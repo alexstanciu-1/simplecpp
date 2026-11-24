@@ -2002,6 +2002,7 @@ CPP;
 				$copy = '__builtin_memmove(' . $name . ', ' . $initializer . ', sizeof(' . $name . '))';
 				return $storage . '; ' . ($this->async_steps === [] ? $copy : $this->async_statement($copy . ';'));
 			}
+			if ($type instanceof owned_callable_type) $this->callable_dependencies($type->signature, $declarations);
 			$native = $type instanceof lambda_type_definition ? 'auto' : $type->cpp_type();
 			$prefix = '[[maybe_unused]] ' . $native . ' ' . $this->name($statement);
 			foreach ($type->cpp_headers() as $header) {
@@ -2439,7 +2440,7 @@ CPP;
 			return $type->lower_cpp_unary($value->operator, $operand);
 		}
 		if ($value instanceof ast_isset_expression) {
-			/** @var carrier_type_definition $type */
+			/** @var presence_test_type $type */
 			$type = $value->operand->type_def();
 			return $type->lower_cpp_presence($this->value($value->operand, $global_references, $declarations, $required_headers));
 		}
@@ -2599,7 +2600,7 @@ CPP;
 			$callback = $value->callable_binding();
 			if ($callback !== null) {
 				$type = $callback->type_def();
-				$target = $type instanceof lambda_type_definition ? $callback->initializer : $type;
+				$target = $type instanceof lambda_type_definition ? $callback->initializer : ($type instanceof owned_callable_type ? $type->signature : $type);
 				return $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers);
 			}
 			if ($value->cardinality !== null) {
@@ -2887,6 +2888,16 @@ CPP;
 		if (!$runtime && $value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
+		if ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
+			foreach ($operands as $index => $argument) {
+				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index], $value->conversion($index))) continue;
+				// An argument can replace the slot through a closure that borrows it.
+				$selected = 'selected_callable_' . $value->start;
+				$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
+				$name = $selected;
+				break;
+			}
+		}
 		if ($runtime && $method) {
 			$receiver = $this->retained_place($operands[0], $global_references, $declarations, $required_headers, $steps, owner_name: 'receiver_owner' . $suffix);
 			$place = 'method_receiver' . $suffix;
@@ -3004,17 +3015,23 @@ CPP;
 			. ' return ' . $call . '; }())';
 	}
 
+	/** Collect declarations for a callable's result and inputs even when the local starts absent. @param (ast_declaration_interface|type_definition)[] $declarations */
+	private function callable_dependencies(callback_type_definition $signature, array &$declarations /** array<string,ast_declaration_interface|type_definition> */): void
+	{
+		self::visit_signature_type_dependencies($signature, function (type_definition $component) use (&$declarations): void {
+			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
+			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
+			else $declarations[$component->name] = $component;
+		});
+	}
+
 	/** Emit the concrete closure in place, with its own expression and result conversion. */
 	private function lambda(ast_lambda_expression $lambda, array &$globals, array &$declarations, array &$headers): string
 	{
 		$type = $lambda->type_def();
 		$signature = $type->signature;
 		foreach ($signature->cpp_headers() as $header) $headers[$header] = true;
-		self::visit_signature_type_dependencies($signature, function (type_definition $component) use (&$declarations): void {
-			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
-			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
-			else $declarations[$component->name] = $component;
-		});
+		$this->callable_dependencies($signature, $declarations);
 		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
 		$parameters = [];
 		foreach ($lambda->parameters as $parameter) {

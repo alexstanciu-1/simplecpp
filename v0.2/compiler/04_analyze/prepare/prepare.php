@@ -939,9 +939,12 @@ final class Preparation
 			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
 		}
 		$type = $origin->type_def();
-		if ($declaration->type_reference !== null
-			&& Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies) !== $type) {
-			throw new diagnostic($source, $declaration->type_reference->byte_start(), 'Local alias requires the exact storage type: ' . $type->name);
+		if ($declaration->type_reference !== null) {
+			$written = Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies);
+			if ($written !== $type && !($type instanceof owned_callable_type && $written instanceof owned_callable_type
+				&& $type->signature->matches($written->signature))) {
+				throw new diagnostic($source, $declaration->type_reference->byte_start(), 'Local alias requires the exact storage type: ' . $type->name);
+			}
 		}
 		if ($target instanceof ast_name_expression) {
 			++$this->expression_visits;
@@ -976,7 +979,7 @@ final class Preparation
 			$declaration->initializer->settle_construction($type, []);
 		}
 		elseif ($declaration->initializer instanceof ast_struct_default) {
-			if (!($type instanceof record_type_definition) && !($type instanceof record_handle_definition) && !($type instanceof type_exception)) {
+			if (!($type instanceof record_type_definition) && !($type instanceof record_handle_definition) && !($type instanceof type_exception) && !($type instanceof owned_callable_type)) {
 				throw new diagnostic($source, $declaration->byte_start(), 'A local without an initializer requires a struct type');
 			}
 			if ($type instanceof shared_record_type_definition && $type->required) {
@@ -1479,8 +1482,9 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_isset_expression) {
 			$this->value($syntax->operand, $initializing);
-			if (!($syntax->operand->type_def() instanceof carrier_type_definition)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'This isset slice requires a carrier');
+			$type = $syntax->operand->type_def();
+			if (!($type instanceof presence_test_type)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'This isset slice requires a carrier or owned callable');
 			}
 			$syntax->settle_presence();
 			return;
@@ -1586,10 +1590,11 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_lambda_expression) {
-			if (!$allow_callback || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Lambda requires an inferred local initializer or typed callback argument');
+			if ((!$allow_callback && !($destination instanceof owned_callable_type)) || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Lambda requires an inferred local initializer or typed callback argument, or an owned callable destination');
 			}
-			$this->lambda($syntax, $destination instanceof callback_type_definition ? $destination : null);
+			$signature = $destination instanceof owned_callable_type ? $destination->signature : $destination;
+			$this->lambda($syntax, $signature instanceof callback_type_definition ? $signature : null);
 			return;
 		}
 		if ($syntax instanceof ast_callable_reference) {
@@ -1620,7 +1625,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_name_expression) {
-			if ($this->resolve_value_name($syntax, $initializing, $allow_callback)) return;
+			if ($this->resolve_value_name($syntax, $initializing, $allow_callback || $destination instanceof owned_callable_type)) return;
 			$name = $syntax->name;
 			throw new diagnostic($syntax->source(), $syntax->byte_start(),
 				$syntax->constant_only ? 'Unknown constant: ' . $name : 'Unknown or not-yet-initialized local/global: ' . $name);
@@ -1955,7 +1960,8 @@ final class Preparation
 		$scope->borrows_receiver = $lambda->explicit_receiver;
 		$conversion = $lambda->body instanceof ast_block ? value_conversion::identity : $scope->return_conversion($lambda->body, $result);
 		if ($scope->borrows_receiver) $this->borrow_receiver($lambda);
-		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $lambda->captures !== [], $scope->borrows_receiver);
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $lambda->captures !== [],
+			$scope->borrows_receiver, $scope->borrows_receiver || $borrowed !== [], $optional);
 		$lambda->settle_lambda($type, $conversion, $writes);
 		if ($lambda->body instanceof ast_block) {
 			$errors = Declaration_Diagnostics::locals($lambda->body);
@@ -2017,7 +2023,7 @@ final class Preparation
 				? $this->find_local($call->name) : ($this->local_frames[0][$call->name] ?? null);
 		}
 		$type = $binding?->type_def();
-		$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
+		$signature = $type instanceof lambda_type_definition || $type instanceof owned_callable_type ? $type->signature : $type;
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
 			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;

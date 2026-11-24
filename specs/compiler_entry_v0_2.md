@@ -325,6 +325,21 @@ initializing required and readonly properties before creating a receiver borrow.
 A borrowed `$this` is available only as a receiver. Typed callbacks accept only
 capture-free callables.
 
+### Owned callable locals
+
+PHP locals may declare a fixed by-value signature, for example
+`$add function<int(int)> = fn($n) => $n + $offset;`. The signature supplies
+omitted component types. An exact concrete closure with copyable by-value captures
+can initialize or replace the target. Borrowed environments and defaulted
+parameters reject at this boundary. The C++ representation is `std::function`.
+
+Copying the local copies its environment under ordinary value semantics, including
+shared-handle identity. A declaration without an initializer starts absent.
+`isset`, conditions, `clean`, and `unset` observe or reset that state.
+Invocation takes positional arguments at full arity. An argument can replace the
+local for subsequent calls. The current invocation retains its selected target.
+Calling absent storage throws `std::bad_function_call` after argument evaluation.
+
 ### Trailing literal parameter defaults
 
 A typed value parameter may declare `= literal` in all three flavors:

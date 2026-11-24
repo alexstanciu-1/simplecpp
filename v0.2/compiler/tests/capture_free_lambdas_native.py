@@ -218,6 +218,50 @@ def prove_reference_captures(work):
           'integer_cast_out_of_range')
 
 
+def prove_owned_callable_locals(work):
+    model = 'class Box {public int $n=2;}'
+    entry = """
+        $f function<int(int)>; if ($f || isset($f)) {return 1;}
+        $empty=$f; $box=new Box(); $offset=3;
+        $f=fn($n)=>$box->n+$offset+$n; $copy function<int(int)> = $f;
+        $box->n=5; $offset=8; $f=fn($n)=>$n;
+        if (!$copy || !isset($f) || isset($empty)) {return 2;}
+        echo $copy(1),$f(1); $alias function<int(int)> =& $f; clean($alias); if ($f) {return 3;}
+        $wrap function<int(int)> = fn($n)=>$copy($n); unset($copy); echo $wrap(2);
+        $arg function<void(Box)>; return 8;
+    """
+    helper = 'function consume(callback<int,int> $op):int {return $op(2);}'
+    borrowed = '$inner=function(int $n) use (&$offset):int {return $offset+$n;};$f=$inner;'
+    replace_argument = ('$op function<int(int)> = fn($n)=>$n+1;'
+                        '$replace=function() use (&$op):int {$op=fn($n)=>$n+10;return 2;};'
+                        'echo $op($replace()),$op(2);return 8;')
+    survives_block = ('$op function<int(int)>; { $n=7;$inner=fn(int $v):int=>$v+$n;$op=$inner; }'
+                      'echo $op(3);return 8;')
+    receiver = 'class Box {public int $n=2; public function run():void {$f function<int()> = fn()=>$this->n;}}'
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, model=model, helper=helper), [
+        (None, None, b'9110'), (None, None, b'9110'),
+        ('main', entry.replace('$f=fn($n)=>$n;', borrowed), 'cannot erase a borrowed environment'),
+        ('main', entry.replace('$f=fn($n)=>$n;', '$f=fn(int $n=4):int=>$n;'), 'cannot erase parameter defaults'),
+        ('main', entry.replace('$f=fn($n)=>$n;', '$f=fn(string $s):int=>3;'), 'Expected exact callable signature'),
+        ('main', entry.replace('$f(1)', '$f(n:1)'), 'Typed callback calls require positional arguments'),
+        ('main', entry.replace('$f(1)', '$f()'), 'Argument count mismatch'),
+        ('main', entry.replace('$f(1)', 'consume($f)'), 'Expected exact callback signature'),
+        ('main', entry, b'9110'),
+        ('model', model.replace('int $n=2', 'string $n="two"'), None),
+        ('model', model, b'9110'),
+        ('model', receiver, 'cannot erase a borrowed environment'),
+        ('model', model, b'9110'),
+        ('main', replace_argument, b'312'),
+        ('main', survives_block, b'10'),
+        ('main', '$at function<int(vector<int>,int)> = fn($v,$i)=>$v[$i];'
+                 '$items vector<int> = [2,7];echo $at($items,1);return 8;', b'7'),
+    ])
+    guard(work, 'php', 'absent-callable',
+          'function arg():int {echo "A";return 3;}$f function<int(int)>;echo $f(arg());return 8;',
+          exception_type='std::bad_function_call', exception_header='functional', expected_stdout=b'A')
+
+
 def prove_receiver_captures(work):
     model = """
         class Counter {
@@ -534,6 +578,7 @@ def main():
         prove_int_capture(root / 'int-capture')
         prove_reference_captures(root / 'reference-captures')
         prove_receiver_captures(root / 'receiver-captures')
+        prove_owned_callable_locals(root / 'owned-callable-locals')
         prove_multiple_int_captures(root / 'multiple-int-captures')
         prove_capture_copy_contract(root / 'capture-copy-contract')
         prove_php_arrow_captures(root / 'php-arrow-captures')

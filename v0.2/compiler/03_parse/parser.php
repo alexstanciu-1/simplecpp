@@ -1050,7 +1050,7 @@ final class Parser
 		} else {
 			$word = $this->cursor->tokens->text_at($start);
 			if ($this->cursor->is(token_kind::keyword)
-				&& (($word === 'weak') || (type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
+				&& (($word === 'weak') || ($word === 'function' && $this->cursor->tokens->source->flavor === flavor::php) || (type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
 				$this->cursor->take_keyword($word);
 			} else {
 				$word = $this->cursor->name(token_kind::identifier);
@@ -1072,7 +1072,12 @@ final class Parser
 			return new ast_compound_type_reference($start, $next->end, $separator, $first);
 		}
 		$next = null;
-		if ($argument_of !== '' && in_array($argument_of, type_registry::EXTENT_FAMILIES, true)) {
+		if ($argument_of === 'function') {
+			$this->cursor->take(token_kind::lparen, '( after callable result type');
+			// Inputs reuse the comma-separated callback component grammar.
+			if (!$this->cursor->is(token_kind::rparen)) $next = $this->type_reference('callback');
+			$this->cursor->take(token_kind::rparen, ') after callable inputs');
+		} elseif ($argument_of !== '' && in_array($argument_of, type_registry::EXTENT_FAMILIES, true)) {
 			$this->cursor->take(token_kind::comma, ", before $argument_of extent");
 			$at = $this->cursor->position();
 			if ($this->cursor->is(token_kind::integer)) {

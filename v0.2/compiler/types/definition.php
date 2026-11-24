@@ -20,6 +20,12 @@ final class initialization_transport
 	}
 }
 
+/** Presence can be observed directly without converting or copying the stored payload. */
+interface presence_test_type
+{
+	public function lower_cpp_presence(string $value): string;
+}
+
 /** Whole-value move assignment preserves source value semantics when a private source dies. */
 interface private_value_transfer_type
 {

@@ -9,6 +9,9 @@ final class Type_Resolution
 	/** Runtime types resolve directly. Application types register a body watch even when lookup fails. */
 	public static function local(ast_type_reference $syntax, scope $symbols, ast_function_body $body, ?Dependency_Watches $dependencies): ?type_definition
 	{
+		if ($syntax->name === 'function' && $syntax->first_child !== null) {
+			return new owned_callable_type(self::callback_signature($syntax, $symbols, $body->parent, $body, $dependencies));
+		}
 		return self::storage($syntax, $symbols, $body->scope->namespace, $body, $dependencies);
 	}
 
@@ -121,6 +124,13 @@ final class Type_Resolution
 		if ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $function->has_receiver()) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callback parameters must be required by-value parameters of free functions or static methods');
 		}
+		return self::callback_signature($syntax, $symbols, $function, $watcher, $dependencies);
+	}
+
+	/** Resolve the ordered components shared by function-pointer callbacks and owned callable locals. */
+	private static function callback_signature(ast_type_reference $syntax, scope $symbols, ast_function_declaration $function,
+		dependency_watcher $watcher, ?Dependency_Watches $dependencies): callback_type_definition
+	{
 		$types = [];
 		for ($part = $syntax->first_child; $part !== null; $part = $part->next_sibling) {
 			$type = self::signature($part, $symbols, $function, $dependencies, $types === [], $watcher);

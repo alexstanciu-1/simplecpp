@@ -392,7 +392,7 @@ final class ast_clean_statement extends ast_reset_statement
 	{
 		$type = $local->type_def();
 		if (!(type_registry::is_numeric_scalar($type) || $type === type_bool::instance() || $type === type_string::instance()
-			|| $type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof boxed_type_definition)) {
+			|| $type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof boxed_type_definition || $type instanceof owned_callable_type)) {
 			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot clean storage of type ' . $type->name);
 		}
 		$this->settle_binding($local);
@@ -414,7 +414,7 @@ final class ast_unset_statement extends ast_reset_statement
 		$type = $local->type_def();
 		if (!(($type instanceof carrier_type_definition && $type->accepts_empty())
 			|| ($type instanceof shared_record_type_definition && !$type->required)
-			|| $type instanceof weak_record_type_definition)) {
+			|| $type instanceof weak_record_type_definition || $type instanceof owned_callable_type)) {
 			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot unset storage of type ' . $type->name);
 		}
 		$this->settle_binding($local);

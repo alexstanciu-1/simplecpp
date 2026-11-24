@@ -502,7 +502,7 @@ a zero-argument, `int`-returning block closure and checks
 `Expected exact callback signature callback<string>`. A failed build preserves
 the published bundle. Repairing the closure to return a string in the same
 compiler instance produces fresh-build-equivalent output and invokes the
-repaired callback. Historical callable-local spelling remains deferred.
+repaired callback. Explicit owned callable locals now have the separate storage contract below.
 
 **Block-local callable visibility (`SCOPE-VAR-002`).** The native closure fixture
 declares `$g` inside `if (true)` and prints its return value, `1`. Moving the
@@ -530,6 +530,8 @@ Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
 **Capturing PHP arrows (`ARROW-001`).** Expression-bodied arrows infer by-value captures for referenced enclosing locals and parameters. The [native tests](../../compiler/tests/capture_free_lambdas_native.py) cover snapshots and cross-file recovery. The [parser tests](../../compiler/tests/lambda_parser_state.php) check nested scope propagation.
 
 **Borrowed receiver.** Local PHP block closures accept `use ($this)`. PHP arrows infer a receiver borrow for instance access. Nested closures retain lexical member visibility. [Native receiver and recovery tests](../../compiler/tests/capture_free_lambdas_native.py)
+
+**Owned callable locals.** Fixed by-value `function<R(Args...)>` locals own copyable environments and support presence, reset and replacement. Factory returns are the next boundary. [Native storage and recovery proof](../../compiler/tests/capture_free_lambdas_native.py)
 
 **Array callable spelling (`CLASS-CALL-010`, partial).** Passing `[$receiver, 'twice']`
 to a `callback<int,int>` parameter reports `A collection literal cannot supply a typed callback`

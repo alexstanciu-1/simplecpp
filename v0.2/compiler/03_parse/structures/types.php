@@ -34,6 +34,11 @@ class ast_type_reference extends ast_node
 		if ($this->first_child === null) {
 			return $this->name;
 		}
+		if ($this->name === 'function') {
+			$inputs = [];
+			for ($part = $this->first_child->next_sibling; $part !== null; $part = $part->next_sibling) $inputs[] = $part->spelling();
+			return 'function<' . $this->first_child->spelling() . '(' . implode(',', $inputs) . ')>';
+		}
 		$name = $this->name . '<';
 		$separator = '';
 		for ($child = $this->first_child; $child !== null; $child = $child->next_sibling) {
