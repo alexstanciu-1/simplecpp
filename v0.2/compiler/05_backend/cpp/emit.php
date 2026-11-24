@@ -580,8 +580,8 @@ CPP;
 		$required_headers = [];
 		foreach ($file->globals() as $global) {
 			$type = $global->type_def();
-			$initializer = $this->declaration_initialization($type, $global->initializer, $global->initialization(), $required_headers);
-			$qualifier = $global->initializer instanceof ast_string_expression ? '' : 'constinit ';
+			$initializer = $global->initializer === null ? '{}' : $this->declaration_initialization($type, $global->initializer, $global->initialization(), $required_headers);
+			$qualifier = $global->initializer === null || $global->initializer instanceof ast_string_expression ? '' : 'constinit ';
 			$definitions[] = $qualifier . $type->cpp_type() . ' ' . self::global_name($global)
 				. ' = ' . $initializer . ";\n";
 			foreach ($type->cpp_headers() as $header) {
@@ -3209,6 +3209,10 @@ CPP;
 		};
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
+			if ($type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
+		}
+		foreach ($record->static_properties as $property) {
+			$type = $property->type_def();
 			if ($type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
 		}
 		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {

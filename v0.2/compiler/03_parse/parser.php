@@ -1864,8 +1864,13 @@ final class Parser
 			}
 			$value = $this->value(argument_operand: $argument_operand);
 			$c->take(token_kind::rparen, ')');
-			if ($c->tokens->source->flavor === flavor::php && $value instanceof ast_field_expression && $c->is(token_kind::lparen)) {
-				return $this->call_arguments($start, $value->field, null, $value, call_qualifier::field_value);
+			if ($c->tokens->source->flavor === flavor::php && $c->is(token_kind::lparen)) {
+				if ($value instanceof ast_field_expression) return $this->call_arguments($start, $value->field, null, $value, call_qualifier::field_value);
+				// Every PHP static property read ends in :: followed by a variable token.
+				if ($value instanceof ast_name_expression && !$value->constant_only && $value->end - $value->start >= 3
+					&& $c->tokens->tokens[$value->end - 2]->kind === token_kind::scope) {
+					return $this->call_arguments($start, $value->name, null, $value, call_qualifier::field_value);
+				}
 			}
 			return $value;
 		}

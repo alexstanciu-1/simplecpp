@@ -325,7 +325,7 @@ initializing required and readonly properties before creating a receiver borrow.
 A borrowed `$this` is available only as a receiver. Typed callbacks accept only
 capture-free callables.
 
-### Owned callables in locals, functions, methods and instance fields
+### Owned callables in locals, functions, methods and properties
 
 PHP locals may declare a fixed by-value signature, for example
 `$add function<int(int)> = fn($n) => $n + $offset;`. The signature supplies
@@ -368,6 +368,12 @@ selects the field’s current callable before evaluating `arg()`. Replacing the 
 during argument evaluation affects subsequent calls. Calling an absent target throws
 `std::bad_function_call` after argument evaluation. The spelling `$object->run(...)`
 with actual arguments continues to select a method.
+
+A static property such as `public static function<int(int)> $run;` starts absent.
+Each declaring class or struct owns one slot shared across compilation units.
+An assignment through `self::$run` sets the target observed by `(Handler::$run)(4)`.
+Static property calls follow the same snapshot, absence and ownership rules as instance
+field calls. Install the callable in executable code after declaration.
 
 ### Trailing literal parameter defaults
 

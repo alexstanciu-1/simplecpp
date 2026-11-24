@@ -40,8 +40,13 @@ final class Global_Syntax
 				}
 				break;
 		}
-		$cursor->take(token_kind::assign, '=');
-		$initializer = $parser->literal_initializer('Expected scalar literal for global initializer');
+		$initializer = null;
+		if ($static && $cursor->tokens->source->flavor === flavor::php && $type?->name === 'function') {
+			if (!$cursor->is(token_kind::semicolon)) throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Static callable property starts absent; assign its target in executable code');
+		} else {
+			$cursor->take(token_kind::assign, '=');
+			$initializer = $parser->literal_initializer('Expected scalar literal for global initializer');
+		}
 		if (!$static && $initializer instanceof ast_string_expression) {
 			throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Expected scalar literal for global initializer');
 		}

@@ -12,7 +12,7 @@ final class Literal_Declaration_Preparation
 		$path = [];
 		foreach ($symbols->declarations as $declaration)
 		{
-			if (!($declaration instanceof ast_literal_declaration) || $declaration->type_ready()) {
+			if (!($declaration instanceof ast_literal_declaration) || $declaration->initializer === null || $declaration->type_ready()) {
 				continue;
 			}
 			self::prepare($declaration, $symbols, $dependencies, $path);

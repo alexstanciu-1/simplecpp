@@ -70,7 +70,8 @@ final class Compilation_Inspection
 	public static function global_row(ast_global_declaration $global): array /** array<string,mixed> */
 	{
 		$row = ['name' => $global->name(), 'type' => $global->type_def()->name];
-		self::write_scalar($row, 'initializer', $global->type_def()->evaluate_constant($global->initialization(), $global->initializer));
+		if ($global->initializer === null) $row['initializer'] = null;
+		else self::write_scalar($row, 'initializer', $global->type_def()->evaluate_constant($global->initialization(), $global->initializer));
 		return $row;
 	}
 
