@@ -10,6 +10,7 @@ final class ast_match_arm extends ast_node
 	public readonly array $labels /** list<ast_expression> */;
 	public readonly ast_expression $result;
 
+	/** @param list<ast_expression> $labels */
 	public function __construct(array $labels /** list<ast_expression> */, ast_expression $result,
 		int $start /** uint32 */, int $end /** uint32 */)
 	{
@@ -30,6 +31,7 @@ abstract class ast_selection_expression extends ast_expression
 	}
 }
 
+/** A conditional expression with two alternative results. */
 final class ast_ternary_expression extends ast_selection_expression
 {
 	/** Between xor and coalescing in the common expression grammar. */

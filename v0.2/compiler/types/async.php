@@ -6,13 +6,16 @@ namespace scpp\compiler;
 /** One resolved task ABI, shared by signature admission, dependency collection and C++ lowering. */
 final readonly class async_task_binding
 {
+	/** PROPERTIES */
 	private string $identity;
 
+	/** CONSTRUCTOR */
 	public function __construct(string $identity)
 	{
 		$this->identity = $identity;
 	}
 
+	/** METHODS */
 	/**
 	 * A suspending unit needs the complete promise. The emitter collects private demand by concrete task name.
 	 * @param array<string,bool> $headers
@@ -37,6 +40,7 @@ final readonly class async_task_binding
 		return 'scpp_async_task_' . hash('sha256', $root . "\0" . $this->identity);
 	}
 
+	/** STATIC METHODS */
 	public static function header_path(string $task): string
 	{
 		return 'units/' . hash('sha256', $task) . '.hpp';

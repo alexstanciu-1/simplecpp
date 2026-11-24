@@ -40,7 +40,10 @@ final class Cpp_Emitter
 	/** A staged owner needs destruction at the end of its consuming operand before a sibling runs. */
 	private int $async_owned_steps = 0;
 	private bool $async_body = false;
-	/** Ordered statements pending in the current coroutine full expression. */
+	/**
+	 * Ordered statements pending in the current coroutine full expression.
+	 * @var list<string>
+	 */
 	private array $async_steps /** list<string> */ = [];
 	/** Owning lowering context for the innermost protected callable collecting exits. */
 	private ?Cpp_Finally_Exit $finally_exit = null;
@@ -91,7 +94,10 @@ final class Cpp_Emitter
 		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
 	}
 
-	/** Apply the prepared conversions and publish the operation's runtime dependencies. */
+	/**
+	 * Apply the prepared conversions and publish the operation's runtime dependencies.
+	 * @param array<string,bool> $required_headers
+	 */
 	private function binary_operands(ast_binary_expression $value, string &$left, string &$right, array &$required_headers): void
 	{
 		$type = $value->execution_type();
@@ -131,7 +137,12 @@ final class Cpp_Emitter
 		return $capture ? '([&]() { const auto membership_key = ' . $left . '; return ' . $test . '; }())' : $test;
 	}
 
-	/** A chain can carry scalar literals verbatim. Capture other values before later operands can change them. */
+	/**
+	 * A chain can carry scalar literals verbatim. Capture other values before later operands can change them.
+	 * @param array<string,ast_global_declaration> $global_references
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $required_headers
+	 */
 	private function chain_operand(ast_expression $operand, int $index, string &$steps, array &$global_references,
 		array &$declarations, array &$required_headers): string
 	{
@@ -169,7 +180,7 @@ final class Cpp_Emitter
 				. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
 		}
 		$helper = '';
-		foreach (dependency_use::ordered_uses as $use) {
+		foreach (dependency_use::enum_helper_uses as $use) {
 			if (!$this->needs_enum_helper($node, $use)) continue;
 			$binding = $type->helper_function($use);
 			$includes[$binding->header] = true;
@@ -706,7 +717,7 @@ CPP;
 		}
 		foreach ($file->declaration_nodes as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
-			foreach (dependency_use::ordered_uses as $use) {
+			foreach (dependency_use::enum_helper_uses as $use) {
 				if (!$this->needs_enum_helper($node, $use)) continue;
 				if ($use !== dependency_use::enum_try_from_value) $required_headers['stdexcept'] = true;
 				if ($use === dependency_use::enum_from_value && $this->needs_enum_helper($node, dependency_use::enum_try_from_value)) {
@@ -1274,11 +1285,16 @@ CPP;
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
 				$steps = [];
-				$receiver = $statement->receiver instanceof ast_field_expression || $type instanceof fixed_array_type
-					? $this->retained_place($statement->receiver, $global_references, $declarations, $required_headers, $steps)
-					: $this->value($statement->receiver, $global_references, $declarations, $required_headers);
-				$key = $this->value($statement->index, $global_references, $declarations, $required_headers);
-				$value = $this->value($statement->value, $global_references, $declarations, $required_headers);
+				$before = $this->suspensions;
+				$receiver = $this->write_receiver($statement->receiver, $global_references, $declarations, $required_headers, $steps);
+				[$key, $key_steps] = $this->staged_operand($statement->index, $global_references, $declarations, $required_headers);
+				[$value, $rhs_steps] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
+				$suspends = $before !== $this->suspensions;
+				if ($suspends) {
+					$steps[] = 'auto&& write_target = ' . $receiver . ';';
+					$receiver = 'write_target';
+					array_push($steps, ...$key_steps);
+				}
 				$conversion = $statement->conversion();
 				$destination = $type->write_type();
 				foreach ($destination->conversion_headers($conversion) as $header) {
@@ -1426,7 +1442,13 @@ CPP;
 		return ['{', ...$body, '}', $label . ':;'];
 	}
 
-	/** Lower entry selection independently of clause order, then let native switch handle transfers. */
+	/**
+	 * Lower entry selection independently of clause order, then let native switch handle transfers.
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,ast_global_declaration> $globals
+	 * @param array<string,bool> $headers
+	 * @return list<string>
+	 */
 	private function switch_lines(ast_switch_statement $syntax, statement_return_target $function,
 		array &$declarations, array &$globals, array &$headers): array
 	{
@@ -1492,7 +1514,13 @@ CPP;
 		return $lines;
 	}
 
-	/** Select a clause before executing its body. A miss index is outside the clause index domain. */
+	/**
+	 * Select a clause before executing its body. A miss index is outside the clause index domain.
+	 * @param list<ast_switch_arm|ast_match_arm> $arms
+	 * @param array<string,ast_global_declaration> $globals
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $headers
+	 */
 	private function carrier_clause_index(carrier_type_definition $carrier, constant_dispatch $dispatch, string $operand,
 		array $arms, array &$globals, array &$declarations, array &$headers): string
 	{
@@ -1517,16 +1545,16 @@ CPP;
 			. $selection . ' return -1; }(' . $operand . '))';
 	}
 
+	/**
+	 * @param array<string,ast_global_declaration> $globals
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $headers
+	 */
 	private function native_case(ast_expression $label, constant_dispatch $dispatch, array &$globals, array &$declarations, array &$headers): string
 	{
 		if ($dispatch === constant_dispatch::enum_switch) return $this->value($label, $globals, $declarations, $headers);
 		$integer = constant_dispatch::integer_label($label) ?? throw new \LogicException('Invalid prepared integer label');
 		return self::integer_spelling($integer);
-	}
-
-	private static function integer_spelling(int $integer /** int64 */): string
-	{
-		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
 	}
 
 	/**
@@ -2162,7 +2190,12 @@ CPP;
 		return $binding === null ? 'static_cast<' . $type->cpp_type() . "&&>($name)" : "$binding->factory($name.data, $count)";
 	}
 
-	/** Release a nested operand's staged owners before evaluating the next sibling. */
+	/**
+	 * Release a nested operand's staged owners before evaluating the next sibling.
+	 * @param array<string,ast_global_declaration> $global_references
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $required_headers
+	 */
 	private function scoped_async_operand(ast_expression $value, array &$global_references, array &$declarations, array &$required_headers,
 		bool &$reorderable, bool $typed_initializer, bool $logical_root, bool $bare_comparison, ?Cpp_Staged_Result $destination): string
 	{
@@ -3238,7 +3271,12 @@ CPP;
 		return '([&]() { ' . implode(' ', [...$snapshots, ...$lines]) . ' }())';
 	}
 
-	/** Emit the concrete closure in place, with its own expression and result conversion. */
+	/**
+	 * Emit the concrete closure in place, with its own expression and result conversion.
+	 * @param array<string,ast_global_declaration> $globals
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $headers
+	 */
 	private function lambda(ast_lambda_expression $lambda, array &$globals, array &$declarations, array &$headers): string
 	{
 		$type = $lambda->type_def();
@@ -3507,6 +3545,10 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	private static function integer_spelling(int $integer /** int64 */): string
+	{
+		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
+	}
 	/** Each distinct inherited signature needs one override, even when multiple interfaces introduce it. */
 	private static function variance_bridges(ast_record_declaration $record): \Generator
 	{

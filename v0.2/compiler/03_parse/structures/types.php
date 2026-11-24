@@ -35,9 +35,13 @@ class ast_type_reference extends ast_node
 			return $this->name;
 		}
 		if ($this->name === 'function') {
-			$inputs = [];
-			for ($part = $this->first_child->next_sibling; $part !== null; $part = $part->next_sibling) $inputs[] = $part->spelling();
-			return 'function<' . $this->first_child->spelling() . '(' . implode(',', $inputs) . ')>';
+			$signature = 'function<' . $this->first_child->spelling() . '(';
+			$separator = '';
+			for ($part = $this->first_child->next_sibling; $part !== null; $part = $part->next_sibling) {
+				$signature .= $separator . $part->spelling();
+				$separator = ',';
+			}
+			return $signature . ')>';
 		}
 		$name = $this->name . '<';
 		$separator = '';

@@ -32,6 +32,7 @@ final class test_constant_expression extends ast_expression
 		$this->settle($value, $known);
 	}
 
+	/** Publish a typed constant fact for the evaluator fixture. */
 	public function settle(int|float|bool|null $value /** int64|float64|bool|null */, bool $known): void
 	{
 		$type = match (true) {

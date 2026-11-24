@@ -51,6 +51,8 @@ class ast_string_expression {
     public function byte_start(): int { return $this->offset; }
 }
 
+final class ast_property_name_string extends ast_string_expression {}
+
 final class ast_interpolation_text extends ast_string_expression {
     public function __construct(source_file $source, string $text, int $start) {
         parent::__construct($source, $text, $start);

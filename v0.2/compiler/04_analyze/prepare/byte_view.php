@@ -6,6 +6,7 @@ namespace scpp\compiler;
 /** One top-level length acquisition for repeated checked reads of a private value-record field. */
 final class Scoped_Byte_View
 {
+	/** Select a stable string field for scoped byte reads. */
 	public static function prepare(ast_function_body $body): void
 	{
 		foreach ($body->locals as $local) {
@@ -40,6 +41,7 @@ final class Scoped_Byte_View
 				&& $index->parent->target === $index);
 	}
 
+	/** Check the loop body for writes that invalidate a borrowed byte view. */
 	private static function stable(ast_statement_block $block, ast_field_expression $field, bool $loop, bool &$loop_read): bool
 	{
 		$owner = $field->receiver->local_binding();

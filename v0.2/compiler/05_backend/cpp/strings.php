@@ -6,7 +6,10 @@ namespace scpp\compiler;
 /** Spells exact C++ literal bytes for string construction and direct output. */
 final class Cpp_String_Literals
 {
-	/** Compare a stable byte-string place against constant bytes, without constructing a string. */
+	/**
+	 * Compare a stable byte-string place against constant bytes, without constructing a string.
+	 * @param array<string,bool> $headers
+	 */
 	public static function equal_bytes(string $subject, string $bytes, array &$headers): string
 	{
 		$length = strlen($bytes);

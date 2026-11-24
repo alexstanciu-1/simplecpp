@@ -19,6 +19,10 @@ final class Literal_Declaration_Preparation
 		}
 	}
 
+	/**
+	 * Evaluate a literal declaration and record its resolved value.
+	 * @param array<string,ast_computed_integer_constant> $path
+	 */
 	private static function prepare(ast_literal_declaration $declaration, scope $symbols, Dependency_Watches $dependencies, array &$path /** array<string,ast_computed_integer_constant> */): void
 	{
 		if ($declaration instanceof ast_computed_integer_constant) {
@@ -53,7 +57,10 @@ final class Literal_Declaration_Preparation
 		$declaration->settle_type($type, $conversion);
 	}
 
-	/** Report the same cycle and location regardless of which dependent was prepared first. */
+	/**
+	 * Report the same cycle and location regardless of which dependent was prepared first.
+	 * @param array<string,ast_computed_integer_constant> $path
+	 */
 	private static function cycle(array $path /** array<string,ast_computed_integer_constant> */, string $key): diagnostic
 	{
 		$cycle = array_keys($path);
@@ -65,6 +72,10 @@ final class Literal_Declaration_Preparation
 			. implode(' -> ', [...array_slice($cycle, $offset), ...array_slice($cycle, 0, $offset), $first]));
 	}
 
+	/**
+	 * Evaluate a constant operand and retain its declaration dependencies.
+	 * @param array<string,ast_computed_integer_constant> $path
+	 */
 	private static function operand(ast_expression $expr, ast_computed_integer_constant $owner, scope $symbols,
 		Dependency_Watches $dependencies, array &$path /** array<string,ast_computed_integer_constant> */, bool $retry): int /** int64 */
 	{
@@ -113,6 +124,10 @@ final class Literal_Declaration_Preparation
 		throw new diagnostic($expr->source(), $expr->byte_start(), 'Unsupported integer constant expression');
 	}
 
+	/**
+	 * Resolve a constant reference and evaluate its declaration.
+	 * @param array<string,ast_computed_integer_constant> $path
+	 */
 	private static function reference(ast_name_expression $expr, ast_computed_integer_constant $owner, scope $symbols,
 		Dependency_Watches $dependencies, array &$path /** array<string,ast_computed_integer_constant> */): int /** int64 */
 	{

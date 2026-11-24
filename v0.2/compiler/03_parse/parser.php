@@ -449,6 +449,7 @@ final class Parser
 		return new ast_if_statement($start, $this->cursor->position(), $arms);
 	}
 
+	/** Collect case bodies and their labels in source order. */
 	private function switch_statement(statement_grammar $grammar, Body_Collection $collector): ast_switch_statement
 	{
 		$c = $this->cursor;
@@ -752,6 +753,7 @@ final class Parser
 		return $this->callable_body($grammar, $function);
 	}
 
+	/** Select the statement grammar for the active body context. */
 	private function grammar(): statement_grammar
 	{
 		return match ($this->cursor->tokens->source->flavor) {
@@ -1278,19 +1280,6 @@ final class Parser
 		return null;
 	}
 
-	private static function comparison_operator(token_kind $kind): ?binary_operator
-	{
-		return match ($kind) {
-			token_kind::equal => binary_operator::equal,
-			token_kind::not_equal => binary_operator::not_equal,
-			token_kind::less => binary_operator::less,
-			token_kind::less_equal => binary_operator::less_equal,
-			token_kind::greater => binary_operator::greater,
-			token_kind::greater_equal => binary_operator::greater_equal,
-			default => null,
-		};
-	}
-
 	/** Python not binds below comparisons and above and. */
 	private function python_not(int $minimum_precedence /** uint8 */): ast_not_expression
 	{
@@ -1653,6 +1642,7 @@ final class Parser
 		return false;
 	}
 
+	/** Parse the parameters, return type and body of a closure. */
 	private function lambda_expression(bool $block = false): ast_lambda_expression
 	{
 		$c = $this->cursor;
@@ -2090,7 +2080,9 @@ final class Parser
 		$start = $this->cursor->position();
 		$word = $this->cursor->at_end() ? '' : $this->cursor->tokens->text_at($start);
 		if ($this->cursor->tokens->source->flavor === flavor::python) {
-			$word = match ($word) { 'True' => 'true', 'False' => 'false', 'None' => 'null', 'true', 'false', 'null' => '', default => $word };
+			$word = match ($word) {
+				'True' => 'true', 'False' => 'false', 'None' => 'null', 'true', 'false', 'null' => '', default => $word
+			};
 		}
 		if (type_registry::literal($word) !== null) {
 			$kind = $this->cursor->tokens->tokens[$start]->kind;
@@ -2238,6 +2230,19 @@ final class Parser
 	}
 
 	/** STATIC METHODS */
+	/** Map a comparison token to its binary operator. */
+	private static function comparison_operator(token_kind $kind): ?binary_operator
+	{
+		return match ($kind) {
+			token_kind::equal => binary_operator::equal,
+			token_kind::not_equal => binary_operator::not_equal,
+			token_kind::less => binary_operator::less,
+			token_kind::less_equal => binary_operator::less_equal,
+			token_kind::greater => binary_operator::greater,
+			token_kind::greater_equal => binary_operator::greater_equal,
+			default => null,
+		};
+	}
 	/** Reuse the consumer tokens and original trait token generations. @param array<string,array<string,ast_trait_declaration>> $bindings */
 	public static function composed(ast_file_node $authored, array $bindings /** array<string,array<string,ast_trait_declaration>> */): ast_file_node
 	{

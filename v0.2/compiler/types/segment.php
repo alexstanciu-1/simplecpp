@@ -79,12 +79,6 @@ final class type_segment_range extends type_definition
 		parent::__construct('segment_range');
 	}
 
-	public static function instance(): self
-	{
-		static $type = null;
-		return $type ??= new self();
-	}
-
 	public function supports_inferred_local(): bool
 	{
 		return true;
@@ -95,8 +89,15 @@ final class type_segment_range extends type_definition
 		return 'scpp::mt::segment_range';
 	}
 
+	/** @return list<string> */
 	public function cpp_headers(): array /** list<string> */
 	{
 		return ['scpp/mt_segment.hpp'];
+	}
+
+	public static function instance(): self
+	{
+		static $type = null;
+		return $type ??= new self();
 	}
 }

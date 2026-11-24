@@ -134,11 +134,21 @@ final class ast_callable_reference extends ast_expression
 interface statement_return_target
 {
 	/** @var ast_parameter_declaration[] */
-	public array $parameters { get; }
-	public bool $returns_reference { get; }
-	public ?int $reference_return_origin { get; }
-	public bool $is_implicit_entry { get; }
-	public bool $is_async { get; }
+	public array $parameters {
+		get;
+	}
+	public bool $returns_reference {
+		get;
+	}
+	public ?int $reference_return_origin {
+		get;
+	}
+	public bool $is_implicit_entry {
+		get;
+	}
+	public bool $is_async {
+		get;
+	}
 	public function return_type_def(): type_definition;
 }
 
@@ -170,12 +180,24 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 {
 	use ast_fixed_parameter_list;
 
+	/** PROPERTIES */
 	/** Prepared result conversion. */
 	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
 
 	/** @var int[] Prepared enclosing storage IDs that invocation may write. */
 	public private(set) array $borrowed_writes /** list<uint32> */ = [];
 
+	public ?int $reference_return_origin {
+		get => $this->type_def?->signature->reference_origin;
+	}
+	public bool $is_implicit_entry {
+		get => false;
+	}
+	public bool $is_async {
+		get => false;
+	}
+
+	/** CONSTRUCTOR */
 	/** @param ast_parameter_declaration[] $parameters @param ast_closure_capture[] $captures */
 	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
 		public readonly ?ast_type_reference $result, public readonly ast_expression|ast_block $body, public readonly array $captures /** list<ast_closure_capture> */ = [],
@@ -188,10 +210,7 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 		$body->attach($this);
 	}
 
-	public ?int $reference_return_origin { get => $this->type_def?->signature->reference_origin; }
-	public bool $is_implicit_entry { get => false; }
-	public bool $is_async { get => false; }
-
+	/** METHODS */
 	public function return_type_def(): type_definition
 	{
 		return $this->type_def()->signature->result;
@@ -467,7 +486,7 @@ final class ast_parallel_expression extends ast_call_expression
 /** Written labels and the recomputable parameter permutation of a labeled call or construction. */
 final class Named_Arguments
 {
-	/** PREP FACTS */
+	/** PROPERTIES */
 	/** @var int[] Prepared parameter slots in written order, then omitted defaults in declaration order. */
 	public private(set) array $slots /** list<uint32> */ = [];
 
@@ -582,12 +601,12 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	/** PROPERTIES */
 	/** Native non-owning queue reference; null outside incremental ownership or after retirement. */
 	private ?preparation_work $preparation_work = null;
+	/** Non-owning length initializer anchoring a proven scoped byte view. */
+	public ?ast_local_declaration $byte_view_length = null;
 
 	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
 	private bool $prepared = false;
-	/** Non-owning length initializer anchoring a proven scoped byte view. */
-	public ?ast_local_declaration $byte_view_length = null;
 	/** Prepared cache: entry-target context; null for ordinary function bodies. */
 	private ?int $exit_digits /** uint8 */ = null;
 	/** Preparation statistics: statements visited by the last successful body preparation; zero before completion. */
@@ -650,6 +669,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		return ($this->prepared) && ($this->exit_digits === $target?->digits);
 	}
 
+	/** Release the bindings and cached results of the previous preparation. */
 	public function reset_preparation(): void
 	{
 		$this->prepared = false;

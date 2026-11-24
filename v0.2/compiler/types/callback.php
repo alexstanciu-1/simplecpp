@@ -33,6 +33,7 @@ final class callback_type_definition extends type_definition
 		return isset($this->modes[$index]) ? '&' : '';
 	}
 
+	/** Spell the concrete native function pointer and its parameter types. */
 	public function cpp_declarator(string $name = ''): string
 	{
 		$result = static function (type_definition $type): string {
@@ -83,6 +84,7 @@ final class callback_type_definition extends type_definition
 		throw new diagnostic($value->source(), $value->byte_start(), 'Expected exact callback signature ' . $this->name);
 	}
 
+	/** Validate the callable target against its prepared signature. */
 	public function require_target(ast_callable_reference $site, ast_function_declaration $target): void
 	{
 		$matches = $target->reference_return_origin === $this->reference_origin && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);

@@ -25,6 +25,7 @@ final class Exit_Preparation
  */
 final class Preparation
 {
+	/** PROPERTIES */
 	/**
 	 * Source-order visibility index, not a declaration collector; native non-owning declaration references.
 	 *
@@ -77,6 +78,7 @@ final class Preparation
 	/** Native non-owning; null when the caller does not collect usage relations. */
 	private ?Dependency_Watches $dependencies = null;
 
+	/** METHODS */
 	/** Standalone clients use the same declaration-before-body orchestration as multifile programs. */
 	public function prepare(ast_file_node $file, entry_target $target): prepared_entry
 	{
@@ -532,6 +534,7 @@ final class Preparation
 		return $this->loop;
 	}
 
+	/** Prepare the switch labels and join initialization facts from reachable exits. */
 	private function switch_statement(ast_switch_statement $syntax, source_file $source, ?entry_target $target,
 		statement_return_target $function): int
 	{
@@ -580,6 +583,10 @@ final class Preparation
 		return ($exits & ~statement_completion::breaks) | ($after ? statement_completion::fallthrough : 0);
 	}
 
+	/**
+	 * Check label type and uniqueness against the switch subject.
+	 * @param array<int|string,bool> $seen
+	 */
 	private function case_label(ast_expression $label, type_definition $type, constant_dispatch $dispatch, array &$seen, string $construct): void
 	{
 		if ($label->type_def() !== $type) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label type must equal subject type');
@@ -601,14 +608,6 @@ final class Preparation
 	private function invalid_case_label(ast_expression $label, string $construct): diagnostic
 	{
 		return new diagnostic($label->source(), $label->byte_start(), $construct . ' label requires a literal, named constant or enum case');
-	}
-
-	/** Keep definite constructor states only where all paths agree. */
-	private static function join_initialization(?array $joined, array $incoming): array
-	{
-		if ($joined === null) return $incoming;
-		foreach ($incoming as $name => $state) if ($joined[$name] !== $state) $joined[$name] = 2;
-		return $joined;
 	}
 
 	/** Prepare a separate lexical frame; facts from its writes are forgotten on exit. */
@@ -2639,6 +2638,20 @@ final class Preparation
 		if ($value->type_def() !== type_registry::integer()) {
 			throw new diagnostic($value->source(), $value->byte_start(), $message);
 		}
+	}
+
+	/** STATIC METHODS */
+	/**
+	 * Keep definite constructor states only where all paths agree.
+	 * @param array<string,int>|null $joined
+	 * @param array<string,int> $incoming
+	 * @return array<string,int>
+	 */
+	private static function join_initialization(?array $joined, array $incoming): array
+	{
+		if ($joined === null) return $incoming;
+		foreach ($incoming as $name => $state) if ($joined[$name] !== $state) $joined[$name] = 2;
+		return $joined;
 	}
 
 }

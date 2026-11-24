@@ -384,10 +384,12 @@ abstract class ast_reset_statement extends ast_storage_write
 	abstract public function prepare_reset(ast_local_binding $local): void;
 }
 
+/** Resets the value held in initialized local storage. */
 final class ast_clean_statement extends ast_reset_statement
 {
 	public const string OPERATION = 'clean';
 
+	/** Validate the target storage before recording the reset binding. */
 	public function prepare_reset(ast_local_binding $local): void
 	{
 		$type = $local->type_def();
@@ -404,6 +406,7 @@ final class ast_unset_statement extends ast_reset_statement
 {
 	public const string OPERATION = 'unset';
 
+	/** Validate the target storage before recording the reset binding. */
 	public function prepare_reset(ast_local_binding $local): void
 	{
 		// Aliases always introduce a new name and resolve to their original slot.

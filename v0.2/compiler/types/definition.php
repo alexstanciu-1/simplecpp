@@ -290,6 +290,7 @@ enum constant_dispatch
 		return $label instanceof ast_name_expression ? $label->declaration() : null;
 	}
 
+	/** Read the prepared integer value of a literal or constant label. */
 	public static function integer_label(ast_expression $label): ?int
 	{
 		if (!($label instanceof ast_integer_expression)) {

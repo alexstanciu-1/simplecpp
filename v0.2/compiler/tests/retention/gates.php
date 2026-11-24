@@ -92,7 +92,7 @@ function publication_gate_case(string $work, string $flavor): void
 	catch (\LogicException $error) {
 		gate_check($error->getMessage() === 'Stale module compilation', 'Wrong stale-reader failure');
 	}
-	unset($handle);
+	unset($handle, $error);
 	gc_collect_cycles();
 	gate_check($old_session->get() === null, 'Released prepared reader retained its session');
 	gate_check($old_root->get() === null && $old_declaration->get() === null,

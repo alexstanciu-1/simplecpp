@@ -87,7 +87,9 @@ foreach ([
 		$type = $frontend->parse(new source_file('extent', $text, $flavor))->declarations['func:grid']->return_type_reference;
 		verify($type->first_child->next_sibling->extent === $expected, 'Checked extent value');
 	}
-	$qualified = match ($flavor) { flavor::php => 'Sizes\\CAP', flavor::cpp => 'Sizes::CAP', flavor::js => 'Sizes.CAP' };
+	$qualified = match ($flavor) {
+		flavor::php => 'Sizes\\CAP', flavor::cpp => 'Sizes::CAP', flavor::js => 'Sizes.CAP'
+	};
 	$text = str_replace($matrix, 'fixed_array<byte,' . $qualified . '>', $source);
 	$type = $frontend->parse(new source_file('named-grid', $text, $flavor))->declarations['func:grid']->return_type_reference;
 	$bound = $type->first_child->next_sibling;
