@@ -1628,6 +1628,8 @@ final class Parser
 	{
 		$c = $this->cursor;
 		$start = $c->take($c->tokens->tokens[$c->position()]->kind, 'fn');
+		$reference = $c->tokens->source->flavor === flavor::php && $c->is(token_kind::ampersand);
+		if ($reference) $c->take(token_kind::ampersand, '&');
 		$parameters = $this->parameters(lambda: true);
 		$captures = [];
 		$receiver_capture = false;
@@ -1668,7 +1670,7 @@ final class Parser
 			$this->arrow = null;
 			try {
 				$body = $this->lexical_block($this->grammar(), $collector, '{ before closure body', $collector);
-				return new ast_lambda_expression($start, $parameters, $result, $body, $captures, $receiver_capture);
+				return new ast_lambda_expression($start, $parameters, $result, $body, $captures, $receiver_capture, $reference);
 			} finally {
 				$this->lexical = $outer_scope;
 				$this->arrow = $outer_arrow;
@@ -1680,7 +1682,7 @@ final class Parser
 			$this->arrow = new Arrow_Captures($parameters, $outer_arrow, $this->lexical);
 			try {
 				$body = $this->value();
-				return new ast_lambda_expression($start, $parameters, $result, $body, $this->arrow->captures());
+				return new ast_lambda_expression($start, $parameters, $result, $body, $this->arrow->captures(), returns_reference: $reference);
 			} finally {
 				$this->arrow = $outer_arrow;
 			}

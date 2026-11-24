@@ -2611,7 +2611,9 @@ CPP;
 			if ($callback !== null) {
 				$type = $callback->type_def();
 				$target = $type instanceof lambda_type_definition ? $callback->initializer : ($type instanceof owned_callable_type ? $type->signature : $type);
-				return $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers);
+				$call = $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers);
+				return $target instanceof ast_lambda_expression && $target->returns_reference && !$borrow_result
+					? 'static_cast<' . $value->type_def()->cpp_type() . '>(' . $call . ')' : $call;
 			}
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];
@@ -3061,7 +3063,7 @@ CPP;
 			array_push($this->async_steps, ...$steps);
 			return $call;
 		}
-		$return_reference = $function instanceof ast_function_declaration && $function->returns_reference ? '&' : '';
+		$return_reference = $function instanceof statement_return_target && $function->returns_reference ? '&' : '';
 		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type() . $return_reference) . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
 	}
@@ -3098,7 +3100,7 @@ CPP;
 			// An explicit capture may be unused in the source body.
 			$capture_uses[] = "\t(void)" . $name . ';';
 		}
-		$header = '[' . implode(', ', $environment) . '](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false);
+		$header = '[' . implode(', ', $environment) . '](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false) . ($lambda->returns_reference ? '&' : '');
 		// Both closure forms lower in a synchronous context, independent of the enclosing operand.
 		$outer = [$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels,
 			$this->async_body, $this->async_steps, $this->async_owned_steps, $this->suspensions];
@@ -3110,7 +3112,7 @@ CPP;
 				if ($capture_uses !== []) array_unshift($lines, ...$capture_uses);
 				return $header . " {\n" . implode("\n", $lines) . "\n}";
 			}
-			$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
+			$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity, borrow_result: $lambda->returns_reference);
 			$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
 			return $header . ' { return ' . $result . '; }';
 		} finally {

@@ -318,9 +318,9 @@ final class Function_Preparation
 	}
 
 	/** A reference result borrows exactly one fixed writable parameter of the same type. */
-	private static function reference_return_origin(ast_function_declaration $declaration, type_definition $type): int /** uint32 */
+	public static function reference_return_origin(ast_function_declaration|ast_lambda_expression $declaration, type_definition $type): int /** uint32 */
 	{
-		if ($declaration->parent instanceof ast_method_owner && !$declaration->is_direct_final_method()) {
+		if ($declaration instanceof ast_function_declaration && $declaration->parent instanceof ast_method_owner && !$declaration->is_direct_final_method()) {
 			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Method reference return requires a final non-overriding instance method');
 		}
 		$origin = null;

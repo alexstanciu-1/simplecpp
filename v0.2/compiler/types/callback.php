@@ -11,9 +11,9 @@ final class callback_type_definition extends type_definition
 	 * @param passing_mode[] $modes Mutable reference positions in ascending input order.
 	 */
 	public function __construct(public readonly type_definition $result, public readonly array $inputs /** list<type_definition> */,
-		private readonly array $modes /** array<uint32,passing_mode> */ = [])
+		private readonly array $modes /** array<uint32,passing_mode> */ = [], public readonly ?int $reference_origin /** uint32|null */ = null)
 	{
-		$name = $result->name;
+		$name = $result->name . ($reference_origin === null ? '' : '&');
 		foreach ($inputs as $i => $input) $name .= ',' . $input->name . $this->input_suffix($i);
 		parent::__construct('callback<' . $name . '>');
 	}
@@ -59,7 +59,7 @@ final class callback_type_definition extends type_definition
 
 	public function matches(type_definition $other): bool
 	{
-		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs && $other->modes === $this->modes;
+		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs && $other->modes === $this->modes && $other->reference_origin === $this->reference_origin;
 	}
 
 	/** Only capture-free closures can cross the native function-pointer boundary. */

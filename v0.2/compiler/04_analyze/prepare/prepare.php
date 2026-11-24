@@ -374,20 +374,7 @@ final class Preparation
 				$this->constructor_initialization?->complete($statement);
 				if ($function->reference_return_origin !== null) {
 					$origin = $function->parameters[$function->reference_return_origin];
-					$value = $statement->value;
-					if ($value instanceof ast_call_expression) {
-						$this->value($value);
-						$selected = $value->reference_origin();
-					} else {
-						$selected = $value instanceof ast_name_expression && !$value->constant_only ? $this->find_local($value->name) : null;
-					}
-					if ($selected !== $origin) {
-						throw new diagnostic($source, $statement->byte_start(), 'Reference return must originate in its writable parameter');
-					}
-					if ($value instanceof ast_name_expression) {
-						++$this->expression_visits;
-						$value->settle_local($origin, unknown: true);
-					}
+					$this->reference_return($statement->value, $origin, $statement);
 					$statement->settle_conversion(value_conversion::identity);
 				}
 				elseif ($target === null) {
@@ -917,7 +904,7 @@ final class Preparation
 	{
 		$name = $declaration->declaration_key();
 		$source = $declaration->source();
-		if ($this->enclosing_lambda !== null || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+		if (($this->enclosing_lambda !== null && !$this->enclosing_lambda->returns_reference) || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
 			throw new diagnostic($source, $declaration->byte_start(), 'Local aliases are deferred in lambdas and generators');
 		}
 		if ($this->find_local($name) !== null) {
@@ -934,7 +921,7 @@ final class Preparation
 			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
 		}
 		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
-			&& (!($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
+			&& ($this->enclosing_lambda !== null || !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
 		if (!($origin instanceof ast_local_declaration) && !$reference_parameter) {
 			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
 		}
@@ -1892,6 +1879,24 @@ final class Preparation
 		return $record;
 	}
 
+	/** Bind a whole caller-owned result through the same origin check for named and anonymous returns. */
+	private function reference_return(?ast_expression $value, ast_parameter_declaration $origin, ast_node $site): void
+	{
+		if ($value instanceof ast_call_expression) {
+			$this->value($value);
+			$selected = $value->reference_origin();
+		} else {
+			$selected = $value instanceof ast_name_expression && !$value->constant_only ? $this->find_local($value->name) : null;
+		}
+		if ($selected !== $origin) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Reference return must originate in its writable parameter');
+		}
+		if ($value instanceof ast_name_expression) {
+			++$this->expression_visits;
+			$value->settle_local($origin, unknown: true);
+		}
+	}
+
 	/** A lambda body uses the enclosing work owner, with a fresh lexical and value environment. */
 	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected): void
 	{
@@ -1959,9 +1964,15 @@ final class Preparation
 		$scope->local_frames = [$locals];
 		$scope->enclosing_lambda = $lambda;
 		$scope->borrows_receiver = $lambda->explicit_receiver;
-		$conversion = $lambda->body instanceof ast_block ? value_conversion::identity : $scope->return_conversion($lambda->body, $result);
+		$origin = $lambda->returns_reference ? Function_Preparation::reference_return_origin($lambda, $result) : null;
+		$this->dependencies?->begin_lambda($this->owner, $lambda);
+		$conversion = value_conversion::identity;
+		if ($lambda->body instanceof ast_expression) {
+			if ($origin === null) $conversion = $scope->return_conversion($lambda->body, $result);
+			else $scope->reference_return($lambda->body, $lambda->parameters[$origin], $lambda->body);
+		}
 		if ($scope->borrows_receiver) $this->borrow_receiver($lambda);
-		$type = new lambda_type_definition(new callback_type_definition($result, $inputs, $modes), $lambda->captures !== [],
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs, $modes, $origin), $lambda->captures !== [],
 			$scope->borrows_receiver, $scope->borrows_receiver || $borrowed !== [], $optional);
 		$lambda->settle_lambda($type, $conversion, $writes);
 		if ($lambda->body instanceof ast_block) {
@@ -2037,6 +2048,7 @@ final class Preparation
 			$this->name_lookups++;
 			$target = $type instanceof lambda_type_definition ? $binding->initializer : $signature;
 			$call->settle_callable_call($binding, $signature, $this->bind_arguments($call, $target, $initializing));
+			if ($target instanceof ast_lambda_expression) $this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $target);
 			if ($target instanceof ast_lambda_expression && $target->borrowed_writes !== []) {
 				$this->invalidate_references($call, $target->borrowed_writes);
 			}
@@ -2129,6 +2141,7 @@ final class Preparation
 			$this->dependencies?->watch_call($symbol, $this->owner, $uses);
 		} else {
 			$this->dependencies?->watch($symbol, $this->owner, $uses);
+			if ($function instanceof ast_function_declaration) $this->dependencies?->closure_call($this->enclosing_lambda, $symbol);
 		}
 		if ($class !== null && $function instanceof ast_function_declaration) $this->ambiguous_construction($call);
 		if (!($function instanceof ast_function_declaration)) {
@@ -2373,7 +2386,10 @@ final class Preparation
 			$this->dependencies?->watch($symbol, $this->owner, Dependency_Watches::PARAMETER_NAMES);
 		}
 		$conversions = $this->bind_arguments($call, $function, $initializing);
-		if ($this->enclosing_lambda === null && $function->is_direct_final_method()) $this->dependencies?->watch_call($symbol, $this->owner);
+		if ($function->is_direct_final_method()) {
+			if ($this->enclosing_lambda === null) $this->dependencies?->watch_call($symbol, $this->owner);
+			else $this->dependencies?->closure_call($this->enclosing_lambda, $symbol);
+		}
 		$instance = null;
 		if ($called !== null && $this->dependencies !== null) {
 			$forwarded = $call->qualifier === call_qualifier::ordinary ? null : $this->owner->parent->instance?->called;

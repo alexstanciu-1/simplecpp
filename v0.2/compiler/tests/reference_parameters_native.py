@@ -44,7 +44,7 @@ def prove_local_aliases(work):
         ('main', '$a =& (1 + 2); return 8;', target_error),
         ('main', '$v int = 1; $a string =& $v; return 8;', 'Local alias requires the exact storage type'),
         ('main', '$v int = 1; { $a =& $v; } echo $a; return 8;', 'Unknown or not-yet-initialized local/global: a'),
-        ('main', base + '$fn = fn(): int => $alias; return 8;', 'Unknown or not-yet-initialized local/global: alias'),
+        ('main', base + '$fn = fn(): int => $alias; $value=99; echo $fn(); return 8;', b'20'),
         ('main', 'struct Box {public int $x=1;} $box Box; $a =& $box->x; return 8;', target_error),
         ('main', 'function f(int $v): void { $a =& $v; } return 8;', target_error),
         ('worker', None, None),

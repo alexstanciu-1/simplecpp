@@ -179,7 +179,7 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 	/** @param ast_parameter_declaration[] $parameters @param ast_closure_capture[] $captures */
 	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
 		public readonly ?ast_type_reference $result, public readonly ast_expression|ast_block $body, public readonly array $captures /** list<ast_closure_capture> */ = [],
-		public readonly bool $explicit_receiver = false)
+		public readonly bool $explicit_receiver = false, public readonly bool $returns_reference = false)
 	{
 		parent::__construct($start, $body->end);
 		foreach ($parameters as $parameter) $parameter->attach($this);
@@ -188,8 +188,7 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 		$body->attach($this);
 	}
 
-	public bool $returns_reference { get => false; }
-	public ?int $reference_return_origin { get => null; }
+	public ?int $reference_return_origin { get => $this->type_def?->signature->reference_origin; }
 	public bool $is_implicit_entry { get => false; }
 	public bool $is_async { get => false; }
 
@@ -384,8 +383,12 @@ class ast_call_expression extends ast_expression
 	public function reference_origin(): ?ast_local_binding
 	{
 		$function = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
-		if (!($function instanceof ast_function_declaration) || $function->reference_return_origin === null) return null;
-		$slot = $function->reference_return_origin;
+		$slot = $function instanceof ast_function_declaration ? $function->reference_return_origin : null;
+		if ($this->function_symbol instanceof ast_local_binding) {
+			$type = $this->function_symbol->type_def();
+			if ($type instanceof lambda_type_definition) $slot = $type->signature->reference_origin;
+		}
+		if ($slot === null) return null;
 		$index = $this instanceof ast_named_call ? array_search($slot, $this->named->slots, true) : $slot;
 		$argument = $index === false ? null : ($this->arguments[$index] ?? null);
 		return $argument instanceof ast_name_expression ? $argument->local_binding() : null;

@@ -53,9 +53,11 @@ final class Dependency_Watches
 	 */
 	private \SplObjectStorage $pending /** SplObjectStorage<dependency_watcher,null> */;
 
-	/** @var array<int,ast_function_body> Reference-returning bodies with outgoing direct calls. */
+	/** @var array<int,ast_function_body> Roots containing named or concrete closure reference returns. */
 	private array $reference_callers = [];
 	private bool $reference_cycles_checked = false;
+	/** Edges involving a concrete closure, keyed by the actual calling body. */
+	private ?\WeakMap $closure_edges /** WeakMap<ast_node,WeakMap<ast_node|symbol_entry,bool>>|null */ = null;
 
 	/** Session-owned demand graph, allocated only by programs that call static methods. */
 	private ?Called_Methods $called_method_cache = null;
@@ -118,11 +120,32 @@ final class Dependency_Watches
 		if ($caller->parent->returns_reference) $this->reference_callers[spl_object_id($caller)] = $caller;
 	}
 
+	/** Replace outgoing edges before re-preparing a retained closure. Its enclosing body owns the incremental root. */
+	public function begin_lambda(ast_function_body $owner, ast_lambda_expression $lambda): void
+	{
+		if ($this->closure_edges !== null) unset($this->closure_edges[$lambda]);
+		if ($lambda->returns_reference) {
+			// Full publication retires watchers through the reverse index, even for a symbol-free body.
+			if (!$this->targets->offsetExists($owner)) $this->targets[$owner] = new \SplObjectStorage();
+			$this->reference_callers[spl_object_id($owner)] = $owner;
+			$this->reference_cycles_checked = false;
+		}
+	}
+
+	/** Only an invocation connects the caller to a concrete closure or its body to a named callee. */
+	public function closure_call(ast_function_body|ast_lambda_expression $caller, ast_lambda_expression|symbol_entry $target): void
+	{
+		$this->closure_edges ??= new \WeakMap();
+		$edges = $this->closure_edges[$caller] ??= new \WeakMap();
+		$edges[$target] = true;
+		$this->reference_cycles_checked = false;
+	}
+
 	/** Check direct calls reachable from reference-returning functions. Removing edges cannot create a cycle. */
 	public function validate_reference_calls(): void
 	{
 		if ($this->reference_cycles_checked || $this->reference_callers === []) return;
-		$cycles = new Reference_Call_Cycles($this->targets);
+		$cycles = new Reference_Call_Cycles($this->targets, $this->closure_edges);
 		$cycles->validate($this->reference_callers);
 		$this->reference_cycles_checked = true;
 	}
@@ -163,6 +186,7 @@ final class Dependency_Watches
 	public function forget(dependency_watcher $watcher): void
 	{
 		unset($this->reference_callers[spl_object_id($watcher)]);
+		if ($this->closure_edges !== null) unset($this->closure_edges[$watcher]);
 		$cache = $this->called_method_cache;
 		if ($watcher instanceof ast_function_body && $cache !== null) $cache->forget($watcher);
 		$this->pending->offsetUnset($watcher);
@@ -289,7 +313,7 @@ final class Reference_Call_Cycles
 	private array $stack = [];
 	private array $errors = [];
 
-	public function __construct(private readonly \SplObjectStorage $targets) {}
+	public function __construct(private readonly \SplObjectStorage $targets, private readonly ?\WeakMap $closure_edges) {}
 
 	public function validate(array $roots): void
 	{
@@ -299,18 +323,27 @@ final class Reference_Call_Cycles
 		if ($this->errors !== []) throw new diagnostic_group(Declaration_Diagnostics::ordered($this->errors));
 	}
 
-	private function visit(ast_function_body $body): int
+	/** Resolve current-generation bodies lazily from watched symbols and concrete lexical invocations. */
+	private function callees(ast_function_body|ast_lambda_expression $body): \Generator
+	{
+		$targets = $this->targets[$body] ?? null;
+		if ($targets !== null) foreach ($targets as $symbol) {
+			if ($targets[$symbol] && ($callee = $symbol->declaration()?->optional_body()) !== null) yield $callee;
+		}
+		foreach ($this->closure_edges[$body] ?? [] as $target => $_) {
+			$callee = $target instanceof ast_lambda_expression ? $target : $target->declaration()?->optional_body();
+			if ($callee !== null) yield $callee;
+		}
+	}
+
+	private function visit(ast_function_body|ast_lambda_expression $body): int
 	{
 		$id = spl_object_id($body);
 		$low = $this->order[$id] = count($this->order);
 		$this->stack[] = $body;
 		$this->active[$id] = true;
 		$self_call = false;
-		$targets = $this->targets[$body] ?? null;
-		if ($targets !== null) foreach ($targets as $symbol) {
-			if (!$targets[$symbol]) continue;
-			$callee = $symbol->declaration()?->optional_body();
-			if ($callee === null) continue;
+		foreach ($this->callees($body) as $callee) {
 			$next = spl_object_id($callee);
 			if ($next === $id) $self_call = true;
 			if (!isset($this->order[$next])) $low = min($low, $this->visit($callee));
@@ -321,10 +354,10 @@ final class Reference_Call_Cycles
 			do {
 				$member = array_pop($this->stack);
 				unset($this->active[spl_object_id($member)]);
-				$function = $member->parent;
+				$function = $member instanceof ast_lambda_expression ? $member : $member->parent;
 				if ($cyclic && $function->returns_reference) {
 					$this->errors[] = new diagnostic($function->source(), $function->byte_start(),
-						'Recursive reference return is unsupported: ' . $function->name());
+						'Recursive reference return is unsupported: ' . ($function instanceof ast_lambda_expression ? 'closure' : $function->name()));
 				}
 			} while ($member !== $body);
 		}
