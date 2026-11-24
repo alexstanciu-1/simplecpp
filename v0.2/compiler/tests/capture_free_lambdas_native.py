@@ -262,6 +262,34 @@ def prove_owned_callable_locals(work):
           exception_type='std::bad_function_call', exception_header='functional', expected_stdout=b'A')
 
 
+def prove_callable_factories(work):
+    factory = 'function makeAdder(int &$base):function<int(int)> {return fn($value)=>$base+$value;}'
+    entry = '$n=3;$add=makeAdder($n);$n=9;echo $add(4);return 8;'
+    owned = '$op function<int(int)> = fn($value)=>$base+$value;return $op;'
+    borrowed = 'return function(int $value) use (&$base):int {return $base+$value;};'
+    nominal = 'function makeReader():function<int(Box)> {return fn($box)=>$box->n;}'
+    reader = '$read=makeReader();echo $read(new Box());return 8;'
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, factory=factory, model='class Box {public int $n=6;}'), [
+        (None, None, b'7'), (None, None, b'7'),
+        ('factory', factory.replace('return fn($value)=>$base+$value;', owned), b'7'),
+        ('factory', factory.replace('return fn($value)=>$base+$value;', borrowed), 'cannot erase a borrowed environment'),
+        ('factory', factory, b'7'),
+        ('factory', factory.replace('int(int)', 'int()').replace('fn($value)=>$base+$value', 'fn()=>$base'),
+         'Argument count mismatch'),
+        ('factory', factory, b'7'),
+        ('factory', factory + nominal, b'7'),
+        ('main', reader, b'6'),
+        ('model', 'class Box {public int $renamed=6;}', 'Unknown field Box.n'),
+        ('model', 'class Box {public int $n=8;}', b'8'),
+        ('main', '$read=makeReader();if (isset($read)) {echo "present";} else {echo "absent";}return 8;', b'present'),
+        ('factory', factory + 'function makeReader():function<int(Box)> {'
+                    '$absent function<int(Box)>;return $absent;}', b'absent'),
+        ('model', None, 'Unsupported callback signature component: Box'),
+        ('model', 'class Box {public int $n=8;}', b'absent'),
+    ])
+
+
 def prove_receiver_captures(work):
     model = """
         class Counter {
@@ -579,6 +607,7 @@ def main():
         prove_reference_captures(root / 'reference-captures')
         prove_receiver_captures(root / 'receiver-captures')
         prove_owned_callable_locals(root / 'owned-callable-locals')
+        prove_callable_factories(root / 'callable-factories')
         prove_multiple_int_captures(root / 'multiple-int-captures')
         prove_capture_copy_contract(root / 'capture-copy-contract')
         prove_php_arrow_captures(root / 'php-arrow-captures')

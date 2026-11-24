@@ -3389,6 +3389,7 @@ CPP;
 			$visit($type->base);
 			return;
 		}
+		if ($type instanceof owned_callable_type) $type = $type->signature;
 		if ($type instanceof callback_type_definition) {
 			self::visit_signature_type_dependencies($type->result, $visit);
 			foreach ($type->inputs as $input) self::visit_signature_type_dependencies($input, $visit);

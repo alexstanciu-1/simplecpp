@@ -340,6 +340,13 @@ Invocation takes positional arguments at full arity. An argument can replace the
 local for subsequent calls. The current invocation retains its selected target.
 Calling absent storage throws `std::bad_function_call` after argument evaluation.
 
+A PHP free function can publish the same fixed signature as its by-value return
+type. The return context supplies omitted closure annotations. For example,
+`function makeAdder(int $base): function<int(int)> { return fn($n) => $base + $n; }`
+returns a callable that owns its snapshot of `$base`. The same ownership and
+signature checks apply when returning a concrete closure or an owned callable
+local. Returning an absent local preserves absence.
+
 ### Trailing literal parameter defaults
 
 A typed value parameter may declare `= literal` in all three flavors:

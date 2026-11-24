@@ -49,6 +49,11 @@ final class Type_Resolution
 		?Dependency_Watches $dependencies, bool $allow_void = false, ?dependency_watcher $watcher = null): ?type_definition
 	{
 		$watcher ??= $function;
+		if ($syntax->name === 'function' && $syntax->first_child !== null && $syntax === $function->return_type_reference
+			&& !$function->returns_reference && !($function->parent instanceof ast_method_owner)) {
+			$function->watch_signature($dependencies);
+			return new owned_callable_type(self::callback_signature($syntax, $symbols, $function, $watcher, $dependencies));
+		}
 		if ($syntax instanceof ast_compound_type_reference) {
 			if ($syntax->name === '|') {
 				if ($watcher === $function) $function->watch_signature($dependencies);
