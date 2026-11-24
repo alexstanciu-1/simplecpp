@@ -941,8 +941,7 @@ final class Preparation
 		$type = $origin->type_def();
 		if ($declaration->type_reference !== null) {
 			$written = Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies);
-			if ($written !== $type && !($type instanceof owned_callable_type && $written instanceof owned_callable_type
-				&& $type->signature->matches($written->signature))) {
+			if ($written === null || !$type->matches($written)) {
 				throw new diagnostic($source, $declaration->type_reference->byte_start(), 'Local alias requires the exact storage type: ' . $type->name);
 			}
 		}

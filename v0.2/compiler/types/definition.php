@@ -327,6 +327,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Canonical types match by identity. Callable contracts also compare their signature components. */
+	public function matches(type_definition $other): bool
+	{
+		return $this === $other;
+	}
+
 	/** Stable identity for concrete recipes, including resolved specialization arguments. */
 	public function concrete_identity(): string
 	{

@@ -167,14 +167,14 @@ final class Method_Preparation
 		?Dependency_Watches $dependencies, dependency_watcher $watcher): ?bool
 	{
 		if ($method->returns_reference !== $base->returns_reference || count($method->parameters) !== count($base->parameters)) return null;
-		$exact = $method->return_type_def() === $base->return_type_def();
+		$exact = $method->return_type_def()->matches($base->return_type_def());
 		if (!$exact && ($method->is_static || !self::widens($method->return_type_def(), $base->return_type_def(), $symbols, $dependencies, $watcher))) return null;
 		foreach ($method->parameters as $i => $parameter) {
 			$original = $base->parameters[$i];
 			if ($parameter->mode !== $original->mode || ($parameter->default_value === null) !== ($original->default_value === null)) return null;
 			$provided = $parameter->type_def();
 			$required = $original->type_def();
-			if ($provided === $required || ($provided instanceof callback_type_definition && $provided->matches($required))) continue;
+			if ($provided->matches($required)) continue;
 			if ($method->is_static || $parameter->mode !== passing_mode::value
 				|| !self::widens($original->type_def(), $parameter->type_def(), $symbols, $dependencies, $watcher)) return null;
 			$exact = false;

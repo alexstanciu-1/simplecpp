@@ -88,6 +88,11 @@ final class owned_callable_type extends type_definition implements presence_test
 		parent::__construct('function<' . $signature->result->name . '(' . implode(',', $inputs) . ')>');
 	}
 
+	public function matches(type_definition $other): bool
+	{
+		return $other instanceof self && $this->signature->matches($other->signature);
+	}
+
 	public function cpp_type(): string
 	{
 		$inputs = [];

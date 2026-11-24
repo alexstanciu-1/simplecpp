@@ -325,7 +325,7 @@ initializing required and readonly properties before creating a receiver borrow.
 A borrowed `$this` is available only as a receiver. Typed callbacks accept only
 capture-free callables.
 
-### Owned callable locals and free functions
+### Owned callables in locals, free functions and static methods
 
 PHP locals may declare a fixed by-value signature, for example
 `$add function<int(int)> = fn($n) => $n + $offset;`. The signature supplies
@@ -340,19 +340,22 @@ Invocation takes positional arguments at full arity. An argument can replace the
 local for subsequent calls. The current invocation retains its selected target.
 Calling absent storage throws `std::bad_function_call` after argument evaluation.
 
-A PHP free function can publish the same fixed signature as its by-value return
+A PHP free function or static method can publish the same fixed signature as its by-value return
 type. The return context supplies omitted closure annotations. For example,
 `function makeAdder(int $base): function<int(int)> { return fn($n) => $base + $n; }`
 returns a callable that owns its snapshot of `$base`. The same ownership and
 signature checks apply when returning a concrete closure or an owned callable
 local. Returning an absent local preserves absence.
 
-A required by-value parameter on a PHP free function can also declare
+A required by-value parameter on either declaration can also use
 `function<R(Args...)>`. The argument receives the selected parameter's signature,
 including when the caller supplies a named argument. The callee owns its copy:
 resetting or replacing the parameter leaves the caller's callable available.
 Invoking the parameter uses the full positional signature. Borrowed environments
 and defaulted closure parameters follow the same erasure checks as owned locals.
+
+A static method redeclaration must match the callable representation and the exact
+input and result types. Named arguments use the selected declaration’s parameter names.
 
 ### Trailing literal parameter defaults
 
