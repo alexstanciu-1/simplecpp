@@ -2,6 +2,9 @@
 #include "scpp/mt_segment.hpp"
 
 namespace scpp::mt {
+// A written entry covers the next count jobs in submission order.
+struct job_entry { size_t count; int64_t workers; };
+
 struct job {
     // The caller owns the grant array through the synchronous join.
     template<size_t N>
@@ -34,9 +37,10 @@ private:
         int64_t (*run)(const segment*);
         int64_t (*run_values)(const segment*, const void*);
     };
-    friend void join(job*, size_t, int64_t);
+    friend void join(job*, size_t, int64_t, const job_entry*, size_t);
     static void admit(const job*, size_t);
 };
 void join(job* jobs, size_t count);
 void join(job* jobs, size_t count, int64_t workers);
+void join(job* jobs, size_t count, int64_t workers, const job_entry* entries, size_t entry_count);
 }

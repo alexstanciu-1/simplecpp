@@ -33,9 +33,16 @@ final class Mt_Provisioning
 					}
 				};
 				if ($launch->iteration !== null) {
-					$bound = $launch->arguments[0];
+					$settings = $launch->arguments[0];
+					$bound = $settings instanceof ast_job_repetition ? $settings->arguments[0] : $settings;
 					$prepare($bound);
 					if ($bound->type_def() !== type_int64::instance()) self::reject($bound, 'each bound requires int');
+					if ($settings instanceof ast_job_repetition) {
+						$workers = $settings->arguments[1];
+						$prepare($workers);
+						if ($workers->type_def() !== type_int64::instance()) self::reject($workers, 'Job workers requires int');
+						$settings->settle_mt('each', type_int64::instance());
+					}
 					$inputs[] = type_int64::instance();
 					$launch->iteration->settle_type(type_int64::instance());
 					$with_index($launch->iteration, $bind);

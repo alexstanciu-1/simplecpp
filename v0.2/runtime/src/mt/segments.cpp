@@ -149,20 +149,43 @@ void join(job* jobs, std::size_t count) {
 }
 
 void join(job* jobs, std::size_t count, int64_t workers) {
+    join(jobs, count, workers, nullptr, 0);
+}
+
+void join(job* jobs, std::size_t count, int64_t workers, const job_entry* entries, size_t entry_count) {
     if (workers <= 0) throw std::invalid_argument("Group workers must be positive");
     job::admit(jobs, count);
+    // Chunk boundaries map scheduler units back to contiguous original result and error slots.
+    std::vector<std::size_t> boundaries;
+    auto units = count;
+    if (entries) {
+        const auto limit = std::min<uint64_t>(workers, std::max(2u, std::thread::hardware_concurrency()));
+        boundaries.push_back(0);
+        for (std::size_t i = 0; i < entry_count; ++i) {
+            const auto [length, cap] = entries[i];
+            if (cap <= 0 || length > count - boundaries.back()) throw std::invalid_argument("Invalid job entry");
+            if (!length) continue;
+            const auto chunks = std::min<uint64_t>({length, static_cast<uint64_t>(cap), limit});
+            const auto width = length / chunks, extra = length % chunks;
+            for (uint64_t part = 0; part < chunks; ++part)
+                boundaries.push_back(boundaries.back() + width + (part < extra));
+        }
+        if (boundaries.back() != count) throw std::invalid_argument("Job entries must cover the batch");
+        units = boundaries.size() - 1;
+    }
     std::vector<std::exception_ptr> errors(count);
-    if (count < 2 || workers == 1) {
+    if (units < 2 || workers == 1) {
         batch_slice{jobs, errors.data(), 0, count}.run();
     } else {
         static worker_pool pool;
-        auto selected = pool.acquire(static_cast<std::size_t>(std::min<uint64_t>(count - 1, workers - 1)));
+        auto selected = pool.acquire(static_cast<std::size_t>(std::min<uint64_t>(units - 1, workers - 1)));
         const auto participants = selected.size() + 1;
-        const auto length = count / participants;
-        const auto extra = count % participants;
+        const auto length = units / participants;
+        const auto extra = units % participants;
         auto slice = [&](std::size_t id) {
             const auto begin = id * length + std::min(id, extra);
-            return batch_slice{jobs, errors.data(), begin, begin + length + (id < extra)};
+            const auto end = begin + length + (id < extra);
+            return batch_slice{jobs, errors.data(), entries ? boundaries[begin] : begin, entries ? boundaries[end] : end};
         };
         for (std::size_t i = 0; i < selected.size(); ++i) {
             selected[i]->slice = slice(i + 1);

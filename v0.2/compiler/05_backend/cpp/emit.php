@@ -3040,8 +3040,13 @@ CPP;
 		$snapshots = [];
 		$lines = [];
 		$dynamic = false;
+		$entries = [];
+		$capped = false;
 		foreach ($value->arguments as $launch) {
-			if ($launch instanceof ast_inline_job && $launch->iteration !== null) $dynamic = true;
+			if ($launch instanceof ast_inline_job && $launch->iteration !== null) {
+				$dynamic = true;
+				if ($launch->arguments[0] instanceof ast_job_repetition) $capped = true;
+			}
 		}
 		$cap = '';
 		if ($value instanceof ast_parallel_expression && $value->receiver !== null) {
@@ -3099,15 +3104,26 @@ CPP;
 			$layout = "struct values_$i { " . implode(' ', $fields) . ' }';
 			$values = '{' . implode(', ', $initializers) . '}';
 			if ($index !== null) {
-				$bound = $this->value($launch->arguments[0], $global_references, $declarations, $required_headers);
+				$settings = $launch->arguments[0];
+				$bound_expr = $settings instanceof ast_job_repetition ? $settings->arguments[0] : $settings;
+				$bound = $this->value($bound_expr, $global_references, $declarations, $required_headers);
 				$snapshots[] = "const auto count_$i = $bound;";
 				$snapshots[] = "if (count_$i < 0) throw std::invalid_argument(\"each bound must be nonnegative\");";
+				$limit = 'INT64_MAX';
+				if ($settings instanceof ast_job_repetition) {
+					$limit = "workers_$i";
+					$expression = $this->value($settings->arguments[1], $global_references, $declarations, $required_headers);
+					$snapshots[] = "const auto $limit = $expression;";
+					$snapshots[] = "if ($limit <= 0) throw std::invalid_argument(\"Job workers must be positive\");";
+				}
+				if ($capped) $entries[] = "{values_list_$i.size(), $limit}";
 				$snapshots[] = "$layout; std::vector<values_$i> values_list_$i; values_list_$i.reserve(count_$i);";
 				$snapshots[] = "for (::scpp::int64 $index = 0; $index < count_$i; ++$index) values_list_$i.push_back($values);";
 				// Reserve all grant storage before publishing pointers into it. Snapshots are already complete.
 				$lines[] = "struct grants_$i { ::scpp::mt::segment slots[" . count($args) . "]; }; std::vector<grants_$i> grants_list_$i; grants_list_$i.reserve(values_list_$i.size());";
 				$lines[] = "for (const auto& snapshot_$i : values_list_$i) { grants_list_$i.push_back({{$grant_list}}); jobs.push_back({grants_list_$i.back().slots, $context$worker_call}); }";
 			} else {
+				if ($capped) $entries[] = '{1, 1}';
 				if ($fields !== []) $snapshots[] = "const $layout snapshot_$i$values;";
 				$lines[] = "::scpp::mt::segment grants_{$i}[]{ $grant_list };";
 				$job = "{grants_$i, $context$worker_call}";
@@ -3115,7 +3131,11 @@ CPP;
 				else $jobs[] = $job;
 			}
 		}
-		if ($dynamic) $lines[] = "::scpp::mt::join(jobs.data(), jobs.size()$cap);";
+		if ($capped) {
+			$lines[] = 'const ::scpp::mt::job_entry entries[]{' . implode(', ', $entries) . '};';
+			$group = $cap === '' ? 'INT64_MAX' : 'workers';
+			$lines[] = "::scpp::mt::join(jobs.data(), jobs.size(), $group, entries, " . count($entries) . ');';
+		} elseif ($dynamic) $lines[] = "::scpp::mt::join(jobs.data(), jobs.size()$cap);";
 		else {
 			$lines[] = '::scpp::mt::job jobs[]{' . implode(', ', $jobs) . '};';
 			$lines[] = '::scpp::mt::join(jobs, ' . count($jobs) . "$cap);";

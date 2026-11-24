@@ -553,3 +553,29 @@ The compiler checks the body once. The caller completes all snapshots before
 borrowing storage, then admits all grants in the expanded group before dispatch.
 A conflict in the final iteration rejects the entire batch even under a cap of
 one. Results follow entry order and, within a repeated entry, index order.
+
+A repeated entry may put `workers: limit` immediately after `each:`. The caller
+evaluates the bound and then the limit once, before binding any iterations,
+including when the bound is zero. The limit must be a positive integer and uses
+caller scope. It limits concurrent instances of this written entry. Two entries
+calling the same function have independent limits.
+
+For example, with twelve partitions this group can run three scans alongside
+both sibling calls when five participants are available:
+
+```php
+$results = parallel (workers: 5) {
+    job (each: $part in 0 ..< $parts, workers: 3,
+         write: $rows = segment($headers, balanced_range($count, $parts, $part))) {
+        return scan_headers($rows);
+    }
+    check_symbols(segment($symbols, 0, $symbol_count));
+    check_routes(segment($routes, 0, $route_count));
+};
+```
+
+The scheduler divides a capped entry into at most its limit of balanced,
+contiguous chunks. Each chunk runs its iterations sequentially. Fewer pool
+participants can run several chunks in sequence. Batch admission still checks
+all grants together, including grants in the same chunk. Results and worker
+failures retain their original iteration slots.

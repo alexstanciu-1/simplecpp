@@ -165,4 +165,5 @@ for checked indexing and counting. The same header declares the two-integer
 `segment_range` and the `balanced_range` helper. Its only includes are `stddef.h` and `stdint.h`.
 A unit lowering `mt_join` uses `scpp/mt_segments.hpp`, which includes the segment
 header and declares the job descriptor, vector borrow operation and joined call.
+Batches with a per-entry cap also supply the iteration count and worker limit for each written entry.
 Admission, pool state, synchronization and failure handling live in the runtime source.

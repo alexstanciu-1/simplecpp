@@ -427,6 +427,15 @@ class ast_call_expression extends ast_expression
 	}
 }
 
+/** Caller-side repetition settings share ordinary operand traversal and reset. */
+final class ast_job_repetition extends ast_call_expression
+{
+	public function __construct(ast_expression $bound, ast_expression $workers)
+	{
+		parent::__construct($bound->start, $workers->end, 'each', null, [$bound, $workers]);
+	}
+}
+
 /** An inline launch owns its capture-free worker as receiver and caller-side binding expressions as operands. */
 final class ast_inline_job extends ast_call_expression
 {

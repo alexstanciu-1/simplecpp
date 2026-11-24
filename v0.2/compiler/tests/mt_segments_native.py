@@ -64,6 +64,23 @@ function tick(int &$calls, int $result): int {
     $calls += 1;
     return $result;
 }
+function capped_batch(vector<int> &$ids, int $parts, int $limit, int &$calls): vector<int> {
+    return parallel (workers: 5) {
+        job (each: $part in 0 ..< $parts, workers: tick($calls, $limit),
+             read: $id = segment($ids,$part,1)) { return note_entry($id[0]); }
+        sibling(segment($ids,12,1));
+        sibling(segment($ids,13,1));
+    };
+}
+function independent_caps(vector<int> &$ids): vector<int> {
+    return parallel {
+        job (each: $i in 0 ..< 4, workers: 1,
+             read: $id = segment($ids,$i,1)) { return note_entry($id[0]); }
+        job (each: $i in 0 ..< 10, workers: 2,
+             read: $id = segment($ids,balanced_range(14,14,$i + 4))) { return note_entry($id[0]); }
+    };
+}
+function sibling(read_segment<int> $id): int { return note_entry($id[0]); }
 function mixed_each(int $parts): int {
     $calls = 0;
     $cells vector<int> = [0,0,0];
@@ -78,7 +95,7 @@ function mixed_each(int $parts): int {
 function each_batch(vector<int> &$entries, vector<int> &$output, int $parts, int $cap, int $width): vector<int> {
     return parallel (workers: $cap) {
         job (each: $part in 0 ..< $parts,
-             write: $entered = segment($entries,$part,1),
+             workers: 3, write: $entered = segment($entries,$part,1),
              write: $dst = segment($output,balanced_range($width,$width,$part % $width)),
              value: $base = $part + 10) {
             $entered[0] = $entered[0] + 1;
@@ -203,6 +220,7 @@ PY_HELPER = """def update(rows: segment<Point>, deltas: segment<int>, i: int) ->
 
 def sources_for(flavor):
     sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'mixed.php': MIXED_BATCH, 'point.php': 'struct Point { public const bool ENABLED = true; public int $x = 1; }'}
+    sources['probe_hook.php'] = 'function note_entry(int $id): int { return $id; }'
     if flavor == 'py':
         return dict(sources, **{'worker.py': PY_WORK, 'helper.py': PY_HELPER})
     # Use the same direct-call block in each brace frontend. The Python worker
@@ -220,7 +238,7 @@ def sources_for(flavor):
             if (!$enabled) { return 0; }
             return update($points, $changes, $index);
         }
-        job (each: $part in 0..<2, read: $empty = segment($rows,balanced_range(0,2,$part))) { return $part + count($empty); }
+        job (each: $part in 0..<2, workers: 1, read: $empty = segment($rows,balanced_range(0,2,$part))) { return $part + count($empty); }
     }; }"""
     sources['dispatch.' + flavor] = header + (body if flavor == 'php' else body.replace('$', ''))
     f = fixture(flavor)
@@ -274,7 +292,9 @@ def prove(work):
             driver.write_text(f'#include "{record}"\n#include "{collection}"\nusing Rows = App::{vec};\n' +
                               Path(__file__).with_name('mt_segments_probe.cpp').read_text())
             probe = work / 'probe'
-            subprocess.run([*FLAGS, driver, *[p for p in units if p.name != 'entry.cpp'],
+            # Link a synchronized observer in place of the identity helper for this native probe.
+            hook = out / manifest['sources']['probe_hook.php']
+            subprocess.run([*FLAGS, driver, *[p for p in units if p.name != 'entry.cpp' and p != hook],
                             LIBRARY, '-o', probe], check=True)
             for policy in ('sleep', 'active'):
                 subprocess.run([probe], env=dict(os.environ, SCPP_MT_WAIT=policy), check=True, timeout=15)
@@ -283,8 +303,11 @@ def prove(work):
     helper = valid['helper.php']
     dispatch = valid['dispatch.php']
     cases = [
+        ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: true')}, 'Job workers requires int'),
+        ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: $part')}, 'local/global: part'),
+        ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: 2, workers: 3')}, 'Job workers must appear once'),
         ({'mixed.php': MIXED_BATCH.replace('each: $part in 0 ..< $parts,', 'workers: 2, each: $part in 0 ..< $parts,')},
-         'Expected each, read, write or value'),
+         'Job workers must appear once, immediately after each'),
         ({'mixed.php': MIXED_BATCH.replace('value: $base = $part + 10', 'value: $base = tick($part,10)')},
          'each index is read-only'),
         ({'mixed.php': MIXED_BATCH.replace('return $part;', '$part += 1; return $part;')}, 'each index is read-only'),

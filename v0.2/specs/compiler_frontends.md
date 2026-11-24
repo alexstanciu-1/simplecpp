@@ -35,7 +35,7 @@ The shared brace-expression parser recognizes registered introducers by the
 identifier followed by an opening brace, optionally preceded by parenthesized group settings. Each construct parses its own body,
 retains source positions, and produces its own expression. The first such
 construct, `parallel`, owns an ordered sequence of named or inline worker launches. Inline launches own
-their ordered read/write grants and scalar value expressions, plus a capture-free block with context-typed parameters. An initial `each:` clause supplies a caller-side iteration index and a read-only worker parameter. Group `workers:` limits participation across all expanded entries.
+their ordered read/write grants and scalar value expressions, plus a capture-free block with context-typed parameters. An initial `each:` clause supplies a caller-side iteration index and a read-only worker parameter. Group `workers:` limits participation across all expanded entries. A `workers:` clause immediately following `each:` limits the concurrent chunks of that entry.
 Preparation sends it directly to the existing joined-batch provisioning path.
 A future construct can use a different body grammar and preparation rule.
 [Parallel block contract](../../specs/compiler_entry_v0_2.md#parallel-block-expressions)

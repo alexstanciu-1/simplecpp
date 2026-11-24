@@ -1801,6 +1801,21 @@ final class Parser
 			if ($parameters !== []) $c->take(token_kind::comma, ',');
 			$at = $c->position();
 			$kind = $c->name(token_kind::identifier);
+			if ($kind === 'workers') {
+				if ($binding_kinds !== ['each'] || $inputs[0] instanceof ast_job_repetition)
+					throw new diagnostic($c->tokens->source, $c->offset(), 'Job workers must appear once, immediately after each');
+				$c->take(token_kind::colon, ': after workers');
+				// The cap is evaluated outside the iteration scope, like the bound.
+				$index_arrow = $this->arrow;
+				$this->arrow = $outer_arrow;
+				try {
+					$workers = $this->value();
+				} finally {
+					$this->arrow = $index_arrow;
+				}
+				$inputs[0] = new ast_job_repetition($inputs[0], $workers);
+				continue;
+			}
 			if (!in_array($kind, ['read', 'write', 'value', 'each'], true)) throw new diagnostic($c->tokens->source,
 				$c->tokens->tokens[$at]->offset, 'Expected each, read, write or value in inline job');
 			$binding_kinds[] = $kind;
