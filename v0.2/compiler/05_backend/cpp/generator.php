@@ -183,6 +183,7 @@ CPP;
 				if ($statement instanceof ast_for_statement) {
 					foreach ($statement->initializers as $item) if ($item instanceof ast_local_declaration) $visit($item);
 				}
+				if ($statement instanceof ast_while_else_statement) self::visit_generator_bindings($statement->otherwise, $visit);
 				self::visit_generator_bindings($statement->body, $visit);
 			}
 		}

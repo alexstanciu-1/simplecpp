@@ -102,6 +102,7 @@ final class Compilation_Inspection
 						'updates' => array_map(self::binding(...), $statement->updates), 'body' => self::body($statement->body)];
 				} else $row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
+				if ($statement instanceof ast_while_else_statement) $row['else'] = self::body($statement->otherwise);
 				$statements[] = $row;
 			}
 			elseif ($statement instanceof ast_rethrow_statement) $statements[] = ['kind' => 'rethrow'];

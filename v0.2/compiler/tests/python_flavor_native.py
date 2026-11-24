@@ -114,7 +114,14 @@ def logical(work, flavor, library):
         assert resident.wait() == 0
 
 
-BODY_ENTRY = """def completed() -> void:
+BODY_ENTRY = """def exhausted(n: int) -> int:
+    while n > 0:
+        n = n - 1
+        continue
+    else:
+        return n
+
+def completed() -> void:
     if True:
         pass
     if left(True):
@@ -132,15 +139,32 @@ while outer < 2:
         if inner == 1:
             continue
         count = count + inner
+        try:
+            break
+        finally:
+            count = count + 1
+    else:
+        return 93
+else:
+    count = count + 1
+if count != 7 or exhausted(0) != 0 or exhausted(3) != 0:
+    return 91
+while True:
+    while False:
+        pass
+    else:
         break
-if count != 4:
-    return 1
+else:
+    return 92
 if (1 if True else 2 if False else 3) != 1:
     return 2
 selected: int = mark(0) if left(False) else mark(6)
 if selected != 6:
     return 3
-return mark(8) if not False and left(True) or False else fallback()
+while False:
+    return 94
+else:
+    return mark(8) if not False and left(True) or False else fallback()
 """
 BODY_CALLEES = {
     'cpp': 'int mark(int value) { echo value; return value; }',
@@ -177,15 +201,16 @@ def everyday_bodies(work, flavor, library):
         previous = artifacts(bundle)
         manifest = (bundle/'manifest.json').read_bytes()
 
-        for path, invalid, valid, label in [
-            (entry, edited.replace('else fallback()', 'else False'), edited, 'branch'),
-            (peer, with_fallback('bool', 'false'), valid_peer, 'signature'),
+        for path, invalid, valid, label, message in [
+            (entry, edited.replace('else fallback()', 'else False'), edited, 'branch', 'Ternary result types must be identical'),
+            (peer, with_fallback('bool', 'false'), valid_peer, 'signature', 'Ternary result types must be identical'),
+            (peer, peer_body, valid_peer, 'deletion', 'Unknown function'),
         ]:
             source_edit(path, invalid)
             failure = invoke(resident)
             fresh_failure = fresh_build(app, work/f'bodies-failure-{label}')
             expected_error = f'main.py:{len(edited.splitlines())}:'
-            assert expected_error in failure.get('error', '') and 'Ternary result types must be identical' in failure['error'], failure
+            assert expected_error in failure.get('error', '') and message in failure['error'], failure
             assert failure['error'] == fresh_failure.get('error'), (failure, fresh_failure)
             assert artifacts(bundle) == previous and (bundle/'manifest.json').read_bytes() == manifest
 
@@ -1289,9 +1314,12 @@ RECORD_ENTRY = """def exercise(fail: bool) -> int:
     original: Diagnostic = failure()
     try:
         try:
-            if fail:
-                raise original
-            return 8
+            while True:
+                if fail:
+                    raise original
+                return 8
+            else:
+                return 95
         except Diagnostic as inner:
             inner.marker = 9
             inner = failure()

@@ -524,7 +524,7 @@ final class Preparation
 		}
 		$statement->target = $destination;
 		$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
-		if ($nonlocal) {
+		if ($nonlocal || ($statement instanceof ast_break_statement && $destination instanceof ast_while_else_statement)) {
 			$this->outward[2 * $destination->start + (int)($statement instanceof ast_continue_statement)] = true;
 			return 0;
 		}
@@ -898,6 +898,18 @@ final class Preparation
 		if ($this->outward !== []) $completion |= $this->arriving($statement);
 		// A post-test loop enters its body once; return and throw are terminal exits.
 		$terminal = statement_completion::returns | statement_completion::throws;
+		if ($statement instanceof ast_while_else_statement) {
+			$before = $this->constructor_initialization?->states;
+			$otherwise = $this->lexical_block($statement->otherwise, $target, $function);
+			if ($completion & statement_completion::breaks) {
+				if ($before !== null) {
+					$this->constructor_initialization->states = ($otherwise & statement_completion::fallthrough)
+						? self::join_initialization($before, $this->constructor_initialization->states) : $before;
+				}
+				$otherwise |= statement_completion::fallthrough;
+			}
+			return ($completion & $terminal) | $otherwise;
+		}
 		if ($statement instanceof ast_for_statement && !$statement->conditions && !($completion & statement_completion::breaks)) {
 			return $completion & $terminal;
 		}

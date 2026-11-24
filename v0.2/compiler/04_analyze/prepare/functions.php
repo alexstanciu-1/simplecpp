@@ -58,6 +58,7 @@ final class Function_Preparation
 					foreach ($statement->conditions as $test) self::expression($test);
 					self::reset_statements($statement->updates);
 				} else self::expression($statement->condition);
+				if ($statement instanceof ast_while_else_statement) self::reset_block($statement->otherwise);
 				self::reset_block($statement->body);
 				continue;
 			}

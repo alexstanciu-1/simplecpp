@@ -271,6 +271,7 @@ final class Syntax_Inspection
 			} else $row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 				'condition' => self::expression($statement->condition), 'span' => self::span($statement),
 				'body' => array_map(self::statement(...), $statement->body->statements)];
+			if ($statement instanceof ast_while_else_statement) $row['else'] = array_map(self::statement(...), $statement->otherwise->statements);
 			return $row;
 		}
 		if ($statement instanceof ast_rethrow_statement) return ['kind' => 'rethrow', 'span' => self::span($statement)];

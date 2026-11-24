@@ -38,6 +38,12 @@ While may fall through. Do-while guarantees return only if its body guarantees r
 its test is still semantically checked. Functions remain the sole watcher/completion
 owners. Callee signature edits invalidate loop consumers; body-only edits retain them.
 
+Python `while ... else` uses a distinct tested-loop node with one additional block
+reference. Preparation visits the else suite once, after restoring the enclosing
+loop target. A break targeting this form uses the existing nonlocal transfer
+route to a label after the suite, including across finalizers. Condition
+exhaustion falls directly into the suite. No runtime completion flag is needed.
+
 ## Proofs and limits
 
 `tests/loops.php` covers all flavors, condition/body ordering, zero and repeated iterations,

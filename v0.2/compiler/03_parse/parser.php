@@ -704,6 +704,11 @@ final class Parser
 			return new ast_do_while_statement($start, $end, $condition, $body);
 		}
 		$body = $this->lexical_block($grammar, $collector, '{ (braced loop body)');
+		if ($python && $this->cursor->keyword('else')) {
+			$this->cursor->take_keyword('else');
+			$otherwise = $this->lexical_block($grammar, $collector, 'Python while else suite');
+			return new ast_while_else_statement($start, $condition, $body, $otherwise);
+		}
 		return new ast_while_statement($start, $body->end, $condition, $body);
 	}
 

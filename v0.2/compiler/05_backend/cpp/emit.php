@@ -945,8 +945,13 @@ CPP;
 			elseif ($statement instanceof ast_loop_transfer) {
 				$continuing = $statement instanceof ast_continue_statement;
 				$transfer = $continuing ? 'continue;' : 'break;';
-				if ($statement->numbered() && $statement->depth() > 1) {
-					$transfer = $this->numbered_transfer($statement);
+				if (($statement->numbered() && $statement->depth() > 1)
+					|| (!$continuing && $statement->target instanceof ast_while_else_statement)) {
+					if ($resume !== null) {
+						$loop = $resume->loops[array_key_last($resume->loops)];
+						$lines[] = $this->generator_cleanup($resume, $loop['depth']);
+					}
+					$transfer = $this->labelled_transfer($statement);
 				}
 				elseif ($this->finally_exit !== null && $this->finally_exit->transfer_target($continuing ? statement_completion::continues : statement_completion::breaks) === $statement->target) {
 					$transfer = $this->finally_exit->save($continuing ? statement_completion::continues : statement_completion::breaks);
@@ -1135,6 +1140,13 @@ CPP;
 					}
 				}
 				if ($header_scope) $lines[] = "\t}";
+				if ($statement instanceof ast_while_else_statement) {
+					$lines[] = "\t{";
+					foreach ($this->statements($statement->otherwise, $declarations, $global_references, $required_headers, $function, $resume) as $line) {
+						$lines[] = "\t" . $line;
+					}
+					$lines[] = "\t}";
+				}
 			}
 			elseif ($statement instanceof ast_rethrow_statement) {
 				// A nested finally may execute under a different native unwind. Use the lexical transport there.
@@ -1344,7 +1356,7 @@ CPP;
 	}
 
 	/** Emit a jump only once its intervening finalizers have replayed the transfer. */
-	private function numbered_transfer(ast_loop_transfer $statement): string
+	private function labelled_transfer(ast_loop_transfer $statement): string
 	{
 		$label = ($statement instanceof ast_continue_statement ? 'scpp_continue_' : 'scpp_break_') . $statement->target->start;
 		if ($this->finally_exit?->crosses($statement)) return $this->finally_exit->save_route($label, $statement);
@@ -1550,7 +1562,7 @@ CPP;
 		} else $lines[] = "\t\tscpp_finalizer();";
 		if ($pending !== null) {
 			if ($syntax->completion & statement_completion::numbered) {
-				foreach ($pending->routes as $label => $route) $lines[] = "\t\t" . $pending->selected($label) . $this->numbered_transfer($route);
+				foreach ($pending->routes as $label => $route) $lines[] = "\t\t" . $pending->selected($label) . $this->labelled_transfer($route);
 			}
 			foreach ([statement_completion::returns, statement_completion::breaks, statement_completion::continues] as $exit) {
 				if (($syntax->completion & $exit) !== 0) $lines[] = "\t\t" . $pending->replay($exit, $outer);

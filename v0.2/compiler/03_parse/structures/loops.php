@@ -39,6 +39,16 @@ final class ast_while_statement extends ast_tested_loop
 {
 }
 
+/** Python pre-test loop with a sibling lexical suite on condition exhaustion. */
+final class ast_while_else_statement extends ast_tested_loop
+{
+	public function __construct(int $start /** uint32 */, ast_expression $condition, ast_block $body, public readonly ast_block $otherwise)
+	{
+		parent::__construct($start, $otherwise->end, $condition, $body);
+		$otherwise->attach($this);
+	}
+}
+
 /** Execute the body before testing: do { echo "once"; } while (false); */
 final class ast_do_while_statement extends ast_tested_loop
 {
