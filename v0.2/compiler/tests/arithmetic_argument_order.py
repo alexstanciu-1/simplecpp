@@ -10,9 +10,9 @@ from entry_probe import raw_entry
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def qualify(directory, compilers, flags):
+def qualify(directory, compilers, flags, quick=False):
     fixtures = {}
-    for suite in ('arithmetic', 'direct_lowering', 'compounds'):
+    for suite in (('direct_lowering',) if quick else ('arithmetic', 'direct_lowering', 'compounds')):
         inventory = directory / (suite + '.json')
         subprocess.run(['php', ROOT / 'compiler/tests' / (suite + '.php'), inventory],
                        env={**os.environ, 'XDEBUG_MODE': 'off'}, check=True)
@@ -21,8 +21,8 @@ def qualify(directory, compilers, flags):
     for compiler in compilers:
         version = subprocess.check_output([compiler, '--version'], text=True).splitlines()[0]
         traces = set()
-        for flavor in ('cpp', 'php', 'js'):
-            for case in ('call_divide', 'call_remainder', 'call_shift_left', 'call_shift_right', 'call_power',
+        for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
+            cases = ('call_divide', 'call_remainder', 'call_shift_left', 'call_shift_right', 'call_power',
                          'call_float_divide', 'call_argument_failure', 'division_by_zero', 'modulo_by_zero',
                          'local_xor', 'checked_literal', 'forward_reference', 'int64_divide', 'literal_peers',
                          'ordered_call_peers', 'sole_checked_argument', 'conversion_order', 'ordered_final_conversion',
@@ -39,7 +39,10 @@ def qualify(directory, compilers, flags):
                          'runtime_ordered_first_failure', 'runtime_ordered_final_failure', 'runtime_ordered_owner',
                          'runtime_pad_literal', 'runtime_pad_failure', 'runtime_pad_bytes', 'runtime_pad_first_failure',
                          'runtime_pad_final_failure', 'runtime_pad_nested', 'runtime_window_owner', 'runtime_window', 'runtime_window_scalar',
-                         'runtime_window_first_failure', 'runtime_window_last_failure', *(['runtime_format_literals'] if flavor == 'php' else [])):
+                         'runtime_window_first_failure', 'runtime_window_last_failure', *(['runtime_format_literals'] if flavor == 'php' else []))
+            if quick:
+                cases = ('call_divide', 'ordered_reference_alias', 'ordered_final_conversion')
+            for case in cases:
                 fixture = fixtures[f'{flavor}_{case}']
                 source = fixture['cpp']
                 objects = []
@@ -75,6 +78,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--cxx', action='append')
     parser.add_argument('--flag', action='append')
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-argument-order-') as work:
-        qualify(Path(work), args.cxx or ['clang++', 'g++'], args.flag or ['-O2'])
+        qualify(Path(work), args.cxx or ['clang++', 'g++'], args.flag or ['-O2'], args.quick)

@@ -236,6 +236,9 @@ class ast_call_expression extends ast_expression
 	public private(set) ?collection_cardinality $cardinality = null;
 	/** Prepared fact: evaluating the receiver or an argument can suspend this coroutine. */
 	public bool $suspending_operands = false;
+	/** Prepared fact: joined-batch intrinsic, or null for ordinary calls. */
+	public private(set) ?string $mt_operation = null;
+
 	/** Prepared fact: native non-owning target binding or direct producer operand; null before preparation or after reset. */
 	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|ast_call_expression|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
@@ -273,6 +276,12 @@ class ast_call_expression extends ast_expression
 		return $this->lexical_root()->function_key($this->name);
 	}
 
+	public function settle_mt(string $operation, type_definition $type): void
+	{
+		$this->mt_operation = $operation;
+		$this->settle_value($type, null);
+	}
+
 	public function settle_cardinality(collection_cardinality $operation, counted_collection_type $receiver): void
 	{
 		$this->cardinality = $operation;
@@ -293,14 +302,14 @@ class ast_call_expression extends ast_expression
 
 	public function has_direct_signature(): bool
 	{
-		return $this->qualifier !== call_qualifier::stored_value && $this->cardinality === null && $this->callable_binding() === null && $this->blocking_producer() === null && $this->constructed_record() === null;
+		return $this->mt_operation === null && $this->qualifier !== call_qualifier::stored_value && $this->cardinality === null && $this->callable_binding() === null && $this->blocking_producer() === null && $this->constructed_record() === null;
 	}
 
 	public function target_name(): string
 	{
 		if ($this->qualifier === call_qualifier::stored_value) return $this->name;
 		if ($this->blocking_producer() !== null) return 'async_wait';
-		return $this->cardinality?->name ?? $this->callable_binding()?->name()
+		return $this->mt_operation ?? $this->cardinality?->name ?? $this->callable_binding()?->name()
 			?? $this->constructed_record()?->name() ?? $this->function_def()->name();
 	}
 
@@ -418,9 +427,40 @@ class ast_call_expression extends ast_expression
 		$this->function_symbol = null;
 		$this->ancestor_dispatch = false;
 		$this->interface_dispatch = false;
+		$this->mt_operation = null;
 		$this->cardinality = null;
 		$this->suspending_operands = false;
 		$this->conversions = [];
+	}
+}
+
+/** Caller-side repetition settings share ordinary operand traversal and reset. */
+final class ast_job_repetition extends ast_call_expression
+{
+	public function __construct(ast_expression $bound, ast_expression $workers)
+	{
+		parent::__construct($bound->start, $workers->end, 'each', null, [$bound, $workers]);
+	}
+}
+
+/** An inline launch owns its capture-free worker as receiver and caller-side binding expressions as operands. */
+final class ast_inline_job extends ast_call_expression
+{
+	/** @param ast_expression[] $inputs @param list<string> $binding_kinds Written access mode for each operand. */
+	public function __construct(ast_lambda_expression $worker, array $inputs, public readonly array $binding_kinds, public readonly ?ast_produced_binding $iteration)
+	{
+		parent::__construct($worker->start, $worker->end, 'job', null, $inputs, $worker);
+		$iteration?->attach($this);
+	}
+}
+
+/** A joined group owns its written worker calls, without resolving a function named parallel. */
+final class ast_parallel_expression extends ast_call_expression
+{
+	/** @param ast_expression[] $jobs */
+	public function __construct(int $start, int $end, array $jobs, ?ast_expression $workers)
+	{
+		parent::__construct($start, $end, 'parallel', null, $jobs, $workers);
 	}
 }
 

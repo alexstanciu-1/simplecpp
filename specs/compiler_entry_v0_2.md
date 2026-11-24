@@ -474,3 +474,167 @@ for truthiness, lexical scopes and completion. Value-returning functions may ret
 through an exhaustive chain rather than a direct final return. Statements after a
 structurally guaranteed return remain rejected. Value facts no longer cross branch
 boundaries, while existing reference-call invalidation remains in effect.
+
+## Parallel block expressions
+
+In the PHP, C++, and JS flavors, `parallel` followed by `{` introduces a
+joined batch in expression position. Ordinary calls such as `parallel()`
+retain normal name lookup. The body contains one or more entries. A direct worker call ends with a
+semicolon. An inline worker ends with its closing brace. The surrounding statement follows its ordinary terminator
+rule. For example, with two disjoint ranges in a PHP-flavor vector:
+
+```php
+$totals = parallel {
+    update(segment($rows, 0, $split));
+    update(segment($rows, $split, $remaining));
+};
+```
+
+This form has the same worker contracts, whole-batch admission, join and
+submission-order integer results as the built-in `mt_join(...)`. A block used as
+a statement still joins all workers. This slice requires the MT segment runtime
+publication and fresh compilation.
+
+An inline worker declares one or more vector grants with `read:` or `write:`. Each binding introduces a distinct worker-local parameter
+whose segment element type comes from the supplied vector. The grant expressions
+use the caller's scope. A job can interleave these grants with any number of
+`value: $name = expression` bindings. Each accepts a numeric or boolean scalar
+and creates a worker-local copy of its inferred type. The caller evaluates all
+scalar inputs and two-argument segment range expressions once, in job and binding order, before borrowing any vector storage
+or admitting the batch. Caller-side effects therefore precede admission even
+when a grant is rejected. A suspending caller must await these inputs before the
+parallel block. Only grants participate in bounds and overlap checks. The body has its own scope, can use approved constants
+and checked helpers, and must return an integer on all completing paths.
+
+```php
+$totals = parallel {
+    job (write: $prices = segment($items, 0, $count),
+         write: $fees = segment($charges, 0, $count),
+         value: $adjustment = $daily_adjustment) {
+        $total = 0;
+        $i = 0;
+        while ($i < count($prices)) {
+            $prices[$i] = $prices[$i] + $fees[$i] + $adjustment;
+            $fees[$i] = 0;
+            $total += $prices[$i];
+            $i += 1;
+        }
+        return $total;
+    }
+};
+```
+
+Inline and named entries share batch admission, submission-order results, and
+the joined lifetime. Two readers may overlap on the same vector. Any nonempty
+overlap involving a writer rejects the whole batch before dispatch, including
+overlaps within one job. Empty ranges claim no slots.
+
+A `read:` binding borrows its source slots without copying. Its worker can index
+and count the segment and forward it to a helper taking `read_segment<T>`.
+The compiler checks this contract in the helper body, including writes to fields
+of indexed records. A writable `segment<T>` may also be passed to a reading
+helper. A named worker taking `read_segment<T>` requests a read grant when
+launched with `segment(vector, offset, length)`. Both modes require isolated
+element types. A job consisting entirely of readers is valid. C++ and JS flavors use bare binding names in the same clauses.
+
+### Hash segments
+
+For a local `hash<V,K>`, `segment(table, offset, length)` grants consecutive live
+entries in insertion order. The same rule applies to `segment(table, range)`.
+Deleting a key removes it from the count, replacing its value preserves its
+position, and reinserting a deleted key places it last. For example, deleting
+`b` from `[a,b,c,d]` and reinserting it gives `[a,c,d,b]`. Offset 1 and length
+2 grant `c,d`. Offset equal to the live count is valid for an empty segment.
+
+Use `foreach ($slice as $key => $value)` to visit the grant. The key is always
+read-only. With `write:`, assigning to the loop value or one of its record
+fields updates that entry in place. With `read:`, both bindings are read-only.
+Named helpers take `hash_segment<V,K>` or `read_hash_segment<V,K>`. Keys may
+be integers or strings, and values must satisfy the vector segment isolation
+rules. The grant permits forward traversal and counting. The hash structure
+stays fixed until join. Admission compares logical intervals on the same
+backing hash across the entire batch, including aliases. Readers may overlap.
+Any nonempty overlap involving a writer rejects the batch before dispatch.
+
+### Balanced vector partitions
+
+With the MT segment runtime enabled, `balanced_range(length, parts, part)`
+returns a `segment_range` value with two read-only integer fields, `offset` and
+`length`. All three arguments are integers. The helper requires `length >= 0`,
+`parts > 0`, and a zero-based `part` less than `parts`. Invalid inputs raise a
+runtime error. The first `length % parts` partitions receive one extra slot.
+For 10 slots and 3 partitions the results are (0, 4), (4, 3), and (7, 3).
+When partitions outnumber slots, trailing partitions are empty at the end.
+
+A range can be copied, passed to a helper, or returned. It contains no vector
+reference. Both named and inline jobs accept `segment(vector, range)`; each
+grant is checked against its actual vector at admission. For example:
+
+```php
+$range = balanced_range(count($input), $parts, $part);
+$results = parallel {
+    job (read: $src = segment($input, $range),
+         write: $dst = segment($output, $range)) {
+        $i = 0;
+        while ($i < count($src)) {
+            $dst[$i] = $src[$i];
+            $i += 1;
+        }
+        return $i;
+    }
+};
+```
+
+### Runtime-sized parallel batches
+
+In brace flavors, `parallel (workers: limit) { ... }` takes a positive integer
+limit evaluated once before any entry. The cap includes the caller. A cap of one
+runs the admitted jobs on the caller. Omitting the setting uses available pool
+capacity.
+
+An inline job can begin with `each: $part in 0 ..< $parts`. The caller evaluates
+the nonnegative integer bound once when it reaches the entry. For each index
+in ascending order, it evaluates the bindings once in written order. The index
+is a read-only integer visible to those bindings and to that job's body.
+A zero bound skips the entry and its bindings. Other entries still run;
+a group that expands to zero jobs returns an empty result vector.
+
+```php
+$results = parallel (workers: 4) {
+    job (each: $part in 0 ..< $parts,
+         write: $rows = segment($headers, balanced_range($count, $parts, $part))) {
+        return scan_headers($rows);
+    }
+};
+```
+
+The compiler checks the body once. The caller completes all snapshots before
+borrowing storage, then admits all grants in the expanded group before dispatch.
+A conflict in the final iteration rejects the entire batch even under a cap of
+one. Results follow entry order and, within a repeated entry, index order.
+
+A repeated entry may put `workers: limit` immediately after `each:`. The caller
+evaluates the bound and then the limit once, before binding any iterations,
+including when the bound is zero. The limit must be a positive integer and uses
+caller scope. It limits concurrent instances of this written entry. Two entries
+calling the same function have independent limits.
+
+For example, with twelve partitions this group can run three scans alongside
+both sibling calls when five participants are available:
+
+```php
+$results = parallel (workers: 5) {
+    job (each: $part in 0 ..< $parts, workers: 3,
+         write: $rows = segment($headers, balanced_range($count, $parts, $part))) {
+        return scan_headers($rows);
+    }
+    check_symbols(segment($symbols, 0, $symbol_count));
+    check_routes(segment($routes, 0, $route_count));
+};
+```
+
+The scheduler divides a capped entry into at most its limit of balanced,
+contiguous chunks. Each chunk runs its iterations sequentially. Fewer pool
+participants can run several chunks in sequence. Batch admission still checks
+all grants together, including grants in the same chunk. Results and worker
+failures retain their original iteration slots.

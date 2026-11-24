@@ -63,11 +63,11 @@ def native(output, build, expected, log):
                 stdout=run.stdout, exit=run.returncode)
 
 
-def prove(work):
+def prove(work, quick=False):
     """Five fixed 20-step cycles; fresh checks for the first cycle and every subsequent cycle end."""
     work.mkdir(parents=True, exist_ok=False)
     report = {}
-    for flavor in ('cpp', 'php', 'js'):
+    for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
         base = work / flavor
         app = base / 'app'
         output = base / 'incremental'
@@ -105,7 +105,7 @@ def prove(work):
         rows = []
         try:
             sources = dict(baseline)
-            for step in range(100):
+            for step in ((0, 1, 5, 6, 8) if quick else range(100)):
                 phase = step % 20
                 if phase in (0, 8, 11, 16, 18):
                     sources = dict(baseline)
@@ -164,7 +164,7 @@ def prove(work):
                         for field in ('sources', 'translation_units', 'headers'):
                             assert current_manifest[field] == fresh_manifest[field], (flavor, step, field)
                         row['artifact_hashes'] = {k: hashlib.sha256(v).hexdigest() for k, v in artifacts(output).items()}
-                        if phase in (0, 5, 16, 19):
+                        if phase in ((5,) if quick else (0, 5, 16, 19)):
                             expected = '901' if phase == 5 else '888'
                             row['native_incremental'] = native(output, base / 'native', expected, base / f'native-{step}.log')
                             row['native_fresh'] = native(fresh_output, fresh_output.parent / 'native', expected,
@@ -172,14 +172,15 @@ def prove(work):
                             assert row['native_incremental']['stdout'] == row['native_fresh']['stdout']
                 rows.append(row)
                 (base / 'results.json').write_text(json.dumps(rows, indent=2))
-            print(f'{flavor}: 100 runs, 24 fresh checkpoints, retention and native equivalence passed', flush=True)
+            print(f'{flavor}: {len(rows)} runs, retention and native equivalence passed', flush=True)
         finally:
             process.stdin.close()
             process.wait(timeout=15)
             assert process.returncode == 0, process.stderr.read()
         report[flavor] = rows
     (work / 'results.json').write_text(json.dumps(report, indent=2))
-    write_report(work, report)
+    if not quick:
+        write_report(work, report)
     return report
 
 
@@ -226,9 +227,10 @@ def write_report(work, report):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, help='New evidence directory; otherwise use temporary storage')
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     if args.output:
-        prove(args.output.resolve())
+        prove(args.output.resolve(), args.quick)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-equivalence-') as directory:
-            prove(Path(directory) / 'proof')
+            prove(Path(directory) / 'proof', args.quick)

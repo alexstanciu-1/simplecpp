@@ -1,4 +1,5 @@
 """Key presence for runtime/application hashes, borrowed receivers and incremental reuse."""
+import argparse
 import json
 import subprocess
 import tempfile
@@ -14,7 +15,7 @@ from parent_methods_native import write_app
 ROOT=Path(__file__).resolve().parents[2]
 
 
-def prove(work, flavor, libraries):
+def prove(work, flavor, libraries, *, quick=False):
     s=fixture(flavor);v,a,fn=s['v'],s['access'],s['function']
     def empty(n,t):
         return {'cpp':f'{t} {n} = [];','php':f'${n} {t} = [];','js':f'let {n}:{t} = [];'}[flavor]
@@ -57,7 +58,21 @@ def prove(work, flavor, libraries):
     main+='if (!hash_contains(makeHolder()'+a+'items,"x")) {return 100;}'
     main+='echo "OK";return 8;'
     expected=b'HKROK'
-    app,out=work/flavor,work/(flavor+'-out');write_app(app,flavor,{'node':node,'owners':owners,'point':point,'holder':holder,'api':api,'main':main,'idle':fn('idle','int',[],'return 1;')})
+    sources = {'node':node,'owners':owners,'point':point,'holder':holder,'api':api,'main':main,'idle':fn('idle','int',[],'return 1;')}
+    if quick:
+        from collection_goal_native import revisions
+        revisions(work, flavor, sources, [
+            (None, None, expected),
+            ('api', api + fn('hash_contains','bool',[('x','int')],'return true;'), 'Argument'),
+            ('api', api, expected),
+        ])
+        out = work / (flavor+'-out')
+        units = json.loads((out/'manifest.json').read_text())['sources']
+        generated = (out/units[f'{flavor}/api.{flavor}']).read_text()
+        assert '.has(' in generated and '.at(' not in generated and '.find(' not in generated
+        return
+    app,out=work/flavor,work/(flavor+'-out')
+    write_app(app,flavor,sources)
     resident=service(app,out)
     steps=[(None,None,None),(None,None,None),('api',api.replace('return hash_contains','return !!hash_contains',1),None),
            ('api',api,None),('point',point.replace(ctor,ctor+s['field']('padding','int','0')),None),('point',point,None),
@@ -126,5 +141,10 @@ def prove(work, flavor, libraries):
 if __name__=='__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-hash-contains-') as temporary:
         work=Path(temporary)
-        libraries={cc:runtime(work,cc,[ROOT/'runtime/generated/src/hash.cpp']) for cc in ['clang++','g++']}
-        for flavor in ['cpp','php','js']:prove(work,flavor,libraries)
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument('--quick', action='store_true')
+        if parser.parse_args().quick:
+            prove(work, 'php', {}, quick=True)
+        else:
+            libraries={cc:runtime(work,cc,[ROOT/'runtime/generated/src/hash.cpp']) for cc in ['clang++','g++']}
+            for flavor in ['cpp','php','js']:prove(work,flavor,libraries)

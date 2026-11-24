@@ -115,7 +115,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
                 $destinationMethod = "\n\tpublic function destination_append_definition(array \$values): string\n\t{\n"
                     . "\t\treturn strtr(" . var_export($body, true) . ", \$values);\n\t}\n";
             }
-            $recipe = ['enable_reserve' => $vector['enable_reserve'], 'count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
+            $recipe = ['mt_segments' => !empty($runtime['mt_segments']) ? '1' : '', 'enable_reserve' => $vector['enable_reserve'], 'count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
             $code .= strtr($template, array_replace($bindings, [
                 '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type, iterable_type' . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
                 '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',

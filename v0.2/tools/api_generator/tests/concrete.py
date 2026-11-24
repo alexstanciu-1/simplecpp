@@ -12,11 +12,11 @@ def run(command, env=None):
     assert p.returncode == 0, (command, p.stdout, p.stderr)
     return p.stdout
 
-def prove(work, sanitize):
+def prove(work, sanitize, quick=False):
     source = work / 'probe.cpp'
     run(['php', ROOT/'tools/api_generator/tests/concrete.php', source])
-    for compiler in ['clang++', 'g++']:
-        flags = ['-std=c++23', '-O1', '-g0', '-Wall', '-Wextra', '-Werror', '-I'+str(ROOT/'runtime/generated/public'), '-I'+str(ROOT/'runtime/src/sequence'), '-I'+str(ROOT/'runtime/src/hash')]
+    for compiler in (['clang++'] if quick else ['clang++', 'g++']):
+        flags = ['-std=c++23', '-O0' if quick else '-O1', '-g0', '-Wall', '-Wextra', '-Werror', '-I'+str(ROOT/'runtime/generated/public'), '-I'+str(ROOT/'runtime/src/sequence'), '-I'+str(ROOT/'runtime/src/hash')]
         if sanitize and compiler == 'clang++': flags += ['-fsanitize=address,undefined', '-fno-omit-frame-pointer']
         run([compiler, *flags, source, '-o', work/'probe'])
         run([work/'probe'])
@@ -24,11 +24,12 @@ def prove(work, sanitize):
         invalid.write_text(source.read_text().replace('Probe(Probe&& other) noexcept', 'Probe(Probe&& other) noexcept(false)'))
         rejected = subprocess.run([compiler, *flags, '-fsyntax-only', str(invalid)], capture_output=True, text=True)
         assert rejected.returncode != 0 and 'nothrow_move_constructible' in rejected.stderr, rejected.stderr
-        run([compiler, *flags, '-I'+str(ROOT/'runtime/generated/public'), '-I'+str(ROOT/'runtime/src/numeric'),
-             ROOT/'runtime/generated/src/runtime.cpp', ROOT/'tests/vector_failure.cpp', '-o', work/'failure'])
+        runtime_inputs = (['-stdlib=libc++', ROOT/'build/clang/libscpp_runtime.a'] if quick else
+                          ['-I'+str(ROOT/'runtime/src/numeric'), ROOT/'runtime/generated/src/runtime.cpp'])
+        run([compiler, *flags, ROOT/'tests/vector_failure.cpp', *runtime_inputs, '-o', work/'failure'])
         run([work/'failure'])
         print(compiler + ': generic recipe, vector/hash aligned non-default elements, holes, copy failure prefixes and runtime allocation failures passed', flush=True)
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(description=__doc__); p.add_argument('--sanitize', action='store_true'); args = p.parse_args()
-    with tempfile.TemporaryDirectory(prefix='scpp-concrete-') as directory: prove(Path(directory), args.sanitize)
+    p = argparse.ArgumentParser(description=__doc__); p.add_argument('--sanitize', action='store_true'); p.add_argument("--quick", action="store_true"); args = p.parse_args()
+    with tempfile.TemporaryDirectory(prefix='scpp-concrete-') as directory: prove(Path(directory), args.sanitize, args.quick)

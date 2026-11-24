@@ -1,4 +1,5 @@
 """PHP donor cases supplementing the namespace, member, foreach and enum fixtures."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -44,7 +45,7 @@ CASES = [
      'main.php:1:29: Expected identifier'),
     ('declared-callable',
      '$f function<int(int)>; if (true) { $f = function (int $x):int {return $x+1;}; } echo $f(5); return 8;',
-     'main.php:1:4: Expected identifier'),
+     (8, b'6', b'')),
     ('scope-control',
      '$f = function (int $x): int { return $x + 1; }; echo $f(5); return 8;',
      (8, b'6', b'')),
@@ -121,7 +122,7 @@ CASES = [
 ]
 
 
-def prove(work):
+def prove(work, quick=False):
     app = work / 'app'
     app.mkdir()
     (app / 'module.json').write_text('{}')
@@ -130,10 +131,12 @@ def prove(work):
     source_edit(app / 'f.php', r'namespace A\B; function f():void {echo "func";}')
     source_edit(app / 'deep.php', r'namespace A\B\A\B; class X { public int $n=7; }')
     output = work / 'out'
-    library = runtime(work, 'clang++', [ROOT / 'runtime/generated/src/hash.cpp'])
+    library = ROOT/'build/clang/libscpp_runtime.a' if quick else runtime(work, 'clang++', [ROOT / 'runtime/generated/src/hash.cpp'])
     resident = service(app, output)
     try:
         for label, source, expected in CASES:
+            if quick and label not in {'integer-hash-indexed-empty', 'declared-callable', 'scope', 'used-import', 'order'}:
+                continue
             source_edit(app / 'main.php', source)
             before = artifacts(output)
             actual = invoke(resident)
@@ -146,12 +149,15 @@ def prove(work):
             else:
                 assert 'error' not in actual and 'error' not in control, (label, actual, control)
                 assert artifacts(output) == artifacts(fresh), label
-                native(output, work / label, expected, library)
+                native(output, work / label, expected, library, cxx_flags=("-stdlib=libc++",) if quick else ())
     finally:
         resident.stdin.close()
         assert resident.wait() == 0
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with TemporaryDirectory() as tmp:
-        prove(Path(tmp))
+        prove(Path(tmp), quick)

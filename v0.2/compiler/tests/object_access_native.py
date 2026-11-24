@@ -31,7 +31,7 @@ def publish(app, out, sources, flavor):
     finally: process.stdin.close(); process.wait()
 
 
-def behavior(work, flavor, libraries, memcheck):
+def behavior(work, flavor, libraries, memcheck, *, flags=('-O1',)):
     s, method, klass, cast = syntax(flavor)
     v, access, fn = s['v'], s['access'], s['function']
     base = klass('Node', s['field']('x','int','3')+method('virtual','7'))
@@ -132,7 +132,7 @@ int main() {
 ''')
     for cc,library in libraries.items():
         binary=work/(flavor+'-ownership-'+cc)
-        result=subprocess.run([cc,'-std=c++23','-O1','-Wall','-Wextra','-Werror','-I',ROOT/'runtime/generated/public',
+        result=subprocess.run([cc,'-std=c++23',*flags,'-Wall','-Wextra','-Werror','-I',ROOT/'runtime/generated/public',
             probe,*[u for u in units if u!=unit],library,'-o',binary],capture_output=True,text=True)
         assert result.returncode==0,result.stderr
         result=subprocess.run([binary],capture_output=True)
@@ -305,11 +305,16 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',type=Path)
     parser.add_argument('--memcheck',action='store_true')
+    parser.add_argument('--quick-runtime', type=Path)
     args=parser.parse_args()
     with tempfile.TemporaryDirectory() as directory:
         work=(args.output or Path(directory)).resolve();work.mkdir(exist_ok=True)
-        libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
-        for flavor in ['cpp','php','js']:
-            behavior(work,flavor,libraries,args.memcheck)
-            incremental(work,flavor,libraries)
-            syntax_and_recovery(work,flavor,libraries)
+        if args.quick_runtime:
+            libraries = {'clang++': args.quick_runtime}
+            behavior(work, 'php', libraries, False, flags=('-O0', '-stdlib=libc++'))
+        else:
+            libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
+            for flavor in ['cpp','php','js']:
+                behavior(work,flavor,libraries,args.memcheck)
+                incremental(work,flavor,libraries)
+                syntax_and_recovery(work,flavor,libraries)

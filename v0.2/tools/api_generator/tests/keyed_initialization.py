@@ -13,7 +13,7 @@ from list_initialization_native import run
 from collection_arguments import EMIT
 
 
-def proof(work):
+def proof(work, quick=False):
     work.mkdir(parents=True, exist_ok=True)
     metadata = json.loads((ROOT / 'runtime/metadata/runtime.json').read_text())
     publication = json.loads((ROOT / 'runtime/metadata/publication.json').read_text())
@@ -57,6 +57,18 @@ def proof(work):
         obj = work / 'hash.o'
         runtime_obj = work / 'runtime.o'
         inc = ['-I', output / 'public', '-I', output / 'private', '-I', ROOT / 'runtime/src/sequence', '-I', ROOT / 'runtime/src/numeric', '-I', ROOT / 'runtime/src/hash']
+        if quick:
+            # Compile one real consumer against this variant's freshly published header.
+            source = '$v hash<int,int> = [1 => 7, 2 => 9]; return $v[2];'
+            emit = ['php', '-r', EMIT, str(boot), 'php', source]
+            if variant == 'disabled':
+                rejected = subprocess.run(emit, capture_output=True, text=True)
+                assert rejected.returncode and 'published keyed destination' in rejected.stderr, rejected
+            else:
+                cpp = run(emit)
+                assert '::' + init.get('consume', init['read_only']) + '(' in cpp
+                run(['clang++', '-std=c++23', *inc, '-x', 'c++', '-fsyntax-only', '-'], input=cpp)
+            continue
         for cxx in ('clang++', 'g++'):
             run([cxx, '-std=c++23', '-O2', *inc, '-c', output / 'src/hash.cpp', '-o', obj])
             run([cxx, '-std=c++23', '-O2', *inc, '-c', output / 'src/runtime.cpp', '-o', runtime_obj])
@@ -95,7 +107,11 @@ def proof(work):
                     assert subprocess.run([exe]).returncode == 7
     # Rejected metadata must leave the last complete export untouched.
     snapshot = {str(p.relative_to(output)): p.read_bytes() for p in output.rglob('*') if p.is_file()}
-    for field, value in [('consume','bad::name'), ('input','class'), ('entry','iteration_limit'), ('entry','iteration_output'), ('read_only','get_or_null'), ('read_only','set'), ('read_only','storage_'), ('input','data'), ('entry','data_'), ('consume','int64'), ('presizing','none'), ('transfer','throwing'), ('stack_bytes',0), ('duplicates','replace')]:
+    invalid_fields = [('consume','bad::name'), ('input','class'), ('entry','iteration_limit'), ('entry','iteration_output'), ('read_only','get_or_null'), ('read_only','set'), ('read_only','storage_'), ('input','data'), ('entry','data_'), ('consume','int64'), ('presizing','none'), ('transfer','throwing'), ('stack_bytes',0), ('duplicates','replace')]
+    if quick:
+        # Cover a malformed identifier, a generated-member collision and an invalid key policy.
+        invalid_fields = [('consume', 'bad::name'), ('entry', 'iteration_limit'), ('duplicates', 'replace')]
+    for field, value in invalid_fields:
         m = copy.deepcopy(metadata); m['hash']['initialization'][field] = value
         mp.write_text(json.dumps(m)); pp.write_text(json.dumps(publication))
         result = subprocess.run(['php', str(generator), 'emit-runtime', str(mp), str(pp), str(facts), str(context), str(output)], capture_output=True)
@@ -120,5 +136,6 @@ def proof(work):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--quick', action='store_true', help='check compiler/provider compatibility for each publication')
     args = parser.parse_args()
-    proof(args.out.resolve())
+    proof(args.out.resolve(), args.quick)

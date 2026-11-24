@@ -122,10 +122,17 @@ foreach (token_kind::cases() as $kind)
 				token_kind::floating, token_kind::single_string, token_kind::double_string, token_kind::template_string, token_kind::keyword,
 				token_kind::newline, token_kind::indent, token_kind::dedent],
 			true)) {
-		$list = scan($kind->label());
-		check((count($list->tokens) === 1) && ($list->tokens[0]->kind === $kind),
+		$python_only = in_array($kind, [token_kind::at_sign, token_kind::double_slash], true);
+		$list = scan($kind->label(), $python_only ? flavor::python : flavor::php);
+		check((count($list->tokens) === ($python_only ? 2 : 1)) && ($list->tokens[0]->kind === $kind),
 			'Punctuation enum classification');
 	}
+}
+foreach ([flavor::php, flavor::cpp, flavor::js] as $flavor) {
+	$list = scan('0..<3', $flavor);
+	check(array_map(fn(token $t): token_kind => $t->kind, $list->tokens) === [
+		token_kind::integer, token_kind::dot, token_kind::dot, token_kind::less, token_kind::integer,
+	], 'Compact each range retains its integer and delimiter');
 }
 // Consumers distinguish keywords by retained spelling, not by a separate token tag.
 foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)

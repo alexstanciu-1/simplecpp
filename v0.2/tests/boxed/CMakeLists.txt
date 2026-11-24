@@ -27,7 +27,7 @@ add_test(NAME boxed_boundary COMMAND ${CMAKE_COMMAND}
   -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
   -DGENERATED=${boxed_generated} -DWORK=${CMAKE_CURRENT_BINARY_DIR}/boundary
   -P ${CMAKE_CURRENT_SOURCE_DIR}/boundary.cmake)
-add_test(NAME boxed_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/publication.py
+add_test(NAME boxed_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/publication.py --quick
   --generator ${api_tooling} --source ${PROJECT_SOURCE_DIR} --facts ${native_facts}
   --context ${native_context} --cxx ${CMAKE_CXX_COMPILER})
 

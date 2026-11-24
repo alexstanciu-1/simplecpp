@@ -8,7 +8,7 @@ from unittest.mock import patch
 import qualification as q
 
 
-def check(directory, compiler):
+def check(directory, compiler, quick=False):
     flags = ['-std=c++23', '-O2']
     cache = directory / 'cache'
     now = 1700000000
@@ -55,6 +55,10 @@ def check(directory, compiler):
             index.write_text(json.dumps(original_index))
             assert q.qualify(compiler, flags, cache, cached_only=True)[0] == key
 
+        if quick:
+            assert q.qualify(compiler, [*flags, "-g"], cache, cached_only=True) is None
+            return
+
         # Exercise an implementation binary changing behind identical driver/version strings.
         component = directory / 'implementation'
         component.write_text('revision one')
@@ -93,6 +97,8 @@ def check(directory, compiler):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--cxx', required=True)
+    parser.add_argument("--quick", action="store_true")
+    args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-qualification-') as work:
-        check(Path(work), parser.parse_args().cxx)
+        check(Path(work), args.cxx, args.quick)
     print('Qualification identity, weekly cache, failed refresh and recovery passed')

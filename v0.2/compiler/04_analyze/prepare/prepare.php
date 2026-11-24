@@ -314,7 +314,7 @@ final class Preparation
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
 				}
-				if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $source->flavor === flavor::python) {
+				if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type) && $source->flavor === flavor::python) {
 					throw new diagnostic($source, $statement->byte_start(), 'Python indexed write requires a typed vector or hash');
 				}
 				$this->value($statement->index);
@@ -758,10 +758,11 @@ final class Preparation
 	{
 		$this->value($statement->source_value);
 		$source_type = $statement->source_value->type_def();
+		$segment = $source_type instanceof segment_type && $source_type->key !== null;
 		$type = $source_type->iteration();
 		$python = $source->flavor === flavor::python;
 		$paired = $python && $statement->key !== null;
-		$hash = ($python || $statement->requires_key) && $type instanceof key_iterable_type;
+		$hash = ($python || $statement->requires_key) && ($type instanceof key_iterable_type || $segment);
 		$statement->keys_only = $hash && !$paired;
 		if (!$hash && ($paired || $statement->requires_key)) {
 			throw new diagnostic($source, $statement->source_value->byte_start(),
@@ -770,7 +771,7 @@ final class Preparation
 		if ($python && !$hash && !($source_type instanceof vector_type_definition)) {
 			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector or hash');
 		}
-		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
+		if ($type === null && !$segment) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
 		if ($function->is_async || $function->return_type_def() instanceof generator_type_definition) {
 			$receiver = $statement->source_value;
 			if ($source_type instanceof generator_type_definition) {
@@ -783,13 +784,15 @@ final class Preparation
 				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires local storage, a temporary or a retained shared field');
 			}
 		}
-		if (($method = $type->iteration_method()) !== null) {
+		if (($method = $type?->iteration_method()) !== null) {
 			Readonly_Access::write($statement->source_value, true);
 			$this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		}
 		$destination = $this->find_local($statement->value->short_name);
+		if ($segment && $destination !== null) throw new diagnostic($source, $statement->value->byte_start(), 'Hash segment traversal requires a fresh loop binding');
 		Readonly_Access::require_writable($statement->value, $destination);
-		$output = $statement->keys_only ? $type->iteration_key_type() : $type->iteration_value_type();
+		$output = $segment ? ($statement->keys_only ? $source_type->key : $source_type->element)
+			: ($statement->keys_only ? $type->iteration_key_type() : $type->iteration_value_type());
 		if ($output instanceof record_type_definition) {
 			$this->dependencies?->watch($this->symbols->entry($output->declaration->symbol_key()), $this->owner);
 			$this->reserve_array_bytes($output->array_bytes(), $statement->value);
@@ -803,7 +806,7 @@ final class Preparation
 		try {
 			if ($destination === null) $this->local_frames[count($this->local_frames) - 1][$statement->value->short_name] = $statement->value;
 			if ($statement->key !== null) {
-				$key_type = $type->iteration_key_type();
+				$key_type = $segment ? $source_type->key : $type->iteration_key_type();
 				if ($key_type === null) throw new diagnostic($source, $statement->key->byte_start(), 'Foreach key binding is unavailable for this traversal');
 				$statement->key->settle_type($key_type);
 				$this->local_frames[count($this->local_frames) - 1][$statement->key->short_name] = $statement->key;
@@ -1095,6 +1098,7 @@ final class Preparation
 		Readonly_Access::write($root, $payload, $field);
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
+		if ($root instanceof ast_index_expression && $root->receiver->type_def() instanceof segment_type) return $field;
 		if (!($root instanceof ast_this_expression)
 			&& (!($root instanceof ast_name_expression) || $root->local_binding() === null)) {
 			throw new diagnostic($root->source(), $root->byte_start(), 'Field assignment requires writable local storage');
@@ -1404,6 +1408,11 @@ final class Preparation
 			$this->value($syntax->receiver, $initializing);
 			$type = $syntax->receiver->type_def();
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
+			if ($type instanceof type_segment_range) {
+				if ($syntax->field !== 'offset' && $syntax->field !== 'length') throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown segment_range field: ' . $syntax->field);
+				$syntax->settle_field(type_int64::instance());
+				return;
+			}
 			if (!($type instanceof record_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice for type ' . $type->name);
 			}
@@ -1439,7 +1448,7 @@ final class Preparation
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
-			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $syntax->source()->flavor === flavor::python
+			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type) && $syntax->source()->flavor === flavor::python
 				&& !($type instanceof boxed_type_definition && $syntax->parent instanceof ast_key_comparison)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash');
 			}
@@ -1929,7 +1938,10 @@ final class Preparation
 		$optional = false;
 		foreach ($lambda->parameters as $index => $parameter) {
 			$name = $parameter->declaration_key();
-			if (isset($locals[$name])) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Duplicate lambda parameter: ' . $name);
+			if (isset($locals[$name])) {
+				$reason = $lambda->parent instanceof ast_inline_job ? 'Duplicate inline job binding: ' : 'Duplicate lambda parameter: ';
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), $reason . $name);
+			}
 			$type = $parameter->type_reference === null
 				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
 				: Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
@@ -2028,9 +2040,32 @@ final class Preparation
 			($site instanceof ast_await_expression ? 'Await' : 'async_wait') . ' requires an async function');
 	}
 
+	/** Provision a whole batch, exposing the iteration index only while preparing repeated bindings. */
+	private function joined_batch(ast_call_expression $call, ?string $initializing): void
+	{
+		if ($this->dependencies?->mt === null) throw new diagnostic($call->source(), $call->byte_start(), 'Joined segments require fresh compilation');
+		Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg, ?callback_type_definition $signature = null) use ($initializing): void {
+			$this->value($arg, $initializing, allow_callback: $signature !== null, destination: $signature);
+		}, function (ast_produced_binding $index, \Closure $bind): void {
+			$this->local_frames[] = [$index->declaration_key() => $index];
+			$this->forget_values();
+			try {
+				$bind();
+			} finally {
+				array_pop($this->local_frames);
+				$this->forget_values();
+			}
+		});
+	}
+
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call, ?string $initializing = null, ?dependency_use $async_use = null): void
 	{
+		if ($call instanceof ast_parallel_expression) {
+			if (!type_registry::HAS_MT_SEGMENTS) throw new diagnostic($call->source(), $call->byte_start(), 'MT segments unavailable in this runtime');
+			$this->joined_batch($call, $initializing);
+			return;
+		}
 		if ($call->qualifier === call_qualifier::stored_value) {
 			$this->value($call->receiver, $initializing);
 			$type = $call->receiver->type_def();
@@ -2196,6 +2231,11 @@ final class Preparation
 					'hash_get_or_null' => 'hash_get_or_null requires a hash with shared class values',
 				});
 				$this->runtime_call($call, $binding, $receiver);
+				return;
+			}
+			if ($builtin === 'mt_join' && type_registry::HAS_MT_SEGMENTS) {
+				if ($class !== null) $this->ambiguous_construction($call);
+				$this->joined_batch($call, $initializing);
 				return;
 			}
 			if ($builtin === 'async_wait') {

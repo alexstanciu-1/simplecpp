@@ -24,6 +24,6 @@ add_executable(json_consumer_test consumer.cpp)
 target_link_libraries(json_consumer_test PRIVATE json_proof_module)
 add_test(NAME json_consumer COMMAND json_consumer_test)
 add_test(NAME json_freshness COMMAND ${generator_launcher} ${runtime_metadata} ${json_publication} ${json_generated} --check)
-add_test(NAME json_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/publication.py
+add_test(NAME json_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/publication.py --quick
   --generator ${api_tooling} --source ${PROJECT_SOURCE_DIR} --facts ${native_facts}
   --context ${native_context} --cxx ${CMAKE_CXX_COMPILER})

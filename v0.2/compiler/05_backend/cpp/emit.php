@@ -981,6 +981,22 @@ CPP;
 				}
 				$lines[] = "\t" . $transfer;
 			}
+			elseif ($statement instanceof ast_foreach_statement && ($source_type = $statement->source_value->type_def()) instanceof segment_type
+				&& $source_type->key !== null) {
+				$receiver = $this->value($statement->source_value, $global_references, $declarations, $required_headers);
+				$lines[] = "{ const auto hash_view = $receiver; int64_t hash_cursor = 0; while (hash_view.next(hash_cursor)) {";
+				$key = $statement->keys_only ? $statement->value : $statement->key;
+				if ($key !== null) $lines[] = '[[maybe_unused]] const auto& ' . $this->name($key) . ' = *static_cast<const '
+					. $source_type->key->cpp_type() . '*>(hash_view.key(hash_cursor));';
+				if (!$statement->keys_only) {
+					$method = $source_type->read_only ? 'value' : 'writable_value';
+					$qualifier = $source_type->read_only ? 'const ' : '';
+					$lines[] = '[[maybe_unused]] auto& ' . $this->name($statement->value) . ' = *static_cast<' . $qualifier
+						. $source_type->element->cpp_type() . "*>(hash_view.$method(hash_cursor));";
+				}
+				array_push($lines, ...$this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume));
+				$lines[] = '} }';
+			}
 			elseif ($statement instanceof ast_foreach_statement) {
 				$source_type = $statement->source_value->type_def();
 				$type = $source_type->iteration();
@@ -2628,6 +2644,7 @@ CPP;
 				return $reference && !$borrow_result
 					? 'static_cast<' . $value->type_def()->cpp_type() . '>(' . $call . ')' : $call;
 			}
+			if ($value->mt_operation === 'mt_join') return $this->joined_batch($value, $global_references, $declarations, $required_headers);
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];
 				/** @var counted_collection_type $type */
@@ -3098,9 +3115,127 @@ CPP;
 	{
 		self::visit_signature_type_dependencies($signature, function (type_definition $component) use (&$declarations): void {
 			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
-			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
+			elseif ($component instanceof enum_type_definition || $component instanceof record_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
 			else $declarations[$component->name] = $component;
 		});
+	}
+
+	/**
+	 * Snapshot caller operands, materialize grants with stable storage, then submit one joined batch.
+	 * @param ast_global_declaration[] $global_references
+	 * @param (ast_declaration_interface|type_definition)[] $declarations
+	 * @param bool[] $required_headers
+	 */
+	private function joined_batch(ast_call_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_declaration_interface|type_definition> */, array &$required_headers /** array<string,bool> */): string
+	{
+		$required_headers['scpp/mt_segments.hpp'] = true;
+		$jobs = [];
+		$snapshots = [];
+		$lines = [];
+		$dynamic = false;
+		$entries = [];
+		$capped = false;
+		foreach ($value->arguments as $launch) {
+			if ($launch instanceof ast_inline_job && $launch->iteration !== null) {
+				$dynamic = true;
+				if ($launch->arguments[0] instanceof ast_job_repetition) $capped = true;
+			}
+		}
+		$cap = '';
+		if ($value instanceof ast_parallel_expression && $value->receiver !== null) {
+			$expression = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			$required_headers['stdexcept'] = true;
+			$snapshots[] = "const auto workers = $expression;";
+			$snapshots[] = 'if (workers <= 0) throw std::invalid_argument("Group workers must be positive");';
+			$cap = ', workers';
+		}
+		if ($dynamic) {
+			$required_headers['vector'] = true;
+			$required_headers['stdexcept'] = true;
+			$lines[] = 'std::vector<::scpp::mt::job> jobs;';
+		}
+		foreach ($value->arguments as $i => $launch) {
+			$index = $launch instanceof ast_inline_job && $launch->iteration !== null ? $this->name($launch->iteration) : null;
+			if ($launch instanceof ast_inline_job) {
+				$name = $this->lambda($launch->receiver, $global_references, $declarations, $required_headers);
+			} else {
+				$worker = $launch->implementation();
+				$name = self::function_name($worker);
+				$declarations[$name] = $worker;
+				$this->collect_signature_types($worker, $declarations);
+			}
+			$args = [];
+			$forwarded = [];
+			$fields = [];
+			$initializers = [];
+			$scalar_inputs = false;
+			foreach ($launch->arguments as $slot => $input) {
+				if ($launch instanceof ast_inline_job && in_array($launch->binding_kinds[$slot], ['each', 'value'], true)) {
+					$scalar_inputs = true;
+					$fields[] = $input->type_def()->cpp_type() . " v$slot;";
+					$initializers[] = $launch->binding_kinds[$slot] === 'each' ? $index : $this->value($input, $global_references, $declarations, $required_headers);
+					$forwarded[] = "static_cast<const values_$i*>(context)->v$slot";
+					continue;
+				}
+				$operands = [];
+				foreach ($input->arguments as $arg) $operands[] = $this->value($arg, $global_references, $declarations, $required_headers);
+				$owner = $operands[0];
+				if ($index !== null || count($operands) === 2) {
+					$fields[] = "::scpp::mt::segment_range range$slot;";
+					$initializers[] = count($operands) === 2 ? $operands[1] : '{' . $operands[1] . ', ' . $operands[2] . '}';
+					$offset = "snapshot_$i.range$slot.offset";
+					$length = "snapshot_$i.range$slot.length";
+				} else [, $offset, $length] = $operands;
+				$forwarded[] = 'inputs[' . count($args) . ']';
+				$borrow = ($input->type_def()->key === null ? 'borrow' : 'borrow_hash') . ($input->type_def()->read_only ? '_read' : '');
+				$args[] = "::scpp::mt::job::{$borrow}($owner, $offset, $length)";
+			}
+			$grant_list = implode(', ', $args);
+			$context = $scalar_inputs ? "snapshot_$i, " : '';
+			$parameter = $scalar_inputs ? ', const void* context' : '';
+			$worker_call = "[](const ::scpp::mt::segment* inputs$parameter) { return $name(" . implode(', ', $forwarded) . '); }';
+			$layout = "struct values_$i { " . implode(' ', $fields) . ' }';
+			$values = '{' . implode(', ', $initializers) . '}';
+			if ($index !== null) {
+				$settings = $launch->arguments[0];
+				$bound_expr = $settings instanceof ast_job_repetition ? $settings->arguments[0] : $settings;
+				$bound = $this->value($bound_expr, $global_references, $declarations, $required_headers);
+				$snapshots[] = "const auto count_$i = $bound;";
+				$snapshots[] = "if (count_$i < 0) throw std::invalid_argument(\"each bound must be nonnegative\");";
+				$limit = 'INT64_MAX';
+				if ($settings instanceof ast_job_repetition) {
+					$limit = "workers_$i";
+					$expression = $this->value($settings->arguments[1], $global_references, $declarations, $required_headers);
+					$snapshots[] = "const auto $limit = $expression;";
+					$snapshots[] = "if ($limit <= 0) throw std::invalid_argument(\"Job workers must be positive\");";
+				}
+				if ($capped) $entries[] = "{values_list_$i.size(), $limit}";
+				$snapshots[] = "$layout; std::vector<values_$i> values_list_$i; values_list_$i.reserve(count_$i);";
+				$snapshots[] = "for (::scpp::int64 $index = 0; $index < count_$i; ++$index) values_list_$i.push_back($values);";
+				// Reserve all grant storage before publishing pointers into it. Snapshots are already complete.
+				$lines[] = "struct grants_$i { ::scpp::mt::segment slots[" . count($args) . "]; }; std::vector<grants_$i> grants_list_$i; grants_list_$i.reserve(values_list_$i.size());";
+				$lines[] = "for (const auto& snapshot_$i : values_list_$i) { grants_list_$i.push_back({{$grant_list}}); jobs.push_back({grants_list_$i.back().slots, $context$worker_call}); }";
+			} else {
+				if ($capped) $entries[] = '{1, 1}';
+				if ($fields !== []) $snapshots[] = "const $layout snapshot_$i$values;";
+				$lines[] = "::scpp::mt::segment grants_{$i}[]{ $grant_list };";
+				$job = "{grants_$i, $context$worker_call}";
+				if ($dynamic) $lines[] = "jobs.push_back($job);";
+				else $jobs[] = $job;
+			}
+		}
+		if ($capped) {
+			$lines[] = 'const ::scpp::mt::job_entry entries[]{' . implode(', ', $entries) . '};';
+			$group = $cap === '' ? 'INT64_MAX' : 'workers';
+			$lines[] = "::scpp::mt::join(jobs.data(), jobs.size(), $group, entries, " . count($entries) . ');';
+		} elseif ($dynamic) $lines[] = "::scpp::mt::join(jobs.data(), jobs.size()$cap);";
+		else {
+			$lines[] = '::scpp::mt::job jobs[]{' . implode(', ', $jobs) . '};';
+			$lines[] = '::scpp::mt::join(jobs, ' . count($jobs) . "$cap);";
+		}
+		$lines[] = $value->type_def()->cpp_type() . ' results; for (const auto& job : jobs) results.append(static_cast<::scpp::int64>(job.result)); return results;';
+		return '([&]() { ' . implode(' ', [...$snapshots, ...$lines]) . ' }())';
 	}
 
 	/** Emit the concrete closure in place, with its own expression and result conversion. */
@@ -3507,6 +3642,7 @@ CPP;
 			foreach ($type->concrete_types() as $argument) self::visit_signature_type_dependencies($argument, $visit);
 			return;
 		}
+		if ($type instanceof segment_type) self::visit_signature_type_dependencies($type->element, $visit);
 		if ($type instanceof nullable_enum_type_definition) $visit($type->payload_type);
 		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) $visit($type);
 	}

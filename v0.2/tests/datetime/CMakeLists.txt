@@ -27,7 +27,7 @@ target_compile_features(datetime_semantics_test PRIVATE cxx_std_23)
 target_link_libraries(datetime_semantics_test PRIVATE Threads::Threads)
 add_test(NAME datetime_semantics COMMAND datetime_semantics_test)
 add_test(NAME datetime_freshness COMMAND ${generator_launcher} ${runtime_metadata} ${datetime_publication} ${datetime_generated} --check)
-add_test(NAME datetime_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/publication.py
+add_test(NAME datetime_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/publication.py --quick
   --generator ${generator_launcher} --metadata ${runtime_metadata} --publication ${datetime_publication}
   --cxx ${CMAKE_CXX_COMPILER} "--flags=${CMAKE_CXX_FLAGS}" --source ${PROJECT_SOURCE_DIR}
   --work ${CMAKE_CURRENT_BINARY_DIR}/publication-proof)

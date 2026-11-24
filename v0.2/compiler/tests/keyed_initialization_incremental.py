@@ -12,10 +12,10 @@ from populated_vectors_native import declaration
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def prove(work):
+def prove(work, quick_runtime=None):
     work.mkdir(parents=True, exist_ok=True)
-    libraries = {cc: runtime(work, cc, [ROOT / 'runtime/generated/src/hash.cpp']) for cc in ('clang++', 'g++')}
-    for flavor in ('cpp', 'php', 'js'):
+    libraries = {'clang++': quick_runtime} if quick_runtime else {cc: runtime(work, cc, [ROOT / 'runtime/generated/src/hash.cpp']) for cc in ('clang++', 'g++')}
+    for flavor in (('php',) if quick_runtime else ('cpp', 'php', 'js')):
         s = fixture(flavor)
         function = lambda typ, name, body: s['function'](name, typ, [], body)
         api = function('int', 'key', 'return 1;') + function('int', 'value', 'return 7;')
@@ -39,6 +39,8 @@ def prove(work):
                  ('api',None,None), (None,None,None), ('api',api,b'7'),
                  ('main',changed_key,b'7'), ('main',extra_entry,b'9'), ('main',string_keys,b'7'),
                  ('main',retired,b''), ('main',main,b'7'), (None,None,b'7')]
+        if quick_runtime:
+            edits = [*edits[:4], ('api', api, b'7'), ('main', retired, b''), ('main', main, b'7')]
         resident = service(app,out)
         rows = []
         try:
@@ -62,14 +64,14 @@ def prove(work):
                 if text == retired: assert b'from_owned_entries' not in b''.join(artifacts(out).values())
                 manifest = json.loads((out/'manifest.json').read_text())
                 for cc,library in libraries.items():
-                    changed = incremental_native_build(out,work/(flavor+'-'+cc),cc,library,expected)
+                    changed = incremental_native_build(out,work/(flavor+'-'+cc),cc,library,expected, cxx_flags=('-stdlib=libc++',) if quick_runtime else ())
                     if name is None and revision > 0: assert not changed and current['preparation']['prepared'] == 0
                     if name == 'main':
                         assert changed == {manifest['sources'][manifest['entry']]}, (cc, revision, changed)
                     if revision == 2:
                         assert changed and all('api.' in source for source,unit in manifest['sources'].items() if unit in changed), changed
                         assert len(changed) == 1, changed
-                    if revision in (0,6) or name == 'main': build(fresh_out,work/(flavor+'-fresh-'+cc),cc,library,expected)
+                    if not quick_runtime and (revision in (0,6) or name == 'main'): build(fresh_out,work/(flavor+'-fresh-'+cc),cc,library,expected)
                 rows.append({'revision':revision, 'php_ms':current['php_ms'], 'prepared':current['preparation']['prepared']})
         finally: resident.stdin.close(); resident.wait()
         (work/(flavor+'-results.json')).write_text(json.dumps(rows,indent=2))
@@ -79,7 +81,8 @@ def prove(work):
 if __name__ == '__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out',type=Path,required=True)
+    parser.add_argument('--quick-runtime', type=Path)
     args=parser.parse_args()
     args.out.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='proof-',dir=args.out.resolve()) as directory:
-        prove(Path(directory))
+        prove(Path(directory), args.quick_runtime)

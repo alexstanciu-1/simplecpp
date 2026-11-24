@@ -1,4 +1,6 @@
 "Typed diagnostic identity, source location, and incremental ancestry recovery."
+import argparse
+from functools import partial
 import json
 import os
 from pathlib import Path
@@ -17,10 +19,10 @@ def catch(flavor, type_name, name):
     return f'catch ({binding})'
 
 
-def native(output, binary, expected, library):
+def native(output, binary, expected, library, *, cxx_flags=()):
     manifest = json.loads((output / 'manifest.json').read_text())
     units = [output / name for name in manifest['translation_units']]
-    subprocess.run(['clang++', '-std=c++23', '-Wall', '-Wextra', '-Werror',
+    subprocess.run(['clang++', '-std=c++23', *cxx_flags, '-Wall', '-Wextra', '-Werror',
                     '-I', ROOT / 'runtime/generated/public', *units,
                     library, '-o', binary], check=True)
     result = subprocess.run([binary], capture_output=True, timeout=10)
@@ -36,7 +38,7 @@ def fresh_build(app, output):
         assert fresh.wait() == 0
 
 
-def prove(work, flavor, library):
+def prove(work, flavor, library, quick=False, run_native=native):
     s = fixture(flavor)
     v, access, field = s['v'], s['access'], s['field']
 
@@ -126,7 +128,7 @@ def prove(work, flavor, library):
     try:
         initial = invoke(resident)
         assert 'error' not in initial, initial
-        native(output, work / 'diagnostic', expected, library)
+        run_native(output, work / 'diagnostic', expected, library)
         before = artifacts(output)
         manifest = (output / 'manifest.json').read_bytes()
 
@@ -164,13 +166,13 @@ def prove(work, flavor, library):
         fresh_result = fresh_build(app, fresh_output)
         assert 'error' not in fresh_result, fresh_result
         assert artifacts(output) == artifacts(fresh_output) == before
-        native(output, work / 'recovered', expected, library)
+        run_native(output, work / 'recovered', expected, library)
 
         source_edit(main_path, good.replace('= 91;', '= 91; echo "E";'))
         edited = invoke(resident)
         assert edited['preparation']['prepared'] == 1, edited
         assert [Path(path).name for path in edited['emitted_sources']] == [main_path.name], edited
-        native(output, work / 'edited', (0, b'E' + expected[1], b''), library)
+        run_native(output, work / 'edited', (0, b'E' + expected[1], b''), library)
         source_edit(main_path, good)
         assert 'error' not in invoke(resident) and artifacts(output) == before
 
@@ -195,7 +197,9 @@ def prove(work, flavor, library):
                     + base + ' { return 3; }')
         guard = invoke(resident)
         assert 'error' not in guard, guard
-        native(output, work / 'guard', (1, b'', b'division_by_zero\n'), library)
+        run_native(output, work / 'guard', (1, b'', b'division_by_zero\n'), library)
+        if quick:
+            return
 
         factory_call = {
             'cpp': 'Exception::make',
@@ -208,12 +212,12 @@ def prove(work, flavor, library):
                     f' {{ try {{ throw {factory_call}("second"); }} finally {{ throw; }} }}')
         nested = invoke(resident)
         assert 'error' not in nested, nested
-        native(output, work / 'nested', (1, b'', b'first\n'), library)
+        run_native(output, work / 'nested', (1, b'', b'first\n'), library)
 
         source_edit(main_path, prefix + 'throw ' + factory_call + '("original\\0message");')
         factory = invoke(resident)
         assert 'error' not in factory, factory
-        native(output, work / 'factory', (1, b'', b'original\0message\n'), library)
+        run_native(output, work / 'factory', (1, b'', b'original\0message\n'), library)
 
         constructor = 'RootFailure' if flavor == 'php' else 'Exception'
         message = s['function']('message', 'string', [], 'echo "M";return "original\\0message";')
@@ -221,7 +225,7 @@ def prove(work, flavor, library):
         source_edit(main_path, construction)
         constructed = invoke(resident)
         assert 'error' not in constructed, constructed
-        native(output, work / 'constructed', (1, b'M', b'original\0message\n'), library)
+        run_native(output, work / 'constructed', (1, b'M', b'original\0message\n'), library)
         before = artifacts(output)
         manifest = (output / 'manifest.json').read_bytes()
 
@@ -244,14 +248,14 @@ def prove(work, flavor, library):
         source_edit(main_path, declaration + f'try {{ throw {v}empty_failure; }} ' + base + ' { return 3; }')
         absent = invoke(resident)
         assert 'error' not in absent, absent
-        native(output, work / 'absent', (1, b'', b'absent_exception\n'), library)
+        run_native(output, work / 'absent', (1, b'', b'absent_exception\n'), library)
 
         shadow = klass('Exception', field('shadow_marker', 'int', '7'))
         source_edit(main_path, shadow + s['infer']('local', 'new Exception()')
                     + f'echo {member("local", "shadow_marker")};return 0;')
         local = invoke(resident)
         assert 'error' not in local, local
-        native(output, work / 'shadow-constructor', (0, b'7', b''), library)
+        run_native(output, work / 'shadow-constructor', (0, b'7', b''), library)
 
         source_edit(main_path, klass('Exception') + 'throw new Exception();')
         shadowed = invoke(resident)
@@ -262,10 +266,13 @@ def prove(work, flavor, library):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     os.environ['XDEBUG_MODE'] = 'off'
     with tempfile.TemporaryDirectory() as directory:
         work = Path(directory)
-        library = runtime(work, 'clang++')
-        for flavor in ['cpp', 'php', 'js']:
-            prove(work / flavor, flavor, library)
+        library = Path(__file__).resolve().parents[2]/'build/clang/libscpp_runtime.a' if quick else runtime(work, 'clang++')
+        for flavor in (['php'] if quick else ['cpp', 'php', 'js']):
+            prove(work / flavor, flavor, library, quick, partial(native, cxx_flags=('-stdlib=libc++',) if quick else ()))
             print(f'{flavor}: diagnostic identity, original location, and ancestry recovery passed', flush=True)

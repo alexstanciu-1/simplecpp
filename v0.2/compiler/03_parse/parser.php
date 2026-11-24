@@ -12,6 +12,12 @@ interface statement_grammar {
 	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration;
 }
 
+/** Names recognized only in expression position immediately before an opening brace. */
+enum keyword_block: string
+{
+	case parallel = 'parallel';
+}
+
 /** Shared syntax construction; flavor grammars select declaration and assignment intent. */
 final class Parser
 {
@@ -1444,16 +1450,21 @@ final class Parser
 		$this->cursor->take(token_kind::lbracket, '[');
 		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 		$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-		if ($terminator === token_kind::newline && ($index === null || !$this->cursor->is(token_kind::assign))) {
+		if ($terminator === token_kind::newline && ($index === null || (!$this->cursor->is(token_kind::assign) && !$this->cursor->is(token_kind::dot)))) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python indexed write requires one key and =');
 		}
 		if ($index !== null && $this->cursor->is(token_kind::lbracket)) {
-			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end));
+			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end), $terminator);
 		}
 		if ($index !== null && (($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lparen)) || $this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
 			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), false);
-			if ($target instanceof ast_qualified_data) return $this->property_write($target);
+			if ($target instanceof ast_field_expression && $terminator === token_kind::newline) {
+				$this->cursor->take(token_kind::assign, '= after Python field');
+				$value = $this->assignment_value();
+				return new ast_field_assignment($target, $value, $this->statement_end($terminator));
+			}
+			if ($target instanceof ast_qualified_data || $target instanceof ast_field_expression) return $this->property_write($target);
 			if ($target instanceof ast_call_expression) return $this->call_statement($target);
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 		}
@@ -1743,10 +1754,142 @@ final class Parser
 		return new ast_await_expression($start, $call);
 	}
 
+	/** Contextual expression introducers. Ordinary names and calls keep their normal grammar. */
+	private function keyword_block_start(): ?keyword_block
+	{
+		$c = $this->cursor;
+		if (!$c->is(token_kind::identifier) || $c->tokens->source->flavor === flavor::python) return null;
+		$kind = keyword_block::tryFrom($c->tokens->text_at($c->position()));
+		if ($kind === null || $c->next_is(token_kind::lbrace)) return $kind;
+		if (!$c->next_is(token_kind::lparen)) return null;
+		// A settings list belongs to a block only when its closing parenthesis precedes a brace.
+		$depth = 1;
+		for ($i = $c->position() + 2; isset($c->tokens->tokens[$i]); ++$i) {
+			$token = $c->tokens->tokens[$i]->kind;
+			if ($token === token_kind::lparen) ++$depth;
+			if ($token !== token_kind::rparen) continue;
+			--$depth;
+			if ($depth === 0) return ($c->tokens->tokens[$i + 1]->kind ?? null) === token_kind::lbrace ? $kind : null;
+		}
+		return null;
+	}
+
+	/** Only the introducer is shared. Each block parser owns its contents and builds its own expression. */
+	private function keyword_block(keyword_block $kind): ast_expression
+	{
+		$start = $this->cursor->take(token_kind::identifier, $kind->value);
+		return match ($kind) {
+			keyword_block::parallel => $this->parallel_body($start),
+		};
+	}
+
+	/** Read group settings and the ordered entries submitted together. */
+	private function parallel_body(int $start /** uint32 */): ast_parallel_expression
+	{
+		$jobs = [];
+		$c = $this->cursor;
+		$workers = null;
+		if ($c->is(token_kind::lparen)) {
+			$c->take(token_kind::lparen, '(');
+			if ($c->name(token_kind::identifier) !== 'workers') throw new diagnostic($c->tokens->source, $c->offset(), 'Expected group workers setting');
+			$c->take(token_kind::colon, ': after workers');
+			$workers = $this->value();
+			$c->take(token_kind::rparen, ') after group workers');
+		}
+		$c->take(token_kind::lbrace, '{');
+		while (!$c->is(token_kind::rbrace)) {
+			if ($c->is(token_kind::identifier) && $c->tokens->text_at($c->position()) === 'job'
+				&& $c->next_is(token_kind::lparen) && ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::colon) {
+				$jobs[] = $this->inline_job();
+				continue;
+			}
+			if (!$this->names->call_start()) throw new diagnostic($c->tokens->source,
+				$c->offset(), 'Expected worker call or } in parallel block');
+			$jobs[] = $this->call();
+			$c->take(token_kind::semicolon, '; after parallel worker call');
+		}
+		$end = $c->take(token_kind::rbrace, '}') + 1;
+		return new ast_parallel_expression($start, $end, $jobs, $workers);
+	}
+
+	/** Binding expressions belong to the caller; only their aliases enter the worker body. */
+	private function inline_job(): ast_inline_job
+	{
+		$c = $this->cursor;
+		$start = $c->take(token_kind::identifier, 'job');
+		$c->take(token_kind::lparen, '(');
+		$parameters = [];
+		$inputs = [];
+		$binding_kinds = [];
+		$iteration = null;
+		$outer_arrow = $this->arrow;
+		do {
+			if ($parameters !== []) $c->take(token_kind::comma, ',');
+			$at = $c->position();
+			$kind = $c->name(token_kind::identifier);
+			if ($kind === 'workers') {
+				if ($binding_kinds !== ['each'] || $inputs[0] instanceof ast_job_repetition)
+					throw new diagnostic($c->tokens->source, $c->offset(), 'Job workers must appear once, immediately after each');
+				$c->take(token_kind::colon, ': after workers');
+				// The cap is evaluated outside the iteration scope, like the bound.
+				$index_arrow = $this->arrow;
+				$this->arrow = $outer_arrow;
+				try {
+					$workers = $this->value();
+				} finally {
+					$this->arrow = $index_arrow;
+				}
+				$inputs[0] = new ast_job_repetition($inputs[0], $workers);
+				continue;
+			}
+			if (!in_array($kind, ['read', 'write', 'value', 'each'], true)) throw new diagnostic($c->tokens->source,
+				$c->tokens->tokens[$at]->offset, 'Expected each, read, write or value in inline job');
+			$binding_kinds[] = $kind;
+			$c->take(token_kind::colon, ': after binding kind');
+			$at = $c->position();
+			$name = $c->binding_name($c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
+			$parameters[] = new ast_parameter_declaration($name, null, count($parameters), $at, $c->position());
+			if ($kind === 'each') {
+				if (count($parameters) !== 1) throw new diagnostic($c->tokens->source, $c->offset(), 'each must be the first job clause');
+				$iteration = $this->lexical->produced_binding($name, $at, false);
+				if ($c->keyword('in')) $c->take_keyword('in');
+				elseif ($c->name(token_kind::identifier) !== 'in') throw new diagnostic($c->tokens->source, $c->offset(), 'Expected in after each index');
+				$zero = $c->take(token_kind::integer, '0 before ..<');
+				if ($c->tokens->text_at($zero) !== '0') throw new diagnostic($c->tokens->source, $c->offset(), 'each ranges start at zero');
+				$c->take(token_kind::dot, '..<');
+				$c->take(token_kind::dot, '..<');
+				$c->take(token_kind::less, '..<');
+			} else $c->take(token_kind::assign, '= before binding expression');
+			$inputs[] = $this->value();
+			if ($kind === 'each' && $outer_arrow !== null) {
+				// Supply the index locally while forwarding other capture requests to the enclosing arrow.
+				$this->arrow = new Arrow_Captures([$parameters[0]], $outer_arrow, $this->lexical);
+			}
+		} while ($c->is(token_kind::comma));
+		$this->arrow = $outer_arrow;
+		$c->take(token_kind::rparen, ') after job bindings');
+		$outer = $this->lexical;
+		$arrow = $this->arrow;
+		$names = $this->lambda_names;
+		$this->arrow = null;
+		$this->lambda_names = null;
+		$collector = new Body_Collection($this->root->scope, $parameters);
+		try {
+			$body = $this->lexical_block($this->grammar(), $collector, '{ before inline job body', $collector);
+		} finally {
+			$this->lexical = $outer;
+			$this->arrow = $arrow;
+			$this->lambda_names = $names;
+		}
+		return new ast_inline_job(new ast_lambda_expression($start, $parameters, null, $body), $inputs, $binding_kinds, $iteration);
+	}
+
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(bool $argument_operand = false): ast_expression
 	{
 		$c = $this->cursor;
+		$block = $this->keyword_block_start();
+		if ($block !== null) return $this->keyword_block($block);
 		if ($c->keyword('await')) return $this->await_expression();
 		if ($c->tokens->source->flavor === flavor::php && $c->keyword('function')) return $this->lambda_expression(true);
 		if ($c->tokens->source->flavor !== flavor::python && $this->lambda_start($argument_operand)) return $this->lambda_expression();
@@ -1996,7 +2139,7 @@ final class Parser
 	private function expression_statement_start(): bool
 	{
 		$flavor = $this->cursor->tokens->source->flavor;
-		return $this->names->call_start() || $this->cursor->is(token_kind::lparen) || ($this->cursor->is(token_kind::keyword)
+		return $this->keyword_block_start() !== null || $this->names->call_start() || $this->cursor->is(token_kind::lparen) || ($this->cursor->is(token_kind::keyword)
 				&& (in_array($this->cursor->tokens->text_at($this->cursor->position()), ['new', 'lock', 'object_cast', 'match'], true)
 					|| ($this->cursor->next_is(token_kind::lparen) && $this->cursor->keyword('weak'))))
 			|| ($flavor !== flavor::cpp && $this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)

@@ -161,7 +161,7 @@ final class Tokenizer
 					throw new diagnostic($source, $start, 'Expected exponent digits');
 				}
 				$next = $source->content[$end] ?? '';
-				if (($next === '.') || self::letter($next) || ($prefixed && $next >= '0' && $next <= '9')) {
+				if (($next === '.' && substr($source->content, $end, 3) !== '..<') || self::letter($next) || ($prefixed && $next >= '0' && $next <= '9')) {
 					throw new diagnostic($source, $start, 'Unsupported numeric literal');
 				}
 				$kind = $prefixed || strpbrk($word, '.eE') === false ? token_kind::integer : token_kind::floating;
@@ -252,7 +252,7 @@ REGEX;
 				flavor::cpp, flavor::python => '[A-Za-z_][A-Za-z_0-9]*+',
 				flavor::js => '[A-Za-z_$][A-Za-z_$0-9]*+',
 		};
-		$numbers = '0[xX][0-9a-fA-F]*+|0[oO][0-7]*+|(?:[0-9]++(?:\.[0-9]*+)?|\.[0-9]++)(?:[eE][+-]?[0-9]*+)?';
+		$numbers = '0[xX][0-9a-fA-F]*+|0[oO][0-7]*+|(?:[0-9]++(?:\.(?!\.)[0-9]*+)?|\.[0-9]++)(?:[eE][+-]?[0-9]*+)?';
 		return self::$patterns[$flavor->value] = '~(?:' . $trivia . '|' . $strings . '|' . $names . '|'
 			. $numbers . '|' . implode('|', $parts) . '|["\'][\s\S]*+\z|[\s\S])~u';
 	}

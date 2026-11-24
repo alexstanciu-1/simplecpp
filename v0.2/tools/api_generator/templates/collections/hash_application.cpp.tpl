@@ -6,6 +6,7 @@ public:
 @section_declaration@
 @section_append_declaration@
 private:
+@section_private_declaration@
     struct storage;
     storage* storage_ = nullptr;
 };

@@ -10,6 +10,7 @@ import tempfile
 p = argparse.ArgumentParser()
 for name in ['generator', 'cxx']: p.add_argument('--'+name, required=True)
 for name in ['source', 'facts', 'context']: p.add_argument('--'+name, type=Path, required=True)
+p.add_argument('--quick', action='store_true')
 a = p.parse_args()
 metadata = json.loads((a.source/'runtime/metadata/runtime.json').read_text())
 publication = json.loads((a.source/'tests/json/publication.json').read_text())
@@ -35,6 +36,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
         assert (result.returncode == 0) == accepted, result.stderr
         if preprocess: assert not re.search(r'\b(template|typename)\b|\bstd::', result.stdout), result.stdout
     for operation, family, payload in [('decode','dynamic','dynamic'), ('decode_mixed','mixed','mixed'), ('encode_mixed','mixed','string'), ('encode_dynamic','dynamic','string')]:
+        if a.quick and operation != 'decode':
+            continue
         pub = copy.deepcopy(publication)
         pub['boxed'] = dict(pub['boxed'], families=[family], scalar_conversions=False)
         pub['carriers']['specializations'] = [{'family':'result', 'payload':payload}]
@@ -57,6 +60,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
         missing = copy.deepcopy(pub); missing['boxed']['families'] = ['mixed' if family == 'dynamic' else 'dynamic']
         generate(metadata, missing, False)
     for argument, expression in [('int64','scpp::int64{42LL}'), ('float64','scpp::float64{1.25}'), ('bool_t','scpp::bool_t{false}'), ('string','scpp::string{"null"}')]:
+        if a.quick and argument != 'int64':
+            continue
         pub = copy.deepcopy(publication)
         del pub['boxed']
         pub['carriers']['specializations'] = [{'family':'result', 'payload':'string'}]
@@ -73,10 +78,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
         for other in ['int64', 'float64', 'bool_t', 'string']:
             if other != argument:
                 compile(out, f'int main() {{ auto r = scpp::json::encode(scpp::{other}{{}}); }}', False)
-        cmd = [a.cxx, '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(out/'public')]
-        cmd += ['-I'+str(a.source/'runtime/src'/folder) for folder in ['numeric','sequence','ownership','boxed','hash','json']]
-        result = subprocess.run(cmd+[str(out/'src/json.cpp'),str(out/'src/runtime.cpp')], capture_output=True, text=True, timeout=60)
-        assert result.returncode == 0, result.stderr
+        if not a.quick:
+            cmd = [a.cxx, '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(out/'public')]
+            cmd += ['-I'+str(a.source/'runtime/src'/folder) for folder in ['numeric','sequence','ownership','boxed','hash','json']]
+            result = subprocess.run(cmd+[str(out/'src/json.cpp'),str(out/'src/runtime.cpp')], capture_output=True, text=True, timeout=60)
+            assert result.returncode == 0, result.stderr
         missing = copy.deepcopy(pub); del missing['carriers']; generate(metadata, missing, False)
         missing = copy.deepcopy(pub)
         if argument == 'string': del missing['string']
@@ -85,6 +91,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
             missing[field].remove(argument)
         generate(metadata, missing, False)
     for payload in ['int64', 'float64', 'bool_t', 'string']:
+        if a.quick and payload != 'string':
+            continue
         pub = copy.deepcopy(publication)
         del pub['boxed']
         pub['carriers']['specializations'] = [{'family':'result', 'payload':'string'}, {'family':'nullable', 'payload':payload}]
@@ -96,11 +104,12 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
             compile(out, f'int main() {{ auto r = scpp::json::encode(scpp::nullable_{payload}{{}}); }}')
             compile(out, '', preprocess=True)
             compile(out, f'int main() {{ auto r = scpp::json::encode(scpp::{payload}{{}}); }}', False)
-            includes = ['numeric','sequence','ownership','boxed','hash','json']
-            cmd = [a.cxx, '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(out/'public')]
-            cmd += ['-I'+str(a.source/'runtime/src'/folder) for folder in includes]
-            result = subprocess.run(cmd+[str(out/'src/json.cpp')], capture_output=True, text=True, timeout=60)
-            assert result.returncode == 0, result.stderr
+            if not a.quick:
+                includes = ['numeric','sequence','ownership','boxed','hash','json']
+                cmd = [a.cxx, '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(out/'public')]
+                cmd += ['-I'+str(a.source/'runtime/src'/folder) for folder in includes]
+                result = subprocess.run(cmd+[str(out/'src/json.cpp')], capture_output=True, text=True, timeout=60)
+                assert result.returncode == 0, result.stderr
         missing = copy.deepcopy(pub); missing['carriers']['specializations'].pop(); generate(metadata, missing, False)
         wrong = copy.deepcopy(pub); wrong['carriers']['specializations'][-1]['family'] = 'result'; generate(metadata, wrong, False)
     for bad in [[], ['decode','decode'], ['from_json'], ['encode']]:

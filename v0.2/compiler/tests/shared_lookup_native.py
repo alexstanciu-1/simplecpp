@@ -1,4 +1,5 @@
 """Shared hash lookup and guarded previous-generation reuse on Clang."""
+import argparse
 import json
 import re
 import subprocess
@@ -15,7 +16,7 @@ from parent_methods_native import write_app
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def prove(work, flavor, library):
+def prove(work, flavor, library, cxx_flags=()):
     s = fixture(flavor)
     v, a, fn = s['v'], s['access'], s['function']
     previous = s['klass']('Generation', s['field']('scope', '?Node') + s['field']('sources', 'vector<Node>'))
@@ -89,11 +90,11 @@ def prove(work, flavor, library):
                                  'bag->items.set(key,App::owner_Node{});'
                                  'return !bag->items.has(key) || bool(App::lookup_(bag,key));}\n')
                 executable = work / (flavor + '-empty')
-                subprocess.run(['clang++', '-std=c++23', '-I', ROOT/'runtime/generated/public',
+                subprocess.run(['clang++', '-std=c++23', *cxx_flags, '-I', ROOT/'runtime/generated/public',
                                 probe, library, '-o', executable], check=True)
                 subprocess.run([executable], check=True)
             expected = b'KEFEFKA61' if revision == 1 else b'KFFKA61'
-            changed = incremental_native_build(out, work/(flavor+'-native'), 'clang++', library, expected)
+            changed = incremental_native_build(out, work/(flavor+'-native'), 'clang++', library, expected, cxx_flags=cxx_flags)
             if revision == 1:
                 assert changed == {units['choose']} and got['preparation']['prepared'] == 1 and len(got['emitted_sources']) == 1, (changed, got)
             if revision == 4:
@@ -114,9 +115,12 @@ def prove(work, flavor, library):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-shared-lookup-') as directory:
         work = Path(directory)
-        library = runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp'])
-        for flavor in ('cpp', 'php', 'js'):
-            prove(work, flavor, library)
+        library = ROOT/'build/clang/libscpp_runtime.a' if quick else runtime(work, 'clang++', [ROOT/'runtime/generated/src/hash.cpp'])
+        for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
+            prove(work, flavor, library, ("-stdlib=libc++",) if quick else ())
             print(flavor, 'shared lookup, guarded fallback and recovery passed', flush=True)

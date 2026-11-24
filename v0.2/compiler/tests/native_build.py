@@ -225,7 +225,7 @@ def protocol_parity(work, compiler):
     print(f'{Path(compiler).name}: {len(cases)} admission vectors, incomplete indexes and legacy migration passed', flush=True)
 
 
-def native_proof(work, compiler, flavor, runtime=None):
+def native_proof(work, compiler, flavor, runtime=None, *, quick=False):
     work.mkdir(parents=True)
     app, bundle, native = (work/n for n in ('app', 'generated', 'native'))
     app.mkdir(); (app/'module.json').write_text('{}')
@@ -286,6 +286,10 @@ def native_proof(work, compiler, flavor, runtime=None):
         assert failed['exit_code'] != 0 and 'executable' not in failed, failed
         unit.write_text(saved)
         assert build(request)['result']['exit_code'] == 0
+    if quick:
+        executed = run([native/'program'])
+        assert (executed.returncode, executed.stdout) == (8, 'host'), executed
+        return
     with host() as build:
         retained = {**request, 'action':'incremental', 'app':str(app), 'runtime':str(runtime) if runtime else None,
                     'facts':str(ROOT/'build/clang/native-layout/facts.json')}
@@ -430,10 +434,14 @@ def rejected_path(work):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-php-native-') as temporary:
         root = (args.output or Path(temporary)).resolve()
         rejected_path(root/'path-rejection')
+        if args.quick:
+            native_proof(root/'php', 'clang++', 'php', quick=True)
+            return
         for name in ('clang++', 'g++'):
             compiler = shutil.which(name)
             assert compiler, name

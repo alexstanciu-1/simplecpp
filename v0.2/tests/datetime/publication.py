@@ -11,6 +11,7 @@ for name in ['generator','metadata','publication','source','work']:
     parser.add_argument('--'+name,type=Path,required=True)
 parser.add_argument('--cxx',required=True)
 parser.add_argument('--flags',default='')
+parser.add_argument("--quick", action="store_true")
 a = parser.parse_args()
 a.work.mkdir(parents=True,exist_ok=True)
 
@@ -33,6 +34,8 @@ for name, operations, types, strings, carriers, body in [
     ('local-now',['format_local_now'],['int64'],True,False,'return scpp::dt::format_local_now(scpp::string{"x"}).size()!=1;'),
     ('local-parse',['parse_common_local'],['int64'],True,True,'return !scpp::dt::parse_common_local(scpp::string{"1970-01-01T00:00:00Z"}).has_value();'),
 ]:
+    if a.quick and name != "parse":
+        continue
     request=json.loads(json.dumps(p))
     request['types']=types
     request['datetime']['operations']=operations

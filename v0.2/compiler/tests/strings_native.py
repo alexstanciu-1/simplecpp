@@ -24,7 +24,7 @@ def success(result):
     return result
 
 
-def prove(work, fixture_script="strings.php", check_copy=True):
+def prove(work, fixture_script="strings.php", check_copy=True, cases=None):
     work.mkdir(parents=True, exist_ok=True)
     start = time.perf_counter()
     success(run(['php', ROOT / 'compiler/tests' / fixture_script, work / 'fixtures.json']))
@@ -32,6 +32,8 @@ def prove(work, fixture_script="strings.php", check_copy=True):
                'configuration': 'O2/g0, libc++, mold, Ninja -j8, no PCH/LTO; prebuilt runtime; fresh instrumented app objects',
                'builds': {}}
     fixtures = json.loads((work / 'fixtures.json').read_text())
+    if cases:
+        fixtures = {name: fixtures[name] for name in cases}
     for flavor, fixture in fixtures.items():
         directory = work / flavor
         directory.mkdir(exist_ok=True)
@@ -74,8 +76,9 @@ def prove(work, fixture_script="strings.php", check_copy=True):
         command = write_build(directory, units)
         command[2] = '8'
         graph = directory / 'build.ninja'
-        graph.write_text(graph.read_text().replace(' -MD ', ' -ftime-trace -MD '))
-        success(run(['ninja', '-f', 'build.ninja', '-t', 'clean'], directory))
+        if not cases:
+            graph.write_text(graph.read_text().replace(' -MD ', ' -ftime-trace -MD '))
+            success(run(['ninja', '-f', 'build.ninja', '-t', 'clean'], directory))
         start = time.perf_counter()
         build = success(run(command, directory))
         elapsed = (time.perf_counter() - start) * 1000
@@ -86,6 +89,8 @@ def prove(work, fixture_script="strings.php", check_copy=True):
         assert result.returncode == 8 and result.stdout.hex() in allowed, (flavor, result, allowed)
         if 'stderr' in fixture:
             assert result.stderr == fixture['stderr'].encode(), result
+        if cases:
+            continue
         totals = {}
         for path in directory.glob('unit-*.json'):
             for event in json.loads(path.read_text())['traceEvents']:
@@ -100,6 +105,8 @@ def prove(work, fixture_script="strings.php", check_copy=True):
             'llvm_backend_ms': totals['Backend'], 'optimizer_ms': totals.get('Optimizer', 0),
             'codegen_ms': totals.get('CodeGenPasses', 0), 'link_command_ms': int(link[1]) - int(link[0]),
             'stdout_hex': result.stdout.hex(), 'exit': result.returncode, 'copy_independence': check_copy}
+    if cases:
+        return
     (work / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
     print(json.dumps(results, indent=2))
 
@@ -107,10 +114,11 @@ def prove(work, fixture_script="strings.php", check_copy=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
-    parser.add_argument('--fixture', choices=['strings.php', 'strlen.php', 'text_casts.php', 'string_index.php', 'interpolation.php'], default='strings.php')
+    parser.add_argument('--fixture', default='strings.php')
+    parser.add_argument('--cases', nargs='+', help='named native examples for the default regression')
     args = parser.parse_args()
     if args.output:
-        prove(args.output.resolve(), args.fixture, check_copy=args.fixture == 'strings.php')
+        prove(args.output.resolve(), args.fixture, check_copy=args.fixture == 'strings.php', cases=args.cases)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-strings-native-') as directory:
-            prove(Path(directory), args.fixture, check_copy=args.fixture == 'strings.php')
+            prove(Path(directory), args.fixture, check_copy=args.fixture == 'strings.php', cases=args.cases)

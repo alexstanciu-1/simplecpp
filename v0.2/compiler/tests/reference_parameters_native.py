@@ -6,7 +6,7 @@ from collection_goal_native import guard, revisions
 from strings_native import prove
 
 
-def prove_local_aliases(work):
+def prove_local_aliases(work, quick=False):
     """Check that lexical aliases lower to the original storage and never own it."""
     base = """
         $value int = 10;
@@ -33,7 +33,7 @@ def prove_local_aliases(work):
     expected = b'100:23:10:2:8:1'
     target_error = 'Local alias requires a previously initialized named local'
     work.mkdir(parents=True, exist_ok=True)
-    revisions(work, 'php', dict(main=main, worker=worker), [
+    edits = [
         (None, None, expected),
         (None, None, expected),
         ('worker', worker.replace('3', '4'), b'100:24:10:2:8:1'),
@@ -50,7 +50,10 @@ def prove_local_aliases(work):
         ('worker', None, None),
         ('main', main, 'Unknown function: bump'),
         ('worker', worker, expected),
-    ])
+    ]
+    # Exercise caller storage, an invalid alias, closure capture, then recovery.
+    selected = [edits[0], edits[8], edits[10], edits[12], ('main', main, expected)] if quick else edits
+    revisions(work, 'php', dict(main=main, worker=worker), selected)
     generated = '\n'.join(p.read_text() for p in (work / 'php-out').rglob('*.cpp'))
     assert all(label not in generated for label in ('var_alias_', 'var_inside_', 'var_vectorAlias_'))
 
@@ -266,9 +269,12 @@ def prove_indexed_arguments(work):
         guard(work, 'php', label, source, 'hash_missing_key', expected_stdout=b'1:41')
 
 
-def run(work):
-    prove(work, 'reference_parameters.php', check_copy=False)
-    prove_local_aliases(work / 'aliases')
+def run(work, quick=False):
+    prove(work, 'reference_parameters.php', check_copy=False, cases=['php', 'multifile'] if quick else None)
+    prove_local_aliases(work / 'aliases', quick)
+    if quick:
+        prove_indexed_arguments(work / 'indexed-arguments')
+        return
     prove_reference_returns(work / 'returns')
     prove_forwarding(work / 'forwarding')
     prove_method_returns(work / 'methods')
@@ -278,9 +284,10 @@ def run(work):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
     if args.output:
-        run(args.output.resolve())
+        run(args.output.resolve(), args.quick)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-reference-parameters-native-') as directory:
-            run(Path(directory))
+            run(Path(directory), args.quick)

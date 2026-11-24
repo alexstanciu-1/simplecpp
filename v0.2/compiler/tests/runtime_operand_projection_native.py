@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import subprocess
+import argparse
 import tempfile
 
 from collection_goal_native import revisions
@@ -63,11 +64,14 @@ def expected(cases):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     edited = [*CASES, ('R', ['B'], 'qualified', True)]
     original, changed = expected(CASES), expected(edited)
     assert original == b'0:;2:AB;1:R;3:RAB;2:BA;1:B;1:A;'
     with tempfile.TemporaryDirectory(prefix='scpp-runtime-operands-') as directory:
-        for flavor in ('cpp', 'php', 'js'):
+        for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
             sources = fixture(flavor, CASES)
             revisions(Path(directory), flavor, sources, [
                 (None, None, original), ('main', fixture(flavor, edited)['main'], changed),

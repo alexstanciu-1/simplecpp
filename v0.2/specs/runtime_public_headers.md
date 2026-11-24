@@ -155,3 +155,19 @@ Append promotes to private heap storage when the result exceeds 22 bytes.
 Clear and moved-from values use the empty inline form. Both forms pass borrowed
 bytes to the runtime through a private view. The layout change requires a
 coordinated rebuild of native consumers and runtime archives.
+
+## Joined segment lowering
+
+Ordinary generated units, including vector consumers, have no MT header dependency.
+With MT enabled, vector and hash declarations forward-declare the launch job for private
+storage access. A worker or helper that takes a segment uses `scpp/mt_segment.hpp`
+for checked vector indexing, live hash traversal and counting. The same header declares the two-integer
+`segment_range` and the `balanced_range` helper. Its only includes are `stddef.h` and `stdint.h`.
+A unit lowering `mt_join` uses `scpp/mt_segments.hpp`, which includes the segment
+header and declares the job descriptor, borrow operations and joined call.
+Batches with a per-entry cap also supply the iteration count and worker limit for each written entry.
+Admission validates the whole batch before dispatch. For each hash backing it
+sorts the granted logical endpoints and walks the live bitmap once up to the
+last endpoint. Workers receive physical bounds and borrow keys and values
+directly from storage. Pool state, synchronization and failure handling live
+in the runtime source.

@@ -35,6 +35,12 @@ Mutable reference binding and assignment to constants reject during preparation.
 Named constant parameter defaults, inferred/local constants
 and text conversions remain deferred.
 
+Joined segment workers and their checked helpers can read declared numeric and
+boolean constants, including folded integer expressions, struct constants and
+published runtime integer constants. MT safety checks the resolved declaration.
+A mutable global with the same initializer still requires a global storage read
+and is rejected.
+
 ## Public struct constants
 
 PHP `public const int LIMIT = 2;`, C++ `static constexpr int LIMIT = 2;` and JS

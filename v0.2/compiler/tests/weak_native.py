@@ -178,10 +178,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--memcheck', action='store_true')
     parser.add_argument('--output', type=Path)
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as tmp:
         work = (args.output or Path(tmp)).resolve()
         work.mkdir(exist_ok=True)
-        for flavor in ('php', 'cpp', 'js'):
+        for flavor in (('php',) if args.quick else ('php', 'cpp', 'js')):
             prove(work, flavor, args.memcheck)
             print(flavor, 'passed', flush=True)

@@ -174,10 +174,16 @@ def main():
     parser.add_argument("--source", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--work", type=Path, required=True)
     parser.add_argument("--capture", type=Path, help="explicitly write a new reviewed contract snapshot; never used by CTest")
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
+    if args.quick and args.capture:
+        parser.error("snapshot capture requires the full corpus")
     args.work.mkdir(parents=True, exist_ok=True)
     corpus = cases(args.source.resolve())
     require(len({case.name for case in corpus}) == len(corpus), "duplicate case name")
+    names = {case.name for case in corpus}
+    if args.quick:
+        corpus = [case for case in corpus if case.name in {"default", "ownership", "unknown_root"}]
     snapshot = {"format": 1, "cases": {}}
     with tempfile.TemporaryDirectory(prefix="parity-", dir=args.work) as temporary:
         root = Path(temporary)
@@ -204,7 +210,7 @@ def main():
         expected = json.loads(Path(__file__).with_name("baseline.json").read_text())
         require(expected["target_facts"] == snapshot["target_facts"],
                 "native facts differ from the G1 fixture; use a reviewed target-specific baseline, never silently recapture")
-        require(expected["cases"].keys() == snapshot["cases"].keys(), "parity corpus changed without baseline review")
+        require(expected["cases"].keys() == names, "parity corpus changed without baseline review")
         for name, case in snapshot["cases"].items():
             # CLI summaries are now structured JSON. Diagnostics retain failure status,
             # not C++ wording. Artifact bytes and prepared facts are unchanged.

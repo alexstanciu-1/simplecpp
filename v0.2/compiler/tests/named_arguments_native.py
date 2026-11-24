@@ -7,7 +7,7 @@ from collection_goal_native import guard, revisions
 from protected_static_native import sources as static_sources
 
 
-def prove(work, flavor):
+def prove(work, flavor, quick=False):
     forms = fixture(flavor)
     fn, v = forms['function'], forms['v']
     difference = fn('difference', 'int', [('left', 'int'), ('right', 'int')],
@@ -34,6 +34,9 @@ def prove(work, flavor):
         ('target', difference.replace('right', 'offset'), 'Unknown named argument: right'),
         ('main', main.replace('right:', 'offset:'), answer),
     ], unaffected_source='plain.' + flavor, unaffected_revisions={9})
+
+    if quick:
+        return
 
     if flavor == 'php':
         runtime = work / 'runtime'
@@ -191,6 +194,13 @@ def prove_late_static(work, flavor):
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--quick', action='store_true')
+    if parser.parse_args().quick:
+        with TemporaryDirectory(prefix='scpp-named-arguments-') as tmp:
+            prove(Path(tmp), 'php', quick=True)
+        raise SystemExit(0)
     with TemporaryDirectory(prefix='scpp-named-arguments-') as tmp:
         for flavor in ('php', 'cpp', 'js'):
             prove(Path(tmp), flavor)

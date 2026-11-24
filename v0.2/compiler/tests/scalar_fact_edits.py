@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import subprocess
+import argparse
 import tempfile
 
 from classes_native import fixture
@@ -38,6 +39,9 @@ def prove(work, flavor):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-scalar-facts-') as tmp:
-        for flavor in ('php', 'cpp', 'js'):
+        for flavor in (('php',) if quick else ('php', 'cpp', 'js')):
             prove(Path(tmp), flavor)

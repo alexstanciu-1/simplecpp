@@ -1,6 +1,7 @@
 """Raw byte arrays, aggregate frame budget and bounds, through all three source flavors."""
 import json
 import subprocess
+import argparse
 import tempfile
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from extends_regressions import forms
 from structs_native import build
 
 
-def prove(work, flavor):
+def prove(work, flavor, quick=False):
     v, access, record, field, _, local, infer = forms(flavor)
     app = work / flavor
     app.mkdir()
@@ -109,7 +110,7 @@ def prove(work, flavor):
         assert 'error' not in (result := invoke(resident)), result
         build(output, work / ('zero-' + flavor), b'01')
         rhs = {'php': 'function tick():int', 'js': 'function tick():int', 'cpp': 'int tick()'}[flavor] + ' { echo "R"; return 7; }'
-        for index in ('-1', '4', '4294967296', '9223372036854775807', '(-9223372036854775807-1)'):
+        for index in (('-1', '4') if quick else ('-1', '4', '4294967296', '9223372036854775807', '(-9223372036854775807-1)')):
             access_statement = (f'{path}[0][{index}]=tick();' if index in ('-1', '4294967296') else f'echo (int){path}[0][{index}];')
             source_edit(main, rhs + local('box', 'Envelope') + access_statement + ' return 8;')
             assert 'error' not in (result := invoke(resident)), result
@@ -123,7 +124,7 @@ def prove(work, flavor):
         resident.stdin.close()
 
 
-def named_extents(work, flavor):
+def named_extents(work, flavor, quick=False):
     v, access, record, field, _, local, _ = forms(flavor)
     sep = {'php': '\\', 'cpp': '::', 'js': '.'}[flavor]
 
@@ -142,7 +143,7 @@ def named_extents(work, flavor):
     main = local('box', 'Envelope') + f'echo count({v}box{access}packet{access}bytes),localSize(); return 8;'
     sources = dict(main=main, local_size=local_size, units=units(2), sizes='namespace Sizes {' + prefix + size + '}',
                    packet=f'use const Sizes{sep}PAGE_SIZE as CAP;' + packet, envelope=envelope)
-    revisions(work, flavor, sources, [
+    edits = [
         (None, None, b'44'),
         (None, None, b'44'),
         ('units', units(3), b'66'),
@@ -152,13 +153,17 @@ def named_extents(work, flavor):
         ('sizes', 'namespace Sizes {' + constant('PAGE_SIZE', 'true', 'bool') + '}', 'requires a namespace integer constant'),
         ('sizes', None, 'requires a namespace integer constant'),
         ('sizes', sources['sizes'], b'00'),
-    ])
+    ]
+    revisions(work, flavor, sources, [edits[i] for i in (0, 2, 3, 5)] if quick else edits)
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-fixed-array-') as tmp:
         named = Path(tmp) / 'named'
         named.mkdir()
-        for language in ('php', 'cpp', 'js'):
-            named_extents(named, language)
-            prove(Path(tmp), language)
+        for language in (('php',) if quick else ('php', 'cpp', 'js')):
+            named_extents(named, language, quick)
+            prove(Path(tmp), language, quick)

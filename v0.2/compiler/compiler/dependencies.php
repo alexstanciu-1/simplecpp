@@ -65,7 +65,7 @@ final class Dependency_Watches
 	private ?Called_Methods $called_method_cache = null;
 
 	/** CONSTRUCTOR */
-	public function __construct()
+	public function __construct(public readonly ?mt_worker_roots $mt = null)
 	{
 		$this->observers = new \SplObjectStorage();
 		$this->targets = new \SplObjectStorage();
