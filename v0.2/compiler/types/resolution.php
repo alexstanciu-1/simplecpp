@@ -49,7 +49,7 @@ final class Type_Resolution
 		?Dependency_Watches $dependencies, bool $allow_void = false, ?dependency_watcher $watcher = null): ?type_definition
 	{
 		$watcher ??= $function;
-		if ($syntax->name === 'function' && $syntax->first_child !== null && !$function->has_receiver()) {
+		if ($syntax->name === 'function' && $syntax->first_child !== null) {
 			$parameter = $syntax->parent;
 			$is_parameter = $parameter instanceof ast_parameter_declaration && $parameter->parent === $function;
 			if ($is_parameter && ($parameter->mode !== passing_mode::value || $parameter->default_value !== null)) {
