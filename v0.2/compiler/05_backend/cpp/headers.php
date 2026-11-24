@@ -32,6 +32,10 @@ final class Cpp_Headers
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
 				if ($node instanceof ast_enum_declaration) $uses = dependency_use::ordered_uses;
+				elseif ($node instanceof ast_function_declaration && $node->is_constructor()) {
+					if ($node->parent->is_final || count($node->parameters) < 2) continue;
+					$uses = [dependency_use::reordered_base];
+				}
 				elseif ($node instanceof ast_function_declaration && $node->is_async) {
 					$uses = [dependency_use::async_wait, dependency_use::async_task];
 					if ($program->session?->group_async_methods) {
@@ -348,6 +352,13 @@ final class Cpp_Headers
 		foreach ($file->declaration_nodes as $record) {
 			if (!($record instanceof ast_type_declaration)) continue;
 			$header = $record instanceof ast_enum_declaration ? hash('sha256', 'enum:' . $record->symbol_key()) . '.hpp' : self::record_header($record);
+			if ($record instanceof ast_record_declaration && !$record->is_final && count($record->methods['__construct']->parameters ?? []) > 1) {
+				// A foreign base initializer can add or retire the constructor's staged entry point.
+				$layout = hash('sha256', "layout\0" . $record->symbol_key()) . '.hpp';
+				foreach ([$header, $layout] as $path) {
+					if (($this->files['units/' . $path] ?? null) !== ($previous->files['units/' . $path] ?? null)) return true;
+				}
+			}
 			if ($record instanceof ast_enum_declaration && ($this->files['units/' . $header] ?? null) !== ($previous->files['units/' . $header] ?? null)) return true;
 			if (isset($this->declarations[$record->symbol_key()]) !== isset($previous->files['units/' . $header])) {
 				return true;

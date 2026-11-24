@@ -20,6 +20,7 @@ enum dependency_use: int
 	case enum_value = 4;
 	case async_wait = 16;
 	case async_task = 32;
+	case reordered_base = 64;
 	case enum_try_from_value = 8;
 
 	public const array ordered_uses /** dependency_use[] */ = [self::enum_from_value, self::enum_name, self::enum_value, self::enum_try_from_value];

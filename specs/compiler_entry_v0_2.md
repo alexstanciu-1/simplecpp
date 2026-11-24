@@ -189,9 +189,14 @@ locals cannot duplicate names. PHP bare writes to parameters are assignments,
 not inferred declarations. Parameters are initialized on entry, with unknown
 caller values during body preparation, and are mutable local storage. Value parameters own copies; explicit references bind caller storage.
 
-Positional calls can omit a trailing suffix with declared defaults. Direct calls to
-source functions, directly resolved instance methods and static methods qualified by explicit type name, lexical self,
-lexical parent, called type or an expression's declared type accept labels when all parameters are by value.
+Positional calls can omit a trailing suffix with declared defaults. Fixed source signatures
+accept named arguments on free functions, instance and static methods, and explicit
+construction. A virtual or interface call takes names from the declaration selected
+by the receiver's declared type. Dispatch may invoke an override with different names.
+An explicit ancestor call uses the selected ancestor declaration. Static lookup
+uses the explicit, lexical, called or expression-qualified type as appropriate.
+Direct, inline, explicit base and late-bound construction use the effective source
+constructor's parameters, including inherited names and defaults.
 An instance call evaluates its receiver once and retains it through the call, before evaluating arguments. PHP, C++ and JS
 use `difference(right: nextRight(), left: nextLeft())`. Python uses
 `difference(right=nextRight(), left=nextLeft())`. Positional arguments can precede
@@ -200,7 +205,10 @@ defaulted parameter. Unknown labels, duplicate bindings and positional arguments
 after a label receive a diagnostic. A parameter rename invalidates callers that
 use names on that declaration. Each supplied argument
 is evaluated once, left to right, and its destination conversion completes before
-the next argument starts. Converted values are preserved for invocation. A failure
+the next argument starts. A named writable or read-only reference follows the
+same storage and default rules as its positional equivalent. A reference-returning
+call retains the origin of the actual bound to the declared return-origin parameter.
+Converted values are preserved for invocation. A failure
 stops later argument evaluation and callee entry; earlier effects remain. Strings
 have owning value semantics: parameter reassignment cannot mutate caller storage,
 and returned strings remain valid after the callee exits.
@@ -227,8 +235,8 @@ parameter names do not affect positional callers. Signature changes invalidate
 observers, while body-only changes retain them. New signatures never require
 copying a foreign AST or creating a second prepared signature model.
 
-Named arguments on virtual or interface-dispatched methods, constructors and runtime calls, variadics, read-only references, reference returns, overloads, signature inference,
-first-class callables, methods and trailing parameter/argument commas are deferred.
+Label binding for variadic signatures, runtime calls and calls through callable values
+remains deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
 ### Named callbacks

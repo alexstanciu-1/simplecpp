@@ -36,10 +36,10 @@ and returns as ordinary struct methods. PHP and C++ call `Type::method(args)`; J
 `Type.method(args)`. In JS a visible local or parameter selects instance lookup first.
 Where a namespace function and a static method share the same written C++ or JS path,
 the existing namespace function takes precedence. An explicit type name admits named arguments
-on static methods with by-value parameters, including inherited methods. For example,
+on static methods with fixed value or supported reference parameters, including inherited methods. For example,
 `Child::make(count: first(), offset: second())` binds labels against the selected declaration,
 evaluates and converts `first()` before `second()`, and passes the results in parameter order.
-The same by-value label rules apply to lexical static calls. Lookup starts at the declaring
+The same label rules apply to lexical static calls. Lookup starts at the declaring
 type for PHP `self::`, C++ `Self::` and JS `class.`, or at its immediate base for
 PHP `parent::`, C++ `Parent::` and JS `super.`. Labels bind to the selected declaration.
 A call from an inherited static body forwards its current called type, including through
@@ -79,7 +79,7 @@ static methods require `::` in this slice.
 
 `$object::method(args)` and `produce()::method(args)` select a fixed static method
 from the qualifier's declared concrete class/struct type, not its runtime class.
-A named call with by-value parameters binds each label to that selected declaration.
+A named call with fixed parameters binds each label to that selected declaration.
 For example, if `produce()` returns a `Child` through its declared type `Base`,
 `produce()::make(count: first(), offset: second())` uses the parameter names and
 positions of the method selected through `Base`.

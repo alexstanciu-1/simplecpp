@@ -119,7 +119,10 @@ argument/default/conversion and return rules. Defaults are not a second method-s
 mechanism. Constructor-specific `set:` inputs remain constructor-only. The bounded
 implementation admits value/void and bounded same-origin reference returns. Overloads, inheritance/virtual dispatch and
 bound callable values remain separate slices, not implicit support from this contract.
-In v0.2, directly resolved instance methods with by-value parameters accept named arguments.
+Named arguments on fixed instance signatures use the receiver's visible method
+declaration, including virtual and interface contracts. An explicit ancestor method
+call takes its names from that ancestor lookup. Override parameter names may differ.
+Supported writable and read-only parameters retain their usual storage requirements.
 The compiler evaluates the receiver once before the written arguments, retains it through invocation,
 and applies the [ordinary label binding and conversion rules](compiler_entry_v0_2.md#typed-value-parameters-and-returns). Static calls now have their own bounded
 [contract](static_members_v0_2.md) on the same method/callable foundation.

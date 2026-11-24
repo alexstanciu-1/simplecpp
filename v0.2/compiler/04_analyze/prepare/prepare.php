@@ -1376,6 +1376,7 @@ final class Preparation
 				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
 			}
 			if ($payload instanceof type_exception) {
+				if ($syntax->named !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 				$factory = $payload->factory;
 				if (count($syntax->arguments) !== count($factory->parameters)) {
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Argument count mismatch for Exception constructor');
@@ -1976,9 +1977,6 @@ final class Preparation
 					}
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
 					$interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
-					if ($call instanceof ast_named_call && ($method->has_virtual_dispatch() || $interface_dispatch)) {
-						throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
-					}
 					if ($static !== $method->is_static) {
 						$message = $static ? 'Expression-qualified call requires a static method: ' : 'Static method requires a type-qualified call: ';
 						throw new diagnostic($call->source(), $call->byte_start(), $message . $method->name());
@@ -2031,7 +2029,7 @@ final class Preparation
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
-			if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+			if ($call instanceof ast_named_call && $class === null) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
 				$this->ambiguous_construction($call);
@@ -2192,9 +2190,6 @@ final class Preparation
 			if ($required) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $qualified);
 			return false;
 		}
-		if ($call instanceof ast_named_call && !$method->is_static) {
-			throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
-		}
 		if (!$method->is_static && !$late && $record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
 			$this->ancestor_call($call, $name, $record->definition, $initializing, $symbol);
 			return true;
@@ -2238,7 +2233,6 @@ final class Preparation
 			$this->source_call($call, $symbol, $method, $initializing, called: $lookup);
 			return;
 		}
-		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 		if ($this->in_lambda) throw new diagnostic($call->source(), $call->byte_start(), 'Capture-free lambda cannot use this');
 		if ($this->owner->parent->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
 		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
@@ -2267,7 +2261,7 @@ final class Preparation
 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
 		}
 		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
-		if ($called !== null && $call instanceof ast_named_call) {
+		if (($called !== null || $ancestor_dispatch) && $call instanceof ast_named_call) {
 			$this->dependencies?->watch($symbol, $this->owner, Dependency_Watches::PARAMETER_NAMES);
 		}
 		$conversions = $this->bind_arguments($call, $function, $initializing);
@@ -2296,10 +2290,14 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
 		}
 		if ($constructor !== null) {
-			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner);
+			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner,
+				isset($site->named) ? Dependency_Watches::PARAMETER_NAMES : 0);
 			$constructor->require_access($this->owner->parent->parent, $site, watcher: $this->access_watcher());
 		}
 		$conversions = $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing);
+		if ($site instanceof ast_base_initialization && $site->named?->reordered()) {
+			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner, dependency_use::reordered_base->value);
+		}
 		if ($site instanceof ast_call_expression) {
 			$site->settle_construction($target, $type, $conversions);
 		}
@@ -2403,9 +2401,9 @@ final class Preparation
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
 		$slots = null;
-		if ($call instanceof ast_named_call) {
-			$call->bind_slots($function);
-			$slots = $call->slots;
+		if (isset($call->named)) {
+			$call->named->bind_slots($call, $function);
+			$slots = $call->named->slots;
 		}
 		if ($callback ? $supplied !== count($function->inputs) : !$function->accepts_argument_count($supplied)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($callback ? $call->name : $function->name()));

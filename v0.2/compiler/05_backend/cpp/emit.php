@@ -260,6 +260,16 @@ final class Cpp_Emitter
 			$name = Cpp_Identifier::source($node->short_name);
 			$layout[] = "\t" . $name . '(' . $params . ');';
 			if ($params !== '' && $constructor->accepts_argument_count(0)) $layout[] = "\t" . $name . '();';
+			if ($this->emits_reordered_base($constructor)) {
+				// Both entry points construct the actual base subobject with the same parameter storage.
+				$refs = $this->parameters($constructor, $includes, false, borrowed_inputs: true);
+				$fields = array_map(static fn(int $slot) => 'values.slot_' . $slot, array_keys($refs));
+				$layout[] = "\tstruct scpp_escape_parameter_refs {};";
+				$layout[] = "\t" . $name . '(scpp_escape_parameter_refs, ' . implode(', ', $refs) . ');';
+				$layout[] = "\tstruct scpp_escape_named_base {};";
+				$layout[] = "\ttemplate<class scpp_escape_values_type> " . $name . '(scpp_escape_named_base, scpp_escape_values_type&& values) : '
+					. $name . '(scpp_escape_parameter_refs{}, ' . implode(', ', $fields) . ') {}';
+			}
 		}
 		if ($inherited_constructor !== null) {
 			$layout[] = "\tusing " . $base->cpp_type() . '::' . Cpp_Identifier::source($base->declaration->short_name) . ';';
@@ -651,8 +661,15 @@ CPP;
 				}
 			}
 			$unit_flavor ??= $this->adapter_flavor;
-			$definitions[] = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '')
-				. $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+			$signature = $this->signature($function, $required_headers, $this->adapter_flavor !== null && $this->root !== '');
+			if ($function->is_constructor() && $this->emits_reordered_base($function)) {
+				$name = Cpp_Identifier::source($function->parent->short_name);
+				$names = array_map($this->name(...), $function->parameters);
+				$definitions[] = $signature . ' : ' . $name . '(scpp_escape_parameter_refs{}, ' . implode(', ', $names) . ") {}\n";
+				$refs = $this->parameters($function, $required_headers, false, borrowed_inputs: true);
+				$signature = $function->parent->definition->cpp_type() . '::' . $name . '(scpp_escape_parameter_refs, ' . implode(', ', $refs) . ')';
+			}
+			$definitions[] = $signature . $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 			if ($function->is_async && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
 				$arguments = array_map($this->forward_argument(...), $function->parameters);
 				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn sync_wait("
@@ -2856,8 +2873,8 @@ CPP;
 		$runtime = $function instanceof runtime_function;
 		$operands = $runtime ? $value->runtime_operands() : $value->arguments;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
-		if ($value instanceof ast_named_call) {
-			$parameters = $value->evaluation_parameters($parameters);
+		if (isset($value->named)) {
+			$parameters = $value->named->evaluation_parameters($parameters);
 		}
 		$before = $this->suspensions;
 		$suspending = $value instanceof ast_call_expression && $value->suspending_operands;
@@ -2952,7 +2969,7 @@ CPP;
 		}
 		if ($argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && ($runtime || $callback || !$function->is_constructor())
 			&& !$has_reference && count($order_sensitive) <= 1))) {
-			if ($value instanceof ast_named_call) $direct_arguments = $value->parameter_order($direct_arguments);
+			if (isset($value->named)) $direct_arguments = $value->named->parameter_order($direct_arguments);
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
 		}
 		// Literal peers cannot observe effects. The last remaining scalar can run in the call
@@ -2972,7 +2989,7 @@ CPP;
 			$direct_arguments[$index] = $type->cpp_trivial_value() ? $temporary
 				: 'static_cast<' . $type->cpp_type() . '&&>(' . $temporary . ')';
 		}
-		if ($value instanceof ast_named_call) $direct_arguments = $value->parameter_order($direct_arguments);
+		if (isset($value->named)) $direct_arguments = $value->named->parameter_order($direct_arguments);
 		array_push($arguments, ...$direct_arguments);
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		if ($before !== $this->suspensions) {
@@ -3035,6 +3052,13 @@ CPP;
 		}
 	}
 
+	/** Project emission only generates a reference entry for an observed base argument permutation. */
+	private function emits_reordered_base(ast_function_declaration $constructor): bool
+	{
+		return !$constructor->parent->is_final && count($constructor->parameters) > 1
+			&& ($this->headers?->uses_helper($constructor, dependency_use::reordered_base) ?? true);
+	}
+
 	/**
 	 * Braced base initialization sequences converted arguments without a temporary base payload.
 	 * @param ast_global_declaration[] $globals
@@ -3052,13 +3076,26 @@ CPP;
 		if ($constructor !== null) {
 			$this->collect_signature_types($constructor, $declarations);
 			if (self::self_value_constructor($constructor)) $arguments[] = '0';
-			foreach ($constructor->parameters as $index => $parameter) {
+			$parameters = $site->named?->evaluation_parameters($constructor->parameters) ?? $constructor->parameters;
+			$fields = [];
+			$reordered = $site->named?->reordered();
+			foreach ($parameters as $index => $parameter) {
 				$argument = $site->arguments[$index] ?? $parameter->default_value;
 				$conversion = isset($site->arguments[$index]) ? $site->conversion($index) : $parameter->default_conversion();
 				$type = $parameter->type_def();
 				foreach ($type->conversion_headers($conversion) as $header) $headers[$header] = true;
 				$value = $this->value($argument, $globals, $declarations, $headers);
+				if ($reordered) {
+					$field = 'slot_' . $site->named->slots[$index];
+					$fields[] = ($type instanceof callback_type_definition ? $type->cpp_declarator($field) : $this->member_type($type) . ' ' . $field) . ';';
+				}
 				$arguments[] = $this->conversion($type, $conversion, $value, $argument);
+			}
+			if ($reordered) {
+				// Aggregate fields are the actual value parameters, initialized once in written order.
+				// Their lifetime ends after base initialization, before the derived fields and body.
+				$values = '[&]() { struct scpp_escape_inputs { ' . implode(' ', $fields) . ' }; return scpp_escape_inputs{' . implode(', ', $arguments) . '}; }()';
+				$arguments = [$constructor->parent->definition->cpp_type() . '::scpp_escape_named_base{}', $values];
 			}
 		}
 		return ' : ' . $base->cpp_type() . '{' . implode(', ', $arguments) . '}';
@@ -3188,7 +3225,7 @@ CPP;
 	}
 
 	/** Share native parameter names, types, passing modes and includes. @param bool[] $headers @return string[] */
-	private function parameters(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types, bool $member = false): array /** list<string> */
+	private function parameters(ast_function_declaration $function, array &$headers /** array<string,bool> */, bool $short_types, bool $member = false, bool $borrowed_inputs = false): array /** list<string> */
 	{
 		$parameters = [];
 		foreach ($function->parameters as $parameter) {
@@ -3201,7 +3238,7 @@ CPP;
 			if ($parameter->mode === passing_mode::readonly_reference) $native = 'const ' . $native;
 			$name = $this->name($parameter);
 			$parameters[] = '[[maybe_unused]] ' . ($type instanceof callback_type_definition
-				? $type->cpp_declarator($name) : $native . ' ' . ($parameter->mode !== passing_mode::value ? '&' : '') . $name);
+				? $type->cpp_declarator(($borrowed_inputs ? '&' : '') . $name) : $native . ' ' . ($borrowed_inputs || $parameter->mode !== passing_mode::value ? '&' : '') . $name);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
 			}
@@ -3292,7 +3329,7 @@ CPP;
 		return 'scpp_slot_' . $name . '_' . bin2hex(implode("\0", $parts));
 	}
 
-	/** C++ reserves T(T) for copy construction; distinguish explicit source construction from memberwise copying. */
+	/** Distinguish an explicit self-value constructor from native memberwise copy construction. */
 	private static function self_value_constructor(ast_function_declaration $constructor): bool
 	{
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;

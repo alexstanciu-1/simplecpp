@@ -807,7 +807,7 @@ abstract class type_definition
 		if (!($function instanceof ast_function_declaration) || $function->parent instanceof ast_record_declaration) {
 			return false;
 		}
-		$parameters = $operand instanceof ast_named_call ? $operand->evaluation_parameters($function->parameters) : $function->parameters;
+		$parameters = $operand instanceof ast_named_call ? $operand->named->evaluation_parameters($function->parameters) : $function->parameters;
 		foreach ($parameters as $index => $parameter) {
 			$argument = $operand->arguments[$index] ?? $parameter->default_value;
 			if ($parameter->mode !== passing_mode::value || !$parameter->type_def()->cpp_trivial_value()

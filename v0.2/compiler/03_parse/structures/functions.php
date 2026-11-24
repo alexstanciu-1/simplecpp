@@ -344,7 +344,9 @@ class ast_call_expression extends ast_expression
 	{
 		$function = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
 		if (!($function instanceof ast_function_declaration) || $function->reference_return_origin === null) return null;
-		$argument = $this->arguments[$function->reference_return_origin];
+		$slot = $function->reference_return_origin;
+		$index = $this instanceof ast_named_call ? array_search($slot, $this->named->slots, true) : $slot;
+		$argument = $index === false ? null : ($this->arguments[$index] ?? null);
 		return $argument instanceof ast_name_expression ? $argument->local_binding() : null;
 	}
 
@@ -376,59 +378,43 @@ class ast_call_expression extends ast_expression
 	}
 }
 
-/** A labeled direct call retains written operands and a resettable permutation of parameter positions. */
-final class ast_named_call extends ast_call_expression
+/** Written labels and the recomputable parameter permutation of a labeled call or construction. */
+final class Named_Arguments
 {
-	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, nonvirtual instance method, or a source static method';
-
-	/** PROPERTIES */
-	/** @var string[] Written label keyed by the argument's source position. */
-	public readonly array $labels /** array<uint32,string> */;
-
 	/** PREP FACTS */
-	/** @var int[] Prepared fact: parameter positions in evaluation order, followed by omitted defaults in declaration order. */
+	/** @var int[] Prepared parameter slots in written order, then omitted defaults in declaration order. */
 	public private(set) array $slots /** list<uint32> */ = [];
 
 	/** CONSTRUCTOR */
-	/**
-	 * @param ast_expression[] $arguments
-	 * @param string[] $labels
-	 */
-	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name, ?token_kind $separator,
-		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */, call_qualifier $qualifier)
+	/** @param string[] $labels Written labels indexed by source argument position. */
+	public function __construct(public readonly array $labels /** array<uint32,string> */)
 	{
-		parent::__construct($start, $end, $name, $separator, $arguments, $receiver, $qualifier);
-		$this->labels = $labels;
 	}
 
 	/** METHODS */
 	/** Resolve against the current published signature. Only explicit operands can consume a slot. */
-	public function bind_slots(ast_function_declaration $function): void
+	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration $function): void
 	{
 		$names = [];
 		foreach ($function->parameters as $slot => $parameter) {
-			if ($parameter->mode !== passing_mode::value) {
-				throw new diagnostic($this->source(), $this->byte_start(), 'Named arguments require by-value parameters');
-			}
 			$names[$parameter->name()] = $slot;
 		}
 		$slots = [];
 		$used = [];
-		foreach ($this->arguments as $position => $argument) {
+		foreach ($site->arguments as $position => $argument) {
 			$label = $this->labels[$position] ?? null;
 			$slot = $label === null ? $position : ($names[$label] ?? null);
 			if ($slot === null) {
-				$target = ($this->qualifier === call_qualifier::called_type || $this->expression_qualified()) ? ' on ' . $function->name() : '';
-				throw new diagnostic($this->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . $target);
+				throw new diagnostic($site->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . ' on ' . $function->name());
 			}
-			if (!isset($function->parameters[$slot])) throw new diagnostic($this->source(), $argument->byte_start(), 'Too many positional arguments');
-			if (isset($used[$slot])) throw new diagnostic($this->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $function->parameters[$slot]->name());
+			if (!isset($function->parameters[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Too many positional arguments');
+			if (isset($used[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $function->parameters[$slot]->name());
 			$used[$slot] = true;
 			$slots[] = $slot;
 		}
 		foreach ($function->parameters as $slot => $parameter) {
 			if (isset($used[$slot])) continue;
-			if ($parameter->default_value === null) throw new diagnostic($this->source(), $this->byte_start(), 'Missing required argument: ' . $parameter->name());
+			if ($parameter->default_value === null) throw new diagnostic($site->source(), $site->byte_start(), 'Missing required argument: ' . $parameter->name());
 			$slots[] = $slot;
 		}
 		$this->slots = $slots;
@@ -441,6 +427,15 @@ final class ast_named_call extends ast_call_expression
 	public function evaluation_parameters(array $parameters): array
 	{
 		return array_map(static fn(int $slot) => $parameters[$slot], $this->slots);
+	}
+
+	/** True when native parameter order differs from the required evaluation order. */
+	public function reordered(): bool
+	{
+		foreach ($this->slots as $index => $slot) {
+			if ($index !== $slot) return true;
+		}
+		return false;
 	}
 
 	/**
@@ -456,8 +451,29 @@ final class ast_named_call extends ast_call_expression
 
 	public function reset_preparation(): void
 	{
-		parent::reset_preparation();
 		$this->slots = [];
+	}
+}
+
+/** Source function or method call with at least one written argument label. */
+final class ast_named_call extends ast_call_expression
+{
+	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, method or constructor';
+
+	public readonly Named_Arguments $named;
+
+	/** @param ast_expression[] $arguments @param string[] $labels */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name, ?token_kind $separator,
+		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */, call_qualifier $qualifier)
+	{
+		parent::__construct($start, $end, $name, $separator, $arguments, $receiver, $qualifier);
+		$this->named = new Named_Arguments($labels);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->named->reset_preparation();
 	}
 }
 

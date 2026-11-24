@@ -752,8 +752,8 @@ final class Parser
 		if ($derived_constructor && $source->flavor === flavor::cpp && $this->cursor->is(token_kind::colon)) {
 			$start = $this->cursor->take(token_kind::colon, ':');
 			$target = $this->named_type();
-			$arguments = $this->arguments();
-			$base = new ast_base_initialization($start, $this->cursor->position(), $arguments, true, $target);
+			$arguments = $this->constructor_arguments($named);
+			$base = new ast_base_initialization($start, $this->cursor->position(), $arguments, true, $target, $named);
 		}
 		$body_start = $this->open_suite($grammar, '{');
 		$close = $grammar instanceof Python_Grammar ? token_kind::dedent : token_kind::rbrace;
@@ -768,9 +768,9 @@ final class Parser
 			if ($source->flavor === flavor::python && $c->keyword('super')
 				&& isset($c->tokens->tokens[$start + 4]) && $c->tokens->text_at($start + 4) === '__init__') {
 				$this->python_super_member();
-				$args = $this->arguments();
+				$args = $this->constructor_arguments($named);
 				$end = $c->take(token_kind::newline, 'NEWLINE') + 1;
-				$base = new ast_base_initialization($start, $end, $args, true);
+				$base = new ast_base_initialization($start, $end, $args, true, named: $named);
 			} elseif (($source->flavor === flavor::php && $spelling === 'parent'
 					&& $c->tokens->text_at($start + 2) === '__construct')
 				|| ($source->flavor === flavor::js && $spelling === 'super' && $c->next_is(token_kind::lparen))) {
@@ -779,9 +779,9 @@ final class Parser
 					$c->take(token_kind::scope, '::');
 					if ($c->name(token_kind::identifier) !== '__construct') throw new diagnostic($source, $c->offset(), 'Expected parent constructor');
 				}
-				$args = $this->arguments();
+				$args = $this->constructor_arguments($named);
 				$end = $c->take(token_kind::semicolon, ';') + 1;
-				$base = new ast_base_initialization($start, $end, $args, true);
+				$base = new ast_base_initialization($start, $end, $args, true, named: $named);
 			}
 			$base ??= new ast_base_initialization($start, $start, [], false);
 			$statement = new ast_base_statement($base);
@@ -947,6 +947,15 @@ final class Parser
 		$arguments = $this->arguments($labels);
 		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels, $qualifier);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
+	}
+
+	/** @return ast_expression[] Only a constructor with labels owns a named binding. */
+	private function constructor_arguments(?Named_Arguments &$named): array /** list<ast_expression> */
+	{
+		$labels = [];
+		$arguments = $this->arguments($labels);
+		$named = $labels ? new Named_Arguments($labels) : null;
+		return $arguments;
 	}
 
 	/**
@@ -1708,9 +1717,10 @@ final class Parser
 				$target = new ast_type_reference($at, $c->position(), $name);
 			}
 			$arguments = [];
-			if ($this->cursor->is(token_kind::lparen)) $arguments = $this->arguments();
+			$named = null;
+			if ($this->cursor->is(token_kind::lparen)) $arguments = $this->constructor_arguments($named);
 			elseif ($this->cursor->tokens->source->flavor !== flavor::php) $this->cursor->take(token_kind::lparen, '( after the constructed type');
-			return new ast_new_expression($start, $this->cursor->position(), $target, $arguments);
+			return new ast_new_expression($start, $this->cursor->position(), $target, $arguments, $named);
 		}
 		if ($this->cursor->keyword('object_cast')) {
 			$start = $this->cursor->position();
@@ -1863,9 +1873,9 @@ final class Parser
 	{
 		if ($type_reference !== null && $this->cursor->is(token_kind::lparen)) {
 			$at = $this->cursor->position();
-			$arguments = $this->arguments();
+			$arguments = $this->constructor_arguments($named);
 			if ($arguments === []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Use a typed declaration without () for default initialization');
-			$value = new ast_struct_default($at, $this->cursor->position(), $arguments);
+			$value = new ast_struct_default($at, $this->cursor->position(), $arguments, $named);
 			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, $value);
 		}
 		if ($type_reference !== null && ($this->cursor->is(token_kind::semicolon) || ($terminator === null && $this->cursor->is(token_kind::comma)))) {

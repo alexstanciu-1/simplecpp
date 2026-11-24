@@ -40,7 +40,7 @@ def prove(work, flavor):
         ref.mkdir()
         revisions(ref, flavor, {'main': '$v int=8; return read(slot: $v);',
                                 'source': 'function read(int &$slot):int {return $slot;}'}, [
-                                    (None, None, 'Named arguments require by-value parameters'),
+                                    (None, None, b''),
                                     ('main', '$v int=8; return read($v);', b'')])
         guard(work, flavor, 'conversion-order',
               'function later():int {echo "L";return 1;} '
@@ -79,16 +79,16 @@ def prove_methods(work, flavor):
              ('main', main.replace('offset', 'start'), answer)]
     if flavor == 'php':
         edits.append(('target', target.replace('offset', 'start').replace('public function', 'public virtual function'),
-                      'Named arguments require a direct source function'))
+                      answer))
         by_reference = target.replace('offset', 'start').replace('int $start', 'int &$start')
-        edits.append(('target', by_reference, 'Named arguments require by-value parameters'))
+        edits.append(('target', by_reference, 'Reference argument requires stable variable storage'))
         interface = ('interface Output {public function write(int $offset, int $count=2):int;} '
                      + target.replace('class Writer', 'class Writer implements Output')
                              .replace('public function', 'public override function'))
         edits.extend([
-            ('target', interface, 'Named arguments require a direct source function'),
-            ('main', 'function emit(Output $out):int {return $out->write(offset: 1);} return 8;',
-             'Named arguments require a direct source function'),
+            ('target', interface, 'Unknown named argument: start'),
+            ('main', 'function emit(Output $out):int {return $out->write(offset: 1);} echo emit(new Writer());return 8;',
+             b'12'),
         ])
     revisions(work, flavor, {'main': main, 'target': target, 'effects': effects}, edits)
 
@@ -148,7 +148,7 @@ def prove_lexical_static(work, flavor):
         ('root', root.replace('offset', 'start'), 'Unknown named argument: offset'),
         ('base', base.replace('offset:', 'start:'), answer),
         ('base', base.replace('offset:', 'start:').replace(parent + 'make', parent + 'read'),
-         'Named arguments require a direct source function'),
+         'ancestor call has no current instance'),
     ])
 
 

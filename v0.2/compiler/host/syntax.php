@@ -109,11 +109,14 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_type_marker) return ['kind' => 'type_marker', 'name' => $expression->name];
 		if ($expression instanceof ast_this_expression) return ['kind' => 'this'];
 		if ($expression instanceof ast_base_initialization) {
-			return ['kind' => 'base_initialization', 'explicit' => $expression->explicit, 'target' => $expression->target?->spelling(),
+			$row = ['kind' => 'base_initialization', 'explicit' => $expression->explicit, 'target' => $expression->target?->spelling(),
 				'arguments' => array_map(self::expression(...), $expression->arguments)];
+			if ($expression->named !== null) $row['labels'] = $expression->named->labels;
+			return $row;
 		}
 		if ($expression instanceof ast_construction_expression) {
 			$row = $expression instanceof ast_new_expression ? ['kind' => 'new', 'target' => $expression->target->name] : ['kind' => 'struct_default'];
+			if ($expression->named !== null) $row['labels'] = $expression->named->labels;
 			if ($expression->arguments !== []) $row['arguments'] = array_map(self::expression(...), $expression->arguments);
 			return $row;
 		}
@@ -204,7 +207,7 @@ final class Syntax_Inspection
 			return ['kind' => 'callable_reference', 'name' => $expression->name, 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_named_call) {
-			return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->labels,
+			return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->named->labels,
 				'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_call_expression) {
