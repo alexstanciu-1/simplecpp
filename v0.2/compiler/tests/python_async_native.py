@@ -29,6 +29,10 @@ async def parent() -> int:
         return 92
     if not (0 < await child(3) < await child(5)):
         return 91
+    while await child(0) > 1:
+        return 93
+    else:
+        await child(1)
     return pair(second=await child(2), first=await child(1))
 """
 

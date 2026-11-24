@@ -95,6 +95,25 @@ foreach (['php:func:str_starts_with', 'cpp:string:starts_with', 'js:string:start
 $header = render($prefixPlan)['public/scpp/proof/prefix.hpp'];
 requireThat(str_contains($header, 'class string;') && str_contains($header, 'bool_t prefix_probe(')
     && !str_contains($header, 'class string final'), 'Prefix declaration requires a complete string');
+// Published argument labels belong to a single source spelling and follow metadata edits.
+$demand->string->functions = ['str_repeat'];
+$repeatSignature = $functionMetadata->string->functions->str_repeat->signatures->php;
+$repeatSignature->parameter_names = ['fragment', 'copies'];
+$repeatPlan = prepareRuntime($functionMetadata, $demand, $facts);
+$registry = renderCompiler($functionMetadata, $facts, $repeatPlan)['types/registry.php'];
+requireThat(substr_count($registry, "parameter_names: ['fragment', 'copies']") === 1
+    && isset($repeatPlan['string_functions']['str_repeat']['adapters']['php']['parameter_names']),
+    'Runtime free function lost its published parameter names');
+foreach ([['same', 'same'], ['only_one'], ['invalid-name', 'copies']] as $invalidNames) {
+    $repeatSignature->parameter_names = $invalidNames;
+    try {
+        prepareRuntime($functionMetadata, $demand, $facts);
+        throw new \LogicException('Accepted invalid runtime parameter names');
+    } catch (\RuntimeException $error) {
+        requireThat(str_contains(strtolower($error->getMessage()), 'parameter name'), 'Unexpected runtime parameter-name error');
+    }
+}
+$repeatSignature->parameter_names = ['string', 'times'];
 $demand->string->functions = ['str_contains'];
 $functionMetadata->string->functions->str_contains->members->js = 'hasBytes';
 $predicatePlan = prepareRuntime($functionMetadata, $demand, $facts);

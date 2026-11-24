@@ -24,7 +24,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	verify($match->subject->parent === $match, 'Owned subject parent');
 	foreach ($match->arms as $arm) {
 		verify($arm->parent === $match && $arm->result->parent === $arm, 'Owned arm/result parents');
-		if ($arm->label !== null) verify($arm->label->parent === $arm, 'Owned condition parent');
+		foreach ($arm->labels as $label) verify($label->parent === $arm, 'Owned condition parent');
 	}
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);

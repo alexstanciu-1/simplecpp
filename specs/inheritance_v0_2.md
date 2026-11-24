@@ -75,6 +75,11 @@ private and non-aggregate, with its declaring record as friend. It is not a sour
 member or parameter. Inline, shared, unique, data and base initialization use the same
 key protocol, without an extra payload copy or changing shared allocation strategy.
 
+Labels in explicit base initializers bind against the immediate base's effective
+constructor. Written values and their conversions run in source order, including
+when their positions differ from declaration order. The base subobject is initialized
+once. Late-bound construction uses the effective constructor of the called type.
+
 Without an authored constructor, a child inherits the supported constructor
 contract of its base, including parameter defaults, through abstract or concrete
 intermediate bases. The original declaration owns that contract; it is not copied into the child's

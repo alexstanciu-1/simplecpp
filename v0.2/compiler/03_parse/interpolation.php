@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final class Interpolation
 {
 	/** Split a whole quoted token only when it contains a named insertion. */
-	public static function parse(token_list $tokens, int $token /** uint32 */): ast_expression
+	public static function parse(token_list $tokens, int $token /** uint32 */, ?Arrow_Captures $arrow = null): ast_expression
 	{
 		$text = $tokens->text_at($token);
 		$flavor = $tokens->source->flavor;
@@ -69,7 +69,9 @@ final class Interpolation
 			if ($start < $i) {
 				$parts[] = new ast_interpolation_text($token, $start, $i - $start);
 			}
-			$parts[] = new ast_interpolation_name(substr($text, $match_start, $after - $match_start), $token, $match_start);
+			$name = substr($text, $match_start, $after - $match_start);
+			$arrow?->read($name, $token, $match_start);
+			$parts[] = new ast_interpolation_name($name, $token, $match_start);
 			$start = $after + ($braced ? 1 : 0);
 			$i = $start - 1;
 		}

@@ -9,7 +9,7 @@ def prove(work):
     functions = '''function text(?string $v):?string { echo "T"; return $v; }
 function countResult(int $v):result<int> { echo "R"; return $v; }
 function pick(?string $s):string {
-    return match(text($s)) { "" => "empty", "abc" => "abc", default => "miss" };
+    return match(text($s)) { "" => "empty", "a", "abc" => "abc", default => "miss" };
 }
 function writeText(?string $s):void {
     switch(text($s)) {
@@ -19,14 +19,14 @@ function writeText(?string $s):void {
     }
 }
 function number(int $n):string {
-    return match(countResult($n)) { 0 => "zero", -1 => "negative", default => "other" };
+    return match(countResult($n)) { 0 => "zero", -2, -1 => "negative", default => "other" };
 }
 function writeNumber(int $n):void {
     switch(countResult($n)) { case 0: echo "Z"; break; default: echo "D"; case -1: echo "N"; }
 }
 '''
     functions += '''enum Mode { case Read=1; case Write=2; }
-function enumPick(?Mode $mode):int { return match($mode) { Mode::Read => 1, default => 2 }; }
+function enumPick(?Mode $mode):int { return match($mode) { Mode::Write, Mode::Read => 1, default => 2 }; }
 class Box { public ?string $content = "field"; }
 function box():Box { echo "B"; return new Box(); }
 '''

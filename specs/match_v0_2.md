@@ -6,7 +6,7 @@ The cpp, php and js flavors share this Simple C++ expression syntax:
 
 ```text
 match (subject) {
-    label => result,
+    label1, label2 => result,
     default => fallback,
 }
 ```
@@ -14,7 +14,7 @@ match (subject) {
 Evaluate the subject exactly once. Select the arm with the equal label, or the
 required default when no label matches. Evaluate only that arm's result. A subject
 failure evaluates no arm; a selected result failure propagates normally. Default
-may appear anywhere. A trailing comma is optional. There is one label per arm.
+may appear anywhere. A trailing comma is optional. A constant-label arm may list several comma-separated labels. Each selects the same result. Duplicate checking spans all labels, including labels in the same arm. The default stands alone.
 
 Constant-label admission belongs to the subject type. Published integers use exact
 integer values; backed enums use cases of the same nominal enum. Byte strings use
@@ -45,7 +45,7 @@ the subject is statically known.
 ## Ordered boolean conditions
 
 A literal `true` subject selects the condition form, `match (true)`. Each non-default
-label is a boolean expression. Evaluate conditions once each, in written order,
+arm has one boolean condition. Evaluate conditions once each, in written order,
 until one returns true; evaluate only that result. Later conditions and results
 are skipped. If none is true, evaluate default, irrespective of where it is written.
 A failing condition or selected result propagates immediately. Evaluation within
@@ -62,7 +62,7 @@ constants and `match(false)` remain outside this slice, even when their values a
 known. No retained mode flag or constant-propagation rule is needed.
 
 Deferred: general boolean subjects, float subjects,
-computed integer/enum labels, multiple labels per arm, exhaustiveness inference, omitted
+computed integer/enum label expressions, exhaustiveness inference, omitted
 defaults, implicit result unification and reference results. This syntax is a
 Simple C++ extension in cpp/js, not a claim about native C++/ECMAScript syntax.
 

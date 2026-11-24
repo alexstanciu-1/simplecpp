@@ -76,3 +76,17 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		&& str_starts_with($failure->getMessage(), $source->path . ':2:' . strlen($failure_line) . ':'),
 		'Original diagnostic snapshot, byte offset and byte column after parser reuse');
 }
+
+// Nested callables need their own environment even when a later callback boundary rejects capture.
+$text = '$factor=3; $f=fn(int $n):int => apply(fn(int $x):int => $factor+$x+$n+$factor);'
+	. '$g=fn(int $factor):int => apply(fn():int => $factor);'
+	. '$h=fn():int => apply(function () use ($factor):int { $inside=4; return $inside; });'
+	. '$i=fn():int => apply(function ():int { return $factor; }); return 8;';
+$source = new source_file('nested.php', $text, flavor::php);
+$statements = (new Parser($frontend->scan($source)))->parse()->main()->body()->statements;
+foreach ([[1, ['factor'], ['factor', 'n']], [2, [], ['factor']], [3, ['factor'], ['factor']], [4, [], []]] as [$index, $outer, $inner]) {
+	$arrow = $statements[$index]->initializer;
+	$nested = $arrow->body->arguments[0];
+	check(array_column($arrow->captures, 'short_name') === $outer
+		&& array_column($nested->captures, 'short_name') === $inner, "Nested lexical capture sets at statement $index");
+}

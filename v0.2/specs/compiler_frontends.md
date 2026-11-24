@@ -39,7 +39,7 @@ the common type, ownership and evaluation rules. The shared backend emits C++.
 | Area | Supported surface |
 | --- | --- |
 | Layout and functions | Indented multiline suites, comments, parenthesized continuations, typed def parameters and returns, typed initialized locals and subsequent assignment. |
-| Expressions and control | Core scalar literals and arithmetic, comparisons, bool-only not/and/or, conditional expressions, if/elif/else, while, pass, unlabelled break and continue, and return. |
+| Expressions and control | Core scalar literals and arithmetic, comparisons, bool-only not/and/or, conditional expressions, if/elif/else, while with optional else, pass, unlabelled break and continue, and return. |
 | Collections | Typed vector and hash local literals, checked indexed reads and single indexed writes. A for name in source loop binds vector elements or hash keys. A new loop name stays in the loop and an existing local receives the selected entries. Typed hashes also accept for key, value in mapping.items(). The key is loop-local and the value uses the shared foreach destination rule. Typed hash traversal follows key insertion order. |
 | Records and ownership | Typed class fields, self, dot access, construction with __init__, and one base class with an initial super().__init__ call. Methods can call super().method(...) as a statement or expression. Compile-time @virtual and @override select the shared method contract, with an explicit override marker required. |
 | Async free functions | Typed `async def`, direct `await` calls and `await async_sleep_ms(...)` use the [shared async contract](../../specs/async_await.md). |

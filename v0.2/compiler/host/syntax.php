@@ -109,11 +109,14 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_type_marker) return ['kind' => 'type_marker', 'name' => $expression->name];
 		if ($expression instanceof ast_this_expression) return ['kind' => 'this'];
 		if ($expression instanceof ast_base_initialization) {
-			return ['kind' => 'base_initialization', 'explicit' => $expression->explicit, 'target' => $expression->target?->spelling(),
+			$row = ['kind' => 'base_initialization', 'explicit' => $expression->explicit, 'target' => $expression->target?->spelling(),
 				'arguments' => array_map(self::expression(...), $expression->arguments)];
+			if ($expression->named !== null) $row['labels'] = $expression->named->labels;
+			return $row;
 		}
 		if ($expression instanceof ast_construction_expression) {
 			$row = $expression instanceof ast_new_expression ? ['kind' => 'new', 'target' => $expression->target->name] : ['kind' => 'struct_default'];
+			if ($expression->named !== null) $row['labels'] = $expression->named->labels;
 			if ($expression->arguments !== []) $row['arguments'] = array_map(self::expression(...), $expression->arguments);
 			return $row;
 		}
@@ -168,7 +171,9 @@ final class Syntax_Inspection
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_match_expression) {
-			return ['kind' => 'match', 'subject' => self::expression($expression->subject), 'arms' => array_map(static fn(ast_match_arm $arm): array => ['label' => $arm->label === null ? null : self::expression($arm->label), 'result' => self::expression($arm->result)], $expression->arms), 'span' => self::span($expression)];
+			return ['kind' => 'match', 'subject' => self::expression($expression->subject), 'arms' => array_map(static fn(ast_match_arm $arm): array => (count($arm->labels) > 1
+				? ['labels' => array_map(self::expression(...), $arm->labels)]
+				: ['label' => $arm->labels === [] ? null : self::expression($arm->labels[0])]) + ['result' => self::expression($arm->result)], $expression->arms), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_object_access_expression) {
 			return ['kind' => $expression->test ? 'instanceof' : 'object_cast', 'target' => $expression->target->spelling(),
@@ -193,16 +198,23 @@ final class Syntax_Inspection
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_lambda_expression) {
-			return ['kind' => 'lambda', 'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array =>
-				['name' => $parameter->short_name, 'type' => $parameter->type_reference->spelling()], $expression->parameters),
-				'result' => $expression->result->spelling(), 'body' => $expression->body instanceof ast_block
+			$row = ['kind' => 'lambda', 'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array =>
+				['name' => $parameter->short_name, 'type' => $parameter->type_reference?->spelling()], $expression->parameters),
+				'result' => $expression->result?->spelling(), 'body' => $expression->body instanceof ast_block
 					? array_map(self::statement(...), $expression->body->statements) : self::expression($expression->body), 'span' => self::span($expression)];
+			if ($expression->explicit_receiver) $row['receiver_capture'] = true;
+			if (count($expression->captures) === 1) $row['capture'] = $expression->captures[0]->short_name;
+			elseif ($expression->captures !== []) $row['captures'] = array_map(static fn(ast_closure_capture $capture) => $capture->short_name, $expression->captures);
+			foreach ($expression->captures as $capture) {
+				if ($capture->by_reference) $row['reference_captures'][] = $capture->short_name;
+			}
+			return $row;
 		}
 		if ($expression instanceof ast_callable_reference) {
 			return ['kind' => 'callable_reference', 'name' => $expression->name, 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_named_call) {
-			return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->labels,
+			return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->named->labels,
 				'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_call_expression) {
@@ -271,6 +283,7 @@ final class Syntax_Inspection
 			} else $row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 				'condition' => self::expression($statement->condition), 'span' => self::span($statement),
 				'body' => array_map(self::statement(...), $statement->body->statements)];
+			if ($statement instanceof ast_while_else_statement) $row['else'] = array_map(self::statement(...), $statement->otherwise->statements);
 			return $row;
 		}
 		if ($statement instanceof ast_rethrow_statement) return ['kind' => 'rethrow', 'span' => self::span($statement)];
