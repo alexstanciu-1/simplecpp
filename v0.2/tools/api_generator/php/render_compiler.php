@@ -336,6 +336,12 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 . implode(', ', $arguments) . "], type_$result::instance(), $symbol, $header$refs, const_reference_mask: $mask, required_module: $module),";
         }
     }
+    if ($runtime['mt_segments'] ?? false) {
+        $cases[] = "\t\t\t'segment_range' => type_segment_range::instance(),";
+        $runtimeCases[] = "\t\t\t'func:balanced_range' => \$bindings[\$key] ??= new runtime_function('balanced_range', "
+            . "[type_int64::instance(), type_int64::instance(), type_int64::instance()], type_segment_range::instance(), "
+            . "'::scpp::mt::balanced_range', 'scpp/mt_segment.hpp', parameter_names: ['length', 'parts', 'part']),";
+    }
     $exportedNames = array_column(array_merge($runtime['types'] ?? [], $runtime['values'] ?? []), 'name');
     if (isset($runtime['string'])) $exportedNames[] = $runtime['string']['name'];
     $exportedNames = array_merge($exportedNames, array_keys((array) ($runtime['aliases'] ?? [])));

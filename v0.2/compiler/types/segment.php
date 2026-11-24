@@ -68,3 +68,33 @@ final class segment_type extends type_definition implements index_read_type, ind
 		return $operation === collection_cardinality::count ? $length : '(' . $length . ' == 0)';
 	}
 }
+
+/** Two owned coordinates returned by balanced_range; no collection or grant is retained. */
+final class type_segment_range extends type_definition
+{
+	private function __construct()
+	{
+		parent::__construct('segment_range');
+	}
+
+	public static function instance(): self
+	{
+		static $type = null;
+		return $type ??= new self();
+	}
+
+	public function supports_inferred_local(): bool
+	{
+		return true;
+	}
+
+	public function cpp_type(): string
+	{
+		return 'scpp::mt::segment_range';
+	}
+
+	public function cpp_headers(): array /** list<string> */
+	{
+		return ['scpp/mt_segment.hpp'];
+	}
+}

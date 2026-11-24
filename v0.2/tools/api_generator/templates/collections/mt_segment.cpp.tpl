@@ -3,6 +3,9 @@
 #include <stdint.h>
 
 namespace scpp::mt {
+struct segment_range { int64_t offset{}, length{}; };
+segment_range balanced_range(int64_t length, int64_t parts, int64_t part);
+
 // Compiler-created views borrow a live vector allocation for one joined call.
 // The compiler retains the element type; stride is its native sizeof.
 class segment {

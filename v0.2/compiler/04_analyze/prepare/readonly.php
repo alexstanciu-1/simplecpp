@@ -9,6 +9,7 @@ final class Readonly_Access
 	public static function field(ast_field_expression $site): ast_instance_field
 	{
 		$type = $site->receiver->type_def();
+		if ($type instanceof type_segment_range) throw new diagnostic($site->source(), $site->byte_start(), 'Cannot modify a segment_range field');
 		if ($type instanceof shared_record_type_definition) $type = $type->payload;
 		return $type->field($site->field) ?? throw new \LogicException('Unresolved field');
 	}

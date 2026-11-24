@@ -53,9 +53,9 @@ final class Mt_Provisioning
 	private static function grant(ast_expression $range, \Closure $prepare, ?type_definition $expected = null, bool $read_only = false): segment_type
 	{
 		if ($range::class !== ast_call_expression::class || $range->name !== 'segment'
-			|| $range->qualifier === call_qualifier::local || $range->member_separator !== null || $range->receiver !== null || count($range->arguments) !== 3)
-			self::reject($range, 'Expected segment(vector, offset, length)');
-		[$owner, $offset, $length] = $range->arguments;
+			|| $range->qualifier === call_qualifier::local || $range->member_separator !== null || $range->receiver !== null || !in_array(count($range->arguments), [2, 3], true))
+			self::reject($range, 'Expected segment(vector, offset, length) or segment(vector, range)');
+		$owner = $range->arguments[0];
 		$prepare($owner);
 		if ($owner::class !== ast_name_expression::class || $owner->local_binding() === null || !($owner->type_def() instanceof vector_type_definition))
 			self::reject($owner, 'Exclusive segment requires a matching writable local vector');
@@ -66,7 +66,12 @@ final class Mt_Provisioning
 		} elseif (!($expected instanceof segment_type) || $expected->element !== $element)
 			self::reject($range, 'Exclusive segment requires a matching writable local vector');
 		if (!$expected->read_only) Readonly_Access::write($owner);
-		foreach ([$offset, $length] as $bound) {
+		if (count($range->arguments) === 2) {
+			$coordinates = $range->arguments[1];
+			$prepare($coordinates);
+			if (!($coordinates->type_def() instanceof type_segment_range)) self::reject($coordinates, 'Expected a segment_range value');
+			if ($range->suspending_operands) self::reject($coordinates, 'Await the range before binding it to a segment');
+		} else foreach (array_slice($range->arguments, 1) as $bound) {
 			$prepare($bound);
 			if ($bound->type_def() !== type_int64::instance() || !($bound instanceof ast_integer_expression
 				|| ($bound::class === ast_name_expression::class && $bound->local_binding() !== null)))

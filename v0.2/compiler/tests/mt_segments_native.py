@@ -59,6 +59,34 @@ DISPATCH = """function dispatch(vector<Point> &$rows, vector<int> &$deltas,
 """
 
 MIXED_BATCH = """function parallel(): int { return 7; }
+function range_batch(const vector<int> &$input, vector<int> &$output, int $parts, int $part): vector<int> {
+    $range = balanced_range(count($input), $parts, $part);
+    return parallel {
+        job (read: $src = segment($input,$range), write: $dst = segment($output,$range)) {
+            $i = 0;
+            while ($i < count($src)) {
+                $dst[$i] = $src[$i];
+                $i += 1;
+            }
+            return $i;
+        }
+    };
+}
+function grow_for_range(vector<int> &$cells, int &$calls): segment_range {
+    $cells[] = 2;
+    $calls += 1;
+    return balanced_range(count($cells),2,1);
+}
+function snapshot_range(): int {
+    $cells vector<int> = [1];
+    $calls = 0;
+    $s = mt_join(single_slot(segment($cells,0,1)), single_slot(segment($cells,grow_for_range($cells,$calls))));
+    return $calls * 100 + $s[0] + $s[1];
+}
+function range_for(int $size, int $parts, int $part): segment_range {
+    return balanced_range($size,$parts,$part);
+}
+function range_end(segment_range $range): int { return $range->offset + $range->length; }
 function read_first(read_segment<Point> $points): int { return $points[0]->x; }
 function relay_read(read_segment<Point> $points): int { return read_first($points); }
 function read_batch(const vector<Point> &$rows, vector<int> &$cells, int $offset): vector<int> {
@@ -164,7 +192,7 @@ def sources_for(flavor):
             if (!$enabled) { return 0; }
             return update($points, $changes, $index);
         }
-        job (read: $empty = segment($rows,0,0)) { return count($empty); }
+        job (read: $empty = segment($rows,balanced_range(0,1,0))) { return count($empty); }
     }; }"""
     sources['dispatch.' + flavor] = header + (body if flavor == 'php' else body.replace('$', ''))
     f = fixture(flavor)
@@ -227,6 +255,10 @@ def prove(work):
     helper = valid['helper.php']
     dispatch = valid['dispatch.php']
     cases = [
+        ({'mixed.php': MIXED_BATCH.replace('segment($output,$range)', 'segment($output,$parts)')},
+         'Expected a segment_range'),
+        ({'mixed.php': MIXED_BATCH.replace('return $range->offset +', '$range->length = 5; return $range->offset +')},
+         'Cannot modify a segment_range field'),
         ({'mixed.php': MIXED_BATCH.replace('return $points[0]->x;', '$points[0]->x = 4; return 4;')},
          'Cannot write through a read-only segment'),
         ({'mixed.php': MIXED_BATCH.replace('$out[0] = relay_read', '$a[0] = relay_read')},

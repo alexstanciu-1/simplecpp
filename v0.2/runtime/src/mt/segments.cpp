@@ -11,6 +11,14 @@
 #include <vector>
 
 namespace scpp::mt {
+segment_range balanced_range(int64_t length, int64_t parts, int64_t part) {
+    if (length < 0 || parts <= 0 || part < 0 || part >= parts)
+        throw std::invalid_argument("balanced_range requires length >= 0, parts > 0 and 0 <= part < parts");
+    const auto width = length / parts;
+    const auto extra = length % parts;
+    return {part * width + std::min(part, extra), width + (part < extra)};
+}
+
 const void* segment::read_at(int64_t index) const {
     if (index < 0 || index >= length) throw std::out_of_range("Segment index");
     return data + static_cast<size_t>(offset + index) * stride;

@@ -1,6 +1,7 @@
 // The harness includes the generated vector header and binds Rows to that concrete type.
 #include <scpp/mt_segments.hpp>
 #include <scpp/vectors.hpp>
+#include <array>
 #include <atomic>
 #include <cassert>
 #include <limits>
@@ -12,6 +13,10 @@ using Int = scpp::int64;
 using scpp::mt::segment;
 namespace App {
 Int work_(segment, segment);
+scpp::mt::segment_range range_for_(Int, Int, Int);
+Int snapshot_range_();
+Int range_end_(scpp::mt::segment_range);
+scpp::vector_int64 range_batch_(const scpp::vector_int64&, scpp::vector_int64&, Int, Int);
 scpp::vector_int64 read_batch_(const Rows&, scpp::vector_int64&, Int);
 scpp::vector_int64 pair_batch_(scpp::vector_int64&, scpp::vector_int64&, Int);
 scpp::vector_int64 mixed_batch_(scpp::vector_int64&, scpp::vector_int64&, Int);
@@ -43,7 +48,40 @@ static Int observed(const segment* inputs) {
     return result;
 }
 
+static void check_ranges() {
+    assert(App::snapshot_range_() == 123);
+    for (Int size = 0; size <= 10; ++size) {
+        for (Int parts = 1; parts <= 12; ++parts) {
+            Int next = 0;
+            for (Int part = 0; part < parts; ++part) {
+                auto range = App::range_for_(size, parts, part);
+                assert(range.offset == next && range.length == size / parts + (part < size % parts));
+                next += range.length;
+                assert(App::range_end_(range) == next);
+            }
+            assert(next == size);
+        }
+    }
+    auto max = std::numeric_limits<Int>::max();
+    assert(App::range_end_(App::range_for_(max, 3, 2)) == max);
+    assert(App::range_end_(App::range_for_(max, max, max - 1)) == max);
+    for (auto [length, parts, part] : {std::array<Int,3>{-1,1,0}, {1,0,0}, {1,-1,0}, {1,1,-1}, {1,1,1}}) {
+        try { App::range_for_(length, parts, part); assert(false); } catch (const std::invalid_argument&) {}
+    }
+    scpp::vector_int64 input, output;
+    for (Int i = 0; i < 10; ++i) { input.append(i + 1); output.append(0); }
+    for (Int part = 0; part < 3; ++part)
+        assert(App::range_batch_(input, output, 3, part).at(0) == (part == 0 ? 4 : 3));
+    for (Int i = 0; i < 10; ++i) assert(output.at(i) == i + 1);
+    assert(App::range_batch_(input, output, 11, 10).at(0) == 0);
+    scpp::vector_int64 shorter;
+    shorter.append(0);
+    try { App::range_batch_(input, shorter, 3, 0); assert(false); } catch (const std::out_of_range&) {}
+    assert(shorter.at(0) == 0);
+}
+
 int main() {
+    check_ranges();
     caller = std::this_thread::get_id();
     Rows rows;
     scpp::vector_int64 deltas;

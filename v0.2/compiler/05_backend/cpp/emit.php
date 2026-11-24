@@ -2621,8 +2621,10 @@ CPP;
 					$forwarded = [];
 					$fields = [];
 					$initializers = [];
+					$scalar_inputs = false;
 					foreach ($launch->arguments as $slot => $input) {
 						if ($launch instanceof ast_inline_job && $launch->binding_kinds[$slot] === 'value') {
+							$scalar_inputs = true;
 							$fields[] = $input->type_def()->cpp_type() . " v$slot;";
 							$initializers[] = $this->value($input, $global_references, $declarations, $required_headers);
 							$forwarded[] = "static_cast<const values_$i*>(context)->v$slot";
@@ -2630,7 +2632,13 @@ CPP;
 						}
 						$operands = [];
 						foreach ($input->arguments as $arg) $operands[] = $this->value($arg, $global_references, $declarations, $required_headers);
-						[$owner, $offset, $length] = $operands;
+						$owner = $operands[0];
+						if (count($operands) === 2) {
+							$fields[] = "::scpp::mt::segment_range range$slot;";
+							$initializers[] = $operands[1];
+							$offset = "snapshot_$i.range$slot.offset";
+							$length = "snapshot_$i.range$slot.length";
+						} else [, $offset, $length] = $operands;
 						$forwarded[] = 'inputs[' . count($args) . ']';
 						$borrow = $input->type_def()->read_only ? 'borrow_read' : 'borrow';
 						$args[] = "::scpp::mt::job::{$borrow}($owner, $offset, $length)";
@@ -2640,6 +2648,8 @@ CPP;
 					$parameter = '';
 					if ($fields !== []) {
 						$snapshots[] = "const struct values_$i { " . implode(' ', $fields) . " } snapshot_$i{" . implode(', ', $initializers) . '};';
+					}
+					if ($scalar_inputs) {
 						$context = "snapshot_$i, ";
 						$parameter = ', const void* context';
 					}

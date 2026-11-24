@@ -1407,6 +1407,11 @@ final class Preparation
 			$this->value($syntax->receiver, $initializing);
 			$type = $syntax->receiver->type_def();
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
+			if ($type instanceof type_segment_range) {
+				if ($syntax->field !== 'offset' && $syntax->field !== 'length') throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown segment_range field: ' . $syntax->field);
+				$syntax->settle_field(type_int64::instance());
+				return;
+			}
 			if (!($type instanceof record_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice for type ' . $type->name);
 			}

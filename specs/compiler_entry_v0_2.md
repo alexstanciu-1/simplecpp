@@ -460,9 +460,9 @@ whose segment element type comes from the supplied vector. The grant expressions
 use the caller's scope. A job can interleave these grants with any number of
 `value: $name = expression` bindings. Each accepts a numeric or boolean scalar
 and creates a worker-local copy of its inferred type. The caller evaluates all
-scalar inputs once, in job and binding order, before borrowing any vector storage
+scalar inputs and two-argument segment range expressions once, in job and binding order, before borrowing any vector storage
 or admitting the batch. Caller-side effects therefore precede admission even
-when a grant is rejected. A suspending caller must await its scalar before the
+when a grant is rejected. A suspending caller must await these inputs before the
 parallel block. Only grants participate in bounds and overlap checks. The body has its own scope, can use approved constants
 and checked helpers, and must return an integer on all completing paths.
 
@@ -496,3 +496,32 @@ of indexed records. A writable `segment<T>` may also be passed to a reading
 helper. A named worker taking `read_segment<T>` requests a read grant when
 launched with `segment(vector, offset, length)`. Both modes require isolated
 element types. A job consisting entirely of readers is valid. C++ and JS flavors use bare binding names in the same clauses.
+
+### Balanced vector partitions
+
+With the MT segment runtime enabled, `balanced_range(length, parts, part)`
+returns a `segment_range` value with two read-only integer fields, `offset` and
+`length`. All three arguments are integers. The helper requires `length >= 0`,
+`parts > 0`, and a zero-based `part` less than `parts`. Invalid inputs raise a
+runtime error. The first `length % parts` partitions receive one extra slot.
+For 10 slots and 3 partitions the results are (0, 4), (4, 3), and (7, 3).
+When partitions outnumber slots, trailing partitions are empty at the end.
+
+A range can be copied, passed to a helper, or returned. It contains no vector
+reference. Both named and inline jobs accept `segment(vector, range)`; each
+grant is checked against its actual vector at admission. For example:
+
+```php
+$range = balanced_range(count($input), $parts, $part);
+$results = parallel {
+    job (read: $src = segment($input, $range),
+         write: $dst = segment($output, $range)) {
+        $i = 0;
+        while ($i < count($src)) {
+            $dst[$i] = $src[$i];
+            $i += 1;
+        }
+        return $i;
+    }
+};
+```

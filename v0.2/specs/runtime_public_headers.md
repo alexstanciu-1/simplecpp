@@ -161,7 +161,8 @@ coordinated rebuild of native consumers and runtime archives.
 Ordinary generated units, including vector consumers, have no MT header dependency.
 With MT enabled, vector declarations forward-declare the launch job for private
 storage access. A worker or helper that takes a segment uses `scpp/mt_segment.hpp`
-for checked indexing and counting. Its only includes are `stddef.h` and `stdint.h`.
+for checked indexing and counting. The same header declares the two-integer
+`segment_range` and the `balanced_range` helper. Its only includes are `stddef.h` and `stdint.h`.
 A unit lowering `mt_join` uses `scpp/mt_segments.hpp`, which includes the segment
 header and declares the job descriptor, vector borrow operation and joined call.
 Admission, pool state, synchronization and failure handling live in the runtime source.
