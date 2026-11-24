@@ -166,7 +166,7 @@ function render(array $plan): array {
     renderHashes($plan, $files, $groups);
     renderDatetime($plan, $files);
     renderJson($plan, $files);
-    renderFilesystem($plan, $files, $groups);
+    foreach (FUNCTION_MODULES as $family) renderModuleFunctions($family, $plan, $files, $groups);
     renderBoxed($plan, $files, $groups);
     $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('core/output_declaration', [
         'string_output' => isset($plan['string']) ? "class string;\nvoid echo_string(const string& value);\n" : '',
@@ -190,9 +190,34 @@ function render(array $plan): array {
     $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration');
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
+    if ($plan['async_frames'] ?? false) {
+        $timerType = new RuntimeConcreteType($plan, 'int64');
+        $files['public/scpp/async_timer.hpp'] = BANNER . template('core/async_timer', ['scalar_header' => $timerType->headers()[0]]);
+        $files['public/scpp/async/frame.hpp'] = BANNER . template('core/async_frame');
+    }
     assembleSubmodules($plan['submodules'], $groups, $files);
     ksort($files, SORT_STRING);
     $files['inventory.json'] = encode(['generator' => 'scpp-api', 'version' => OUTPUT_VERSION, 'files' => array_keys($files)]) . "\n";
     ksort($files, SORT_STRING);
     return $files;
+}
+
+/** One consumer-owned header per demanded result, including its inline calls to the erased frame ABI. */
+function asyncTaskHeader(ConcreteType $type, string $task, bool $value, string $namespace): string {
+    $parts = asyncTaskParts($type, $task, $value, $namespace, true);
+    return $parts['declaration'] . "\n#include <scpp/async/frame.hpp>\n" . $parts['implementation'];
+}
+
+/** Shared recipe fragments for inline headers and application-owned out-of-line definitions. */
+function asyncTaskParts(ConcreteType $type, string $task, bool $value, string $namespace, bool $inline): array {
+    $parts = concreteTemplate('core/async_task', ['result' => $type], [
+        'task' => $task, 'has_value' => $value ? '1' : '', 'no_value' => $value ? '' : '1',
+        'includes' => implode('', array_map(includeHeader(...), $type->headers())) . ($value ? "#include <new>\n" : ''),
+        'extract' => $value ? '    return static_cast<' . $type->cppType($namespace) . '&&>(promise.value);' : '',
+        'open' => $namespace === '' ? '' : "namespace $namespace {",
+        'close' => $namespace === '' ? '' : '}', 'inline' => $inline ? 'inline ' : '',
+    ], $namespace);
+    $methods = $parts['implementation'];
+    if ($namespace !== '') $methods = "namespace $namespace {\n" . $methods . "}\n";
+    return ['declaration' => $parts['declaration'], 'implementation' => $methods];
 }

@@ -1,0 +1,12 @@
+{
+  "parameters": {"result": {"alias": "result_type", "requires": []}},
+  "fragments": {
+    "declaration": [
+      "core/async_task",
+      {"template": "core/async_task_value", "when": "has_value"},
+      {"template": "core/async_task_void", "when": "no_value"},
+      "core/async_task_tail"
+    ],
+    "implementation": ["core/async_task_methods"]
+  }
+}

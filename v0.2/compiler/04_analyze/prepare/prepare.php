@@ -33,7 +33,8 @@ final class Preparation
 	private array $local_frames /** list<array<string,ast_local_binding>> */ = [];
 	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
 	private bool $unknown_initializers = false;
-	private bool $in_lambda = false;
+	private ?ast_lambda_expression $enclosing_lambda = null;
+	private bool $borrows_receiver = false;
 	/** Conservative sum across lexical scopes; reset at every body preparation. */
 	private int $array_bytes /** uint32 */ = 0;
 	private bool $has_lambda_local = false;
@@ -64,6 +65,7 @@ final class Preparation
 	private bool $in_finalizer = false;
 	/** Permission is lexical and restored before each sibling finally region. */
 	private bool $in_catch = false;
+	private int $suspension_count = 0;
 	/** Traversal state: current-instance access is unavailable while preparing base arguments. */
 	private bool $initializing_base = false;
 	/** Transient initialization proof, owned only while preparing a constructor. */
@@ -132,7 +134,9 @@ final class Preparation
 	{
 		$this->local_frames = [[]];
 		$this->array_bytes = 0;
-		$this->in_lambda = $this->has_lambda_local = false;
+		$this->has_lambda_local = false;
+		$this->enclosing_lambda = null;
+		$this->borrows_receiver = false;
 		$this->guards = [];
 		$this->unknown_initializers = false;
 		$this->latest_writes = [];
@@ -142,7 +146,7 @@ final class Preparation
 			? new Constructor_Initialization($function->parent) : null;
 		foreach ($function->parameters as $parameter) {
 			if ($parameter->type_def() instanceof record_type_definition && $parameter->mode === passing_mode::value) {
-				$this->dependencies?->watch($symbols->entry($parameter->type_def()->declaration->symbol_key()), $owner);
+				$this->dependencies?->watch($this->symbols->entry($parameter->type_def()->declaration->symbol_key()), $owner);
 				$this->reserve_array_bytes($parameter->type_def()->array_bytes(), $parameter);
 			}
 			$this->local_frames[0][$parameter->declaration_key()] = $parameter;
@@ -151,7 +155,8 @@ final class Preparation
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
 		$this->loop = null;
-		$this->outward = $this->switch_break_states = [];
+		$this->switch_break_states = [];
+		$this->outward = [];
 		$completion = $this->sequence($syntax, $source, $target, $function);
 		if (($completion & statement_completion::fallthrough) !== 0) $this->constructor_initialization?->complete($owner);
 		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
@@ -167,7 +172,7 @@ final class Preparation
 	 * @param ast_statement[] $syntax
 	 */
 	private function sequence(array $syntax /** list<ast_statement> */, source_file $source,
-		?entry_target $target, ast_function_declaration $function): int /** uint8 */
+		?entry_target $target, statement_return_target $function): int /** uint8 */
 	{
 		$generator = $function->return_type_def();
 		$completion = statement_completion::fallthrough;
@@ -200,7 +205,7 @@ final class Preparation
 					$this->value($statement->key);
 					$statement->key_conversion = $generator->iteration_key_type()->prepare_conversion($statement->key, conversion_context::typed_destination);
 				}
-				$this->value($statement->value);
+				$this->value($statement->value, destination: $generator->iteration_value_type());
 				$statement->conversion = $generator->iteration_value_type()->prepare_conversion($statement->value, conversion_context::typed_destination);
 				$this->forget_values();
 			}
@@ -249,6 +254,9 @@ final class Preparation
 			elseif ($statement instanceof ast_if_statement) {
 				$next = $this->conditional($statement, $source, $target, $function);
 			}
+			elseif ($statement instanceof ast_local_alias) {
+				$this->local_alias($statement);
+			}
 			elseif ($statement instanceof ast_local_declaration) {
 				$this->declaration($statement);
 				if ($generator instanceof generator_type_definition && $statement->type_def() instanceof generator_type_definition) {
@@ -257,8 +265,8 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
 				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment);
-				$this->value($statement->value);
 				$type = $statement->target->type_def();
+				$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
 				if ($statement instanceof ast_property_compound) $type->prepare_compound($statement);
 				else {
 					if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
@@ -296,6 +304,7 @@ final class Preparation
 				} else {
 					$this->value($receiver);
 					$binding = $receiver->declaration();
+					Readonly_Access::write($receiver, true);
 					if (!($binding instanceof ast_local_binding)
 						&& !($binding instanceof ast_global_declaration && $binding->parent instanceof ast_record_declaration)) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires writable local storage');
@@ -305,9 +314,12 @@ final class Preparation
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
 				}
+				if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $source->flavor === flavor::python) {
+					throw new diagnostic($source, $statement->byte_start(), 'Python indexed write requires a typed vector or hash');
+				}
 				$this->value($statement->index);
 				$type->prepare_key($statement->index);
-				$this->value($statement->value);
+				$this->collection_element($statement->value, $type->write_type(), null);
 				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
 				if ($binding instanceof ast_local_binding) $this->latest_writes[$binding->storage_id()] = null;
 			}
@@ -316,6 +328,7 @@ final class Preparation
 					$this->writable_property($statement->receiver, payload: true);
 				} else {
 					$this->value($statement->receiver);
+					Readonly_Access::write($statement->receiver, true);
 					if ($statement->receiver->local_binding() === null) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 					}
@@ -324,7 +337,7 @@ final class Preparation
 				if (!($type instanceof appendable_collection_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires an appendable collection');
 				}
-				$this->value($statement->value);
+				$this->collection_element($statement->value, $type->write_type(), null);
 				$statement->settle_append($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
 			}
 			elseif ($statement instanceof ast_storage_write) {
@@ -340,6 +353,15 @@ final class Preparation
 					}
 				}
 			}
+			elseif ($statement instanceof ast_await_statement) {
+				$this->value($statement->value);
+			}
+			elseif ($statement instanceof ast_delay_statement) {
+				if (!$function->is_async) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires an async function');
+				++$this->suspension_count;
+				$this->value($statement->value);
+				if ($statement->value->type_def() !== type_registry::integer()) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires int64 milliseconds');
+			}
 			elseif ($statement instanceof ast_call_statement) {
 				$this->expression_visits++;
 				$this->call($statement->value);
@@ -350,20 +372,21 @@ final class Preparation
 					throw new diagnostic($source, $statement->byte_start(), 'Return cannot leave a finally block');
 				}
 				$this->constructor_initialization?->complete($statement);
-				if ($target === null) {
+				if ($function->reference_return_origin !== null) {
+					$origin = $function->parameters[$function->reference_return_origin];
+					$this->reference_return($statement->value, $origin, $statement);
+					$statement->settle_conversion(value_conversion::identity);
+				}
+				elseif ($target === null) {
 					$return_type = $function->return_type_def();
-					if ($return_type === type_void::instance() || $return_type instanceof generator_type_definition) {
-						if ($statement->value !== null) {
-							throw new diagnostic($source, $statement->byte_start(), 'Void function cannot return a value');
-						}
-					}
-					else {
-						if ($statement->value === null) {
+					if ($statement->value === null) {
+						if ($return_type !== type_void::instance() && !($return_type instanceof generator_type_definition)) {
 							throw new diagnostic($source, $statement->byte_start(), 'Non-void function requires a value return');
 						}
-						$this->value($statement->value);
-						if ($return_type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
-						$statement->settle_conversion($return_type->prepare_conversion($statement->value, conversion_context::typed_destination));
+					} elseif ($return_type instanceof generator_type_definition) {
+						throw new diagnostic($source, $statement->byte_start(), 'Void function cannot return a value');
+					} else {
+						$statement->settle_conversion($this->return_conversion($statement->value, $return_type));
 					}
 				}
 				else
@@ -389,7 +412,7 @@ final class Preparation
 
 	/** Compose protected exits with the independent finalizer, whose abrupt exits replace pending exits. */
 	private function try_statement(ast_try_statement $syntax, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		if (array_filter($this->constructor_initialization?->states ?? [], static fn(int $state): bool => $state !== 1) !== []) {
 			throw new diagnostic($source, $syntax->byte_start(), 'Try during field initialization is deferred');
@@ -402,6 +425,7 @@ final class Preparation
 		try {
 			$completion = $this->lexical_block($syntax->body, $target, $function);
 			$seen = [];
+			$before_handlers = $this->suspension_count;
 			foreach ($syntax->handlers as $handler) {
 				$caught = Type_Resolution::local($handler->type, $this->symbols, $this->owner, $this->dependencies);
 				$this->require_exception($caught, $handler->type, true);
@@ -414,8 +438,12 @@ final class Preparation
 				$completion |= $this->lexical_block($handler->body, $target, $function, $handler->binding);
 			}
 			$this->in_catch = $outer_catch;
+			$syntax->suspending_handlers = $before_handlers !== $this->suspension_count;
 			$syntax->protected_completion = $completion;
 			if ($syntax->finalizer !== null) {
+				if ($function->returns_reference && ($completion & statement_completion::returns)) {
+					throw new diagnostic($source, $syntax->byte_start(), 'Reference returns across finally are deferred');
+				}
 				if ($this->outward !== []) $syntax->protected_completion |= statement_completion::numbered;
 				if ($completion & statement_completion::breaks) $syntax->break_target = $this->break_target();
 				if ($completion & statement_completion::continues) $syntax->continue_target = $this->loop;
@@ -481,7 +509,7 @@ final class Preparation
 		}
 		$statement->target = $destination;
 		$next = $statement instanceof ast_break_statement ? statement_completion::breaks : statement_completion::continues;
-		if ($nonlocal) {
+		if ($nonlocal || ($statement instanceof ast_break_statement && $destination instanceof ast_while_else_statement)) {
 			$this->outward[2 * $destination->start + (int)($statement instanceof ast_continue_statement)] = true;
 			return 0;
 		}
@@ -505,10 +533,10 @@ final class Preparation
 	}
 
 	private function switch_statement(ast_switch_statement $syntax, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int
+		statement_return_target $function): int
 	{
 		$this->value($syntax->subject);
-		$type = $syntax->subject->type_def();
+		$type = $syntax->subject->type_def()->dispatch_label_type();
 		$dispatch = $type->constant_dispatch();
 		if ($dispatch === null) throw new diagnostic($source, $syntax->byte_start(), 'Switch subject requires constant-label dispatch');
 		$outer = $this->switch;
@@ -555,10 +583,24 @@ final class Preparation
 	private function case_label(ast_expression $label, type_definition $type, constant_dispatch $dispatch, array &$seen, string $construct): void
 	{
 		if ($label->type_def() !== $type) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label type must equal subject type');
-		$key = $dispatch->label_key($label);
-		if ($key === null) throw new diagnostic($label->source(), $label->byte_start(), $construct . ' label requires a literal, named constant or enum case');
-		if (isset($seen[$key])) throw new diagnostic($label->source(), $label->byte_start(), 'Duplicate ' . strtolower($construct) . ' label');
-		$seen[$key] = true;
+		if ($dispatch === constant_dispatch::integer_switch) {
+			$integer = constant_dispatch::integer_label($label) ?? throw $this->invalid_case_label($label, $construct);
+			$duplicate = isset($seen[$integer]);
+			$seen[$integer] = true;
+		} else {
+			$key = match ($dispatch) {
+				constant_dispatch::enum_switch => constant_dispatch::enum_case_name($label),
+				constant_dispatch::byte_equality => constant_dispatch::string_label_bytes($label),
+			} ?? throw $this->invalid_case_label($label, $construct);
+			$duplicate = isset($seen[$key]);
+			$seen[$key] = true;
+		}
+		if ($duplicate) throw new diagnostic($label->source(), $label->byte_start(), 'Duplicate ' . strtolower($construct) . ' label');
+	}
+
+	private function invalid_case_label(ast_expression $label, string $construct): diagnostic
+	{
+		return new diagnostic($label->source(), $label->byte_start(), $construct . ' label requires a literal, named constant or enum case');
 	}
 
 	/** Keep definite constructor states only where all paths agree. */
@@ -570,7 +612,7 @@ final class Preparation
 	}
 
 	/** Prepare a separate lexical frame; facts from its writes are forgotten on exit. */
-	private function lexical_block(ast_block $body, ?entry_target $target, ast_function_declaration $function,
+	private function lexical_block(ast_block $body, ?entry_target $target, statement_return_target $function,
 		?ast_produced_binding $binding = null): int /** uint8 */
 	{
 		$this->local_frames[] = $binding === null ? [] : [$binding->declaration_key() => $binding];
@@ -614,7 +656,7 @@ final class Preparation
 
 	/** Prepare all alternatives once, with lexical frames and conservative value barriers at alternatives and join. */
 	private function conditional(ast_if_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$completion = 0;
 		$has_else = false;
@@ -679,7 +721,7 @@ final class Preparation
 	}
 
 	/** Recognize a direct interface or union-arm test on storage whose owner cannot be rebound through an alias. */
-	private function branch_guard(ast_expression $condition, ast_function_declaration $function, bool $paired): ?ast_object_access_expression
+	private function branch_guard(ast_expression $condition, statement_return_target $function, bool $paired): ?ast_object_access_expression
 	{
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
 		if (!($test instanceof ast_object_access_expression) || !$test->test || !($test->operand instanceof ast_name_expression)
@@ -700,22 +742,45 @@ final class Preparation
 		$condition->type_def()->prepare_condition($condition);
 	}
 
+	/** Check an already prepared logical operand against its source flavor's admission rule. */
+	private function logical_operand(ast_expression $operand): void
+	{
+		$type = $operand->type_def();
+		if ($type !== type_bool::instance() && ($source = $operand->source())->flavor === flavor::python) {
+			throw new diagnostic($source, $operand->byte_start(), 'Python logical operand requires bool');
+		}
+		$type->prepare_condition($operand);
+	}
+
 	/** Resolve produced types and ordinary assignments once; no iteration-dependent analysis or snapshots. */
 	private function foreach_loop(ast_foreach_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$this->value($statement->source_value);
-		$type = $statement->source_value->type_def()->iteration();
+		$source_type = $statement->source_value->type_def();
+		$type = $source_type->iteration();
+		$python = $source->flavor === flavor::python;
+		$paired = $python && $statement->key !== null;
+		$hash = ($python || $statement->requires_key) && $type instanceof key_iterable_type;
+		$statement->keys_only = $hash && !$paired;
+		if (!$hash && ($paired || $statement->requires_key)) {
+			throw new diagnostic($source, $statement->source_value->byte_start(),
+				$paired ? 'Python items traversal requires a typed hash' : 'JS for-in requires a typed hash');
+		}
+		if ($python && !$hash && !($source_type instanceof vector_type_definition)) {
+			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector or hash');
+		}
 		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
-		if ($function->return_type_def() instanceof generator_type_definition) {
+		if ($function->is_async || $function->return_type_def() instanceof generator_type_definition) {
 			$receiver = $statement->source_value;
-			if ($receiver->type_def() instanceof generator_type_definition) {
+			if ($source_type instanceof generator_type_definition) {
 				throw new diagnostic($source, $receiver->byte_start(), 'Nested cursor traversal is deferred');
 			}
 			while ($receiver instanceof ast_field_expression) $receiver = $receiver->receiver;
 			if (!(($receiver instanceof ast_name_expression && $receiver->local_binding() !== null)
-				|| $receiver instanceof ast_call_expression || $receiver instanceof ast_construction_expression)) {
-				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires cursor-owned storage, a temporary or a retained shared field');
+				|| $receiver instanceof ast_call_expression || $receiver instanceof ast_construction_expression
+				|| ($function->is_async && $receiver instanceof ast_await_expression))) {
+				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires local storage, a temporary or a retained shared field');
 			}
 		}
 		if (($method = $type->iteration_method()) !== null) {
@@ -723,7 +788,8 @@ final class Preparation
 			$this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		}
 		$destination = $this->find_local($statement->value->short_name);
-		$output = $type->iteration_value_type();
+		Readonly_Access::require_writable($statement->value, $destination);
+		$output = $statement->keys_only ? $type->iteration_key_type() : $type->iteration_value_type();
 		if ($output instanceof record_type_definition) {
 			$this->dependencies?->watch($this->symbols->entry($output->declaration->symbol_key()), $this->owner);
 			$this->reserve_array_bytes($output->array_bytes(), $statement->value);
@@ -763,7 +829,7 @@ final class Preparation
 
 	/** Prepare initialization once in its own lexical frame, then reuse the repeating-region worker. */
 	private function for_loop(ast_for_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$this->local_frames[] = [];
 		try {
@@ -777,7 +843,7 @@ final class Preparation
 
 	/** Prepare each repeating region once with unknown incoming values; no iteration or fixed-point analysis. */
 	private function loop(ast_loop_statement $statement, source_file $source, ?entry_target $target,
-		ast_function_declaration $function): int /** uint8 */
+		statement_return_target $function): int /** uint8 */
 	{
 		$post_test = $statement instanceof ast_do_while_statement;
 		$this->forget_values();
@@ -817,6 +883,18 @@ final class Preparation
 		if ($this->outward !== []) $completion |= $this->arriving($statement);
 		// A post-test loop enters its body once; return and throw are terminal exits.
 		$terminal = statement_completion::returns | statement_completion::throws;
+		if ($statement instanceof ast_while_else_statement) {
+			$before = $this->constructor_initialization?->states;
+			$otherwise = $this->lexical_block($statement->otherwise, $target, $function);
+			if ($completion & statement_completion::breaks) {
+				if ($before !== null) {
+					$this->constructor_initialization->states = ($otherwise & statement_completion::fallthrough)
+						? self::join_initialization($before, $this->constructor_initialization->states) : $before;
+				}
+				$otherwise |= statement_completion::fallthrough;
+			}
+			return ($completion & $terminal) | $otherwise;
+		}
 		if ($statement instanceof ast_for_statement && !$statement->conditions && !($completion & statement_completion::breaks)) {
 			return $completion & $terminal;
 		}
@@ -831,6 +909,47 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(), 'Function fixed-array storage exceeds 64 KiB');
 		}
 		$this->array_bytes += $bytes;
+	}
+
+	/** Publish a second lexical name for already-live storage without reading or copying it. */
+	private function local_alias(ast_local_alias $declaration): void
+	{
+		$name = $declaration->declaration_key();
+		$source = $declaration->source();
+		if (($this->enclosing_lambda !== null && !$this->enclosing_lambda->returns_reference) || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+			throw new diagnostic($source, $declaration->byte_start(), 'Local aliases are deferred in lambdas and generators');
+		}
+		if ($this->find_local($name) !== null) {
+			throw new diagnostic($source, $declaration->byte_start(), 'Local alias must introduce a new name: ' . $name);
+		}
+		$target = $declaration->initializer;
+		if ($target instanceof ast_call_expression) {
+			$this->value($target, $name);
+			$origin = $target->reference_origin();
+			if ($origin === null) {
+				throw new diagnostic($source, $target->byte_start(), 'Local alias call requires a reference return');
+			}
+		} else {
+			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
+		}
+		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
+			&& ($this->enclosing_lambda !== null || !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
+		if (!($origin instanceof ast_local_declaration) && !$reference_parameter) {
+			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
+		}
+		$type = $origin->type_def();
+		if ($declaration->type_reference !== null) {
+			$written = Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies);
+			if ($written === null || !$type->matches($written)) {
+				throw new diagnostic($source, $declaration->type_reference->byte_start(), 'Local alias requires the exact storage type: ' . $type->name);
+			}
+		}
+		if ($target instanceof ast_name_expression) {
+			++$this->expression_visits;
+			$target->settle_local($origin, unknown: true);
+		}
+		$declaration->settle_type($type, constant_evaluation::unavailable);
+		$this->local_frames[count($this->local_frames) - 1][$name] = $origin;
 	}
 
 	/** Prepare one local, account for inline storage and publish it after its initializer succeeds. */
@@ -858,7 +977,7 @@ final class Preparation
 			$declaration->initializer->settle_construction($type, []);
 		}
 		elseif ($declaration->initializer instanceof ast_struct_default) {
-			if (!($type instanceof record_type_definition) && !($type instanceof record_handle_definition) && !($type instanceof type_exception)) {
+			if (!($type instanceof record_type_definition) && !($type instanceof record_handle_definition) && !($type instanceof type_exception) && !($type instanceof owned_callable_type)) {
 				throw new diagnostic($source, $declaration->byte_start(), 'A local without an initializer requires a struct type');
 			}
 			if ($type instanceof shared_record_type_definition && $type->required) {
@@ -867,49 +986,41 @@ final class Preparation
 			$this->expression_visits++;
 			$this->construction($declaration->initializer, $type, $name);
 		}
-		elseif ($declaration->initializer instanceof ast_keyed_collection_expression) {
-			if (!($type instanceof keyed_initializer_type)) throw new diagnostic($source, $declaration->initializer->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
-			$this->expression_visits++;
-			foreach ($declaration->initializer->entries as $entry) {
-				$this->value($entry->key, $name);
-				$type->prepare_key($entry->key);
-				$this->value($entry->value, $name);
-				$entry->conversion = $type->write_type()->prepare_conversion($entry->value, conversion_context::typed_destination);
-			}
-			$declaration->initializer->settle_collection($type);
-		}
-		elseif (($declaration->initializer instanceof ast_collection_expression) && $type !== null) {
-			if (!($type instanceof indexed_collection_type)) {
-				throw new diagnostic($source, $declaration->initializer->byte_start(), 'Destination has no published collection initialization capability');
-			}
-			$this->collection($declaration->initializer, $type, $name);
-		}
 		else {
 			$this->value($declaration->initializer, $name,
-				allow_callback: $type === null && $declaration->initializer instanceof ast_lambda_expression);
+				allow_callback: $type === null && $declaration->initializer instanceof ast_lambda_expression,
+				destination: $type);
 		}
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
-			if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $declaration);
 			if (!$type->supports_inferred_local() && !($type instanceof fixed_array_type)) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(),
 					'Cannot infer a local type from null; write an explicit type');
 			}
 		}
-		if ($type instanceof fixed_array_type) {
-			if ($declaration->parent instanceof ast_for_statement || $this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
-				throw new diagnostic($source, $declaration->byte_start(), 'Declare fixed-array locals in an ordinary statement block');
-			}
-			$this->reserve_array_bytes($type->bytes, $declaration);
-		}
-		elseif ($type instanceof record_type_definition) $this->reserve_array_bytes($type->array_bytes(), $declaration);
-		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
+		$conversion = $this->prepare_local_initialization($declaration, $type);
 		$declaration->settle_type($type, $type->evaluate_constant($conversion, $declaration->initializer), true, $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
 		if ($type instanceof lambda_type_definition) $this->has_lambda_local = true;
 		if ($this->unknown_initializers) {
 			$this->latest_writes[$declaration->storage_id()] = $declaration;
 		}
+	}
+
+	/** Owned locals and capture fields initialize through the same source conversion and layout rules. */
+	private function prepare_local_initialization(ast_local_declaration $declaration, type_definition $type): int /** uint16 */
+	{
+		if ($type instanceof fixed_array_type) {
+			if ($declaration instanceof ast_closure_capture || $declaration->parent instanceof ast_for_statement || $this->enclosing_lambda !== null || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Declare fixed-array locals in an ordinary statement block');
+			}
+			$this->reserve_array_bytes($type->bytes, $declaration);
+		}
+		elseif ($type instanceof record_type_definition) {
+			if ($declaration->type_reference === null) $this->require_inline_cleanup($type, $declaration);
+			$this->reserve_array_bytes($type->array_bytes(), $declaration);
+		}
+		return $type->prepare_local_initializer($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
 	}
 
 	/** Resolve both forms of type-qualified writes through the ordinary watched name lookup. */
@@ -1004,6 +1115,7 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(),
 				'Assignment requires an existing local; global writes are deferred: ' . $name);
 		}
+		Readonly_Access::require_writable($site, $local);
 		return $local;
 	}
 
@@ -1015,7 +1127,7 @@ final class Preparation
 	}
 
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
-	private function write(ast_storage_write $statement): void
+	private function write(ast_storage_write $statement, bool $consumes_result = false): void
 	{
 		if ($statement instanceof ast_index_update) {
 			$this->value($statement->target);
@@ -1032,14 +1144,22 @@ final class Preparation
 			return;
 		}
 		$local = $this->assignment_local($statement, $statement->name);
+		if ($statement instanceof ast_reset_statement) {
+			$statement->prepare_reset($local);
+			$this->record_assignment($local, null);
+			return;
+		}
 		$type = $local->type_def();
 		if ($statement instanceof ast_update_statement) {
+			if ($consumes_result && ($local instanceof ast_parameter_declaration || $type !== type_registry::integer())) {
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'Update RHS requires an initialized int64 local');
+			}
 			$statement->require_update_type($type);
 			$statement->settle_update($local);
 			$this->latest_writes[$local->storage_id()] = null;
 			return;
 		}
-		$this->value($statement->value);
+		$this->value($statement->value, destination: $statement->calculates_value() ? null : $type);
 		if ($statement->operator === binary_operator::coalesce) {
 			if (!($local instanceof ast_local_declaration) || $statement->parent instanceof ast_for_statement) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Coalescing assignment requires a plain local statement');
@@ -1053,6 +1173,15 @@ final class Preparation
 			$statement->settle_assignment($local, $conversion);
 		}
 		else {
+			$source = $statement->source();
+			if ($source->flavor === flavor::python) {
+				if (!type_registry::is_numeric_scalar($type)) {
+					throw new diagnostic($source, $statement->byte_start(), 'Python compound destination requires a numeric scalar');
+				}
+				if (!type_registry::is_numeric_scalar($statement->value->type_def())) {
+					throw new diagnostic($source, $statement->value->byte_start(), 'Python compound operand requires a numeric scalar');
+				}
+			}
 			$statement->prepare_local_compound($local);
 		}
 		$this->record_assignment($local, $statement);
@@ -1061,7 +1190,6 @@ final class Preparation
 	/** Prepare ordered elements once using the destination contract; nested literals inherit their element destination. */
 	private function collection(ast_collection_expression $syntax, type_definition&indexed_collection_type $type, ?string $initializing): void
 	{
-		$this->expression_visits++;
 		if ($type instanceof fixed_array_type && count($syntax->elements) !== $type->extent) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array initializer must match extent ' . $type->extent);
 		}
@@ -1075,12 +1203,53 @@ final class Preparation
 		$destination = $type->write_type();
 		$conversions = [];
 		foreach ($syntax->elements as $element) {
-			if ($element instanceof ast_collection_expression && $destination instanceof indexed_collection_type) {
-				$this->collection($element, $destination, $initializing);
-			} else $this->value($element, $initializing);
+			$this->collection_element($element, $destination, $initializing);
 			$conversions[] = $destination->prepare_conversion($element, conversion_context::typed_destination);
 		}
 		$syntax->settle_collection($type, $conversions);
+	}
+
+	/** A nested keyed literal with a family-specific spelling keeps that family. */
+	private function collection_element(ast_expression $element, type_definition $destination, ?string $initializing): void
+	{
+		if ($destination instanceof boxed_type_definition && $element instanceof ast_keyed_collection_expression
+			&& in_array($element->source()->flavor, [flavor::php, flavor::js], true)) {
+			$this->value($element, $initializing);
+		} else $this->value($element, $initializing, destination: $destination);
+	}
+
+	/** Resolve a contextual construction target before applying PHP/JS defaults. */
+	private function literal(ast_collection_expression|ast_keyed_collection_expression $syntax, ?type_definition $type, ?string $initializing): void
+	{
+		$syntax->suspends = false;
+		$flavor = $syntax->source()->flavor;
+		if ($type === null && ($flavor === flavor::php || $flavor === flavor::js)) {
+			$dynamic = $syntax instanceof ast_keyed_collection_expression
+				? $syntax->lexical_root()->tokens->tokens[$syntax->start]->kind === token_kind::lbrace : $flavor === flavor::js;
+			$type = type_registry::resolve($dynamic ? 'dynamic' : 'mixed');
+		}
+		if ($syntax instanceof ast_collection_expression) {
+			if (!($type instanceof indexed_collection_type)) {
+				if ($type instanceof callback_type_definition && $flavor === flavor::php) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'A collection literal cannot supply a typed callback');
+				$message = $type === null ? 'Collection requires an explicitly typed local initializer' : 'Destination has no published collection initialization capability';
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), $message);
+			}
+			if ($type instanceof fixed_array_type && !($syntax->parent instanceof ast_local_declaration || $syntax->parent instanceof ast_collection_expression)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed-array literal requires a local initializer');
+			}
+			$this->collection($syntax, $type, $initializing);
+			return;
+		}
+		if (!($type instanceof keyed_initializer_type)) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
+		}
+		foreach ($syntax->entries as $entry) {
+			$this->value($entry->key, $initializing);
+			$type->prepare_key($entry->key);
+			$this->collection_element($entry->value, $type->write_type(), $initializing);
+			$entry->conversion = $type->write_type()->prepare_conversion($entry->value, conversion_context::typed_destination);
+		}
+		$syntax->settle_collection($type);
 	}
 
 	/** Statement and fallback throws use the same admission and settled root conversion. */
@@ -1104,23 +1273,28 @@ final class Preparation
 	}
 
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
-	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false): void
+	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null): void
 	{
-		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum_from_value or object_cast target');
+		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum lookup or object_cast target');
 		$this->expression_visits++;
 		if ($syntax instanceof ast_throw_expression) {
 			$this->prepare_throw($syntax, $initializing);
 			return;
 		}
-		if ($syntax instanceof ast_keyed_collection_expression) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed local; nested keyed input is deferred');
-		if ($syntax instanceof ast_collection_expression) {
-			throw new diagnostic($syntax->source(), $syntax->byte_start(), ($syntax->elements === [] ? 'Empty collection requires an explicitly typed local initializer (vector, hash or boxed container)' : 'Populated collection requires an explicitly typed local initializer'));
+		if ($syntax instanceof ast_keyed_collection_expression || $syntax instanceof ast_collection_expression) {
+			$this->literal($syntax, $destination, $initializing);
+			return;
+		}
+		if ($syntax instanceof ast_update_expression) {
+			$this->write($syntax->update, consumes_result: true);
+			$syntax->settle_update();
+			return;
 		}
 		if ($syntax instanceof ast_condition_assignment) {
 			if (!$syntax->in_condition()) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Parenthesized assignment requires a control-statement condition');
 			$local = $this->assignment_local($syntax, $syntax->target->name);
 			if (!($local instanceof ast_local_declaration)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Condition assignment requires a declared local');
-			$this->value($syntax->value, $initializing);
+			$this->value($syntax->value, $initializing, destination: $local->type_def());
 			$syntax->settle_assignment($local, $local->type_def()->prepare_conversion($syntax->value, conversion_context::assignment));
 			$this->record_assignment($local, null);
 			return;
@@ -1134,8 +1308,9 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_match_expression) {
+			$syntax->suspends = false;
 			$this->value($syntax->subject, $initializing);
-			$type = $syntax->subject->type_def();
+			$type = $syntax->subject->type_def()->dispatch_label_type();
 			$conditional = ast_match_expression::is_condition_subject($syntax->subject);
 			$dispatch = $type->constant_dispatch();
 			if (!$conditional && $dispatch === null) {
@@ -1145,14 +1320,16 @@ final class Preparation
 			$default = null;
 			$result = null;
 			foreach ($syntax->arms as $arm) {
-				if ($arm->label === null) {
+				if ($arm->labels === []) {
 					if ($default !== null) throw new diagnostic($arm->source(), $arm->byte_start(), 'Duplicate match default');
 					$default = $arm;
 					continue;
 				}
-				$this->value($arm->label, $initializing);
-				if (!$conditional) $this->case_label($arm->label, $type, $dispatch, $seen, 'Match');
-				elseif ($arm->label->type_def() !== $type) throw new diagnostic($arm->source(), $arm->byte_start(), 'Match label type must equal subject type');
+				foreach ($arm->labels as $label) {
+					$this->value($label, $initializing);
+					if (!$conditional) $this->case_label($label, $type, $dispatch, $seen, 'Match');
+					elseif ($label->type_def() !== $type) throw new diagnostic($label->source(), $label->byte_start(), 'Match label type must equal subject type');
+				}
 				$this->selection_result($arm->result, $result, $initializing, 'Match');
 			}
 			if ($default === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Match requires a default arm');
@@ -1175,16 +1352,12 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_this_expression) {
-			if ($this->in_lambda) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Capture-free lambda cannot use this');
-			if ($this->initializing_base) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Current instance is unavailable during base initialization');
-			if ($this->owner->parent->is_static) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Static method has no this receiver');
-			$record = $this->owner->parent->parent;
-			if (!($record instanceof ast_method_owner)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires an instance method');
-			}
+			if ($this->enclosing_lambda !== null) $this->borrow_receiver($syntax);
+			$record = $this->receiver_owner($syntax);
 			$parent = $syntax->parent;
 			$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression
 				|| $parent instanceof ast_qualified_data) && $parent->receiver === $syntax;
+			if (!$is_receiver && $this->enclosing_lambda !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Borrowed this can only be used as a receiver');
 			if (!$is_receiver && $this->owner->parent->is_destructor()) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during destruction is forbidden');
 			if (!$is_receiver && $this->owner->parent->is_constructor() && !($parent instanceof ast_return_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
@@ -1205,6 +1378,20 @@ final class Preparation
 				$payload = $record->definition;
 			} else {
 				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
+			}
+			if ($payload instanceof type_exception) {
+				if ($syntax->named !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+				$factory = $payload->factory;
+				if (count($syntax->arguments) !== count($factory->parameters)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Argument count mismatch for Exception constructor');
+				}
+				$message = $syntax->arguments[0];
+				$this->value($message, $initializing);
+				if ($message->type_def() !== $factory->parameters[0]) {
+					throw new diagnostic($message->source(), $message->byte_start(), 'Exception constructor requires ' . $factory->parameters[0]->name);
+				}
+				$syntax->settle_construction($factory->return_type_def(), [value_conversion::identity]);
+				return;
 			}
 			if ($payload instanceof shared_record_type_definition && $payload->required) $payload = $payload->payload;
 			if (!($payload instanceof record_type_definition)) {
@@ -1252,6 +1439,10 @@ final class Preparation
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
+			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition) && $syntax->source()->flavor === flavor::python
+				&& !($type instanceof boxed_type_definition && $syntax->parent instanceof ast_key_comparison)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash');
+			}
 			$this->value($syntax->index, $initializing);
 			$type->prepare_index($syntax);
 			return;
@@ -1268,8 +1459,8 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_cast_expression) {
-			$this->value($syntax->operand, $initializing);
 			$type = Type_Resolution::resolve($syntax->type_reference);
+			$this->value($syntax->operand, $initializing, destination: $type instanceof boxed_type_definition ? $type : null);
 			if ($type === null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_reference->spelling());
 			}
@@ -1278,6 +1469,10 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_unary_expression) {
 			$this->value($syntax->operand, $initializing);
+			if ($syntax->operator === unary_operator::bit_not && $syntax->source()->flavor === flavor::python
+				&& !type_registry::is_numeric_scalar($syntax->operand->type_def())) {
+				throw new diagnostic($syntax->source(), $syntax->operand->byte_start(), 'Unsupported unary operand: Python bitwise operators require integer scalars');
+			}
 			if ($syntax->operand->type_def() instanceof carrier_type_definition) {
 				$syntax->operand->type_def()->require_extraction($syntax->operand, conversion_context::assignment);
 			}
@@ -1286,22 +1481,45 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_isset_expression) {
 			$this->value($syntax->operand, $initializing);
-			if (!($syntax->operand->type_def() instanceof carrier_type_definition)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'This isset slice requires a carrier');
+			$type = $syntax->operand->type_def();
+			if (!($type instanceof presence_test_type)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'This isset slice requires a carrier or owned callable');
 			}
 			$syntax->settle_presence();
 			return;
 		}
 		if ($syntax instanceof ast_not_expression) {
 			$this->value($syntax->operand, $initializing);
-			$syntax->operand->type_def()->prepare_condition($syntax->operand);
+			$this->logical_operand($syntax->operand);
 			$syntax->settle_not();
 			return;
 		}
+		if ($syntax instanceof ast_comparison_chain) {
+			$syntax->suspends = false;
+			foreach ($syntax->links as $link) {
+				$this->value($link, $initializing);
+				if ($link->type_def() !== type_bool::instance()) {
+					throw new diagnostic($link->source(), $link->byte_start(), 'Comparison chain requires a boolean comparison');
+				}
+			}
+			$syntax->settle_chain();
+			return;
+		}
 		if ($syntax instanceof ast_binary_expression) {
-			$this->value($syntax->left, $initializing);
+			if (!($syntax instanceof ast_continued_comparison)) $this->value($syntax->left, $initializing);
 			// A lazy RHS is still checked; any reference-call invalidation conservatively survives the join.
-			$this->value($syntax->right, $initializing);
+			if ($syntax instanceof ast_key_comparison) {
+				$this->expression_visits++;
+				if (!$this->resolve_value_name($syntax->right, $initializing, false)) {
+					if (!($syntax->left->receiver->type_def() instanceof boxed_type_definition)) {
+						throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Missing-key test requires mixed or dynamic');
+					}
+					$syntax->settle_key_test();
+					return;
+				}
+			} else {
+				$this->value($syntax->right, $initializing);
+			}
 			if ($syntax->operator === binary_operator::coalesce) {
 				$carrier = $syntax->left->type_def();
 				if (!($carrier instanceof carrier_type_definition) || !$carrier->supports_coalescing()) {
@@ -1314,21 +1532,36 @@ final class Preparation
 				return;
 			}
 			if ($syntax->operator->logical()) {
-				$syntax->left->type_def()->prepare_condition($syntax->left);
-				$syntax->right->type_def()->prepare_condition($syntax->right);
+				$this->logical_operand($syntax->left);
+				$this->logical_operand($syntax->right);
 				$syntax->settle_binary(type_bool::instance());
 				return;
 			}
 			$left = $syntax->left->type_def();
 			$right = $syntax->right->type_def();
+			if ($syntax->operator->membership()) {
+				if (!($right instanceof membership_type)) throw new diagnostic($syntax->source(), $syntax->right->byte_start(), 'Receiver does not support Python membership');
+				$right->prepare_membership($syntax);
+				return;
+			}
+			if (in_array($syntax->operator, [binary_operator::bit_and, binary_operator::bit_xor, binary_operator::bit_or], true)
+				&& $syntax->source()->flavor === flavor::python
+				&& !(type_registry::is_numeric_scalar($left) && type_registry::is_numeric_scalar($right))) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands: Python bitwise operators require integer scalars');
+			}
+			// A Python owner identity test accepts any two shared views of an allocation.
+			if (($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical)
+				&& $syntax->source()->flavor === flavor::python && !($syntax instanceof ast_key_comparison)
+				&& !($syntax->right instanceof ast_keyword_expression && $syntax->right->word === 'null')) {
+				if (!($left instanceof shared_record_type_definition && $right instanceof shared_record_type_definition)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python identity requires two shared handles or a literal None on the right');
+				}
+				$syntax->settle_binary(type_bool::instance(), $left);
+				return;
+			}
 			if ($left instanceof shared_record_type_definition || $right instanceof shared_record_type_definition) {
 				$owner = $left instanceof shared_record_type_definition ? $left : $right;
 				$owner->prepare_binary($syntax);
-				return;
-			}
-			$box = $left instanceof boxed_type_definition ? $left : $right;
-			if ($box instanceof boxed_type_definition) {
-				$box->prepare_binary($syntax);
 				return;
 			}
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
@@ -1337,6 +1570,14 @@ final class Preparation
 					$syntax->settle_binary(type_bool::instance(), $carrier);
 					return;
 				}
+				if ($syntax->source()->flavor === flavor::python && $syntax->right instanceof ast_keyword_expression && $left !== type_null::instance()) {
+					throw new diagnostic($syntax->source(), $syntax->left->byte_start(), 'Python None test requires a nullable value, shared handle or None');
+				}
+			}
+			$box = $left instanceof boxed_type_definition ? $left : $right;
+			if ($box instanceof boxed_type_definition) {
+				$box->prepare_binary($syntax);
+				return;
 			}
 			if ($left instanceof carrier_type_definition) {
 				$left->require_extraction($syntax->left, conversion_context::assignment);
@@ -1348,18 +1589,31 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_lambda_expression) {
-			if (!$allow_callback || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Lambda requires an inferred local initializer or typed callback argument');
+			if ((!$allow_callback && !($destination instanceof owned_callable_type)) || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Lambda requires an inferred local initializer or typed callback argument, or an owned callable destination');
 			}
-			$this->lambda($syntax);
+			$signature = $destination instanceof owned_callable_type ? $destination->signature : $destination;
+			$this->lambda($syntax, $signature instanceof callback_type_definition ? $signature : null);
 			return;
 		}
 		if ($syntax instanceof ast_callable_reference) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable reference requires a typed callback argument');
 		}
+		if ($syntax instanceof ast_await_expression) {
+			$this->prepare_await_context($syntax);
+			$suspends = $this->owner->parent->is_async;
+			if ($suspends) ++$this->suspension_count;
+			$target = $this->async_producer($syntax->operand, $initializing,
+				$suspends ? dependency_use::async_task : dependency_use::async_wait, $syntax);
+			if ($target->return_type_def() === type_void::instance() && $destination !== type_void::instance() && !($syntax->parent instanceof ast_await_statement)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
+			}
+			$syntax->settle($suspends);
+			return;
+		}
 		if ($syntax instanceof ast_call_expression) {
 			$this->call($syntax, $initializing);
-			if ($syntax->type_def() === type_void::instance()) {
+			if ($syntax->type_def() === type_void::instance() && $destination !== type_void::instance()) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
 			}
 			return;
@@ -1369,97 +1623,110 @@ final class Preparation
 			type_registry::prepare_literal($syntax);
 			return;
 		}
-		if ($syntax instanceof ast_name_expression)
-		{
-			$this->name_lookups++;
+		if ($syntax instanceof ast_name_expression) {
+			if ($this->resolve_value_name($syntax, $initializing, $allow_callback || $destination instanceof owned_callable_type)) return;
 			$name = $syntax->name;
-			if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_called_type_name || $syntax instanceof ast_qualified_data) {
-				$lookup = match (true) {
-					$syntax instanceof ast_called_type_name => $this->called_record($syntax, 'Late-static access')->definition,
-					$syntax instanceof ast_ancestor_name => $this->lexical_base($syntax, 'Ancestor access'),
-					default => $this->static_qualifier($syntax->receiver, $initializing),
-				};
-				$this->bind_record_data($syntax, $lookup, $name, $lookup->name);
-				return;
-			}
-			if (!$syntax->constant_only && ($name === $initializing)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(),
-					'Cannot read local during its initialization: ' . $name);
-			}
-			$binding = $syntax->constant_only ? null : $this->find_local($name);
-			if ($binding !== null) {
-				$type = $binding->type_def();
-				if (!$allow_callback && ($type instanceof callback_type_definition || $type instanceof lambda_type_definition)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable value can only be invoked or forwarded');
-				}
-				$id = $binding->storage_id();
-				// Reference parameters can alias each other or globals; never propagate their write constants.
-				$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode === passing_mode::reference))
-					|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
-				$write = $this->latest_writes[$id] ?? null;
-				$type = $binding->type_def();
-				$view = $type instanceof intersection_type_definition
-					? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
-				if ($type instanceof class_union_type_definition) {
-					$guard = $this->guards[$id] ?? null;
-					if ($guard instanceof ast_object_access_expression) {
-						$syntax->settle_guard($guard, narrow: true);
-						return;
-					}
-					$view = $guard ?? $type->receiver_view($syntax);
-				}
-				$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
-				return;
-			}
-			if ($syntax instanceof ast_interpolation_name) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown interpolation local or parameter: ' . $name);
-			}
-			$separator = strpos($name, '\\');
-			if ($syntax->member_syntax && ($separator !== false)
-				&& ($this->find_local(substr($name, 0, $separator)) !== null)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
-			}
-			if (Enum_Preparation::reference($syntax, $this->symbols, $this->owner, $this->dependencies)) return;
-			$scope_separator = strrpos($name, '::');
-			if ($scope_separator !== false && $this->bind_static_data($syntax, substr($name, 0, $scope_separator),
-				substr($name, $scope_separator + 2))) return;
-			if (!$syntax->constant_only) {
-				$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
-				$symbol = $this->symbols->entry($key);
-				if ($this->bind_literal($syntax, $symbol)) return;
-				if ($syntax->source()->flavor === flavor::php && str_contains($name, '::')) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown static property: ' . $name);
-				}
-			}
-			if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
-				$symbol = $this->symbols->entry($syntax->lexical_root()->constant_key($name));
-				if ($this->bind_literal($syntax, $symbol)) return;
-				// C++ and JS share the namespace separator with type-qualified members.
-				if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
-					if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return;
-				}
-				if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
-					$constant = runtime_constants::integer($syntax->lexical_root()->runtime_constant_key($name));
-					if ($constant !== null) {
-						$syntax->settle_runtime_constant($constant);
-						return;
-					}
-				}
-			}
 			throw new diagnostic($syntax->source(), $syntax->byte_start(),
 				$syntax->constant_only ? 'Unknown constant: ' . $name : 'Unknown or not-yet-initialized local/global: ' . $name);
 		}
 		throw new \LogicException('Unhandled expression preparation');
 	}
 
+	/** Watch each candidate symbol, including misses. Invalid bindings retain their own diagnostic. */
+	private function resolve_value_name(ast_name_expression $syntax, ?string $initializing, bool $allow_callback): bool
+	{
+		$this->name_lookups++;
+		$name = $syntax->name;
+		if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_called_type_name || $syntax instanceof ast_qualified_data) {
+			$lookup = match (true) {
+				$syntax instanceof ast_called_type_name => $this->called_record($syntax, 'Late-static access')->definition,
+				$syntax instanceof ast_ancestor_name => $this->lexical_base($syntax, 'Ancestor access'),
+				default => $this->static_qualifier($syntax->receiver, $initializing),
+			};
+			$this->bind_record_data($syntax, $lookup, $name, $lookup->name);
+			return true;
+		}
+		if (!$syntax->constant_only && ($name === $initializing)) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(),
+				'Cannot read local during its initialization: ' . $name);
+		}
+		$binding = $syntax->constant_only ? null : $this->find_local($name);
+		if ($binding !== null) {
+			$type = $binding->type_def();
+			if (!$allow_callback && ($type instanceof callback_type_definition || $type instanceof lambda_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable value can only be invoked or forwarded');
+			}
+			if ($syntax->parent instanceof ast_closure_capture) {
+				$syntax->settle_local($binding, unknown: true);
+				return true;
+			}
+			$id = $binding->storage_id();
+			// A borrowed slot may observe writes through another name.
+			$unknown = ($binding instanceof ast_closure_capture && $binding->by_reference)
+				|| (($binding instanceof ast_parameter_declaration) && ($binding->mode !== passing_mode::value))
+				|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
+			$write = $this->latest_writes[$id] ?? null;
+			$type = $binding->type_def();
+			$view = $type instanceof intersection_type_definition
+				? $type->receiver_view($syntax, $this->symbols, $this->owner, $this->dependencies) : null;
+			if ($type instanceof class_union_type_definition) {
+				$guard = $this->guards[$id] ?? null;
+				if ($guard instanceof ast_object_access_expression) {
+					$syntax->settle_guard($guard, narrow: true);
+					return true;
+				}
+				$view = $guard ?? $type->receiver_view($syntax);
+			}
+			$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
+			return true;
+		}
+		if ($syntax->parent instanceof ast_closure_capture) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Capture requires an initialized local: ' . $name);
+		if ($syntax instanceof ast_interpolation_name) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown interpolation local or parameter: ' . $name);
+		}
+		$separator = strpos($name, '\\');
+		if ($syntax->member_syntax && ($separator !== false)
+			&& ($this->find_local(substr($name, 0, $separator)) !== null)) {
+			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Member reads are not supported in this slice');
+		}
+		if (Enum_Preparation::reference($syntax, $this->symbols, $this->owner, $this->dependencies)) return true;
+		$scope_separator = strrpos($name, '::');
+		if ($scope_separator !== false && $this->bind_static_data($syntax, substr($name, 0, $scope_separator),
+			substr($name, $scope_separator + 2))) return true;
+		if (!$syntax->constant_only) {
+			$key = 'var:' . Source_Names::resolve($name, $this->owner->scope->namespace);
+			$symbol = $this->symbols->entry($key);
+			if ($this->bind_literal($syntax, $symbol)) return true;
+			if ($syntax->source()->flavor === flavor::php && str_contains($name, '::')) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown static property: ' . $name);
+			}
+		}
+		if ($syntax->constant_only || ($syntax->source()->flavor !== flavor::php)) {
+			$symbol = $this->symbols->entry($syntax->lexical_root()->constant_key($name));
+			if ($this->bind_literal($syntax, $symbol)) return true;
+			// C++ and JS share the namespace separator with type-qualified members.
+			if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
+				if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return true;
+			}
+			if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
+				$constant = runtime_constants::integer($syntax->lexical_root()->runtime_constant_key($name));
+				if ($constant !== null) {
+					$syntax->settle_runtime_constant($constant);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	/**
-	 * Validate mutable storage and defer invalidation until every argument has been evaluated.
+	 * Bind exact stable storage. Only a writable reference can invalidate the caller’s value facts.
 	 * @param int[] $writes Local storage IDs invalidated by the call.
 	 */
-	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */): void
+	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */, bool $readonly = false): void
 	{
 		$storage = $argument instanceof ast_name_expression ? $argument->declaration() : null;
-		if ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant) {
+		if (!$readonly && ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant)) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Constant cannot bind a mutable reference');
 		}
 		if (!($storage instanceof ast_local_binding)) {
@@ -1469,7 +1736,10 @@ final class Preparation
 		if ($storage->type_def() !== $type) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
 		}
-		$writes[] = $storage->storage_id();
+		if (!$readonly) {
+			Readonly_Access::require_writable($argument, $storage);
+			$writes[] = $storage->storage_id();
+		}
 	}
 
 	/** A callee can replace the slot only after its arguments are evaluated. @param int[] $writes */
@@ -1488,6 +1758,14 @@ final class Preparation
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
+		$slots = null;
+		if ($call instanceof ast_named_call) {
+			if (!($runtime instanceof runtime_function) || $runtime->parameter_names === null || $call->receiver !== null) {
+				throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+			}
+			$call->named->bind_slots($call, $runtime);
+			$slots = $call->named->slots;
+		}
 		$operands = $call->runtime_operands($runtime instanceof runtime_function ? $runtime : null);
 		$prepared ??= $call->receiver;
 		if ($runtime instanceof runtime_overloads) {
@@ -1511,10 +1789,11 @@ final class Preparation
 		}
 		$writes = [];
 		foreach ($operands as $index => $argument) {
+			$slot = $slots[$index] ?? $index;
+			$type = $runtime->parameters[$slot];
 			if ($argument !== $prepared && $argument !== $call->receiver) {
-				$this->value($argument);
+				$this->value($argument, destination: $type);
 			}
-			$type = $runtime->parameters[$index];
 			if ($index === 0 && $runtime->receiver_method) {
 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
 				if ($runtime->is_reference(0)) Readonly_Access::write($argument, true);
@@ -1522,7 +1801,7 @@ final class Preparation
 					$this->bind_reference($argument, $type, $writes);
 				}
 			}
-			elseif ($runtime->is_reference($index)) {
+			elseif ($runtime->is_reference($slot)) {
 				$this->bind_reference($argument, $type, $writes);
 			}
 			elseif ($argument->type_def() !== $type) {
@@ -1576,55 +1855,200 @@ final class Preparation
 		return $type;
 	}
 
-	/** A lambda body uses the enclosing work owner, with a fresh lexical and value environment. */
-	private function lambda(ast_lambda_expression $lambda): void
+	/** Check the return operand once against the callable's declared result. */
+	private function return_conversion(ast_expression $value, type_definition $result): int /** uint16 */
 	{
-		$function = $this->owner->parent;
-		$result = Type_Resolution::signature($lambda->result, $this->symbols, $function, $this->dependencies, true, $this->owner);
-		if (!Type_Resolution::callback_component($result) || $result === type_void::instance()) {
-			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Lambda requires a supported non-void result type');
+		$this->value($value, destination: $result);
+		if ($result === type_void::instance()) {
+			if ($value->type_def() !== $result) throw new diagnostic($value->source(), $value->byte_start(), 'Void function cannot return a value');
+			return value_conversion::identity;
 		}
-		$locals = [];
-		$inputs = [];
-		foreach ($lambda->parameters as $parameter) {
-			$name = $parameter->declaration_key();
-			if (isset($locals[$name])) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Duplicate lambda parameter: ' . $name);
-			$type = Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
-			if (!Type_Resolution::callback_component($type) || $parameter->mode !== passing_mode::value || $parameter->default_value !== null) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported by-value parameters without defaults');
+		if ($result instanceof class_union_type_definition) $this->watch_union_source($value);
+		return $result->prepare_conversion($value, conversion_context::typed_destination);
+	}
+
+	/** Demand the receiver in this lexical scope, including implicit ancestor dispatch in PHP arrows. */
+	private function borrow_receiver(ast_node $site): void
+	{
+		if ($this->enclosing_lambda !== null) {
+			if (!$this->enclosing_lambda->explicit_receiver
+				&& ($this->enclosing_lambda->body instanceof ast_block || $site->source()->flavor !== flavor::php)) {
+				throw new diagnostic($site->source(), $site->byte_start(), 'Closure must capture this receiver');
 			}
-			$parameter->settle_type($type);
-			$locals[$name] = $parameter;
-			$inputs[] = $type;
+			$this->borrows_receiver = true;
+			return;
 		}
-		$frames = $this->local_frames;
-		$writes = $this->latest_writes;
-		$guards = $this->guards;
-		$guard_reads = $this->guard_reads;
-		$unknown = $this->unknown_initializers;
-		$in_lambda = $this->in_lambda;
-		$this->local_frames = [$locals];
-		$this->latest_writes = [];
-		$this->guards = $this->guard_reads = [];
-		$this->unknown_initializers = false;
-		$this->in_lambda = true;
-		try {
-			$this->value($lambda->body);
-			$conversion = $result->prepare_conversion($lambda->body, conversion_context::typed_destination);
-			$lambda->settle_lambda(new lambda_type_definition(new callback_type_definition($result, $inputs)), $conversion);
-		} finally {
-			$this->local_frames = $frames;
-			$this->latest_writes = $writes;
-			$this->guards = $guards;
-			$this->guard_reads = $guard_reads;
-			$this->unknown_initializers = $unknown;
-			$this->in_lambda = $in_lambda;
+		$this->receiver_owner($site);
+		$this->constructor_initialization?->complete($site);
+	}
+
+	/** Resolve the current instance independently of the declaring class used for lexical access. */
+	private function receiver_owner(ast_node $site): ast_method_owner
+	{
+		if ($this->initializing_base) throw new diagnostic($site->source(), $site->byte_start(), 'Current instance is unavailable during base initialization');
+		if ($this->owner->parent->is_static) throw new diagnostic($site->source(), $site->byte_start(), 'Static method has no this receiver');
+		$record = $this->owner->parent->parent;
+		if (!($record instanceof ast_method_owner)) throw new diagnostic($site->source(), $site->byte_start(), 'this requires an instance method');
+		return $record;
+	}
+
+	/** Bind a whole caller-owned result through the same origin check for named and anonymous returns. */
+	private function reference_return(?ast_expression $value, ast_parameter_declaration $origin, ast_node $site): void
+	{
+		if ($value instanceof ast_call_expression) {
+			$this->value($value);
+			$selected = $value->reference_origin();
+		} else {
+			$selected = $value instanceof ast_name_expression && !$value->constant_only ? $this->find_local($value->name) : null;
+		}
+		if ($selected !== $origin) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Reference return must originate in its writable parameter');
+		}
+		if ($value instanceof ast_name_expression) {
+			++$this->expression_visits;
+			$value->settle_local($origin, unknown: true);
 		}
 	}
 
-	/** Resolve only the published signature, then validate and convert arguments in source order. */
-	private function call(ast_call_expression $call, ?string $initializing = null): void
+	/** A lambda body uses the enclosing work owner, with a fresh lexical and value environment. */
+	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected): void
 	{
+		$function = $this->owner->parent;
+		if ($expected !== null && count($lambda->parameters) !== count($expected->inputs)) {
+			throw new diagnostic($lambda->source(), $lambda->byte_start(), 'Expected exact callback signature ' . $expected->name);
+		}
+		$result = $lambda->result === null
+			? ($expected?->result ?? throw new diagnostic($lambda->source(), $lambda->byte_start(), 'Lambda requires an explicit result type without a callback context'))
+			: Type_Resolution::signature($lambda->result, $this->symbols, $function, $this->dependencies, true, $this->owner);
+		if (!Type_Resolution::callback_component($result)) {
+			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Lambda requires a supported result type');
+		}
+		$locals = [];
+		$inputs = [];
+		$modes = [];
+		$optional = false;
+		foreach ($lambda->parameters as $index => $parameter) {
+			$name = $parameter->declaration_key();
+			if (isset($locals[$name])) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Duplicate lambda parameter: ' . $name);
+			$type = $parameter->type_reference === null
+				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
+				: Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
+			if (!Type_Resolution::callback_component($type) || $parameter->mode === passing_mode::readonly_reference) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
+			}
+			$parameter->settle_type($type);
+			if ($optional || $parameter->default_value !== null) {
+				Function_Preparation::parameter_default($parameter, $this->symbols, $this->owner, $this->dependencies);
+				$optional = true;
+			}
+			$locals[$name] = $parameter;
+			$inputs[] = $type;
+			if ($parameter->mode === passing_mode::reference) $modes[$index] = $parameter->mode;
+		}
+		$borrowed /** array<uint32,ast_closure_capture> */ = [];
+		$writes /** list<uint32> */ = [];
+		foreach ($lambda->captures as $capture) {
+			$name = $capture->declaration_key();
+			if (isset($locals[$name])) {
+				$reason = $locals[$name] instanceof ast_closure_capture ? 'Duplicate closure capture: ' : 'Capture conflicts with closure parameter: ';
+				throw new diagnostic($capture->source(), $capture->byte_start(), $reason . $name);
+			}
+			$this->value($capture->initializer);
+			$capture_type = $capture->initializer->type_def();
+			$conversion = $capture->by_reference ? value_conversion::identity : $this->prepare_local_initialization($capture, $capture_type);
+			$capture->settle_type($capture_type, constant_evaluation::unavailable, true, $conversion);
+			if ($capture->by_reference) {
+				// Different capture names can borrow the same slot through local aliases.
+				$origin = $capture->initializer->local_def();
+				$id = $origin->storage_id();
+				if (!isset($borrowed[$id])) {
+					$borrowed[$id] = $capture;
+					if (Readonly_Access::readonly_origin($origin) === null) $writes[] = $id;
+				}
+				$locals[$name] = $borrowed[$id];
+			} else {
+				$locals[$name] = $capture;
+			}
+		}
+		$scope = new self();
+		$scope->owner = $this->owner;
+		$scope->symbols = $this->symbols;
+		$scope->dependencies = $this->dependencies;
+		$scope->local_frames = [$locals];
+		$scope->enclosing_lambda = $lambda;
+		$scope->borrows_receiver = $lambda->explicit_receiver;
+		$origin = $lambda->returns_reference ? Function_Preparation::reference_return_origin($lambda, $result) : null;
+		$this->dependencies?->begin_lambda($this->owner, $lambda);
+		$conversion = value_conversion::identity;
+		if ($lambda->body instanceof ast_expression) {
+			if ($origin === null) $conversion = $scope->return_conversion($lambda->body, $result);
+			else $scope->reference_return($lambda->body, $lambda->parameters[$origin], $lambda->body);
+		}
+		if ($scope->borrows_receiver) $this->borrow_receiver($lambda);
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs, $modes, $origin), $lambda->captures !== [],
+			$scope->borrows_receiver, $scope->borrows_receiver || $borrowed !== [], $optional);
+		$lambda->settle_lambda($type, $conversion, $writes);
+		if ($lambda->body instanceof ast_block) {
+			$errors = Declaration_Diagnostics::locals($lambda->body);
+			if ($errors !== []) throw new diagnostic_group($errors);
+			$completion = $scope->sequence($lambda->body->statements, $lambda->source(), null, $lambda);
+			if ($result !== type_void::instance() && ($completion & statement_completion::fallthrough) !== 0) {
+				throw new diagnostic($lambda->source(), $lambda->lexical_root()->byte_at($lambda->body->end - 1),
+					'Non-void closure requires a value return');
+			}
+		}
+		$this->statement_visits += $scope->statement_visits;
+		$this->expression_visits += $scope->expression_visits;
+		$this->name_lookups += $scope->name_lookups;
+	}
+
+	/** Only a suspension examines its parent path. Eligibility uses the facts from the ordinary binder. */
+	private function prepare_await_context(ast_await_expression $syntax): void
+	{
+		if ($this->enclosing_lambda !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a function body outside a lambda');
+		if (!$this->owner->parent->is_async) return;
+		for ($context = $syntax->parent; $context instanceof ast_expression || $context instanceof ast_match_arm
+			|| $context instanceof ast_keyed_entry; $context = $context->parent) {
+			if ($context instanceof ast_comparison_chain || $context instanceof ast_match_expression || $context instanceof ast_collection_expression || $context instanceof ast_keyed_collection_expression) {
+				$context->suspends = true;
+			} elseif ($context instanceof ast_call_expression) {
+				$context->suspending_operands = true;
+			}
+		}
+	}
+
+	/** Bind a consumed producer and request the native entry selected by its consumer. */
+	private function async_producer(ast_call_expression $producer, ?string $initializing, dependency_use $use,
+		ast_await_expression|ast_call_expression $site): ast_function_declaration
+	{
+		$this->call($producer, $initializing, $use);
+		$target = $producer->has_direct_signature() ? $producer->function_def() : null;
+		if ($target instanceof ast_function_declaration && $target->is_async) return $target;
+		throw new diagnostic($site->source(), $site->byte_start(),
+			($site instanceof ast_await_expression ? 'Await' : 'async_wait') . ' requires an async function');
+	}
+
+	/** Resolve only the published signature, then validate and convert arguments in source order. */
+	private function call(ast_call_expression $call, ?string $initializing = null, ?dependency_use $async_use = null): void
+	{
+		if ($call->qualifier === call_qualifier::stored_value) {
+			$this->value($call->receiver, $initializing);
+			$type = $call->receiver->type_def();
+			if (!($type instanceof owned_callable_type)) throw new diagnostic($call->source(), $call->byte_start(), 'Invocation requires an owned callable: ' . $call->name);
+			$this->dependencies?->callable_site($this->owner, $call);
+			$call->settle_callable_call(null, $type->signature, $this->bind_arguments($call, $type->signature, $initializing));
+			return;
+		}
+		$type_symbol = null;
+		$class = null;
+		if ($call->source()->flavor === flavor::python && $call->receiver === null && $call->member_separator === null) {
+			$type_symbol = $this->symbols->entry($call->lexical_root()->type_key($call->name));
+			$this->dependencies?->watch($type_symbol, $this->owner);
+			$candidate = $type_symbol->declaration();
+			if ($candidate instanceof ast_record_declaration && $candidate->kind === record_kind::class_type) {
+				$class = $candidate;
+			}
+		}
 		$binding = null;
 		if ($call->receiver === null && $call->member_separator === null
 			&& ($call->qualifier === call_qualifier::local || ($call->qualifier === call_qualifier::ordinary && $call->source()->flavor !== flavor::php))) {
@@ -1632,10 +2056,17 @@ final class Preparation
 				? $this->find_local($call->name) : ($this->local_frames[0][$call->name] ?? null);
 		}
 		$type = $binding?->type_def();
-		$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
+		$signature = $type instanceof lambda_type_definition || $type instanceof owned_callable_type ? $type->signature : $type;
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
+			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
-			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $signature, $initializing));
+			$target = $type instanceof lambda_type_definition ? $binding->initializer : $signature;
+			$call->settle_callable_call($binding, $signature, $this->bind_arguments($call, $target, $initializing));
+			if ($target instanceof ast_lambda_expression) $this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $target);
+			else $this->dependencies?->callable_site($this->owner, $call);
+			if ($target instanceof ast_lambda_expression && $target->borrowed_writes !== []) {
+				$this->invalidate_references($call, $target->borrowed_writes);
+			}
 			return;
 		}
 		if ($call->qualifier === call_qualifier::local) {
@@ -1668,7 +2099,8 @@ final class Preparation
 					$symbol = $record instanceof record_type_definition
 						? $record->method_symbol($name, $this->symbols, $this->owner, $this->dependencies, $call)
 						: $this->symbols->entry('method:' . $record->name . '::' . $name);
-					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner);
+					if ($symbol !== null) $this->dependencies?->watch($symbol, $this->owner,
+						$call instanceof ast_named_call ? Dependency_Watches::PARAMETER_NAMES : 0);
 					$method = $symbol?->declaration();
 					if ($method === null && !$static && $record instanceof record_type_definition && $record->exception_descendant()) {
 						$binding = type_registry::exception()->runtime_method($name);
@@ -1679,6 +2111,7 @@ final class Preparation
 						}
 					}
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
+					$interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
 					if ($static !== $method->is_static) {
 						$message = $static ? 'Expression-qualified call requires a static method: ' : 'Static method requires a type-qualified call: ';
 						throw new diagnostic($call->source(), $call->byte_start(), $message . $method->name());
@@ -1688,7 +2121,7 @@ final class Preparation
 						if ($receiver instanceof ast_this_expression) $this->constructor_initialization?->complete($call);
 					}
 					$this->source_call($call, $symbol, $method, $initializing, called: $static ? $record : null);
-					$call->interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
+					$call->interface_dispatch = $interface_dispatch;
 					return;
 				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
@@ -1697,9 +2130,9 @@ final class Preparation
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
 				}
 				if ($runtime->receiver_method) {
-					$expected = $call->source()->flavor === flavor::js ? token_kind::dot : token_kind::member;
+					$expected = in_array($call->source()->flavor, [flavor::js, flavor::python], true) ? token_kind::dot : token_kind::member;
 					if ($call->member_separator !== $expected) {
-						throw new diagnostic($call->source(), $call->byte_start(), 'Native receiver methods use -> in PHP/C++ and . in JS');
+						throw new diagnostic($call->source(), $call->byte_start(), 'Native receiver methods use -> in PHP/C++ and . in JS/Python');
 					}
 				}
 				elseif ($call->member_separator === token_kind::member) {
@@ -1717,8 +2150,15 @@ final class Preparation
 		}
 		$key = $file->function_key($call->name);
 		$symbol = $this->symbols->entry($key);
-		$this->dependencies?->watch($symbol, $this->owner);
 		$function = $symbol->declaration();
+		$uses = $call instanceof ast_named_call ? Dependency_Watches::PARAMETER_NAMES : 0;
+		if ($function instanceof ast_function_declaration && $this->enclosing_lambda === null) {
+			$this->dependencies?->watch_call($symbol, $this->owner, $uses);
+		} else {
+			$this->dependencies?->watch($symbol, $this->owner, $uses);
+			if ($function instanceof ast_function_declaration) $this->dependencies?->closure_call($this->enclosing_lambda, $symbol);
+		}
+		if ($class !== null && $function instanceof ast_function_declaration) $this->ambiguous_construction($call);
 		if (!($function instanceof ast_function_declaration)) {
 			// PHP has distinct type qualification. C++ and JS first try an existing namespace function.
 			if ($call->source()->flavor !== flavor::php && ($last = strrpos($call->name, '\\')) > 0) {
@@ -1726,7 +2166,10 @@ final class Preparation
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
-			if ($runtime !== null) {
+			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
+				$this->ambiguous_construction($call);
+			}
+			if ($runtime !== null && $class === null) {
 				if ($runtime instanceof runtime_function && !$file->type_availability->allows($runtime->required_module)) {
 					throw new diagnostic($call->source(), $call->byte_start(),
 						'Function ' . $runtime->name() . ' requires module ' . $runtime->required_module);
@@ -1734,8 +2177,10 @@ final class Preparation
 				$this->runtime_call($call, $runtime);
 				return;
 			}
+			if ($call instanceof ast_named_call && $class === null) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
 			if ($builtin === 'hash_contains' || $builtin === 'hash_find' || $builtin === 'hash_get_or_null') {
+				if ($class !== null) $this->ambiguous_construction($call);
 				if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires a collection and key');
 				$receiver = $call->arguments[0];
 				$this->value($receiver, $initializing);
@@ -1753,28 +2198,45 @@ final class Preparation
 				$this->runtime_call($call, $binding, $receiver);
 				return;
 			}
-			if ($builtin === 'enum_from_value') {
+			if ($builtin === 'async_wait') {
+				$producer = $call->arguments[0] ?? null;
+				if (count($call->arguments) !== 1 || !($producer instanceof ast_call_expression)) {
+					throw new diagnostic($call->source(), $call->byte_start(), 'async_wait requires one direct async call');
+				}
+				$this->async_producer($producer, $initializing, dependency_use::async_wait, $call);
+				$call->settle_blocking_wait($producer);
+				return;
+			}
+			if ($builtin === 'enum_from_value' || $builtin === 'enum_try_from_value') {
+				if ($class !== null) $this->ambiguous_construction($call);
+				$nullable = $builtin === 'enum_try_from_value';
 				if (count($call->arguments) !== 2 || !($call->arguments[0] instanceof ast_type_marker)) {
-					throw new diagnostic($call->source(), $call->byte_start(), 'enum_from_value requires an enum type marker and one integer');
+					throw new diagnostic($call->source(), $call->byte_start(),
+						$builtin . ' requires an enum type marker and one ' . ($nullable ? 'string' : 'integer'));
 				}
 				$marker = $call->arguments[0];
 				$entry = $this->symbols->entry($file->type_key($marker->name));
-				$this->dependencies?->watch($entry, $this->owner, dependency_use::enum_from_value->value);
+				$use = $nullable ? dependency_use::enum_try_from_value : dependency_use::enum_from_value;
+				$this->dependencies?->watch($entry, $this->owner, $use->value);
 				$enum = $entry->declaration();
-				if (!($enum instanceof ast_enum_declaration)) throw new diagnostic($marker->source(), $marker->byte_start(), 'enum_from_value target must be an enum');
+				if (!($enum instanceof ast_enum_declaration)) throw new diagnostic($marker->source(), $marker->byte_start(), $builtin . ' target must be an enum');
+				$string_backing = $enum->definition->backing() === type_string::instance();
+				if ($nullable && !$string_backing) throw new diagnostic($marker->source(), $marker->byte_start(), $builtin . ' requires a string-backed enum');
 				$argument = $call->arguments[1];
 				$this->value($argument, $initializing);
 				$input = $argument->type_def();
-				if ($enum->definition->backing() === type_string::instance()) {
-					if ($input !== type_string::instance()) throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires a string');
+				if ($string_backing) {
+					if ($input !== type_string::instance()) throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires a string');
 				} elseif (!defined($input::class . '::MINIMUM') || !defined($input::class . '::MAXIMUM')) {
-					throw new diagnostic($argument->source(), $argument->byte_start(), 'enum_from_value requires an integer');
+					throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires an integer');
 				}
-				$conversion = $enum->definition->from_value_function()->parameters[0]->prepare_conversion($argument, conversion_context::typed_destination);
-				$call->settle_runtime($enum->definition->from_value_function(), [$conversion]);
+				$binding = $enum->definition->helper_function($use);
+				$conversion = $binding->parameters[0]->prepare_conversion($argument, conversion_context::typed_destination);
+				$call->settle_runtime($binding, [$conversion]);
 				return;
 			}
 			if ($builtin === 'enum_value' || $builtin === 'enum_name') {
+				if ($class !== null) $this->ambiguous_construction($call);
 				if (count($call->arguments) !== 1) throw new diagnostic($call->source(), $call->byte_start(), $builtin . ' requires one enum argument');
 				$argument = $call->arguments[0];
 				$this->value($argument, $initializing);
@@ -1792,8 +2254,13 @@ final class Preparation
 				default => null,
 			};
 			if ($operation === null) {
+				if ($class !== null) {
+					$this->construction($call, $class->definition->required, $initializing, $type_symbol);
+					return;
+				}
 				throw new diagnostic($call->source(), $call->byte_start(), 'Unknown function: ' . $call->name);
 			}
+			if ($class !== null) $this->ambiguous_construction($call);
 			if (count($call->arguments) !== 1) {
 				throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires one collection argument');
 			}
@@ -1806,7 +2273,12 @@ final class Preparation
 			$call->settle_cardinality($operation, $type);
 			return;
 		}
-		$this->source_call($call, $symbol, $function, $initializing);
+		$this->source_call($call, $symbol, $function, $initializing, async_use: $async_use);
+	}
+
+	private function ambiguous_construction(ast_call_expression $call): never
+	{
+		throw new diagnostic($call->source(), $call->byte_start(), 'Ambiguous Python call: both function and class named ' . $call->name);
 	}
 
 	/** Read the called type attached to this prepared static body. */
@@ -1897,7 +2369,7 @@ final class Preparation
 			$this->source_call($call, $symbol, $method, $initializing, called: $lookup);
 			return;
 		}
-		if ($this->in_lambda) throw new diagnostic($call->source(), $call->byte_start(), 'Capture-free lambda cannot use this');
+		if ($this->enclosing_lambda !== null) $this->borrow_receiver($call);
 		if ($this->owner->parent->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
 		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
 		if ($method->is_abstract) throw new diagnostic($call->source(), $call->byte_start(), 'Cannot call an abstract ancestor implementation');
@@ -1912,8 +2384,9 @@ final class Preparation
 	}
 
 	/** Shared positional admission, conversions and reference invalidation for source calls. */
-	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null): void
+	private function source_call(ast_call_expression $call, symbol_entry $symbol, ast_function_declaration $function, ?string $initializing, bool $ancestor_dispatch = false, ?record_type_definition $called = null, ?dependency_use $async_use = null): void
 	{
+		if ($function->is_async && $async_use === null) throw new diagnostic($call->source(), $call->byte_start(), 'Async call requires await');
 		if ($function->is_destructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Explicit destructor invocation is forbidden');
 		$context = $this->owner->parent->parent;
 		$result = $function->return_type_def();
@@ -1924,30 +2397,51 @@ final class Preparation
 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
 		}
 		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
+		if (($called !== null || $ancestor_dispatch) && $call instanceof ast_named_call) {
+			$this->dependencies?->watch($symbol, $this->owner, Dependency_Watches::PARAMETER_NAMES);
+		}
 		$conversions = $this->bind_arguments($call, $function, $initializing);
+		if ($function->is_direct_final_method()) {
+			if ($this->enclosing_lambda === null) $this->dependencies?->watch_call($symbol, $this->owner);
+			else $this->dependencies?->closure_call($this->enclosing_lambda, $symbol);
+		}
 		$instance = null;
 		if ($called !== null && $this->dependencies !== null) {
 			$forwarded = $call->qualifier === call_qualifier::ordinary ? null : $this->owner->parent->instance?->called;
 			$instance = $this->dependencies->static_call($this->owner, $symbol,
 				$forwarded ?? $this->symbols->entry($called->declaration->symbol_key()));
+			$this->dependencies->closure_call($this->enclosing_lambda ?? $this->owner, $instance);
+		}
+		if ($function->is_async) {
+			$this->dependencies?->watch($symbol, $this->owner, $async_use->value);
 		}
 		$call->settle_function($symbol, $conversions, $ancestor_dispatch, $instance);
 	}
 
 	/** Inline and shared construction use the same published signature and argument checks. */
-	private function construction(ast_construction_expression $site, type_definition $type, ?string $initializing): void
+	private function construction(ast_construction_expression|ast_call_expression $site, type_definition $type, ?string $initializing,
+		?symbol_entry $target = null): void
 	{
-		$payload = $type instanceof shared_record_type_definition && $site instanceof ast_new_expression ? $type->payload : $type;
-		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site, $site instanceof ast_new_expression);
+		$shared = $site instanceof ast_new_expression || $site instanceof ast_call_expression;
+		$payload = $type instanceof shared_record_type_definition && $shared ? $type->payload : $type;
+		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site, $shared);
 		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
 		}
 		if ($constructor !== null) {
-			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner);
+			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner,
+				isset($site->named) ? Dependency_Watches::PARAMETER_NAMES : 0);
 			$constructor->require_access($this->owner->parent->parent, $site, watcher: $this->access_watcher());
 		}
-		$site->settle_construction($type, $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing));
+		$conversions = $constructor === null ? [] : $this->bind_arguments($site, $constructor, $initializing);
+		if ($site instanceof ast_base_initialization && $site->named?->reordered()) {
+			$this->dependencies?->watch($this->symbols->entry($constructor->symbol_key()), $this->owner, dependency_use::reordered_base->value);
+		}
+		if ($site instanceof ast_call_expression) {
+			$site->settle_construction($target, $type, $conversions);
+		}
+		else $site->settle_construction($type, $conversions);
 	}
 
 	/** Base arguments use the ordinary call boundary, before the current instance becomes available. */
@@ -2029,7 +2523,7 @@ final class Preparation
 			}
 		}
 		if (!($target instanceof ast_function_declaration) || $target->has_receiver()
-			|| $target->is_implicit_entry || $target->is_constructor() || $target->is_destructor()) {
+			|| $target->is_async || $target->is_implicit_entry || $target->is_constructor() || $target->is_destructor()) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Callback requires a source free function or static method: ' . $site->name);
 		}
 		$target->require_access($this->owner->parent->parent, $site, null, $this->access_watcher());
@@ -2038,30 +2532,39 @@ final class Preparation
 			$symbol = $this->dependencies->static_call($this->owner, $symbol, $type);
 		}
 		$site->settle_target($symbol, $signature);
+		$this->dependencies?->callable_site($this->owner, $site);
 	}
 
 	/** Share arity, conversions and reference effects between functions and constructors. @return int[] */
-	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration|callback_type_definition $function,
+	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration|ast_lambda_expression|callback_type_definition $function,
 		?string $initializing): array /** list<uint16> */
 	{
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
+		$slots = null;
+		if (isset($call->named)) {
+			if ($callback) throw new diagnostic($call->source(), $call->byte_start(), 'Typed callback calls require positional arguments');
+			$call->named->bind_slots($call, $function);
+			$slots = $call->named->slots;
+		}
 		if ($callback ? $supplied !== count($function->inputs) : !$function->accepts_argument_count($supplied)) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($callback ? $call->name : $function->name()));
+			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($function instanceof ast_function_declaration ? $function->name() : $call->name));
 		}
 		$conversions = [];
 		$writes = [];
 		foreach ($call->arguments as $index => $argument) {
-			$parameter = $callback ? null : $function->parameters[$index];
-			$type = $parameter === null ? $function->inputs[$index] : $parameter->type_def();
-			if ($type instanceof callback_type_definition && $argument instanceof ast_callable_reference) {
+			$slot = $slots[$index] ?? $index;
+			$parameter = $callback ? null : $function->parameters[$slot];
+			$type = $parameter === null ? $function->inputs[$slot] : $parameter->type_def();
+			if ($argument instanceof ast_callable_reference && ($type instanceof callback_type_definition || $type instanceof owned_callable_type)) {
 				$this->expression_visits++;
-				$this->callback_reference($argument, $type);
+				$this->callback_reference($argument, $type instanceof owned_callable_type ? $type->signature : $type);
 			} else {
-				$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition);
+				$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
 			}
-			if ($parameter?->mode === passing_mode::reference) {
-				$this->bind_reference($argument, $parameter->type_def(), $writes);
+			$mode = $parameter?->mode ?? $function->input_mode($slot);
+			if ($mode !== passing_mode::value) {
+				$this->bind_reference($argument, $type, $writes, $mode === passing_mode::readonly_reference);
 				$conversions[] = value_conversion::identity;
 			}
 			else {

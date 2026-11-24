@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final class Interpolation
 {
 	/** Split a whole quoted token only when it contains a named insertion. */
-	public static function parse(token_list $tokens, int $token /** uint32 */): ast_expression
+	public static function parse(token_list $tokens, int $token /** uint32 */, ?Arrow_Captures $arrow = null): ast_expression
 	{
 		$text = $tokens->text_at($token);
 		$flavor = $tokens->source->flavor;
@@ -52,13 +52,14 @@ final class Interpolation
 				}
 				$name_at = $i + ($braced ? 2 : 1);
 			}
-			if (!preg_match($pattern, $text, $match, 0, $name_at)) {
+			$after /** int64 */ = $name_at;
+			$match_start = regex_find_span($pattern, $text, $name_at, $after);
+			if ($match_start === -1) {
 				if ($flavor === flavor::php && !$braced && !str_contains('{$', $next) && ord($next) < 128) {
 					continue;
 				}
 				throw new diagnostic($tokens->source, $tokens->tokens[$token]->offset + $i, 'Expected an interpolation name');
 			}
-			$after = $name_at + strlen($match[0]);
 			if ($braced && $text[$after] !== '}') {
 				throw new diagnostic($tokens->source, $tokens->tokens[$token]->offset + $after, 'Expected closing interpolation brace');
 			}
@@ -68,7 +69,9 @@ final class Interpolation
 			if ($start < $i) {
 				$parts[] = new ast_interpolation_text($token, $start, $i - $start);
 			}
-			$parts[] = new ast_interpolation_name($match[0], $token, $name_at);
+			$name = substr($text, $match_start, $after - $match_start);
+			$arrow?->read($name, $token, $match_start);
+			$parts[] = new ast_interpolation_name($name, $token, $match_start);
 			$start = $after + ($braced ? 1 : 0);
 			$i = $start - 1;
 		}

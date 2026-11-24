@@ -16,6 +16,7 @@ enum passing_mode: int
 {
 	case value = 0;
 	case reference = 1;
+	case readonly_reference = 2;
 }
 
 /**
@@ -139,6 +140,17 @@ abstract class ast_node
 	}
 }
 
+/** Declaration families that can share a duplicate chain for the same symbol key. */
+enum declaration_duplicate_category: int /** uint8 */ {
+	case local_binding = 1;
+	case type_declaration = 2;
+	case global_declaration = 3;
+	case instance_field = 4;
+	case enum_case = 5;
+	case constant_declaration = 6;
+	case function_declaration = 7;
+}
+
 /**
  * Supplies a declaration's local lookup key; index owners add category prefixes.
  *
@@ -149,6 +161,7 @@ interface ast_declaration_interface {
 	public function name(): string;
 	public function declaration_key(): string;
 	public function symbol_key(): string;
+	public function duplicate_category(): declaration_duplicate_category;
 	public function duplicate_element(): ?ast_declaration_interface;
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void;
 	public function clear_duplicate(): void;
@@ -205,10 +218,10 @@ trait ast_declaration
 	/** The declaring scope links unchained declarations after successful collection, with no active readers. */
 	public function link_duplicate(ast_declaration_interface $duplicate_element): void
 	{
-		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
-			|| (get_class($duplicate_element) !== get_class($this)
-					&& !(($this instanceof ast_local_binding) && ($duplicate_element instanceof ast_local_binding))
-					&& !(($this instanceof ast_type_declaration) && ($duplicate_element instanceof ast_type_declaration))) || ($duplicate_element->symbol_key() !== $this->symbol_key())) {
+		if (!($this instanceof ast_declaration_interface) || ($this->duplicate_element !== null)
+			|| ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
+			|| ($duplicate_element->duplicate_category() !== $this->duplicate_category())
+			|| ($duplicate_element->symbol_key() !== $this->symbol_key())) {
 			throw new \LogicException('Invalid duplicate declaration link');
 		}
 		$this->duplicate_element = $duplicate_element;

@@ -29,7 +29,7 @@ final class Scoped_Byte_View
 		$type = $field->type_def();
 		return $type instanceof scoped_byte_read_type && $call instanceof ast_call_expression
 			&& $call->cardinality === null && $call->receiver === null && count($call->arguments) === 1 && $call->arguments[0] === $field
-			&& ($binding = $call->function_def()) instanceof runtime_function && $type->is_byte_length($binding);
+			&& ($binding = $call->runtime_binding()) !== null && $type->is_byte_length($binding);
 	}
 
 	public static function indexed_read(ast_field_expression $field): bool
@@ -63,6 +63,7 @@ final class Scoped_Byte_View
 			if ($statement instanceof ast_storage_write && $statement->writes_to($owner)) return false;
 			if ($statement instanceof ast_block_statement && !self::stable($statement->body, $field, $loop, $loop_read)) return false;
 			if ($statement instanceof ast_loop_statement && !self::stable($statement->body, $field, true, $loop_read)) return false;
+			if ($statement instanceof ast_while_else_statement && !self::stable($statement->otherwise, $field, $loop, $loop_read)) return false;
 			if ($statement instanceof ast_branch_statement) {
 				foreach ($statement->arms as $arm) {
 					if (!self::stable($arm->body, $field, $loop, $loop_read)) return false;

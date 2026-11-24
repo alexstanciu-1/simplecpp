@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
-use scpp\compiler\{Dependency_Watches, dependency_watcher, symbol_entry};
+use scpp\compiler\{Dependency_Watches, dependency_use, dependency_watcher, symbol_entry};
 
 /** Counts notifications without any AST dependency, proving that watcher granularity belongs to the consumer. */
 final class Test_Watcher implements dependency_watcher
@@ -32,6 +32,8 @@ function verify(bool $ok, string $message): void
 		throw new RuntimeException($message);
 	}
 }
+
+verify(dependency_use::ordered_uses === dependency_use::cases(), 'Dependency use inventory must match enum declaration order');
 
 $watches = new Dependency_Watches();
 $a = new symbol_entry();
@@ -108,8 +110,8 @@ verify($watches->observer_count($a) === 0, 'Final bucket retained');
 echo "Grouped source membership, external-use queries and bucket removal passed\n";
 
 // Optional helper usage shares the existing relation and retires with its observer.
-$watches->watch($a, $local, scpp\compiler\dependency_use::enum_from_value->value);
+$watches->watch($a, $local, dependency_use::enum_from_value->value);
 $watches->watch($a, $local);
-verify($watches->has_use($a, scpp\compiler\dependency_use::enum_from_value), 'Ordinary watch erased usage');
+verify($watches->has_use($a, dependency_use::enum_from_value), 'Ordinary watch erased usage');
 $watches->forget($local);
-verify(!$watches->has_use($a, scpp\compiler\dependency_use::enum_from_value), 'Retired observer retained usage');
+verify(!$watches->has_use($a, dependency_use::enum_from_value), 'Retired observer retained usage');

@@ -215,11 +215,43 @@ def prove(work, flavor, library):
         assert 'error' not in factory, factory
         native(output, work / 'factory', (1, b'', b'original\0message\n'), library)
 
+        constructor = 'RootFailure' if flavor == 'php' else 'Exception'
+        message = s['function']('message', 'string', [], 'echo "M";return "original\\0message";')
+        construction = prefix + message + f'try {{ throw new {constructor}(message()); }} ' + base + ' { throw; }'
+        source_edit(main_path, construction)
+        constructed = invoke(resident)
+        assert 'error' not in constructed, constructed
+        native(output, work / 'constructed', (1, b'M', b'original\0message\n'), library)
+        before = artifacts(output)
+        manifest = (output / 'manifest.json').read_bytes()
+
+        for spelling, diagnostic in [
+            ('', 'Argument count mismatch for Exception constructor'),
+            ('"a", "b"', 'Argument count mismatch for Exception constructor'),
+            ('1', 'Exception constructor requires string'),
+        ]:
+            source_edit(main_path, f'throw new Exception({spelling});')
+            check_failed_edit(diagnostic, 'fresh-bad-constructor')
+        source_edit(main_path, construction)
+        recovered = invoke(resident)
+        assert 'error' not in recovered and artifacts(output) == before, recovered
+        clean = work / 'fresh-construction'
+        result = fresh_build(app, clean)
+        assert 'error' not in result and artifacts(clean) == artifacts(output), result
+        assert invoke(resident)['preparation']['prepared'] == 0
+
         declaration = s['local']('empty_failure', 'Exception')
         source_edit(main_path, declaration + f'try {{ throw {v}empty_failure; }} ' + base + ' { return 3; }')
         absent = invoke(resident)
         assert 'error' not in absent, absent
         native(output, work / 'absent', (1, b'', b'absent_exception\n'), library)
+
+        shadow = klass('Exception', field('shadow_marker', 'int', '7'))
+        source_edit(main_path, shadow + s['infer']('local', 'new Exception()')
+                    + f'echo {member("local", "shadow_marker")};return 0;')
+        local = invoke(resident)
+        assert 'error' not in local, local
+        native(output, work / 'shadow-constructor', (0, b'7', b''), library)
 
         source_edit(main_path, klass('Exception') + 'throw new Exception();')
         shadowed = invoke(resident)

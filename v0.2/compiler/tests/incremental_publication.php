@@ -18,7 +18,7 @@ function verify(bool $ok, string $message): void
 		throw new RuntimeException($message);
 	}
 }
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$make = static function (string $path, string $name) use ($flavor): \scpp\compiler\ast_file_node {
 		$header = $flavor === flavor::cpp ? 'void ' . $name . '()' : 'function ' . $name . '(): void';
 		return (new Source_Frontend())->collect(new source_file($path, $header . '{}', $flavor));

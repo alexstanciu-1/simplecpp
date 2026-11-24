@@ -21,10 +21,10 @@ final class fixed_array_type extends type_definition implements indexed_collecti
 
 	/** CONSTRUCTOR */
 	/** Validate native storage before multiplying, including the physical slot of an empty dimension. */
-	private function __construct(type_definition $element, ast_extent_literal $bound)
+	private function __construct(type_definition $element, ast_extent_reference $bound, int $extent /** int64 */)
 	{
 		$this->element = $element;
-		$this->extent = $bound->extent;
+		$this->extent = $extent;
 		$width = $element instanceof self ? $element->bytes : 1;
 		// Standard C++ needs an addressable placeholder for an empty dimension.
 		$physical = max(1, $this->extent);
@@ -110,12 +110,12 @@ final class fixed_array_type extends type_definition implements indexed_collecti
 		return '(' . $receiver . ')[scpp::fixed_array_index(' . $index . ', ' . $this->extent . ')]';
 	}
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null, ?string $rhs_steps = null): string
 	{
 		$target = $this->lower_cpp_index($write->index, $receiver, $key);
 		$operand = $this->element->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
 		// Select and bounds-check the destination before evaluating a possibly effectful RHS.
-		return '{ auto& fixed_element = ' . $target . '; fixed_element = ' . $operand . '; }';
+		return '{ auto& fixed_element = ' . $target . '; ' . ($rhs_steps === null ? '' : $rhs_steps . ' ') . 'fixed_element = ' . $operand . '; }';
 	}
 
 	/** Admit exact shape copies only where lowering has an explicit array destination. */
@@ -133,12 +133,12 @@ final class fixed_array_type extends type_definition implements indexed_collecti
 
 	/** STATIC METHODS */
 	/** Intern one shape by its resolved element and normalized extent. */
-	public static function resolve(type_definition $element, ast_extent_literal $bound): self
+	public static function resolve(type_definition $element, ast_extent_reference $bound, int $extent /** int64 */): self
 	{
-		$name = 'fixed_array<' . $element->name . ',' . $bound->extent . '>';
+		$name = 'fixed_array<' . $element->name . ',' . $extent . '>';
 		$shape = (self::$shapes[$name] ?? null)?->get();
 		if ($shape !== null) return $shape;
-		$shape = new self($element, $bound);
+		$shape = new self($element, $bound, $extent);
 		self::$shapes[$name] = \WeakReference::create($shape);
 		return $shape;
 	}

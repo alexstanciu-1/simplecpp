@@ -41,6 +41,54 @@ final class ast_call_statement extends ast_statement
 	}
 }
 
+/** Direct task consumption, such as return await read_value(). */
+final class ast_await_expression extends ast_expression
+{
+	public readonly ast_call_expression $operand;
+
+	/** Prepared fact: suspend this coroutine or wait at the synchronous boundary; set during each preparation. */
+	public private(set) bool $suspends = false;
+
+	public function __construct(int $start /** uint32 */, ast_call_expression $operand)
+	{
+		parent::__construct($start, $operand->end);
+		$this->operand = $operand;
+		$operand->attach($this);
+	}
+
+	public function settle(bool $suspends): void
+	{
+		$this->suspends = $suspends;
+		$this->settle_value($this->operand->type_def(), null);
+	}
+}
+
+/** Complete an awaited call and discard its result, as in await flush(); */
+final class ast_await_statement extends ast_statement
+{
+	public readonly ast_await_expression $value;
+
+	public function __construct(ast_await_expression $value, int $end /** uint32 */)
+	{
+		parent::__construct($value->start, $end);
+		$this->value = $value;
+		$value->attach($this);
+	}
+}
+
+/** Await the timer at statement position: await async_sleep_ms(1); */
+final class ast_delay_statement extends ast_statement
+{
+	public readonly ast_expression $value;
+
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_expression $value)
+	{
+		parent::__construct($start, $end);
+		$this->value = $value;
+		$value->attach($this);
+	}
+}
+
 /** Lexical self and parent calls forward the enclosing static implementation's called type. */
 enum call_qualifier: int /** uint8 */
 {
@@ -49,6 +97,7 @@ enum call_qualifier: int /** uint8 */
 	case lexical_parent = 2;
 	case called_type = 3;
 	case local = 4;
+	case stored_value = 5;
 }
 
 /** A named callable used as an argument. The target is resolved against the expected parameter type. */
@@ -81,31 +130,91 @@ final class ast_callable_reference extends ast_expression
 	}
 }
 
-/** An expression-bodied lambda owns only its written parameters, result type and expression. */
-final class ast_lambda_expression extends ast_expression
+/** The callable whose result contract applies to returns in a statement block. */
+interface statement_return_target
 {
+	/** @var ast_parameter_declaration[] */
+	public array $parameters { get; }
+	public bool $returns_reference { get; }
+	public ?int $reference_return_origin { get; }
+	public bool $is_implicit_entry { get; }
+	public bool $is_async { get; }
+	public function return_type_def(): type_definition;
+}
+
+/** Arity of a source parameter list with trailing defaults. */
+trait ast_fixed_parameter_list
+{
+	/** Defaults form a trailing suffix; only the first omitted parameter needs inspection. */
+	public function accepts_argument_count(int $supplied /** uint32 */): bool
+	{
+		return $supplied <= count($this->parameters)
+			&& (!isset($this->parameters[$supplied]) || $this->parameters[$supplied]->default_value !== null);
+	}
+}
+
+/** A lexical capture bound to its enclosing storage at creation. */
+final class ast_closure_capture extends ast_local_declaration
+{
+	public function __construct(string $name, int $start /** uint32 */, ?int $string_offset /** uint32|null */ = null,
+		public readonly bool $by_reference = false)
+	{
+		$read = $string_offset === null ? new ast_name_expression($name, $start, $start + 1)
+			: new ast_interpolation_name($name, $start, $string_offset);
+		parent::__construct($start, $start + 1, $name, null, $read);
+	}
+}
+
+/** Owns the signature and body while its enclosing function owns incremental preparation. */
+final class ast_lambda_expression extends ast_expression implements statement_return_target
+{
+	use ast_fixed_parameter_list;
+
 	/** Prepared result conversion. */
 	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
 
-	/** @param ast_parameter_declaration[] $parameters */
+	/** @var int[] Prepared enclosing storage IDs that invocation may write. */
+	public private(set) array $borrowed_writes /** list<uint32> */ = [];
+
+	/** @param ast_parameter_declaration[] $parameters @param ast_closure_capture[] $captures */
 	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
-		public readonly ast_type_reference $result, public readonly ast_expression $body)
+		public readonly ?ast_type_reference $result, public readonly ast_expression|ast_block $body, public readonly array $captures /** list<ast_closure_capture> */ = [],
+		public readonly bool $explicit_receiver = false, public readonly bool $returns_reference = false)
 	{
 		parent::__construct($start, $body->end);
 		foreach ($parameters as $parameter) $parameter->attach($this);
-		$result->attach($this);
+		foreach ($captures as $capture) $capture->attach($this);
+		$result?->attach($this);
 		$body->attach($this);
 	}
 
-	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */): void
+	public ?int $reference_return_origin { get => $this->type_def?->signature->reference_origin; }
+	public bool $is_implicit_entry { get => false; }
+	public bool $is_async { get => false; }
+
+	public function return_type_def(): type_definition
+	{
+		return $this->type_def()->signature->result;
+	}
+
+	/** Publish the signature, result conversion and effects together. @param int[] $borrowed_writes */
+	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */, array $borrowed_writes /** list<uint32> */): void
 	{
 		$this->conversion = $conversion;
+		$this->borrowed_writes = $borrowed_writes;
 		$this->settle_value($type, null);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->borrowed_writes = [];
+		$this->conversion = value_conversion::identity;
 	}
 }
 
 /** A named invocation owns arguments and their conversion facts; example: identity("hello"). */
-final class ast_call_expression extends ast_expression
+class ast_call_expression extends ast_expression
 {
 	/** PROPERTIES */
 	public readonly string $name;
@@ -125,8 +234,10 @@ final class ast_call_expression extends ast_expression
 	public bool $interface_dispatch = false;
 	/** Prepared fact: builtin operation when the watched name resolves to a collection query. */
 	public private(set) ?collection_cardinality $cardinality = null;
-	/** Prepared fact: native non-owning stable symbol or immutable runtime binding; null before preparation or after reset. */
-	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|null $function_symbol = null;
+	/** Prepared fact: evaluating the receiver or an argument can suspend this coroutine. */
+	public bool $suspending_operands = false;
+	/** Prepared fact: native non-owning target binding or direct producer operand; null before preparation or after reset. */
+	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|ast_call_expression|null $function_symbol = null;
 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
 	private array $conversions /** list<uint16> */ = [];
 
@@ -168,9 +279,49 @@ final class ast_call_expression extends ast_expression
 		$this->settle_value($receiver->cardinality_result($operation), null);
 	}
 
+	/** The explicit bridge reuses its existing operand and its checked argument conversions. */
+	public function settle_blocking_wait(ast_call_expression $producer): void
+	{
+		$this->function_symbol = $producer;
+		$this->settle_value($producer->type_def(), null);
+	}
+
+	public function blocking_producer(): ?ast_call_expression
+	{
+		return $this->function_symbol instanceof ast_call_expression ? $this->function_symbol : null;
+	}
+
+	public function has_direct_signature(): bool
+	{
+		return $this->qualifier !== call_qualifier::stored_value && $this->cardinality === null && $this->callable_binding() === null && $this->blocking_producer() === null && $this->constructed_record() === null;
+	}
+
 	public function target_name(): string
 	{
-		return $this->cardinality?->name ?? $this->callable_binding()?->name() ?? $this->function_def()->name();
+		if ($this->qualifier === call_qualifier::stored_value) return $this->name;
+		if ($this->blocking_producer() !== null) return 'async_wait';
+		return $this->cardinality?->name ?? $this->callable_binding()?->name()
+			?? $this->constructed_record()?->name() ?? $this->function_def()->name();
+	}
+
+	/** A call-shaped construction watches the same stable class entry as type resolution. */
+	public function constructed_record(): ?ast_record_declaration
+	{
+		$target = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
+		return $target instanceof ast_record_declaration ? $target : null;
+	}
+
+	/** @param int[] $conversions */
+	public function settle_construction(symbol_entry $target, shared_record_type_definition $type, array $conversions /** list<uint16> */): void
+	{
+		$this->function_symbol = $target;
+		$this->conversions = $conversions;
+		$this->settle_value($type, null);
+	}
+
+	public function runtime_binding(): ?runtime_function
+	{
+		return $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
 	}
 
 	/** @param int[] $conversions */
@@ -191,7 +342,8 @@ final class ast_call_expression extends ast_expression
 	public function runtime_operands(?runtime_function $binding = null): array /** list<ast_expression> */
 	{
 		$binding ??= $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
-		if ($binding?->name() === 'enum_from_value' && ($this->arguments[0] ?? null) instanceof ast_type_marker) {
+		if (($this->arguments[0] ?? null) instanceof ast_type_marker
+			&& ($binding?->name() === 'enum_from_value' || $binding?->name() === 'enum_try_from_value')) {
 			return array_slice($this->arguments, 1);
 		}
 		return $this->receiver === null || $binding?->type_qualified ? $this->arguments : [$this->receiver, ...$this->arguments];
@@ -206,7 +358,7 @@ final class ast_call_expression extends ast_expression
 	}
 
 	/** @param int[] $conversions */
-	public function settle_local_call(ast_local_binding $parameter, callback_type_definition $signature, array $conversions /** list<uint16> */): void
+	public function settle_callable_call(?ast_local_binding $parameter, callback_type_definition $signature, array $conversions /** list<uint16> */): void
 	{
 		$this->settle_value($signature->result, null);
 		$this->function_symbol = $parameter;
@@ -225,6 +377,23 @@ final class ast_call_expression extends ast_expression
 		}
 		if ($this->function_symbol instanceof called_method_instance) return $this->function_symbol->method->declaration();
 		return ($this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null) ?? throw new \LogicException('Call target is not settled or was removed');
+	}
+
+	/** Return the caller's bound slot when this call yields a reference to one argument. */
+	public function reference_origin(): ?ast_local_binding
+	{
+		$function = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
+		$slot = $function instanceof ast_function_declaration ? $function->reference_return_origin : null;
+		if ($this->function_symbol instanceof ast_local_binding) {
+			$type = $this->function_symbol->type_def();
+			$signature = $type instanceof callback_type_definition ? $type : $type->signature;
+			$slot = $signature->reference_origin;
+		}
+		if ($this->qualifier === call_qualifier::stored_value) $slot = $this->receiver->type_def()->signature->reference_origin;
+		if ($slot === null) return null;
+		$index = $this instanceof ast_named_call ? array_search($slot, $this->named->slots, true) : $slot;
+		$argument = $index === false ? null : ($this->arguments[$index] ?? null);
+		return $argument instanceof ast_name_expression ? $argument->local_binding() : null;
 	}
 
 	/** Lower only after the coordinator has settled all reachable implementations. */
@@ -250,7 +419,112 @@ final class ast_call_expression extends ast_expression
 		$this->ancestor_dispatch = false;
 		$this->interface_dispatch = false;
 		$this->cardinality = null;
+		$this->suspending_operands = false;
 		$this->conversions = [];
+	}
+}
+
+/** Written labels and the recomputable parameter permutation of a labeled call or construction. */
+final class Named_Arguments
+{
+	/** PREP FACTS */
+	/** @var int[] Prepared parameter slots in written order, then omitted defaults in declaration order. */
+	public private(set) array $slots /** list<uint32> */ = [];
+
+	/** CONSTRUCTOR */
+	/** @param string[] $labels Written labels indexed by source argument position. */
+	public function __construct(public readonly array $labels /** array<uint32,string> */)
+	{
+	}
+
+	/** METHODS */
+	/** Resolve against the current published signature. Only explicit operands can consume a slot. */
+	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function|ast_lambda_expression $function): void
+	{
+		$names = [];
+		if ($function instanceof runtime_function) $names = array_flip($function->parameter_names);
+		else foreach ($function->parameters as $slot => $parameter) {
+			$names[$parameter->name()] = $slot;
+		}
+		$slots = [];
+		$used = [];
+		foreach ($site->arguments as $position => $argument) {
+			$label = $this->labels[$position] ?? null;
+			$slot = $label === null ? $position : ($names[$label] ?? null);
+			if ($slot === null) {
+				$target = $function instanceof ast_lambda_expression ? $site->name : $function->name();
+				throw new diagnostic($site->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . ' on ' . $target);
+			}
+			if (!isset($function->parameters[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Too many positional arguments');
+			if (isset($used[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $label);
+			$used[$slot] = true;
+			$slots[] = $slot;
+		}
+		foreach ($names as $name => $slot) {
+			if (isset($used[$slot])) continue;
+			if ($function instanceof runtime_function || $function->parameters[$slot]->default_value === null) {
+				throw new diagnostic($site->source(), $site->byte_start(), 'Missing required argument: ' . $name);
+			}
+			$slots[] = $slot;
+		}
+		$this->slots = $slots;
+	}
+
+	/**
+	 * @template T of ast_parameter_declaration|type_definition
+	 * @param T[] $parameters
+	 * @return T[]
+	 */
+	public function evaluation_parameters(array $parameters): array
+	{
+		return array_map(static fn(int $slot) => $parameters[$slot], $this->slots);
+	}
+
+	/** True when native parameter order differs from the required evaluation order. */
+	public function reordered(): bool
+	{
+		foreach ($this->slots as $index => $slot) {
+			if ($index !== $slot) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param string[] $operands
+	 * @return string[]
+	 */
+	public function parameter_order(array $operands): array
+	{
+		$ordered = $operands;
+		foreach ($this->slots as $index => $slot) $ordered[$slot] = $operands[$index];
+		return $ordered;
+	}
+
+	public function reset_preparation(): void
+	{
+		$this->slots = [];
+	}
+}
+
+/** Source function or method call with at least one written argument label. */
+final class ast_named_call extends ast_call_expression
+{
+	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, method, constructor or local lambda, or a runtime free function with published parameter names';
+
+	public readonly Named_Arguments $named;
+
+	/** @param ast_expression[] $arguments @param string[] $labels */
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name, ?token_kind $separator,
+		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */, call_qualifier $qualifier)
+	{
+		parent::__construct($start, $end, $name, $separator, $arguments, $receiver, $qualifier);
+		$this->named = new Named_Arguments($labels);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->named->reset_preparation();
 	}
 }
 
@@ -341,7 +615,9 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		$this->prepared = false;
 		$this->queue_change();
 		$this->byte_view_length = null;
-		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
+		$this->name_lookups = 0;
+		$this->expression_visits = 0;
+		$this->statement_visits = 0;
 	}
 
 	/** Publish body completion and the target context only after all statement facts settle. */
@@ -377,15 +653,18 @@ final class ast_function_body extends ast_statement_block implements dependency_
  * ```
  * short_name is ping, return_type_reference names void, and return_type_def() is unavailable until declaration preparation.
  */
-final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature
+final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature, statement_return_target
 {
 	use ast_declaration { name as private namespace_name; }
+	use ast_fixed_parameter_list;
 
 	/** PROPERTIES */
 	/** Native non-owning authored trait; null for an ordinary member. */
 	public ?ast_trait_declaration $trait_origin = null;
 	public readonly bool $is_private;
 	public readonly bool $is_protected;
+	/** Written free-function modifier; the return type names the eventual value. */
+	public bool $is_async = false;
 	public readonly bool $is_implicit_entry;
 	public readonly bool $is_static;
 	/** Written method intent, populated by Record_Syntax before publication. */
@@ -395,7 +674,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	private string $source_key = '';
 	public bool $is_override = false;
 	public bool $is_final = false;
-	/** First method modifier token, null for unmarked declarations. */
+	/** First callable modifier token, null for unmarked declarations. */
 	public ?int $modifier_start /** uint32|null */ = null;
 	/** Native owning return type syntax; absence is distinct from an unresolved return type. */
 	public readonly ?ast_type_reference $return_type_reference;
@@ -419,6 +698,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public bool $introduces_slot = false;
 	/** Prepared fact: canonical return type; settled before any body consumes this declaration. */
 	protected ?type_definition $return_type_def = null;
+	/** Prepared fact: ordinal of the sole writable parameter supplying returned storage. */
+	public private(set) ?int $reference_return_origin /** uint32|null */ = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -430,7 +711,8 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	 */
 	public function __construct(string $name, ?ast_type_reference $return_type_reference, int $start /** uint32 */,
 		int $header_end /** uint32 */,
-		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [], bool $static = false, bool $private = false, bool $protected = false)
+		bool $is_implicit_entry = false, ?string $namespace = null, array $parameters /** list<ast_parameter_declaration> */ = [], bool $static = false, bool $private = false, bool $protected = false,
+		public readonly bool $returns_reference = false)
 	{
 		$this->is_static = $static;
 		$this->is_protected = $protected;
@@ -456,6 +738,11 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 			? $this->parent->name() . '::' . $this->short_name : $this->namespace_name();
 	}
 
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::function_declaration;
+	}
+
 	/** Canonical global handle; the local declaration key remains usable by source-scope indexes. */
 	public function symbol_key(): string
 	{
@@ -467,6 +754,13 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function has_virtual_dispatch(): bool
 	{
 		return $this->is_virtual || $this->is_override || $this->is_abstract;
+	}
+
+	/** An explicitly final instance method with a single concrete implementation and no virtual slot. */
+	public function is_direct_final_method(): bool
+	{
+		return $this->is_final && !$this->is_static && !$this->has_virtual_dispatch()
+			&& $this->parent instanceof ast_record_declaration && $this->parent->kind !== record_kind::interface_type;
 	}
 
 	public function has_receiver(): bool
@@ -487,13 +781,6 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 			$kind = $this->is_constructor() ? 'constructor' : 'method';
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot call private ' . $kind . ' ' . $this->name());
 		}
-	}
-
-	/** Defaults form a trailing suffix; only the first omitted parameter needs inspection. */
-	public function accepts_argument_count(int $supplied /** uint32 */): bool
-	{
-		return $supplied <= count($this->parameters)
-			&& (!isset($this->parameters[$supplied]) || $this->parameters[$supplied]->default_value !== null);
 	}
 
 	public function is_constructor(): bool
@@ -563,6 +850,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function reset_preparation(): void
 	{
 		$this->return_type_def = null;
+		$this->reference_return_origin = null;
 		$this->method_contract_ready = false;
 		$this->adapted_base = null;
 		$this->introduces_slot = false;
@@ -572,11 +860,12 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->body?->reset_preparation();
 	}
 
-	public function settle_return_type(type_definition $type): void
+	public function settle_return_type(type_definition $type, ?int $reference_origin /** uint32|null */ = null): void
 	{
 		if ($this->return_type_def !== null) {
 			throw new \LogicException('Function return type is already settled');
 		}
+		$this->reference_return_origin = $reference_origin;
 		$this->return_type_def = $type;
 	}
 
@@ -610,6 +899,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function invalidate_dependencies(): void
 	{
 		$this->return_type_def = null;
+		$this->reference_return_origin = null;
 		$this->method_contract_ready = false;
 		$this->adapted_base = null;
 		$this->introduces_slot = false;
@@ -635,7 +925,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		if ($this->source()->flavor === flavor::js && ($this->parent instanceof ast_method_owner)
 			&& $this->lexical_root()->tokens->text_at($this->start) !== 'function') return $this->start;
 		return $this->is_implicit_entry ? $this->start
-			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + 1);
+			: ($this->source()->flavor === flavor::cpp ? $this->return_type_reference->end : $this->start + ($this->returns_reference ? 2 : 1));
 	}
 
 	/** Return: token position. */
@@ -662,7 +952,7 @@ final class ast_return_statement extends ast_statement
 	public readonly ?ast_expression $value;
 
 	/** PREP FACTS */
-	/** Prepared fact: entry or function return conversion; null before preparation or for a void return. */
+	/** Prepared fact: entry or function return conversion; null before preparation or for a bare return. */
 	protected ?int $conversion /** uint16|null */ = null;
 
 	/** CONSTRUCTOR */

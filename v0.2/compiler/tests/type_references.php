@@ -87,7 +87,13 @@ foreach ([
 		$type = $frontend->parse(new source_file('extent', $text, $flavor))->declarations['func:grid']->return_type_reference;
 		verify($type->first_child->next_sibling->extent === $expected, 'Checked extent value');
 	}
-	foreach (['byte, 9223372036854775808', 'byte, 0x8000000000000000', 'byte', 'byte, -1', 'byte, CAP', 'byte, 1+1', 'byte, 2, 3'] as $invalid) {
+	$qualified = match ($flavor) { flavor::php => 'Sizes\\CAP', flavor::cpp => 'Sizes::CAP', flavor::js => 'Sizes.CAP' };
+	$text = str_replace($matrix, 'fixed_array<byte,' . $qualified . '>', $source);
+	$type = $frontend->parse(new source_file('named-grid', $text, $flavor))->declarations['func:grid']->return_type_reference;
+	$bound = $type->first_child->next_sibling;
+	verify($bound instanceof scpp\compiler\ast_extent_reference && $bound->name === 'Sizes\\CAP'
+		&& $bound->source_text() === $qualified && $bound->parent === $type, 'Named extent qualification and ownership');
+	foreach (['byte, 9223372036854775808', 'byte, 0x8000000000000000', 'byte', 'byte, -1', 'byte, 1+1', 'byte, 2, 3'] as $invalid) {
 		try {
 			$text = str_replace($matrix, 'fixed_array<' . $invalid . '>', $source);
 			$frontend->parse(new source_file('invalid-grid', $text, $flavor));

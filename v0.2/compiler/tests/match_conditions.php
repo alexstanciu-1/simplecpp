@@ -14,7 +14,7 @@ function verify(bool $ok, string $message): void
 	if (!$ok) throw new RuntimeException($message);
 }
 
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$entry = (new Source_Frontend())->prepare(new source_file('conditions',
 		'return match(true){default=>3,false=>1,true=>2};', $flavor), new entry_target(31));
 	$match = $entry->body()->statements[0]->value;
@@ -24,7 +24,7 @@ foreach (flavor::cases() as $flavor) {
 	verify($match->subject->parent === $match, 'Owned subject parent');
 	foreach ($match->arms as $arm) {
 		verify($arm->parent === $match && $arm->result->parent === $arm, 'Owned arm/result parents');
-		if ($arm->label !== null) verify($arm->label->parent === $arm, 'Owned condition parent');
+		foreach ($arm->labels as $label) verify($label->parent === $arm, 'Owned condition parent');
 	}
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);

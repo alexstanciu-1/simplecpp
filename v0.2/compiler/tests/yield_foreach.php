@@ -5,7 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/yield.php';
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, Incremental_Project};
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$v = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$member = $flavor === flavor::js ? '.' : '->';
 	$decl = static fn(string $type, string $name, string $value): string => match ($flavor) {
@@ -32,6 +32,11 @@ foreach (flavor::cases() as $flavor) {
 		verify(serialize($entry) === $before, 'Lowering mutated preparation');
 		$fixtures[$flavor->name . '_' . $name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected), 'compiler_ms' => $elapsed / 1e6];
 	};
+	if ($flavor === flavor::js) {
+		$emit('hash_keys', 'function make():hash<int,string>{let items:hash<int,string> = []; items["only"]=10; return items;}'
+			. 'function stream():Iterator<string>{for (key in make()) {yield key;}}'
+			. 'foreach(stream() as key){echo key;} return 8;', 'only');
+	}
 	foreach (['vector<int>', 'hash<int,string>', 'mixed', 'dynamic'] as $family => $type) {
 		$setup = $decl($type, 'items', '[]') . $v('items') . ($family === 0 ? '[]' : '["a"]') . '=10;'
 			. $v('items') . ($family === 0 ? '[]' : '["b"]') . '=20;';

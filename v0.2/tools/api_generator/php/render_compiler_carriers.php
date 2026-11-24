@@ -14,6 +14,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
     }
     $cases = [];
     $literals = [];
+    $typeNames = [];
     foreach ($runtime['carrier_sentinels'] ?? [] as $state => $sentinel) {
         $class = 'type_' . $sentinel['literal'];
         $name = var_export($sentinel['literal'], true);
@@ -28,6 +29,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
         if ($payload === null) continue;
         $export = typeExport($runtime['submodules'], $carrier['name']);
         $class = 'type_' . $carrier['name'];
+        $typeNames[$carrier['family'] . '<' . $carrier['payload'] . '>'] = $typeNames[$carrier['name']] = $carrier['name'];
         $sentinelCases = [];
         foreach ($runtime['carrier_sentinels'] ?? [] as $state => $sentinel) {
             if (array_key_exists($state, $carrier['states'])) {
@@ -41,10 +43,12 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             ? "'([&]() { const auto &carrier = ' . \$value . '; return carrier.{$valuePresence}() || {$truePresence}; }())'"
             : "'(' . \$value . ').{$valuePresence}()'";
         $code .= strtr(readFile(__DIR__ . '/../templates/carriers/carrier_type.php.tpl'), [
+            '@instance_field@' => $carrier['instance_field'] ? 'true' : 'false',
             '@sentinel_cases@' => implode("\n", $sentinelCases),
             '@presence_expression@' => $presenceExpression,
             '@presence@' => $valuePresence,
             '@true_presence@' => $truePresence,
+            '@dispatch_label_type@' => in_array($carrier['family'], ['nullable', 'result'], true) ? '$this->payload_type' : '$this',
             '@coalesce@' => $carrier['family'] === 'nullable' && count($carrier['states']) === 2 && array_key_exists('value', $carrier['states']) && array_key_exists('empty', $carrier['states']) ? 'true' : 'false',
             '@empty@' => array_key_exists('empty', $carrier['states']) ? 'true' : 'false',
             '@implicit@' => $carrier['extraction'] === 'implicit_checked_one_layer_value_copy' ? 'true' : 'false',
@@ -55,5 +59,5 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
         ]);
         $cases[$carrier['family']][] = "\t\t\t" . $payload['class'] . "::instance() => $class::instance(),";
     }
-    return [$code, $cases, $literals];
+    return [$code, $cases, $literals, $typeNames];
 }

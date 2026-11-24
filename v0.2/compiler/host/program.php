@@ -78,7 +78,7 @@ final class Program_Command
 		{
 			$flavor = flavor::tryFrom($arguments[$index]);
 			if ($flavor === null) {
-				throw new \RuntimeException('Flavor must be cpp, php or js');
+				throw new \RuntimeException('Flavor must be cpp, php, js or py');
 			}
 			$path = $arguments[$index + 1];
 			Program_Loader::require_relative($path);

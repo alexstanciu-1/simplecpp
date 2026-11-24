@@ -4,12 +4,12 @@ Doc Status: supporting
 Date: 2026-10-29
 Scope: approved rewrite direction and the intended first parser subset. The active
 PHP rebuild implements loading, tokenization and the bounded declaration/assignment
-parser and the bounded [integer entry slice](../../specs/compiler_entry_v0_2.md). This is not
-an assertion of complete C++, PHP or JavaScript compatibility.
+parser and the bounded [integer entry slice](../../specs/compiler_entry_v0_2.md).
+The Python subsection records the v0.2 typed surface.
 
 ## Language and policy boundary
 
-Simple C++ is one language with C++, PHP and JS syntax flavors. There is one PHP
+Simple C++ is one language with C++, PHP, JS and Python syntax flavors. There is one PHP
 flavor, not separate PHP/strict-PHP++/PHS modes. Historical strict-PHS donor guidance
 does not establish a second mode in this rewrite. PRJ configurations will select composed profiles controlling policy and configured
 defaults, enforced by common compiler analysis. These are not separate PHP language
@@ -19,21 +19,71 @@ and intent regardless of whether a later profile permits it.
 Mixed flavors in a project are allowed, though consistent project style is encouraged.
 Flavor is per file, never global. Selected composed profiles are project-wide.
 PRJ loading, profile composition and profile enforcement are not implemented in this
-parser slice. The CLI requires explicit cpp/php/js; it does not guess from extension.
-The driver accepts a flavor for each source operation, and token generations retain
-that selection. Parsing dispatches from that retained flavor, not a second argument.
+parser slice. File commands and explicit program inventories accept cpp, php, js
+and py. Module discovery recognizes .py files alongside the other flavors. Token
+generations retain the selected flavor, which also drives parsing.
 
 Integer literal 3 is intended to acquire the project-configured default integer type
 through analysis; the parser neither selects int64 nor converts the spelling. Unknown
 names/types, duplicate declarations, overflow, conversions and inference restrictions
 remain semantic responsibilities. Successful parsing does not mean a valid program.
 
+
+## Python syntax flavor in v0.2
+
+The Python surface is a typed Simple C++ frontend selected per file with py.
+One tokenizer adds Python layout tokens with original byte positions, and the
+shared parser builds the same AST used by cpp, php and js. Preparation uses
+the common type, ownership and evaluation rules. The shared backend emits C++.
+
+| Area | Supported surface |
+| --- | --- |
+| Layout and functions | Indented multiline suites, comments, parenthesized continuations, typed def parameters and returns, typed initialized locals and subsequent assignment. |
+| Expressions and control | Core scalar literals and arithmetic, comparisons, bool-only not/and/or, conditional expressions, if/elif/else, while with optional else, pass, unlabelled break and continue, and return. |
+| Collections | Typed vector and hash local literals, checked indexed reads and single indexed writes. A for name in source loop binds vector elements or hash keys. A new loop name stays in the loop and an existing local receives the selected entries. Typed hashes also accept for key, value in mapping.items(). The key is loop-local and the value uses the shared foreach destination rule. Typed hash traversal follows key insertion order. |
+| Records and ownership | Typed class fields, self, dot access, construction with __init__, and one base class with an initial super().__init__ call. Methods can call super().method(...) as a statement or expression. Compile-time @virtual and @override select the shared method contract, with an explicit override marker required. |
+| Async free functions | Typed `async def`, direct `await` calls and `await async_sleep_ms(...)` use the [shared async contract](../../specs/async_await.md). |
+| Typed failures | Raise, bare rethrow in a handler, typed except Type as name clauses and finally under the shared cleanup rules. |
+
+The shared collection contract rejects negative vector indexes and duplicate
+literal keys. Typed hash writes insert or replace. Boolean operators require
+bool operands. Local scopes follow Simple C++ blocks, and every new ordinary
+local needs a type and initializer.
+
+Python `key in mapping` and `key not in mapping` test key presence at comparison precedence. The mapping must publish a typed key-presence binding, and the key must match its declared key type. Both operands evaluate once, key first. A failed key expression skips the mapping expression. The result is independent of the stored value and traversal order.
+
+Python `in` on a typed vector scans elements in order and stops at the first match. It compares supported scalars by value and shared handles by allocation identity. Integer/float membership compares the exact numeric values, including integers above 2⁵³. A boolean needle compares numerically to integer elements. The needle evaluates once before the vector expression, including for an empty vector.
+
+For `mixed` and `dynamic` receivers, Python list literals retain their sequence identity through copies. Dictionary literals and existing containers received from cpp, php, or js test keys, even when all keys are consecutive integers starting at zero. Python dictionary literals preserve integer and string keys separately within the boxed storage's supported key range. A boxed string supports substring membership. In each case `not in` negates the result.
+
+Python `is None` and `is not None` evaluate the left operand once and return bool. The operand can be a nullable carrier that admits absence, a shared record handle, or a null value. These tests preserve the declared type in both branches. Result errors do not represent absence.
+
+Python `a is b` and `a is not b` also accept two shared record handles, including optional handles and interface views. The operands evaluate once in source order. Identity compares the allocation retained by each operand. Two empty handles compare identical, including when their declared payload types differ. Scalar and collection values do not support this two-handle form.
+
+Python integer scalars support unary `~`, binary `&`, `^` and `|`, and corresponding compound assignments on existing locals and parameters. Bitwise operations bind more tightly than comparisons. Narrow destinations use the shared checked write-back rules.
+
+Python binary / yields float64 for supported int64 and float64 operands.
+Integer // rounds down and integer % uses the divisor's sign. These spellings
+select separate operations from the cpp/php/js integer division and remainder.
+See the [arithmetic contract](planning/python_flavor.md#python-division-floor-division-and-modulo).
+
+Python comparison chains support `== != < <= > >=` for the operand pairs admitted by the shared comparison rules, `in` and `not in` for supported collection receivers, and `is` and `is not` for the handle and literal-None tests above. The unbound `undefined` missing-key marker is available only in a standalone indexed test. Every adjacent pair is type-checked. Operands execute once, from left to right. A false comparison skips the remaining operands at runtime. Parentheses can make a comparison result an operand of a separate comparison.
+
+Deferred Python spellings and semantics include floating floor division and
+modulo, operand-valued boolean operators, type inference
+on first assignment, general iteration and range, standalone items views and general destructuring,
+comprehensions, generator syntax, import and print, general decorators, dynamic
+attributes, Python-authored interfaces, and general super proxies. Package interoperability and CPython execution are outside the
+flavor scope. Native tokenizer layout parity is tracked as separate cutover work.
+See the [runnable example](../compiler/examples/python/main.py) and the
+[acceptance record](planning/python_flavor.md#v02-closeout).
+
 ## Named callback syntax
 
-All three flavors use `callback<Result, Input1, Input2>` on a parameter and
+The cpp, php and js flavors use `callback<Result, Input1, Input2>` on a parameter and
 `name(...)` to refer to a source function. Static references use each flavor's
 type-qualified syntax. See the [named callback contract](../../specs/compiler_entry_v0_2.md#named-callbacks).
-The three flavors also admit [capture-free `fn` expressions](../../specs/compiler_entry_v0_2.md#capture-free-lambdas)
+These flavors also admit [capture-free `fn` expressions](../../specs/compiler_entry_v0_2.md#capture-free-lambdas)
 with their ordinary parameter syntax.
 
 ## First common subset
@@ -416,7 +466,7 @@ taking precedence. Concrete descendants implement it through ordinary override r
 
 ## Explicit ancestor member access
 
-PHP uses `parent::evaluate(...)`; JS uses `super.evaluate(...)`. Lookup starts at
+PHP uses `parent::evaluate(...)`, JS uses `super.evaluate(...)` and Python uses `super().evaluate(...)`. Lookup starts at
 the immediate base of the lexical declaring record and follows inherited members.
 The C++ flavor accepts `Parent::evaluate(...)` for a lexical parent method call.
 It also accepts an actual ancestor type name, such as `Node::evaluate(...)`, including

@@ -6,7 +6,7 @@ The cpp, php and js flavors share this Simple C++ expression syntax:
 
 ```text
 match (subject) {
-    label => result,
+    label1, label2 => result,
     default => fallback,
 }
 ```
@@ -14,7 +14,7 @@ match (subject) {
 Evaluate the subject exactly once. Select the arm with the equal label, or the
 required default when no label matches. Evaluate only that arm's result. A subject
 failure evaluates no arm; a selected result failure propagates normally. Default
-may appear anywhere. A trailing comma is optional. There is one label per arm.
+may appear anywhere. A trailing comma is optional. A constant-label arm may list several comma-separated labels. Each selects the same result. Duplicate checking spans all labels, including labels in the same arm. The default stands alone.
 
 Constant-label admission belongs to the subject type. Published integers use exact
 integer values; backed enums use cases of the same nominal enum. Byte strings use
@@ -22,6 +22,15 @@ exact bytes, including length and embedded NULs. Integer and string labels accep
 literals or named constants of exactly the subject type. Locals, calls and other
 computed labels are rejected even when their value can be inferred. Duplicate
 values (including aliases), duplicate defaults and missing defaults are errors.
+
+With a one-layer nullable or result subject, the payload type supplies the label
+domain for both constant-label match and switch. It must itself support constant
+dispatch. Evaluate the subject once and test for a payload before extraction.
+Present zero and present empty bytes participate in ordinary label comparison.
+An absent nullable or a stored result error selects default directly. In switch,
+execution then follows ordinary fallthrough, or continues after the switch if
+default is omitted. An exception raised while evaluating the subject propagates.
+Explicit alternate-state labels and the boolean-sentinel carrier families remain deferred.
 
 All value arms must produce the same canonical type. A default of the form
 `default => throw expression` contributes no result type and requires at
@@ -36,7 +45,7 @@ the subject is statically known.
 ## Ordered boolean conditions
 
 A literal `true` subject selects the condition form, `match (true)`. Each non-default
-label is a boolean expression. Evaluate conditions once each, in written order,
+arm has one boolean condition. Evaluate conditions once each, in written order,
 until one returns true; evaluate only that result. Later conditions and results
 are skipped. If none is true, evaluate default, irrespective of where it is written.
 A failing condition or selected result propagates immediately. Evaluation within
@@ -53,7 +62,7 @@ constants and `match(false)` remain outside this slice, even when their values a
 known. No retained mode flag or constant-propagation rule is needed.
 
 Deferred: general boolean subjects, float subjects,
-computed integer/enum labels, multiple labels per arm, exhaustiveness inference, omitted
+computed integer/enum label expressions, exhaustiveness inference, omitted
 defaults, implicit result unification and reference results. This syntax is a
 Simple C++ extension in cpp/js, not a claim about native C++/ECMAScript syntax.
 

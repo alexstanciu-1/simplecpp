@@ -19,9 +19,12 @@ public:
 private:
     friend struct boxed_inspection;
     using table = packed_table<boxed_value>;
+    struct list_storage { std::shared_ptr<table> entries; };
     using payload = std::variant<std::monostate, bool, std::int64_t, double,
-        std::shared_ptr<const std::string>, std::shared_ptr<table>>;
+        std::shared_ptr<const std::string>, std::shared_ptr<table>, list_storage>;
     payload value_;
+    std::shared_ptr<table>& writable_table_handle();
+    bool python_equal(const boxed_value& other, unsigned depth) const;
     const table* read_table() const;
     template<class Operation> auto mutate(Operation operation);
 public:
@@ -37,6 +40,8 @@ public:
     static boxed_value floating(double value) noexcept;
     static boxed_value string(std::string_view value);
     static boxed_value container();
+    static boxed_value python_list();
+    bool python_contains(const boxed_value& needle) const;
     kind type() const noexcept;
     bool get_boolean() const;
     std::int64_t get_integer() const;

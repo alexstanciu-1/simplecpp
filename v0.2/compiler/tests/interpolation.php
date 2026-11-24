@@ -28,10 +28,49 @@ function rejects(Closure $action, string $message): string
 	throw new RuntimeException('Expected rejection: ' . $message);
 }
 
+// PHP bootstrap extraction must preserve the output on both kinds of unsuccessful search.
+$span_end = 123;
+verify(\scpp\compiler\regex_find_span('/\Gx/', 'é!x', 2, $span_end) === -1 && $span_end === 123, 'Anchored miss');
+foreach ([['/[/', 0], ['/./u', 1], ['//', -1], ['//', 99]] as [$pattern, $offset]) {
+	try {
+		\scpp\compiler\regex_find_span($pattern, 'é', $offset, $span_end);
+	} catch (RuntimeException $error) {
+		verify($span_end === 123, 'Failed span search modified end');
+		continue;
+	}
+	throw new RuntimeException('Expected span search error');
+}
+verify(\scpp\compiler\regex_find_span('//', 'é', 2, $span_end) === 2 && $span_end === 2, 'Empty match at EOF');
+
+/** Exercise the public virtual reset through the same base type as a preparation traversal. */
+function reset_expression(scpp\compiler\ast_expression $node): void
+{
+	$node->reset_preparation();
+}
+
 $fixtures = [];
 $target = new entry_target(31);
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$prepare = static fn(string $source) => (new Source_Frontend())->prepare(new source_file('main', $source, $flavor), $target);
+	$prepared = $prepare('echo "old"; return 8;');
+	$node = $prepared->body()->statements[0]->values[0];
+	$type = scpp\compiler\type_registry::string();
+	verify($node instanceof scpp\compiler\ast_string_expression && $node->type_def() === $type && $node->bytes() === 'old',
+		'Expected a prepared string literal');
+	reset_expression($node);
+	foreach (['type_def' => 'Expression type is not settled', 'bytes' => 'String is not decoded'] as $read => $expected) {
+		try {
+			$node->$read();
+		}
+		catch (LogicException $error) {
+			verify($error->getMessage() === $expected, 'Unexpected reset diagnostic: ' . $error->getMessage());
+			continue;
+		}
+		throw new RuntimeException('Reset left ' . $read . ' available');
+	}
+	$node->settle_bytes("new\0bytes");
+	verify($node->type_def() === $type && $node->constant() === null && !$node->constant_known()
+		&& $node->bytes() === "new\0bytes", 'String re-preparation retained stale facts');
 	$decl = static fn(string $name, string $type, string $v) => match ($flavor) {
 		flavor::cpp => "$type $name = $v;", flavor::php => '$' . "$name $type = $v;", flavor::js => "let $name: $type = $v;",
 	};

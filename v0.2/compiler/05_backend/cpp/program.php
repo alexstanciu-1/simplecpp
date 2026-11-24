@@ -17,7 +17,8 @@ final class Cpp_Program
 		$program->require_prepared();
 		$bodies = [];
 		$root = $program->session?->cpp_namespace ?? 'App';
-		if ($previous?->cpp_namespace !== $root) {
+		$grouped = $program->session?->group_async_methods ?? false;
+		if ($previous === null || $previous->cpp_namespace !== $root || $previous->group_async_methods !== $grouped) {
 			$changed = null;
 		}
 		$layouts = [];
@@ -65,8 +66,8 @@ final class Cpp_Program
 			}
 		}
 		sort($native, \SORT_STRING);
-		return new cpp_program_output($output->entry_path, $output->source_units, array_merge($output->files, $header_files, $adapter_files), $native,
-			array_values(array_unique($links)), $emitted, $root, $source_adapters);
+		return new cpp_program_output($output->entry_path, $output->source_units, array_merge($output->files, $header_files, $adapter_files, $headers->grouped_methods_unit($adapter_files)), $native,
+			array_values(array_unique($links)), $emitted, $root, $source_adapters, $grouped);
 	}
 
 	/** Merge source-private adapter text after lowering; differing expansions cannot silently share a symbol. @param string[] $files */

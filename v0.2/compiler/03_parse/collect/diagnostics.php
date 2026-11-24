@@ -73,6 +73,7 @@ final class Declaration_Diagnostics
 		foreach ($body->statements as $statement) {
 			if ($statement instanceof ast_block_statement || $statement instanceof ast_repeating_statement) {
 				array_push($errors, ...self::locals($statement->body));
+				if ($statement instanceof ast_while_else_statement) array_push($errors, ...self::locals($statement->otherwise));
 			}
 			elseif ($statement instanceof ast_try_statement) {
 				array_push($errors, ...self::locals($statement->body));

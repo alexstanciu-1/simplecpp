@@ -6,9 +6,13 @@ namespace scpp\compiler;
 /** Nominal enum identity; storage and backing facts are shared by every occurrence of this declaration. */
 final class enum_type_definition extends type_definition
 {
+	use nominal_async_task;
+
 	/** PROPERTIES */
 	/** Native non-owning defining AST. */
 	public readonly ast_enum_declaration $declaration;
+	/** Canonical nullable carrier for this nominal enum. */
+	public readonly nullable_enum_type_definition $nullable;
 
 	/** PREP FACTS */
 	/** Prepared fact: null until all cases validate. The source backing can differ from compact native storage. */
@@ -19,6 +23,8 @@ final class enum_type_definition extends type_definition
 	private ?runtime_function $value_function = null;
 	/** Prepared fact: immutable checked-construction binding; shared across call sites. */
 	private ?runtime_function $from_value_function = null;
+	/** Prepared fact: immutable nullable lookup binding, available for string backing. */
+	private ?runtime_function $try_from_value_function = null;
 	/** Prepared fact: immutable case-name binding; shared across call sites. */
 	private ?runtime_function $name_function = null;
 
@@ -27,6 +33,7 @@ final class enum_type_definition extends type_definition
 	{
 		parent::__construct($declaration->name());
 		$this->declaration = $declaration;
+		$this->nullable = new nullable_enum_type_definition($this);
 	}
 
 	/** METHODS */
@@ -50,6 +57,10 @@ final class enum_type_definition extends type_definition
 		$input = $backing === type_string::instance() ? $backing : type_int64::instance();
 		$this->from_value_function = new runtime_function('enum_from_value', [$input], $this,
 			'scpp_enum_from_value_' . Cpp_Emitter::qualified_path($this->name), $input->cpp_headers()[0]);
+		$this->try_from_value_function = $backing === type_string::instance()
+			? new runtime_function('enum_try_from_value', [$input], $this->nullable,
+				'scpp_enum_try_from_value_' . Cpp_Emitter::qualified_path($this->name), $input->cpp_headers()[0])
+			: null;
 		$this->name_function = new runtime_function('enum_name', [$this], type_string::instance(),
 			'scpp_enum_name_' . Cpp_Emitter::qualified_path($this->name), type_string::instance()->cpp_headers()[0]);
 		$this->storage = $storage;
@@ -79,6 +90,11 @@ final class enum_type_definition extends type_definition
 	public function cpp_case(ast_enum_case $case): string
 	{
 		return $this->cpp_type() . '::' . Cpp_Identifier::source($case->short_name);
+	}
+
+	public function supports_async_parameter(): bool
+	{
+		return true;
 	}
 
 	public function cpp_trivial_value(): bool
@@ -141,6 +157,7 @@ final class enum_type_definition extends type_definition
 	{
 		return match ($use) {
 			dependency_use::enum_from_value => $this->from_value_function(),
+			dependency_use::enum_try_from_value => $this->try_from_value_function ?? throw new \LogicException('Nullable enum lookup is unavailable'),
 			dependency_use::enum_value => $this->value_function(),
 			dependency_use::enum_name => $this->name_function ?? throw new \LogicException('Enum name signature is not prepared'),
 		};

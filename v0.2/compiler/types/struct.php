@@ -14,6 +14,7 @@ enum record_layout_state: int
 /** Nominal record payload/layout identity, distinct from its source value storage contract. */
 final class record_type_definition extends type_definition implements dependency_watcher, iterable_type
 {
+	use nominal_async_task;
 	use collection_specializations;
 	use concrete_value_storage;
 
@@ -116,6 +117,7 @@ final class record_type_definition extends type_definition implements dependency
 		if ($this->dependencies === $dependencies && $this->symbol === $symbol && $this->source_key === $source_key) return;
 		$this->dependencies?->forget($this);
 		$this->layout_state = record_layout_state::pending;
+		$this->task_binding = null;
 		$this->array_bytes = 0;
 		$this->method_contract_ready = false;
 		$this->hook_slots = [];
@@ -139,6 +141,7 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		if ($this->layout_state !== record_layout_state::pending) $this->dependencies->changed($this->symbol);
 		$this->layout_state = record_layout_state::pending;
+		$this->task_binding = null;
 		$this->array_bytes = 0;
 		$this->method_contract_ready = false;
 		$this->hook_slots = [];
@@ -205,7 +208,15 @@ final class record_type_definition extends type_definition implements dependency
 			$interface->prepare_layout($symbols, $active, $work);
 			$this->interfaces[] = $interface;
 		}
-		$bytes = $this->base_type?->array_bytes() ?? 0;
+		// An uninitialized static callable depends on the signature types in this record's scope.
+		foreach ($this->declaration->static_properties as $property) {
+			if ($property->initializer !== null) continue;
+			$property->reset_preparation();
+			$type = Type_Resolution::storage($property->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
+			if (!$type?->supports_static_property()) throw new diagnostic($property->source(), $property->byte_start(), 'Unsupported static property type');
+			$property->settle_type($type);
+		}
+		$bytes = $this->base()?->array_bytes() ?? 0;
 		$state = record_layout_state::ready;
 		foreach ($this->declaration->fields as $field) {
 			if (isset($this->declaration->static_properties[$field->short_name])) {
@@ -545,6 +556,29 @@ final class record_type_definition extends type_definition implements dependency
 		}
 	}
 
+	public function supports_async_parameter(): bool
+	{
+		return $this->async_task() !== null;
+	}
+
+	/** Check ownership of every base and embedded field before publishing its task binding. */
+	protected function supports_async_storage(): bool
+	{
+		$node = $this->declaration;
+		if ($node->kind !== record_kind::structure || $node->is_abstract) return false;
+		$destructor = $node->methods['__destruct'] ?? null;
+		if ($destructor !== null && ($destructor->is_private || $destructor->is_protected)) return false;
+		// Layout preparation already checks base destruction and rejects inline cycles.
+		for ($part = $this; $part !== null; $part = $part->base()) {
+			foreach ($part->declaration->fields as $field) {
+				$type = $field->storage_type();
+				// An inline byte array moves with its enclosing record.
+				if (!($type instanceof fixed_array_type) && !$type->supports_async_parameter()) return false;
+			}
+		}
+		return true;
+	}
+
 	/** A base subobject or handle may name an abstract record; standalone inline storage requires a concrete value. */
 	public function require_complete_value(ast_node $site, bool $runtime_owned = false): void
 	{
@@ -618,6 +652,7 @@ final class record_type_definition extends type_definition implements dependency
 abstract class record_handle_definition extends type_definition
 {
 	use concrete_value_storage;
+	use concrete_async_task;
 
 	/** Native non-owning payload identity. */
 	public readonly record_type_definition $payload;
@@ -626,6 +661,11 @@ abstract class record_handle_definition extends type_definition
 	{
 		parent::__construct($name ?? $family . '<' . $payload->name . '>');
 		$this->payload = $payload;
+	}
+
+	public function supports_async_parameter(): bool
+	{
+		return true;
 	}
 
 	public function supports_inferred_local(): bool

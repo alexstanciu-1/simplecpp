@@ -21,6 +21,7 @@ final class compilation_session
 	public readonly module $entry;
 	/** Native namespace root selected for this application. Empty selects global emission. */
 	public readonly string $cpp_namespace;
+	public readonly bool $group_async_methods;
 	/** Native shared-owning immutable type export selection for this application. */
 	public readonly type_availability $type_availability;
 	/**
@@ -44,7 +45,7 @@ final class compilation_session
 
 	/** CONSTRUCTOR */
 	/** @param module[] $modules */
-	public function __construct(array $modules /** array<string,module> */, module $entry, string $cpp_namespace = 'App')
+	public function __construct(array $modules /** array<string,module> */, module $entry, string $cpp_namespace = 'App', bool $group_async_methods = false)
 	{
 		$this->dependency_watches = new Dependency_Watches();
 		$this->preparation_work = new preparation_work();
@@ -52,6 +53,7 @@ final class compilation_session
 		$this->type_availability = new type_availability(array_values(array_map(static fn(module $module): string => $module->name, $modules)));
 		$this->entry = $entry;
 		$this->cpp_namespace = $cpp_namespace;
+		$this->group_async_methods = $group_async_methods;
 	}
 
 	/** METHODS */

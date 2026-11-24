@@ -16,21 +16,39 @@ final class Cpp_Headers
 	private array $files /** array<string,string> */ = [];
 
 	/** @var int[] Ephemeral lowering requirements from completed watch relations. */
-	private array $enum_helpers /** array<string,uint8> */ = [];
+	private ?array $helper_uses /** array<string,uint8>|null */ = null;
+
+	/** @var array<string,array{declaration:string,definition:string}> Task fragments by private header path for this emission. */
+	private array $grouped_tasks = [];
 
 	/** CONSTRUCTOR */
 	/** Plan completed declarations; null creates an empty standalone planner. @param cpp_generator_layout[] $layouts */
 	public function __construct(?prepared_program $program = null, array $layouts /** array<string,cpp_generator_layout> */ = [])
 	{
 		if ($program === null) return;
+		$this->helper_uses = [];
+		$results = [];
+		$root = $program->session?->cpp_namespace ?? 'App';
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
-				if (!($node instanceof ast_enum_declaration)) continue;
+				if ($node instanceof ast_enum_declaration) $uses = dependency_use::ordered_uses;
+				elseif ($node instanceof ast_function_declaration && $node->is_constructor()) {
+					if ($node->parent->is_final || count($node->parameters) < 2) continue;
+					$uses = [dependency_use::reordered_base];
+				}
+				elseif ($node instanceof ast_function_declaration && $node->is_async) {
+					$uses = [dependency_use::async_wait, dependency_use::async_task];
+					if ($program->session?->group_async_methods) {
+						$type = $node->return_type_def();
+						$results[$type->async_task()->cpp_name($root)] = $type;
+					}
+				}
+				else continue;
 				$symbol = $file->scope->parent->entry($node->symbol_key());
-				foreach (dependency_use::cases() as $use) {
+				foreach ($uses as $use) {
 					if ($program->dependencies->has_use($symbol, $use)) {
 						$key = $node->symbol_key();
-						$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
+						$this->helper_uses[$key] = ($this->helper_uses[$key] ?? 0) | $use->value;
 					}
 				}
 			}
@@ -125,13 +143,41 @@ final class Cpp_Headers
 			$this->files['units/' . $header] = $text . Cpp_Emitter::namespace_body(
 				$program->session?->cpp_namespace ?? 'App', implode("\n", array_merge($owners, $lines)) . "\n");
 		}
+		foreach ($results as $task => $type) $this->plan_grouped_task($task, $type, $emitter, $root);
 		ksort($this->files, \SORT_STRING);
 	}
 
 	/** METHODS */
-	public function needs_enum_helper(ast_enum_declaration $enum, dependency_use $use): bool
+	/** Resolve the complete payload before its task declaration in the application methods unit. */
+	private function plan_grouped_task(string $task, type_definition $type, Cpp_Emitter $emitter, string $root): void
 	{
-		return (($this->enum_helpers[$enum->symbol_key()] ?? 0) & $use->value) !== 0;
+		$prefix = $this->value_dependencies($type, $emitter, $root);
+		$path = async_task_binding::header_path($task);
+		$name = basename($path);
+		$parts = \Scpp\Api\asyncTaskParts(new cpp_concrete_type($type, $root), $task, $type !== type_void::instance(), $root, false);
+		$this->grouped_tasks[$path] = ['declaration' => $parts['declaration'],
+			'definition' => $prefix . "#include \"$name\"\n" . $parts['implementation']];
+	}
+
+	public function grouped_declaration(string $path): ?string
+	{
+		return $this->grouped_tasks[$path]['declaration'] ?? null;
+	}
+
+	/** Assemble live source-owned demand, including reused sources. @param string[] $adapters @return string[] */
+	public function grouped_methods_unit(array $adapters): array
+	{
+		$live = array_intersect_key($this->grouped_tasks, $adapters);
+		if ($live === []) return [];
+		ksort($live, \SORT_STRING);
+		return ['units/' . hash('sha256', 'async:grouped-methods') . '.cpp' =>
+			"#include <coroutine>\n#include <scpp/async/frame.hpp>\n" . implode("\n", array_column($live, 'definition'))];
+	}
+
+	public function uses_helper(ast_function_declaration|ast_enum_declaration $node, dependency_use $use): bool
+	{
+		if ($this->helper_uses === null) return $node instanceof ast_function_declaration;
+		return (($this->helper_uses[$node->symbol_key()] ?? 0) & $use->value) !== 0;
 	}
 
 	/** Publish one nominal enum header for signatures and foreign case references. */
@@ -230,6 +276,31 @@ final class Cpp_Headers
 		return $path;
 	}
 
+	/** Publish a self-contained application value header for a separate implementation unit. */
+	public function publish_value_header(record_type_definition|application_collection_type $type, Cpp_Emitter $emitter, string $root): string
+	{
+		if ($type instanceof application_collection_type) return $this->publish_collection($type, $emitter, $root);
+		return $this->publish_record($type->declaration, $emitter, $root);
+	}
+
+	/** Complete application payloads before a concrete recipe. Runtime dependencies come from the recipe. */
+	private function value_dependencies(type_definition $type, Cpp_Emitter $emitter, string $root): string
+	{
+		if ($type instanceof record_type_definition || $type instanceof application_collection_type) {
+			return '#include "' . $this->publish_value_header($type, $emitter, $root) . "\"\n";
+		}
+		if ($type instanceof enum_type_definition) {
+			return '#include "' . $this->publish_enum($type->declaration, $emitter, $root) . "\"\n";
+		}
+		if (!($type instanceof record_handle_definition)) return '';
+		$includes = [];
+		$owner = $type->payload->shared;
+		$body = $emitter->owner_declaration($owner, $includes) . $emitter->owner_methods($owner, $includes);
+		$text = '#include "' . $this->publish_value_header($type->payload, $emitter, $root) . "\"\n";
+		foreach ($includes as $header => $_) $text .= "#include <$header>\n";
+		return $text . Cpp_Emitter::namespace_body($root, $body);
+	}
+
 	/** Publish a concrete field dependency after complete element declarations; reuse the source recipe artifacts. */
 	private function publish_collection(application_collection_type $type, Cpp_Emitter $emitter, string $root): string
 	{
@@ -237,20 +308,7 @@ final class Cpp_Headers
 		if (isset($this->files['units/' . $header])) return $header;
 		$text = "#pragma once\n";
 		foreach ($type->concrete_types() as $argument) {
-			if ($argument instanceof application_collection_type) {
-				$text .= '#include "' . $this->publish_collection($argument, $emitter, $root) . "\"\n";
-				continue;
-			}
-			$record = $argument instanceof record_handle_definition ? $argument->payload : $argument;
-			if (!($record instanceof record_type_definition)) continue;
-			$dependency = $this->publish_record($record->declaration, $emitter, $root);
-			$text .= '#include "' . $dependency . "\"\n";
-			if ($argument instanceof record_handle_definition) {
-				$includes = [];
-				$owner = $emitter->owner_declaration($record->shared, $includes) . $emitter->owner_methods($record->shared, $includes);
-				foreach ($includes as $include => $_) $text .= "#include <$include>\n";
-				$text .= Cpp_Emitter::namespace_body($root, $owner);
-			}
+			$text .= $this->value_dependencies($argument, $emitter, $root);
 		}
 		$concrete = new Cpp_Concrete_Collections($root);
 		$concrete->request($type);
@@ -294,6 +352,13 @@ final class Cpp_Headers
 		foreach ($file->declaration_nodes as $record) {
 			if (!($record instanceof ast_type_declaration)) continue;
 			$header = $record instanceof ast_enum_declaration ? hash('sha256', 'enum:' . $record->symbol_key()) . '.hpp' : self::record_header($record);
+			if ($record instanceof ast_record_declaration && !$record->is_final && count($record->methods['__construct']->parameters ?? []) > 1) {
+				// A foreign base initializer can add or retire the constructor's staged entry point.
+				$layout = hash('sha256', "layout\0" . $record->symbol_key()) . '.hpp';
+				foreach ([$header, $layout] as $path) {
+					if (($this->files['units/' . $path] ?? null) !== ($previous->files['units/' . $path] ?? null)) return true;
+				}
+			}
 			if ($record instanceof ast_enum_declaration && ($this->files['units/' . $header] ?? null) !== ($previous->files['units/' . $header] ?? null)) return true;
 			if (isset($this->declarations[$record->symbol_key()]) !== isset($previous->files['units/' . $header])) {
 				return true;

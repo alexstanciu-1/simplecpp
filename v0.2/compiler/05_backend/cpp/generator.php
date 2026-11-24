@@ -183,6 +183,7 @@ CPP;
 				if ($statement instanceof ast_for_statement) {
 					foreach ($statement->initializers as $item) if ($item instanceof ast_local_declaration) $visit($item);
 				}
+				if ($statement instanceof ast_while_else_statement) self::visit_generator_bindings($statement->otherwise, $visit);
 				self::visit_generator_bindings($statement->body, $visit);
 			}
 		}
@@ -230,12 +231,14 @@ CPP;
 		$type = $source_type->iteration();
 		$capture = $this->generator_iteration_capture($statement->source_value);
 		$fields = $capture === null ? '' : $capture->type_def()->cpp_type() . ' receiver;';
-		if ($type->iteration_output_type() !== null) $fields .= $type->iteration_output_type() . ' output{};';
-		elseif (!$this->iteration_direct($statement) || $statement->destination === $statement->value) $fields .= $type->iteration_value_type()->cpp_type() . ' output{};';
+		$output_type = $statement->keys_only ? null : $type->iteration_output_type();
+		$binding_type = $statement->value->type_def();
+		if ($output_type !== null) $fields .= $output_type . ' output{};';
+		elseif (!$this->iteration_direct($statement) || $statement->destination === $statement->value) $fields .= $binding_type->cpp_type() . ' output{};';
 		$key_type = $statement->key?->type_def() ?? ($type->iteration_method() !== null ? $type->iteration_key_type() : null);
 		if ($key_type !== null) $fields .= $key_type->cpp_type() . ' key{};';
 		$fields .= $type->lower_cpp_iteration_storage($statement->key !== null);
-		foreach ([$source_type, $capture?->type_def(), $type->iteration_value_type(), $key_type] as $used) {
+		foreach ([$source_type, $capture?->type_def(), $binding_type, $key_type] as $used) {
 			if ($used === null) continue;
 			foreach ($used->cpp_headers() as $header) $headers[$header] = true;
 			if ($used instanceof record_type_definition || $used instanceof record_handle_definition || $used instanceof enum_type_definition || $used instanceof application_collection_type) $types[] = $used;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Shared carrier transport; e.g. nullable<int> wraps an approved int conversion or checks one payload extraction. */
-abstract class carrier_type_definition extends type_definition
+abstract class carrier_type_definition extends type_definition implements presence_test_type
 {
 	/** PROPERTIES */
 	/** Native non-owning canonical payload definition, shared by all occurrences. */
@@ -26,6 +26,12 @@ abstract class carrier_type_definition extends type_definition
 	abstract public function implicit_extraction(): bool;
 	abstract public function lower_cpp_extract(string $value): string;
 	abstract public function lower_cpp_presence(string $value): string;
+
+	/** Instance-field publication does not grant static carrier storage. */
+	final public function supports_static_property(): bool
+	{
+		return false;
+	}
 
 	/** A strict null comparison operates on the carrier itself and reads only presence. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
@@ -88,6 +94,62 @@ abstract class carrier_type_definition extends type_definition
 		}
 		$conversion = $this->payload_type->prepare_conversion($value, $context);
 		return $conversion | value_conversion::WRAP;
+	}
+}
+
+/** Canonical nullable transport for a source-declared enum, owned by that enum. */
+final class nullable_enum_type_definition extends carrier_type_definition
+{
+	public function __construct(enum_type_definition $payload)
+	{
+		parent::__construct('nullable<' . $payload->name . '>', $payload);
+	}
+
+	public function dispatch_label_type(): type_definition
+	{
+		return $this->payload_type;
+	}
+
+	public function accepts_empty(): bool
+	{
+		return true;
+	}
+
+	public function supports_coalescing(): bool
+	{
+		return true;
+	}
+
+	public function implicit_extraction(): bool
+	{
+		return true;
+	}
+
+	public function sentinel_factory(string $state): ?string
+	{
+		return null;
+	}
+
+
+	public function lower_cpp_extract(string $value): string
+	{
+		return '(' . $value . ').value()';
+	}
+
+	public function lower_cpp_presence(string $value): string
+	{
+		return '(' . $value . ').has_value()';
+	}
+
+	public function cpp_type(): string
+	{
+		return 'std::optional<' . $this->payload_type->cpp_type() . '>';
+	}
+
+	/** @return string[] */
+	public function cpp_headers(): array /** list<string> */
+	{
+		return ['optional', ...$this->payload_type->cpp_headers()];
 	}
 }
 

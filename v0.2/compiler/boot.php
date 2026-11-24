@@ -6,6 +6,7 @@ if ((\PHP_VERSION_ID < 80500) || (\PHP_INT_SIZE !== 8)) {
 	throw new RuntimeException('The compiler requires 64-bit PHP 8.5+');
 }
 
+require_once __DIR__ . '/host/regex.php';
 require_once __DIR__ . '/compiler/flavor.php';
 require_once __DIR__ . '/compiler/names.php';
 require_once __DIR__ . '/compiler/dependencies.php';
@@ -15,6 +16,7 @@ require_once __DIR__ . '/01_prepare_inputs/modules.php';
 require_once __DIR__ . '/01_prepare_inputs/file.php';
 require_once __DIR__ . '/compiler/diagnostics.php';
 require_once __DIR__ . '/02_tokenize/structures.php';
+require_once __DIR__ . '/02_tokenize/python_layout.php';
 require_once __DIR__ . '/02_tokenize/tokens.php';
 require_once __DIR__ . '/03_parse/structures/abstract.php';
 require_once __DIR__ . '/03_parse/structures/types.php';
@@ -56,12 +58,14 @@ require_once __DIR__ . '/03_parse/parser.php';
 require_once __DIR__ . '/03_parse/flavors/cpp.php';
 require_once __DIR__ . '/03_parse/flavors/php.php';
 require_once __DIR__ . '/03_parse/flavors/js.php';
+require_once __DIR__ . '/03_parse/flavors/python.php';
 require_once __DIR__ . '/compiler/frontend.php';
 
 require_once __DIR__ . '/04_analyze/prepare/structures.php';
 require_once __DIR__ . '/04_analyze/prepare/strings.php';
 require_once __DIR__ . '/types/conversion.php';
 require_once __DIR__ . '/types/definition.php';
+require_once __DIR__ . '/types/async.php';
 require_once __DIR__ . '/types/callback.php';
 require_once __DIR__ . '/types/runtime.php';
 require_once __DIR__ . '/types/generator.php';
@@ -107,6 +111,7 @@ require_once __DIR__ . '/05_backend/cpp/object_access.php';
 require_once __DIR__ . '/05_backend/cpp/exceptions.php';
 require_once __DIR__ . '/05_backend/cpp/finally.php';
 require_once __DIR__ . '/05_backend/cpp/initialization.php';
+require_once __DIR__ . '/05_backend/cpp/staged_result.php';
 require_once __DIR__ . '/05_backend/cpp/emit.php';
 require_once __DIR__ . '/05_backend/cpp/strings.php';
 require_once __DIR__ . '/05_backend/cpp/output.php';

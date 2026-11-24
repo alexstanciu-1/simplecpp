@@ -15,7 +15,7 @@ import tempfile
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from native_build import qualified_ninja, write_build
+from native_build import async_producers, qualified_ninja, write_build
 from pch_cache import runtime_pch
 from contextlib import nullcontext
 
@@ -104,12 +104,14 @@ def compile_report(data, php, cache_root=None):
         binary = work / 'program'
         native_start = time.perf_counter()
         use_pch = data.get('pch', False)
+        units = [work / 'generated' / unit for unit in report.pop('units')]
+        producers = (async_producers(units) or None) if use_pch else None
         cache = runtime_pch(cache_root or ROOT / 'build/compiler-panel-pch', work,
-                            data.get('optimization', 'O2')) if use_pch else nullcontext((work, None))
+                            data.get('optimization', 'O2'), async_profile=bool(producers)) if use_pch else nullcontext((work, None))
         with cache as (build_dir, cache_report):
-            command = write_build(build_dir, [work / 'generated' / unit for unit in report.pop('units')],
+            command = write_build(build_dir, units,
                                   data.get('optimization', 'O2'), use_pch,
-                                  validate_pch=data.get('validate_pch', True))
+                                  validate_pch=data.get('validate_pch', True), async_units=producers)
             graph = (build_dir / 'build.ninja').read_text()
             qualification_start = time.perf_counter()
             with qualified_ninja(command, build_dir) as invocation:

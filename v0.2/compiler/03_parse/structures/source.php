@@ -89,8 +89,9 @@ final class ast_file_node extends ast_node
 			$constant->type_def();
 		}
 		$this->main()?->body()->require_prepared();
-		foreach ($this->static_implementations as &$group) {
-			if (count($group) > 1) uasort($group, static fn(ast_function_declaration $a, ast_function_declaration $b): int =>
+		foreach (array_keys($this->static_implementations) as $method_key) {
+			if (count($this->static_implementations[$method_key]) < 2) continue;
+			uasort($this->static_implementations[$method_key], static fn(ast_function_declaration $a, ast_function_declaration $b): int =>
 				strcmp($a->instance->called->declaration()->name(), $b->instance->called->declaration()->name()));
 		}
 		$this->prepared = true;

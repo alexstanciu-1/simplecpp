@@ -63,7 +63,7 @@ final class Compiler_Cli
 		}
 		$flavor = flavor::tryFrom($arguments[2]);
 		if ($flavor === null) {
-			fwrite(\STDERR, "Flavor must be cpp, php or js\n");
+			fwrite(\STDERR, "Flavor must be cpp, php, js or py\n");
 			return 2;
 		}
 		try
@@ -102,7 +102,7 @@ final class Compiler_Cli
 	/** Provide the command synopsis used by help and usage-error responses. */
 	private static function usage(): string
 	{
-		return "Usage: php main.php <tokens|parse|collect> <cpp|php|js> <file>\n"
+		return "Usage: php main.php <tokens|parse|collect> <cpp|php|js|py> <file>\n"
 			. "       php main.php frontend <app-dir> [status|stop]\n"
 			. "       php main.php prepare <flavor> <file> <native-facts.json>\n"
 			. "       php main.php cpp <flavor> <file> <native-facts.json> <output.cpp>\n"

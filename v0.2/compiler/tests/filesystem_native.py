@@ -152,6 +152,14 @@ with tempfile.TemporaryDirectory(prefix='scpp-filesystem-native-') as directory:
             {empty_write}
             if ({variable}confirmed !== {len(contents)} || isset({variable}failed) ||
                 isset({variable}badPath) || {variable}emptyWrite !== 0) {{return 4;}}
+            {local('route', 'int', '0')}
+            switch ({variable}failed) {{
+                case 0: return 7;
+                default: {variable}route = 1;
+                case -1: {variable}route += 2; break;
+            }}
+            if ({variable}route !== 3) {{return 8;}}
+            if (match ({variable}missing) {{ "" => 1, default => 2 }} !== 2) {{return 9;}}
             {cleanup}
             {caught}
             try {{

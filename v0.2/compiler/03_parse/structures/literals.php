@@ -14,8 +14,8 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	public readonly member_visibility $visibility;
 	/** Native owning written type; null requests scalar-literal inference in this slice. */
 	public readonly ?ast_type_reference $type_reference;
-	/** Native owning initializer syntax. */
-	public readonly ast_expression $initializer;
+	/** Native owning initializer syntax. An absent static callable has no written initializer. */
+	public readonly ?ast_expression $initializer;
 
 	/** PREP FACTS */
 	/** Prepared fact: canonical declared type; null before preparation or after reset. */
@@ -26,7 +26,7 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	/** CONSTRUCTOR */
 	/** $start and $end are token boundaries, with exclusive end. */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
-		?string $namespace, ?ast_type_reference $type_reference, ast_expression $initializer, member_visibility $visibility = member_visibility::public)
+		?string $namespace, ?ast_type_reference $type_reference, ?ast_expression $initializer, member_visibility $visibility = member_visibility::public)
 	{
 		parent::__construct($start, $end);
 		$this->visibility = $visibility;
@@ -35,7 +35,7 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 		$this->type_reference = $type_reference;
 		$type_reference?->attach($this);
 		$this->initializer = $initializer;
-		$initializer->attach($this);
+		$initializer?->attach($this);
 	}
 
 	/** METHODS */
@@ -43,7 +43,7 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 	{
 		$this->type_def = null;
 		$this->initialization = null;
-		$this->initializer->reset_preparation();
+		$this->initializer?->reset_preparation();
 	}
 
 	public function type_ready(): bool
@@ -57,7 +57,7 @@ abstract class ast_literal_declaration extends ast_node implements ast_declarati
 		if ($this->type_def !== null) {
 			throw new \LogicException('Literal declaration type is already settled');
 		}
-		$this->initializer->type_def();
+		$this->initializer?->type_def();
 		$this->type_def = $type;
 		$this->initialization = $conversion;
 	}

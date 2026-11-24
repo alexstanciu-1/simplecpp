@@ -1,0 +1,2 @@
+$arguments = host_arguments();
+return \scpp\compiler\Compiler_Cli::run($arguments);

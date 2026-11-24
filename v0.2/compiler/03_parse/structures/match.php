@@ -3,19 +3,20 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** One owned match arm, e.g. Kind::Word => classify(); a null label denotes default. */
+/** One owned match arm, e.g. Kind::Word => classify(); an empty label list denotes default. */
 final class ast_match_arm extends ast_node
 {
-	public readonly ?ast_expression $label;
+	/** @var ast_expression[] Labels in written order. */
+	public readonly array $labels /** list<ast_expression> */;
 	public readonly ast_expression $result;
 
-	public function __construct(?ast_expression $label, ast_expression $result,
+	public function __construct(array $labels /** list<ast_expression> */, ast_expression $result,
 		int $start /** uint32 */, int $end /** uint32 */)
 	{
 		parent::__construct($start, $end);
-		$this->label = $label;
+		$this->labels = $labels;
 		$this->result = $result;
-		$label?->attach($this);
+		foreach ($labels as $label) $label->attach($this);
 		$result->attach($this);
 	}
 }
@@ -35,9 +36,9 @@ final class ast_ternary_expression extends ast_selection_expression
 	public const int PRECEDENCE = 1;
 
 	public function __construct(public readonly ast_expression $condition, public readonly ast_expression $when_true,
-		public readonly ast_expression $when_false)
+		public readonly ast_expression $when_false, int $start /** uint32 */, int $end /** uint32 */)
 	{
-		parent::__construct($condition->start, $when_false->end);
+		parent::__construct($start, $end);
 		$condition->attach($this);
 		$when_true->attach($this);
 		$when_false->attach($this);
@@ -50,6 +51,9 @@ final class ast_match_expression extends ast_selection_expression
 	public readonly ast_expression $subject;
 	/** @var ast_match_arm[] Owning arms in written order, including erroneous duplicate labels/defaults. */
 	public readonly array $arms /** list<ast_match_arm> */;
+
+	/** Prepared fact: an operand suspends in the enclosing coroutine. */
+	public bool $suspends = false;
 
 	/** @param ast_match_arm[] $arms */
 	public function __construct(ast_expression $subject, array $arms /** list<ast_match_arm> */, int $start /** uint32 */, int $end /** uint32 */)

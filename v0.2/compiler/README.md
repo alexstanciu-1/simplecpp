@@ -269,6 +269,33 @@ for the shared application/runtime model, initial full-rebuild rule and agreed
 minimal records. The initial ownership/loading foundation is implemented; incremental reuse and
 runtime metadata ingestion remain deferred.
 
+
+## Python syntax flavor
+
+Use py with the file CLI or .py sources in a module. Python is a typed
+Simple C++ surface compiled to native C++ through the same frontend,
+preparation and backend as cpp, php and js. See the
+[frontend contract](../specs/compiler_frontends.md#python-syntax-flavor-in-v02)
+and the [v0.2 acceptance record](../specs/planning/python_flavor.md#v02-closeout).
+
+The [standalone example](examples/python/main.py) builds a vector and a hash,
+reads through the hash keys and accumulates a result in a typed class. On Linux
+with Clang, libc++, CMake and Ninja, run from the repository root:
+
+    cmake -S v0.2 -B v0.2/build/clang -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ \
+      -DCMAKE_CXX_FLAGS=-stdlib=libc++
+    cmake --build v0.2/build/clang --target scpp_runtime
+
+    work=$(mktemp -d)
+    printf '{"cxx":"clang++","flags":["-std=c++23","-O2","-stdlib=libc++","-I","%s/v0.2/runtime/generated/public"],"jobs":4}\n' "$PWD" > "$work/toolchain.json"
+    XDEBUG_MODE=off php v0.2/compiler/main.php build \
+      v0.2/compiler/examples/python v0.2/build/clang/native-layout/facts.json \
+      "$work/generated" "$work/native" "$work/toolchain.json"
+    "$work/native/program"
+
+The example exits with status 0 and produces no output.
+
 ## Module manifests
 
 Use `project <module-dir|module.json> <facts.json> <output-dir>` for the common

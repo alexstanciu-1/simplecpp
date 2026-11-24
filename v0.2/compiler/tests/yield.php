@@ -44,7 +44,7 @@ function remove_tree(string $path): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$v = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$signature = static fn(string $name, string $result, string $parameter = 'int'): string => match ($flavor) {
 		flavor::php => 'function ' . $name . '(' . $parameter . ' $x):' . $result,

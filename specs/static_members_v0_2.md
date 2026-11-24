@@ -35,7 +35,20 @@ Public static struct methods accept the same parameters, defaults, writable refe
 and returns as ordinary struct methods. PHP and C++ call `Type::method(args)`; JS calls
 `Type.method(args)`. In JS a visible local or parameter selects instance lookup first.
 Where a namespace function and a static method share the same written C++ or JS path,
-the existing namespace function takes precedence. A static method body has no `this` receiver.
+the existing namespace function takes precedence. An explicit type name admits named arguments
+on static methods with fixed value or supported reference parameters, including inherited methods. For example,
+`Child::make(count: first(), offset: second())` binds labels against the selected declaration,
+evaluates and converts `first()` before `second()`, and passes the results in parameter order.
+The same label rules apply to lexical static calls. Lookup starts at the declaring
+type for PHP `self::`, C++ `Self::` and JS `class.`, or at its immediate base for
+PHP `parent::`, C++ `Parent::` and JS `super.`. Labels bind to the selected declaration.
+A call from an inherited static body forwards its current called type, including through
+these labeled calls. For a late-bound call such as `static::make(count: 3)`, preparation
+resolves the method for the current called type and binds labels to that declaration's
+parameters. A child that inherits the method uses the inherited names. A child that
+redeclares it supplies its own names and parameter positions.
+
+A static method body has no `this` receiver.
 
 Inside a struct method or constructor, PHP `self::`, C++ `Self::` and JS `class.`
 qualify the declaring struct directly. They support static calls, constant reads
@@ -66,6 +79,11 @@ static methods require `::` in this slice.
 
 `$object::method(args)` and `produce()::method(args)` select a fixed static method
 from the qualifier's declared concrete class/struct type, not its runtime class.
+A named call with fixed parameters binds each label to that selected declaration.
+For example, if `produce()` returns a `Child` through its declared type `Base`,
+`produce()::make(count: first(), offset: second())` uses the parameter names and
+positions of the method selected through `Base`.
+
 Supported record storage modifiers share this nominal selection, including inline,
 shared, unique and weak storage. Read-only storage may qualify a static call.
 

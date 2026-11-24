@@ -78,6 +78,7 @@ final class Last_Use_Transfer
 			if ($statement instanceof ast_storage_write && isset($candidates[$statement->name])
 				&& $statement->writes_to($candidates[$statement->name]->value->local_def())) unset($candidates[$statement->name]);
 			if ($statement instanceof ast_block_statement || $statement instanceof ast_loop_statement) self::exclude_observed_parameters($statement->body, $candidates);
+			if ($statement instanceof ast_while_else_statement) self::exclude_observed_parameters($statement->otherwise, $candidates);
 			if ($statement instanceof ast_branch_statement) {
 				foreach ($statement->arms as $arm) self::exclude_observed_parameters($arm->body, $candidates);
 			}
@@ -113,6 +114,7 @@ final class Last_Use_Transfer
 			// Header bindings have their own scope and may refer to existing writable storage.
 			if ($statement instanceof ast_for_statement || $statement instanceof ast_foreach_statement || $statement instanceof ast_try_statement) return false;
 			if (($statement instanceof ast_block_statement || $statement instanceof ast_loop_statement) && !self::private_uses($statement->body, $write, $source, $result)) return false;
+			if ($statement instanceof ast_while_else_statement && !self::private_uses($statement->otherwise, $write, $source, $result)) return false;
 			if ($statement instanceof ast_branch_statement) {
 				foreach ($statement->arms as $arm) {
 					if (!self::private_uses($arm->body, $write, $source, $result)) return false;

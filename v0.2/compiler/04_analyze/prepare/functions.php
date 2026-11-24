@@ -45,6 +45,7 @@ final class Function_Preparation
 			if ($statement instanceof ast_foreach_statement) {
 				$statement->destination = null;
 				$statement->conversion = null;
+				$statement->keys_only = false;
 				$statement->key?->reset_preparation();
 				$statement->value->reset_preparation();
 				self::expression($statement->source_value);
@@ -57,11 +58,13 @@ final class Function_Preparation
 					foreach ($statement->conditions as $test) self::expression($test);
 					self::reset_statements($statement->updates);
 				} else self::expression($statement->condition);
+				if ($statement instanceof ast_while_else_statement) self::reset_block($statement->otherwise);
 				self::reset_block($statement->body);
 				continue;
 			}
 			if ($statement instanceof ast_try_statement) {
 				$statement->protected_completion = $statement->completion = null;
+				$statement->suspending_handlers = false;
 				$statement->break_target = $statement->continue_target = null;
 				self::reset_block($statement->body);
 				foreach ($statement->handlers as $handler) {
@@ -120,7 +123,7 @@ final class Function_Preparation
 				}
 			}
 			elseif (($statement instanceof ast_return_statement)
-				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
+				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_delay_statement) || ($statement instanceof ast_await_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 				if ($statement->value !== null) {
 					self::expression($statement->value);
 				}
@@ -134,7 +137,12 @@ final class Function_Preparation
 		$value->reset_preparation();
 		if ($value instanceof ast_lambda_expression) {
 			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
-			self::expression($value->body);
+			foreach ($value->captures as $capture) {
+				$capture->reset_preparation();
+				$capture->initializer->reset_preparation();
+			}
+			if ($value->body instanceof ast_block) self::reset_block($value->body);
+			else self::expression($value->body);
 			return;
 		}
 		if ($value instanceof ast_condition_assignment) {
@@ -151,7 +159,7 @@ final class Function_Preparation
 		if ($value instanceof ast_match_expression) {
 			self::expression($value->subject);
 			foreach ($value->arms as $arm) {
-				if ($arm->label !== null) self::expression($arm->label);
+				foreach ($arm->labels as $label) self::expression($label);
 				self::expression($arm->result);
 			}
 			return;
@@ -174,7 +182,7 @@ final class Function_Preparation
 			}
 			return;
 		}
-		if (($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
+		if (($value instanceof ast_await_expression) || ($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
 			|| ($value instanceof ast_unary_expression) || ($value instanceof ast_throw_expression)) {
 			self::expression($value->operand);
 		}
@@ -185,8 +193,12 @@ final class Function_Preparation
 			self::expression($value->receiver);
 			self::expression($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) {
+			foreach ($value->links as $link) self::expression($link);
+			return;
+		}
 		if ($value instanceof ast_binary_expression) {
-			self::expression($value->left);
+			if (!($value instanceof ast_continued_comparison)) self::expression($value->left);
 			self::expression($value->right);
 		}
 		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {
@@ -241,9 +253,12 @@ final class Function_Preparation
 			throw new diagnostic($declaration->source(), $declaration->lexical_root()->byte_at($declaration->return_type_position()),
 				'Unknown or unsupported return type: ' . $declaration->return_type_reference?->spelling());
 		}
+		if ($declaration->is_async && $type->async_task() === null) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Unpublished async result: ' . $type->name);
+		}
 		$optional = false;
 		foreach ($declaration->parameters as $parameter) {
-			if ($type instanceof generator_type_definition && $parameter->mode === passing_mode::reference) {
+			if ($type instanceof generator_type_definition && $parameter->mode !== passing_mode::value) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
 			}
 			$parameter->reset_preparation();
@@ -252,6 +267,9 @@ final class Function_Preparation
 				: Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);
 			if ($parameter_type === null) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Unknown or unsupported parameter type: ' . $parameter->type_reference->spelling());
+			}
+			if ($declaration->is_async && ($parameter->mode !== passing_mode::value || !$parameter_type->supports_async_parameter())) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Async parameters require a supported owned by-value type: ' . $parameter_type->name);
 			}
 			if ($type instanceof generator_type_definition && $parameter_type instanceof callback_type_definition) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Callback parameters on yield producers are deferred');
@@ -262,32 +280,60 @@ final class Function_Preparation
 			if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}
+			if ($parameter->mode === passing_mode::readonly_reference && ($declaration->parent instanceof ast_method_owner
+				|| !($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition))) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
+			}
 			$parameter->settle_type($parameter_type);
-			$default = $parameter->default_value;
-			if ($default !== null) {
-				if ($parameter->mode === passing_mode::reference) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
-				}
-				if ($parameter_type instanceof enum_type_definition) {
-					if (!($default instanceof ast_name_expression)
-						|| !Enum_Preparation::reference($default, $symbols, $watcher, $dependencies)) {
-						throw new diagnostic($default->source(), $default->byte_start(), 'Enum parameter default requires an enum case');
-					}
-				} else {
-					if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
-						|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
-						throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
-					}
-					type_registry::prepare_literal($default);
-				}
-				$parameter->settle_default($parameter_type->prepare_conversion($default, conversion_context::typed_destination));
+			if ($optional || $parameter->default_value !== null) {
+				self::parameter_default($parameter, $symbols, $watcher, $dependencies);
 				$optional = true;
 			}
-			elseif ($optional) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
-			}
 		}
-		$declaration->settle_return_type($type);
+		$reference_origin = $declaration->returns_reference ? self::reference_return_origin($declaration, $type) : null;
+		$declaration->settle_return_type($type, $reference_origin);
+	}
+
+	/** Validate the optional suffix and prepare a default once against its declared type. */
+	public static function parameter_default(ast_parameter_declaration $parameter, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): void
+	{
+		$default = $parameter->default_value;
+		if ($default === null) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
+		$parameter_type = $parameter->type_def();
+		if ($parameter->mode !== passing_mode::value) {
+			throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
+		}
+		if ($parameter_type instanceof enum_type_definition) {
+			if (!($default instanceof ast_name_expression)
+				|| !Enum_Preparation::reference($default, $symbols, $watcher, $dependencies)) {
+				throw new diagnostic($default->source(), $default->byte_start(), 'Enum parameter default requires an enum case');
+			}
+		} else {
+			if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
+				|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
+				throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
+			}
+			type_registry::prepare_literal($default);
+		}
+		$parameter->settle_default($parameter_type->prepare_conversion($default, conversion_context::typed_destination));
+	}
+
+	/** A reference result borrows exactly one fixed writable parameter of the same type. */
+	public static function reference_return_origin(ast_function_declaration|ast_lambda_expression $declaration, type_definition $type): int /** uint32 */
+	{
+		if ($declaration instanceof ast_function_declaration && $declaration->parent instanceof ast_method_owner && !$declaration->is_direct_final_method()) {
+			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Method reference return requires a final non-overriding instance method');
+		}
+		$origin = null;
+		foreach ($declaration->parameters as $index => $parameter) {
+			if ($parameter->mode !== passing_mode::reference) continue;
+			if ($origin !== null || $parameter->type_def() !== $type) {
+				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Reference return requires exactly one writable parameter of the return type');
+			}
+			$origin = $index;
+		}
+		return $origin ?? throw new diagnostic($declaration->source(), $declaration->byte_start(),
+			'Reference return requires exactly one writable parameter of the return type');
 	}
 
 	/** Prepare only this source's bodies, reading foreign signatures but never foreign executable syntax. */

@@ -53,7 +53,7 @@ function remove_tree(string $path): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$v = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$decl = static fn(string $type, string $name, string $value): string => match ($flavor) {
 		flavor::php => '$' . $name . ' ' . $type . ' = ' . $value . ';',
@@ -102,8 +102,11 @@ foreach (flavor::cases() as $flavor) {
 		$tail = '';
 		if (str_starts_with($type, 'vector')) {
 			$provider .= $function('void', 'append', $ref($type, 'x'), $v('x') . '[]=' . $first . ';');
-			$main .= 'append(' . $v('a') . ');echo count(' . $v('a') . ');';
-			$tail = '2';
+			$provider .= $function('void', 'forwardAppend', $ref($type, 'x'), 'append(' . $v('x') . ');')
+				. $function('int', 'appendCopy', $param($type, 'x'), 'forwardAppend(' . $v('x') . ');return count(' . $v('x') . ');');
+			$main .= 'echo appendCopy(' . $v('a') . ');echo count(' . $v('a') . ');'
+				. 'forwardAppend(' . $v('a') . ');echo count(' . $v('a') . ');echo ' . $v('a') . '[1];';
+			$tail = '212' . $bytes;
 		}
 		$main .= 'return 8;';
 		$expected = static fn(string $effect): string => implode('|', [$bytes, $effect, $bytes, $changed, $bytes, $bytes, $bytes]) . '|' . $tail;

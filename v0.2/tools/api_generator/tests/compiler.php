@@ -9,6 +9,7 @@ require_once __DIR__ . '/../php/render_compiler.php';
 require_once __DIR__ . '/../php/families.php';
 require_once __DIR__ . '/../php/render.php';
 require_once __DIR__ . '/../php/render_sequences.php';
+require_once __DIR__ . '/../php/render_modules.php';
 
 /** Locate a normalized test row by canonical identity, independent of family expansion order. */
 function conversion_row(object $metadata, string $from, string $to): object {
@@ -20,7 +21,8 @@ $root = dirname(__DIR__, 3);
 $facts = targetFacts(decode(readFile($argv[1]), 'facts'), decode(readFile($argv[2]), 'context'));
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
 // Keep the legacy core matrix fixture deliberately core-only; optional activation has its own proofs.
-foreach ($metadata->compiler->modules->{'runtime-numeric'}->types as $identity) {
+$optionalWidths = $metadata->compiler->modules->{'runtime-numeric'}->types;
+foreach ($optionalWidths as $identity) {
     unset($metadata->compiler->value_types->$identity, $metadata->compiler->three_way->types->$identity);
     $metadata->compiler->strict_identity->types = array_values(array_diff($metadata->compiler->strict_identity->types, [$identity]));
 }
@@ -58,6 +60,16 @@ $functionMetadata->string->functions->count_bytes = $declaration;
 $declaration->symbol = 'scpp::str::measured_bytes';
 $demand = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
 $demand->string->functions = ['count_bytes'];
+$asyncDemand = clone $demand;
+foreach ([false, true] as $enabled) {
+    $asyncDemand->async_frames = $enabled;
+    $asyncPlan = prepareRuntime($functionMetadata, $asyncDemand, $facts);
+    $asyncRuntime = render($asyncPlan);
+    $registry = renderCompiler($functionMetadata, $facts, $asyncPlan)['types/registry.php'];
+    requireThat(str_contains($registry, 'HAS_ASYNC_FRAMES = ' . ($enabled ? 'true;' : 'false;'))
+        && isset($asyncRuntime['public/scpp/async/frame.hpp']) === $enabled
+        && !isset($asyncRuntime['public/scpp/async_int64.hpp']), 'Frame selection emitted a concrete runtime task');
+}
 $functionPlan = prepareRuntime($functionMetadata, $demand, $facts);
 $registry = renderCompiler($functionMetadata, $facts, $functionPlan)['types/registry.php'];
 requireThat(str_contains($registry, "'func:count_bytes'") && str_contains($registry, "'scpp::str::measured_bytes'")
@@ -68,6 +80,25 @@ $bytePlan = prepareRuntime($functionMetadata, $demand, $facts);
 $registry = renderCompiler($functionMetadata, $facts, $bytePlan)['types/registry.php'];
 requireThat(str_contains($registry, "'func:string_byte_from_int'") && !str_contains($registry, "'func:count_bytes'")
     && str_contains(renderString($bytePlan)[0], 'string byte_from_int(int64 value)'), 'Checked byte function publication mismatch');
+// Published argument labels belong to a single source spelling and follow metadata edits.
+$demand->string->functions = ['str_repeat'];
+$repeatSignature = $functionMetadata->string->functions->str_repeat->signatures->php;
+$repeatSignature->parameter_names = ['fragment', 'copies'];
+$repeatPlan = prepareRuntime($functionMetadata, $demand, $facts);
+$registry = renderCompiler($functionMetadata, $facts, $repeatPlan)['types/registry.php'];
+requireThat(substr_count($registry, "parameter_names: ['fragment', 'copies']") === 1
+    && isset($repeatPlan['string_functions']['str_repeat']['adapters']['php']['parameter_names']),
+    'Runtime free function lost its published parameter names');
+foreach ([['same', 'same'], ['only_one'], ['invalid-name', 'copies']] as $invalidNames) {
+    $repeatSignature->parameter_names = $invalidNames;
+    try {
+        prepareRuntime($functionMetadata, $demand, $facts);
+        throw new \LogicException('Accepted invalid runtime parameter names');
+    } catch (\RuntimeException $error) {
+        requireThat(str_contains(strtolower($error->getMessage()), 'parameter name'), 'Unexpected runtime parameter-name error');
+    }
+}
+$repeatSignature->parameter_names = ['string', 'times'];
 $demand->string->functions = ['str_contains'];
 $functionMetadata->string->functions->str_contains->members->js = 'hasBytes';
 $predicatePlan = prepareRuntime($functionMetadata, $demand, $facts);
@@ -225,11 +256,12 @@ foreach (['unknown', 'algorithm', 'implicit', 'duplicate_owner', 'binding'] as $
 // Mixed operators expand from active families, with independently removable compound permission.
 $definitions = compilerTypePlan(compilerProviderMetadata($rawMetadata), $facts, $integerTypes);
 $expanded = compilerMixedNumericOperations(clone $rawMetadata->compiler, $definitions);
-requireThat(count($expanded->promotions) === 8, 'Expected both integer representations in mixed groups');
+requireThat(count(array_filter($expanded->promotions, static fn($row) => $row->operators !== ['true_divide'])) === 8, 'Expected both integer representations in mixed groups');
 $subset = unserialize(serialize($rawMetadata));
 $subset->compiler->mixed_numeric_operators->arithmetic = [];
 $subset->compiler->mixed_numeric_operators->compound_operators = [];
-$rows = compilerMixedNumericOperations($subset->compiler, $definitions)->promotions;
+$rows = array_filter(compilerMixedNumericOperations($subset->compiler, $definitions)->promotions,
+    static fn($row) => $row->operators !== ['true_divide']);
 requireThat(count($rows) === 4, 'Arithmetic removal changed mixed comparisons');
 foreach ($rows as $row) requireThat($row->result === 'bool_t' && !isset($row->compound_operators), 'Comparison admitted arithmetic writes');
 foreach (['duplicate', 'arithmetic', 'comparison', 'compound', 'policy', 'conversion'] as $change) {
@@ -246,6 +278,27 @@ foreach (['duplicate', 'arithmetic', 'comparison', 'compound', 'policy', 'conver
         renderCompiler($bad, $facts);
         throw new \LogicException('Invalid mixed numeric family admitted: ' . $change);
     } catch (\RuntimeException $expected) {
+    }
+}
+// Alternative division operations can be removed without altering the default bindings.
+$withoutDivision = unserialize(serialize($rawMetadata));
+unset($withoutDivision->compiler->division);
+$defaultMath = renderCompiler($withoutDivision, $facts);
+requireThat(str_contains($defaultMath['types/int64.php'], 'scpp::int64_divide(')
+    && str_contains($defaultMath['types/float64.php'], 'scpp::float64_divide(')
+    && !str_contains($defaultMath['types/int64.php'], 'binary_operator::floor_divide')
+    && !str_contains($defaultMath['types/float64.php'], 'binary_operator::true_divide'),
+    'Removing the division exception changed default math or retained its bindings');
+// Equal signatures do not make floor and truncating remainder interchangeable.
+foreach (['floor', 'default'] as $operation) {
+    $swapped = unserialize(serialize($rawMetadata));
+    if ($operation === 'floor') $swapped->compiler->division->int64->floor_remainder = 'int64_remainder';
+    else $swapped->compiler->integer_operators->bindings->int64->remainder = 'int64_floor_remainder';
+    try {
+        renderCompiler($swapped, $facts);
+        throw new \LogicException('Swapped remainder binding accepted: ' . $operation);
+    } catch (\RuntimeException $error) {
+        requireThat(str_contains($error->getMessage(), 'strategy'), 'Expected remainder strategy mismatch');
     }
 }
 // Integer single-operand capabilities share one family owner and remain independently removable.
@@ -814,7 +867,7 @@ foreach (['arithmetic', 'unary'] as $section) {
     unset($without->compiler->$section->float64);
     if ($section === 'arithmetic') $without->compiler->promotions = array_values(array_filter($without->compiler->promotions, static fn($row) => $row->result === 'bool_t'));
     $limited = renderCompiler($without, $facts)['types/float64.php'];
-    requireThat(!str_contains($limited, $section === 'arithmetic' ? 'scpp::float64_divide' : 'public function prepare_unary'), 'Removed float capability still generated');
+    requireThat(!str_contains($limited, $section === 'arithmetic' ? 'binary_operator::divide =>' : 'public function prepare_unary'), 'Removed float capability still generated');
 }
 foreach (['remainder', 'unchecked_division', 'compound_policy'] as $change) {
     $bad = unserialize(serialize($metadata));
@@ -1010,7 +1063,7 @@ try {
 }
 $without->compiler->promotions = array_values(array_filter($without->compiler->promotions,
     static fn($row) => $row->result === 'bool_t'));
-requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'scpp::float64_divide('), 'Missing division still lowered');
+requireThat(!str_contains(renderCompiler($without, $facts)['types/float64.php'], 'binary_operator::divide =>'), 'Missing default division still lowered');
 
 // Compound permission is explicit, directional and independently removable.
 $without = unserialize(serialize($metadata));

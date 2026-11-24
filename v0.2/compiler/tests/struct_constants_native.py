@@ -92,9 +92,14 @@ def private_members(work, flavor):
     for index, use, error, stdout in probes:
         revisions.extend([(entry, use+'return 8;', None, stdout), (model, record([index]), error, None),
                           (model, record(), None, stdout)])
-    revisions.extend([(entry, good, None, b'7'), (model, record(range(3)), None, b'7'),
-                      (model, record(range(3))+'struct Outsider { '+modifier+api+' { return '+named+'step(); } }',
-                       probes[0][2], None), (model, record(range(3)), None, b'7')])
+    outsider = 'struct Outsider { '+modifier+api+' { return '+named+'step(); } }'
+    revisions.extend([
+        (entry, good, None, b'7'),
+        (model, record(range(3)), None, b'7'),
+        (model, record(range(3)) + outsider, None, b'7'),
+        (entry, 'echo Outsider'+scope+'advance(); return 8;', 'Cannot call private method Counter::step', None),
+        (entry, good, None, b'7'),
+    ])
     out = work / ('private-out-'+flavor)
     with service(app, out) as resident:
         for rev, (path, text, error, stdout) in enumerate(revisions):

@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "async_frames": true,
   "modules": ["numeric"],
   "boxed": {"header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
   "namespace": "scpp",
@@ -761,7 +762,8 @@
       },
       {
         "family": "nullable",
-        "payload": "string"
+        "payload": "string",
+        "instance_field": true
       },
       {
         "family": "nullable",

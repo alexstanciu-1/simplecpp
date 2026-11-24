@@ -11,6 +11,17 @@ require_once __DIR__ . '/hashes.php';
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry
 {
+	public const bool HAS_ASYNC_FRAMES = @async_available@;
+
+	/** Runtime concrete values eligible for task storage when requested by an application. */
+	public static function async_value(type_definition $type): bool
+	{
+		return match ($type::class) {
+			@async_value_types@ => true,
+			default => false,
+		};
+	}
+
 	/** Type names introduced by the active providers into scpp::types. */
 	public static function has_cpp_type_alias(string $name): bool
 	{
@@ -40,6 +51,15 @@ final class type_registry
 		return match ($name) {
 @cases@
 			default => null,
+		};
+	}
+
+	/** Canonical numeric scalar identities supplied by the active metadata providers. */
+	public static function is_numeric_scalar(type_definition $type): bool
+	{
+		return match ($type) {
+@numeric_scalar_cases@
+			default => false,
 		};
 	}
 

@@ -24,6 +24,10 @@ reference parameters can alias the same slot. Whole-container replacement does n
 invalidate the slot: runtime assignment handles its old storage lifetime. No element or
 property reference is introduced, so reallocation does not create a borrowed element.
 
+A by-value vector or hash parameter owns a local value. Assigning another collection
+to that parameter replaces the local value and leaves the caller’s collection intact.
+Whole-collection reassignment is an ordinary operation and emits no warning.
+
 Preparation and lowering are unchanged: canonical identity and ast_local_binding checks,
 existing storage-write invalidation, existing passing_mode and native Type& parameters.
 The implementation removes the collection-only declaration prohibition. No new AST

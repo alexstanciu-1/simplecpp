@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace Scpp\Api;
 require_once __DIR__ . '/boxed.php';
 require_once __DIR__ . '/json.php';
-require_once __DIR__ . '/filesystem.php';
+require_once __DIR__ . '/module_functions.php';
 
 /** Internal native traversal ABI shared by the supported concrete collection families. */
 function collectionTraversalPlan(): array {
@@ -40,7 +40,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -73,10 +73,12 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareHashes($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
     prepareJson($metadata, $publication, $plan);
-    prepareFilesystem($metadata, $publication, $plan);
+    foreach (FUNCTION_MODULES as $family) prepareModuleFunctions($family, $metadata, $publication, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     finalizePublicationProviders($plan);
+    $plan['async_frames'] = $publication->async_frames ?? false;
+    requireThat(is_bool($plan['async_frames']), 'Invalid async frame selection');
     return $plan;
 }
 
@@ -305,7 +307,15 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                     $options = ['trim_side' => $side, 'trim_set' => $set];
                 }
                 if (array_key_exists($flavor, $signatures)) {
-                    if ($trim) {
+                    if (isset($signatures[$flavor]->parameter_names)) {
+                        $options += fields($signatures[$flavor], ['parameter_names']);
+                        $labels = listValue($options['parameter_names']);
+                        requireThat(($flavor === 'php' || isset($freeNames[$flavor])) && !isset($signature['required_parameters'])
+                            && !isset($function->arities) && count($labels) === count($signature['parameters']),
+                            'Parameter names require a fixed-arity free function and one name per parameter');
+                        foreach ($labels as $label) requireThat(preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', textValue($label)) === 1, 'Invalid parameter name');
+                        requireThat(count(array_unique($labels)) === count($labels), 'Duplicate parameter name');
+                    } elseif ($trim) {
                         requireThat($flavor === 'php', 'Explicit trim masks require the PHP flavor');
                         $options += fields($signatures[$flavor], ['parameters', 'required_parameters']);
                         literals($signatures[$flavor], ['parameters' => ['string', 'string'], 'required_parameters' => 1]);
@@ -596,7 +606,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     requireThat(hasValue($plan, 'bool_t'), 'Carriers require published boolean type');
     $carriers = [];
     foreach(listValue(at($p, 'specializations')) as $item) {
-        fields($item, ['family', 'payload']);
+        fields($item, ['family', 'payload', 'instance_field']);
         $family = textValue(at($item, 'family'));
         at($families, $family);
         $payload = textValue(at($item, 'payload'));
@@ -608,6 +618,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         $name = $family . '_' . $payload;
         requireThat(!isset($carriers[$name]), 'Duplicate carrier specialization');
         $carriers[$name] = compact('name', 'family', 'payload', 'extraction') + ['payload_access' => $payloadAccess, 'presence' => object($m->presence)] + $familyPlans[$family] + [ 'boxing' => 'explicit', 'extraction_can_fail' => true, 'non_payload_extraction' => 'throw_runtime_error', 'condition' => 'cpp_payload_conversion_rules', 'lifecycle' => 'owned_copy_move_resets_source_to_default', 'lifted_operators' => false, 'result_category' => 'value', 'explicit_lowering' => 'value_then_payload_operation'];
+        $carriers[$name]['instance_field'] = property_exists($item, 'instance_field') && boolean($item->instance_field);
         if ($payloadInfo['kind'] === 'boxed') {
             $carriers[$name]['payload_header'] = $payloadInfo['header'];
             $carriers[$name]['payload_copy'] = $payloadInfo['copy'];
@@ -737,8 +748,8 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
         if($key === 'int64') {
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
-        $traversal = collectionTraversalPlan();
-        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method']]);
+        $traversal = collectionTraversalPlan() + ['next_key_method' => 'iteration_next_key', 'current_value_method' => 'iteration_current_value'];
+        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method'], $traversal['next_key_method'], $traversal['current_value_method']]);
         requireThat(array_intersect($callables, $occupied) === [], 'Keyed initialization name conflicts with a published member');
         $hashes[$name] = compact('name', 'key', 'value', 'methods', 'initialization') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_concrete_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => $traversal];
     }

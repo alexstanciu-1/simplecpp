@@ -70,7 +70,8 @@ final class Compilation_Inspection
 	public static function global_row(ast_global_declaration $global): array /** array<string,mixed> */
 	{
 		$row = ['name' => $global->name(), 'type' => $global->type_def()->name];
-		self::write_scalar($row, 'initializer', $global->type_def()->evaluate_constant($global->initialization(), $global->initializer));
+		if ($global->initializer === null) $row['initializer'] = null;
+		else self::write_scalar($row, 'initializer', $global->type_def()->evaluate_constant($global->initialization(), $global->initializer));
 		return $row;
 	}
 
@@ -102,6 +103,7 @@ final class Compilation_Inspection
 						'updates' => array_map(self::binding(...), $statement->updates), 'body' => self::body($statement->body)];
 				} else $row = ['kind' => $statement instanceof ast_do_while_statement ? 'do_while' : 'while',
 					'condition' => self::value($statement->condition), 'body' => self::body($statement->body)];
+				if ($statement instanceof ast_while_else_statement) $row['else'] = self::body($statement->otherwise);
 				$statements[] = $row;
 			}
 			elseif ($statement instanceof ast_rethrow_statement) $statements[] = ['kind' => 'rethrow'];
@@ -157,12 +159,15 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => 'append', 'receiver' => self::value($statement->receiver),
 					'value' => self::value($statement->value), 'conversion' => value_conversion::name($statement->conversion())];
 			}
+			elseif ($statement instanceof ast_await_statement) {
+				$statements[] = ['kind' => 'discard', 'value' => self::value($statement->value)];
+			}
 			elseif ($statement instanceof ast_base_statement) {
 				$statements[] = ['kind' => 'base_initialization', 'value' => self::value($statement->value)];
 			}
 			elseif ($statement instanceof ast_call_statement) {
 				$call = $statement->value;
-				$signature = $call->cardinality === null && $call->callable_binding() === null ? $statement->function_def() : null;
+				$signature = $call->has_direct_signature() ? $statement->function_def() : null;
 				$statements[] = ['kind' => 'call', 'target' => $signature?->name() ?? $call->target_name(),
 					'return_type' => ($signature?->return_type_def() ?? $call->type_def())->name,
 					'arguments' => array_map(self::value(...), $signature instanceof runtime_function ? $call->runtime_operands() : $call->arguments)];
@@ -184,6 +189,9 @@ final class Compilation_Inspection
 		if ($statement instanceof ast_property_update || $statement instanceof ast_index_update) {
 			return ['kind' => $statement instanceof ast_index_update ? 'indexed_update' : 'property_update', 'target' => self::value($statement->target),
 				'operator' => $statement->operator->name, 'postfix' => $statement->postfix];
+		}
+		if ($statement instanceof ast_reset_statement) {
+			return ['kind' => $statement::OPERATION, 'id' => $statement->local_def()->storage_id()];
 		}
 		if ($statement instanceof ast_update_statement) {
 			return ['kind' => 'update', 'id' => $statement->local_def()->storage_id(),
@@ -215,6 +223,7 @@ final class Compilation_Inspection
 			return ['kind' => 'throw', 'value' => self::value($value->operand)];
 		}
 		$row = ['type' => $value->type_def()->name];
+		if ($value instanceof ast_await_expression) $row += ['kind' => 'await', 'operand' => self::value($value->operand)];
 		self::write_scalar($row, 'constant', $value->constant());
 		$row['constant_known'] = $value->constant_known();
 		if ($value instanceof ast_construction_expression) {
@@ -242,6 +251,11 @@ final class Compilation_Inspection
 			$row['operator'] = $value->operator->name;
 			$row['operand'] = self::value($value->operand);
 		}
+		if ($value instanceof ast_update_expression) {
+			$row += ['kind' => $value->update->postfix ? 'postfix_update' : 'prefix_update',
+				'id' => $value->update->local_def()->storage_id(),
+				'operator' => $value->update->operator->name];
+		}
 		if ($value instanceof ast_condition_assignment) {
 			$row += ['kind' => 'condition_assignment', 'target' => $value->target->local_def()->storage_id(),
 				'conversion' => value_conversion::name($value->conversion), 'value' => self::value($value->value)];
@@ -251,7 +265,9 @@ final class Compilation_Inspection
 		}
 		if ($value instanceof ast_match_expression) {
 			$row['subject'] = self::value($value->subject);
-			$row['arms'] = array_map(static fn(ast_match_arm $arm): array => ['label' => $arm->label === null ? null : self::value($arm->label), 'result' => self::value($arm->result)], $value->arms);
+			$row['arms'] = array_map(static fn(ast_match_arm $arm): array => (count($arm->labels) > 1
+				? ['labels' => array_map(self::value(...), $arm->labels)]
+				: ['label' => $arm->labels === [] ? null : self::value($arm->labels[0])]) + ['result' => self::value($arm->result)], $value->arms);
 		}
 		if ($value instanceof ast_object_access_expression) {
 			$row['operator'] = $value->test ? 'instanceof' : 'object_cast';
@@ -275,6 +291,14 @@ final class Compilation_Inspection
 			$row['receiver'] = self::value($value->receiver);
 			$row['index'] = self::value($value->index);
 		}
+		if ($value instanceof ast_comparison_chain) $row['links'] = array_map(self::value(...), $value->links);
+
+		if ($value instanceof ast_key_comparison && $value->tests_key()) {
+			$row['operator'] = $value->operator === binary_operator::identical ? 'key_missing' : 'key_present';
+			$row['receiver'] = self::value($value->left->receiver);
+			$row['index'] = self::value($value->left->index);
+			return $row;
+		}
 		if ($value instanceof ast_binary_expression) {
 			if (!$value->operator->lazy()) {
 				$row['execution_type'] = $value->execution_type()->name;
@@ -282,15 +306,27 @@ final class Compilation_Inspection
 				$row['right_conversion'] = value_conversion::name($value->right_conversion);
 			}
 			$row['operator'] = $value->operator->name;
-			$row['left'] = self::value($value->left);
+			if (!($value instanceof ast_continued_comparison)) $row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
 		}
-		if ($value instanceof ast_lambda_expression) $row['body'] = self::value($value->body);
+		if ($value instanceof ast_lambda_expression) {
+			$row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
+			if ($value->type_def()->borrows_receiver) $row['receiver_capture'] = true;
+			if (count($value->captures) === 1) $row['capture'] = self::value($value->captures[0]->initializer);
+			elseif ($value->captures !== []) $row['captures'] = array_map(static fn(ast_closure_capture $capture) => self::value($capture->initializer), $value->captures);
+			foreach ($value->captures as $capture) {
+				if ($capture->by_reference) $row['reference_captures'][] = $capture->short_name;
+			}
+		}
 		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
+		if (isset($value->named)) {
+			$row['labels'] = $value->named->labels;
+			$row['parameter_slots'] = $value->named->slots;
+		}
 		if ($value instanceof ast_call_expression) {
 			$row['target'] = $value->target_name();
 			if ($value->ancestor_dispatch) $row['dispatch'] = 'ancestor';
-			$row['arguments'] = array_map(self::value(...), $value->cardinality === null && $value->callable_binding() === null && $value->function_def() instanceof runtime_function
+			$row['arguments'] = array_map(self::value(...), $value->runtime_binding() !== null
 					? $value->runtime_operands() : $value->arguments);
 		}
 		if ($value instanceof ast_string_expression) {

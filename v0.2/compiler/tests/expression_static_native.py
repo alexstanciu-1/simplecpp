@@ -43,6 +43,12 @@ def prove(work, flavor):
     inline_main = main.replace('return 8;', calls+'return 8;')
     rejected_view = 'interface View {}' + (';' if flavor == 'cpp' else '')
     rejected_view += fn('inspect', 'int', [('p','View')], f'return {local}::pick(1,2);')
+    named = main.replace(call, f'produce({v}box)::pick(count: first({v}box), offset: second())')
+    def named_pick(owner, count_name):
+        return static('pick', f'echo "{owner}";return {v}offset * 10 + {v}{count_name};',
+                      [('offset', 'int'), (count_name, 'int')])
+    named_base = klass('Base', named_pick('B', 'count'))
+    named_child = klass('Child', named_pick('C', 'length'), 'Base')
     revisions(work, flavor, src, [
         (None, None, b'P12B3B'), (None, None, b'P12B3B'),
         ('factory', factory('Child'), b'P12C3B'),
@@ -56,12 +62,44 @@ def prove(work, flavor):
         ('base', base, b'P12B3B'),
         ('main', main.replace('first('+v+'box),second()', 'second()'), 'Argument count mismatch'),
         ('main', main, b'P12B3B'), ('view', rejected_view, 'concrete record type'), ('view', None, b'P12B3B'),
+        ('base', named_base, b'P12B12B'), ('child', named_child, b'P12B12B'),
+        ('main', named, b'P12B21B'),
+        ('child', named_child.replace('length', 'size'), b'P12B21B'),
+        ('base', named_base.replace('count', 'total'), 'Unknown named argument: count on Base::pick'),
+        ('main', named.replace('count:', 'total:'), b'P12B21B'),
     ])
 
     # Dereferencing an empty Box fails during qualifier evaluation. Neither argument nor method may print.
     empty = {'php': '$box ?Box=null;', 'cpp': '?Box box=null;', 'js': 'let box:?Box=null;'}[flavor]
     failing = empty + f'({v}box{access}observer)::pick(second(),second());return 8;'
     guard(work, flavor, 'qualifier-failure', base+child+box+second+failing, 'ownership_empty_access')
+
+    # The qualifier starts, then throws during the empty-handle read. Arguments and callee have distinct traces.
+    broken = fn('broken', 'weak<Child>', [], empty + f'echo "Q";return {v}box{access}observer;')
+    failing_named = 'broken()::pick(size: second(), offset: second());return 8;'
+    guard(work, flavor, 'named-qualifier-failure', named_base + named_child.replace('length', 'size')
+          + box + second + broken + failing_named, 'ownership_empty_access', expected_stdout=b'Q')
+
+
+def donor_declared_qualifier(work, flavor):
+    # Port compiler/my-try/tests/late_static.php's declared_qualifier case.
+    _, (s, klass, _, static, sep) = sources(flavor)
+    late = 'Static::' if flavor == 'cpp' else 'static::'
+    base = klass('Base', static('pick', 'return 2;')
+                 + static('run', f'return {late}pick();'))
+    child = klass('Child', static('pick', 'return 9;'), 'Base')
+    setup, qualifier = {
+        'php': ('$b Base=new Child();', '$b'),
+        'cpp': ('Base b=new Child();', '(b)'),
+        'js': ('let b:Base=new Child();', 'b'),
+    }[flavor]
+    main = setup + f'echo {qualifier}::run(),Child{sep}run();return 8;'
+    work.mkdir(exist_ok=True)
+    revisions(work, flavor, dict(base=base, child=child, main=main), [
+        (None, None, b'29'),
+        (None, None, b'29'),
+    ])
+
 
 
 def data_members(work, flavor):
@@ -152,4 +190,5 @@ if __name__ == '__main__':
         work.mkdir(exist_ok=True)
         for flavor in ['php', 'cpp', 'js']:
             prove(work, flavor)
+            donor_declared_qualifier(work / "donor", flavor)
             data_members(work/"data", flavor)

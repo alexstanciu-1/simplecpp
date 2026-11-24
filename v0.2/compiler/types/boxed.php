@@ -4,8 +4,26 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Canonical tagged scalar family. Runtime checks consume the actual payload, e.g. (int)$boxed. */
-abstract class boxed_type_definition extends type_definition implements indexed_mutation_type
+abstract class boxed_type_definition extends type_definition implements indexed_mutation_type, membership_type
 {
+	use collection_keyed_store;
+
+	public function prepare_membership(ast_binary_expression $site): void
+	{
+		$needle = $site->left->type_def();
+		if ($needle !== $this && !$this->accepts_scalar($needle)) {
+			throw new diagnostic($site->source(), $site->left->byte_start(), 'Unsupported boxed membership operand');
+		}
+		$site->settle_binary(type_bool::instance(), $this);
+	}
+
+	/** @param array<string,bool> $headers */
+	public function lower_cpp_membership(ast_expression $needle, string $key, string $receiver, array &$headers): string
+	{
+		if ($needle->type_def() !== $this) $key = $this->box_cpp($needle, $key);
+		return '(' . $receiver . ').python_contains(' . $key . ')';
+	}
+
 	public function prepare_key(ast_expression $key): void
 	{
 		$type = $key->type_def();
@@ -38,20 +56,25 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $receiver . '.source_read(scpp::boxed_key(' . $index . '))';
 	}
 
+	/** Generated source_has applies the same source-key normalization as indexed reads. */
+	public function lower_cpp_key_presence(string $receiver, string $key): string
+	{
+		return '(' . $receiver . ').source_has(' . $key . ')';
+	}
+
 	public function lower_cpp_mutation_read(ast_expression $key, string $receiver, string $index): string
 	{
 		return $receiver . '.source_require(scpp::boxed_key(' . $index . '))';
 	}
 
-	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string
+	public function lower_cpp_key(ast_expression $syntax, string $key): string
 	{
-		return $receiver . '.source_set(scpp::boxed_key(' . $index . '), ' . $value . ');';
+		return 'scpp::boxed_key(' . $key . ')';
 	}
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
+	public function lower_cpp_write(string $receiver, string $key, string $value): string
 	{
-		$value = $this->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
-		return $receiver . '.source_set(scpp::boxed_key(' . $key . '), ' . $value . ');';
+		return $receiver . '.source_set(' . $key . ', ' . $value . ')';
 	}
 
 	public function supports_inferred_local(): bool

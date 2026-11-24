@@ -9,8 +9,8 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	use ast_declaration;
 
 	/** PROPERTIES */
-	/** Native owning written type syntax. */
-	public readonly ast_type_reference $type_reference;
+	/** Native owning written type syntax; absent for a context-typed lambda input. */
+	public readonly ?ast_type_reference $type_reference;
 	public readonly passing_mode $mode;
 	public readonly int $id /** uint32 */;
 	/** Owned literal or enum-case syntax; null means a required parameter. */
@@ -24,14 +24,14 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 
 	/** CONSTRUCTOR */
 	/** $start/$end: token positions; $id: body storage ordinal. */
-	public function __construct(string $name, ast_type_reference $type_reference, int $id /** uint32 */,
+	public function __construct(string $name, ?ast_type_reference $type_reference, int $id /** uint32 */,
 		int $start /** uint32 */, int $end /** uint32 */, ?ast_expression $default_value = null,
 		passing_mode $mode = passing_mode::value)
 	{
 		$this->short_name = $name;
 		$this->namespace = null;
 		$this->type_reference = $type_reference;
-		$type_reference->attach($this);
+		$type_reference?->attach($this);
 		$this->mode = $mode;
 		$this->id = $id;
 		parent::__construct($start, $end);
@@ -40,6 +40,11 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	}
 
 	/** METHODS */
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::local_binding;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'var:' . $this->declaration_key();
@@ -99,7 +104,7 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	/** Return: token position of the parameter name. */
 	public function name_position(): int /** uint32 */
 	{
-		return $this->start + ($this->source()->flavor === flavor::js ? 0 : $this->type_reference->end - $this->start)
-			+ ($this->mode === passing_mode::reference ? 1 : 0);
+		$position = $this->source()->flavor === flavor::js ? $this->start : ($this->type_reference?->end ?? $this->start);
+		return $position + ($this->mode !== passing_mode::value ? 1 : 0);
 	}
 }

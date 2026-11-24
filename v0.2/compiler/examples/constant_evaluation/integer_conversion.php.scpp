@@ -1,0 +1,18 @@
+// The caller supplies the conversion codes selected during type preparation.
+function evaluateIntegerFact(int $operation, constant_fact $source):constant_fact {
+    if ($source->kind === UNKNOWN) { return $source; }
+    switch ($operation) {
+        case CONVERSION_IDENTITY: return $source;
+        case CONVERSION_BOOLEAN_INTEGER:
+            if ($source->kind === BOOLEAN) { return intFact((int) $source->booleanValue); }
+            throw new Exception("Boolean conversion requires a boolean fact");
+        default: throw new Exception("Unsupported integer fact conversion");
+    }
+}
+
+function prepareIntegerCastLocal(constant_fact $operand, int $castOperation, int $localOperation):integer_slot {
+    $cast = evaluateIntegerFact($castOperation, $operand);
+    $local integer_slot;
+    $local->settle(evaluateIntegerFact($localOperation, $cast));
+    return $local;
+}

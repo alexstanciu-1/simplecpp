@@ -143,6 +143,11 @@ final class ast_produced_binding extends ast_expression implements ast_local_bin
 		return $this->id;
 	}
 
+	public function duplicate_category(): declaration_duplicate_category
+	{
+		return declaration_duplicate_category::local_binding;
+	}
+
 	public function symbol_key(): string
 	{
 		return 'var:' . $this->declaration_key();
@@ -224,6 +229,8 @@ final class ast_try_statement extends ast_statement
 	public readonly ?ast_block $finalizer;
 
 	/** PREP FACTS */
+	/** Prepared fact: a handler can suspend, so its dispatch must run outside the native catch. */
+	public bool $suspending_handlers = false;
 	/** Prepared fact: exits from the protected operation before the finalizer; null until settled. */
 	public ?int $protected_completion /** uint8 */ = null;
 	/** Prepared fact: exits remaining after the finalizer; null until settled. */

@@ -62,7 +62,7 @@ final class Project_Changes
 		sort($optimize_functions, \SORT_STRING);
 		return ($optimize_functions === [] ? [] : ['optimize_functions' => array_values(array_unique($optimize_functions))])
 			+ ['version' => 4, 'php' => \PHP_VERSION, 'entry' => $session->entry_key(),
-			'cpp_namespace' => $session->cpp_namespace, 'modules' => $modules, 'other_inputs' => $other_inputs];
+			'group_async_methods' => $session->group_async_methods, 'cpp_namespace' => $session->cpp_namespace, 'modules' => $modules, 'other_inputs' => $other_inputs];
 	}
 
 	/**

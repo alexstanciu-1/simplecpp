@@ -41,7 +41,11 @@ final class Record_Syntax
 			throw new diagnostic($c->tokens->source, $c->tokens->tokens[$start + 1]->offset, 'Reserved type name: ' . $name);
 		}
 		$base = null;
-		if ($flavor === flavor::cpp ? $c->is(token_kind::colon) : $c->keyword('extends')) {
+		if ($flavor === flavor::python && $c->is(token_kind::lparen)) {
+			$c->take(token_kind::lparen, '(');
+			$base = $parser->named_type();
+			$c->take(token_kind::rparen, ') after a single base class');
+		} elseif ($flavor !== flavor::python && ($flavor === flavor::cpp ? $c->is(token_kind::colon) : $c->keyword('extends'))) {
 			if ($flavor === flavor::cpp) {
 				$c->take(token_kind::colon, ':');
 				if ($c->keyword('public')) $c->take_keyword('public');
@@ -53,7 +57,7 @@ final class Record_Syntax
 			$interfaces[] = $base;
 			$base = null;
 		}
-		if ($c->keyword('implements') || (($interfaces !== [] || ($flavor === flavor::cpp && $base !== null)) && $c->is(token_kind::comma))) {
+		if ($flavor !== flavor::python && ($c->keyword('implements') || (($interfaces !== [] || ($flavor === flavor::cpp && $base !== null)) && $c->is(token_kind::comma)))) {
 			if ($c->keyword('implements')) {
 				if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces extend other interfaces');
 				$c->take_keyword('implements');
@@ -74,7 +78,11 @@ final class Record_Syntax
 		if ($trait) return new ast_trait_declaration($name, $parser->source_namespace(), $start, $c->position(), $body_start, $fields, $members, $uses);
 		$hooks = [];
 		$parser->contribute($name, $uses, $aliases, $fields, $members, $hooks);
-		$record = new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $c->position(), $members, $base, $kind, $abstract, $interfaces, $final, $hooks);
+		$end = $c->position();
+		if ($flavor === flavor::python) {
+			while ($c->tokens->tokens[$end - 1]->kind === token_kind::dedent) --$end;
+		}
+		$record = new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $end, $members, $base, $kind, $abstract, $interfaces, $final, $hooks);
 		foreach ($uses as $use) $use->attach($record);
 		return $record;
 	}
@@ -90,11 +98,18 @@ final class Record_Syntax
 	{
 		$c = $parser->cursor;
 		$flavor = $c->tokens->source->flavor;
-		$c->take(token_kind::lbrace, '{');
+		$python = $flavor === flavor::python;
+		$parser->open_suite($grammar, '{');
+		$close = $python ? token_kind::dedent : token_kind::rbrace;
 		$fields = [];
 		$private_section = false;
 		$protected_section = false;
-		while (!$c->is(token_kind::rbrace)) {
+		while (!$c->is($close)) {
+			if ($python && $c->keyword('pass')) {
+				$c->take_keyword('pass');
+				$c->take(token_kind::newline, 'NEWLINE');
+				continue;
+			}
 			if ($c->keyword('use')) {
 				if ($kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interfaces cannot compose traits');
 				$c->take_keyword('use');
@@ -164,7 +179,7 @@ final class Record_Syntax
 				$members[] = Constant_Syntax::read($parser, $visibility);
 				continue;
 			}
-			$readonly = $c->tokens->text_at($c->position()) === 'readonly';
+			$readonly = !$python && $c->tokens->text_at($c->position()) === 'readonly';
 			if ($readonly) {
 				$c->take($c->is(token_kind::keyword) ? token_kind::keyword : token_kind::identifier, 'readonly');
 				if ($static) throw new diagnostic($c->tokens->source, $c->offset(), 'Readonly static properties are deferred');
@@ -173,11 +188,13 @@ final class Record_Syntax
 				flavor::php => $c->keyword('function') && $c->tokens->text_at($c->position() + 1) === '__construct',
 				flavor::cpp => $c->tokens->text_at($c->position()) === ($origin_name ?? $name) && $c->next_is(token_kind::lparen),
 				flavor::js => $c->tokens->text_at($c->position()) === 'constructor' && $c->next_is(token_kind::lparen),
+				flavor::python => $c->keyword('def') && $c->tokens->text_at($c->position() + 1) === '__init__',
 			};
 			$destructor = match ($flavor) {
 				flavor::php => $c->keyword('function') && $c->tokens->text_at($c->position() + 1) === '__destruct',
 				flavor::cpp => $c->tokens->text_at($c->position()) === '~',
 				flavor::js => $c->tokens->text_at($c->position()) === 'destructor' && $c->next_is(token_kind::lparen),
+				flavor::python => false,
 			};
 			if ($constructor && $kind === record_kind::interface_type) throw new diagnostic($c->tokens->source, $c->offset(), 'Interface constructors are forbidden');
 			if ($destructor) {
@@ -194,9 +211,10 @@ final class Record_Syntax
 			} elseif ($constructor) {
 				if ($static) throw new diagnostic($c->tokens->source, $c->offset(), 'Constructor cannot be static');
 				if ($flavor === flavor::php) $c->take_keyword('function');
+				if ($python) $c->take_keyword('def');
 				$at = $c->position();
 				$c->name(token_kind::identifier);
-				$parameters = $parser->parameters();
+				$parameters = $parser->parameters($python);
 				foreach ($parameters as $parameter) {
 					if ($parameter->mode !== passing_mode::value) {
 						throw new diagnostic($c->tokens->source, $c->offset(), 'Constructors require by-value parameters');
@@ -207,8 +225,9 @@ final class Record_Syntax
 					$parser->source_namespace(), $parameters, private: $private, protected: $protected);
 			} else {
 				$js_method = $flavor === flavor::js && $c->is(token_kind::identifier) && $c->next_is(token_kind::lparen);
-				$method = $js_method ? $parser->named_function_header(false, $static, $private, $protected)
-					: (($kind === record_kind::interface_type && $flavor === flavor::cpp || $grammar->function_start($parser)) ? $grammar->function_header($parser, $static, $private, $protected) : null);
+				$method = $python && $grammar->function_start($parser) ? $parser->named_function_header(python_receiver: true)
+					: ($js_method ? $parser->named_function_header(false, $static, $private, $protected)
+					: (($kind === record_kind::interface_type && $flavor === flavor::cpp || $grammar->function_start($parser)) ? $grammar->function_header($parser, $static, $private, $protected) : null));
 				if ($method?->short_name === '__destruct') throw new diagnostic($c->tokens->source, $c->offset(), 'Expected a destructor declaration');
 				if ($method?->short_name === '__construct' || ($flavor === flavor::js && $method?->short_name === 'constructor')) {
 					throw new diagnostic($c->tokens->source, $c->offset(), 'Expected a constructor declaration');
@@ -250,7 +269,7 @@ final class Record_Syntax
 				$members[] = Global_Syntax::read($parser, true, $visibility);
 				continue;
 			}
-			if ($flavor === flavor::js) {
+			if ($flavor === flavor::js || $python) {
 				$field = $c->name(token_kind::identifier);
 				$c->take(token_kind::colon, ':');
 				$type = $parser->named_type(allow_union: $readonly);
@@ -263,7 +282,7 @@ final class Record_Syntax
 				$c->take(token_kind::assign, '=');
 				$initializer = $parser->literal_initializer('Field initializer requires a literal or enum case', allow_case: true);
 			}
-			$end = $c->take(token_kind::semicolon, ';') + 1;
+			$end = $c->take($python ? token_kind::newline : token_kind::semicolon, $python ? 'NEWLINE' : ';') + 1;
 			$node = new ast_instance_field($field, $type, $field_start, $end, $private, $initializer, $protected, $readonly);
 			if (isset($fields[$field])) {
 				$tail = $fields[$field];
@@ -273,7 +292,7 @@ final class Record_Syntax
 				$fields[$field] = $node;
 			}
 		}
-		$c->take(token_kind::rbrace, '}');
+		$c->take($close, $close->label());
 		if ($flavor === flavor::cpp && $c->is(token_kind::semicolon)) $c->take(token_kind::semicolon, ';');
 		return $fields;
 	}
@@ -281,9 +300,16 @@ final class Record_Syntax
 	/** Recognize only the bounded method markers; no general attribute interpretation. @param int[] $modifiers */
 	private static function modifiers(Syntax_Cursor $c, array &$modifiers /** array<string,uint32> */, bool $attributes): void
 	{
+		$python = $c->tokens->source->flavor === flavor::python;
 		while (true) {
 			$at = $c->position();
-			if ($attributes && $c->is(token_kind::attribute)) {
+			if ($python) {
+				if (!$attributes || !$c->is(token_kind::at_sign)) return;
+				$c->take(token_kind::at_sign, '@');
+				$name = $c->name(token_kind::identifier);
+				if (!in_array($name, ['virtual', 'override'], true)) throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset, 'Unsupported method marker');
+				$c->take(token_kind::newline, 'NEWLINE after method marker');
+			} elseif ($attributes && $c->is(token_kind::attribute)) {
 				$c->take(token_kind::attribute, '#[');
 				if ($c->is(token_kind::backslash)) $c->take(token_kind::backslash, '\\');
 				$name = $c->name(token_kind::identifier);

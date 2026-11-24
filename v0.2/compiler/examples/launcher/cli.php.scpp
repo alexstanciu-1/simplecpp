@@ -1,0 +1,25 @@
+namespace scpp\compiler;
+
+final class Compiler_Cli {
+	public static function run(vector<string> &$arguments): int {
+		if (count($arguments) <= 1 || $arguments[1] === "--help") {
+			echo usage();
+			return 0;
+		}
+		if ($arguments[1] === "frontend" && count($arguments) < 3) {
+			\host_write_error(usage());
+			return 2;
+		}
+		throw Exception::make("Command outside the launcher proof");
+	}
+}
+
+function usage(): string {
+	return "Usage: php main.php <tokens|parse|collect> <cpp|php|js> <file>\n"
+		. "       php main.php frontend <app-dir> [status|stop]\n"
+		. "       php main.php prepare <flavor> <file> <native-facts.json>\n"
+		. "       php main.php cpp <flavor> <file> <native-facts.json> <output.cpp>\n"
+		. "       php main.php build <module> <facts.json> <generated-dir> <native-dir> <toolchain.json> [--optimize-function=NAME ...]\n"
+		. "       php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force] [--optimize-function=NAME ...]\n"
+		. "       php main.php program <root> <entry-relative> <facts.json> <output-dir> <flavor> <source-relative> [...]\n";
+}

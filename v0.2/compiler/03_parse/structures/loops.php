@@ -39,6 +39,16 @@ final class ast_while_statement extends ast_tested_loop
 {
 }
 
+/** Python pre-test loop with a sibling lexical suite on condition exhaustion. */
+final class ast_while_else_statement extends ast_tested_loop
+{
+	public function __construct(int $start /** uint32 */, ast_expression $condition, ast_block $body, public readonly ast_block $otherwise)
+	{
+		parent::__construct($start, $otherwise->end, $condition, $body);
+		$otherwise->attach($this);
+	}
+}
+
 /** Execute the body before testing: do { echo "once"; } while (false); */
 final class ast_do_while_statement extends ast_tested_loop
 {
@@ -65,8 +75,16 @@ final class ast_for_statement extends ast_loop_statement
 /** Transfer with a non-owning prepared destination. Numbered forms retain their literal in the syntax span. */
 abstract class ast_loop_transfer extends ast_statement
 {
+	private readonly int $exit_depth /** int64 */;
+
 	/** Prepared fact: native non-owning target; null until resolved or after invalidation. */
 	public ast_switch_statement|ast_repeating_statement|null $target = null;
+
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, int $depth /** int64 */)
+	{
+		parent::__construct($start, $end);
+		$this->exit_depth = $depth;
+	}
 
 	public function numbered(): bool
 	{
@@ -75,7 +93,7 @@ abstract class ast_loop_transfer extends ast_statement
 
 	public function depth(): int
 	{
-		return $this->numbered() ? (int)$this->lexical_root()->tokens->text_at($this->end - 2) : 1;
+		return $this->exit_depth;
 	}
 }
 
@@ -96,6 +114,8 @@ final class ast_foreach_statement extends ast_repeating_statement
 	public readonly ast_expression $source_value;
 	public readonly ?ast_produced_binding $key;
 	public readonly ast_produced_binding $value;
+	/** JS for-in requires keys; Python for selects keys or values from its source. */
+	public readonly bool $requires_key;
 	public readonly scope $scope;
 
 	/** PREP FACTS */
@@ -103,14 +123,17 @@ final class ast_foreach_statement extends ast_repeating_statement
 	public ?ast_local_binding $destination = null;
 	/** Prepared fact: approved per-element assignment; null until prepared. */
 	public ?int $conversion /** uint16 */ = null;
+	/** Prepared fact: the written binding receives only the key. */
+	public bool $keys_only = false;
 
 	/** CONSTRUCTOR */
 	/** $start: foreach token position. Children are owned syntax; scope indexes those children. */
 	public function __construct(int $start /** uint32 */, ast_expression $source, ?ast_produced_binding $key,
-		ast_produced_binding $value, ast_block $body, scope $scope)
+		ast_produced_binding $value, ast_block $body, scope $scope, bool $requires_key = false)
 	{
 		parent::__construct($start, $body->end, $body);
 		$this->source_value = $source;
+		$this->requires_key = $requires_key;
 		$this->key = $key;
 		$this->value = $value;
 		$this->scope = $scope;

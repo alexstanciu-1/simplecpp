@@ -7,7 +7,7 @@ require_once __DIR__ . '/../host/compilation.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
 	Project_Compiler, Incremental_Preparation, Function_Preparation, Preparation, Program_Frontend, Cpp_Program,
-	Syntax_Inspection, Compilation_Inspection};
+	Syntax_Inspection, Compilation_Inspection, prepared_entry};
 
 function verify(bool $ok, string $message): void
 {
@@ -44,7 +44,7 @@ function rejects(Closure $action, string $message): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor)
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 {
 	$var = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$fn = static fn(string $name, string $parameters, string $type, string $body): string => definition($flavor, $name, $parameters, $type, $body);
@@ -54,7 +54,8 @@ foreach (flavor::cases() as $flavor)
 	verify($entry->body()->statement_visits === 3 && $entry->body()->expression_visits === 2, 'Transfers need no extra preparation traversal');
 	$code = $fn('test', '', 'bool', 'echo "T"; return false;')
 		. $fn('choose', '', 'int', 'do { if (true) { break; } else { return 2; } } while (test()); return 8;')
-		. $fn('nested', '', 'int', 'do { while (true) { break; } return 8; } while (false);')
+		. $fn('leave', '', 'bool', 'return true;')
+		. $fn('nested', '', 'int', 'do { while (leave()) { break 002; } return 2; } while (false); return 8;')
 		. $decl('i', 'int', '0')
 		. 'while (' . $var('i') . ' < 4) {' . $var('i') . '=' . $var('i') . '+1;'
 		. 'if (' . $var('i') . ' == 2) { continue; }'
@@ -86,6 +87,15 @@ foreach (flavor::cases() as $flavor)
 	rejects(fn() => $prepare('for (;;) { try {} finally { for (;;) { break 2; } } }'), 'cannot leave a finally');
 	rejects(fn() => $prepare($fn('stream', '', 'Iterator<int>', 'while (true) { yield 1; break 1; }') . 'return 8;'), 'yield producers');
 	rejects(fn() => $prepare('for (;;) { for (;;) { try { break 2; } finally { for (;;) {} } } } return 0;'), 'after unconditional');
+	foreach (['break', 'continue'] as $keyword) {
+		$prepare('while (true) { ' . $keyword . ' ' . str_repeat('0', 256) . '1; } return 8;');
+		foreach (['000', '0x2', '0o2'] as $depth) {
+			rejects(fn() => $prepare("while (true) { $keyword $depth; } return 8;"), 'Exit depth requires a positive decimal integer');
+		}
+		foreach (['9223372036854775807', '9223372036854775808', str_repeat('9', 256)] as $depth) {
+			rejects(fn() => $prepare("while (true) { $keyword $depth; } return 8;"), 'Exit depth exceeds enclosing eligible targets');
+		}
+	}
 	foreach (['break label;', 'continue label;', 'continue -1;', 'break 1+2;'] as $bad) {
 		rejects(fn() => $prepare('while (true) {' . $bad . '} return 8;'), 'positive decimal exit depth');
 	}
@@ -140,6 +150,23 @@ foreach (flavor::cases() as $flavor)
 		file_put_contents($main, 'while (true) { break; } return 8;');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 1, 'Outside-loop recovery');
+		$nested = 'while (true) { while (true) { break 002; } } return 8;';
+		foreach ([$nested, str_replace('002', str_repeat('9', 256), $nested), $nested] as $step => $text) {
+			file_put_contents($main, $text);
+			$session = $compiler->frontend($directory, $session);
+			$fresh = (new Project_Compiler())->frontend($directory);
+			if ($step === 1) {
+				foreach ([$session, $fresh] as $candidate) {
+					rejects(fn() => Incremental_Preparation::prepare($candidate, $target), 'Exit depth exceeds enclosing eligible targets');
+				}
+			} else {
+				Incremental_Preparation::prepare($session, $target);
+				Incremental_Preparation::prepare($fresh, $target);
+				$emit = static fn(scpp\compiler\compilation_session $candidate): string => (new Cpp_Emitter())->emit(new prepared_entry($candidate->entry->entry->ast, $target));
+				verify($emit($session) === $emit($fresh), 'Numbered exit recovery differs from fresh lowering');
+			}
+			verify($session->scope->entry('func:predicate')->declaration() === $callee, 'Depth edit reparsed unrelated function');
+		}
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op rebuilt');
 	}

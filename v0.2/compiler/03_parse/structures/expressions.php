@@ -31,6 +31,16 @@ enum binary_operator: int
 	case compare = 23;
 	case power = 24;
 	case coalesce = 25;
+	case true_divide = 26;
+	case floor_divide = 27;
+	case floor_remainder = 28;
+	case key_in = 29;
+	case key_not_in = 30;
+
+	public function membership(): bool
+	{
+		return $this === self::key_in || $this === self::key_not_in;
+	}
 
 	/** Map recognized compound spellings to ordinary binary semantics; admission belongs to generated types. */
 	public static function compound(token_kind $token): ?self
@@ -75,19 +85,38 @@ enum binary_operator: int
 			self::bit_or => 5,
 			self::bit_xor => 6,
 			self::bit_and => 7,
-			self::equal, self::not_equal, self::identical, self::not_identical, self::compare => 8,
+			self::equal, self::not_equal, self::identical, self::not_identical, self::compare, self::key_in, self::key_not_in => 8,
 			self::less, self::less_equal, self::greater, self::greater_equal => 9,
 			self::concatenate => 10,
 			self::shift_left, self::shift_right => 11,
 			self::add, self::subtract => 12,
-			self::multiply, self::divide, self::remainder => 13,
+			self::multiply, self::divide, self::remainder, self::true_divide, self::floor_divide, self::floor_remainder => 13,
 			self::power => 14,
 		};
 	}
 }
 
+/** Ordered links. Each interior operand belongs to its preceding link. */
+final class ast_comparison_chain extends ast_expression
+{
+	/** Prepared fact: at least one operand suspends in the enclosing coroutine. */
+	public bool $suspends = false;
+
+	/** @param list<ast_binary_expression> $links */
+	public function __construct(int $start, int $end, public readonly array $links)
+	{
+		parent::__construct($start, $end);
+		foreach ($links as $link) $link->attach($this);
+	}
+
+	public function settle_chain(): void
+	{
+		$this->settle_value(type_bool::instance(), null);
+	}
+}
+
 /** Owns operands of e.g. value < limit or ready && valid; inherited type readiness records successful admission. */
-final class ast_binary_expression extends ast_expression
+class ast_binary_expression extends ast_expression
 {
 	/** PROPERTIES */
 	/** Native owning left operand; lazy operators test its truthiness or presence before deciding whether to evaluate the RHS. */
@@ -113,16 +142,16 @@ final class ast_binary_expression extends ast_expression
 		$this->left = $left;
 		$this->right = $right;
 		$this->operator = $operator;
-		$left->attach($this);
+		if (!($this instanceof ast_continued_comparison)) $left->attach($this);
 		$right->attach($this);
 	}
 
 	/** METHODS */
-	/** Settles the approved result identity; no constant folding or duplicate prepared tree. */
+	/** Publish the result and conversions, with a folded value for integer constant declarations. */
 	public function settle_binary(type_definition $result, ?type_definition $execution = null,
-		int $left /** uint16 */ = value_conversion::identity, int $right /** uint16 */ = value_conversion::identity): void
+		int $left /** uint16 */ = value_conversion::identity, int $right /** uint16 */ = value_conversion::identity, ?int $folded /** ?int64 */ = null): void
 	{
-		$this->settle_value($result, null);
+		$this->settle_value($result, $folded);
 		$this->execution_type = $execution ?? $this->left->value_type();
 		$uses_payload = !$this->operator->logical() && !($this->execution_type instanceof carrier_type_definition);
 		$this->left_conversion = $left | ($uses_payload && $this->left->type_def() instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
@@ -142,6 +171,24 @@ final class ast_binary_expression extends ast_expression
 		$this->execution_type = null;
 		$this->left_conversion = value_conversion::identity;
 		$this->right_conversion = value_conversion::identity;
+	}
+}
+
+/** Its left operand is a non-owning link to the previous comparison's right operand. */
+final class ast_continued_comparison extends ast_binary_expression {}
+
+/** Strict indexed comparison whose bare RHS can bind to a declaration or denote a missing key. */
+final class ast_key_comparison extends ast_binary_expression
+{
+	public function settle_key_test(): void
+	{
+		$this->settle_value(type_bool::instance(), null);
+	}
+
+	/** A bound RHS takes the ordinary binary settlement path and has an execution type. */
+	public function tests_key(): bool
+	{
+		return $this->type_def !== null && $this->execution_type === null;
 	}
 }
 
@@ -170,10 +217,10 @@ final class ast_unary_expression extends ast_expression
 		$operand->attach($this);
 	}
 
-	/** No constant folding or duplicate prepared operand. */
-	public function settle_unary(type_definition $type): void
+	/** Only declaration folding supplies a known integer result. */
+	public function settle_unary(type_definition $type, ?int $folded /** ?int64 */ = null): void
 	{
-		$this->settle_value($type, null);
+		$this->settle_value($type, $folded);
 	}
 }
 
@@ -259,6 +306,27 @@ final class ast_isset_expression extends ast_expression
 	public function settle_presence(): void
 	{
 		$this->settle_value(type_bool::instance(), null);
+	}
+}
+
+/** A complete assignment RHS that consumes the value of a local update. */
+final class ast_update_expression extends ast_expression
+{
+	public function __construct(public readonly ast_update_statement $update)
+	{
+		parent::__construct($update->start, $update->end);
+		$update->attach($this);
+	}
+
+	public function settle_update(): void
+	{
+		$this->settle_value($this->update->local_def()->type_def(), null);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->update->reset_preparation();
 	}
 }
 

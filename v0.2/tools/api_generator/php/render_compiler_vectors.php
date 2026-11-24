@@ -104,7 +104,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $code .= strtr($template, $bindings);
         if (!$application) {
             $application = true;
-            $identity = "\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$element)\n\t{\n\t\tparent::__construct('vector<' . \$element->name . '>', \$element);\n\t\t\$this->native_name = 'scpp_vector_' . hash('sha256', \$element::class . ':' . \$element->name);\n\t}\n";
+            $identity = "\tuse concrete_async_task;\n\n\tprivate readonly string \$native_name;\n\n\tpublic function __construct(type_definition \$element)\n\t{\n\t\tparent::__construct('vector<' . \$element->name . '>', \$element);\n\t\t\$this->native_name = 'scpp_vector_' . hash('sha256', \$element->concrete_identity());\n\t}\n";
             $destination = concreteRecipe(vectorConcreteRecipe($vector))->destination_append ?? null;
             $destinationInterface = $destination === null ? '' : ', destination_append_type';
             $destinationMethod = '';
@@ -137,7 +137,10 @@ function compilerTraversalMethods(array $plan, string $value, string $key, bool 
     $arguments = $boxed ? "\$prefix . 'iteration_key_index, ' . \$prefix . 'iteration_key_text, ' . \$value" : "\$key . ', ' . \$value";
     $publish = $boxed ? " . ' && ((' . \$key . ' = ' . \$prefix . 'iteration_key_index < 0 ? scpp::mixed::from_string(' . \$prefix . 'iteration_key_text) : scpp::mixed::from_integer(' . \$prefix . 'iteration_key_index)), true)'" : '';
     $output = $constructed ? "\n\tpublic function iteration_output_type(): ?string { return \$this->cpp_type() . '::iteration_output'; }\n" : '';
-    return $output . strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
+    $keys = isset($plan['next_key_method']) ? strtr(readFile(__DIR__ . '/../templates/collections/compiler_key_iteration.php.tpl'), [
+        '@next_key@' => $plan['next_key_method'], '@current_value@' => $plan['current_value_method'],
+    ]) : '';
+    return $output . $keys . strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
         '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
         '@limit@' => $plan['limit_method'], '@next@' => $plan['next_method'],
         '@arguments@' => $arguments, '@publish@' => $publish,

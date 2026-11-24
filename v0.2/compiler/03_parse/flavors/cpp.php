@@ -35,7 +35,7 @@ final class Cpp_Grammar implements statement_grammar
 				elseif ($kind === token_kind::greater) {
 					$depth--;
 				}
-				elseif (!in_array($kind, [token_kind::identifier, token_kind::keyword, token_kind::comma, token_kind::integer], true)) {
+				elseif (!in_array($kind, [token_kind::identifier, token_kind::keyword, token_kind::comma, token_kind::integer, token_kind::scope], true)) {
 					return false;
 				}
 				$position++;

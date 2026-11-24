@@ -41,7 +41,7 @@ def revisions(work,flavor,sources,edits, *, unaffected_source=None, unaffected_r
     (work/(flavor+'-timings.json')).write_text(json.dumps(rows,indent=2)+'\n')
 
 
-def guard(work,flavor,label,source,error, *, retry_entry=False):
+def guard(work,flavor,label,source,error=None, *, retry_entry=False, expected_stdout=b'', exception_type='std::exception', exception_header='stdexcept'):
     app=work/(flavor+'-'+label);app.mkdir();out=work/(flavor+'-'+label+'-out')
     source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}));source_edit(app/('main.'+flavor),source)
     p=service(app,out)
@@ -50,5 +50,8 @@ def guard(work,flavor,label,source,error, *, retry_entry=False):
     assert 'error' not in got,got
     entry=out/'entry.cpp';text=raw_entry(entry.read_text())
     on_expected = 'tested_entry()' if retry_entry else '8'
-    entry.write_text('#include <stdexcept>\n#include <string_view>\n'+text+'\nint main() {try {tested_entry();} catch(const std::exception& e) {return std::string_view(e.what()) == '+json.dumps(error)+' ? '+on_expected+' : 91;} return 92;}\n')
-    measure(out,work/(flavor+'-'+label+'-native'),b'')
+    result = on_expected if error is None else f'std::string_view(e.what()) == {json.dumps(error)} ? {on_expected} : 91'
+    handler = f'catch(const {exception_type}& e) {{ (void)e; return {result}; }}'
+    entry.write_text(f'#include <{exception_header}>\n#include <string_view>\n' + text
+                     + '\nint main() {try {tested_entry();} ' + handler + ' return 92;}\n')
+    measure(out,work/(flavor+'-'+label+'-native'),expected_stdout)

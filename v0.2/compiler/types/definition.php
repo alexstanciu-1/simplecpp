@@ -20,6 +20,12 @@ final class initialization_transport
 	}
 }
 
+/** Presence can be observed directly without converting or copying the stored payload. */
+interface presence_test_type
+{
+	public function lower_cpp_presence(string $value): string;
+}
+
 /** Whole-value move assignment preserves source value semantics when a private source dies. */
 interface private_value_transfer_type
 {
@@ -123,6 +129,13 @@ interface iterable_type
 	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string;
 }
 
+/** Published traversal that can advance without materializing a value. */
+interface key_iterable_type extends iterable_type
+{
+	public function lower_cpp_iteration_next_key(string $receiver, string $output, string $prefix = ''): string;
+	public function lower_cpp_iteration_current_value(string $receiver): string;
+}
+
 /** Unary observations on a published collection. Native uint8. */
 enum collection_cardinality: int
 {
@@ -135,6 +148,14 @@ interface counted_collection_type
 {
 	public function cardinality_result(collection_cardinality $operation): type_definition;
 	public function lower_cpp_cardinality(collection_cardinality $operation, string $receiver): string;
+}
+
+/** Python membership uses the receiver's containment semantics for a prepared needle. */
+interface membership_type
+{
+	public function prepare_membership(ast_binary_expression $site): void;
+	/** @param array<string,bool> $headers */
+	public function lower_cpp_membership(ast_expression $needle, string $key, string $receiver, array &$headers): string;
 }
 
 /** Published key existence query, independent of payload representation or null state. */
@@ -195,7 +216,9 @@ interface index_write_type
 {
 	public function prepare_key(ast_expression $key): void;
 	public function write_type(): type_definition;
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string;
+	/** Null permits direct lowering. A staged RHS (including a bare await with no prelude) follows key selection. */
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value,
+		?Cpp_Adapters $adapters = null, ?string $rhs_steps = null): string;
 }
 
 /** Read/modify/write collections replace an approved element value without exposing an element reference. */
@@ -216,6 +239,28 @@ trait checked_indexed_mutation
 	}
 }
 
+/** Vectors, hashes and boxed collections normalize a key and replace through a runtime setter. */
+trait collection_keyed_store
+{
+	abstract public function write_type(): type_definition;
+	abstract public function lower_cpp_key(ast_expression $syntax, string $key): string;
+	abstract public function lower_cpp_write(string $receiver, string $key, string $value): string;
+
+	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string
+	{
+		return $this->lower_cpp_write($receiver, $this->lower_cpp_key($key, $index), $value) . ';';
+	}
+
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value,
+		?Cpp_Adapters $adapters = null, ?string $rhs_steps = null): string
+	{
+		$value = $this->write_type()->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
+		if ($rhs_steps === null) return $this->lower_cpp_replace($write->index, $receiver, $key, $value);
+		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; ' . $rhs_steps . ' '
+			. $this->lower_cpp_write($receiver, 'write_key', $value) . '; }';
+	}
+}
+
 /** Ordered stores snapshot the normalized key and converted value before invoking the runtime member. */
 trait ordered_keyed_store
 {
@@ -223,10 +268,10 @@ trait ordered_keyed_store
 	abstract public function lower_cpp_key(ast_expression $syntax, string $key): string;
 	abstract public function lower_cpp_write(string $receiver, string $key, string $value): string;
 
-	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null): string
+	public function lower_cpp_store(ast_index_assignment $write, string $receiver, string $key, string $value, ?Cpp_Adapters $adapters = null, ?string $rhs_steps = null): string
 	{
 		$value = $this->write_type()->lower_cpp_exact_argument($write->value, $write->conversion(), $value, $adapters);
-		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; const auto write_value = ' . $value . '; '
+		return '{ const auto write_key = ' . $this->lower_cpp_key($write->index, $key) . '; ' . ($rhs_steps === null ? '' : $rhs_steps . ' ') . 'const auto write_value = ' . $value . '; '
 			. $this->lower_cpp_write($receiver, 'write_key', 'write_value') . '; }';
 	}
 }
@@ -238,22 +283,33 @@ enum constant_dispatch
 	case enum_switch;
 	case byte_equality;
 
-	/** Return a duplicate key only for an admitted constant label of the subject's exact type. */
-	public function label_key(ast_expression $label): int|string|null
+	/** A receiver-dependent name is an expression, even when it resolves to a constant. */
+	private static function static_binding(ast_expression $label): ?name_binding
 	{
-		// An expression-qualified constant has a receiver to evaluate; a case label is static data.
 		if ($label instanceof ast_qualified_data || $label instanceof ast_called_type_name) return null;
-		$binding = $label instanceof ast_name_expression ? $label->declaration() : null;
-		return match ($this) {
-			self::enum_switch => $binding instanceof ast_enum_case ? $binding->short_name : null,
-			self::integer_switch => ($label instanceof ast_integer_expression || $binding instanceof ast_constant_declaration
-				|| $binding instanceof runtime_integer_constant) && is_int($label->constant()) ? $label->constant() : null,
-			self::byte_equality => self::bytes($binding instanceof ast_constant_declaration ? $binding->initializer : $label),
-		};
+		return $label instanceof ast_name_expression ? $label->declaration() : null;
 	}
 
-	private static function bytes(ast_expression $literal): ?string
+	public static function integer_label(ast_expression $label): ?int
 	{
+		if (!($label instanceof ast_integer_expression)) {
+			$binding = self::static_binding($label);
+			if (!($binding instanceof ast_constant_declaration || $binding instanceof runtime_integer_constant)) return null;
+		}
+		$value = $label->constant();
+		return is_int($value) ? $value : null;
+	}
+
+	public static function enum_case_name(ast_expression $label): ?string
+	{
+		$binding = self::static_binding($label);
+		return $binding instanceof ast_enum_case ? $binding->short_name : null;
+	}
+
+	public static function string_label_bytes(ast_expression $label): ?string
+	{
+		$binding = self::static_binding($label);
+		$literal = $binding instanceof ast_constant_declaration ? $binding->initializer : $label;
 		return $literal instanceof ast_string_expression ? $literal->bytes() : null;
 	}
 }
@@ -271,6 +327,39 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Canonical types match by identity. Callable contracts also compare their signature components. */
+	public function matches(type_definition $other): bool
+	{
+		return $this === $other;
+	}
+
+	/** Stable identity for concrete recipes, including resolved specialization arguments. */
+	public function concrete_identity(): string
+	{
+		return $this::class . ':' . $this->name;
+	}
+
+	/** A by-value parameter must own its storage until its coroutine frame releases it. */
+	public function supports_async_parameter(): bool
+	{
+		return $this instanceof application_collection_type || ($this !== type_void::instance() && type_registry::async_value($this));
+	}
+
+	/** Cache a binding only for an eligible canonical runtime value requested by a producer. */
+	public function async_task(): ?async_task_binding
+	{
+		static $bindings = [];
+		if (isset($bindings[$this::class])) return $bindings[$this::class];
+		if (!type_registry::HAS_ASYNC_FRAMES || !type_registry::async_value($this)) return null;
+		return $bindings[$this::class] = new async_task_binding($this->concrete_identity());
+	}
+
+	/** Exact label domain for a single constant selection. */
+	public function dispatch_label_type(): type_definition
+	{
+		return $this;
+	}
+
 	public function constant_dispatch(): ?constant_dispatch
 	{
 		return null;
@@ -557,6 +646,17 @@ abstract class type_definition
 		throw new \LogicException('Literal lowering is unavailable for type: ' . $this->name);
 	}
 
+	/** Initialize owned storage from a binding using its published copy contract or its source conversion rules. */
+	final public function prepare_local_initializer(ast_expression $value, conversion_context $context): int /** uint16 */
+	{
+		if ($value instanceof ast_name_expression && $value->local_binding() !== null && $value->type_def() === $this) {
+			$copy = $this->concrete_storage_support('copy_constructible');
+			if ($copy === true) return value_conversion::identity;
+			if ($copy === false) throw new diagnostic($value->source(), $value->byte_start(), 'Cannot copy a local of type ' . $this->name);
+		}
+		return $this->prepare_conversion($value, $context);
+	}
+
 	/** Select scalar work once, with carrier transport encoded independently in the prepared integer. */
 	final public function prepare_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
@@ -723,14 +823,15 @@ abstract class type_definition
 	protected static function independent_local_call(ast_expression $local, ast_expression $operand): bool
 	{
 		if (!($local instanceof ast_name_expression && $local->local_binding() instanceof ast_local_declaration
-			&& $operand instanceof ast_call_expression && $operand->cardinality === null && $operand->callable_binding() === null)) {
+			&& $operand instanceof ast_call_expression && $operand->has_direct_signature())) {
 			return false;
 		}
 		$function = $operand->function_def();
 		if (!($function instanceof ast_function_declaration) || $function->parent instanceof ast_record_declaration) {
 			return false;
 		}
-		foreach ($function->parameters as $index => $parameter) {
+		$parameters = $operand instanceof ast_named_call ? $operand->named->evaluation_parameters($function->parameters) : $function->parameters;
+		foreach ($parameters as $index => $parameter) {
 			$argument = $operand->arguments[$index] ?? $parameter->default_value;
 			if ($parameter->mode !== passing_mode::value || !$parameter->type_def()->cpp_trivial_value()
 				|| !self::stable_cpp_operand($argument) || !$argument->type_def()->cpp_trivial_value()) {

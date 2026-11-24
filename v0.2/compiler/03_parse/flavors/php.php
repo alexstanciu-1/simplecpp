@@ -16,7 +16,7 @@ final class Php_Grammar implements statement_grammar
 {
 	public function function_start(Parser $parser): bool
 	{
-		return $parser->cursor->keyword('function');
+		return $parser->cursor->keyword('function') && !$parser->cursor->next_is(token_kind::less);
 	}
 
 	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration
@@ -29,12 +29,12 @@ final class Php_Grammar implements statement_grammar
 	{
 		$cursor = $parser->cursor;
 		$start = $cursor->position();
-		$name = $cursor->name(token_kind::variable);
+		$name = $cursor->binding_name(token_kind::variable);
 		if ($parser->compound_operator() !== null) {
 			return $parser->assignment($start, $name, assignment_intent::existing_binding, $terminator);
 		}
 		if ($cursor->is(token_kind::assign)) {
-			if (!$collector->has_local($name)) {
+			if ($cursor->next_is(token_kind::ampersand) || !$collector->has_local($name)) {
 				return $parser->declaration($start, $name, null, $terminator);
 			}
 			return $parser->assignment($start, $name, assignment_intent::declare_or_assign, $terminator);

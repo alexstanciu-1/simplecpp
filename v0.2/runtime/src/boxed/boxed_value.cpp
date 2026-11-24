@@ -33,7 +33,18 @@ boxed_value<Family> boxed_value<Family>::container() {
     boxed_value<Family> r; r.value_ = std::make_shared<table>(); return r;
 }
 template<boxed_family Family>
-typename boxed_value<Family>::kind boxed_value<Family>::type() const noexcept { return static_cast<kind>(value_.index()); }
+boxed_value<Family> boxed_value<Family>::python_list() {
+    boxed_value r;
+    r.value_ = list_storage{std::make_shared<table>()};
+    return r;
+}
+template<boxed_family Family>
+std::shared_ptr<typename boxed_value<Family>::table>& boxed_value<Family>::writable_table_handle() {
+    if (auto* list = std::get_if<list_storage>(&value_)) return list->entries;
+    return std::get<std::shared_ptr<table>>(value_);
+}
+template<boxed_family Family>
+typename boxed_value<Family>::kind boxed_value<Family>::type() const noexcept { return std::holds_alternative<list_storage>(value_) ? kind::container : static_cast<kind>(value_.index()); }
 template<boxed_family Family>
 bool boxed_value<Family>::get_boolean() const {
     if (type() != kind::boolean) throw std::runtime_error("boxed_expected_boolean");
@@ -59,7 +70,7 @@ void boxed_value<Family>::clean() noexcept { value_ = std::monostate{}; }
 template<boxed_family Family>
 void boxed_value<Family>::clear() {
     if (type() != kind::container) throw std::runtime_error("boxed_expected_container");
-    auto& storage = std::get<std::shared_ptr<table>>(value_);
+    auto& storage = writable_table_handle();
     if constexpr (Family == boxed_family::mixed) {
         // Discarding a shared value needs a new empty table, not a clone of every old element.
         if (storage.use_count() > 1) { storage = std::make_shared<table>(); return; }
@@ -70,6 +81,7 @@ template<boxed_family Family>
 const typename boxed_value<Family>::table* boxed_value<Family>::read_table() const {
     if (type() == kind::null) return nullptr;
     if (type() != kind::container) throw std::runtime_error("boxed_expected_container");
+    if (const auto* list = std::get_if<list_storage>(&value_)) return list->entries.get();
     return std::get<std::shared_ptr<table>>(value_).get();
 }
 template<boxed_family Family>
@@ -79,19 +91,25 @@ template<class Operation> auto boxed_value<Family>::mutate(Operation operation) 
     std::shared_ptr<table> prepared;
     if constexpr (Family == boxed_family::mixed) {
         if (!current) prepared = std::make_shared<table>();
-        else if (std::get<std::shared_ptr<table>>(value_).use_count() > 1)
+        else if (writable_table_handle().use_count() > 1)
             prepared = std::make_shared<table>(*current);
     } else {
         if (!current) throw std::runtime_error("dynamic_requires_container");
         // Dynamic mutation retains the same table even when other bindings share it.
     }
-    table& target = prepared ? *prepared : *std::get<std::shared_ptr<table>>(value_);
+    table& target = prepared ? *prepared : *writable_table_handle();
+    auto publish = [&] {
+        if (prepared) {
+            if (current) writable_table_handle() = std::move(prepared);
+            else value_ = std::move(prepared);
+        }
+    };
     if constexpr (std::is_void_v<result>) {
         operation(target);
-        if (prepared) value_ = std::move(prepared);
+        publish();
     } else {
         auto value = operation(target);
-        if (prepared) value_ = std::move(prepared);
+        publish();
         return value;
     }
 }
@@ -178,6 +196,83 @@ bool boxed_value<Family>::iteration_next(std::int64_t& position, std::int64_t li
     const auto* t = read_table();
     if (!t) throw std::runtime_error("boxed_expected_container");
     return t->iteration_next(position, limit, value, key);
+}
+namespace {
+bool python_integer_equal(std::int64_t integer, double number) {
+    return number >= -0x1p63 && number < 0x1p63
+        && static_cast<std::int64_t>(number) == integer && static_cast<double>(integer) == number;
+}
+}
+
+template<boxed_family Family>
+bool boxed_value<Family>::python_equal(const boxed_value& other, unsigned depth) const {
+    const auto a = type(), b = other.type();
+    if (a == kind::integer || a == kind::boolean) {
+        const auto integer = a == kind::integer ? get_integer() : std::int64_t(get_boolean());
+        if (b == kind::floating) return python_integer_equal(integer, other.get_floating());
+        if (b == kind::boolean) return integer == other.get_boolean();
+        return b == kind::integer && integer == other.get_integer();
+    }
+    if (a == kind::floating) {
+        if (b == kind::integer || b == kind::boolean) return other.python_equal(*this, depth);
+        return b == kind::floating && get_floating() == other.get_floating();
+    }
+    if (a != b) return false;
+    if (a == kind::null) return true;
+    if (a == kind::string) return *std::get<std::shared_ptr<const std::string>>(value_)
+                               == *std::get<std::shared_ptr<const std::string>>(other.value_);
+    const auto* lhs = read_table();
+    const auto* rhs = other.read_table();
+    const bool list = std::holds_alternative<list_storage>(value_);
+    if (list != std::holds_alternative<list_storage>(other.value_) || lhs->size() != rhs->size()) return false;
+    if (lhs == rhs) return true;
+    if (depth >= 256) throw std::runtime_error("Python recursive container comparison");
+    std::int64_t pos = 0, peer_pos = 0;
+    boxed_value item, peer;
+    std::uint32_t key;
+    while (iteration_next(pos, iteration_limit(), item, &key)) {
+        if (list) {
+            if (!other.iteration_next(peer_pos, other.iteration_limit(), peer) || !item.python_equal(peer, depth + 1)) return false;
+        } else {
+            const auto* value = packed_key::is_string(key) ? rhs->find(packed_string_pool::instance().resolve(key))
+                                                            : rhs->find(static_cast<std::int64_t>(key));
+            if (!value || !item.python_equal(*value, depth + 1)) return false;
+        }
+    }
+    return true;
+}
+
+template<boxed_family Family>
+bool boxed_value<Family>::python_contains(const boxed_value& needle) const {
+    if (type() == kind::string && needle.type() == kind::string) {
+        const auto& text = *std::get<std::shared_ptr<const std::string>>(value_);
+        return text.find(*std::get<std::shared_ptr<const std::string>>(needle.value_)) != std::string::npos;
+    }
+    if (type() != kind::container) throw std::runtime_error("TypeError");
+    if (std::holds_alternative<list_storage>(value_)) {
+        boxed_value item;
+        std::int64_t position = 0;
+        const auto limit = iteration_limit();
+        while (iteration_next(position, limit, item)) if (needle.python_equal(item, 0)) return true;
+        return false;
+    }
+    switch (needle.type()) {
+        case kind::string: return contains(*std::get<std::shared_ptr<const std::string>>(needle.value_));
+        case kind::boolean: return contains(std::int64_t(needle.get_boolean()));
+        case kind::integer: {
+            const auto key = needle.get_integer();
+            return key >= 0 && key <= packed_key::max_integer && contains(key);
+        }
+        case kind::floating: {
+            const auto number = needle.get_floating();
+            if (!(number >= 0 && number <= packed_key::max_integer)) return false;
+            const auto key = static_cast<std::int64_t>(number);
+            return static_cast<double>(key) == number && contains(key);
+        }
+        case kind::null: return false;
+        case kind::container: throw std::runtime_error("TypeError");
+    }
+    throw std::logic_error("invalid boxed kind");
 }
 template class boxed_value<boxed_family::mixed>;
 template class boxed_value<boxed_family::dynamic>;

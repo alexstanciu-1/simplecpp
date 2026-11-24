@@ -116,6 +116,34 @@ The following are not native-reference bindable in the current safe subset:
 
 ## v0.2 bounded local aliases and reference returns
 
+The PHP-flavor bootstrap accepts `$alias =& $value` and
+`$alias T =& $value` in ordinary statement blocks. The target must resolve
+to a previously initialized whole local in the same or an enclosing block,
+or to a writable reference parameter of the enclosing free function or final non-overriding instance method.
+Alias chains resolve to the original binding. A written type must match the storage
+exactly. The alias name must be new in the visible scope and is usable only
+inside its declaring block. Ordinary assignment through it writes the original
+slot. Binding creates no runtime storage and does not extend the target's lifetime.
+By-value parameters, properties, elements, temporaries, lambda capture and generator
+aliases are outside this bootstrap slice.
+
+A free function declared `function &select(T &$slot): T` and a final
+non-overriding instance method can return a reference. Exactly one parameter
+must be writable by reference and its type must match the result. Each return
+must select that parameter, a visible alias, or a call result rooted in it.
+The receiver selects the method. The writable argument supplies the returned slot.
+
+An ordinary assignment copies the result. In `$alias =& select($value)`, the
+call runs once and the new name binds to the caller's slot after it succeeds.
+Directly called inferred PHP closures can declare the same result using
+`fn&(int &$slot):int => $slot` or `function &(int &$slot):int { return $slot; }`.
+A block can return through a local alias of that parameter. Captures and locals
+cannot supply the result. Free functions, final non-overriding instance methods,
+and concrete closures can forward the caller's slot.
+Typed callbacks and owned callables can forward the same slot under an explicit reference-result
+signature. Preparation rejects cycles containing reference returns, including indirect calls
+through compatible targets and by-value intermediaries. Returns across finally remain deferred.
+
 The `compiler/my-try` implementation accepts both inferred and explicitly typed
 local bindings:
 

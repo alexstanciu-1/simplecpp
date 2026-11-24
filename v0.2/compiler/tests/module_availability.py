@@ -9,6 +9,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='scpp-availability-') as directory:
     work = Path(directory)
+    (work / 'tools').symlink_to(ROOT / 'tools', target_is_directory=True)
     compiler = work / 'compiler'
     shutil.copytree(ROOT / 'compiler', compiler, ignore=shutil.ignore_patterns('tests', '__pycache__'))
     meta = json.loads((ROOT / 'runtime/metadata/runtime.json').read_text())

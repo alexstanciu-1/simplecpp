@@ -35,7 +35,7 @@ function rejects(Closure $action, string $message): void
 }
 
 $fixtures = [];
-foreach (flavor::cases() as $flavor) {
+foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$decl = static fn(string $type, string $name, string $value) => declaration($flavor, $type, $name, $value);
 	$var = static fn(string $name) => ($flavor === flavor::php ? '$' : '') . $name;
 	$prepare = static fn(string $text) => (new Source_Frontend())->prepare(new source_file('vectors', $text, $flavor), new entry_target(31));
@@ -72,7 +72,7 @@ foreach (flavor::cases() as $flavor) {
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[0] = "bad";', 'conversion'],
 		[$decl('vector<string>', 'strings', '[]') . "$s" . '[0] = 1;', 'conversion'],
 		[$decl('vector<int>', 'values', '[]') . $decl('vector<string>', 'copy', $v), 'conversion'],
-		['echo [];', 'explicitly typed local initializer'],
+		['echo [];', $flavor === flavor::cpp ? 'explicitly typed local initializer' : 'Echo currently supports'],
 	] as [$text, $message]) {
 		rejects(fn() => $prepare($text . 'return 8;'), $message);
 	}

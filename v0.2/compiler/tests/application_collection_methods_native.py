@@ -7,13 +7,59 @@ from pathlib import Path
 from app_namespace_native import artifacts, invoke, service
 from application_vectors_native import measure
 from classes_native import fixture
+from collection_goal_native import revisions
 from extends_native import source_edit
+
+
+def typed_local(flavor, name, type_name, value):
+    return {
+        'php': '$' + f'{name} {type_name} = {value};',
+        'cpp': f'{type_name} {name} = {value};',
+        'js': f'let {name}:{type_name} = {value};',
+    }[flavor]
+
+
+def typed_collection_donor(work, flavor):
+    """Exercise the typed equivalents of the donor's literal and indexed operations."""
+    s = fixture(flavor)
+    access = s['access']
+    v = s['v']
+    values, counts, ids = (v + name for name in ('values', 'counts', 'ids'))
+    vector_type = 'vector<int>'
+    vector = s['function'](
+        'initialValues', vector_type, [],
+        typed_local(flavor, 'values', vector_type, '[1, 2]') + f'return {values};',
+    )
+    main = (
+        typed_local(flavor, 'emptyValues', vector_type, '[]')
+        + typed_local(flavor, 'values', vector_type, 'initialValues()')
+        + f'{values}[]=3;{values}[0]=9;'
+        + f'echo count({v}emptyValues),":",{values}[0],":",{values}[1],":",{values}[2],":";'
+        + typed_local(flavor, 'counts', 'hash<int,string>', '["1"=>0,"01"=>2]')
+        + typed_local(flavor, 'ids', 'hash<string,int>', '[1=>"int"]')
+        + f'if (!hash_contains({counts},"1") || {counts}["1"]!==0) {{return 2;}}'
+        + f'if (!{counts}{access}remove("1") || {counts}{access}remove("1")) {{return 3;}}'
+        + f'if (hash_contains({counts},"1") || count({counts})!==1) {{return 4;}}'
+        + f'echo {counts}["01"],":",{ids}[1];return 8;'
+    )
+    expected = b'0:9:2:3:2:int'
+    work.mkdir(exist_ok=True)
+    revisions(work, flavor, dict(main=main, vector=vector), [
+        (None, None, expected),
+        (None, None, expected),
+        ('vector', vector.replace('[1, 2]', '[1, 4]'), b'0:9:4:3:2:int'),
+        ('main', main.replace(f'{counts}["01"]', f'{counts}[1]'), 'Hash key requires string'),
+        ('main', main.replace(f'{ids}[1]', f'{ids}["1"]'), 'Hash key requires int64'),
+        ('vector', None, None),
+        ('main', main, None),
+        ('vector', vector, expected),
+    ])
 
 
 def prove(work,flavor):
     s=fixture(flavor);v,a=s['v'],s['access']
     def decl(name,t,value):
-        return {'php':f'${name} {t} = {value};','cpp':f'{t} {name} = {value};','js':f'let {name}:{t} = {value};'}[flavor]
+        return typed_local(flavor, name, t, value)
     ctor={'php':'public function __construct(int $x) {$this->x=$x;}', 'cpp':'Point(int x) {this->x=x;}', 'js':'constructor(x:int) {this.x=x;}'}[flavor]
     point={'php':'$p Point(7);','cpp':'Point p(7);','js':'let p:Point(7);'}[flavor]
     types=s['record']('Point',s['field']('x','int','0')+s['field']('text','string','"owned heap-backed payload"')+ctor)
@@ -68,4 +114,6 @@ if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path);args=p.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-app-methods-') as tmp:
         work=(args.output or Path(tmp)).resolve();work.mkdir(exist_ok=True)
-        for flavor in ['php','cpp','js']:prove(work,flavor)
+        for flavor in ['php','cpp','js']:
+            typed_collection_donor(work / 'typed-donor', flavor)
+            prove(work,flavor)
