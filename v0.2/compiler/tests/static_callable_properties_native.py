@@ -1,11 +1,12 @@
 """Static callable properties share one slot across files and snapshot the target before arguments."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from collection_goal_native import guard, revisions
 
 
-def prove(work):
+def prove(work, quick=False):
     holder = """
         class Handler {
             public static function<int(int)> $run;
@@ -29,6 +30,16 @@ def prove(work):
         }
     """
     trace = b'7:5:12'
+    if quick:
+        source = payload + slot + holder + derived + reader + main.replace(
+            'return 8;', 'echo ":",Derived::inherited();return 8;')
+        borrowed = source.replace('fn($n)=>$n+$offset',
+                                  'function(int $n) use (&$offset):int {return $n+$offset;}')
+        revisions(work, 'php', dict(main=borrowed, writer=writer), [
+            (None, None, 'cannot erase a borrowed environment'),
+            ('main', source, trace + b':12'),
+        ])
+        return
     revisions(work, 'php', dict(main=main, holder=holder, writer=writer, reader=reader, slot=slot, payload=payload, derived=derived), [
         (None, None, trace), (None, None, trace),
         ('holder', holder.replace('fn($n)=>$n+$offset',
@@ -52,5 +63,8 @@ def prove(work):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--quick', action='store_true')
+    args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-static-callable-properties-') as directory:
-        prove(Path(directory))
+        prove(Path(directory), args.quick)

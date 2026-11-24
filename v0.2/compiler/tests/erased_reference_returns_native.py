@@ -1,4 +1,5 @@
 """Reference-result origin survives erasure, replacement and signature edits."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -7,7 +8,7 @@ from application_vectors_native import measure
 from collection_goal_native import revisions
 
 
-def prove(work):
+def prove(work, quick=False):
     helper = 'function &pick(int &$x):int {echo "P";return $x;}'
     consumer = """
         function &relay(callback<int&,int&> $op,int &$n):int {return $op($n);}
@@ -49,6 +50,14 @@ def prove(work):
     """
     spare = 'function spare():void {$op=fn(int $n):int=>root($n);}'
     mismatch = 'Callback target signature mismatch'
+    if quick:
+        source = helper + consumer + main
+        revisions(work, 'php', dict(main=helper + consumer + named_cycle), [
+            (None, None, 'Recursive reference return'),
+            ('main', source.replace('&pick', 'pick', 1), mismatch),
+            ('main', source, trace),
+        ])
+        return
     revisions(work, 'php', dict(main=main, helper=helper, consumer=consumer), [
         (None, None, trace), (None, None, trace),
         ('helper', helper.replace('&pick', 'pick'), mismatch),
@@ -96,6 +105,10 @@ def mixed_consumers(work):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--quick', action='store_true')
+    args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-erased-refs-') as directory:
-        prove(Path(directory))
-        mixed_consumers(Path(directory))
+        prove(Path(directory), args.quick)
+        if not args.quick:
+            mixed_consumers(Path(directory))

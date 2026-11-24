@@ -1,11 +1,12 @@
 """Owned callable method contracts, interface and base dispatch, and escaping snapshots."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from collection_goal_native import revisions
 
 
-def prove(work):
+def prove(work, quick=False):
     api = 'interface Mapper {public function wrap(function<int(int)> $op):function<int(int)>;}'
     base = """
         class BaseMapper implements Mapper {
@@ -34,6 +35,15 @@ def prove(work):
     """
     trace = b'16:19:5'
     mismatch = 'Override signature must match exactly'
+    if quick:
+        source = api + base + child + main
+        revisions(work, 'php', dict(main=source.replace('int(int)> $baseOp', 'int(string)> $baseOp')), [
+            (None, None, mismatch),
+            ('main', source.replace('fn($n)=>$n+$offset', 'fn($n)=>$n+$this->offset'),
+             'cannot erase a borrowed environment'),
+            ('main', source, trace),
+        ])
+        return
     revisions(work, 'php', dict(main=main, api=api, base=base, child=child), [
         (None, None, trace), (None, None, trace),
         ('base', base.replace('function<int(int)> $baseOp', 'function<int(string)> $baseOp'), mismatch),
@@ -46,5 +56,8 @@ def prove(work):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--quick', action='store_true')
+    args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-instance-owned-callables-') as directory:
-        prove(Path(directory))
+        prove(Path(directory), args.quick)

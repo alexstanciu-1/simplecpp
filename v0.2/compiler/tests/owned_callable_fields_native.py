@@ -1,11 +1,12 @@
 """Owned callable instance fields select their target before argument evaluation."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from collection_goal_native import guard, revisions
 
 
-def prove(work):
+def prove(work, quick=False):
     holder = """
         class Handler {
             public function<int(int)> $run;
@@ -29,6 +30,15 @@ def prove(work):
     """
     slot = 'struct Slot {public function<int()> $read;}'
     trace = b'6:7:S5:12:102'
+    if quick:
+        source = payload + slot + holder + reader + main
+        borrowed = source.replace('fn($n)=>$n+$offset',
+                                  'function(int $n) use (&$offset):int {return $n+$offset;}')
+        revisions(work, 'php', dict(main=borrowed), [
+            (None, None, 'cannot erase a borrowed environment'),
+            ('main', source, trace),
+        ])
+        return
     revisions(work, 'php', dict(main=main, holder=holder, payload=payload, reader=reader, slot=slot), [
         (None, None, trace), (None, None, trace),
         ('main', main.replace('fn($n)=>$n+$offset', 'function(int $n) use (&$offset):int {return $n+$offset;}'),
@@ -53,5 +63,8 @@ def prove(work):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--quick', action='store_true')
+    args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-owned-callable-fields-') as directory:
-        prove(Path(directory))
+        prove(Path(directory), args.quick)

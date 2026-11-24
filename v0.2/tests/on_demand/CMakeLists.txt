@@ -1,5 +1,7 @@
 # Register exhaustive proofs only in builds that explicitly request them.
 set(proofs
+  static_callable_properties erased_reference_returns owned_callable_fields
+  static_owned_callables instance_owned_callables
   boxed_scalars callable_collections callable_reference_inputs
   staged_ownership source_loader_callbacks
   runtime_operand_projection undefined_key collection_bootstrap
