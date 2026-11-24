@@ -1,11 +1,12 @@
 """Owned callable elements retain value semantics across indexed calls and incremental builds."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from collection_goal_native import guard, revisions
 
 
-def prove(work):
+def prove(work, quick=False):
     producer = """
         function makeOps(int $n):vector<function<int(int)>> {
             $ops vector<function<int(int)>> = [fn($x)=>$x+$n];return $ops;
@@ -37,6 +38,14 @@ def prove(work):
     """
     trace = b'5:5:12:5:K6:22:6K:2'
     borrow = 'function(int $x) use (&$n):int {return $x+$n;}'
+    if quick:
+        source = producer + consumer + main
+        revisions(work, 'php', dict(main=source), [
+            (None, None, trace),
+            ('main', source.replace('fn($x)=>$x+$n', borrow), 'cannot erase a borrowed environment'),
+            ('main', producer + '$ops=makeOps(4);echo $ops[0](2);return 8;', b'6'),
+        ])
+        return
     revisions(work, 'php', dict(main=main, producer=producer, consumer=consumer), [
         (None, None, trace), (None, None, trace),
         ('main', """
@@ -77,5 +86,8 @@ def prove(work):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--quick', action='store_true')
+    args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-callable-collections-') as directory:
-        prove(Path(directory))
+        prove(Path(directory), args.quick)

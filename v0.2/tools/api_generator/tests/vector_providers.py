@@ -21,7 +21,7 @@ def run(args, expected=0):
     return result.stdout, (time.perf_counter() - start) * 1000
 
 
-def proof(work):
+def proof(work, quick=False):
     work.mkdir(parents=True, exist_ok=True)
     metadata = json.loads((ROOT / 'runtime/metadata/runtime.json').read_text())
     publication = json.loads((ROOT / 'runtime/metadata/publication.json').read_text())
@@ -29,6 +29,10 @@ def proof(work):
     facts = ROOT / 'build/clang/native-layout/facts.json'
     context = facts.with_name('context.json')
     publication.pop('mt_segments', None)  # This proof also publishes without vectors.
+    if quick:
+        for family in ('hashes', 'boxed', 'async_frames'):
+            publication.pop(family, None)
+        publication['string']['functions'] = ['explode', 'implode']
     generator = ROOT / 'tools/api_generator/generate.php'
     mp, pp, output = work / 'metadata.json', work / 'publication.json', work / 'runtime'
 
@@ -74,26 +78,27 @@ def proof(work):
     assert baseline['submodules']['nodes']['core.vectors']['requires'] == ['core.scalars', 'core.string']
     assert '#include <scpp/numeric.hpp>' not in (output / 'public/scpp/vectors.hpp').read_text()
 
-    reduced = copy.deepcopy(metadata)
-    del reduced['vector']['transfer_assignment']
-    mp.write_text(json.dumps(reduced))
-    run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
-    assert 'private_value_transfer_type' not in (compiler / 'types/vectors.php').read_text()
-    assert b'private_value_transfer_type' in compiler_before['vectors.php']
+    if not quick:
+        reduced = copy.deepcopy(metadata)
+        del reduced['vector']['transfer_assignment']
+        mp.write_text(json.dumps(reduced))
+        run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
+        assert 'private_value_transfer_type' not in (compiler / 'types/vectors.php').read_text()
+        assert b'private_value_transfer_type' in compiler_before['vectors.php']
 
-    reduced = copy.deepcopy(metadata)
-    del reduced['vector']['reserve']
-    without = emit(reduced, publication)
-    assert all('reserve' not in [m['name'] for m in v['methods']] for v in without['vectors'])
-    assert 'void reserve(' not in (output / 'public/scpp/vectors.hpp').read_text()
-    run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
-    assert "'reserve' =>" not in (compiler/'types/vectors.php').read_text()
-    emit(metadata, publication)
-    run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
-    assert snapshot() == original and "'reserve' =>" in (compiler/'types/vectors.php').read_text()
+        reduced = copy.deepcopy(metadata)
+        del reduced['vector']['reserve']
+        without = emit(reduced, publication)
+        assert all('reserve' not in [m['name'] for m in v['methods']] for v in without['vectors'])
+        assert 'void reserve(' not in (output / 'public/scpp/vectors.hpp').read_text()
+        run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
+        assert "'reserve' =>" not in (compiler/'types/vectors.php').read_text()
+        emit(metadata, publication)
+        run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
+        assert snapshot() == original and "'reserve' =>" in (compiler/'types/vectors.php').read_text()
 
     # Invalid provider/header and effective cycles fail before changing a successful publication.
-    for kind in ('missing', 'legacy_header', 'cycle', 'unpublished', 'duplicate'):
+    for kind in (('cycle',) if quick else ('missing', 'legacy_header', 'cycle', 'unpublished', 'duplicate')):
         m, p = copy.deepcopy(metadata), copy.deepcopy(publication)
         if kind == 'missing': m['vector']['provider'] = 'missing'
         if kind == 'legacy_header': p['vectors']['header'] = 'scpp/wrong.hpp'
@@ -126,19 +131,20 @@ def proof(work):
     emit(metadata, publication)
     assert snapshot() == original
 
-    # Element-specific dependencies: an int-only vector needs no string or optional numeric provider.
-    minimal = copy.deepcopy(no_vectors)
-    minimal.pop('hashes')
-    minimal.pop('carriers')
-    minimal.pop('string')
-    minimal.pop('boxed')
-    minimal['vectors'] = {'specializations': [publication['vectors']['specializations'][0]]}
-    narrow = emit(metadata, minimal)
-    assert narrow['submodules']['nodes']['core.vectors']['requires'] == ['core.scalars']
-    assert 'vector_string' not in narrow['submodules']['type_exports']
+    if not quick:
+        # Element-specific dependencies: an int-only vector needs no string or optional numeric provider.
+        minimal = copy.deepcopy(no_vectors)
+        minimal.pop('hashes')
+        minimal.pop('carriers')
+        minimal.pop('string')
+        minimal.pop('boxed')
+        minimal['vectors'] = {'specializations': [publication['vectors']['specializations'][0]]}
+        narrow = emit(metadata, minimal)
+        assert narrow['submodules']['nodes']['core.vectors']['requires'] == ['core.scalars']
+        assert 'vector_string' not in narrow['submodules']['type_exports']
 
     report = {}
-    for variant in ('default', 'relocated', 'shared_string'):
+    for variant in (('relocated',) if quick else ('default', 'relocated', 'shared_string')):
         m = copy.deepcopy(metadata)
         if variant == 'relocated': m['submodules']['core.vectors']['header'] = 'scpp/collections/list.hpp'
         if variant == 'shared_string': m['vector']['provider'] = 'core.string'
@@ -184,6 +190,12 @@ int main() {{
         rejected = work / 'rejected.cpp'
         rejected.write_text(f'#include <{header}>\nvoid f() {{ scpp::vector_int64 v; v.append(1.5); }}\n')
         run([*flags, '-fsyntax-only', rejected], 1)
+        if quick:
+            exe = work / 'consumer'
+            run([*flags, '-O0', '-I' + str(ROOT / 'runtime/src/numeric'), '-I' + str(ROOT / 'runtime/src/sequence'),
+                 '-I' + str(ROOT / 'runtime/src/ownership'), source, output / 'src/runtime.cpp', '-fuse-ld=mold', '-o', exe])
+            run([exe])
+            continue
         runtime_object = work / 'runtime.o'
         run([*flags, '-I' + str(ROOT / 'runtime/src/numeric'), '-I' + str(ROOT / 'runtime/src/sequence'), '-I' + str(ROOT / 'runtime/src/ownership'),
              '-c', output / 'src/runtime.cpp', '-o', runtime_object])
@@ -204,9 +216,10 @@ int main() {{
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     if args.output:
-        proof(args.output.resolve())
+        proof(args.output.resolve(), args.quick)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-vector-providers-') as directory:
-            proof(Path(directory))
+            proof(Path(directory), args.quick)

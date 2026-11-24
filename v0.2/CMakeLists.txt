@@ -313,7 +313,8 @@ if(BUILD_TESTING)
   add_test(NAME compiler_carrier_values COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_values.php)
   scpp_fixture_test(carrier_values php)
   add_test(NAME compiler_boxed_scalars COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_scalars.php)
-  add_test(NAME compiler_boxed_scalars_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_scalars_native.py)
+  add_test(NAME compiler_boxed_scalars_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture boxed_scalars.php --cases php-mixed php-dynamic-mutating php-mixed-bad-pair php-container-incremental-1)
   add_test(NAME compiler_hash_operations COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_operations.php)
   scpp_fixture_test(hash_operations php php-missing)
   add_test(NAME compiler_hash_types COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_types.php)
@@ -676,9 +677,9 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_erased_reference_returns_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_closure_reference_returns_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/closure_reference_returns_native.py)
   set_tests_properties(compiler_closure_reference_returns_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
-  add_test(NAME compiler_callable_reference_inputs_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/callable_reference_inputs_native.py)
+  add_test(NAME compiler_callable_reference_inputs_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/callable_reference_inputs_native.py --quick)
   set_tests_properties(compiler_callable_reference_inputs_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
-  add_test(NAME compiler_callable_collections_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/callable_collections_native.py)
+  add_test(NAME compiler_callable_collections_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/callable_collections_native.py --quick)
   set_tests_properties(compiler_callable_collections_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_signature_dependency_visitor COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/signature_dependency_visitor.php)
   add_test(NAME compiler_nullable_string_fields_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/nullable_string_fields_native.py)
@@ -761,7 +762,7 @@ if(BUILD_TESTING)
   add_test(NAME carrier_provider_exports COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/carrier_providers.py)
   add_test(NAME vector_provider_exports COMMAND ${Python3_EXECUTABLE} -B
-    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py)
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py --quick)
   add_test(NAME runtime_submodule_providers COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/submodules.py --quick)
   add_test(NAME numeric_contract COMMAND ${PHP_EXECUTABLE}
@@ -774,7 +775,7 @@ if(BUILD_TESTING)
     --source ${CMAKE_CURRENT_SOURCE_DIR}
     --work ${CMAKE_CURRENT_BINARY_DIR}/generator-parity)
   add_test(NAME runtime_family_contract COMMAND ${Python3_EXECUTABLE} -B
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/runtime_parity.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/runtime_parity.py --quick
     --generator ${api_tooling} --facts ${native_facts} --context ${native_context}
     --work ${CMAKE_CURRENT_BINARY_DIR}/runtime-family-contract)
   add_test(NAME scalar_contract COMMAND ${Python3_EXECUTABLE} -B

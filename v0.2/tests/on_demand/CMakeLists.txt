@@ -1,5 +1,6 @@
 # Register exhaustive proofs only in builds that explicitly request them.
 set(proofs
+  boxed_scalars callable_collections callable_reference_inputs
   staged_ownership source_loader_callbacks
   runtime_operand_projection undefined_key collection_bootstrap
   input_records incremental_executable weak shared_references reference_parameters
@@ -135,3 +136,11 @@ add_test(NAME scalar_contract_full COMMAND ${Python3_EXECUTABLE} -B
   --work ${CMAKE_CURRENT_BINARY_DIR}/scalar-contract-full --emit
   --cxx ${CMAKE_CXX_COMPILER} --flag=-stdlib=libc++)
 set_tests_properties(runtime_submodule_providers_full scalar_contract_full PROPERTIES LABELS on_demand)
+
+add_test(NAME runtime_family_contract_full COMMAND ${Python3_EXECUTABLE} -B
+  ${PROJECT_SOURCE_DIR}/tests/generator_parity/runtime_parity.py
+  --generator ${api_tooling} --facts ${native_facts} --context ${native_context}
+  --work ${CMAKE_CURRENT_BINARY_DIR}/runtime-family-contract-full)
+add_test(NAME vector_provider_exports_full COMMAND ${Python3_EXECUTABLE} -B
+  ${PROJECT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py)
+set_tests_properties(runtime_family_contract_full vector_provider_exports_full PROPERTIES LABELS on_demand)
