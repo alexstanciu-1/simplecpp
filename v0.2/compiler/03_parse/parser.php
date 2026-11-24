@@ -1039,7 +1039,7 @@ final class Parser
 	}
 
 	/** Build immutable ordered argument chains without an intermediate array; commas belong to the containing type. */
-	private function type_reference(string $argument_of = '', bool $allow_void = false, bool $parameter = false, bool $allow_union = false, bool $callable_input = false): ast_type_reference
+	private function type_reference(string $argument_of = '', bool $allow_void = false, bool $parameter = false, bool $allow_union = false): ast_type_reference
 	{
 		$start = $this->cursor->position();
 		$child = null;
@@ -1071,13 +1071,13 @@ final class Parser
 			$first = new ast_type_reference($start, $end, $word, $child, $next);
 			return new ast_compound_type_reference($start, $next->end, $separator, $first);
 		}
-		$reference = $callable_input && $this->cursor->is(token_kind::ampersand);
+		$reference = ($argument_of === 'callback' || $argument_of === 'function') && $this->cursor->is(token_kind::ampersand);
 		if ($reference) $end = $this->cursor->take(token_kind::ampersand, '&') + 1;
 		$next = null;
 		if ($argument_of === 'function') {
 			$this->cursor->take(token_kind::lparen, '( after callable result type');
 			// Inputs reuse the comma-separated callback component grammar.
-			if (!$this->cursor->is(token_kind::rparen)) $next = $this->type_reference('callback', callable_input: true);
+			if (!$this->cursor->is(token_kind::rparen)) $next = $this->type_reference('callback');
 			$this->cursor->take(token_kind::rparen, ') after callable inputs');
 		} elseif ($argument_of !== '' && in_array($argument_of, type_registry::EXTENT_FAMILIES, true)) {
 			$this->cursor->take(token_kind::comma, ", before $argument_of extent");
@@ -1091,9 +1091,9 @@ final class Parser
 			}
 		} elseif ($argument_of !== '' && $this->cursor->is(token_kind::comma)) {
 			$this->cursor->take(token_kind::comma, ',');
-			$next = $this->type_reference($argument_of, true, callable_input: $argument_of === 'callback');
+			$next = $this->type_reference($argument_of, true);
 		}
-		return $reference ? new ast_reference_input($start, $end, $word, $child, $next) : new ast_type_reference($start, $end, $word, $child, $next);
+		return $reference ? new ast_callable_reference_component($start, $end, $word, $child, $next) : new ast_type_reference($start, $end, $word, $child, $next);
 	}
 
 	/** Parse ordered comma-separated echo operands. */

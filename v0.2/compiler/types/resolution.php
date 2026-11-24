@@ -150,11 +150,18 @@ final class Type_Resolution
 			if (!self::callback_component($type)) {
 				throw new diagnostic($part->source(), $part->byte_start(), 'Unsupported callback signature component: ' . $part->spelling());
 			}
-			if ($part instanceof ast_reference_input) $modes[count($types) - 1] = passing_mode::reference;
+			if ($types !== [] && $part instanceof ast_callable_reference_component) $modes[count($types) - 1] = passing_mode::reference;
 			$types[] = $type;
 		}
 		$result = array_shift($types);
-		return new callback_type_definition($result, $types, $modes);
+		$origin = null;
+		if ($syntax->first_child instanceof ast_callable_reference_component) {
+			$origin = array_key_first($modes);
+			if (count($modes) !== 1 || $types[$origin] !== $result) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Reference return requires exactly one writable parameter of the return type');
+			}
+		}
+		return new callback_type_definition($result, $types, $modes, $origin);
 	}
 
 	/** Inline values and intersection projection are outside the fixed by-value callback ABI. */

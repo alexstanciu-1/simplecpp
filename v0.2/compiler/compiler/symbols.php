@@ -235,7 +235,7 @@ final class Symbol_Publication implements declaration_sink
 		$signature = $type->name . '<';
 		$separator = '';
 		for ($part = $type->first_child; $part !== null; $part = $part->next_sibling) {
-			$signature .= $separator . self::signature_type($part) . ($part instanceof ast_reference_input ? '&' : '');
+			$signature .= $separator . self::signature_type($part) . ($part instanceof ast_callable_reference_component ? '&' : '');
 			$separator = ',';
 		}
 		return $signature . '>';

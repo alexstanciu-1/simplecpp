@@ -261,7 +261,13 @@ function, invoke the parameter with ordinary call syntax (`$op(value)` in PHP,
 parameter. A trailing `&` marks a mutable reference input, as in
 `callback<void,int&>`. It uses the direct-call rules for exact writable storage,
 aliasing and invalidation of caller value facts. Value inputs use ordinary
-conversions. Invocation follows the usual evaluation and exception contracts.
+conversions. A result marker in `callback<R&,Args...>` or `function<R&(Args...)>`
+makes the result a writable alias of the one reference input, whose type must be
+exactly `R`. The target must declare the same result mode and origin. In PHP,
+`$a =& $op($x)` binds to the caller's slot after a successful invocation, while
+`$a = $op($x)` copies the value. A stored callable may be reset or replaced while
+that alias remains live. The existing capture and ownership rules apply.
+Invocation follows the usual evaluation and exception contracts.
 
 The C++ backend passes a typed native function pointer. Instance method
 references and persistent callback storage are outside this slice.

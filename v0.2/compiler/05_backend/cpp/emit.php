@@ -2605,14 +2605,16 @@ CPP;
 				$signature = $target->type_def()->signature;
 				$this->callable_dependencies($signature, $declarations);
 				$operand = $this->value($target, $global_references, $declarations, $required_headers);
-				return $this->invocation($value, $signature, $operand, $value->type_def(), $global_references, $declarations, $required_headers);
+				$call = $this->invocation($value, $signature, $operand, $value->type_def(), $global_references, $declarations, $required_headers);
+				return $signature->reference_origin !== null && !$borrow_result ? 'static_cast<' . $value->type_def()->cpp_type() . '>(' . $call . ')' : $call;
 			}
 			$callback = $value->callable_binding();
 			if ($callback !== null) {
 				$type = $callback->type_def();
 				$target = $type instanceof lambda_type_definition ? $callback->initializer : ($type instanceof owned_callable_type ? $type->signature : $type);
 				$call = $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers);
-				return $target instanceof ast_lambda_expression && $target->returns_reference && !$borrow_result
+				$reference = $target instanceof ast_lambda_expression ? $target->returns_reference : $target->reference_origin !== null;
+				return $reference && !$borrow_result
 					? 'static_cast<' . $value->type_def()->cpp_type() . '>(' . $call . ')' : $call;
 			}
 			if ($value->cardinality !== null) {
@@ -3063,7 +3065,7 @@ CPP;
 			array_push($this->async_steps, ...$steps);
 			return $call;
 		}
-		$return_reference = $function instanceof statement_return_target && $function->returns_reference ? '&' : '';
+		$return_reference = $callback ? $function->result_suffix() : ($function instanceof statement_return_target && $function->returns_reference ? '&' : '');
 		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type() . $return_reference) . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
 	}

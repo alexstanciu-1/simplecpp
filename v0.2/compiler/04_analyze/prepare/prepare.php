@@ -2022,6 +2022,7 @@ final class Preparation
 			$this->value($call->receiver, $initializing);
 			$type = $call->receiver->type_def();
 			if (!($type instanceof owned_callable_type)) throw new diagnostic($call->source(), $call->byte_start(), 'Invocation requires an owned callable: ' . $call->name);
+			$this->dependencies?->callable_site($this->owner, $call);
 			$call->settle_callable_call(null, $type->signature, $this->bind_arguments($call, $type->signature, $initializing));
 			return;
 		}
@@ -2049,6 +2050,7 @@ final class Preparation
 			$target = $type instanceof lambda_type_definition ? $binding->initializer : $signature;
 			$call->settle_callable_call($binding, $signature, $this->bind_arguments($call, $target, $initializing));
 			if ($target instanceof ast_lambda_expression) $this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $target);
+			else $this->dependencies?->callable_site($this->owner, $call);
 			if ($target instanceof ast_lambda_expression && $target->borrowed_writes !== []) {
 				$this->invalidate_references($call, $target->borrowed_writes);
 			}
@@ -2395,6 +2397,7 @@ final class Preparation
 			$forwarded = $call->qualifier === call_qualifier::ordinary ? null : $this->owner->parent->instance?->called;
 			$instance = $this->dependencies->static_call($this->owner, $symbol,
 				$forwarded ?? $this->symbols->entry($called->declaration->symbol_key()));
+			$this->dependencies->closure_call($this->enclosing_lambda ?? $this->owner, $instance);
 		}
 		if ($function->is_async) {
 			$this->dependencies?->watch($symbol, $this->owner, $async_use->value);
@@ -2516,6 +2519,7 @@ final class Preparation
 			$symbol = $this->dependencies->static_call($this->owner, $symbol, $type);
 		}
 		$site->settle_target($symbol, $signature);
+		$this->dependencies?->callable_site($this->owner, $site);
 	}
 
 	/** Share arity, conversions and reference effects between functions and constructors. @return int[] */

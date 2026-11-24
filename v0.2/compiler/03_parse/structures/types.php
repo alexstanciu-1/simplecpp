@@ -50,8 +50,8 @@ class ast_type_reference extends ast_node
 
 }
 
-/** A mutable input in a callable contract, e.g. int& in callback<void,int&>. */
-final class ast_reference_input extends ast_type_reference
+/** A writable reference component in a callable signature, e.g. callback<int&,int&>. */
+final class ast_callable_reference_component extends ast_type_reference
 {
 	public function spelling(): string
 	{

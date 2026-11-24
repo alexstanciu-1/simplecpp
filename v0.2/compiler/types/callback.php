@@ -18,6 +18,11 @@ final class callback_type_definition extends type_definition
 		parent::__construct('callback<' . $name . '>');
 	}
 
+	public function result_suffix(): string
+	{
+		return $this->reference_origin === null ? '' : '&';
+	}
+
 	public function input_mode(int $index /** uint32 */): passing_mode
 	{
 		return $this->modes[$index] ?? passing_mode::value;
@@ -36,7 +41,7 @@ final class callback_type_definition extends type_definition
 		};
 		$inputs = [];
 		foreach ($this->inputs as $i => $input) $inputs[] = $result($input) . $this->input_suffix($i);
-		return $result($this->result) . ' (*' . $name . ')(' . implode(', ', $inputs) . ')';
+		return $result($this->result) . $this->result_suffix() . ' (*' . $name . ')(' . implode(', ', $inputs) . ')';
 	}
 
 	public function cpp_type(): string
@@ -69,6 +74,9 @@ final class callback_type_definition extends type_definition
 		if ($source instanceof lambda_type_definition && $source->has_capture) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Typed callbacks require a capture-free callable');
 		}
+		if ($source instanceof lambda_type_definition && !$source->admits_pointer()) {
+			throw new diagnostic($value->source(), $value->byte_start(), 'Reference-returning callbacks require a target without parameter defaults');
+		}
 		if ($this->matches($source instanceof lambda_type_definition ? $source->signature : $source)) {
 			return value_conversion::identity;
 		}
@@ -77,7 +85,7 @@ final class callback_type_definition extends type_definition
 
 	public function require_target(ast_callable_reference $site, ast_function_declaration $target): void
 	{
-		$matches = !$target->returns_reference && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
+		$matches = $target->reference_return_origin === $this->reference_origin && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
 		if ($matches) {
 			foreach ($target->parameters as $index => $parameter) {
 				if ($parameter->mode !== $this->input_mode($index) || $parameter->default_value !== null || $parameter->type_def() !== $this->inputs[$index]) {
@@ -105,7 +113,7 @@ final class callable_signature_index
 	public static function element(callback_type_definition $signature): owned_callable_type
 	{
 		static $root = new self();
-		$node = $root;
+		$node = $signature->reference_origin === null ? $root : ($root->reference_inputs ??= new self());
 		foreach ([$signature->result, ...$signature->inputs] as $i => $component) {
 			if ($i > 0 && $signature->input_mode($i - 1) === passing_mode::reference) $node = $node->reference_inputs ??= new self();
 			$node->children ??= new \WeakMap();
@@ -129,7 +137,7 @@ final class owned_callable_type extends type_definition implements presence_test
 	{
 		$inputs = [];
 		foreach ($signature->inputs as $i => $input) $inputs[] = $input->name . $signature->input_suffix($i);
-		parent::__construct('function<' . $signature->result->name . '(' . implode(',', $inputs) . ')>');
+		parent::__construct('function<' . $signature->result->name . $signature->result_suffix() . '(' . implode(',', $inputs) . ')>');
 	}
 
 	public function matches(type_definition $other): bool
@@ -141,7 +149,7 @@ final class owned_callable_type extends type_definition implements presence_test
 	{
 		$inputs = [];
 		foreach ($this->signature->inputs as $i => $input) $inputs[] = $input->cpp_type() . $this->signature->input_suffix($i);
-		return 'std::function<' . $this->signature->result->cpp_type() . '(' . implode(', ', $inputs) . ')>';
+		return 'std::function<' . $this->signature->result->cpp_type() . $this->signature->result_suffix() . '(' . implode(', ', $inputs) . ')>';
 	}
 
 	/** @return string[] */
@@ -192,13 +200,22 @@ final class owned_callable_type extends type_definition implements presence_test
 /** Each prepared lambda expression owns its distinct concrete type. Its signature is structural. */
 final class lambda_type_definition extends type_definition
 {
+	/** PROPERTIES */
 	public readonly bool $has_capture;
 
+	/** CONSTRUCTOR */
 	public function __construct(public readonly callback_type_definition $signature, bool $has_local_captures, public readonly bool $borrows_receiver = false,
 		public readonly bool $has_borrow = false, public readonly bool $has_defaults = false)
 	{
 		$this->has_capture = $has_local_captures || $borrows_receiver;
 		parent::__construct('lambda ' . $signature->name);
+	}
+
+	/** METHODS */
+	/** Native function pointers carry neither a capture environment nor defaults on a reference-result contract. */
+	public function admits_pointer(): bool
+	{
+		return !$this->has_capture && (!$this->has_defaults || $this->signature->reference_origin === null);
 	}
 
 	/** The native callable type has no standalone spelling. */

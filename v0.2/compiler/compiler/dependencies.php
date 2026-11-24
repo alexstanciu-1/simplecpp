@@ -55,9 +55,11 @@ final class Dependency_Watches
 
 	/** @var array<int,ast_function_body> Roots containing named or concrete closure reference returns. */
 	private array $reference_callers = [];
+	/** @var array<int,list<ast_lambda_expression|ast_callable_reference|ast_call_expression>> Sites owned by each live prepared body. */
+	private array $callable_sites = [];
 	private bool $reference_cycles_checked = false;
 	/** Edges involving a concrete closure, keyed by the actual calling body. */
-	private ?\WeakMap $closure_edges /** WeakMap<ast_node,WeakMap<ast_node|symbol_entry,bool>>|null */ = null;
+	private ?\WeakMap $closure_edges /** WeakMap<ast_node,WeakMap<ast_node|symbol_entry|called_method_instance,bool>>|null */ = null;
 
 	/** Session-owned demand graph, allocated only by programs that call static methods. */
 	private ?Called_Methods $called_method_cache = null;
@@ -123,21 +125,31 @@ final class Dependency_Watches
 	/** Replace outgoing edges before re-preparing a retained closure. Its enclosing body owns the incremental root. */
 	public function begin_lambda(ast_function_body $owner, ast_lambda_expression $lambda): void
 	{
+		$this->callable_site($owner, $lambda);
 		if ($this->closure_edges !== null) unset($this->closure_edges[$lambda]);
 		if ($lambda->returns_reference) {
-			// Full publication retires watchers through the reverse index, even for a symbol-free body.
-			if (!$this->targets->offsetExists($owner)) $this->targets[$owner] = new \SplObjectStorage();
 			$this->reference_callers[spl_object_id($owner)] = $owner;
 			$this->reference_cycles_checked = false;
 		}
 	}
 
+	/** Defer exact-signature grouping until a reference-return root actually needs cycle validation. */
+	public function callable_site(ast_function_body $owner, ast_lambda_expression|ast_callable_reference|ast_call_expression $site): void
+	{
+		$id = spl_object_id($owner);
+		if (!isset($this->callable_sites[$id]) && !$this->targets->offsetExists($owner)) $this->targets[$owner] = new \SplObjectStorage();
+		$this->callable_sites[$id][] = $site;
+		if ($owner->parent->returns_reference) $this->reference_callers[$id] = $owner;
+		$this->reference_cycles_checked = false;
+	}
+
 	/** Only an invocation connects the caller to a concrete closure or its body to a named callee. */
-	public function closure_call(ast_function_body|ast_lambda_expression $caller, ast_lambda_expression|symbol_entry $target): void
+	public function closure_call(ast_function_body|ast_lambda_expression $caller, ast_lambda_expression|symbol_entry|called_method_instance $target): void
 	{
 		$this->closure_edges ??= new \WeakMap();
 		$edges = $this->closure_edges[$caller] ??= new \WeakMap();
 		$edges[$target] = true;
+		if ($caller instanceof ast_function_body && $caller->parent->returns_reference) $this->reference_callers[spl_object_id($caller)] = $caller;
 		$this->reference_cycles_checked = false;
 	}
 
@@ -146,7 +158,7 @@ final class Dependency_Watches
 	{
 		if ($this->reference_cycles_checked || $this->reference_callers === []) return;
 		$cycles = new Reference_Call_Cycles($this->targets, $this->closure_edges);
-		$cycles->validate($this->reference_callers);
+		$cycles->validate($this->reference_callers, $this->callable_sites);
 		$this->reference_cycles_checked = true;
 	}
 
@@ -185,7 +197,7 @@ final class Dependency_Watches
 	/** Remove all subscriptions and any queued notification before rebuilding or abandoning a watcher. */
 	public function forget(dependency_watcher $watcher): void
 	{
-		unset($this->reference_callers[spl_object_id($watcher)]);
+		unset($this->reference_callers[spl_object_id($watcher)], $this->callable_sites[spl_object_id($watcher)]);
 		if ($this->closure_edges !== null) unset($this->closure_edges[$watcher]);
 		$cache = $this->called_method_cache;
 		if ($watcher instanceof ast_function_body && $cache !== null) $cache->forget($watcher);
@@ -305,18 +317,66 @@ final class Dependency_Watches
 	}
 }
 
-/** Tarjan's strongly connected components over the current generation's resolved free-function and final instance-method calls. */
+/** Check recursive components over current direct calls, concrete closures and exact indirect signatures. */
 final class Reference_Call_Cycles
 {
+	/** PROPERTIES */
+	/** @var array<int,int> Discovery order by graph node identity. */
 	private array $order = [];
+	/** @var array<int,bool> Nodes still on the component stack. */
 	private array $active = [];
+	/** @var object[] Nodes awaiting component assignment. */
 	private array $stack = [];
+	/** @var diagnostic[] Cycle members with reference results. */
 	private array $errors = [];
 
-	public function __construct(private readonly \SplObjectStorage $targets, private readonly ?\WeakMap $closure_edges) {}
+	/** @var array<int,array<int,object>> Caller-to-group and group-to-target adjacency for this validation. */
+	private array $indirect = [];
 
-	public function validate(array $roots): void
+	/** CONSTRUCTOR */
+	public function __construct(private readonly \SplObjectStorage $targets, private readonly ?\WeakMap $closure_edges)
 	{
+	}
+
+	/** METHODS */
+	private function edge(object $from, object $to): void
+	{
+		$this->indirect[spl_object_id($from)][spl_object_id($to)] = $to;
+	}
+
+	/**
+	 * Build one graph node per exact signature and callable representation before checking recursive components.
+	 * @param ast_function_body[] $roots
+	 * @param array<int,list<ast_expression>> $sites
+	 */
+	public function validate(array $roots, array $sites): void
+	{
+		// Keep both canonical identities live while edges are indexed, including pointer-only targets.
+		$groups = [];
+		foreach ($sites as $body_sites) {
+			foreach ($body_sites as $site) {
+				if ($site instanceof ast_call_expression) {
+					$type = ($site->qualifier === call_qualifier::stored_value ? $site->receiver : $site->callable_binding())->type_def();
+					$owned = $type instanceof owned_callable_type;
+					$group = callable_signature_index::element($owned ? $type->signature : $type);
+					$caller = $site->parent;
+					while (!($caller instanceof ast_function_body || $caller instanceof ast_lambda_expression)) $caller = $caller->parent;
+					$this->edge($caller, $owned ? $group : $group->signature);
+				} elseif ($site instanceof ast_callable_reference) {
+					$target = $site->implementation()->body();
+					$group = callable_signature_index::element($site->type_def());
+					$this->edge($group, $target);
+					$this->edge($group->signature, $target);
+				} else {
+					$type = $site->type_def();
+					$group = callable_signature_index::element($type->signature);
+					if (!$type->has_borrow && !$type->has_defaults) $this->edge($group, $site);
+					if ($type->admits_pointer()) $this->edge($group->signature, $site);
+					if ($site->returns_reference) $roots[spl_object_id($site)] = $site;
+				}
+				$groups[spl_object_id($group)] = $group;
+			}
+		}
 		foreach ($roots as $body) {
 			if (!isset($this->order[spl_object_id($body)])) $this->visit($body);
 		}
@@ -324,19 +384,25 @@ final class Reference_Call_Cycles
 	}
 
 	/** Resolve current-generation bodies lazily from watched symbols and concrete lexical invocations. */
-	private function callees(ast_function_body|ast_lambda_expression $body): \Generator
+	private function callees(object $body): \Generator
 	{
+		yield from $this->indirect[spl_object_id($body)] ?? [];
 		$targets = $this->targets[$body] ?? null;
 		if ($targets !== null) foreach ($targets as $symbol) {
 			if ($targets[$symbol] && ($callee = $symbol->declaration()?->optional_body()) !== null) yield $callee;
 		}
 		foreach ($this->closure_edges[$body] ?? [] as $target => $_) {
-			$callee = $target instanceof ast_lambda_expression ? $target : $target->declaration()?->optional_body();
+			$callee = match (true) {
+				$target instanceof ast_lambda_expression => $target,
+				$target instanceof called_method_instance => $target->implementation?->optional_body(),
+				default => $target->declaration()?->optional_body(),
+			};
 			if ($callee !== null) yield $callee;
 		}
 	}
 
-	private function visit(ast_function_body|ast_lambda_expression $body): int
+	/** Pop one complete component at its lowest discovery index and diagnose its reference-return members. */
+	private function visit(object $body): int
 	{
 		$id = spl_object_id($body);
 		$low = $this->order[$id] = count($this->order);
@@ -354,8 +420,8 @@ final class Reference_Call_Cycles
 			do {
 				$member = array_pop($this->stack);
 				unset($this->active[spl_object_id($member)]);
-				$function = $member instanceof ast_lambda_expression ? $member : $member->parent;
-				if ($cyclic && $function->returns_reference) {
+				$function = $member instanceof ast_function_body ? $member->parent : $member;
+				if ($cyclic && $function instanceof statement_return_target && $function->returns_reference) {
 					$this->errors[] = new diagnostic($function->source(), $function->byte_start(),
 						'Recursive reference return is unsupported: ' . ($function instanceof ast_lambda_expression ? 'closure' : $function->name()));
 				}

@@ -386,8 +386,10 @@ class ast_call_expression extends ast_expression
 		$slot = $function instanceof ast_function_declaration ? $function->reference_return_origin : null;
 		if ($this->function_symbol instanceof ast_local_binding) {
 			$type = $this->function_symbol->type_def();
-			if ($type instanceof lambda_type_definition) $slot = $type->signature->reference_origin;
+			$signature = $type instanceof callback_type_definition ? $type : $type->signature;
+			$slot = $signature->reference_origin;
 		}
+		if ($this->qualifier === call_qualifier::stored_value) $slot = $this->receiver->type_def()->signature->reference_origin;
 		if ($slot === null) return null;
 		$index = $this instanceof ast_named_call ? array_search($slot, $this->named->slots, true) : $slot;
 		$argument = $index === false ? null : ($this->arguments[$index] ?? null);
