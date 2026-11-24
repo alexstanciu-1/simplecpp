@@ -375,6 +375,15 @@ An assignment through `self::$run` sets the target observed by `(Handler::$run)(
 Static property calls follow the same snapshot, absence and ownership rules as instance
 field calls. Install the callable in executable code after declaration.
 
+A typed vector or hash can store an owned callable, for example
+`$ops vector<function<int(int)>> = [fn($n) => $n + 1];` or
+`$ops hash<function<int(int)>,string> = ["add" => fn($n) => $n + 1];`.
+Literals, indexed writes and appends use the element signature and its ownership checks.
+An indexed call such as `$ops["add"](arg())` selects the target before evaluating
+arguments. Container copies own independent entries. Keyed `isset` requires every
+index on the path to exist and the final callable to be present. A missing index
+skips the remaining keys and leaves the container untouched.
+
 ### Trailing literal parameter defaults
 
 A typed value parameter may declare `= literal` in all three flavors:

@@ -2005,10 +2005,10 @@ final class Preparation
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call, ?string $initializing = null, ?dependency_use $async_use = null): void
 	{
-		if ($call->qualifier === call_qualifier::field_value) {
+		if ($call->qualifier === call_qualifier::stored_value) {
 			$this->value($call->receiver, $initializing);
 			$type = $call->receiver->type_def();
-			if (!($type instanceof owned_callable_type)) throw new diagnostic($call->source(), $call->byte_start(), 'Invocation requires an owned callable field: ' . $call->name);
+			if (!($type instanceof owned_callable_type)) throw new diagnostic($call->source(), $call->byte_start(), 'Invocation requires an owned callable: ' . $call->name);
 			$call->settle_callable_call(null, $type->signature, $this->bind_arguments($call, $type->signature, $initializing));
 			return;
 		}

@@ -1430,7 +1430,7 @@ final class Parser
 		if ($index !== null && $this->cursor->is(token_kind::lbracket)) {
 			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end));
 		}
-		if ($index !== null && ($this->cursor->is(token_kind::scope)
+		if ($index !== null && (($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lparen)) || $this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
 			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), false);
 			if ($target instanceof ast_qualified_data) return $this->property_write($target);
@@ -1505,6 +1505,10 @@ final class Parser
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
 			if ($flavor === flavor::python && !$this->cursor->is(token_kind::dot) && !$this->cursor->is(token_kind::lbracket)) break;
+			if ($flavor === flavor::php && $value instanceof ast_index_expression && $this->cursor->is(token_kind::lparen)) {
+				$value = $this->call_arguments($value->start, 'indexed callable', null, $value, call_qualifier::stored_value);
+				continue;
+			}
 			if ($this->cursor->is(token_kind::scope)) {
 				$this->cursor->take(token_kind::scope, '::');
 				$property = $flavor === flavor::php && $this->cursor->is(token_kind::variable);
@@ -1865,11 +1869,11 @@ final class Parser
 			$value = $this->value(argument_operand: $argument_operand);
 			$c->take(token_kind::rparen, ')');
 			if ($c->tokens->source->flavor === flavor::php && $c->is(token_kind::lparen)) {
-				if ($value instanceof ast_field_expression) return $this->call_arguments($start, $value->field, null, $value, call_qualifier::field_value);
+				if ($value instanceof ast_field_expression) return $this->call_arguments($start, $value->field, null, $value, call_qualifier::stored_value);
 				// Every PHP static property read ends in :: followed by a variable token.
 				if ($value instanceof ast_name_expression && !$value->constant_only && $value->end - $value->start >= 3
 					&& $c->tokens->tokens[$value->end - 2]->kind === token_kind::scope) {
-					return $this->call_arguments($start, $value->name, null, $value, call_qualifier::field_value);
+					return $this->call_arguments($start, $value->name, null, $value, call_qualifier::stored_value);
 				}
 			}
 			return $value;

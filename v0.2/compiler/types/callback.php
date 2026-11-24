@@ -78,9 +78,37 @@ final class callback_type_definition extends type_definition
 	}
 }
 
+/** Intern collection element contracts by ordered component identity, without retaining retired declarations. */
+final class callable_signature_index
+{
+	/** @var \WeakMap<type_definition,callable_signature_index>|null */
+	private ?\WeakMap $children = null;
+	/** @var \WeakReference<owned_callable_type>|null */
+	private ?\WeakReference $element = null;
+
+	/** Follow canonical component objects in signature order and reuse the live leaf. */
+	public static function element(callback_type_definition $signature): owned_callable_type
+	{
+		static $root = new self();
+		$node = $root;
+		foreach ([$signature->result, ...$signature->inputs] as $component) {
+			$node->children ??= new \WeakMap();
+			$node = $node->children[$component] ??= new self();
+		}
+		$element = $node->element?->get();
+		if ($element !== null) return $element;
+		$element = new owned_callable_type($signature);
+		$node->element = \WeakReference::create($element);
+		return $element;
+	}
+}
+
 /** Explicit callable storage owns a copy of its target and has an absent default state. */
 final class owned_callable_type extends type_definition implements presence_test_type
 {
+	use collection_specializations;
+	use concrete_value_storage;
+
 	public function __construct(public readonly callback_type_definition $signature)
 	{
 		$inputs = [];

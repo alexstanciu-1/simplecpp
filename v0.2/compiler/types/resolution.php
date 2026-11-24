@@ -256,7 +256,10 @@ final class Type_Resolution
 			throw new diagnostic($syntax->source(), $syntax->byte_start(),
 				'Type requires exactly ' . ($arity === 1 ? 'one argument: ' : 'two arguments: ') . $syntax->name);
 		}
-		$element = self::argument($child, $symbols, $namespace, $watcher, $dependencies);
+		$element = $child->name === 'function' && $child->first_child !== null && $symbols !== null && $watcher !== null
+			&& ($syntax->name === 'vector' || $syntax->name === 'hash')
+			? callable_signature_index::element(self::callback_signature($child, $symbols, $namespace, $watcher, $dependencies))
+			: self::argument($child, $symbols, $namespace, $watcher, $dependencies);
 		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
 		$published = type_registry::specialize($syntax->name, $element, $key);
 		if ($published !== null) return $published;

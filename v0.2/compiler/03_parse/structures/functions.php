@@ -97,7 +97,7 @@ enum call_qualifier: int /** uint8 */
 	case lexical_parent = 2;
 	case called_type = 3;
 	case local = 4;
-	case field_value = 5;
+	case stored_value = 5;
 }
 
 /** A named callable used as an argument. The target is resolved against the expected parameter type. */
@@ -294,12 +294,12 @@ class ast_call_expression extends ast_expression
 
 	public function has_direct_signature(): bool
 	{
-		return $this->qualifier !== call_qualifier::field_value && $this->cardinality === null && $this->callable_binding() === null && $this->blocking_producer() === null && $this->constructed_record() === null;
+		return $this->qualifier !== call_qualifier::stored_value && $this->cardinality === null && $this->callable_binding() === null && $this->blocking_producer() === null && $this->constructed_record() === null;
 	}
 
 	public function target_name(): string
 	{
-		if ($this->qualifier === call_qualifier::field_value) return $this->name;
+		if ($this->qualifier === call_qualifier::stored_value) return $this->name;
 		if ($this->blocking_producer() !== null) return 'async_wait';
 		return $this->cardinality?->name ?? $this->callable_binding()?->name()
 			?? $this->constructed_record()?->name() ?? $this->function_def()->name();

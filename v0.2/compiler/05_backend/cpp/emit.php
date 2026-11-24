@@ -2440,6 +2440,9 @@ CPP;
 			return $type->lower_cpp_unary($value->operator, $operand);
 		}
 		if ($value instanceof ast_isset_expression) {
+			if ($value->operand instanceof ast_index_expression && $value->operand->type_def() instanceof owned_callable_type) {
+				return $this->indexed_callable_presence($value, $global_references, $declarations, $required_headers);
+			}
 			/** @var presence_test_type $type */
 			$type = $value->operand->type_def();
 			return $type->lower_cpp_presence($this->value($value->operand, $global_references, $declarations, $required_headers));
@@ -2597,7 +2600,7 @@ CPP;
 			return '&' . $name;
 		}
 		if ($value instanceof ast_call_expression) {
-			if ($value->qualifier === call_qualifier::field_value) {
+			if ($value->qualifier === call_qualifier::stored_value) {
 				$target = $value->receiver;
 				$signature = $target->type_def()->signature;
 				$this->callable_dependencies($signature, $declarations);
@@ -2836,6 +2839,43 @@ CPP;
 		return 'static_cast<void>(' . $this->value($receiver, $globals, $declarations, $headers) . ')';
 	}
 
+	/** Probe each index once, evaluating later keys only inside successful outer lookups.
+	 * @param ast_global_declaration[] $globals @param ast_function_declaration[] $declarations @param bool[] $headers */
+	private function indexed_callable_presence(ast_isset_expression $test, array &$globals, array &$declarations, array &$headers): string
+	{
+		$path = [];
+		$base = $test->operand;
+		while ($base instanceof ast_index_expression) {
+			$path[] = $base;
+			$base = $base->receiver;
+		}
+		$before = $this->suspensions;
+		$steps = [];
+		$prefix = 'probe_' . $test->start . '_';
+		$place = $this->retained_place($base, $globals, $declarations, $headers, $steps, owner_name: $prefix . 'owner');
+		$receiver = $prefix . 'base';
+		$steps[] = 'const auto& ' . $receiver . ' = ' . $place . ';';
+		$result = $prefix . 'present';
+		$steps[] = 'bool ' . $result . ' = false;';
+		foreach (array_reverse($path) as $i => $access) {
+			[$key, $staged] = $this->staged_operand($access->index, $globals, $declarations, $headers);
+			array_push($steps, ...$staged);
+			$index = $prefix . 'key_' . $i;
+			$steps[] = 'const auto ' . $index . ' = ' . $access->receiver->type_def()->lower_cpp_key($access->index, $key) . ';';
+			$steps[] = 'if (' . $receiver . '.has(' . $index . ')) {';
+			$read = $receiver . '.at(' . $index . ')';
+			$receiver = $prefix . 'item_' . $i;
+			if ($access === $test->operand) $steps[] = $result . ' = ' . $access->type_def()->lower_cpp_presence($read) . ';';
+			else $steps[] = 'const auto& ' . $receiver . ' = ' . $read . ';';
+		}
+		$steps[] = str_repeat('}', count($path));
+		if ($before !== $this->suspensions) {
+			array_push($this->async_steps, ...$steps);
+			return $result;
+		}
+		return '([&]() { ' . implode(' ', $steps) . ' return ' . $result . '; }())';
+	}
+
 	/**
 	 * Select a receiver or writable field and retain its nearest enclosing allocation across operand effects.
 	 * @param ast_global_declaration[] $globals
@@ -2895,7 +2935,7 @@ CPP;
 		if (!$runtime && $value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
-		if ($callback && $value->qualifier === call_qualifier::field_value) {
+		if ($callback && $value->qualifier === call_qualifier::stored_value) {
 			$selected = 'selected_callable_' . $value->start;
 			$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
 			$name = $selected;
@@ -3195,18 +3235,7 @@ CPP;
 	private function record_signature_forwards(ast_record_declaration $record): string
 	{
 		$forwards = [];
-		$collect = static function (type_definition $type) use (&$forwards): void {
-			if ($type instanceof intersection_type_definition) {
-				$forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
-			} elseif ($type instanceof application_collection_type) {
-				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
-			} elseif ($type instanceof enum_type_definition) {
-				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
-					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
-			} elseif ($type instanceof record_type_definition) {
-				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
-			} elseif ($type instanceof record_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
-		};
+		$collect = self::signature_forward_collector($forwards);
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
 			if ($type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
@@ -3383,6 +3412,32 @@ CPP;
 	private static function self_value_constructor(ast_function_declaration $constructor): bool
 	{
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
+	}
+
+	/** Collect the native declarations needed to name a signature before its component definitions.
+	 * @param string[] $forwards */
+	private static function signature_forward_collector(array &$forwards): \Closure
+	{
+		return static function (type_definition $type) use (&$forwards): void {
+			if ($type instanceof intersection_type_definition) {
+				$forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof application_collection_type) {
+				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof enum_type_definition) {
+				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
+					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
+			} elseif ($type instanceof record_type_definition) {
+				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
+			} elseif ($type instanceof record_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+		};
+	}
+
+	/** A concrete container header can name a callable whose arguments include its enclosing class. */
+	public static function callable_forwards(owned_callable_type $type): string
+	{
+		$forwards = [];
+		self::visit_signature_type_dependencies($type, self::signature_forward_collector($forwards));
+		return implode('', $forwards);
 	}
 
 	/** Visit the receiver and outputs, then signature parameters in declaration order. @param \Closure(type_definition):void $visit */

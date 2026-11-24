@@ -131,7 +131,9 @@ final class Cpp_Concrete_Collections
 			$guard = 'SCPP_CONCRETE_' . strtoupper($key);
 			$arguments = [];
 			$includes = $type->cpp_headers();
+			$forwards = '';
 			foreach ($type->concrete_types() as $parameter => $argument) {
+				if ($argument instanceof owned_callable_type) $forwards .= Cpp_Emitter::callable_forwards($argument);
 				$arguments[$parameter] = new cpp_concrete_type($argument, $this->root);
 				$includes = array_merge($includes, $argument->cpp_headers());
 			}
@@ -146,7 +148,7 @@ final class Cpp_Concrete_Collections
 					$header .= '#include "' . $dependency . '.hpp"' . "\n";
 				}
 			}
-			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $body) . "\n#endif\n";
+			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $forwards . $body) . "\n#endif\n";
 		}
 		return $files + $this->destination_headers;
 	}
