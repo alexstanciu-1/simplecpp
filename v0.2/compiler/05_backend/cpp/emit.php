@@ -2608,10 +2608,14 @@ CPP;
 				$jobs = [];
 				$lines = [];
 				foreach ($value->arguments as $i => $launch) {
-					$worker = $launch->implementation();
-					$name = self::function_name($worker);
-					$declarations[$name] = $worker;
-					$this->collect_signature_types($worker, $declarations);
+					if ($launch instanceof ast_inline_job) {
+						$name = $this->lambda($launch->receiver, $global_references, $declarations, $required_headers);
+					} else {
+						$worker = $launch->implementation();
+						$name = self::function_name($worker);
+						$declarations[$name] = $worker;
+						$this->collect_signature_types($worker, $declarations);
+					}
 					$args = [];
 					$forwarded = [];
 					foreach ($launch->arguments as $slot => $segment) {
@@ -3046,7 +3050,7 @@ CPP;
 	{
 		self::visit_signature_type_dependencies($signature, function (type_definition $component) use (&$declarations): void {
 			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
-			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
+			elseif ($component instanceof enum_type_definition || $component instanceof record_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
 			else $declarations[$component->name] = $component;
 		});
 	}

@@ -439,8 +439,8 @@ boundaries, while existing reference-call invalidation remains in effect.
 
 In the PHP, C++, and JS flavors, `parallel` followed by `{` introduces a
 joined batch in expression position. Ordinary calls such as `parallel()`
-retain normal name lookup. The body contains one or more semicolon-terminated
-direct worker calls. The surrounding statement follows its ordinary terminator
+retain normal name lookup. The body contains one or more entries. A direct worker call ends with a
+semicolon. An inline worker ends with its closing brace. The surrounding statement follows its ordinary terminator
 rule. For example, with two disjoint ranges in a PHP-flavor vector:
 
 ```php
@@ -454,3 +454,30 @@ This form has the same worker contracts, whole-batch admission, join and
 submission-order integer results as the built-in `mt_join(...)`. A block used as
 a statement still joins all workers. This slice requires the MT segment runtime
 publication and fresh compilation.
+
+An inline worker declares one or more exclusive vector grants with repeated
+`write:` bindings. Each binding introduces a distinct worker-local parameter
+whose segment element type comes from the supplied vector. The grant expressions
+use the caller's scope. The body has its own scope, can use approved constants
+and checked helpers, and must return an integer on all completing paths.
+
+```php
+$totals = parallel {
+    job (write: $prices = segment($items, 0, $count),
+         write: $fees = segment($charges, 0, $count)) {
+        $total = 0;
+        $i = 0;
+        while ($i < count($prices)) {
+            $prices[$i] = $prices[$i] + $fees[$i];
+            $fees[$i] = 0;
+            $total += $prices[$i];
+            $i += 1;
+        }
+        return $total;
+    }
+};
+```
+
+Inline and named entries share batch admission, submission-order results, and
+the joined lifetime. Overlapping exclusive grants are rejected even within one
+inline worker. C++ and JS flavors use bare binding names in the same clauses.

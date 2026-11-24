@@ -1912,7 +1912,10 @@ final class Preparation
 		$optional = false;
 		foreach ($lambda->parameters as $index => $parameter) {
 			$name = $parameter->declaration_key();
-			if (isset($locals[$name])) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Duplicate lambda parameter: ' . $name);
+			if (isset($locals[$name])) {
+				$reason = $lambda->parent instanceof ast_inline_job ? 'Duplicate inline job binding: ' : 'Duplicate lambda parameter: ';
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), $reason . $name);
+			}
 			$type = $parameter->type_reference === null
 				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
 				: Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
@@ -2007,8 +2010,8 @@ final class Preparation
 	private function joined_batch(ast_call_expression $call, ?string $initializing): void
 	{
 		if ($this->dependencies?->mt === null) throw new diagnostic($call->source(), $call->byte_start(), 'Joined segments require fresh compilation');
-		Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg) use ($initializing): void {
-			$this->value($arg, $initializing);
+		Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg, ?callback_type_definition $signature = null) use ($initializing): void {
+			$this->value($arg, $initializing, allow_callback: $signature !== null, destination: $signature);
 		});
 	}
 

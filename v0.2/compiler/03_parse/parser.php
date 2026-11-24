@@ -1750,14 +1750,57 @@ final class Parser
 	private function parallel_body(int $start /** uint32 */): ast_parallel_expression
 	{
 		$jobs = [];
-		while (!$this->cursor->is(token_kind::rbrace)) {
-			if (!$this->names->call_start()) throw new diagnostic($this->cursor->tokens->source,
-				$this->cursor->offset(), 'Expected worker call or } in parallel block');
+		$c = $this->cursor;
+		while (!$c->is(token_kind::rbrace)) {
+			if ($c->is(token_kind::identifier) && $c->tokens->text_at($c->position()) === 'job'
+				&& $c->next_is(token_kind::lparen) && ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::colon) {
+				$jobs[] = $this->inline_job();
+				continue;
+			}
+			if (!$this->names->call_start()) throw new diagnostic($c->tokens->source,
+				$c->offset(), 'Expected worker call or } in parallel block');
 			$jobs[] = $this->call();
-			$this->cursor->take(token_kind::semicolon, '; after parallel worker call');
+			$c->take(token_kind::semicolon, '; after parallel worker call');
 		}
-		$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+		$end = $c->take(token_kind::rbrace, '}') + 1;
 		return new ast_parallel_expression($start, $end, $jobs);
+	}
+
+	/** Grant expressions belong to the caller; only their aliases enter the worker body. */
+	private function inline_job(): ast_inline_job
+	{
+		$c = $this->cursor;
+		$start = $c->take(token_kind::identifier, 'job');
+		$c->take(token_kind::lparen, '(');
+		$parameters = [];
+		$grants = [];
+		do {
+			if ($parameters !== []) $c->take(token_kind::comma, ',');
+			$at = $c->position();
+			if ($c->name(token_kind::identifier) !== 'write') throw new diagnostic($c->tokens->source,
+				$c->tokens->tokens[$at]->offset, 'Expected write binding in inline job');
+			$c->take(token_kind::colon, ': after write');
+			$at = $c->position();
+			$name = $c->binding_name($c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
+			$parameters[] = new ast_parameter_declaration($name, null, count($parameters), $at, $c->position());
+			$c->take(token_kind::assign, '= before segment grant');
+			$grants[] = $this->value();
+		} while ($c->is(token_kind::comma));
+		$c->take(token_kind::rparen, ') after write bindings');
+		$outer = $this->lexical;
+		$arrow = $this->arrow;
+		$names = $this->lambda_names;
+		$this->arrow = null;
+		$this->lambda_names = null;
+		$collector = new Body_Collection($this->root->scope, $parameters);
+		try {
+			$body = $this->lexical_block($this->grammar(), $collector, '{ before inline job body', $collector);
+		} finally {
+			$this->lexical = $outer;
+			$this->arrow = $arrow;
+			$this->lambda_names = $names;
+		}
+		return new ast_inline_job(new ast_lambda_expression($start, $parameters, null, $body), $grants);
 	}
 
 	/** Parse one primary or prefix expression before postfix indexing. */

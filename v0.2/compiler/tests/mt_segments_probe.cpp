@@ -12,6 +12,7 @@ using Int = scpp::int64;
 using scpp::mt::segment;
 namespace App {
 Int work_(segment, segment);
+scpp::vector_int64 pair_batch_(scpp::vector_int64&, scpp::vector_int64&, Int);
 scpp::vector_int64 mixed_batch_(scpp::vector_int64&, scpp::vector_int64&, Int);
 scpp::vector_int64 dispatch_(Rows&, scpp::vector_int64&, scpp::vector_int64&, Int);
 }
@@ -59,6 +60,10 @@ int main() {
     scpp::vector_int64 cells;
     for (int i = 0; i < 4; ++i) cells.append(i);
     try { App::mixed_batch_(cells, cells, 0); return 5; }
+    catch (const std::invalid_argument&) {}
+    for (int i = 0; i < 4; ++i) assert(cells.at(i) == i);
+    // Both write bindings of the inline job reach cell zero through different names.
+    try { App::pair_batch_(cells, cells, 0); return 7; }
     catch (const std::invalid_argument&) {}
     for (int i = 0; i < 4; ++i) assert(cells.at(i) == i);
     segment one[]{job::borrow(cells, 0, 1)};

@@ -41,6 +41,9 @@ $cells vector<int> = [1,2,3,4];
 $m = mixed_batch($cells, $cells, 3);
 echo $m[0], $m[1], $cells[0], $cells[1], $cells[2], $cells[3];
 check_blocks($cells);
+$fresh vector<int> = [1,2,3,4];
+$pair = pair_batch($fresh, $fresh, 1);
+echo $pair[0], $pair[1], $fresh[0], $fresh[1];
 return 0;
 """
 
@@ -54,7 +57,7 @@ DISPATCH = """function dispatch(vector<Point> &$rows, vector<int> &$deltas,
 
 MIXED_BATCH = """function parallel(): int { return 7; }
 function check_blocks(vector<int> &$cells): void {
-    $more = parallel { single_slot(segment($cells,0,1)); };
+    $more = parallel { job (write: $cell = segment($cells,0,1)) { return single_slot($cell); } };
     parallel { single_slot(segment($cells,0,1)); };
     echo $more[0], $cells[0], parallel();
 }
@@ -64,6 +67,22 @@ function adjustment(): int { return LIMIT; }
 function mixed_batch(vector<int> &$cells, vector<int> &$alias, int $last): vector<int> {
     return mt_join(single_slot(segment($cells,0,1)),
                    three_slots(segment($cells,1,1), segment($cells,2,1), segment($alias,$last,1)));
+}
+function pair_batch(vector<int> &$cells, vector<int> &$alias, int $offset): vector<int> {
+    return parallel {
+        single_slot(segment($cells,3,1));
+        job (write: $prices = segment($cells,0,1), write: $fees = segment($alias,$offset,1)) {
+            $sum = 0;
+            $i = 0;
+            while ($i < count($prices)) {
+                $prices[$i] = $prices[$i] + $fees[$i];
+                $fees[$i] = 0;
+                $sum += $prices[$i];
+                $i += 1;
+            }
+            return $sum;
+        }
+    };
 }
 function single_slot(segment<int> $a): int {
     if (Point::ENABLED) { $a[0] = $a[0] + adjustment(); }
@@ -106,7 +125,9 @@ def sources_for(flavor):
     }[flavor]
     body = """{ return parallel {
         work(segment($rows,0,1), segment($deltas,0,1));
-        work(segment($rows,1,1), segment($other,$offset,1));
+        job (write: $points = segment($rows,1,1), write: $changes = segment($other,$offset,1)) {
+            return update($points, $changes, 0);
+        }
     }; }"""
     sources['dispatch.' + flavor] = header + (body if flavor == 'php' else body.replace('$', ''))
     f = fixture(flavor)
@@ -136,7 +157,7 @@ def prove(work):
         subprocess.run([*FLAGS, *units, LIBRARY, '-o', binary], check=True)
         for policy in ('sleep', 'active'):
             env = dict(os.environ, SCPP_MT_WAIT=policy)
-            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344' + b'21317'
+            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344' + b'21317' + b'14330'
         if flavor == 'php':
             # Check the transitive header closure in an MT-enabled, mixed-use build.
             view, launch = 'mt_segment.hpp', 'mt_segments.hpp'
@@ -167,10 +188,18 @@ def prove(work):
 
     valid = sources_for('php')
     helper = valid['helper.php']
+    dispatch = valid['dispatch.php']
     cases = [
+        ({'dispatch.php': dispatch.replace('return update($points, $changes, 0);', 'return $offset;')},
+         'Unknown or not-yet-initialized local/global: offset'),
+        ({'dispatch.php': dispatch.replace('write: $changes', 'write: $points')}, 'Duplicate inline job binding: points'),
+        ({'dispatch.php': dispatch.replace('return update($points, $changes, 0);', 'return $changes;')}, 'conversion'),
+        ({'dispatch.php': dispatch.replace('return update($points, $changes, 0);', 'return forbidden();')
+                          + ' global $counter int = 1; function forbidden(): int { return $counter; }'},
+         'MT safety: worker cannot access global or static storage'),
         ({'dispatch.php': valid['dispatch.php'].replace('work(segment($rows,0,1), segment($deltas,0,1));', '1;')},
          'Expected worker call'),
-        ({'dispatch.php': valid['dispatch.php'].replace('segment($other,$offset,1));', 'segment($other,$offset,1))')},
+        ({'dispatch.php': valid['dispatch.php'].replace('segment($deltas,0,1));', 'segment($deltas,0,1))')},
          'Expected ; after parallel worker call'),
         ({'dispatch.php': DISPATCH[:DISPATCH.index('return')] + 'return parallel {}; }'},
          'Expected at least one segment worker'),

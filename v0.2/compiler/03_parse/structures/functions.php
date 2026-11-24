@@ -427,6 +427,16 @@ class ast_call_expression extends ast_expression
 	}
 }
 
+/** An inline launch owns its capture-free worker as receiver and caller-side grants as operands. */
+final class ast_inline_job extends ast_call_expression
+{
+	/** @param ast_expression[] $grants */
+	public function __construct(ast_lambda_expression $worker, array $grants)
+	{
+		parent::__construct($worker->start, $worker->end, 'job', null, $grants, $worker);
+	}
+}
+
 /** A joined group owns its written worker calls, without resolving a function named parallel. */
 final class ast_parallel_expression extends ast_call_expression
 {

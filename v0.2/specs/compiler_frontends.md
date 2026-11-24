@@ -34,7 +34,8 @@ remain semantic responsibilities. Successful parsing does not mean a valid progr
 The shared brace-expression parser recognizes registered introducers by the
 identifier followed by an opening brace. Each construct parses its own body,
 retains source positions, and produces its own expression. The first such
-construct, `parallel`, owns an ordered sequence of ordinary call expressions.
+construct, `parallel`, owns an ordered sequence of named or inline worker launches. Inline launches own
+their grant expressions and a capture-free block with context-typed parameters.
 Preparation sends it directly to the existing joined-batch provisioning path.
 A future construct can use a different body grammar and preparation rule.
 [Parallel block contract](../../specs/compiler_entry_v0_2.md#parallel-block-expressions)

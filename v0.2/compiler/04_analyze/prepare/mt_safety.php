@@ -69,12 +69,12 @@ final class Mt_Safety
 			$id = spl_object_id($function);
 			if (isset($seen[$id])) continue;
 			$seen[$id] = true;
-			array_push($pending, ...self::body($function->body()));
+			array_push($pending, ...self::body($function instanceof ast_lambda_expression ? $function->body : $function->body()));
 		}
 	}
 
 	/** Independent body check. Reads settled AST facts and returns only direct callees. @return ast_function_declaration[] */
-	private static function body(ast_function_body $body): array /** list<ast_function_declaration> */
+	private static function body(ast_statement_block $body): array /** list<ast_function_declaration> */
 	{
 		$callees = [];
 		$nodes = [$body];
