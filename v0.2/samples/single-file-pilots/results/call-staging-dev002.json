@@ -1,0 +1,1752 @@
+{
+  "host": "tf-dev002",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+  "php": "PHP 8.5.12 (cli) (built: Oct 21 2026 14:37:30) (NTS)",
+  "flags": [
+    "clang++",
+    "-std=c++23",
+    "-stdlib=libc++",
+    "-O2",
+    "-g0",
+    "-I/tmp/scpp-o1.6hOBV0/v02/runtime/generated/public"
+  ],
+  "link": [
+    "clang++",
+    "-stdlib=libc++",
+    "--ld-path=/usr/bin/ld.mold"
+  ],
+  "builds": [
+    {
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "round": 0,
+      "compiler_ms": 95.044854,
+      "php_other_ms": 63.146364972206115,
+      "probe_ms": 3.200158476829529,
+      "app_ms": 1834.3659415841103,
+      "entry_ms": 26.929453015327454,
+      "link_ms": 29.74417805671692,
+      "total_ms": 2052.4309501051903,
+      "cpp_bytes": 295983,
+      "app_sha256": "69f4c245779de3a5bdb88be864a901bd2306845354d1e04214e34bc0eee9a13b"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "round": 0,
+      "compiler_ms": 94.927423,
+      "php_other_ms": 62.968127131797786,
+      "probe_ms": 2.6956498622894287,
+      "app_ms": 2374.9993294477463,
+      "entry_ms": 27.070678770542145,
+      "link_ms": 31.482204794883728,
+      "total_ms": 2594.1434130072594,
+      "cpp_bytes": 304175,
+      "app_sha256": "adcac2a5f913fc585cafa8cda54693511578339ec8f96ae94a55596f69411919"
+    },
+    {
+      "sample": "route-table",
+      "mode": "direct",
+      "round": 0,
+      "compiler_ms": 94.087908,
+      "php_other_ms": 61.2518918213768,
+      "probe_ms": 3.291703760623932,
+      "app_ms": 2537.8399193286896,
+      "entry_ms": 26.610128581523895,
+      "link_ms": 30.27372807264328,
+      "total_ms": 2753.3552795648575,
+      "cpp_bytes": 319194,
+      "app_sha256": "ee33b8f71f0cc877ebbdd26dd498d5cf9e1b33a89d43fe86ce54ac1130e32446"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "current",
+      "round": 0,
+      "compiler_ms": 99.583498,
+      "php_other_ms": 65.18989914765548,
+      "probe_ms": 3.125607967376709,
+      "app_ms": 2412.8106608986855,
+      "entry_ms": 26.257187128067017,
+      "link_ms": 29.801197350025177,
+      "total_ms": 2636.76805049181,
+      "cpp_bytes": 310907,
+      "app_sha256": "82b142f480bd61f6b603933d3ffeb188f6ef08d00d8d09a0cf8bf515076a1c5c"
+    },
+    {
+      "sample": "access-log",
+      "mode": "current",
+      "round": 0,
+      "compiler_ms": 112.234879,
+      "php_other_ms": 68.02425934571838,
+      "probe_ms": 3.225356340408325,
+      "app_ms": 2984.7821816802025,
+      "entry_ms": 31.39503300189972,
+      "link_ms": 32.653436064720154,
+      "total_ms": 3232.315145432949,
+      "cpp_bytes": 365191,
+      "app_sha256": "35374536ca785e36a96ec6e579d9bbadd49e4588c00ff53885ccc7ac1f91772d"
+    },
+    {
+      "sample": "access-log",
+      "mode": "blocks",
+      "round": 0,
+      "compiler_ms": 106.151919,
+      "php_other_ms": 63.83259303107833,
+      "probe_ms": 3.1168609857559204,
+      "app_ms": 2306.7927956581116,
+      "entry_ms": 26.855014264583588,
+      "link_ms": 27.223922312259674,
+      "total_ms": 2533.973105251789,
+      "cpp_bytes": 348577,
+      "app_sha256": "067e56370f61ff09d25470d187badbda695c8421dcdf512edd60d8fa0a76675c"
+    },
+    {
+      "sample": "route-table",
+      "mode": "current",
+      "round": 0,
+      "compiler_ms": 99.950866,
+      "php_other_ms": 63.900551601108546,
+      "probe_ms": 3.096155822277069,
+      "app_ms": 2649.8031690716743,
+      "entry_ms": 28.151951730251312,
+      "link_ms": 30.605606734752655,
+      "total_ms": 2875.508300960064,
+      "cpp_bytes": 325518,
+      "app_sha256": "0e8434a8f9cc660f583083176d0d73c9622b9e47562b9f07a9b03daeff85a928"
+    },
+    {
+      "sample": "route-table",
+      "mode": "blocks",
+      "round": 0,
+      "compiler_ms": 94.938053,
+      "php_other_ms": 62.71002609727097,
+      "probe_ms": 2.919033169746399,
+      "app_ms": 2021.7124223709106,
+      "entry_ms": 23.879073560237885,
+      "link_ms": 31.236454844474792,
+      "total_ms": 2237.3950630426407,
+      "cpp_bytes": 310958,
+      "app_sha256": "d90fd7347fb2af1ea92c37f21a6dca6d34dc78587f81e4f25d875b64a0d2ec69"
+    },
+    {
+      "sample": "access-log",
+      "mode": "direct",
+      "round": 0,
+      "compiler_ms": 103.426386,
+      "php_other_ms": 62.07382273546601,
+      "probe_ms": 3.2845064997673035,
+      "app_ms": 2934.971809387207,
+      "entry_ms": 23.22811633348465,
+      "link_ms": 28.096094727516174,
+      "total_ms": 3155.080735683441,
+      "cpp_bytes": 358867,
+      "app_sha256": "56cb0e7fe43c93a5fb0ede942fcb287416c1ba716cbcbbad685850cb1ec16698"
+    },
+    {
+      "sample": "route-table",
+      "mode": "current",
+      "round": 1,
+      "compiler_ms": 95.814767,
+      "php_other_ms": 63.416173043926236,
+      "probe_ms": 3.070250153541565,
+      "app_ms": 2605.536974966526,
+      "entry_ms": 25.581076741218567,
+      "link_ms": 30.64412623643875,
+      "total_ms": 2824.063368141651,
+      "cpp_bytes": 325518,
+      "app_sha256": "0e8434a8f9cc660f583083176d0d73c9622b9e47562b9f07a9b03daeff85a928"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "round": 1,
+      "compiler_ms": 96.116814,
+      "php_other_ms": 67.56633968890762,
+      "probe_ms": 2.6291459798812866,
+      "app_ms": 1810.9505996108055,
+      "entry_ms": 29.52314168214798,
+      "link_ms": 29.908068478107452,
+      "total_ms": 2036.6941094398499,
+      "cpp_bytes": 295983,
+      "app_sha256": "69f4c245779de3a5bdb88be864a901bd2306845354d1e04214e34bc0eee9a13b"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "round": 1,
+      "compiler_ms": 95.973916,
+      "php_other_ms": 64.48543851984405,
+      "probe_ms": 2.869129180908203,
+      "app_ms": 2321.2195113301277,
+      "entry_ms": 26.487909257411957,
+      "link_ms": 31.842194497585297,
+      "total_ms": 2542.8780987858772,
+      "cpp_bytes": 304175,
+      "app_sha256": "adcac2a5f913fc585cafa8cda54693511578339ec8f96ae94a55596f69411919"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "current",
+      "round": 1,
+      "compiler_ms": 94.342095,
+      "php_other_ms": 62.353375213890075,
+      "probe_ms": 3.1059905886650085,
+      "app_ms": 2387.5332474708557,
+      "entry_ms": 26.542849838733673,
+      "link_ms": 29.400214552879333,
+      "total_ms": 2603.277772665024,
+      "cpp_bytes": 310907,
+      "app_sha256": "82b142f480bd61f6b603933d3ffeb188f6ef08d00d8d09a0cf8bf515076a1c5c"
+    },
+    {
+      "sample": "route-table",
+      "mode": "direct",
+      "round": 1,
+      "compiler_ms": 93.622826,
+      "php_other_ms": 61.723202506755825,
+      "probe_ms": 3.450721502304077,
+      "app_ms": 2574.3790343403816,
+      "entry_ms": 25.251150131225586,
+      "link_ms": 33.81877392530441,
+      "total_ms": 2792.2457084059715,
+      "cpp_bytes": 319194,
+      "app_sha256": "ee33b8f71f0cc877ebbdd26dd498d5cf9e1b33a89d43fe86ce54ac1130e32446"
+    },
+    {
+      "sample": "access-log",
+      "mode": "current",
+      "round": 1,
+      "compiler_ms": 106.250885,
+      "php_other_ms": 65.48344803833008,
+      "probe_ms": 3.0337050557136536,
+      "app_ms": 2988.4150996804237,
+      "entry_ms": 30.792564153671265,
+      "link_ms": 32.927244901657104,
+      "total_ms": 3226.902946829796,
+      "cpp_bytes": 365191,
+      "app_sha256": "35374536ca785e36a96ec6e579d9bbadd49e4588c00ff53885ccc7ac1f91772d"
+    },
+    {
+      "sample": "access-log",
+      "mode": "blocks",
+      "round": 1,
+      "compiler_ms": 102.39449,
+      "php_other_ms": 62.477649692306514,
+      "probe_ms": 3.2751187682151794,
+      "app_ms": 2336.944706737995,
+      "entry_ms": 24.24328774213791,
+      "link_ms": 31.07239305973053,
+      "total_ms": 2560.4076460003853,
+      "cpp_bytes": 348577,
+      "app_sha256": "067e56370f61ff09d25470d187badbda695c8421dcdf512edd60d8fa0a76675c"
+    },
+    {
+      "sample": "route-table",
+      "mode": "blocks",
+      "round": 1,
+      "compiler_ms": 94.490533,
+      "php_other_ms": 61.710457080833436,
+      "probe_ms": 2.627328038215637,
+      "app_ms": 2020.400531589985,
+      "entry_ms": 23.924022912979126,
+      "link_ms": 28.16253900527954,
+      "total_ms": 2231.3154116272926,
+      "cpp_bytes": 310958,
+      "app_sha256": "d90fd7347fb2af1ea92c37f21a6dca6d34dc78587f81e4f25d875b64a0d2ec69"
+    },
+    {
+      "sample": "access-log",
+      "mode": "direct",
+      "round": 1,
+      "compiler_ms": 104.072408,
+      "php_other_ms": 62.281860789291386,
+      "probe_ms": 3.379136323928833,
+      "app_ms": 2928.407683968544,
+      "entry_ms": 28.899259865283966,
+      "link_ms": 31.530827283859253,
+      "total_ms": 3158.5711762309074,
+      "cpp_bytes": 358867,
+      "app_sha256": "56cb0e7fe43c93a5fb0ede942fcb287416c1ba716cbcbbad685850cb1ec16698"
+    },
+    {
+      "sample": "route-table",
+      "mode": "blocks",
+      "round": 2,
+      "compiler_ms": 95.1658,
+      "php_other_ms": 61.73843548221588,
+      "probe_ms": 3.8251355290412903,
+      "app_ms": 2031.2039628624916,
+      "entry_ms": 25.000646710395813,
+      "link_ms": 30.561886727809906,
+      "total_ms": 2247.4958673119545,
+      "cpp_bytes": 310958,
+      "app_sha256": "d90fd7347fb2af1ea92c37f21a6dca6d34dc78587f81e4f25d875b64a0d2ec69"
+    },
+    {
+      "sample": "access-log",
+      "mode": "blocks",
+      "round": 2,
+      "compiler_ms": 105.835354,
+      "php_other_ms": 69.45484313401795,
+      "probe_ms": 3.4725964069366455,
+      "app_ms": 2345.421813428402,
+      "entry_ms": 28.483882546424866,
+      "link_ms": 28.767302632331848,
+      "total_ms": 2581.4357921481133,
+      "cpp_bytes": 348577,
+      "app_sha256": "067e56370f61ff09d25470d187badbda695c8421dcdf512edd60d8fa0a76675c"
+    },
+    {
+      "sample": "route-table",
+      "mode": "direct",
+      "round": 2,
+      "compiler_ms": 95.883586,
+      "php_other_ms": 65.97427230020905,
+      "probe_ms": 3.004036843776703,
+      "app_ms": 2531.680203974247,
+      "entry_ms": 26.730366051197052,
+      "link_ms": 32.398439943790436,
+      "total_ms": 2755.67090511322,
+      "cpp_bytes": 319194,
+      "app_sha256": "ee33b8f71f0cc877ebbdd26dd498d5cf9e1b33a89d43fe86ce54ac1130e32446"
+    },
+    {
+      "sample": "route-table",
+      "mode": "current",
+      "round": 2,
+      "compiler_ms": 95.282068,
+      "php_other_ms": 66.19611616357041,
+      "probe_ms": 2.8721466660499573,
+      "app_ms": 2567.10222363472,
+      "entry_ms": 29.098674654960632,
+      "link_ms": 30.711010098457336,
+      "total_ms": 2791.262239217758,
+      "cpp_bytes": 325518,
+      "app_sha256": "0e8434a8f9cc660f583083176d0d73c9622b9e47562b9f07a9b03daeff85a928"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "round": 2,
+      "compiler_ms": 94.823348,
+      "php_other_ms": 61.93749360804749,
+      "probe_ms": 3.365620970726013,
+      "app_ms": 1823.2537433505058,
+      "entry_ms": 25.613509118556976,
+      "link_ms": 33.07148814201355,
+      "total_ms": 2042.0652031898499,
+      "cpp_bytes": 295983,
+      "app_sha256": "69f4c245779de3a5bdb88be864a901bd2306845354d1e04214e34bc0eee9a13b"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "current",
+      "round": 2,
+      "compiler_ms": 95.132487,
+      "php_other_ms": 66.02881652020264,
+      "probe_ms": 2.989932894706726,
+      "app_ms": 2419.084742665291,
+      "entry_ms": 26.003368198871613,
+      "link_ms": 30.1259383559227,
+      "total_ms": 2639.3652856349945,
+      "cpp_bytes": 310907,
+      "app_sha256": "82b142f480bd61f6b603933d3ffeb188f6ef08d00d8d09a0cf8bf515076a1c5c"
+    },
+    {
+      "sample": "access-log",
+      "mode": "current",
+      "round": 2,
+      "compiler_ms": 107.147766,
+      "php_other_ms": 64.58183591965103,
+      "probe_ms": 3.357335925102234,
+      "app_ms": 2981.668658554554,
+      "entry_ms": 24.118885397911072,
+      "link_ms": 30.608922243118286,
+      "total_ms": 3211.4834040403366,
+      "cpp_bytes": 365191,
+      "app_sha256": "35374536ca785e36a96ec6e579d9bbadd49e4588c00ff53885ccc7ac1f91772d"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "round": 2,
+      "compiler_ms": 94.884172,
+      "php_other_ms": 64.77273263781356,
+      "probe_ms": 3.696732223033905,
+      "app_ms": 2374.446824193001,
+      "entry_ms": 26.70321613550186,
+      "link_ms": 31.392045319080353,
+      "total_ms": 2595.8957225084305,
+      "cpp_bytes": 304175,
+      "app_sha256": "adcac2a5f913fc585cafa8cda54693511578339ec8f96ae94a55596f69411919"
+    },
+    {
+      "sample": "access-log",
+      "mode": "direct",
+      "round": 2,
+      "compiler_ms": 104.365347,
+      "php_other_ms": 65.34879091179657,
+      "probe_ms": 3.245636820793152,
+      "app_ms": 2949.8486444354057,
+      "entry_ms": 35.46523302793503,
+      "link_ms": 29.319576919078827,
+      "total_ms": 3187.5932291150093,
+      "cpp_bytes": 358867,
+      "app_sha256": "56cb0e7fe43c93a5fb0ede942fcb287416c1ba716cbcbbad685850cb1ec16698"
+    },
+    {
+      "sample": "route-table",
+      "mode": "current",
+      "round": 3,
+      "compiler_ms": 101.68513,
+      "php_other_ms": 67.05612599861145,
+      "probe_ms": 3.7618428468704224,
+      "app_ms": 2707.7870666980743,
+      "entry_ms": 28.433911502361298,
+      "link_ms": 31.092852354049683,
+      "total_ms": 2939.816929399967,
+      "cpp_bytes": 325518,
+      "app_sha256": "0e8434a8f9cc660f583083176d0d73c9622b9e47562b9f07a9b03daeff85a928"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "round": 3,
+      "compiler_ms": 95.513692,
+      "php_other_ms": 63.782664141567224,
+      "probe_ms": 2.749420702457428,
+      "app_ms": 1843.0160284042358,
+      "entry_ms": 27.959279716014862,
+      "link_ms": 31.053557991981506,
+      "total_ms": 2064.074642956257,
+      "cpp_bytes": 295983,
+      "app_sha256": "69f4c245779de3a5bdb88be864a901bd2306845354d1e04214e34bc0eee9a13b"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "current",
+      "round": 3,
+      "compiler_ms": 98.789978,
+      "php_other_ms": 63.97040638081741,
+      "probe_ms": 4.377119243144989,
+      "app_ms": 2443.208120763302,
+      "entry_ms": 28.01421284675598,
+      "link_ms": 30.331939458847046,
+      "total_ms": 2668.6917766928673,
+      "cpp_bytes": 310907,
+      "app_sha256": "82b142f480bd61f6b603933d3ffeb188f6ef08d00d8d09a0cf8bf515076a1c5c"
+    },
+    {
+      "sample": "route-table",
+      "mode": "blocks",
+      "round": 3,
+      "compiler_ms": 94.340291,
+      "php_other_ms": 62.25110205353165,
+      "probe_ms": 2.925761044025421,
+      "app_ms": 2028.4419059753418,
+      "entry_ms": 25.602415204048157,
+      "link_ms": 28.89017015695572,
+      "total_ms": 2242.4516454339027,
+      "cpp_bytes": 310958,
+      "app_sha256": "d90fd7347fb2af1ea92c37f21a6dca6d34dc78587f81e4f25d875b64a0d2ec69"
+    },
+    {
+      "sample": "route-table",
+      "mode": "direct",
+      "round": 3,
+      "compiler_ms": 96.195461,
+      "php_other_ms": 67.78503790995026,
+      "probe_ms": 2.90071964263916,
+      "app_ms": 2577.6647850871086,
+      "entry_ms": 28.26537936925888,
+      "link_ms": 33.76167267560959,
+      "total_ms": 2806.5730556845665,
+      "cpp_bytes": 319194,
+      "app_sha256": "ee33b8f71f0cc877ebbdd26dd498d5cf9e1b33a89d43fe86ce54ac1130e32446"
+    },
+    {
+      "sample": "access-log",
+      "mode": "blocks",
+      "round": 3,
+      "compiler_ms": 105.652291,
+      "php_other_ms": 65.27701425541305,
+      "probe_ms": 3.886885941028595,
+      "app_ms": 2295.9453016519547,
+      "entry_ms": 23.21365475654602,
+      "link_ms": 28.519921004772186,
+      "total_ms": 2522.4950686097145,
+      "cpp_bytes": 348577,
+      "app_sha256": "067e56370f61ff09d25470d187badbda695c8421dcdf512edd60d8fa0a76675c"
+    },
+    {
+      "sample": "access-log",
+      "mode": "current",
+      "round": 3,
+      "compiler_ms": 104.96936,
+      "php_other_ms": 62.541939252510076,
+      "probe_ms": 3.4729689359664917,
+      "app_ms": 2962.3578265309334,
+      "entry_ms": 23.05879443883896,
+      "link_ms": 28.50407361984253,
+      "total_ms": 3184.9049627780914,
+      "cpp_bytes": 365191,
+      "app_sha256": "35374536ca785e36a96ec6e579d9bbadd49e4588c00ff53885ccc7ac1f91772d"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "round": 3,
+      "compiler_ms": 100.583713,
+      "php_other_ms": 64.27912836772155,
+      "probe_ms": 3.135897219181061,
+      "app_ms": 2346.939966082573,
+      "entry_ms": 29.536902904510498,
+      "link_ms": 30.39553016424179,
+      "total_ms": 2574.871137738228,
+      "cpp_bytes": 304175,
+      "app_sha256": "adcac2a5f913fc585cafa8cda54693511578339ec8f96ae94a55596f69411919"
+    },
+    {
+      "sample": "access-log",
+      "mode": "direct",
+      "round": 3,
+      "compiler_ms": 104.509748,
+      "php_other_ms": 62.322833162452696,
+      "probe_ms": 3.280259668827057,
+      "app_ms": 2904.1652008891106,
+      "entry_ms": 26.48022770881653,
+      "link_ms": 28.657786548137665,
+      "total_ms": 3129.4160559773445,
+      "cpp_bytes": 358867,
+      "app_sha256": "56cb0e7fe43c93a5fb0ede942fcb287416c1ba716cbcbbad685850cb1ec16698"
+    },
+    {
+      "sample": "route-table",
+      "mode": "current",
+      "round": 4,
+      "compiler_ms": 95.257772,
+      "php_other_ms": 63.657650856807706,
+      "probe_ms": 3.1095892190933228,
+      "app_ms": 2588.3024260401726,
+      "entry_ms": 30.06192296743393,
+      "link_ms": 34.61640328168869,
+      "total_ms": 2815.0057643651962,
+      "cpp_bytes": 325518,
+      "app_sha256": "0e8434a8f9cc660f583083176d0d73c9622b9e47562b9f07a9b03daeff85a928"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "round": 4,
+      "compiler_ms": 94.833457,
+      "php_other_ms": 65.971425645607,
+      "probe_ms": 3.0983462929725647,
+      "app_ms": 1845.3139513731003,
+      "entry_ms": 25.657646358013153,
+      "link_ms": 31.24053031206131,
+      "total_ms": 2066.1153569817543,
+      "cpp_bytes": 295983,
+      "app_sha256": "69f4c245779de3a5bdb88be864a901bd2306845354d1e04214e34bc0eee9a13b"
+    },
+    {
+      "sample": "route-table",
+      "mode": "direct",
+      "round": 4,
+      "compiler_ms": 94.880665,
+      "php_other_ms": 65.60296351142884,
+      "probe_ms": 3.1157881021499634,
+      "app_ms": 2537.1147245168686,
+      "entry_ms": 26.52578055858612,
+      "link_ms": 29.922306537628174,
+      "total_ms": 2757.1622282266617,
+      "cpp_bytes": 319194,
+      "app_sha256": "ee33b8f71f0cc877ebbdd26dd498d5cf9e1b33a89d43fe86ce54ac1130e32446"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "round": 4,
+      "compiler_ms": 93.804986,
+      "php_other_ms": 61.48547607666397,
+      "probe_ms": 2.969495952129364,
+      "app_ms": 2335.0101336836815,
+      "entry_ms": 25.930948555469513,
+      "link_ms": 30.451901257038116,
+      "total_ms": 2549.6529415249825,
+      "cpp_bytes": 304175,
+      "app_sha256": "adcac2a5f913fc585cafa8cda54693511578339ec8f96ae94a55596f69411919"
+    },
+    {
+      "sample": "access-log",
+      "mode": "direct",
+      "round": 4,
+      "compiler_ms": 104.043233,
+      "php_other_ms": 62.250186897556304,
+      "probe_ms": 3.4264028072357178,
+      "app_ms": 2974.5081812143326,
+      "entry_ms": 27.67907828092575,
+      "link_ms": 32.59224444627762,
+      "total_ms": 3204.499326646328,
+      "cpp_bytes": 358867,
+      "app_sha256": "56cb0e7fe43c93a5fb0ede942fcb287416c1ba716cbcbbad685850cb1ec16698"
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "current",
+      "round": 4,
+      "compiler_ms": 95.100477,
+      "php_other_ms": 64.52794406819153,
+      "probe_ms": 3.348805010318756,
+      "app_ms": 2425.2605959773064,
+      "entry_ms": 30.45642375946045,
+      "link_ms": 35.97261756658554,
+      "total_ms": 2654.6668633818626,
+      "cpp_bytes": 310907,
+      "app_sha256": "82b142f480bd61f6b603933d3ffeb188f6ef08d00d8d09a0cf8bf515076a1c5c"
+    },
+    {
+      "sample": "access-log",
+      "mode": "current",
+      "round": 4,
+      "compiler_ms": 104.428655,
+      "php_other_ms": 67.30151316377639,
+      "probe_ms": 3.2713860273361206,
+      "app_ms": 2967.694528400898,
+      "entry_ms": 25.37643164396286,
+      "link_ms": 32.21716731786728,
+      "total_ms": 3200.2896815538406,
+      "cpp_bytes": 365191,
+      "app_sha256": "35374536ca785e36a96ec6e579d9bbadd49e4588c00ff53885ccc7ac1f91772d"
+    },
+    {
+      "sample": "access-log",
+      "mode": "blocks",
+      "round": 4,
+      "compiler_ms": 105.825586,
+      "php_other_ms": 68.09862913795853,
+      "probe_ms": 3.4155696630477905,
+      "app_ms": 2331.981875002384,
+      "entry_ms": 26.449181139469147,
+      "link_ms": 27.72611379623413,
+      "total_ms": 2563.496954739094,
+      "cpp_bytes": 348577,
+      "app_sha256": "067e56370f61ff09d25470d187badbda695c8421dcdf512edd60d8fa0a76675c"
+    },
+    {
+      "sample": "route-table",
+      "mode": "blocks",
+      "round": 4,
+      "compiler_ms": 96.681413,
+      "php_other_ms": 63.28448211632919,
+      "probe_ms": 3.1473562121391296,
+      "app_ms": 2021.0544988512993,
+      "entry_ms": 27.935154736042023,
+      "link_ms": 29.535993933677673,
+      "total_ms": 2241.6388988494873,
+      "cpp_bytes": 310958,
+      "app_sha256": "d90fd7347fb2af1ea92c37f21a6dca6d34dc78587f81e4f25d875b64a0d2ec69"
+    }
+  ],
+  "traces": [
+    {
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "round": 0,
+      "Total CodeGenPasses": 913.205,
+      "Total Optimizer": 712.769,
+      "Total Frontend": 195.67
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "round": 0,
+      "Total Optimizer": 1158.991,
+      "Total CodeGenPasses": 1052.76,
+      "Total Frontend": 252.295
+    },
+    {
+      "sample": "route-table",
+      "mode": "direct",
+      "round": 0,
+      "Total Optimizer": 1199.28,
+      "Total CodeGenPasses": 1135.887,
+      "Total Frontend": 277.313
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "current",
+      "round": 0,
+      "Total Optimizer": 1190.415,
+      "Total CodeGenPasses": 1008.378,
+      "Total Frontend": 255.133
+    },
+    {
+      "sample": "access-log",
+      "mode": "current",
+      "round": 0,
+      "Total Optimizer": 1380.363,
+      "Total CodeGenPasses": 1349.389,
+      "Total Frontend": 318.411
+    },
+    {
+      "sample": "access-log",
+      "mode": "blocks",
+      "round": 0,
+      "Total CodeGenPasses": 1205.157,
+      "Total Optimizer": 872.586,
+      "Total Frontend": 256.628
+    },
+    {
+      "sample": "route-table",
+      "mode": "current",
+      "round": 0,
+      "Total Optimizer": 1237.0,
+      "Total CodeGenPasses": 1109.054,
+      "Total Frontend": 288.688
+    },
+    {
+      "sample": "route-table",
+      "mode": "blocks",
+      "round": 0,
+      "Total CodeGenPasses": 1019.16,
+      "Total Optimizer": 804.226,
+      "Total Frontend": 262.389
+    },
+    {
+      "sample": "access-log",
+      "mode": "direct",
+      "round": 0,
+      "Total CodeGenPasses": 1379.206,
+      "Total Optimizer": 1322.249,
+      "Total Frontend": 318.582
+    },
+    {
+      "sample": "route-table",
+      "mode": "blocks",
+      "round": 2,
+      "Total CodeGenPasses": 1038.229,
+      "Total Optimizer": 802.154,
+      "Total Frontend": 232.176
+    },
+    {
+      "sample": "access-log",
+      "mode": "blocks",
+      "round": 2,
+      "Total CodeGenPasses": 1211.53,
+      "Total Optimizer": 878.043,
+      "Total Frontend": 256.746
+    },
+    {
+      "sample": "route-table",
+      "mode": "direct",
+      "round": 2,
+      "Total Optimizer": 1219.328,
+      "Total CodeGenPasses": 1110.963,
+      "Total Frontend": 283.841
+    },
+    {
+      "sample": "route-table",
+      "mode": "current",
+      "round": 2,
+      "Total Optimizer": 1275.441,
+      "Total CodeGenPasses": 1138.954,
+      "Total Frontend": 285.823
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "round": 2,
+      "Total CodeGenPasses": 922.038,
+      "Total Optimizer": 715.967,
+      "Total Frontend": 198.323
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "current",
+      "round": 2,
+      "Total Optimizer": 1187.182,
+      "Total CodeGenPasses": 1020.078,
+      "Total Frontend": 254.542
+    },
+    {
+      "sample": "access-log",
+      "mode": "current",
+      "round": 2,
+      "Total Optimizer": 1387.263,
+      "Total CodeGenPasses": 1356.505,
+      "Total Frontend": 322.532
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "round": 2,
+      "Total Optimizer": 1156.716,
+      "Total CodeGenPasses": 1027.276,
+      "Total Frontend": 255.885
+    },
+    {
+      "sample": "access-log",
+      "mode": "direct",
+      "round": 2,
+      "Total Optimizer": 1373.591,
+      "Total CodeGenPasses": 1331.101,
+      "Total Frontend": 316.678
+    },
+    {
+      "sample": "route-table",
+      "mode": "current",
+      "round": 4,
+      "Total Optimizer": 1227.754,
+      "Total CodeGenPasses": 1125.483,
+      "Total Frontend": 281.018
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "round": 4,
+      "Total CodeGenPasses": 893.387,
+      "Total Optimizer": 717.0,
+      "Total Frontend": 197.348
+    },
+    {
+      "sample": "route-table",
+      "mode": "direct",
+      "round": 4,
+      "Total Optimizer": 1198.117,
+      "Total CodeGenPasses": 1124.978,
+      "Total Frontend": 278.099
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "round": 4,
+      "Total Optimizer": 1123.739,
+      "Total CodeGenPasses": 992.729,
+      "Total Frontend": 250.685
+    },
+    {
+      "sample": "access-log",
+      "mode": "direct",
+      "round": 4,
+      "Total CodeGenPasses": 1342.284,
+      "Total Optimizer": 1326.751,
+      "Total Frontend": 330.167
+    },
+    {
+      "sample": "stock-ledger",
+      "mode": "current",
+      "round": 4,
+      "Total Optimizer": 1176.126,
+      "Total CodeGenPasses": 1022.5,
+      "Total Frontend": 249.233
+    },
+    {
+      "sample": "access-log",
+      "mode": "current",
+      "round": 4,
+      "Total Optimizer": 1363.648,
+      "Total CodeGenPasses": 1330.796,
+      "Total Frontend": 316.377
+    },
+    {
+      "sample": "access-log",
+      "mode": "blocks",
+      "round": 4,
+      "Total CodeGenPasses": 1207.988,
+      "Total Optimizer": 862.847,
+      "Total Frontend": 263.66
+    },
+    {
+      "sample": "route-table",
+      "mode": "blocks",
+      "round": 4,
+      "Total CodeGenPasses": 1011.092,
+      "Total Optimizer": 788.338,
+      "Total Frontend": 230.351
+    }
+  ],
+  "cpu": [
+    {
+      "round": 0,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 1.923590375
+    },
+    {
+      "round": 0,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.14787425
+    },
+    {
+      "round": 0,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 1.8186343333333332
+    },
+    {
+      "round": 0,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.6968824166666666
+    },
+    {
+      "round": 0,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.579109125
+    },
+    {
+      "round": 0,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6038722083333333
+    },
+    {
+      "round": 0,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.08895
+    },
+    {
+      "round": 0,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.584896625
+    },
+    {
+      "round": 0,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.7022254166666667
+    },
+    {
+      "round": 0,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.130012875
+    },
+    {
+      "round": 0,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 1.672279
+    },
+    {
+      "round": 0,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6913612916666667
+    },
+    {
+      "round": 0,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.663410416666666
+    },
+    {
+      "round": 0,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 3.218113375
+    },
+    {
+      "round": 0,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 3.34337
+    },
+    {
+      "round": 0,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.519070958333334
+    },
+    {
+      "round": 0,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 3.3638345833333334
+    },
+    {
+      "round": 0,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.6278979583333335
+    },
+    {
+      "round": 1,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.14143425
+    },
+    {
+      "round": 1,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.7030786666666666
+    },
+    {
+      "round": 1,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6940726666666667
+    },
+    {
+      "round": 1,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.163310708333333
+    },
+    {
+      "round": 1,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.621818666666667
+    },
+    {
+      "round": 1,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.5978199166666665
+    },
+    {
+      "round": 1,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 3.2042331666666666
+    },
+    {
+      "round": 1,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 3.369083625
+    },
+    {
+      "round": 1,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.6389265
+    },
+    {
+      "round": 1,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6122049166666667
+    },
+    {
+      "round": 1,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 1.7532555
+    },
+    {
+      "round": 1,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.59070875
+    },
+    {
+      "round": 1,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.054965458333333
+    },
+    {
+      "round": 1,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 3.3652405416666666
+    },
+    {
+      "round": 1,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 1.6643432916666667
+    },
+    {
+      "round": 1,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 1.7807357083333333
+    },
+    {
+      "round": 1,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.7204612916666666
+    },
+    {
+      "round": 1,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.592290875
+    },
+    {
+      "round": 2,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 3.4766265416666666
+    },
+    {
+      "round": 2,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.129721083333333
+    },
+    {
+      "round": 2,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.7023602916666667
+    },
+    {
+      "round": 2,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.569612375
+    },
+    {
+      "round": 2,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.075116583333333
+    },
+    {
+      "round": 2,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.637103541666667
+    },
+    {
+      "round": 2,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.67828175
+    },
+    {
+      "round": 2,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 1.6443812916666667
+    },
+    {
+      "round": 2,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 3.3528669166666667
+    },
+    {
+      "round": 2,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.604628625
+    },
+    {
+      "round": 2,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.5874530833333333
+    },
+    {
+      "round": 2,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.6954055833333334
+    },
+    {
+      "round": 2,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 1.7899922916666666
+    },
+    {
+      "round": 2,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 1.7641659166666666
+    },
+    {
+      "round": 2,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.164078
+    },
+    {
+      "round": 2,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 3.2887003333333333
+    },
+    {
+      "round": 2,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.653349833333333
+    },
+    {
+      "round": 2,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.586694625
+    },
+    {
+      "round": 3,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.569993541666666
+    },
+    {
+      "round": 3,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.7025865
+    },
+    {
+      "round": 3,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6761544166666666
+    },
+    {
+      "round": 3,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.7038676666666667
+    },
+    {
+      "round": 3,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.1187125
+    },
+    {
+      "round": 3,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 1.67062925
+    },
+    {
+      "round": 3,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.658049083333333
+    },
+    {
+      "round": 3,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 3.33845825
+    },
+    {
+      "round": 3,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 3.20343375
+    },
+    {
+      "round": 3,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.59347725
+    },
+    {
+      "round": 3,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 1.7486355833333334
+    },
+    {
+      "round": 3,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.154606125
+    },
+    {
+      "round": 3,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.5946920416666667
+    },
+    {
+      "round": 3,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 1.7529056666666667
+    },
+    {
+      "round": 3,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.559361083333333
+    },
+    {
+      "round": 3,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6090585833333333
+    },
+    {
+      "round": 3,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.147906833333334
+    },
+    {
+      "round": 3,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 3.6251801666666665
+    },
+    {
+      "round": 4,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.699397125
+    },
+    {
+      "round": 4,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.073057708333334
+    },
+    {
+      "round": 4,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.71369325
+    },
+    {
+      "round": 4,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.5992969166666666
+    },
+    {
+      "round": 4,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.039485166666666
+    },
+    {
+      "round": 4,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.117612083333333
+    },
+    {
+      "round": 4,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 1.75638175
+    },
+    {
+      "round": 4,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 3.4041615
+    },
+    {
+      "round": 4,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.626038666666667
+    },
+    {
+      "round": 4,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 1.8000883333333333
+    },
+    {
+      "round": 4,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.722703875
+    },
+    {
+      "round": 4,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 1.6684150833333333
+    },
+    {
+      "round": 4,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 3.3859460833333332
+    },
+    {
+      "round": 4,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.6080579583333333
+    },
+    {
+      "round": 4,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6974944583333333
+    },
+    {
+      "round": 4,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.6878245
+    },
+    {
+      "round": 4,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.5930314166666667
+    },
+    {
+      "round": 4,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 3.289975666666667
+    },
+    {
+      "round": 5,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.0978813333333335
+    },
+    {
+      "round": 5,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.60808175
+    },
+    {
+      "round": 5,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.757678833333333
+    },
+    {
+      "round": 5,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.006436125
+    },
+    {
+      "round": 5,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.655253416666667
+    },
+    {
+      "round": 5,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.600551375
+    },
+    {
+      "round": 5,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 1.652276875
+    },
+    {
+      "round": 5,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.6976380833333333
+    },
+    {
+      "round": 5,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 1.7669603333333332
+    },
+    {
+      "round": 5,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 3.2076507916666666
+    },
+    {
+      "round": 5,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.6978359583333333
+    },
+    {
+      "round": 5,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6764387083333333
+    },
+    {
+      "round": 5,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 3.3496170833333334
+    },
+    {
+      "round": 5,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.095428
+    },
+    {
+      "round": 5,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.585857083333333
+    },
+    {
+      "round": 5,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.5917945416666667
+    },
+    {
+      "round": 5,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 1.7730521666666668
+    },
+    {
+      "round": 5,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 3.543740375
+    },
+    {
+      "round": 6,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 3.374108458333333
+    },
+    {
+      "round": 6,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.108232
+    },
+    {
+      "round": 6,
+      "sample": "route-table",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 1.7519375416666667
+    },
+    {
+      "round": 6,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.107746958333333
+    },
+    {
+      "round": 6,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.5833992083333334
+    },
+    {
+      "round": 6,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "full",
+      "cpu_ms": 4.6232179166666665
+    },
+    {
+      "round": 6,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.678776708333333
+    },
+    {
+      "round": 6,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 3.3514104166666665
+    },
+    {
+      "round": 6,
+      "sample": "stock-ledger",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.5809207916666667
+    },
+    {
+      "round": 6,
+      "sample": "stock-ledger",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 4.555819375
+    },
+    {
+      "round": 6,
+      "sample": "stock-ledger",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.784361125
+    },
+    {
+      "round": 6,
+      "sample": "route-table",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 1.775148625
+    },
+    {
+      "round": 6,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 1.64530675
+    },
+    {
+      "round": 6,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "shared",
+      "cpu_ms": 0.6919390416666666
+    },
+    {
+      "round": 6,
+      "sample": "access-log",
+      "mode": "direct",
+      "case": "shared",
+      "cpu_ms": 0.6940484166666666
+    },
+    {
+      "round": 6,
+      "sample": "access-log",
+      "mode": "blocks",
+      "case": "shared",
+      "cpu_ms": 0.6944036666666666
+    },
+    {
+      "round": 6,
+      "sample": "access-log",
+      "mode": "current",
+      "case": "full",
+      "cpu_ms": 4.0129967083333336
+    },
+    {
+      "round": 6,
+      "sample": "route-table",
+      "mode": "direct",
+      "case": "full",
+      "cpu_ms": 3.191852416666667
+    }
+  ]
+}

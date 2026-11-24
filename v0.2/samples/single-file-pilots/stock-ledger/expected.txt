@@ -1,0 +1,11 @@
+posted 8 invalid 1 duplicates 1 refused 2
+receipts 3 holds 1 releases 1 shipments 2 counts 1
+item pen review
+  stock 9 held 2 available 7 cents 990
+  received 15 shipped 4 variance -2 shortfalls 1
+  sales 800 cost 440 margin 360
+item pad empty
+  stock 0 held 0 available 0 cents 0
+  received 2 shipped 2 variance 0 shortfalls 0
+  sales 900 cost 600 margin 300
+warehouse cents 990 available 7
