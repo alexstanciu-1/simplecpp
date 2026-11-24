@@ -771,10 +771,11 @@ final class Preparation
 	{
 		$this->value($statement->source_value);
 		$source_type = $statement->source_value->type_def();
+		$segment = $source_type instanceof segment_type && $source_type->key !== null;
 		$type = $source_type->iteration();
 		$python = $source->flavor === flavor::python;
 		$paired = $python && $statement->key !== null;
-		$hash = ($python || $statement->requires_key) && $type instanceof key_iterable_type;
+		$hash = ($python || $statement->requires_key) && ($type instanceof key_iterable_type || $segment);
 		$statement->keys_only = $hash && !$paired;
 		if (!$hash && ($paired || $statement->requires_key)) {
 			throw new diagnostic($source, $statement->source_value->byte_start(),
@@ -783,7 +784,7 @@ final class Preparation
 		if ($python && !$hash && !($source_type instanceof vector_type_definition)) {
 			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector or hash');
 		}
-		if ($type === null) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
+		if ($type === null && !$segment) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
 		if ($function->is_async || $function->return_type_def() instanceof generator_type_definition) {
 			$receiver = $statement->source_value;
 			if ($source_type instanceof generator_type_definition) {
@@ -796,13 +797,15 @@ final class Preparation
 				throw new diagnostic($source, $receiver->byte_start(), 'Suspended foreach requires local storage, a temporary or a retained shared field');
 			}
 		}
-		if (($method = $type->iteration_method()) !== null) {
+		if (($method = $type?->iteration_method()) !== null) {
 			Readonly_Access::write($statement->source_value, true);
 			$this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		}
 		$destination = $this->find_local($statement->value->short_name);
+		if ($segment && $destination !== null) throw new diagnostic($source, $statement->value->byte_start(), 'Hash segment traversal requires a fresh loop binding');
 		Readonly_Access::require_writable($statement->value, $destination);
-		$output = $statement->keys_only ? $type->iteration_key_type() : $type->iteration_value_type();
+		$output = $segment ? ($statement->keys_only ? $source_type->key : $source_type->element)
+			: ($statement->keys_only ? $type->iteration_key_type() : $type->iteration_value_type());
 		if ($output instanceof record_type_definition) {
 			$this->dependencies?->watch($this->symbols->entry($output->declaration->symbol_key()), $this->owner);
 			$this->reserve_array_bytes($output->array_bytes(), $statement->value);
@@ -816,7 +819,7 @@ final class Preparation
 		try {
 			if ($destination === null) $this->local_frames[count($this->local_frames) - 1][$statement->value->short_name] = $statement->value;
 			if ($statement->key !== null) {
-				$key_type = $type->iteration_key_type();
+				$key_type = $segment ? $source_type->key : $type->iteration_key_type();
 				if ($key_type === null) throw new diagnostic($source, $statement->key->byte_start(), 'Foreach key binding is unavailable for this traversal');
 				$statement->key->settle_type($key_type);
 				$this->local_frames[count($this->local_frames) - 1][$statement->key->short_name] = $statement->key;

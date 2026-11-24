@@ -81,7 +81,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             $applicationCases[$variant] = $append
                 ? "\t\tif (\$family === " . var_export($family, true) . " && \$second === $key::instance() && \$element->concrete_storage_support('copy_constructible') === true) return new $app(\$element, \$second);\n"
                 : "\t\tif (\$family === " . var_export($family, true) . " && \$second?->hash_key_supported() && \$element->concrete_storage_support('copy_constructible') === true) return new $app(\$element, \$second);\n";
-            $recipe = hashConcreteArguments($hash, $runtime['hashes']['count_type']) + $hash['traversal'];
+            $recipe = ['mt_segments' => !empty($runtime['mt_segments']) ? '1' : ''] + hashConcreteArguments($hash, $runtime['hashes']['count_type']) + $hash['traversal'];
             unset($recipe['enable_shared_lookup']); // The settled application value supplies this condition.
             $appInitialization = '';
             if ($hash['initialization'] !== null) {

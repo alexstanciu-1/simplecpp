@@ -20,6 +20,11 @@ final class Readonly_Access
 		while ($binding instanceof ast_closure_capture && $binding->by_reference) {
 			$binding = $binding->initializer->local_def();
 		}
+		if ($binding instanceof ast_produced_binding && $binding->parent instanceof ast_foreach_statement) {
+			$loop = $binding->parent;
+			$type = $loop->source_value->type_def();
+			if ($type instanceof segment_type && ($type->read_only || $loop->keys_only || $loop->key === $binding)) return $binding;
+		}
 		if (($binding instanceof ast_produced_binding && $binding->parent instanceof ast_inline_job)
 			|| ($binding instanceof ast_parameter_declaration && $binding->parent instanceof ast_lambda_expression
 				&& $binding->parent->parent instanceof ast_inline_job && $binding->parent->parent->iteration !== null && $binding->id === 0)) return $binding;
@@ -32,6 +37,8 @@ final class Readonly_Access
 	{
 		$origin = self::readonly_origin($binding);
 		if ($origin !== null) {
+			if ($origin instanceof ast_produced_binding && $origin->parent instanceof ast_foreach_statement)
+				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write to a read-only hash segment binding: ' . $origin->short_name);
 			if ($origin instanceof ast_produced_binding || ($origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::value))
 				throw new diagnostic($site->source(), $site->byte_start(), 'The each index is read-only');
 			$message = $origin instanceof ast_closure_capture ? 'Cannot write to by-value capture: ' : 'Cannot write through read-only reference: ';

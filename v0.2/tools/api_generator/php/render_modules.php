@@ -6,7 +6,8 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         return;
     }
     $hashes = $plan['hashes'];
-    $h = "namespace scpp {\n";
+    $mt = !empty($plan['mt_segments']);
+    $h = ($mt ? "namespace scpp::mt { struct job; }\n" : '') . "namespace scpp {\n";
     $d = BANNER . includeHeader($hashes['header']) . includeHeader('concrete_index_impl.hpp') . includeHeader('new') . includeHeader('cstring') . includeHeader('scalar_semantics.hpp') . "namespace scpp {\n";
     foreach($hashes['specializations'] as $hash) {
         $n = $hash['name'];
@@ -15,7 +16,7 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $count = $hashes['count_type'];
         $nullable = 'nullable_' . $v;
         $lh = template('core/lifecycle_declaration', ['n' => $n]);
-        $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh') + $hash['traversal'] + ['inline' => ''];
+        $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh') + $hash['traversal'] + ['inline' => '', 'mt_segments' => $mt ? '1' : ''];
         $vars['methods'] = template('collections/hash_value_methods_declaration', $vars);
         $h .= template('collections/hash_declaration', $vars) . template('collections/hash_key_iteration_declaration', $vars);
         if ($hash['initialization'] !== null) {
@@ -41,7 +42,7 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
             $h .= $parts['append_declaration'] . scalarInputFences($plan, 'append', [[$v]]);
             $d .= $parts['append_definition'];
         }
-        $h .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
+        $h .= "private:\n" . $parts['private_declaration'] . "    struct storage;\n    storage* storage_ = nullptr;\n};\n";
     }
     $groups[] = ['provider' => $plan['hash_publication']['provider'], 'declarations' => $h . "}\n", 'system' => []];
     $files['src/hash.cpp'] = $d . "}\n";

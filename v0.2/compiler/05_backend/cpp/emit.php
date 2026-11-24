@@ -976,6 +976,22 @@ CPP;
 				}
 				$lines[] = "\t" . $transfer;
 			}
+			elseif ($statement instanceof ast_foreach_statement && ($source_type = $statement->source_value->type_def()) instanceof segment_type
+				&& $source_type->key !== null) {
+				$receiver = $this->value($statement->source_value, $global_references, $declarations, $required_headers);
+				$lines[] = "{ const auto hash_view = $receiver; int64_t hash_cursor = 0; while (hash_view.next(hash_cursor)) {";
+				$key = $statement->keys_only ? $statement->value : $statement->key;
+				if ($key !== null) $lines[] = '[[maybe_unused]] const auto& ' . $this->name($key) . ' = *static_cast<const '
+					. $source_type->key->cpp_type() . '*>(hash_view.key(hash_cursor));';
+				if (!$statement->keys_only) {
+					$method = $source_type->read_only ? 'value' : 'writable_value';
+					$qualifier = $source_type->read_only ? 'const ' : '';
+					$lines[] = '[[maybe_unused]] auto& ' . $this->name($statement->value) . ' = *static_cast<' . $qualifier
+						. $source_type->element->cpp_type() . "*>(hash_view.$method(hash_cursor));";
+				}
+				array_push($lines, ...$this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume));
+				$lines[] = '} }';
+			}
 			elseif ($statement instanceof ast_foreach_statement) {
 				$source_type = $statement->source_value->type_def();
 				$type = $source_type->iteration();
@@ -3094,7 +3110,7 @@ CPP;
 					$length = "snapshot_$i.range$slot.length";
 				} else [, $offset, $length] = $operands;
 				$forwarded[] = 'inputs[' . count($args) . ']';
-				$borrow = $input->type_def()->read_only ? 'borrow_read' : 'borrow';
+				$borrow = ($input->type_def()->key === null ? 'borrow' : 'borrow_hash') . ($input->type_def()->read_only ? '_read' : '');
 				$args[] = "::scpp::mt::job::{$borrow}($owner, $offset, $length)";
 			}
 			$grant_list = implode(', ', $args);

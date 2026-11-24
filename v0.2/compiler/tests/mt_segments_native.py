@@ -218,8 +218,58 @@ PY_HELPER = """def update(rows: segment<Point>, deltas: segment<int>, i: int) ->
 """
 
 
+HASH_BATCH = """function record_hash(): int {
+    $one Point;
+    $records hash<Point,string> = [];
+    $records["a"] = $one;
+    $records["b"] = $one;
+    $result = parallel {
+        job (write: $slice = segment($records,balanced_range(2,1,0))) {
+            foreach ($slice as $key => $row) {
+                if ($key === "b") { $row->x = 5; }
+            }
+            return count($slice);
+        }
+    };
+    return $result[0] + $records["a"]->x + $records["b"]->x;
+}
+function read_order(read_hash_segment<int,int> $s): int {
+    $order = 0;
+    foreach ($s as $key => $v) { $order = $order * 10 + $key; }
+    return $order;
+}
+function read_pair(hash<int,int> &$table, int $offset, int $length): vector<int> {
+    return parallel {
+        read_order(segment($table,$offset,$length));
+        job (read: $s = segment($table,$offset,$length)) { return count($s); }
+    };
+}
+function update_hash(hash_segment<int,int> $s): int {
+    $order = 0;
+    foreach ($s as $key => $value) {
+        $order = $order * 10 + $key;
+        $value += 10;
+    }
+    return $order;
+}
+function hash_batch(hash<int,int> &$table, hash<int,int> &$alias, vector<int> &$entered, int $offset): vector<int> {
+    return parallel {
+        job (write: $flag = segment($entered,0,1), write: $slice = segment($table,1,2)) {
+            $flag[0] = 1;
+            return update_hash($slice);
+        }
+        job (write: $flag = segment($entered,1,1), read: $slice = segment($alias,$offset,1)) {
+            $flag[0] = 1;
+            foreach ($slice as $key => $value) { return $key; }
+            return 0;
+        }
+    };
+}
+"""
+
+
 def sources_for(flavor):
-    sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'mixed.php': MIXED_BATCH, 'point.php': 'struct Point { public const bool ENABLED = true; public int $x = 1; }'}
+    sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'mixed.php': MIXED_BATCH, 'hash.php': HASH_BATCH, 'point.php': 'struct Point { public const bool ENABLED = true; public int $x = 1; }'}
     sources['probe_hook.php'] = 'function note_entry(int $id): int { return $id; }'
     if flavor == 'py':
         return dict(sources, **{'worker.py': PY_WORK, 'helper.py': PY_HELPER})
@@ -303,6 +353,10 @@ def prove(work):
     helper = valid['helper.php']
     dispatch = valid['dispatch.php']
     cases = [
+        ({'hash.php': HASH_BATCH.replace('write: $slice = segment($records', 'read: $slice = segment($records')},
+         'read-only hash segment binding'),
+        ({'hash.php': HASH_BATCH.replace('$value += 10;', '$key += 10;')}, 'read-only hash segment binding'),
+        ({'hash.php': HASH_BATCH.replace('return $key;', '$value += 10; return $key;')}, 'read-only hash segment binding'),
         ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: true')}, 'Job workers requires int'),
         ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: $part')}, 'local/global: part'),
         ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: 2, workers: 3')}, 'Job workers must appear once'),

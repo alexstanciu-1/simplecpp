@@ -3,12 +3,13 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Borrowed worker parameter. Only the joined launch can create a view over vector slots. */
+/** Borrowed worker parameter. Only the joined launch can create a view over collection slots. */
 final class segment_type extends type_definition implements index_read_type, index_write_type, counted_collection_type
 {
-	public function __construct(public readonly type_definition $element, public readonly bool $read_only)
+	public function __construct(public readonly type_definition $element, public readonly bool $read_only, public readonly ?type_definition $key = null)
 	{
-		parent::__construct(($read_only ? 'read_segment<' : 'segment<') . $element->name . '>');
+		$family = ($read_only ? 'read_' : '') . ($key === null ? 'segment' : 'hash_segment');
+		parent::__construct($family . '<' . $element->name . ($key === null ? '' : ',' . $key->name) . '>');
 	}
 
 	public function cpp_type(): string
@@ -19,18 +20,19 @@ final class segment_type extends type_definition implements index_read_type, ind
 	/** @return string[] */
 	public function cpp_headers(): array /** list<string> */
 	{
-		return ['scpp/mt_segment.hpp', ...$this->element->cpp_headers()];
+		return ['scpp/mt_segment.hpp', ...$this->element->cpp_headers(), ...($this->key?->cpp_headers() ?? [])];
 	}
 
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
 		if ($value->type_def() instanceof self && $value->type_def()->element === $this->element
-			&& ($this->read_only || !$value->type_def()->read_only)) return value_conversion::identity;
+			&& $value->type_def()->key === $this->key && ($this->read_only || !$value->type_def()->read_only)) return value_conversion::identity;
 		return parent::prepare_scalar_conversion($value, $context);
 	}
 
 	public function prepare_key(ast_expression $key): void
 	{
+		if ($this->key !== null) throw new diagnostic($key->source(), $key->byte_start(), 'Traverse hash segments with foreach');
 		if ($key->type_def() !== type_int64::instance()) throw new diagnostic($key->source(), $key->byte_start(), 'Segment index requires int');
 	}
 

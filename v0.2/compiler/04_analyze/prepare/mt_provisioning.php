@@ -77,17 +77,21 @@ final class Mt_Provisioning
 	{
 		if ($range::class !== ast_call_expression::class || $range->name !== 'segment'
 			|| $range->qualifier === call_qualifier::local || $range->member_separator !== null || $range->receiver !== null || !in_array(count($range->arguments), [2, 3], true))
-			self::reject($range, 'Expected segment(vector, offset, length) or segment(vector, range)');
+			self::reject($range, 'Expected segment(collection, offset, length) or segment(collection, range)');
 		$owner = $range->arguments[0];
 		$prepare($owner);
-		if ($owner::class !== ast_name_expression::class || $owner->local_binding() === null || !($owner->type_def() instanceof vector_type_definition))
-			self::reject($owner, 'Exclusive segment requires a matching writable local vector');
-		$element = $owner->type_def()->element_type;
+		$container = $owner->type_def();
+		if ($owner::class !== ast_name_expression::class || $owner->local_binding() === null || !($container instanceof vector_type_definition || $container instanceof hash_type_definition))
+			self::reject($owner, 'Segment requires a matching local vector or hash');
+		$key = $container instanceof hash_type_definition ? $container->key_type : null;
+		if ($key !== null && $key !== type_int64::instance() && $key !== type_string::instance())
+			self::reject($range, 'Hash segment keys must be int or string');
+		$element = $container instanceof hash_type_definition ? $container->value_type : $container->element_type;
 		if ($expected === null) {
 			if (!Mt_Rules::isolated($element)) self::reject($range, 'Segment requires isolated inline elements');
-			$expected = new segment_type($element, $read_only);
-		} elseif (!($expected instanceof segment_type) || $expected->element !== $element)
-			self::reject($range, 'Exclusive segment requires a matching writable local vector');
+			$expected = new segment_type($element, $read_only, $key);
+		} elseif (!($expected instanceof segment_type) || $expected->element !== $element || $expected->key !== $key)
+			self::reject($range, 'Segment requires a matching local vector or hash');
 		if (!$expected->read_only) Readonly_Access::write($owner);
 		if (count($range->arguments) === 2) {
 			$coordinates = $range->arguments[1];

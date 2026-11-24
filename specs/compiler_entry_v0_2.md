@@ -497,6 +497,25 @@ helper. A named worker taking `read_segment<T>` requests a read grant when
 launched with `segment(vector, offset, length)`. Both modes require isolated
 element types. A job consisting entirely of readers is valid. C++ and JS flavors use bare binding names in the same clauses.
 
+### Hash segments
+
+For a local `hash<V,K>`, `segment(table, offset, length)` grants consecutive live
+entries in insertion order. The same rule applies to `segment(table, range)`.
+Deleting a key removes it from the count, replacing its value preserves its
+position, and reinserting a deleted key places it last. For example, deleting
+`b` from `[a,b,c,d]` and reinserting it gives `[a,c,d,b]`. Offset 1 and length
+2 grant `c,d`. Offset equal to the live count is valid for an empty segment.
+
+Use `foreach ($slice as $key => $value)` to visit the grant. The key is always
+read-only. With `write:`, assigning to the loop value or one of its record
+fields updates that entry in place. With `read:`, both bindings are read-only.
+Named helpers take `hash_segment<V,K>` or `read_hash_segment<V,K>`. Keys may
+be integers or strings, and values must satisfy the vector segment isolation
+rules. The grant permits forward traversal and counting. The hash structure
+stays fixed until join. Admission compares logical intervals on the same
+backing hash across the entire batch, including aliases. Readers may overlap.
+Any nonempty overlap involving a writer rejects the batch before dispatch.
+
 ### Balanced vector partitions
 
 With the MT segment runtime enabled, `balanced_range(length, parts, part)`
