@@ -190,8 +190,8 @@ not inferred declarations. Parameters are initialized on entry, with unknown
 caller values during body preparation, and are mutable local storage. Value parameters own copies; explicit references bind caller storage.
 
 Positional calls can omit a trailing suffix with declared defaults. Direct calls to
-source functions, directly resolved instance methods and explicitly type-qualified static methods
-with by-value parameters also accept labels.
+source functions, directly resolved instance methods and static methods qualified by explicit type name, lexical self,
+or lexical parent accept labels when all parameters are by value.
 An instance call evaluates its receiver once and retains it through the call, before evaluating arguments. PHP, C++ and JS
 use `difference(right: nextRight(), left: nextLeft())`. Python uses
 `difference(right=nextRight(), left=nextLeft())`. Positional arguments can precede

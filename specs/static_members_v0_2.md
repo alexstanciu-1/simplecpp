@@ -39,6 +39,12 @@ the existing namespace function takes precedence. An explicit type name admits n
 on static methods with by-value parameters, including inherited methods. For example,
 `Child::make(count: first(), offset: second())` binds labels against the selected declaration,
 evaluates and converts `first()` before `second()`, and passes the results in parameter order.
+The same by-value label rules apply to lexical static calls. Lookup starts at the declaring
+type for PHP `self::`, C++ `Self::` and JS `class.`, or at its immediate base for
+PHP `parent::`, C++ `Parent::` and JS `super.`. Labels bind to the selected declaration.
+A call from an inherited static body forwards its current called type, including through
+these labeled calls. Labels on late-bound `static::` calls remain deferred.
+
 A static method body has no `this` receiver.
 
 Inside a struct method or constructor, PHP `self::`, C++ `Self::` and JS `class.`

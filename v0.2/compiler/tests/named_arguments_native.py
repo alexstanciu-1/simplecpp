@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from classes_native import fixture
 from collection_goal_native import guard, revisions
+from protected_static_native import sources as static_sources
 
 
 def prove(work, flavor):
@@ -116,15 +117,44 @@ def prove_static_methods(work, flavor):
     edits.extend([('collision', collision, b'CO4312' if flavor == 'php' else b'CO4366'),
                   ('collision', None, b'CO4312')])
     if flavor == 'php':
-        for qualifier in ('self', 'static'):
-            edits.append(('base', renamed.replace('public static function',
-                          f'public static function probe():int {{return {qualifier}::make(start: 1);}} public static function'),
-                          'Named arguments require a direct source function'))
+        edits.append(('base', renamed.replace('public static function',
+                      'public static function probe():int {return static::make(start: 1);} public static function'),
+                      'Named arguments require a direct source function'))
         edits += [('base', renamed, b'CO4312'),
                   ('main', '$w=new Child();return $w::make(start: 1);',
                    'Named arguments require a direct source function')]
     revisions(work, flavor, {'main': main, 'base': base, 'child': child,
                              'effects': effects, 'positional': positional}, edits)
+
+
+def prove_lexical_static(work, flavor):
+    _, (syntax, klass, method, static, sep) = static_sources(flavor)
+    v = syntax['v']
+    lexical, parent, late = {
+        'php': ('self::', 'parent::', 'static::'),
+        'cpp': ('Self::', 'Parent::', 'Static::'),
+        'js': ('class.', 'super.', 'static::'),
+    }[flavor]
+    params = [('offset', 'int'), ('count', 'int')]
+    make = static('make', f'return {late}tag() + {v}offset * 10 + {v}count;', params)
+    root = klass('Root', make + static('tag', 'return 1;') + method('read', 'return 1;', params))
+    args = 'count: first(), offset: second()'
+    callers = static('run', f'return {lexical}make({args});') + static('fromParent', f'return {parent}make({args});')
+    base = klass('Base', callers, 'Root')
+    child = klass('Child', static('make', 'return 99;', params) + static('tag', 'return 5;'), 'Base')
+    fn = fixture(flavor)['function']
+    effects = fn('first', 'int', [], 'echo "C";return 3;') + fn('second', 'int', [], 'echo "O";return 4;')
+    main = f'echo Base{sep}run(),Child{sep}run(),Child{sep}fromParent();return 8;'
+    answer = b'CO44CO48CO48'
+    revisions(work, flavor, dict(main=main, root=root, base=base, child=child, effects=effects), [
+        (None, None, answer), (None, None, answer),
+        ('base', klass('Base', callers + static('make', 'return 77;', params), 'Root'), b'CO77CO77CO48'),
+        ('base', base, answer),
+        ('root', root.replace('offset', 'start'), 'Unknown named argument: offset'),
+        ('base', base.replace('offset:', 'start:'), answer),
+        ('base', base.replace('offset:', 'start:').replace(parent + 'make', parent + 'read'),
+         'Named arguments require a direct source function'),
+    ])
 
 
 if __name__ == '__main__':
@@ -140,6 +170,11 @@ if __name__ == '__main__':
         static_methods.mkdir()
         for flavor in ('php', 'cpp', 'js'):
             prove_static_methods(static_methods, flavor)
+
+        lexical_methods = Path(tmp) / 'lexical-methods'
+        lexical_methods.mkdir()
+        for flavor in ('php', 'cpp', 'js'):
+            prove_lexical_static(lexical_methods, flavor)
 
         guard(static_methods, 'php', 'static-conversion-order',
               'class Window {public static function make(int $offset, byte $count):int {echo "X";return 8;}} '

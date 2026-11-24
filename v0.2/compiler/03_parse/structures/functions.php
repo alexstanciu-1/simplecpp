@@ -379,7 +379,7 @@ class ast_call_expression extends ast_expression
 /** A labeled direct call retains written operands and a resettable permutation of parameter positions. */
 final class ast_named_call extends ast_call_expression
 {
-	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, nonvirtual instance method, or explicitly type-qualified static method';
+	public const string UNSUPPORTED_TARGET = 'Named arguments require a direct source function, nonvirtual instance method, or a static method qualified by type, self, or parent';
 
 	/** PROPERTIES */
 	/** @var string[] Written label keyed by the argument's source position. */
@@ -395,9 +395,9 @@ final class ast_named_call extends ast_call_expression
 	 * @param string[] $labels
 	 */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name, ?token_kind $separator,
-		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */)
+		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */, call_qualifier $qualifier)
 	{
-		parent::__construct($start, $end, $name, $separator, $arguments, $receiver);
+		parent::__construct($start, $end, $name, $separator, $arguments, $receiver, $qualifier);
 		$this->labels = $labels;
 	}
 

@@ -2192,9 +2192,8 @@ final class Preparation
 			if ($required) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $qualified);
 			return false;
 		}
-		if ($call instanceof ast_named_call) {
-			if (!$method->is_static) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
-			$this->dependencies?->watch($symbol, $this->owner, Dependency_Watches::PARAMETER_NAMES);
+		if ($call instanceof ast_named_call && !$method->is_static) {
+			throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 		}
 		if (!$method->is_static && !$late && $record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
 			$this->ancestor_call($call, $name, $record->definition, $initializing, $symbol);
@@ -2239,6 +2238,7 @@ final class Preparation
 			$this->source_call($call, $symbol, $method, $initializing, called: $lookup);
 			return;
 		}
+		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 		if ($this->in_lambda) throw new diagnostic($call->source(), $call->byte_start(), 'Capture-free lambda cannot use this');
 		if ($this->owner->parent->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
 		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
@@ -2267,6 +2267,9 @@ final class Preparation
 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
 		}
 		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());
+		if ($called !== null && $call instanceof ast_named_call) {
+			$this->dependencies?->watch($symbol, $this->owner, Dependency_Watches::PARAMETER_NAMES);
+		}
 		$conversions = $this->bind_arguments($call, $function, $initializing);
 		if (!$this->in_lambda && $function->is_direct_final_method()) $this->dependencies?->watch_call($symbol, $this->owner);
 		$instance = null;
