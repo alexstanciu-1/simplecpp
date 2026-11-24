@@ -278,15 +278,18 @@ JS   let inc = fn(x: int): int => x + 1;
 Each lambda expression has a distinct concrete type. An inferred local
 can invoke its lambda with positional or named arguments. Labels bind to the local
 lambda’s written parameter names. Each argument and its conversion run once in
-written order. PHP block closures follow the same rule. Passing the lambda to a
-typed callback parameter exposes only the positional callback signature. An inline lambda or
-such a local can supply a callback argument when the component types
-match exactly. The C++ backend emits a concrete capture-free lambda and
+written order. Capture-free arrow lambdas and PHP block closures accept the
+same trailing parameter defaults as named functions. Local calls may omit the
+trailing suffix or use a label to skip a default. Passing the lambda to a typed
+callback exposes its full positional signature. Every invocation through that
+callback must supply every input, including those with defaults on the lambda.
+Both inline lambdas and inferred locals can supply a callback argument when
+the component types match exactly. The C++ backend emits a concrete capture-free lambda and
 converts it to a native function pointer at the callback boundary.
 
 The body sees its own parameters and ordinary nonlocal symbols. Enclosing
 locals and the current instance are unavailable. This slice covers inferred
-local initializers and typed callback arguments. Captures, block bodies,
+local initializers and typed callback arguments. Captures,
 new lifetime rules and yield producers are deferred.
 
 ### Trailing literal parameter defaults

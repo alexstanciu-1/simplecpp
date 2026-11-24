@@ -141,9 +141,22 @@ interface statement_return_target
 	public function return_type_def(): type_definition;
 }
 
+/** Arity of a source parameter list with trailing defaults. */
+trait ast_fixed_parameter_list
+{
+	/** Defaults form a trailing suffix; only the first omitted parameter needs inspection. */
+	public function accepts_argument_count(int $supplied /** uint32 */): bool
+	{
+		return $supplied <= count($this->parameters)
+			&& (!isset($this->parameters[$supplied]) || $this->parameters[$supplied]->default_value !== null);
+	}
+}
+
 /** Owns the signature and body while its enclosing function owns incremental preparation. */
 final class ast_lambda_expression extends ast_expression implements statement_return_target
 {
+	use ast_fixed_parameter_list;
+
 	/** Prepared result conversion. */
 	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
 
@@ -610,6 +623,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature, statement_return_target
 {
 	use ast_declaration { name as private namespace_name; }
+	use ast_fixed_parameter_list;
 
 	/** PROPERTIES */
 	/** Native non-owning authored trait; null for an ordinary member. */
@@ -734,13 +748,6 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 			$kind = $this->is_constructor() ? 'constructor' : 'method';
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot call private ' . $kind . ' ' . $this->name());
 		}
-	}
-
-	/** Defaults form a trailing suffix; only the first omitted parameter needs inspection. */
-	public function accepts_argument_count(int $supplied /** uint32 */): bool
-	{
-		return $supplied <= count($this->parameters)
-			&& (!isset($this->parameters[$supplied]) || $this->parameters[$supplied]->default_value !== null);
 	}
 
 	public function is_constructor(): bool

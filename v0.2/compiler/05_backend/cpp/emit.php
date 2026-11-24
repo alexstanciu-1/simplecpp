@@ -2596,8 +2596,8 @@ CPP;
 			$callback = $value->callable_binding();
 			if ($callback !== null) {
 				$type = $callback->type_def();
-				$signature = $type instanceof lambda_type_definition ? $type->signature : $type;
-				return $this->invocation($value, $signature, $this->name($callback), $signature->result, $global_references, $declarations, $required_headers);
+				$target = $type instanceof lambda_type_definition ? $callback->initializer : $type;
+				return $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers);
 			}
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];
@@ -2863,7 +2863,7 @@ CPP;
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $required_headers
 	 */
-	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|callback_type_definition|runtime_function $function,
+	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|ast_lambda_expression|callback_type_definition|runtime_function $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null): string
 	{
@@ -2880,7 +2880,7 @@ CPP;
 		$suspending = $value instanceof ast_call_expression && $value->suspending_operands;
 		$suffix = $suspending ? '_' . $value->start . '_' . $value->end : '';
 		$receiver_reorderable = true;
-		$method = $runtime ? $function->receiver_method : !$callback && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
+		$method = $runtime ? $function->receiver_method : $function instanceof ast_function_declaration && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
 		if (!$runtime && $value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
@@ -2967,7 +2967,7 @@ CPP;
 			$arguments[0] = 'enum_receiver' . $suffix;
 			$direct = false;
 		}
-		if ($argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && ($runtime || $callback || !$function->is_constructor())
+		if ($argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && (!($function instanceof ast_function_declaration) || !$function->is_constructor())
 			&& !$has_reference && count($order_sensitive) <= 1))) {
 			if (isset($value->named)) $direct_arguments = $value->named->parameter_order($direct_arguments);
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';

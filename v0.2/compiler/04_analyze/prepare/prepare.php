@@ -1852,14 +1852,19 @@ final class Preparation
 		}
 		$locals = [];
 		$inputs = [];
+		$optional = false;
 		foreach ($lambda->parameters as $parameter) {
 			$name = $parameter->declaration_key();
 			if (isset($locals[$name])) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Duplicate lambda parameter: ' . $name);
 			$type = Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
-			if (!Type_Resolution::callback_component($type) || $parameter->mode !== passing_mode::value || $parameter->default_value !== null) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported by-value parameters without defaults');
+			if (!Type_Resolution::callback_component($type) || $parameter->mode !== passing_mode::value) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported by-value parameters');
 			}
 			$parameter->settle_type($type);
+			if ($optional || $parameter->default_value !== null) {
+				Function_Preparation::parameter_default($parameter, $this->symbols, $this->owner, $this->dependencies);
+				$optional = true;
+			}
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
 		}
@@ -1938,13 +1943,8 @@ final class Preparation
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
 			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
-			if ($call instanceof ast_named_call) {
-				if (!($type instanceof lambda_type_definition && $binding instanceof ast_local_declaration && $binding->initializer instanceof ast_lambda_expression)) {
-					throw new diagnostic($call->source(), $call->byte_start(), 'Typed callback calls require positional arguments');
-				}
-				$call->named->bind_slots($call, $binding->initializer);
-			}
-			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $signature, $initializing));
+			$target = $type instanceof lambda_type_definition ? $binding->initializer : $signature;
+			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $target, $initializing));
 			return;
 		}
 		if ($call->qualifier === call_qualifier::local) {
@@ -2408,19 +2408,19 @@ final class Preparation
 	}
 
 	/** Share arity, conversions and reference effects between functions and constructors. @return int[] */
-	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration|callback_type_definition $function,
+	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration|ast_lambda_expression|callback_type_definition $function,
 		?string $initializing): array /** list<uint16> */
 	{
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
 		$slots = null;
 		if (isset($call->named)) {
-			// Local lambdas have already bound their labels against the concrete initializer.
-			if (!$callback) $call->named->bind_slots($call, $function);
+			if ($callback) throw new diagnostic($call->source(), $call->byte_start(), 'Typed callback calls require positional arguments');
+			$call->named->bind_slots($call, $function);
 			$slots = $call->named->slots;
 		}
 		if ($callback ? $supplied !== count($function->inputs) : !$function->accepts_argument_count($supplied)) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($callback ? $call->name : $function->name()));
+			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($function instanceof ast_function_declaration ? $function->name() : $call->name));
 		}
 		$conversions = [];
 		$writes = [];

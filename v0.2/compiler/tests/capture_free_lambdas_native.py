@@ -71,6 +71,49 @@ def prove_named_calls(work, flavor):
           'integer_cast_out_of_range', expected_stdout=b'R')
 
 
+def prove_defaults(work, flavor):
+    form = fixture(flavor)
+    v, fn = form['v'], form['function']
+    params = 'a:int,b:byte=2,c:int=3' if flavor == 'js' else f'int {v}a,byte {v}b=2,int {v}c=3'
+    definition = f'fn({params}):int => {v}a*100+{v}b*10+{v}c'
+    entry = (form['infer']('digits', definition)
+             + f'echo {v}digits(4),":",{v}digits(4,c:9),":",apply({v}digits);return 8;')
+    consumer = fn('apply', 'int', [('op', 'callback<int,int,byte,int>')], f'return {v}op(4,8,6);')
+    edited = entry.replace('=2', '=5')
+    required = edited.replace('=5', '')
+    initial_trace, edited_trace = b'423:429:486', b'453:459:486'
+    work.mkdir()
+    revisions(work, flavor, dict(main=entry, consumer=consumer), [
+        (None, None, initial_trace), (None, None, initial_trace),
+        ('main', edited, edited_trace),
+        ('main', required, 'Argument count mismatch for function: digits'),
+        ('main', required.replace('digits(4)', 'digits(4,1)'), 'Missing required argument: b'),
+        ('main', edited, edited_trace),
+        ('consumer', consumer.replace('op(4,8,6)', 'op(4)'), 'Argument count mismatch for function: op'),
+        ('consumer', consumer.replace('op(4,8,6)', 'op(4,b:8,c:6)'), 'Typed callback calls require positional arguments'),
+        ('consumer', consumer, edited_trace),
+        ('main', edited.replace('=3', ''), 'Required parameter follows optional parameter'),
+        ('main', edited.replace('=5', '=4+1'), 'Parameter defaults require literals'),
+        ('main', edited.replace('=5', '=300'), 'outside uint8 range'),
+        ('main', entry, initial_trace),
+    ])
+
+
+def prove_enum_default(work, flavor):
+    form = fixture(flavor)
+    v = form['v']
+    enum = 'enum Kind {case First=1;case Selected=7;}' if flavor == 'php' else 'enum Kind {First=1,Selected=7}'
+    case = 'Kind.Selected' if flavor == 'js' else 'Kind::Selected'
+    param = 'k:Kind' if flavor == 'js' else f'Kind {v}k'
+    local = form['infer']('readKind', f'fn({param}={case}):int => enum_value({v}k)')
+    work.mkdir()
+    revisions(work, flavor, dict(main=local + f'echo {v}readKind();return 8;', kind=enum), [
+        (None, None, b'7'), ('kind', enum.replace('=7', '=5'), b'5'),
+        ('kind', enum.replace('Selected', 'Other'), 'Unknown enum case'),
+        ('kind', enum, b'7'),
+    ])
+
+
 def prove_block(work):
     worker = """function select_text(int $flag):string {
         $outer = 9;
@@ -158,6 +201,7 @@ def prove_block_call_arity(work):
         (None, None, b'12'),
         ('main', missing_argument, 'Argument count mismatch for function: h'),
         ('main', valid, b'12'),
+        ('main', valid.replace('int $x, int $y', 'int $x=3, int $y=9').replace('y: 9, x: 3', ''), b'12'),
     ])
 
 
@@ -187,6 +231,8 @@ def main():
         for flavor in ('php', 'cpp', 'js'):
             prove(root / flavor, flavor)
             prove_named_calls(root / (flavor + "-named"), flavor)
+            prove_defaults(root / (flavor + "-defaults"), flavor)
+            prove_enum_default(root / (flavor + "-enum-default"), flavor)
 
 
 if __name__ == '__main__':
