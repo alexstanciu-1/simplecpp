@@ -1864,6 +1864,9 @@ final class Parser
 			}
 			$value = $this->value(argument_operand: $argument_operand);
 			$c->take(token_kind::rparen, ')');
+			if ($c->tokens->source->flavor === flavor::php && $value instanceof ast_field_expression && $c->is(token_kind::lparen)) {
+				return $this->call_arguments($start, $value->field, null, $value, call_qualifier::field_value);
+			}
 			return $value;
 		}
 		if (($this->declaring_type !== null || $this->arrow !== null) && !$this->cursor->at_end()) {

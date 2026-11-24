@@ -2005,6 +2005,13 @@ final class Preparation
 	/** Resolve only the published signature, then validate and convert arguments in source order. */
 	private function call(ast_call_expression $call, ?string $initializing = null, ?dependency_use $async_use = null): void
 	{
+		if ($call->qualifier === call_qualifier::field_value) {
+			$this->value($call->receiver, $initializing);
+			$type = $call->receiver->type_def();
+			if (!($type instanceof owned_callable_type)) throw new diagnostic($call->source(), $call->byte_start(), 'Invocation requires an owned callable field: ' . $call->name);
+			$call->settle_callable_call(null, $type->signature, $this->bind_arguments($call, $type->signature, $initializing));
+			return;
+		}
 		$type_symbol = null;
 		$class = null;
 		if ($call->source()->flavor === flavor::python && $call->receiver === null && $call->member_separator === null) {
@@ -2027,7 +2034,7 @@ final class Preparation
 			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
 			$target = $type instanceof lambda_type_definition ? $binding->initializer : $signature;
-			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $target, $initializing));
+			$call->settle_callable_call($binding, $signature, $this->bind_arguments($call, $target, $initializing));
 			if ($target instanceof ast_lambda_expression && $target->borrowed_writes !== []) {
 				$this->invalidate_references($call, $target->borrowed_writes);
 			}

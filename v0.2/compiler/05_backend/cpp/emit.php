@@ -2597,6 +2597,13 @@ CPP;
 			return '&' . $name;
 		}
 		if ($value instanceof ast_call_expression) {
+			if ($value->qualifier === call_qualifier::field_value) {
+				$target = $value->receiver;
+				$signature = $target->type_def()->signature;
+				$this->callable_dependencies($signature, $declarations);
+				$operand = $this->value($target, $global_references, $declarations, $required_headers);
+				return $this->invocation($value, $signature, $operand, $value->type_def(), $global_references, $declarations, $required_headers);
+			}
 			$callback = $value->callable_binding();
 			if ($callback !== null) {
 				$type = $callback->type_def();
@@ -2888,7 +2895,11 @@ CPP;
 		if (!$runtime && $value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
-		if ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
+		if ($callback && $value->qualifier === call_qualifier::field_value) {
+			$selected = 'selected_callable_' . $value->start;
+			$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
+			$name = $selected;
+		} elseif ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
 			foreach ($operands as $index => $argument) {
 				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index], $value->conversion($index))) continue;
 				// An argument can replace the slot through a closure that borrows it.
@@ -3196,6 +3207,10 @@ CPP;
 				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
 			} elseif ($type instanceof record_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
 		};
+		foreach ($record->fields as $field) {
+			$type = $field->type_def();
+			if ($type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
+		}
 		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
 			self::visit_signature_type_dependencies($parameter->type_def(), $collect);
 		}

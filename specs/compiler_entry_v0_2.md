@@ -325,7 +325,7 @@ initializing required and readonly properties before creating a receiver borrow.
 A borrowed `$this` is available only as a receiver. Typed callbacks accept only
 capture-free callables.
 
-### Owned callables in locals, free functions and methods
+### Owned callables in locals, functions, methods and instance fields
 
 PHP locals may declare a fixed by-value signature, for example
 `$add function<int(int)> = fn($n) => $n + $offset;`. The signature supplies
@@ -360,6 +360,14 @@ the parameter names from the declaration selected at the call site.
 
 An instance method can copy a field into a local and return a closure that captures
 that local by value. Returning a closure that borrows `$this` fails the ownership check.
+
+A PHP class or struct can declare an instance field such as `public function<int(int)> $run;`.
+The field starts absent. Assignment supplies the expected signature and applies the same
+ownership check as a local. `($object->run)(arg())` evaluates the receiver once and
+selects the field’s current callable before evaluating `arg()`. Replacing the field
+during argument evaluation affects subsequent calls. Calling an absent target throws
+`std::bad_function_call` after argument evaluation. The spelling `$object->run(...)`
+with actual arguments continues to select a method.
 
 ### Trailing literal parameter defaults
 

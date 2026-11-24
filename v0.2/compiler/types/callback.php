@@ -106,6 +106,16 @@ final class owned_callable_type extends type_definition implements presence_test
 		return ['functional', ...$this->signature->cpp_headers()];
 	}
 
+	public function supports_instance_field(): bool
+	{
+		return true;
+	}
+
+	public function supports_static_property(): bool
+	{
+		return false;
+	}
+
 	public function supports_inferred_local(): bool
 	{
 		return true;

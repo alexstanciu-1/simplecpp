@@ -16,7 +16,7 @@ final class Php_Grammar implements statement_grammar
 {
 	public function function_start(Parser $parser): bool
 	{
-		return $parser->cursor->keyword('function');
+		return $parser->cursor->keyword('function') && !$parser->cursor->next_is(token_kind::less);
 	}
 
 	public function function_header(Parser $parser, bool $static = false, bool $private = false, bool $protected = false, ?string $alias = null): ast_function_declaration
