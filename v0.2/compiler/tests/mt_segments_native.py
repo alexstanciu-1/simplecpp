@@ -1,5 +1,6 @@
 """Fresh multi-file compilation and native slot identity, batch admission and joined failure."""
 import json
+import os
 import re
 import subprocess
 import sys
@@ -91,7 +92,9 @@ def prove(work):
         assert re.search(r'\(\*static_cast<scpp_records::Point\*>\(.*?\.at\([^;]*?\)\)+\.x =', helper_cpp), helper_cpp
         binary = work / ('run-' + flavor)
         subprocess.run([*FLAGS, *units, LIBRARY, '-o', binary], check=True)
-        assert subprocess.check_output([binary], timeout=10) == b'35351356'
+        for policy in ('sleep', 'active'):
+            env = dict(os.environ, SCPP_MT_WAIT=policy)
+            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356'
         if flavor == 'php':
             # Exercise the compiler-generated application vector and the actual worker body.
             headers = [out / name for name in manifest['headers']]
@@ -104,7 +107,8 @@ def prove(work):
             probe = work / 'probe'
             subprocess.run([*FLAGS, driver, *[p for p in units if p.name != 'entry.cpp'],
                             LIBRARY, '-o', probe], check=True)
-            subprocess.run([probe], check=True, timeout=15)
+            for policy in ('sleep', 'active'):
+                subprocess.run([probe], env=dict(os.environ, SCPP_MT_WAIT=policy), check=True, timeout=15)
 
     valid = sources_for('php')
     helper = valid['helper.php']

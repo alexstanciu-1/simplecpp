@@ -32,6 +32,11 @@ into either family and encodes both through checked results. Direct int64, float
 bool_t and string encoding, including their nullable forms, is also available.
 All twelve operations are generated independently on request.
 
+Compiled `mt_join` batches share a process-wide worker pool. The caller participates,
+and background workers start on demand and remain available for later joins. Set
+`SCPP_MT_WAIT=sleep` (default) to block idle workers or `SCPP_MT_WAIT=active` to
+keep them polling between batches on dedicated CPUs.
+
 The optional [datetime module](specs/datetime_module.md) provides eleven clock,
 sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
 configuring, then link `scpp_datetime`; the core has no datetime dependency.
