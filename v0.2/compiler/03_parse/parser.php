@@ -1732,25 +1732,45 @@ final class Parser
 	private function keyword_block_start(): ?keyword_block
 	{
 		$c = $this->cursor;
-		if (!$c->next_is(token_kind::lbrace) || !$c->is(token_kind::identifier)
-			|| $c->tokens->source->flavor === flavor::python) return null;
-		return keyword_block::tryFrom($c->tokens->text_at($c->position()));
+		if (!$c->is(token_kind::identifier) || $c->tokens->source->flavor === flavor::python) return null;
+		$kind = keyword_block::tryFrom($c->tokens->text_at($c->position()));
+		if ($kind === null || $c->next_is(token_kind::lbrace)) return $kind;
+		if (!$c->next_is(token_kind::lparen)) return null;
+		// A settings list belongs to a block only when its closing parenthesis precedes a brace.
+		$depth = 1;
+		for ($i = $c->position() + 2; isset($c->tokens->tokens[$i]); ++$i) {
+			$token = $c->tokens->tokens[$i]->kind;
+			if ($token === token_kind::lparen) ++$depth;
+			if ($token !== token_kind::rparen) continue;
+			--$depth;
+			if ($depth === 0) return ($c->tokens->tokens[$i + 1]->kind ?? null) === token_kind::lbrace ? $kind : null;
+		}
+		return null;
 	}
 
 	/** Only the introducer is shared. Each block parser owns its contents and builds its own expression. */
 	private function keyword_block(keyword_block $kind): ast_expression
 	{
 		$start = $this->cursor->take(token_kind::identifier, $kind->value);
-		$this->cursor->take(token_kind::lbrace, '{');
 		return match ($kind) {
 			keyword_block::parallel => $this->parallel_body($start),
 		};
 	}
 
+	/** Read group settings and the ordered entries submitted together. */
 	private function parallel_body(int $start /** uint32 */): ast_parallel_expression
 	{
 		$jobs = [];
 		$c = $this->cursor;
+		$workers = null;
+		if ($c->is(token_kind::lparen)) {
+			$c->take(token_kind::lparen, '(');
+			if ($c->name(token_kind::identifier) !== 'workers') throw new diagnostic($c->tokens->source, $c->offset(), 'Expected group workers setting');
+			$c->take(token_kind::colon, ': after workers');
+			$workers = $this->value();
+			$c->take(token_kind::rparen, ') after group workers');
+		}
+		$c->take(token_kind::lbrace, '{');
 		while (!$c->is(token_kind::rbrace)) {
 			if ($c->is(token_kind::identifier) && $c->tokens->text_at($c->position()) === 'job'
 				&& $c->next_is(token_kind::lparen) && ($c->tokens->tokens[$c->position() + 3]->kind ?? null) === token_kind::colon) {
@@ -1763,7 +1783,7 @@ final class Parser
 			$c->take(token_kind::semicolon, '; after parallel worker call');
 		}
 		$end = $c->take(token_kind::rbrace, '}') + 1;
-		return new ast_parallel_expression($start, $end, $jobs);
+		return new ast_parallel_expression($start, $end, $jobs, $workers);
 	}
 
 	/** Binding expressions belong to the caller; only their aliases enter the worker body. */
@@ -1775,20 +1795,37 @@ final class Parser
 		$parameters = [];
 		$inputs = [];
 		$binding_kinds = [];
+		$iteration = null;
+		$outer_arrow = $this->arrow;
 		do {
 			if ($parameters !== []) $c->take(token_kind::comma, ',');
 			$at = $c->position();
 			$kind = $c->name(token_kind::identifier);
-			if (!in_array($kind, ['read', 'write', 'value'], true)) throw new diagnostic($c->tokens->source,
-				$c->tokens->tokens[$at]->offset, 'Expected read, write or value binding in inline job');
+			if (!in_array($kind, ['read', 'write', 'value', 'each'], true)) throw new diagnostic($c->tokens->source,
+				$c->tokens->tokens[$at]->offset, 'Expected each, read, write or value in inline job');
 			$binding_kinds[] = $kind;
 			$c->take(token_kind::colon, ': after binding kind');
 			$at = $c->position();
 			$name = $c->binding_name($c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 			$parameters[] = new ast_parameter_declaration($name, null, count($parameters), $at, $c->position());
-			$c->take(token_kind::assign, '= before binding expression');
+			if ($kind === 'each') {
+				if (count($parameters) !== 1) throw new diagnostic($c->tokens->source, $c->offset(), 'each must be the first job clause');
+				$iteration = $this->lexical->produced_binding($name, $at, false);
+				if ($c->keyword('in')) $c->take_keyword('in');
+				elseif ($c->name(token_kind::identifier) !== 'in') throw new diagnostic($c->tokens->source, $c->offset(), 'Expected in after each index');
+				$zero = $c->take(token_kind::integer, '0 before ..<');
+				if ($c->tokens->text_at($zero) !== '0') throw new diagnostic($c->tokens->source, $c->offset(), 'each ranges start at zero');
+				$c->take(token_kind::dot, '..<');
+				$c->take(token_kind::dot, '..<');
+				$c->take(token_kind::less, '..<');
+			} else $c->take(token_kind::assign, '= before binding expression');
 			$inputs[] = $this->value();
+			if ($kind === 'each' && $outer_arrow !== null) {
+				// Supply the index locally while forwarding other capture requests to the enclosing arrow.
+				$this->arrow = new Arrow_Captures([$parameters[0]], $outer_arrow, $this->lexical);
+			}
 		} while ($c->is(token_kind::comma));
+		$this->arrow = $outer_arrow;
 		$c->take(token_kind::rparen, ') after job bindings');
 		$outer = $this->lexical;
 		$arrow = $this->arrow;
@@ -1803,7 +1840,7 @@ final class Parser
 			$this->arrow = $arrow;
 			$this->lambda_names = $names;
 		}
-		return new ast_inline_job(new ast_lambda_expression($start, $parameters, null, $body), $inputs, $binding_kinds);
+		return new ast_inline_job(new ast_lambda_expression($start, $parameters, null, $body), $inputs, $binding_kinds, $iteration);
 	}
 
 	/** Parse one primary or prefix expression before postfix indexing. */

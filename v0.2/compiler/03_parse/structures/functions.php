@@ -431,9 +431,10 @@ class ast_call_expression extends ast_expression
 final class ast_inline_job extends ast_call_expression
 {
 	/** @param ast_expression[] $inputs @param list<string> $binding_kinds Written access mode for each operand. */
-	public function __construct(ast_lambda_expression $worker, array $inputs, public readonly array $binding_kinds)
+	public function __construct(ast_lambda_expression $worker, array $inputs, public readonly array $binding_kinds, public readonly ?ast_produced_binding $iteration)
 	{
 		parent::__construct($worker->start, $worker->end, 'job', null, $inputs, $worker);
+		$iteration?->attach($this);
 	}
 }
 
@@ -441,9 +442,9 @@ final class ast_inline_job extends ast_call_expression
 final class ast_parallel_expression extends ast_call_expression
 {
 	/** @param ast_expression[] $jobs */
-	public function __construct(int $start, int $end, array $jobs)
+	public function __construct(int $start, int $end, array $jobs, ?ast_expression $workers)
 	{
-		parent::__construct($start, $end, 'parallel', null, $jobs);
+		parent::__construct($start, $end, 'parallel', null, $jobs, $workers);
 	}
 }
 

@@ -2012,11 +2012,21 @@ final class Preparation
 			($site instanceof ast_await_expression ? 'Await' : 'async_wait') . ' requires an async function');
 	}
 
+	/** Provision a whole batch, exposing the iteration index only while preparing repeated bindings. */
 	private function joined_batch(ast_call_expression $call, ?string $initializing): void
 	{
 		if ($this->dependencies?->mt === null) throw new diagnostic($call->source(), $call->byte_start(), 'Joined segments require fresh compilation');
 		Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg, ?callback_type_definition $signature = null) use ($initializing): void {
 			$this->value($arg, $initializing, allow_callback: $signature !== null, destination: $signature);
+		}, function (ast_produced_binding $index, \Closure $bind): void {
+			$this->local_frames[] = [$index->declaration_key() => $index];
+			$this->forget_values();
+			try {
+				$bind();
+			} finally {
+				array_pop($this->local_frames);
+				$this->forget_values();
+			}
 		});
 	}
 

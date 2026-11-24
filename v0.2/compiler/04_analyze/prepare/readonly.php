@@ -20,14 +20,20 @@ final class Readonly_Access
 		while ($binding instanceof ast_closure_capture && $binding->by_reference) {
 			$binding = $binding->initializer->local_def();
 		}
+		if (($binding instanceof ast_produced_binding && $binding->parent instanceof ast_inline_job)
+			|| ($binding instanceof ast_parameter_declaration && $binding->parent instanceof ast_lambda_expression
+				&& $binding->parent->parent instanceof ast_inline_job && $binding->parent->parent->iteration !== null && $binding->id === 0)) return $binding;
 		return $binding instanceof ast_closure_capture
 			|| ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::readonly_reference) ? $binding : null;
 	}
 
+	/** Diagnose writes at the source binding that supplies the read-only storage. */
 	public static function require_writable(ast_node $site, ?ast_local_binding $binding): void
 	{
 		$origin = self::readonly_origin($binding);
 		if ($origin !== null) {
+			if ($origin instanceof ast_produced_binding || ($origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::value))
+				throw new diagnostic($site->source(), $site->byte_start(), 'The each index is read-only');
 			$message = $origin instanceof ast_closure_capture ? 'Cannot write to by-value capture: ' : 'Cannot write through read-only reference: ';
 			throw new diagnostic($site->source(), $site->byte_start(), $message . $origin->short_name);
 		}

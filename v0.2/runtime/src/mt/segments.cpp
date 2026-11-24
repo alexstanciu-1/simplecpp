@@ -145,13 +145,18 @@ void job::admit(const job* jobs, std::size_t count) {
 }
 
 void join(job* jobs, std::size_t count) {
+    join(jobs, count, INT64_MAX);
+}
+
+void join(job* jobs, std::size_t count, int64_t workers) {
+    if (workers <= 0) throw std::invalid_argument("Group workers must be positive");
     job::admit(jobs, count);
     std::vector<std::exception_ptr> errors(count);
-    if (count < 2) {
+    if (count < 2 || workers == 1) {
         batch_slice{jobs, errors.data(), 0, count}.run();
     } else {
         static worker_pool pool;
-        auto selected = pool.acquire(count - 1);
+        auto selected = pool.acquire(static_cast<std::size_t>(std::min<uint64_t>(count - 1, workers - 1)));
         const auto participants = selected.size() + 1;
         const auto length = count / participants;
         const auto extra = count % participants;

@@ -1,18 +1,23 @@
 // The harness includes the generated vector header and binds Rows to that concrete type.
 #include <scpp/mt_segments.hpp>
 #include <scpp/vectors.hpp>
+#include <algorithm>
 #include <array>
+#include <set>
 #include <atomic>
 #include <cassert>
 #include <limits>
 #include <latch>
 #include <stdexcept>
+#include <string_view>
 #include <thread>
+#include <vector>
 using Point = App::scpp_records::Point;
 using Int = scpp::int64;
 using scpp::mt::segment;
 namespace App {
 Int work_(segment, segment);
+scpp::vector_int64 each_batch_(scpp::vector_int64&, scpp::vector_int64&, Int, Int, Int);
 scpp::mt::segment_range range_for_(Int, Int, Int);
 Int snapshot_range_();
 Int range_end_(scpp::mt::segment_range);
@@ -80,7 +85,50 @@ static void check_ranges() {
     assert(shorter.at(0) == 0);
 }
 
+static void check_pool_cap() {
+    using namespace scpp::mt;
+    scpp::vector_int64 cells;
+    for (Int i = 0; i < 12; ++i) cells.append(i);
+    segment shared[]{job::borrow_read(cells, 0, 12)};
+    std::array<std::thread::id, 12> ids;
+    std::array<std::thread::id*, 12> destinations;
+    std::vector<job> jobs;
+    for (size_t i = 0; i < ids.size(); ++i) {
+        destinations[i] = &ids[i];
+        jobs.emplace_back(shared, destinations[i], [](const segment*, const void* context) -> Int {
+            // Each probe owns one result slot, just as each language job does.
+            **static_cast<std::thread::id* const*>(context) = std::this_thread::get_id();
+            return 0;
+        });
+    }
+    for (int cap : {1, 2, 4}) {
+        join(jobs.data(), jobs.size(), cap);
+        std::set<std::thread::id> participants(ids.begin(), ids.end());
+        assert(participants.contains(std::this_thread::get_id()));
+        assert(participants.size() == std::min<unsigned>(cap, std::max(2u, std::thread::hardware_concurrency())));
+    }
+}
+
+static void check_each() {
+    for (Int cap : {1, 2, 8}) {
+        scpp::vector_int64 entered, output;
+        for (int i = 0; i < 12; ++i) { entered.append(0); output.append(0); }
+        assert(App::each_batch_(entered, output, 0, cap, 12).size() == 0);
+        // First eleven output grants are disjoint. Only the final partition wraps to slot zero.
+        try { App::each_batch_(entered, output, 12, cap, 11); assert(false); }
+        catch (const std::invalid_argument& error) { assert(std::string_view(error.what()) == "Overlapping exclusive segments"); }
+        for (int i = 0; i < 12; ++i) assert(entered.at(i) == 0 && output.at(i) == 0);
+        auto results = App::each_batch_(entered, output, 12, cap, 12);
+        assert(results.size() == 12);
+        for (int i = 0; i < 12; ++i) assert(results.at(i) == i && entered.at(i) == 1 && output.at(i) == i + 10);
+        try { App::each_batch_(entered, output, 0, 0, 12); assert(false); } catch (const std::invalid_argument&) {}
+        try { App::each_batch_(entered, output, -1, cap, 12); assert(false); } catch (const std::invalid_argument&) {}
+    }
+}
+
 int main() {
+    check_pool_cap();
+    check_each();
     check_ranges();
     caller = std::this_thread::get_id();
     Rows rows;

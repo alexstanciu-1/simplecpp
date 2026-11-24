@@ -7,24 +7,39 @@ namespace scpp\compiler;
 final class Mt_Provisioning
 {
 	/** Resolve worker targets and range operands against settled contracts. */
-	public static function batch(ast_call_expression $batch, scope $symbols, Dependency_Watches $dependencies, ast_function_body $caller, \Closure $prepare): void
+	public static function batch(ast_call_expression $batch, scope $symbols, Dependency_Watches $dependencies, ast_function_body $caller, \Closure $prepare, \Closure $with_index): void
 	{
 		if ($batch->arguments === []) self::reject($batch, 'Expected at least one segment worker');
+		if ($batch instanceof ast_parallel_expression && $batch->receiver !== null) {
+			$prepare($batch->receiver);
+			if ($batch->receiver->type_def() !== type_int64::instance()) self::reject($batch->receiver, 'Group workers requires int');
+		}
 		foreach ($batch->arguments as $launch) {
 			if ($launch instanceof ast_inline_job) {
 				$inputs = [];
 				if (!in_array('write', $launch->binding_kinds, true) && !in_array('read', $launch->binding_kinds, true))
 					self::reject($launch, 'Inline job requires at least one segment binding');
-				foreach ($launch->arguments as $slot => $input) {
-					if ($launch->binding_kinds[$slot] === 'value') {
-						$prepare($input);
-						if ($launch->suspending_operands) self::reject($input, 'Await a scalar before binding it to an inline job');
-						$type = $input->type_def();
-						if (!Mt_Rules::scalar($type))
-							self::reject($input, 'Inline job value binding requires a numeric or boolean scalar');
-						$inputs[] = $type;
-					} else $inputs[] = self::grant($input, $prepare, read_only: $launch->binding_kinds[$slot] === 'read');
-				}
+				$bind = function () use ($launch, $prepare, &$inputs): void {
+					foreach ($launch->arguments as $slot => $input) {
+						if ($launch->binding_kinds[$slot] === 'each') continue;
+						if ($launch->binding_kinds[$slot] === 'value') {
+							$prepare($input);
+							if ($launch->suspending_operands) self::reject($input, 'Await a scalar before binding it to an inline job');
+							$type = $input->type_def();
+							if (!Mt_Rules::scalar($type))
+								self::reject($input, 'Inline job value binding requires a numeric or boolean scalar');
+							$inputs[] = $type;
+						} else $inputs[] = self::grant($input, $prepare, read_only: $launch->binding_kinds[$slot] === 'read');
+					}
+				};
+				if ($launch->iteration !== null) {
+					$bound = $launch->arguments[0];
+					$prepare($bound);
+					if ($bound->type_def() !== type_int64::instance()) self::reject($bound, 'each bound requires int');
+					$inputs[] = type_int64::instance();
+					$launch->iteration->settle_type(type_int64::instance());
+					$with_index($launch->iteration, $bind);
+				} else $bind();
 				$prepare($launch->receiver, new callback_type_definition(type_int64::instance(), $inputs));
 				$dependencies->mt->workers[] = $launch->receiver;
 				$launch->settle_mt('inline_job', type_int64::instance());
@@ -46,6 +61,7 @@ final class Mt_Provisioning
 			$dependencies->mt->workers[] = $worker;
 			$launch->settle_function($symbol, $conversions);
 		}
+		if ($batch->suspending_operands) self::reject($batch, 'Await batch inputs before the parallel block');
 		$batch->settle_mt('mt_join', type_registry::specialize('vector', type_int64::instance()));
 	}
 

@@ -34,8 +34,9 @@ private:
         int64_t (*run)(const segment*);
         int64_t (*run_values)(const segment*, const void*);
     };
-    friend void join(job*, size_t);
+    friend void join(job*, size_t, int64_t);
     static void admit(const job*, size_t);
 };
 void join(job* jobs, size_t count);
+void join(job* jobs, size_t count, int64_t workers);
 }

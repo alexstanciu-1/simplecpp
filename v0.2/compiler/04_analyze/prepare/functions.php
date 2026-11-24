@@ -200,6 +200,7 @@ final class Function_Preparation
 			if (!($value instanceof ast_continued_comparison)) self::expression($value->left);
 			self::expression($value->right);
 		}
+		if ($value instanceof ast_inline_job && $value->iteration !== null) self::expression($value->iteration);
 		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {
 			if ($value instanceof ast_call_expression && $value->receiver !== null) {
 				self::expression($value->receiver);

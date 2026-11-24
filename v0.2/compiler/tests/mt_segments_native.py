@@ -45,6 +45,7 @@ $fresh vector<int> = [1,2,3,4];
 $pair = pair_batch($fresh, $fresh, 1);
 echo $pair[0], $pair[1], $fresh[0], $fresh[1];
 check_snapshots();
+echo mixed_each(0), mixed_each(2);
 $r = read_batch($rows, $fresh, 0);
 echo $r[0], $r[1], $fresh[0];
 return 0;
@@ -59,6 +60,33 @@ DISPATCH = """function dispatch(vector<Point> &$rows, vector<int> &$deltas,
 """
 
 MIXED_BATCH = """function parallel(): int { return 7; }
+function tick(int &$calls, int $result): int {
+    $calls += 1;
+    return $result;
+}
+function mixed_each(int $parts): int {
+    $calls = 0;
+    $cells vector<int> = [0,0,0];
+    $results = parallel (workers: tick($calls, 1)) {
+        job (each: $i in 0 ..< tick($calls, $parts), write: $a = segment($cells,$i,1),
+             value: $v = tick($calls,$i)) { $a[0] = $v; return $i; }
+        single_slot(segment($cells,2,1));
+        job (each: $i in 0 ..< 1, read: $a = segment($cells,0,0)) { return 9; }
+    };
+    return $calls * 100 + $results[$parts] + $results[$parts + 1];
+}
+function each_batch(vector<int> &$entries, vector<int> &$output, int $parts, int $cap, int $width): vector<int> {
+    return parallel (workers: $cap) {
+        job (each: $part in 0 ..< $parts,
+             write: $entered = segment($entries,$part,1),
+             write: $dst = segment($output,balanced_range($width,$width,$part % $width)),
+             value: $base = $part + 10) {
+            $entered[0] = $entered[0] + 1;
+            $dst[0] = $base;
+            return $part;
+        }
+    };
+}
 function range_batch(const vector<int> &$input, vector<int> &$output, int $parts, int $part): vector<int> {
     $range = balanced_range(count($input), $parts, $part);
     return parallel {
@@ -185,14 +213,14 @@ def sources_for(flavor):
         'cpp': 'vector<int> dispatch(vector<Point>& rows, vector<int>& deltas, vector<int>& other, int offset)',
         'js': 'function dispatch(&rows:vector<Point>, &deltas:vector<int>, &other:vector<int>, offset:int):vector<int>',
     }[flavor]
-    body = """{ return parallel {
+    body = """{ return parallel (workers: 2) {
         work(segment($rows,0,1), segment($deltas,0,1));
         job (value: $enabled = true, write: $points = segment($rows,1,1),
              value: $index = $offset - 1, write: $changes = segment($other,$offset,1)) {
             if (!$enabled) { return 0; }
             return update($points, $changes, $index);
         }
-        job (read: $empty = segment($rows,balanced_range(0,1,0))) { return count($empty); }
+        job (each: $part in 0..<2, read: $empty = segment($rows,balanced_range(0,2,$part))) { return $part + count($empty); }
     }; }"""
     sources['dispatch.' + flavor] = header + (body if flavor == 'php' else body.replace('$', ''))
     f = fixture(flavor)
@@ -222,7 +250,7 @@ def prove(work):
         subprocess.run([*FLAGS, *units, LIBRARY, '-o', binary], check=True)
         for policy in ('sleep', 'active'):
             env = dict(os.environ, SCPP_MT_WAIT=policy)
-            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344' + b'21317' + b'14330' + b'32151515' + b'344'
+            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344' + b'21317' + b'14330' + b'32151515' + b'219419' + b'344'
         if flavor == 'php':
             # Check the transitive header closure in an MT-enabled, mixed-use build.
             view, launch = 'mt_segment.hpp', 'mt_segments.hpp'
@@ -255,6 +283,14 @@ def prove(work):
     helper = valid['helper.php']
     dispatch = valid['dispatch.php']
     cases = [
+        ({'mixed.php': MIXED_BATCH.replace('each: $part in 0 ..< $parts,', 'workers: 2, each: $part in 0 ..< $parts,')},
+         'Expected each, read, write or value'),
+        ({'mixed.php': MIXED_BATCH.replace('value: $base = $part + 10', 'value: $base = tick($part,10)')},
+         'each index is read-only'),
+        ({'mixed.php': MIXED_BATCH.replace('return $part;', '$part += 1; return $part;')}, 'each index is read-only'),
+        ({'mixed.php': MIXED_BATCH.replace('workers: $cap', 'workers: true')}, 'Group workers requires int'),
+        ({'mixed.php': MIXED_BATCH.replace('0 ..< $parts', '0 ..< false')}, 'each bound requires int'),
+
         ({'mixed.php': MIXED_BATCH.replace('segment($output,$range)', 'segment($output,$parts)')},
          'Expected a segment_range'),
         ({'mixed.php': MIXED_BATCH.replace('return $range->offset +', '$range->length = 5; return $range->offset +')},

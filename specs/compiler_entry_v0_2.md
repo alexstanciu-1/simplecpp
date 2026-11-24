@@ -525,3 +525,31 @@ $results = parallel {
     }
 };
 ```
+
+### Runtime-sized parallel batches
+
+In brace flavors, `parallel (workers: limit) { ... }` takes a positive integer
+limit evaluated once before any entry. The cap includes the caller. A cap of one
+runs the admitted jobs on the caller. Omitting the setting uses available pool
+capacity.
+
+An inline job can begin with `each: $part in 0 ..< $parts`. The caller evaluates
+the nonnegative integer bound once when it reaches the entry. For each index
+in ascending order, it evaluates the bindings once in written order. The index
+is a read-only integer visible to those bindings and to that job's body.
+A zero bound skips the entry and its bindings. Other entries still run;
+a group that expands to zero jobs returns an empty result vector.
+
+```php
+$results = parallel (workers: 4) {
+    job (each: $part in 0 ..< $parts,
+         write: $rows = segment($headers, balanced_range($count, $parts, $part))) {
+        return scan_headers($rows);
+    }
+};
+```
+
+The compiler checks the body once. The caller completes all snapshots before
+borrowing storage, then admits all grants in the expanded group before dispatch.
+A conflict in the final iteration rejects the entire batch even under a cap of
+one. Results follow entry order and, within a repeated entry, index order.
