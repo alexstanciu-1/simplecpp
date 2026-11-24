@@ -502,7 +502,7 @@ a zero-argument, `int`-returning block closure and checks
 `Expected exact callback signature callback<string>`. A failed build preserves
 the published bundle. Repairing the closure to return a string in the same
 compiler instance produces fresh-build-equivalent output and invokes the
-repaired callback. Historical callable-local spelling and captures remain deferred.
+repaired callback. Historical callable-local spelling remains deferred.
 
 **Block-local callable visibility (`SCOPE-VAR-002`).** The native closure fixture
 declares `$g` inside `if (true)` and prints its return value, `1`. Moving the
@@ -524,6 +524,8 @@ The native fixture retries in the same compiler instance with the closure bound 
 Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
 
 **By-value captures (`CLOSURE-USE-001`, partial).** PHP block closures in inferred locals accept lists such as `use ($base, $step)`. Each name initializes owned storage under the same copy contract as a local. Shared handles retain identity and move-only cursors reject. Typed callbacks require capture-free callables. [Native snapshot and recovery tests](../../compiler/tests/capture_free_lambdas_native.py)
+
+**Lexical reference captures (`CLOSURE-USE-002`, partial).** Inferred PHP block closures accept `use (&$name)` on stable storage. Aliases retain their original target and nested borrows preserve readonly access. Copying and escaping a borrowing closure remain deferred. [Backlog and native proof](closure_callable_backlog.md)
 
 **Capturing PHP arrows (`ARROW-001`).** Expression-bodied arrows infer by-value captures for referenced enclosing locals and parameters. The [native tests](../../compiler/tests/capture_free_lambdas_native.py) cover snapshots and cross-file recovery. The [parser tests](../../compiler/tests/lambda_parser_state.php) check nested scope propagation.
 

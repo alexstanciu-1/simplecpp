@@ -257,8 +257,8 @@ final class Body_Collection
 /** Parse-time lexical requirements for one PHP arrow, anchored at each name's first use. */
 final class Arrow_Captures
 {
-	/** @var ast_value_capture[] First-use order is the environment's field order. */
-	private array $captures /** array<string,ast_value_capture> */ = [];
+	/** @var ast_closure_capture[] First-use order is the environment's field order. */
+	private array $captures /** array<string,ast_closure_capture> */ = [];
 	/** @var bool[] */
 	private array $parameters /** array<string,bool> */ = [];
 
@@ -273,14 +273,14 @@ final class Arrow_Captures
 	{
 		if (isset($this->parameters[$name]) || isset($this->captures[$name])) return true;
 		if (!($this->outer?->read($name, $start, $string_offset) ?? $this->lexical?->has_local($name))) return false;
-		$capture = new ast_value_capture($name, $start, $string_offset);
+		$capture = new ast_closure_capture($name, $start, $string_offset);
 		$capture->identify(count($this->parameters) + count($this->captures));
 		$this->captures[$name] = $capture;
 		return true;
 	}
 
-	/** @return ast_value_capture[] */
-	public function captures(): array /** list<ast_value_capture> */
+	/** @return ast_closure_capture[] */
+	public function captures(): array /** list<ast_closure_capture> */
 	{
 		return array_values($this->captures);
 	}

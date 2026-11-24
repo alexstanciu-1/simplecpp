@@ -298,11 +298,18 @@ converts it to a native function pointer at the callback boundary.
 
 A PHP block closure in an inferred local initializer can capture visible copyable
 locals or parameters with `function () use ($base, $step): int { ... }`.
-Each capture copies its current value when the closure is created. The closure
+Each by-value capture copies its current value when the closure is created. The closure
 reads those snapshots even after the outer variables change. Copying a shared handle
 retains its allocation. Move-only bindings reject at the capture site. Existing
-restrictions on callable storage and fixed-array placement apply. Each capture is
+restrictions on callable storage and fixed-array placement apply. Each snapshot is
 read-only. Names must be distinct and cannot repeat a closure parameter name.
+In the same list, `&$name` borrows the named storage for the closure's lexical
+lifetime. An alias designates its original slot. A nested borrow preserves its
+source's writability. Calling the closure invalidates value facts for its writable
+borrowed slots. Borrowing supports move-only storage. A writable borrow supports
+the original type's `clean` operation. Whole-variable `unset` on a borrow rejects.
+Concrete closure copying and escaping environments remain deferred.
+
 PHP arrows capture referenced enclosing locals and parameters automatically by value.
 Each name is captured once at creation. Parameters shadow enclosing names. A nested
 arrow draws from its immediate callable, so enclosing arrows also capture any

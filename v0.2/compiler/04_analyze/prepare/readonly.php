@@ -13,14 +13,22 @@ final class Readonly_Access
 		return $type->field($site->field) ?? throw new \LogicException('Unresolved field');
 	}
 
-	/** Local aliases resolve to their original parameter binding. */
+	/** Borrowed capture chains preserve the owning binding's access mode. */
+	public static function readonly_origin(?ast_local_binding $binding): ?ast_local_binding
+	{
+		while ($binding instanceof ast_closure_capture && $binding->by_reference) {
+			$binding = $binding->initializer->local_def();
+		}
+		return $binding instanceof ast_closure_capture
+			|| ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::readonly_reference) ? $binding : null;
+	}
+
 	public static function require_writable(ast_node $site, ?ast_local_binding $binding): void
 	{
-		if ($binding instanceof ast_value_capture) {
-			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write to by-value capture: ' . $binding->short_name);
-		}
-		if ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::readonly_reference) {
-			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write through read-only reference: ' . $binding->short_name);
+		$origin = self::readonly_origin($binding);
+		if ($origin !== null) {
+			$message = $origin instanceof ast_closure_capture ? 'Cannot write to by-value capture: ' : 'Cannot write through read-only reference: ';
+			throw new diagnostic($site->source(), $site->byte_start(), $message . $origin->short_name);
 		}
 	}
 

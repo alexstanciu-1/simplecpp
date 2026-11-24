@@ -203,7 +203,10 @@ final class Syntax_Inspection
 				'result' => $expression->result?->spelling(), 'body' => $expression->body instanceof ast_block
 					? array_map(self::statement(...), $expression->body->statements) : self::expression($expression->body), 'span' => self::span($expression)];
 			if (count($expression->captures) === 1) $row['capture'] = $expression->captures[0]->short_name;
-			elseif ($expression->captures !== []) $row['captures'] = array_map(static fn(ast_value_capture $capture) => $capture->short_name, $expression->captures);
+			elseif ($expression->captures !== []) $row['captures'] = array_map(static fn(ast_closure_capture $capture) => $capture->short_name, $expression->captures);
+			foreach ($expression->captures as $capture) {
+				if ($capture->by_reference) $row['reference_captures'][] = $capture->short_name;
+			}
 			return $row;
 		}
 		if ($expression instanceof ast_callable_reference) {

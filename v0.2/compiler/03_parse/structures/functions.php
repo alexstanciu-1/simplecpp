@@ -152,10 +152,11 @@ trait ast_fixed_parameter_list
 	}
 }
 
-/** A read-only closure local whose initializer reads the enclosing local at creation. */
-final class ast_value_capture extends ast_local_declaration
+/** A lexical capture bound to its enclosing storage at creation. */
+final class ast_closure_capture extends ast_local_declaration
 {
-	public function __construct(string $name, int $start /** uint32 */, ?int $string_offset /** uint32|null */ = null)
+	public function __construct(string $name, int $start /** uint32 */, ?int $string_offset /** uint32|null */ = null,
+		public readonly bool $by_reference = false)
 	{
 		$read = $string_offset === null ? new ast_name_expression($name, $start, $start + 1)
 			: new ast_interpolation_name($name, $start, $string_offset);
@@ -171,9 +172,12 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 	/** Prepared result conversion. */
 	public private(set) int $conversion /** uint16 */ = value_conversion::identity;
 
-	/** @param ast_parameter_declaration[] $parameters @param ast_value_capture[] $captures */
+	/** @var int[] Prepared enclosing storage IDs that invocation may write. */
+	public private(set) array $borrowed_writes /** list<uint32> */ = [];
+
+	/** @param ast_parameter_declaration[] $parameters @param ast_closure_capture[] $captures */
 	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
-		public readonly ?ast_type_reference $result, public readonly ast_expression|ast_block $body, public readonly array $captures /** list<ast_value_capture> */ = [])
+		public readonly ?ast_type_reference $result, public readonly ast_expression|ast_block $body, public readonly array $captures /** list<ast_closure_capture> */ = [])
 	{
 		parent::__construct($start, $body->end);
 		foreach ($parameters as $parameter) $parameter->attach($this);
@@ -192,10 +196,19 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 		return $this->type_def()->signature->result;
 	}
 
-	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */): void
+	/** Publish the signature, result conversion and effects together. @param int[] $borrowed_writes */
+	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */, array $borrowed_writes /** list<uint32> */): void
 	{
 		$this->conversion = $conversion;
+		$this->borrowed_writes = $borrowed_writes;
 		$this->settle_value($type, null);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->borrowed_writes = [];
+		$this->conversion = value_conversion::identity;
 	}
 }
 

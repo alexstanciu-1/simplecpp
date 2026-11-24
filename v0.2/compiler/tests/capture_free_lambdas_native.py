@@ -169,13 +169,53 @@ def prove_int_capture(work):
         ('main', edited.replace('int $n)', 'int $offset)'), 'Capture conflicts with closure parameter'),
         ('main', entry, b'7'),
         ('main', edited.replace('return $n + $offset;', 'bump($offset);return $n;'), 'Cannot write to by-value capture'),
-        ('main', edited.replace('use ($offset)', 'use (&$offset)'), 'Expected variable'),
+        ('main', edited.replace('use ($offset)', 'use (&$offset)'), b'14'),
         ('main', edited.replace('return $n + $offset;', 'return $n;'), b'4'),
         ('main', entry.replace('$offset=3;', '$offset=seed();'), 'Unknown function: seed'),
         ('seed', 'function seed():int {return 3;}', b'7'),
         ('seed', 'function seed():Iterator<int> {yield 3;}', 'Generator cursors are move-only'),
         ('seed', 'function seed():int {return 5;}', b'9'),
     ], unaffected_source='consumer.php', unaffected_revisions={2, 4, 11})
+
+
+def prove_reference_captures(work):
+    helper = 'function size(const vector<int> &$v):int {$f=function() use (&$v):int {return count($v);};return $f();}'
+    entry = """
+        $x=1; $alias =& $x; $again =& $alias;
+        $set=function() use (&$again):void {
+            $inner=function() use (&$again):void {$again=9;}; $inner();
+        };
+        $read=function() use (&$x):int {return $x;};
+        $set(); echo $read();
+        $items vector<int> = [1,2]; echo size($items);
+        $empty=function() use (&$items):void {clean($items);}; $empty(); echo size($items);
+        return 8;
+    """
+    cursor = ('function values():Iterator<int> {yield 2;yield 3;} $cursor=values();'
+              '$f=function() use (&$cursor):int {$n=0;foreach ($cursor as $v) {$n+=$v;}return $n;};'
+              'echo $f();return 8;')
+    escape = '$outside=0; { $inside=2; $f=function() use (&$inside):int {return $inside;}; $outside=$f; }'
+    both = '$both=function() use (&$again,&$x):int {$again=7;return $x;};echo $both();$set();'
+    mixed = '$both=function() use ($again,&$x):int {$x=7;return $again;};echo $both(),$x;$set();'
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, helper=helper), [
+        (None, None, b'920'), (None, None, b'920'),
+        ('main', entry.replace('use (&$again)', 'use ($again)', 1), 'Cannot write to by-value capture'),
+        ('main', entry, b'920'),
+        ('helper', helper.replace('return count($v);', 'clean($v); return count($v);'), 'Cannot write through read-only reference'),
+        ('helper', helper, b'920'),
+        ('main', entry.replace('clean($items);', 'unset($items);'), 'Cannot unset a native alias'),
+        ('main', entry.replace('$set();', escape), 'Callable value can only be invoked or forwarded'),
+        ('main', entry.replace('$set();', '$far=300;$set();$v byte=$far;'), 'outside uint8 range'),
+        ('main', entry.replace('$set();', both), b'7920'),
+        ('main', entry.replace('$set();', mixed), b'17920'),
+        ('main', cursor, b'5'),
+        ('main', cursor.replace('(&$cursor)', '($cursor)'), 'Generator cursors are move-only'),
+        ('main', entry, b'920'),
+    ])
+    guard(work, 'php', 'borrow-narrowing',
+          '$x=1;$a =& $x;$f=function() use (&$a):void {$a=300;};$f();$v byte=$x;return 8;',
+          'integer_cast_out_of_range')
 
 
 def prove_multiple_int_captures(work):
@@ -434,6 +474,7 @@ def main():
         prove_captured_vector_return(root / 'captured-vector-return')
         prove_void_forwarding(root / 'void-forwarding')
         prove_int_capture(root / 'int-capture')
+        prove_reference_captures(root / 'reference-captures')
         prove_multiple_int_captures(root / 'multiple-int-captures')
         prove_capture_copy_contract(root / 'capture-copy-contract')
         prove_php_arrow_captures(root / 'php-arrow-captures')

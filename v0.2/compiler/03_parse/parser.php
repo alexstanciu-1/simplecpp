@@ -1623,12 +1623,13 @@ final class Parser
 			$c->take_keyword('use');
 			$c->take(token_kind::lparen, '( after use');
 			while (true) {
+				$mode = $this->parameter_mode();
 				$at = $c->position();
-				$captures[] = new ast_value_capture($c->name(token_kind::variable), $at);
+				$captures[] = new ast_closure_capture($c->name(token_kind::variable), $at, by_reference: $mode === passing_mode::reference);
 				if (!$c->is(token_kind::comma)) break;
 				$c->take(token_kind::comma, ',');
 			}
-			$c->take(token_kind::rparen, ') after by-value captures');
+			$c->take(token_kind::rparen, ') after captures');
 		}
 		$result = null;
 		if ($c->is(token_kind::colon)) {

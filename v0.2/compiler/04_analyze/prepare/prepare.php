@@ -1008,7 +1008,7 @@ final class Preparation
 	private function prepare_local_initialization(ast_local_declaration $declaration, type_definition $type): int /** uint16 */
 	{
 		if ($type instanceof fixed_array_type) {
-			if ($declaration instanceof ast_value_capture || $declaration->parent instanceof ast_for_statement || $this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+			if ($declaration instanceof ast_closure_capture || $declaration->parent instanceof ast_for_statement || $this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Declare fixed-array locals in an ordinary statement block');
 			}
 			$this->reserve_array_bytes($type->bytes, $declaration);
@@ -1654,13 +1654,14 @@ final class Preparation
 			if (!$allow_callback && ($type instanceof callback_type_definition || $type instanceof lambda_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable value can only be invoked or forwarded');
 			}
-			if ($syntax->parent instanceof ast_value_capture) {
+			if ($syntax->parent instanceof ast_closure_capture) {
 				$syntax->settle_local($binding, unknown: true);
 				return true;
 			}
 			$id = $binding->storage_id();
-			// Reference parameters may observe writes through other aliases.
-			$unknown = (($binding instanceof ast_parameter_declaration) && ($binding->mode !== passing_mode::value))
+			// A borrowed slot may observe writes through another name.
+			$unknown = ($binding instanceof ast_closure_capture && $binding->by_reference)
+				|| (($binding instanceof ast_parameter_declaration) && ($binding->mode !== passing_mode::value))
 				|| (array_key_exists($id, $this->latest_writes) ? ($this->latest_writes[$id] === null) : $this->unknown_initializers);
 			$write = $this->latest_writes[$id] ?? null;
 			$type = $binding->type_def();
@@ -1677,7 +1678,7 @@ final class Preparation
 			$syntax->settle_local($binding, $write instanceof ast_assignment_statement ? $write : null, $unknown, $view);
 			return true;
 		}
-		if ($syntax->parent instanceof ast_value_capture) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Capture requires an initialized local: ' . $name);
+		if ($syntax->parent instanceof ast_closure_capture) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Capture requires an initialized local: ' . $name);
 		if ($syntax instanceof ast_interpolation_name) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown interpolation local or parameter: ' . $name);
 		}
@@ -1897,17 +1898,30 @@ final class Preparation
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
 		}
+		$borrowed /** array<uint32,ast_closure_capture> */ = [];
+		$writes /** list<uint32> */ = [];
 		foreach ($lambda->captures as $capture) {
 			$name = $capture->declaration_key();
 			if (isset($locals[$name])) {
-				$reason = $locals[$name] instanceof ast_value_capture ? 'Duplicate closure capture: ' : 'Capture conflicts with closure parameter: ';
+				$reason = $locals[$name] instanceof ast_closure_capture ? 'Duplicate closure capture: ' : 'Capture conflicts with closure parameter: ';
 				throw new diagnostic($capture->source(), $capture->byte_start(), $reason . $name);
 			}
 			$this->value($capture->initializer);
 			$capture_type = $capture->initializer->type_def();
-			$conversion = $this->prepare_local_initialization($capture, $capture_type);
+			$conversion = $capture->by_reference ? value_conversion::identity : $this->prepare_local_initialization($capture, $capture_type);
 			$capture->settle_type($capture_type, constant_evaluation::unavailable, true, $conversion);
-			$locals[$name] = $capture;
+			if ($capture->by_reference) {
+				// Different capture names can borrow the same slot through local aliases.
+				$origin = $capture->initializer->local_def();
+				$id = $origin->storage_id();
+				if (!isset($borrowed[$id])) {
+					$borrowed[$id] = $capture;
+					if (Readonly_Access::readonly_origin($origin) === null) $writes[] = $id;
+				}
+				$locals[$name] = $borrowed[$id];
+			} else {
+				$locals[$name] = $capture;
+			}
 		}
 		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $lambda->captures !== []);
 		$scope = new self();
@@ -1919,14 +1933,14 @@ final class Preparation
 		if ($lambda->body instanceof ast_block) {
 			$errors = Declaration_Diagnostics::locals($lambda->body);
 			if ($errors !== []) throw new diagnostic_group($errors);
-			$lambda->settle_lambda($type, value_conversion::identity);
+			$lambda->settle_lambda($type, value_conversion::identity, $writes);
 			$completion = $scope->sequence($lambda->body->statements, $lambda->source(), null, $lambda);
 			if ($result !== type_void::instance() && ($completion & statement_completion::fallthrough) !== 0) {
 				throw new diagnostic($lambda->source(), $lambda->lexical_root()->byte_at($lambda->body->end - 1),
 					'Non-void closure requires a value return');
 			}
 		} else {
-			$lambda->settle_lambda($type, $scope->return_conversion($lambda->body, $result));
+			$lambda->settle_lambda($type, $scope->return_conversion($lambda->body, $result), $writes);
 		}
 		$this->statement_visits += $scope->statement_visits;
 		$this->expression_visits += $scope->expression_visits;
@@ -1985,6 +1999,9 @@ final class Preparation
 			$this->name_lookups++;
 			$target = $type instanceof lambda_type_definition ? $binding->initializer : $signature;
 			$call->settle_local_call($binding, $signature, $this->bind_arguments($call, $target, $initializing));
+			if ($target instanceof ast_lambda_expression && $target->borrowed_writes !== []) {
+				$this->invalidate_references($call, $target->borrowed_writes);
+			}
 			return;
 		}
 		if ($call->qualifier === call_qualifier::local) {
