@@ -117,8 +117,7 @@ def prove_static_methods(work, flavor):
     edits.extend([('collision', collision, b'CO4312' if flavor == 'php' else b'CO4366'),
                   ('collision', None, b'CO4312')])
     if flavor == 'php':
-        edits.append(('main', '$w=new Child();return $w::make(start: 1);',
-                      'Named arguments require a direct source function'))
+        edits.append(('main', '$w=new Child();return $w::make(count: 8, start: 0);', b''))
     revisions(work, flavor, {'main': main, 'base': base, 'child': child,
                              'effects': effects, 'positional': positional}, edits)
 

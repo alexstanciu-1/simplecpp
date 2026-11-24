@@ -79,6 +79,11 @@ static methods require `::` in this slice.
 
 `$object::method(args)` and `produce()::method(args)` select a fixed static method
 from the qualifier's declared concrete class/struct type, not its runtime class.
+A named call with by-value parameters binds each label to that selected declaration.
+For example, if `produce()` returns a `Child` through its declared type `Base`,
+`produce()::make(count: first(), offset: second())` uses the parameter names and
+positions of the method selected through `Base`.
+
 Supported record storage modifiers share this nominal selection, including inline,
 shared, unique and weak storage. Read-only storage may qualify a static call.
 

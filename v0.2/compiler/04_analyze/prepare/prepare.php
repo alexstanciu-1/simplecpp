@@ -1976,7 +1976,7 @@ final class Preparation
 					}
 					if ($method === null || $method->is_constructor()) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown method ' . $record->name . '::' . $name);
 					$interface_dispatch = !$static && $record instanceof record_type_definition && $record->interface_dispatch($name);
-					if ($call instanceof ast_named_call && ($static || $method->has_virtual_dispatch() || $interface_dispatch)) {
+					if ($call instanceof ast_named_call && ($method->has_virtual_dispatch() || $interface_dispatch)) {
 						throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 					}
 					if ($static !== $method->is_static) {
