@@ -2634,7 +2634,7 @@ CPP;
 					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
-				if ($value->suspending_operands) {
+				if ($value->suspending_operands || $value instanceof ast_named_call) {
 					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers);
 				}
 				$operands = $value->runtime_operands();
@@ -2921,7 +2921,7 @@ CPP;
 			$argument = $operands[$index] ?? $parameter->default_value;
 			$conversion = isset($operands[$index]) ? $value->conversion($index) : $parameter->default_conversion();
 			$type = $callback || $runtime ? $parameter : $parameter->type_def();
-			$by_value = $runtime ? !$function->is_reference($index) : $callback || $parameter->mode === passing_mode::value;
+			$by_value = $runtime ? !$function->is_reference($value->named->slots[$index] ?? $index) : $callback || $parameter->mode === passing_mode::value;
 			$operand_safe = false;
 			$records_before = $this->record_expressions;
 			$step_start = count($this->async_steps);

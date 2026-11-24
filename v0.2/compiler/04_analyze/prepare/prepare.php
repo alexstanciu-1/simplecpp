@@ -1745,7 +1745,14 @@ final class Preparation
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
-		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+		$slots = null;
+		if ($call instanceof ast_named_call) {
+			if (!($runtime instanceof runtime_function) || $runtime->parameter_names === null || $call->receiver !== null) {
+				throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+			}
+			$call->named->bind_slots($call, $runtime);
+			$slots = $call->named->slots;
+		}
 		$operands = $call->runtime_operands($runtime instanceof runtime_function ? $runtime : null);
 		$prepared ??= $call->receiver;
 		if ($runtime instanceof runtime_overloads) {
@@ -1769,7 +1776,8 @@ final class Preparation
 		}
 		$writes = [];
 		foreach ($operands as $index => $argument) {
-			$type = $runtime->parameters[$index];
+			$slot = $slots[$index] ?? $index;
+			$type = $runtime->parameters[$slot];
 			if ($argument !== $prepared && $argument !== $call->receiver) {
 				$this->value($argument, destination: $type);
 			}
@@ -1780,7 +1788,7 @@ final class Preparation
 					$this->bind_reference($argument, $type, $writes);
 				}
 			}
-			elseif ($runtime->is_reference($index)) {
+			elseif ($runtime->is_reference($slot)) {
 				$this->bind_reference($argument, $type, $writes);
 			}
 			elseif ($argument->type_def() !== $type) {
@@ -2029,7 +2037,6 @@ final class Preparation
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
-			if ($call instanceof ast_named_call && $class === null) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
 				$this->ambiguous_construction($call);
@@ -2042,6 +2049,7 @@ final class Preparation
 				$this->runtime_call($call, $runtime);
 				return;
 			}
+			if ($call instanceof ast_named_call && $class === null) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 			$builtin = $file->imported_function_target($call->name) === null ? ltrim($call->name, '\\') : null;
 			if ($builtin === 'hash_contains' || $builtin === 'hash_find' || $builtin === 'hash_get_or_null') {
 				if ($class !== null) $this->ambiguous_construction($call);

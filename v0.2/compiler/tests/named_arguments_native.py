@@ -36,6 +36,21 @@ def prove(work, flavor):
     ], unaffected_source='plain.' + flavor, unaffected_revisions={9})
 
     if flavor == 'php':
+        runtime = work / 'runtime'
+        runtime.mkdir()
+        helpers = ('function repetitions():int {echo "T";return 3;} '
+                   'function fragment():string {echo "S";return "ab";}')
+        repeat = 'echo str_repeat(times: repetitions(), string: fragment());return 8;'
+        revisions(runtime, flavor, dict(main=repeat, helpers=helpers), [
+            (None, None, b'TSababab'), (None, None, b'TSababab'),
+            ('main', repeat.replace('times:', 'count:'), 'Unknown named argument: count on str_repeat'),
+            ('main', repeat.replace('string:', 'times:'), 'Parameter supplied twice: times'),
+            ('main', 'echo str_repeat(times: 3);return 8;', 'Missing required argument: string'),
+            ('main', 'echo str_repeat(times: "bad", string: "ab");return 8;', 'str_repeat requires int64'),
+            ('main', 'echo str_repeat(fragment(), times: repetitions());return 8;', b'STababab'),
+            ('main', 'echo str_repeat(fragment(), repetitions());return 8;', b'STababab'),
+            ('helpers', None, None), ('helpers', helpers, b'STababab'), ('main', repeat, b'TSababab'),
+        ])
         ref = work / 'by-reference'
         ref.mkdir()
         revisions(ref, flavor, {'main': '$v int=8; return read(slot: $v);',

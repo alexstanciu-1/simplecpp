@@ -235,8 +235,12 @@ parameter names do not affect positional callers. Signature changes invalidate
 observers, while body-only changes retain them. New signatures never require
 copying a foreign AST or creating a second prepared signature model.
 
-Label binding for variadic signatures, runtime calls and calls through callable values
-remains deferred.
+A runtime free function accepts named arguments when its binding publishes source
+parameter names. Those names are part of its public API. Renaming one breaks calls
+that use the old label. The first binding is PHP `str_repeat(string, times)`.
+For example, `str_repeat(times: repetitions(), string: fragment())` evaluates
+`repetitions()` first and passes its result as the second argument.
+Variadic signatures and calls through callable values remain deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
 ### Named callbacks
