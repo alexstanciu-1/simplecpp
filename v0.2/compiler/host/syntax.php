@@ -198,10 +198,12 @@ final class Syntax_Inspection
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_lambda_expression) {
-			return ['kind' => 'lambda', 'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array =>
+			$row = ['kind' => 'lambda', 'parameters' => array_map(static fn(ast_parameter_declaration $parameter): array =>
 				['name' => $parameter->short_name, 'type' => $parameter->type_reference->spelling()], $expression->parameters),
 				'result' => $expression->result->spelling(), 'body' => $expression->body instanceof ast_block
 					? array_map(self::statement(...), $expression->body->statements) : self::expression($expression->body), 'span' => self::span($expression)];
+			if ($expression->capture !== null) $row['capture'] = $expression->capture->short_name;
+			return $row;
 		}
 		if ($expression instanceof ast_callable_reference) {
 			return ['kind' => 'callable_reference', 'name' => $expression->name, 'span' => self::span($expression)];

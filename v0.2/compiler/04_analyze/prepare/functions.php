@@ -136,6 +136,10 @@ final class Function_Preparation
 		$value->reset_preparation();
 		if ($value instanceof ast_lambda_expression) {
 			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
+			if ($value->capture !== null) {
+				$value->capture->reset_preparation();
+				$value->capture->initializer->reset_preparation();
+			}
 			if ($value->body instanceof ast_block) self::reset_block($value->body);
 			else self::expression($value->body);
 			return;

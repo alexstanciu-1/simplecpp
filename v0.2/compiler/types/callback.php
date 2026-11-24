@@ -48,9 +48,13 @@ final class callback_type_definition extends type_definition
 		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs;
 	}
 
+	/** Only capture-free closures can cross the native function-pointer boundary. */
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
 		$source = $value->type_def();
+		if ($source instanceof lambda_type_definition && $source->has_capture) {
+			throw new diagnostic($value->source(), $value->byte_start(), 'Typed callbacks require a capture-free callable');
+		}
 		if ($this->matches($source instanceof lambda_type_definition ? $source->signature : $source)) {
 			return value_conversion::identity;
 		}
@@ -77,7 +81,7 @@ final class callback_type_definition extends type_definition
 /** Each prepared lambda expression owns its distinct concrete type. Its signature is structural. */
 final class lambda_type_definition extends type_definition
 {
-	public function __construct(public readonly callback_type_definition $signature)
+	public function __construct(public readonly callback_type_definition $signature, public readonly bool $has_capture)
 	{
 		parent::__construct('lambda ' . $signature->name);
 	}

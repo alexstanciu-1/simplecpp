@@ -231,6 +231,9 @@ final class Body_Collection
 				$this->expression($argument);
 			}
 		}
+		if ($value instanceof ast_lambda_expression && $value->capture !== null) {
+			$this->references[] = $value->capture->initializer;
+		}
 		if ($value instanceof ast_name_expression) {
 			$this->references[] = $value;
 		}

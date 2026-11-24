@@ -307,7 +307,10 @@ final class Compilation_Inspection
 			if (!($value instanceof ast_continued_comparison)) $row['left'] = self::value($value->left);
 			$row['right'] = self::value($value->right);
 		}
-		if ($value instanceof ast_lambda_expression) $row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
+		if ($value instanceof ast_lambda_expression) {
+			$row['body'] = $value->body instanceof ast_block ? self::body($value->body) : self::value($value->body);
+			if ($value->capture !== null) $row['capture'] = self::value($value->capture->initializer);
+		}
 		if ($value instanceof ast_callable_reference) $row['target'] = $value->name;
 		if (isset($value->named)) {
 			$row['labels'] = $value->named->labels;

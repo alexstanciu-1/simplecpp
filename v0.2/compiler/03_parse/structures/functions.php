@@ -152,6 +152,15 @@ trait ast_fixed_parameter_list
 	}
 }
 
+/** A read-only closure local whose initializer reads the enclosing local at creation. */
+final class ast_value_capture extends ast_local_declaration
+{
+	public function __construct(string $name, int $start /** uint32 */)
+	{
+		parent::__construct($start, $start + 1, $name, null, new ast_name_expression($name, $start, $start + 1));
+	}
+}
+
 /** Owns the signature and body while its enclosing function owns incremental preparation. */
 final class ast_lambda_expression extends ast_expression implements statement_return_target
 {
@@ -162,10 +171,11 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 
 	/** @param ast_parameter_declaration[] $parameters */
 	public function __construct(int $start /** uint32 */, public readonly array $parameters /** list<ast_parameter_declaration> */,
-		public readonly ast_type_reference $result, public readonly ast_expression|ast_block $body)
+		public readonly ast_type_reference $result, public readonly ast_expression|ast_block $body, public readonly ?ast_value_capture $capture = null)
 	{
 		parent::__construct($start, $body->end);
 		foreach ($parameters as $parameter) $parameter->attach($this);
+		$capture?->attach($this);
 		$result->attach($this);
 		$body->attach($this);
 	}

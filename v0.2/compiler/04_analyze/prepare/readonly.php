@@ -16,6 +16,9 @@ final class Readonly_Access
 	/** Local aliases resolve to their original parameter binding. */
 	public static function require_writable(ast_node $site, ?ast_local_binding $binding): void
 	{
+		if ($binding instanceof ast_value_capture) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write to by-value capture: ' . $binding->short_name);
+		}
 		if ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::readonly_reference) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write through read-only reference: ' . $binding->short_name);
 		}

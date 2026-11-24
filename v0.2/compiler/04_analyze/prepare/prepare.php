@@ -1871,7 +1871,20 @@ final class Preparation
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
 		}
-		$type = new lambda_type_definition(new callback_type_definition($result, $inputs));
+		$capture = $lambda->capture;
+		if ($capture !== null) {
+			$name = $capture->declaration_key();
+			if (isset($locals[$name])) throw new diagnostic($capture->source(), $capture->byte_start(), 'Capture conflicts with closure parameter: ' . $name);
+			$this->name_lookups++;
+			$this->expression_visits++;
+			$outer = $this->find_local($name);
+			if ($outer === null) throw new diagnostic($capture->source(), $capture->byte_start(), 'Capture requires an initialized local: ' . $name);
+			if ($outer->type_def() !== type_registry::integer()) throw new diagnostic($capture->source(), $capture->byte_start(), 'By-value capture requires an int local: ' . $name);
+			$capture->initializer->settle_local($outer, unknown: true);
+			$capture->settle_type($outer->type_def(), constant_evaluation::unavailable);
+			$locals[$name] = $capture;
+		}
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $capture !== null);
 		$scope = new self();
 		$scope->owner = $this->owner;
 		$scope->symbols = $this->symbols;

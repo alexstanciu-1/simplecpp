@@ -1602,16 +1602,25 @@ final class Parser
 		$c = $this->cursor;
 		$start = $c->take($c->tokens->tokens[$c->position()]->kind, 'fn');
 		$parameters = $this->parameters();
+		$capture = null;
+		if ($block && $c->keyword('use')) {
+			$c->take_keyword('use');
+			$c->take(token_kind::lparen, '( after use');
+			$at = $c->position();
+			$capture = new ast_value_capture($c->name(token_kind::variable), $at);
+			$c->take(token_kind::rparen, ') after one by-value capture');
+		}
 		$c->take(token_kind::colon, ': (lambda result type)');
 		$result = $this->return_type();
 		if ($block) {
 			$outer_scope = $this->lexical;
 			$outer_type = $this->declaring_type;
 			$collector = new Body_Collection($this->root->scope, $parameters);
+			if ($capture !== null) $collector->declare_local($capture);
 			$this->declaring_type = null;
 			try {
 				$body = $this->lexical_block($this->grammar(), $collector, '{ before closure body', $collector);
-				return new ast_lambda_expression($start, $parameters, $result, $body);
+				return new ast_lambda_expression($start, $parameters, $result, $body, $capture);
 			} finally {
 				$this->lexical = $outer_scope;
 				$this->declaring_type = $outer_type;

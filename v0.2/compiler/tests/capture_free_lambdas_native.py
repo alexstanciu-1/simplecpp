@@ -149,6 +149,34 @@ def prove_block(work):
     ], unaffected_source='main.php', unaffected_revisions={4, 6, 8, 10})
 
 
+def prove_int_capture(work):
+    closure = 'function (int $n) use ($offset):int { return $n + $offset; }'
+    entry = f'$offset=3; $add={closure}; $offset=10; echo $add(4); return 8;'
+    edited = entry.replace('$offset=3', '$offset=5')
+    callback = 'function apply(callback<int,int> $op):int {return $op(4);} function bump(int &$n):void {$n+=1;}'
+    callback_error = 'Typed callbacks require a capture-free callable'
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, consumer=callback), [
+        (None, None, b'7'), (None, None, b'7'), ('main', edited, b'9'),
+        ('main', edited.replace(' use ($offset)', ''), 'Unknown or not-yet-initialized local/global: offset'),
+        ('main', edited, b'9'),
+        ('main', edited.replace('$add(4)', 'apply($add)'), callback_error),
+        ('main', f'$offset=5; echo apply({closure}); return 8;', callback_error),
+        ('main', edited.replace('$offset=5;', ''), 'Capture requires an initialized local: offset'),
+        ('main', edited.replace('$offset=5;', '$offset="5";'), 'By-value capture requires an int local: offset'),
+        ('main', edited.replace('return $n + $offset;', '$offset=8; return $n;'), 'Cannot write to by-value capture'),
+        ('main', edited.replace('int $n)', 'int $offset)'), 'Capture conflicts with closure parameter'),
+        ('main', entry, b'7'),
+        ('main', edited.replace('return $n + $offset;', 'bump($offset);return $n;'), 'Cannot write to by-value capture'),
+        ('main', edited.replace('use ($offset)', 'use (&$offset)'), 'Expected variable'),
+        ('main', edited.replace('return $n + $offset;', 'return $n;'), b'4'),
+        ('main', entry.replace('$offset=3;', '$offset=seed();'), 'Unknown function: seed'),
+        ('seed', 'function seed():int {return 3;}', b'7'),
+        ('seed', 'function seed():string {return "3";}', 'By-value capture requires an int local'),
+        ('seed', 'function seed():int {return 5;}', b'9'),
+    ], unaffected_source='consumer.php', unaffected_revisions={2, 4, 11})
+
+
 def prove_void_block(work):
     consumer = 'function notify(callback<void,int> $op):void { $op(7); }'
     main = '''$report = function (int $n): void {
@@ -244,6 +272,7 @@ def main():
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
         prove_void_block(root / 'void-block')
+        prove_int_capture(root / 'int-capture')
         prove_block_requires_result_type(root / 'block-requires-result-type')
         prove_block_call_arity(root / 'block-call-arity')
         prove_block_append_placement(root / 'block-append-placement')
