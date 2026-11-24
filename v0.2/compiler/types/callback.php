@@ -3,15 +3,29 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** A fixed by-value signature owned by its declaring parameter, with canonical component types. */
+/** A fixed-arity signature owned by its declaring parameter, with canonical component types. */
 final class callback_type_definition extends type_definition
 {
-	/** @param type_definition[] $inputs */
-	public function __construct(public readonly type_definition $result, public readonly array $inputs /** list<type_definition> */)
+	/**
+	 * @param type_definition[] $inputs
+	 * @param passing_mode[] $modes Mutable reference positions in ascending input order.
+	 */
+	public function __construct(public readonly type_definition $result, public readonly array $inputs /** list<type_definition> */,
+		private readonly array $modes /** array<uint32,passing_mode> */ = [])
 	{
 		$name = $result->name;
-		foreach ($inputs as $input) $name .= ',' . $input->name;
+		foreach ($inputs as $i => $input) $name .= ',' . $input->name . $this->input_suffix($i);
 		parent::__construct('callback<' . $name . '>');
+	}
+
+	public function input_mode(int $index /** uint32 */): passing_mode
+	{
+		return $this->modes[$index] ?? passing_mode::value;
+	}
+
+	public function input_suffix(int $index /** uint32 */): string
+	{
+		return isset($this->modes[$index]) ? '&' : '';
 	}
 
 	public function cpp_declarator(string $name = ''): string
@@ -21,7 +35,7 @@ final class callback_type_definition extends type_definition
 			return str_starts_with($native, 'scpp::') ? '::' . $native : $native;
 		};
 		$inputs = [];
-		foreach ($this->inputs as $input) $inputs[] = $result($input);
+		foreach ($this->inputs as $i => $input) $inputs[] = $result($input) . $this->input_suffix($i);
 		return $result($this->result) . ' (*' . $name . ')(' . implode(', ', $inputs) . ')';
 	}
 
@@ -45,7 +59,7 @@ final class callback_type_definition extends type_definition
 
 	public function matches(type_definition $other): bool
 	{
-		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs;
+		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs && $other->modes === $this->modes;
 	}
 
 	/** Only capture-free closures can cross the native function-pointer boundary. */
@@ -66,7 +80,7 @@ final class callback_type_definition extends type_definition
 		$matches = !$target->returns_reference && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
 		if ($matches) {
 			foreach ($target->parameters as $index => $parameter) {
-				if ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $parameter->type_def() !== $this->inputs[$index]) {
+				if ($parameter->mode !== $this->input_mode($index) || $parameter->default_value !== null || $parameter->type_def() !== $this->inputs[$index]) {
 					$matches = false;
 					break;
 				}
@@ -83,6 +97,7 @@ final class callable_signature_index
 {
 	/** @var \WeakMap<type_definition,callable_signature_index>|null */
 	private ?\WeakMap $children = null;
+	private ?self $reference_inputs = null;
 	/** @var \WeakReference<owned_callable_type>|null */
 	private ?\WeakReference $element = null;
 
@@ -91,7 +106,8 @@ final class callable_signature_index
 	{
 		static $root = new self();
 		$node = $root;
-		foreach ([$signature->result, ...$signature->inputs] as $component) {
+		foreach ([$signature->result, ...$signature->inputs] as $i => $component) {
+			if ($i > 0 && $signature->input_mode($i - 1) === passing_mode::reference) $node = $node->reference_inputs ??= new self();
 			$node->children ??= new \WeakMap();
 			$node = $node->children[$component] ??= new self();
 		}
@@ -112,7 +128,7 @@ final class owned_callable_type extends type_definition implements presence_test
 	public function __construct(public readonly callback_type_definition $signature)
 	{
 		$inputs = [];
-		foreach ($signature->inputs as $input) $inputs[] = $input->name;
+		foreach ($signature->inputs as $i => $input) $inputs[] = $input->name . $signature->input_suffix($i);
 		parent::__construct('function<' . $signature->result->name . '(' . implode(',', $inputs) . ')>');
 	}
 
@@ -124,7 +140,7 @@ final class owned_callable_type extends type_definition implements presence_test
 	public function cpp_type(): string
 	{
 		$inputs = [];
-		foreach ($this->signature->inputs as $input) $inputs[] = $input->cpp_type();
+		foreach ($this->signature->inputs as $i => $input) $inputs[] = $input->cpp_type() . $this->signature->input_suffix($i);
 		return 'std::function<' . $this->signature->result->cpp_type() . '(' . implode(', ', $inputs) . ')>';
 	}
 

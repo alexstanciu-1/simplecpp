@@ -50,6 +50,15 @@ class ast_type_reference extends ast_node
 
 }
 
+/** A mutable input in a callable contract, e.g. int& in callback<void,int&>. */
+final class ast_reference_input extends ast_type_reference
+{
+	public function spelling(): string
+	{
+		return parent::spelling() . '&';
+	}
+}
+
 /** A fixed-array dimension. A named dimension uses the namespace constant path in name. */
 class ast_extent_reference extends ast_type_reference
 {

@@ -144,15 +144,17 @@ final class Type_Resolution
 		dependency_watcher $watcher, ?Dependency_Watches $dependencies): callback_type_definition
 	{
 		$types = [];
+		$modes = [];
 		for ($part = $syntax->first_child; $part !== null; $part = $part->next_sibling) {
 			$type = self::named($part, $symbols, $namespace, $watcher, $dependencies, $types === []);
 			if (!self::callback_component($type)) {
 				throw new diagnostic($part->source(), $part->byte_start(), 'Unsupported callback signature component: ' . $part->spelling());
 			}
+			if ($part instanceof ast_reference_input) $modes[count($types) - 1] = passing_mode::reference;
 			$types[] = $type;
 		}
 		$result = array_shift($types);
-		return new callback_type_definition($result, $types);
+		return new callback_type_definition($result, $types, $modes);
 	}
 
 	/** Inline values and intersection projection are outside the fixed by-value callback ABI. */

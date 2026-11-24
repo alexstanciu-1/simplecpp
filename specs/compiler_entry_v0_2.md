@@ -255,11 +255,13 @@ Pass a source function as `name(...)`. A type-qualified reference such as
 `Math::twice(...)` (PHP and C++) or `Math.twice(...)` (JS) can select a
 static method using normal name lookup and access checks. The ellipsis forms
 a reference without invoking its target. The expected types and arity must
-match the target's required by-value signature exactly. Inside the accepting
+match the target's required signature exactly, including each input's passing mode. Inside the accepting
 function, invoke the parameter with ordinary call syntax (`$op(value)` in PHP,
 `op(value)` in C++ and JS), or forward it to another matching callback
-parameter. Invocation uses the ordinary argument conversions, evaluation
-contract and exception propagation.
+parameter. A trailing `&` marks a mutable reference input, as in
+`callback<void,int&>`. It uses the direct-call rules for exact writable storage,
+aliasing and invalidation of caller value facts. Value inputs use ordinary
+conversions. Invocation follows the usual evaluation and exception contracts.
 
 The C++ backend passes a typed native function pointer. Instance method
 references and persistent callback storage are outside this slice.
@@ -270,7 +272,8 @@ A lambda passed directly to a selected `callback<R,Args...>` parameter may omit
 input and result annotations independently. For example, `apply(fn($x) => $x)`
 uses the selected callback's first input and result. This applies to PHP block
 closures and to expression-bodied arrows in PHP, C++ and JS. Arity and authored
-annotations must match the expected signature exactly. An inferred local closure
+annotations must match the expected signature exactly. A reference input requires a written
+`&` on the closure parameter even when its type is omitted. An inferred local closure
 still requires all annotations at its initializer. A void arrow such as `fn(): void => ping()` evaluates its void
 body once. Functions, methods, and PHP block closures follow the same rule for
 `return ping();`. Exceptions propagate through the usual handlers and finalizers.
@@ -327,11 +330,12 @@ capture-free callables.
 
 ### Owned callables in locals, functions, methods and properties
 
-PHP locals may declare a fixed by-value signature, for example
+PHP locals may declare a fixed-arity signature, for example
 `$add function<int(int)> = fn($n) => $n + $offset;`. The signature supplies
 omitted component types. An exact concrete closure with copyable by-value captures
 can initialize or replace the target. Borrowed environments and defaulted
-parameters reject at this boundary. The C++ representation is `std::function`.
+parameters reject at this boundary. Mutable reference inputs such as `function<void(int&)>`
+borrow the caller's storage for each invocation under the same rules as typed callbacks. The C++ representation is `std::function`.
 
 Copying the local copies its environment under ordinary value semantics, including
 shared-handle identity. A declaration without an initializer starts absent.

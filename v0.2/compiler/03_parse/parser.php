@@ -850,12 +850,12 @@ final class Parser
 					$type = $this->type_reference(allow_void: true, parameter: true);
 				}
 			}
-			elseif ($lambda && ($this->cursor->is(token_kind::variable)
+			elseif ($lambda && ($this->cursor->is(token_kind::ampersand) || $this->cursor->is(token_kind::variable)
 				|| ($this->cursor->tokens->source->flavor === flavor::cpp && $this->cursor->is(token_kind::identifier)
 					&& ($this->cursor->next_is(token_kind::rparen) || $this->cursor->next_is(token_kind::comma) || $this->cursor->next_is(token_kind::assign))))) {
 				$type = null;
-				$mode = passing_mode::value;
-				$name = $this->cursor->binding_name($this->cursor->tokens->tokens[$start]->kind);
+				$mode = $this->parameter_mode();
+				$name = $this->cursor->binding_name($this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 			}
 			else {
 				if ($this->cursor->tokens->source->flavor === flavor::php
@@ -1039,7 +1039,7 @@ final class Parser
 	}
 
 	/** Build immutable ordered argument chains without an intermediate array; commas belong to the containing type. */
-	private function type_reference(string $argument_of = '', bool $allow_void = false, bool $parameter = false, bool $allow_union = false): ast_type_reference
+	private function type_reference(string $argument_of = '', bool $allow_void = false, bool $parameter = false, bool $allow_union = false, bool $callable_input = false): ast_type_reference
 	{
 		$start = $this->cursor->position();
 		$child = null;
@@ -1071,11 +1071,13 @@ final class Parser
 			$first = new ast_type_reference($start, $end, $word, $child, $next);
 			return new ast_compound_type_reference($start, $next->end, $separator, $first);
 		}
+		$reference = $callable_input && $this->cursor->is(token_kind::ampersand);
+		if ($reference) $end = $this->cursor->take(token_kind::ampersand, '&') + 1;
 		$next = null;
 		if ($argument_of === 'function') {
 			$this->cursor->take(token_kind::lparen, '( after callable result type');
 			// Inputs reuse the comma-separated callback component grammar.
-			if (!$this->cursor->is(token_kind::rparen)) $next = $this->type_reference('callback');
+			if (!$this->cursor->is(token_kind::rparen)) $next = $this->type_reference('callback', callable_input: true);
 			$this->cursor->take(token_kind::rparen, ') after callable inputs');
 		} elseif ($argument_of !== '' && in_array($argument_of, type_registry::EXTENT_FAMILIES, true)) {
 			$this->cursor->take(token_kind::comma, ", before $argument_of extent");
@@ -1089,9 +1091,9 @@ final class Parser
 			}
 		} elseif ($argument_of !== '' && $this->cursor->is(token_kind::comma)) {
 			$this->cursor->take(token_kind::comma, ',');
-			$next = $this->type_reference($argument_of, true);
+			$next = $this->type_reference($argument_of, true, callable_input: $argument_of === 'callback');
 		}
-		return new ast_type_reference($start, $end, $word, $child, $next);
+		return $reference ? new ast_reference_input($start, $end, $word, $child, $next) : new ast_type_reference($start, $end, $word, $child, $next);
 	}
 
 	/** Parse ordered comma-separated echo operands. */

@@ -19,7 +19,8 @@ The [closure specification](../../../specs/language/closures.md) owns semantics.
 | Implemented · Owned callable instance fields | Class and struct fields default to absent, use contextual assignment and support invocation through a parenthesized field read. Native revisions cover replacement during argument evaluation, absent calls, rejected borrows and cross-file signature repair. |
 | Implemented · Owned callable static properties | Each declaring class or struct owns one initially absent slot. Native revisions cover cross-file replacement during a call, borrowed captures, absent invocation and signature repair. |
 | Implemented · Typed callable containers | Vectors and hashes store fixed-signature owned callables. Native tests cover indexed selection during replacement, copies, lazy keyed presence, borrowed-capture rejection and cross-file signature repair. |
-| Richer signatures | Reference inputs and returns require per-parameter modes, return origins and alias checks through indirect calls. Variadics additionally require pack binding and ordered conversion. Preserve positional full-arity invocation of today's fixed typed callbacks. |
+| Implemented · Mutable reference inputs | Typed callbacks and owned callables use explicit reference inputs, exact target matching and the direct-call storage binder. |
+| Richer signatures | Reference returns require return origins and alias checks through indirect calls. Variadics additionally require pack binding and ordered conversion. Preserve positional full-arity invocation of today's fixed typed callbacks. |
 
 Contextual completion uses the existing preparation pass and callback ABI. The vector regression and the diagnostic add no work to successful compilation. The remaining items need lifetime, representation or calling-convention work. Reassess those designs and measure representative callers before enabling them.
 

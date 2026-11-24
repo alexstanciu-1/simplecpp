@@ -1907,6 +1907,7 @@ final class Preparation
 		}
 		$locals = [];
 		$inputs = [];
+		$modes = [];
 		$optional = false;
 		foreach ($lambda->parameters as $index => $parameter) {
 			$name = $parameter->declaration_key();
@@ -1914,8 +1915,8 @@ final class Preparation
 			$type = $parameter->type_reference === null
 				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
 				: Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
-			if (!Type_Resolution::callback_component($type) || $parameter->mode !== passing_mode::value) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported by-value parameters');
+			if (!Type_Resolution::callback_component($type) || $parameter->mode === passing_mode::readonly_reference) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
 			}
 			$parameter->settle_type($type);
 			if ($optional || $parameter->default_value !== null) {
@@ -1924,6 +1925,7 @@ final class Preparation
 			}
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
+			if ($parameter->mode === passing_mode::reference) $modes[$index] = $parameter->mode;
 		}
 		$borrowed /** array<uint32,ast_closure_capture> */ = [];
 		$writes /** list<uint32> */ = [];
@@ -1959,7 +1961,7 @@ final class Preparation
 		$scope->borrows_receiver = $lambda->explicit_receiver;
 		$conversion = $lambda->body instanceof ast_block ? value_conversion::identity : $scope->return_conversion($lambda->body, $result);
 		if ($scope->borrows_receiver) $this->borrow_receiver($lambda);
-		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $lambda->captures !== [],
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs, $modes), $lambda->captures !== [],
 			$scope->borrows_receiver, $scope->borrows_receiver || $borrowed !== [], $optional);
 		$lambda->settle_lambda($type, $conversion, $writes);
 		if ($lambda->body instanceof ast_block) {
@@ -2527,8 +2529,9 @@ final class Preparation
 			} else {
 				$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
 			}
-			if ($parameter !== null && $parameter->mode !== passing_mode::value) {
-				$this->bind_reference($argument, $parameter->type_def(), $writes, $parameter->mode === passing_mode::readonly_reference);
+			$mode = $parameter?->mode ?? $function->input_mode($slot);
+			if ($mode !== passing_mode::value) {
+				$this->bind_reference($argument, $type, $writes, $mode === passing_mode::readonly_reference);
 				$conversions[] = value_conversion::identity;
 			}
 			else {
