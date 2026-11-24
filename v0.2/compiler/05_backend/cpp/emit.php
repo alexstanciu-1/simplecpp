@@ -3020,8 +3020,8 @@ CPP;
 		foreach ($lambda->parameters as $parameter) {
 			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
 		}
-		$environment = [];
-		$capture_uses = [];
+		$environment = $type->borrows_receiver ? ['&scpp_self'] : [];
+		$capture_uses = $type->borrows_receiver ? ["\t(void)scpp_self;"] : [];
 		foreach ($lambda->captures as $capture) {
 			$name = $this->name($capture);
 			$source = $this->name($capture->initializer->local_def());

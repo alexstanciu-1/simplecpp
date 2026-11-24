@@ -218,6 +218,64 @@ def prove_reference_captures(work):
           'integer_cast_out_of_range')
 
 
+def prove_receiver_captures(work):
+    model = """
+        class Counter {
+            private int $n=2;
+            private static function seed():int {return 3;}
+            public static function start():int {$f=function():int {return self::seed();};return $f();}
+            public function run():int {
+                $v=self::start();
+                $outer=function() use ($this,$v):int {
+                    $inner=fn():int => $this->n;
+                    $this->n+=$v;
+                    return $inner();
+                };
+                return $outer();
+            }
+        }
+    """
+    entry = '$obj=new Counter();echo $obj->run(),$obj->run();return 8;'
+    base = 'class Base {protected function step():int {return 7;}}'
+    derived = ('class Counter extends Base {public function run():int {'
+               '$f=fn():int => parent::step();return $f();}}')
+    erased = derived.replace('return $f();', 'return invoke($f);') + 'function invoke(callback<int> $f):int {return $f();}'
+
+    ctor = ('class Counter {public readonly int $n; public function __construct() {'
+            '$this->n=3; $f=function() use ($this):int {return $this->n;};echo $f();}'
+            'public function run():int {return $this->n;}}')
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, model=model), [
+        (None, None, b'58'), (None, None, b'58'),
+        ('model', model.replace('use ($this,$v)', 'use ($v)'), 'Closure must capture this receiver'),
+        ('model', model, b'58'),
+        ('model', model.replace('use ($this,$v)', 'use (&$this,$v)'), 'cannot be captured with &$this'),
+        ('model', model.replace('use ($this,$v)', 'use ($this,$v,$this)'), 'Duplicate closure capture: this'),
+        ('model', model.replace('function():int {return self::seed();}', 'function() use ($this):int {return self::seed();}'),
+         'Static method has no this receiver'),
+        ('model', model.replace('return $inner();', '$copy=$this;return $inner();'), 'Borrowed this can only be used as a receiver'),
+        ('model', model.replace('return $inner();', '$this=1;return $inner();'), 'Cannot rebind this receiver'),
+        ('model', model.replace('return $inner();', 'return invoke($inner);')
+         + 'function invoke(callback<int> $f):int {return $f();}', 'Typed callbacks require a capture-free callable'),
+        ('main', '$f=function() use ($this):int {return 1;};return 8;', 'this requires an instance method'),
+        ('main', entry, 'Typed callbacks require a capture-free callable'),
+        ('model', model.replace('class Counter', 'struct Counter'), b'58'),
+        ('model', model.replace('=2;', '=4;'), b'710'),
+        ('base', base, b'710'),
+        ('model', derived, b'77'),
+        ('model', erased, 'Typed callbacks require a capture-free callable'),
+        ('base', base.replace('protected function', 'protected static function'), b'77'),
+        ('base', base.replace('protected function', 'private static function'), 'Cannot call private'),
+        ('base', base.replace('protected function', 'protected static function'), b'77'),
+        ('model', derived.replace('fn():int => parent::step()', 'function() use ($this):int {return parent::step();}'), b'77'),
+        ('base', base, b'77'),
+        ('model', ctor, b'333'),
+        ('model', ctor.replace('$this->n=3; ', '').replace('echo $f();', '$this->n=3;echo $f();'),
+         'property is not initialized'),
+        ('model', model, b'58'),
+    ])
+
+
 def prove_multiple_int_captures(work):
     captures = 'use ($base, $step)'
     closure = f'function () {captures}:int {{ return $base * 10 + $step; }}'
@@ -475,6 +533,7 @@ def main():
         prove_void_forwarding(root / 'void-forwarding')
         prove_int_capture(root / 'int-capture')
         prove_reference_captures(root / 'reference-captures')
+        prove_receiver_captures(root / 'receiver-captures')
         prove_multiple_int_captures(root / 'multiple-int-captures')
         prove_capture_copy_contract(root / 'capture-copy-contract')
         prove_php_arrow_captures(root / 'php-arrow-captures')

@@ -512,7 +512,7 @@ final class Parser
 			$type = $this->type_reference();
 			if ($python) $this->cursor->take_keyword('as');
 			$position = $this->cursor->position();
-			$name = $this->cursor->name($flavor === flavor::php ? token_kind::variable : token_kind::identifier);
+			$name = $this->cursor->binding_name($flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 		}
 		if (!$python) $this->cursor->take(token_kind::rparen, ')');
 		$child = $collector->child();
@@ -618,12 +618,12 @@ final class Parser
 			$c->take_keyword('as');
 			$kind = $c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
 			$value_pos = $c->position();
-			$name = $c->name($kind);
+			$name = $c->binding_name($kind);
 			if ($c->is(token_kind::arrow)) {
 				$c->take(token_kind::arrow, '=>');
 				$key = $header->produced_binding($name, $value_pos, true);
 				$value_pos = $c->position();
-				$name = $c->name($kind);
+				$name = $c->binding_name($kind);
 				if ($name === $key->short_name) throw new diagnostic($c->tokens->source, $c->offset(), 'Foreach key and value must have different names');
 			}
 			$c->take(token_kind::rparen, ')');
@@ -855,7 +855,7 @@ final class Parser
 					&& ($this->cursor->next_is(token_kind::rparen) || $this->cursor->next_is(token_kind::comma) || $this->cursor->next_is(token_kind::assign))))) {
 				$type = null;
 				$mode = passing_mode::value;
-				$name = $this->cursor->name($this->cursor->tokens->tokens[$start]->kind);
+				$name = $this->cursor->binding_name($this->cursor->tokens->tokens[$start]->kind);
 			}
 			else {
 				if ($this->cursor->tokens->source->flavor === flavor::php
@@ -870,7 +870,7 @@ final class Parser
 					$this->cursor->take(token_kind::ampersand, '& after const parameter type');
 					$mode = passing_mode::readonly_reference;
 				} else $mode = $this->parameter_mode();
-				$name = $this->cursor->name($this->cursor->tokens->source->flavor === flavor::php
+				$name = $this->cursor->binding_name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
 			}
 			$default = null;
@@ -1619,13 +1619,23 @@ final class Parser
 		$start = $c->take($c->tokens->tokens[$c->position()]->kind, 'fn');
 		$parameters = $this->parameters(lambda: true);
 		$captures = [];
+		$receiver_capture = false;
 		if ($block && $c->keyword('use')) {
 			$c->take_keyword('use');
 			$c->take(token_kind::lparen, '( after use');
 			while (true) {
 				$mode = $this->parameter_mode();
 				$at = $c->position();
-				$captures[] = new ast_closure_capture($c->name(token_kind::variable), $at, by_reference: $mode === passing_mode::reference);
+				$name = $c->name(token_kind::variable);
+				if ($name === 'this') {
+					if ($mode === passing_mode::reference || $receiver_capture) {
+						throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset,
+							$receiver_capture ? 'Duplicate closure capture: this' : 'The receiver cannot be captured with &$this');
+					}
+					$receiver_capture = true;
+				} else {
+					$captures[] = new ast_closure_capture($name, $at, by_reference: $mode === passing_mode::reference);
+				}
 				if (!$c->is(token_kind::comma)) break;
 				$c->take(token_kind::comma, ',');
 			}
@@ -1638,7 +1648,6 @@ final class Parser
 		}
 		if ($block) {
 			$outer_scope = $this->lexical;
-			$outer_type = $this->declaring_type;
 			$collector = new Body_Collection($this->root->scope, $parameters);
 			$outer_arrow = $this->arrow;
 			foreach ($captures as $capture) {
@@ -1646,13 +1655,11 @@ final class Parser
 				$outer_arrow?->read($capture->declaration_key(), $capture->start);
 			}
 			$this->arrow = null;
-			$this->declaring_type = null;
 			try {
 				$body = $this->lexical_block($this->grammar(), $collector, '{ before closure body', $collector);
-				return new ast_lambda_expression($start, $parameters, $result, $body, $captures);
+				return new ast_lambda_expression($start, $parameters, $result, $body, $captures, $receiver_capture);
 			} finally {
 				$this->lexical = $outer_scope;
-				$this->declaring_type = $outer_type;
 				$this->arrow = $outer_arrow;
 			}
 		}
@@ -1844,7 +1851,7 @@ final class Parser
 			$name_kind = $c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
 			if ($c->is($name_kind) && $c->next_is(token_kind::assign)) {
 				$at = $c->position();
-				$target = new ast_name_expression($c->name($name_kind), $at, $at + 1);
+				$target = new ast_name_expression($c->binding_name($name_kind), $at, $at + 1);
 				$this->arrow?->read($target->name, $at);
 				$c->take(token_kind::assign, '=');
 				$rhs = $this->assignment_value();
@@ -1854,7 +1861,7 @@ final class Parser
 			$c->take(token_kind::rparen, ')');
 			return $value;
 		}
-		if ($this->declaring_type !== null && !$this->cursor->at_end()) {
+		if (($this->declaring_type !== null || $this->arrow !== null) && !$this->cursor->at_end()) {
 			$start = $this->cursor->position();
 			$self = match ($c->tokens->source->flavor) {
 				flavor::php => '$this',

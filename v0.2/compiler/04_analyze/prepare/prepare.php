@@ -33,7 +33,8 @@ final class Preparation
 	private array $local_frames /** list<array<string,ast_local_binding>> */ = [];
 	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
 	private bool $unknown_initializers = false;
-	private bool $in_lambda = false;
+	private ?ast_lambda_expression $enclosing_lambda = null;
+	private bool $borrows_receiver = false;
 	/** Conservative sum across lexical scopes; reset at every body preparation. */
 	private int $array_bytes /** uint32 */ = 0;
 	private bool $has_lambda_local = false;
@@ -134,7 +135,8 @@ final class Preparation
 		$this->local_frames = [[]];
 		$this->array_bytes = 0;
 		$this->has_lambda_local = false;
-		$this->in_lambda = false;
+		$this->enclosing_lambda = null;
+		$this->borrows_receiver = false;
 		$this->guards = [];
 		$this->unknown_initializers = false;
 		$this->latest_writes = [];
@@ -915,7 +917,7 @@ final class Preparation
 	{
 		$name = $declaration->declaration_key();
 		$source = $declaration->source();
-		if ($this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+		if ($this->enclosing_lambda !== null || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
 			throw new diagnostic($source, $declaration->byte_start(), 'Local aliases are deferred in lambdas and generators');
 		}
 		if ($this->find_local($name) !== null) {
@@ -1008,7 +1010,7 @@ final class Preparation
 	private function prepare_local_initialization(ast_local_declaration $declaration, type_definition $type): int /** uint16 */
 	{
 		if ($type instanceof fixed_array_type) {
-			if ($declaration instanceof ast_closure_capture || $declaration->parent instanceof ast_for_statement || $this->in_lambda || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+			if ($declaration instanceof ast_closure_capture || $declaration->parent instanceof ast_for_statement || $this->enclosing_lambda !== null || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Declare fixed-array locals in an ordinary statement block');
 			}
 			$this->reserve_array_bytes($type->bytes, $declaration);
@@ -1349,16 +1351,12 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_this_expression) {
-			if ($this->in_lambda) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Capture-free lambda cannot use this');
-			if ($this->initializing_base) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Current instance is unavailable during base initialization');
-			if ($this->owner->parent->is_static) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Static method has no this receiver');
-			$record = $this->owner->parent->parent;
-			if (!($record instanceof ast_method_owner)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'this requires an instance method');
-			}
+			if ($this->enclosing_lambda !== null) $this->borrow_receiver($syntax);
+			$record = $this->receiver_owner($syntax);
 			$parent = $syntax->parent;
 			$is_receiver = ($parent instanceof ast_field_expression || $parent instanceof ast_call_expression
 				|| $parent instanceof ast_qualified_data) && $parent->receiver === $syntax;
+			if (!$is_receiver && $this->enclosing_lambda !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Borrowed this can only be used as a receiver');
 			if (!$is_receiver && $this->owner->parent->is_destructor()) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during destruction is forbidden');
 			if (!$is_receiver && $this->owner->parent->is_constructor() && !($parent instanceof ast_return_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Copying this during construction is deferred');
@@ -1865,6 +1863,31 @@ final class Preparation
 		return $result->prepare_conversion($value, conversion_context::typed_destination);
 	}
 
+	/** Demand the receiver in this lexical scope, including implicit ancestor dispatch in PHP arrows. */
+	private function borrow_receiver(ast_node $site): void
+	{
+		if ($this->enclosing_lambda !== null) {
+			if (!$this->enclosing_lambda->explicit_receiver
+				&& ($this->enclosing_lambda->body instanceof ast_block || $site->source()->flavor !== flavor::php)) {
+				throw new diagnostic($site->source(), $site->byte_start(), 'Closure must capture this receiver');
+			}
+			$this->borrows_receiver = true;
+			return;
+		}
+		$this->receiver_owner($site);
+		$this->constructor_initialization?->complete($site);
+	}
+
+	/** Resolve the current instance independently of the declaring class used for lexical access. */
+	private function receiver_owner(ast_node $site): ast_method_owner
+	{
+		if ($this->initializing_base) throw new diagnostic($site->source(), $site->byte_start(), 'Current instance is unavailable during base initialization');
+		if ($this->owner->parent->is_static) throw new diagnostic($site->source(), $site->byte_start(), 'Static method has no this receiver');
+		$record = $this->owner->parent->parent;
+		if (!($record instanceof ast_method_owner)) throw new diagnostic($site->source(), $site->byte_start(), 'this requires an instance method');
+		return $record;
+	}
+
 	/** A lambda body uses the enclosing work owner, with a fresh lexical and value environment. */
 	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected): void
 	{
@@ -1923,24 +1946,25 @@ final class Preparation
 				$locals[$name] = $capture;
 			}
 		}
-		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $lambda->captures !== []);
 		$scope = new self();
 		$scope->owner = $this->owner;
 		$scope->symbols = $this->symbols;
 		$scope->dependencies = $this->dependencies;
 		$scope->local_frames = [$locals];
-		$scope->in_lambda = true;
+		$scope->enclosing_lambda = $lambda;
+		$scope->borrows_receiver = $lambda->explicit_receiver;
+		$conversion = $lambda->body instanceof ast_block ? value_conversion::identity : $scope->return_conversion($lambda->body, $result);
+		if ($scope->borrows_receiver) $this->borrow_receiver($lambda);
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs), $lambda->captures !== [], $scope->borrows_receiver);
+		$lambda->settle_lambda($type, $conversion, $writes);
 		if ($lambda->body instanceof ast_block) {
 			$errors = Declaration_Diagnostics::locals($lambda->body);
 			if ($errors !== []) throw new diagnostic_group($errors);
-			$lambda->settle_lambda($type, value_conversion::identity, $writes);
 			$completion = $scope->sequence($lambda->body->statements, $lambda->source(), null, $lambda);
 			if ($result !== type_void::instance() && ($completion & statement_completion::fallthrough) !== 0) {
 				throw new diagnostic($lambda->source(), $lambda->lexical_root()->byte_at($lambda->body->end - 1),
 					'Non-void closure requires a value return');
 			}
-		} else {
-			$lambda->settle_lambda($type, $scope->return_conversion($lambda->body, $result), $writes);
 		}
 		$this->statement_visits += $scope->statement_visits;
 		$this->expression_visits += $scope->expression_visits;
@@ -1950,7 +1974,7 @@ final class Preparation
 	/** Only a suspension examines its parent path. Eligibility uses the facts from the ordinary binder. */
 	private function prepare_await_context(ast_await_expression $syntax): void
 	{
-		if ($this->in_lambda) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a function body outside a lambda');
+		if ($this->enclosing_lambda !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Await requires a function body outside a lambda');
 		if (!$this->owner->parent->is_async) return;
 		for ($context = $syntax->parent; $context instanceof ast_expression || $context instanceof ast_match_arm
 			|| $context instanceof ast_keyed_entry; $context = $context->parent) {
@@ -2087,7 +2111,7 @@ final class Preparation
 		$symbol = $this->symbols->entry($key);
 		$function = $symbol->declaration();
 		$uses = $call instanceof ast_named_call ? Dependency_Watches::PARAMETER_NAMES : 0;
-		if ($function instanceof ast_function_declaration && !$this->in_lambda) {
+		if ($function instanceof ast_function_declaration && $this->enclosing_lambda === null) {
 			$this->dependencies?->watch_call($symbol, $this->owner, $uses);
 		} else {
 			$this->dependencies?->watch($symbol, $this->owner, $uses);
@@ -2303,7 +2327,7 @@ final class Preparation
 			$this->source_call($call, $symbol, $method, $initializing, called: $lookup);
 			return;
 		}
-		if ($this->in_lambda) throw new diagnostic($call->source(), $call->byte_start(), 'Capture-free lambda cannot use this');
+		if ($this->enclosing_lambda !== null) $this->borrow_receiver($call);
 		if ($this->owner->parent->is_static) throw new diagnostic($call->source(), $call->byte_start(), 'Instance method requires a receiver: ancestor call has no current instance');
 		if ($this->initializing_base) throw new diagnostic($call->source(), $call->byte_start(), 'Current instance is unavailable during base initialization');
 		if ($method->is_abstract) throw new diagnostic($call->source(), $call->byte_start(), 'Cannot call an abstract ancestor implementation');
@@ -2335,7 +2359,7 @@ final class Preparation
 			$this->dependencies?->watch($symbol, $this->owner, Dependency_Watches::PARAMETER_NAMES);
 		}
 		$conversions = $this->bind_arguments($call, $function, $initializing);
-		if (!$this->in_lambda && $function->is_direct_final_method()) $this->dependencies?->watch_call($symbol, $this->owner);
+		if ($this->enclosing_lambda === null && $function->is_direct_final_method()) $this->dependencies?->watch_call($symbol, $this->owner);
 		$instance = null;
 		if ($called !== null && $this->dependencies !== null) {
 			$forwarded = $call->qualifier === call_qualifier::ordinary ? null : $this->owner->parent->instance?->called;

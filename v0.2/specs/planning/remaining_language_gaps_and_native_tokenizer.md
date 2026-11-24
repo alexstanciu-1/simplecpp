@@ -529,6 +529,8 @@ Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
 
 **Capturing PHP arrows (`ARROW-001`).** Expression-bodied arrows infer by-value captures for referenced enclosing locals and parameters. The [native tests](../../compiler/tests/capture_free_lambdas_native.py) cover snapshots and cross-file recovery. The [parser tests](../../compiler/tests/lambda_parser_state.php) check nested scope propagation.
 
+**Borrowed receiver.** Local PHP block closures accept `use ($this)`. PHP arrows infer a receiver borrow for instance access. Nested closures retain lexical member visibility. [Native receiver and recovery tests](../../compiler/tests/capture_free_lambdas_native.py)
+
 **Array callable spelling (`CLASS-CALL-010`, partial).** Passing `[$receiver, 'twice']`
 to a `callback<int,int>` parameter reports `A collection literal cannot supply a typed callback`
 at the opening bracket. Replacing the argument with `Arithmetic::twice(...)`

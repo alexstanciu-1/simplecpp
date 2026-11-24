@@ -81,8 +81,11 @@ final class callback_type_definition extends type_definition
 /** Each prepared lambda expression owns its distinct concrete type. Its signature is structural. */
 final class lambda_type_definition extends type_definition
 {
-	public function __construct(public readonly callback_type_definition $signature, public readonly bool $has_capture)
+	public readonly bool $has_capture;
+
+	public function __construct(public readonly callback_type_definition $signature, bool $has_local_captures, public readonly bool $borrows_receiver = false)
 	{
+		$this->has_capture = $has_local_captures || $borrows_receiver;
 		parent::__construct('lambda ' . $signature->name);
 	}
 

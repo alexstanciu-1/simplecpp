@@ -69,6 +69,17 @@ final class Syntax_Cursor
 		$this->index++;
 	}
 
+	/** Read a declaration or assignment target. PHP reserves $this for the current instance. */
+	public function binding_name(token_kind $kind): string
+	{
+		$position = $this->position();
+		$name = $this->name($kind);
+		if ($kind === token_kind::variable && $name === 'this' && $this->tokens->source->flavor === flavor::php) {
+			throw new diagnostic($this->tokens->source, $this->tokens->tokens[$position]->offset, 'Cannot rebind this receiver');
+		}
+		return $name;
+	}
+
 	public function name(token_kind $kind): string
 	{
 		$start = $this->take($kind, $kind === token_kind::variable ? 'variable name' : 'identifier');

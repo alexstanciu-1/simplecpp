@@ -315,7 +315,15 @@ Each name is captured once at creation. Parameters shadow enclosing names. A nes
 arrow draws from its immediate callable, so enclosing arrows also capture any
 bindings needed to create it. A block closure exposes only its explicit captures
 and its own locals and parameters. Global reads retain ordinary lookup.
-Typed callbacks accept only capture-free callables.
+A PHP block closure in an instance method may borrow its receiver with `use ($this)`.
+PHP arrows borrow it when their expression needs an instance, including an instance
+call through `parent::`. Each intervening block closure must capture the receiver.
+Members operate on the original instance. Closures retain their declaring class for
+lexical access to private and protected members and for `self::` and `parent::` lookup.
+A static method provides that lexical context alone. A constructor must finish
+initializing required and readonly properties before creating a receiver borrow.
+A borrowed `$this` is available only as a receiver. Typed callbacks accept only
+capture-free callables.
 
 ### Trailing literal parameter defaults
 
