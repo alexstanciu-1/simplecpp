@@ -931,7 +931,7 @@ final class ast_return_statement extends ast_statement
 	public readonly ?ast_expression $value;
 
 	/** PREP FACTS */
-	/** Prepared fact: entry or function return conversion; null before preparation or for a void return. */
+	/** Prepared fact: entry or function return conversion; null before preparation or for a bare return. */
 	protected ?int $conversion /** uint16|null */ = null;
 
 	/** CONSTRUCTOR */

@@ -1299,7 +1299,13 @@ CPP;
 					$lines[] = "\tif (!(" . $type->lower_cpp_presence($this->name($statement->local_def())) . ')) { ' . ltrim($this->async_statement($write . ';')) . ' }';
 				} else $lines[] = $this->async_statement($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
 			}
-			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
+			elseif ($statement instanceof ast_return_statement && ($statement->value === null || $statement->value->type_def() === type_void::instance())) {
+				if ($statement->value !== null) {
+					$lines[] = $this->async_statement($this->value($statement->value, $global_references, $declarations, $required_headers) . ';');
+				}
+				$lines[] = $resume === null ? "\t" . ($this->finally_exit?->save(statement_completion::returns) ?? ($function->is_async ? 'co_return;' : 'return;')) : "close(); return false;";
+			}
+			elseif ($statement instanceof ast_return_statement) {
 				$conversion = $statement->conversion();
 				if (!$function->is_async && $this->finally_exit === null && $statement->value instanceof ast_match_expression && $conversion === value_conversion::identity) {
 					$lines[] = "\t" . $this->match_selection($statement->value, $global_references, $declarations, $required_headers);
@@ -1332,9 +1338,6 @@ CPP;
 						: $this->value($value, $global_references, $declarations, $required_headers);
 					$lines[] = $this->async_statement($type->lower_cpp_output($value, $operand));
 				}
-			}
-			elseif ($statement instanceof ast_return_statement) {
-				$lines[] = $resume === null ? "\t" . ($this->finally_exit?->save(statement_completion::returns) ?? ($function->is_async ? 'co_return;' : 'return;')) : "close(); return false;";
 			}
 			elseif ($statement instanceof ast_delay_statement) {
 				$required_headers['scpp/async_timer.hpp'] = true;

@@ -265,9 +265,47 @@ def prove_void_block(work):
         ('main', main.replace('return;', 'return $n;'), 'Void function cannot return a value'),
         ('main', main, b'7'),
         ('main', main.replace('$report(0);', 'echo $report(0);'), 'Void call cannot be used as a value'),
-        ('main', '$f = fn(int $n):void => $n; return 8;', 'Expression-bodied lambda requires a non-void result type'),
+        ('main', '$f = fn(int $n):void => $n; return 8;', 'Void function cannot return a value'),
         ('main', main, b'7'),
     ], unaffected_source='consumer.php', unaffected_revisions={3, 6})
+
+
+def prove_void_forwarding(work):
+    helper = 'function notify(int $n):void {echo $n;}'
+    api = """function relay():void {return notify(1);}
+        function apply(callback<void> $callback):void {return $callback();}
+        class Reporter {
+            public static function report():void {return relay();}
+            public function run():void {return Reporter::report();}
+        }"""
+    entry = """$n=2; $captured=fn():void => notify($n); $n=8; $captured();
+        apply(fn():void => notify(3));
+        $block=function ():void {try {return relay();} finally {echo "F";}};
+        $block(); $reporter=new Reporter(); $reporter->run(); return 8;"""
+    throwing = 'class Failure extends Exception {} function notify(int $n):void {echo $n; throw new Failure();}'
+    protected = """function relay():void {try {return notify(4);} finally {echo "F";}}
+        try {relay();} catch (Failure $failure) {echo "C";} return 8;"""
+    async_protected = """async function delayed():void {await async_sleep_ms(1); return notify(5);}
+        async function relay():void {try {return await delayed();} finally {echo "F";}}
+        try {await relay();} catch (Failure $failure) {echo "C";} return 8;"""
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, helper=helper, api=api), [
+        (None, None, b'231F1'), (None, None, b'231F1'),
+        ('helper', 'function notify(int $n):int {return $n;}', 'Void function cannot return a value'),
+        ('helper', helper, b'231F1'),
+        ('main', 'return notify(1);', 'Void call cannot be used as a value'),
+        ('main', 'function bad():int {return notify(1);} return 8;', 'Void call cannot be used as a value'),
+        ('main', 'function bad():void {return notify(notify(1));} return 8;', 'Void call cannot be used as a value'),
+        ('main', entry, b'231F1'),
+    ])
+    exceptions = work / 'exceptions'
+    exceptions.mkdir()
+    revisions(exceptions, 'php', dict(main=protected, helper=throwing), [
+        (None, None, b'4FC'),
+        ('helper', 'class Failure extends Exception {} ' + helper, b'4F'),
+        ('main', async_protected, b'5F'),
+        ('helper', throwing, b'5FC'),
+    ])
 
 
 def prove_block_callback_result(work):
@@ -345,6 +383,7 @@ def main():
         root.mkdir(parents=True, exist_ok=True)
         prove_block(root / 'block')
         prove_void_block(root / 'void-block')
+        prove_void_forwarding(root / 'void-forwarding')
         prove_int_capture(root / 'int-capture')
         prove_multiple_int_captures(root / 'multiple-int-captures')
         prove_capture_copy_contract(root / 'capture-copy-contract')

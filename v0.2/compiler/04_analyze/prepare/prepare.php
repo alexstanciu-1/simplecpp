@@ -390,18 +390,14 @@ final class Preparation
 				}
 				elseif ($target === null) {
 					$return_type = $function->return_type_def();
-					if ($return_type === type_void::instance() || $return_type instanceof generator_type_definition) {
-						if ($statement->value !== null) {
-							throw new diagnostic($source, $statement->byte_start(), 'Void function cannot return a value');
-						}
-					}
-					else {
-						if ($statement->value === null) {
+					if ($statement->value === null) {
+						if ($return_type !== type_void::instance() && !($return_type instanceof generator_type_definition)) {
 							throw new diagnostic($source, $statement->byte_start(), 'Non-void function requires a value return');
 						}
-						$this->value($statement->value, destination: $return_type);
-						if ($return_type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
-						$statement->settle_conversion($return_type->prepare_conversion($statement->value, conversion_context::typed_destination));
+					} elseif ($return_type instanceof generator_type_definition) {
+						throw new diagnostic($source, $statement->byte_start(), 'Void function cannot return a value');
+					} else {
+						$statement->settle_conversion($this->return_conversion($statement->value, $return_type));
 					}
 				}
 				else
@@ -1606,7 +1602,7 @@ final class Preparation
 			if ($suspends) ++$this->suspension_count;
 			$target = $this->async_producer($syntax->operand, $initializing,
 				$suspends ? dependency_use::async_task : dependency_use::async_wait, $syntax);
-			if ($target->return_type_def() === type_void::instance() && !($syntax->parent instanceof ast_await_statement)) {
+			if ($target->return_type_def() === type_void::instance() && $destination !== type_void::instance() && !($syntax->parent instanceof ast_await_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
 			}
 			$syntax->settle($suspends);
@@ -1614,7 +1610,7 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_call_expression) {
 			$this->call($syntax, $initializing);
-			if ($syntax->type_def() === type_void::instance()) {
+			if ($syntax->type_def() === type_void::instance() && $destination !== type_void::instance()) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
 			}
 			return;
@@ -1855,6 +1851,18 @@ final class Preparation
 		return $type;
 	}
 
+	/** Check the return operand once against the callable's declared result. */
+	private function return_conversion(ast_expression $value, type_definition $result): int /** uint16 */
+	{
+		$this->value($value, destination: $result);
+		if ($result === type_void::instance()) {
+			if ($value->type_def() !== $result) throw new diagnostic($value->source(), $value->byte_start(), 'Void function cannot return a value');
+			return value_conversion::identity;
+		}
+		if ($result instanceof class_union_type_definition) $this->watch_union_source($value);
+		return $result->prepare_conversion($value, conversion_context::typed_destination);
+	}
+
 	/** A lambda body uses the enclosing work owner, with a fresh lexical and value environment. */
 	private function lambda(ast_lambda_expression $lambda): void
 	{
@@ -1862,9 +1870,6 @@ final class Preparation
 		$result = Type_Resolution::signature($lambda->result, $this->symbols, $function, $this->dependencies, true, $this->owner);
 		if (!Type_Resolution::callback_component($result)) {
 			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Lambda requires a supported result type');
-		}
-		if ($result === type_void::instance() && !($lambda->body instanceof ast_block)) {
-			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Expression-bodied lambda requires a non-void result type');
 		}
 		$locals = [];
 		$inputs = [];
@@ -1913,8 +1918,7 @@ final class Preparation
 					'Non-void closure requires a value return');
 			}
 		} else {
-			$scope->value($lambda->body, destination: $result);
-			$lambda->settle_lambda($type, $result->prepare_conversion($lambda->body, conversion_context::typed_destination));
+			$lambda->settle_lambda($type, $scope->return_conversion($lambda->body, $result));
 		}
 		$this->statement_visits += $scope->statement_visits;
 		$this->expression_visits += $scope->expression_visits;

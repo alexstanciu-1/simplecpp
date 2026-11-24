@@ -109,8 +109,8 @@ JS:  function ping(): void { return; }
 ```
 
 All flavors call these functions with `ping();` in statement position. A function
-body may be empty or fall through, or end with a bare `return;`. Returning any value
-from a void function is invalid. Bodies may contain the existing explicit integer
+body may be empty or fall through, or end with a bare `return;`. It may forward a void call with
+`return ping();`. Returning a non-void value is invalid. Bodies may contain the existing explicit integer
 local declarations and no-argument calls; each body has its own local scope and
 cannot capture top-level or other functions' locals. Local source-order visibility
 rules remain unchanged. Executable statements after a return remain unsupported.
@@ -221,7 +221,7 @@ values are not constant-folded by inspecting callee bodies.
 
 Calls can appear in existing value positions, including arguments to nested calls,
 initializers, assignments, echo and returns. A non-void result may be discarded in
-statement position. Void calls are permitted only as statements. Non-void functions
+statement position. A void call can be a statement or the return expression of a void callable. Non-void functions
 must return a value; fallthrough and bare returns reject. Void functions may fall
 through or return without a value. Following executable statements after a return
 remain outside the current straight-line body slice. The executable entry retains
@@ -266,11 +266,13 @@ references and persistent callback storage are outside this slice.
 
 ### Lambdas
 
-An expression-bodied lambda has explicitly typed by-value inputs and a
-non-void result type. A capture-free PHP block closure may declare `void`. It can
-exit with a bare `return;` or reach its closing brace. Returning a value is a
-preparation error. A `void` closure can be called as a statement or passed to
-a typed callback with a matching signature, such as `callback<void,int>`.
+An expression-bodied lambda has explicitly typed by-value inputs and a declared
+result type. A void arrow such as `fn(): void => ping()` evaluates its void
+body once. Functions, methods, and PHP block closures follow the same rule for
+`return ping();`. Exceptions propagate through the usual handlers and finalizers.
+A void block closure can also use a bare return or reach its closing brace.
+A capture-free void closure can supply a matching typed callback such as
+`callback<void,int>`.
 
 ```text
 PHP  $inc = fn(int $x): int => $x + 1;
