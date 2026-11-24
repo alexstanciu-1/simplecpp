@@ -136,6 +136,10 @@ final class Function_Preparation
 		$value->reset_preparation();
 		if ($value instanceof ast_lambda_expression) {
 			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
+			foreach ($value->captures as $capture) {
+				$capture->reset_preparation();
+				$capture->initializer->reset_preparation();
+			}
 			if ($value->body instanceof ast_block) self::reset_block($value->body);
 			else self::expression($value->body);
 			return;
@@ -154,7 +158,7 @@ final class Function_Preparation
 		if ($value instanceof ast_match_expression) {
 			self::expression($value->subject);
 			foreach ($value->arms as $arm) {
-				if ($arm->label !== null) self::expression($arm->label);
+				foreach ($arm->labels as $label) self::expression($label);
 				self::expression($arm->result);
 			}
 			return;
@@ -290,32 +294,37 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
 			}
 			$parameter->settle_type($parameter_type);
-			$default = $parameter->default_value;
-			if ($default !== null) {
-				if ($parameter->mode !== passing_mode::value) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
-				}
-				if ($parameter_type instanceof enum_type_definition) {
-					if (!($default instanceof ast_name_expression)
-						|| !Enum_Preparation::reference($default, $symbols, $watcher, $dependencies)) {
-						throw new diagnostic($default->source(), $default->byte_start(), 'Enum parameter default requires an enum case');
-					}
-				} else {
-					if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
-						|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
-						throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
-					}
-					type_registry::prepare_literal($default);
-				}
-				$parameter->settle_default($parameter_type->prepare_conversion($default, conversion_context::typed_destination));
+			if ($optional || $parameter->default_value !== null) {
+				self::parameter_default($parameter, $symbols, $watcher, $dependencies);
 				$optional = true;
-			}
-			elseif ($optional) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
 			}
 		}
 		$reference_origin = $declaration->returns_reference ? self::reference_return_origin($declaration, $type) : null;
 		$declaration->settle_return_type($type, $reference_origin);
+	}
+
+	/** Validate the optional suffix and prepare a default once against its declared type. */
+	public static function parameter_default(ast_parameter_declaration $parameter, scope $symbols, dependency_watcher $watcher, ?Dependency_Watches $dependencies): void
+	{
+		$default = $parameter->default_value;
+		if ($default === null) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Required parameter follows optional parameter');
+		$parameter_type = $parameter->type_def();
+		if ($parameter->mode !== passing_mode::value) {
+			throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Reference parameter defaults are deferred');
+		}
+		if ($parameter_type instanceof enum_type_definition) {
+			if (!($default instanceof ast_name_expression)
+				|| !Enum_Preparation::reference($default, $symbols, $watcher, $dependencies)) {
+				throw new diagnostic($default->source(), $default->byte_start(), 'Enum parameter default requires an enum case');
+			}
+		} else {
+			if (!(($default instanceof ast_integer_expression) || ($default instanceof ast_float_expression)
+				|| ($default instanceof ast_keyword_expression) || ($default instanceof ast_string_expression))) {
+				throw new diagnostic($default->source(), $default->byte_start(), 'Parameter defaults require literals');
+			}
+			type_registry::prepare_literal($default);
+		}
+		$parameter->settle_default($parameter_type->prepare_conversion($default, conversion_context::typed_destination));
 	}
 
 	/** A reference result borrows exactly one fixed writable parameter of the same type. */

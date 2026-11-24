@@ -20,6 +20,12 @@ final class initialization_transport
 	}
 }
 
+/** Presence can be observed directly without converting or copying the stored payload. */
+interface presence_test_type
+{
+	public function lower_cpp_presence(string $value): string;
+}
+
 /** Whole-value move assignment preserves source value semantics when a private source dies. */
 interface private_value_transfer_type
 {
@@ -634,6 +640,17 @@ abstract class type_definition
 		throw new \LogicException('Literal lowering is unavailable for type: ' . $this->name);
 	}
 
+	/** Initialize owned storage from a binding using its published copy contract or its source conversion rules. */
+	final public function prepare_local_initializer(ast_expression $value, conversion_context $context): int /** uint16 */
+	{
+		if ($value instanceof ast_name_expression && $value->local_binding() !== null && $value->type_def() === $this) {
+			$copy = $this->concrete_storage_support('copy_constructible');
+			if ($copy === true) return value_conversion::identity;
+			if ($copy === false) throw new diagnostic($value->source(), $value->byte_start(), 'Cannot copy a local of type ' . $this->name);
+		}
+		return $this->prepare_conversion($value, $context);
+	}
+
 	/** Select scalar work once, with carrier transport encoded independently in the prepared integer. */
 	final public function prepare_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
@@ -807,7 +824,7 @@ abstract class type_definition
 		if (!($function instanceof ast_function_declaration) || $function->parent instanceof ast_record_declaration) {
 			return false;
 		}
-		$parameters = $operand instanceof ast_named_call ? $operand->evaluation_parameters($function->parameters) : $function->parameters;
+		$parameters = $operand instanceof ast_named_call ? $operand->named->evaluation_parameters($function->parameters) : $function->parameters;
 		foreach ($parameters as $index => $parameter) {
 			$argument = $operand->arguments[$index] ?? $parameter->default_value;
 			if ($parameter->mode !== passing_mode::value || !$parameter->type_def()->cpp_trivial_value()

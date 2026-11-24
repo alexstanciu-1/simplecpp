@@ -3,19 +3,20 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** One owned match arm, e.g. Kind::Word => classify(); a null label denotes default. */
+/** One owned match arm, e.g. Kind::Word => classify(); an empty label list denotes default. */
 final class ast_match_arm extends ast_node
 {
-	public readonly ?ast_expression $label;
+	/** @var ast_expression[] Labels in written order. */
+	public readonly array $labels /** list<ast_expression> */;
 	public readonly ast_expression $result;
 
-	public function __construct(?ast_expression $label, ast_expression $result,
+	public function __construct(array $labels /** list<ast_expression> */, ast_expression $result,
 		int $start /** uint32 */, int $end /** uint32 */)
 	{
 		parent::__construct($start, $end);
-		$this->label = $label;
+		$this->labels = $labels;
 		$this->result = $result;
-		$label?->attach($this);
+		foreach ($labels as $label) $label->attach($this);
 		$result->attach($this);
 	}
 }

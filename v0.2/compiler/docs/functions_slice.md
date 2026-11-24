@@ -79,8 +79,9 @@ prepared-call/signature objects and reference/variadic transport were not import
 Current Simple C++ contracts and the agreed PHP type-before-name spelling take
 precedence over historical shorthand examples.
 
-Named arguments, read-only references, reference returns/defaults, overloads, variadics, signature inference,
-first-class callables, methods and trailing commas remain deferred. Recursive
+The initial function slice deferred named arguments and references. The current
+[fixed-signature contract](../../../specs/compiler_entry_v0_2.md#typed-value-parameters-and-returns)
+covers label binding, including supported reference parameters. Recursive
 signatures can resolve, but terminating recursive execution is not claimed by these function proofs. The later [conditional slice](conditions.md) adds braced branches separately.
 
 ## Verification

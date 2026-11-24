@@ -44,7 +44,7 @@ The [non-async closure pass](non_async_language_closure.md) reconciles all 177 h
 | G01 | Prefix and postfix updates on initialized int64 locals have bounded RHS and initializer support. Ordinary local and field chains use separate writes. Discarded results use standalone calls or explicit assignments for checked expressions. |
 | G02–G03 | Scalar casts, interpolation, byte indexing, presence, emptiness and coalescing have evidence. Word-form and/or, short ternary and nullsafe access were deferred. Reconcile the grouped xor rule against its exact donor spelling. |
 | G04–G07 | Explicit annotation migrations, typed collections, value/keyed iteration and bounded references have evidence. Keep writable iteration, ownership annotations and interface reference returns deferred. Map remaining historical array, reference and annotation rows to their exact restrictions or migrations. |
-| G08–G09 | G08 is settled for bootstrap. Capture-free closures, typed callbacks and exact-arity invocation have proofs. Captures, closure defaults and separately declared callable locals remain deferred. The historical array-callable form has a generic collection diagnostic. |
+| G08–G09 | G08 is settled for bootstrap. Capture-free closures, typed callbacks and exact-arity invocation have proofs. Local PHP block closures support explicit by-value captures of copyable bindings and trailing defaults. Reference captures and separately declared callable locals remain deferred. The historical array-callable form has a typed-callback diagnostic. See the [callable backlog](closure_callable_backlog.md). |
 | G10–G13 | Namespace and member lookup, construction, visibility, typed enum lookup, exceptions and destructor restrictions have evidence. Use explicit case values for internal strategy enums. Revisit if backing values become observable. Defer enum interfaces until a production caller needs interface dispatch. Reconcile outstanding member and trait cases. Include execution and nullsafe chaining stay deferred. |
 | G14–G17 | The bootstrap uses the exact int64 literal. Compare constant expressions, generics/layout, source-native declarations, configurable policy and synchronous generator forms with current contracts and actual compiler call sites. Record a supported equivalent or explicit disposition per topic. The recursive traversal visitor already supplies a bootstrap alternative to generator delegation. |
 
@@ -376,7 +376,7 @@ Take abstract-base forwarding and variance as separate follow-ups.
 
 ### G08 · Function and method signatures
 
-**Named arguments · direct source functions implemented.** Written operands and their conversions run once in source order. Preparation binds labels to by-value parameters and supplies omitted defaults. The native proof covers all four flavors, a throwing conversion, diagnostics, and parameter-rename recovery against a fresh build. Reference parameters, methods, constructors and runtime callables are deferred. [Language contract](../../../specs/compiler_entry_v0_2.md#typed-value-parameters-and-returns) · [Native proof](../../compiler/tests/named_arguments_native.py)
+**Named arguments on fixed source signatures.** Direct and inline construction, explicit base initialization and late-bound construction use the selected constructor. Explicit ancestor instance calls, virtual calls and interface calls use the visible declaration. Writable and read-only arguments use their existing reference contracts. PHP `str_repeat` publishes the fixed runtime labels `string` and `times`. Calls to inferred local lambdas use their declared parameter names. Typed callback calls take positional arguments. Further runtime targets and variadic signatures remain open. The native proofs cover written evaluation order, throwing conversions, destructor counts, cross-file renames and recovery. [Language contract](../../../specs/compiler_entry_v0_2.md#typed-value-parameters-and-returns) · [Method proof](../../compiler/tests/named_arguments_native.py) · [Construction, dispatch and reference proof](../../compiler/tests/named_construction_native.py)
 
 Preparation-only measurement on a PHP-flavor fixture with eight functions making 32 calls each, a target function and an entry body. Ten measured samples followed two warm-ups. Median fresh preparation was 7.431 ms positional and 7.985 ms named (10 prepared). Editing one function body took 1.008 ms positional and 1.102 ms named (1 prepared, 9 reused). These timings exclude the frontend, C++ emission and Clang.
 
@@ -491,7 +491,7 @@ when a bootstrap caller needs them or donor parity takes priority.
 
 **Typed capture-free block closures (`CLOSURE-001`).** Implemented for PHP
 `function (int $a): int { ... }`. Parameters and locals belong to the closure.
-Its returns use the declared result and the usual statement completion check.
+Its returns use the declared result and the usual statement completion check. Void arrows and block closures can forward a void call under the ordinary callable return rule. Block closures also accept bare return and fallthrough.
 The enclosing function body owns dependency watches and incremental preparation.
 `compiler_capture_free_lambdas_native` exercises both branches, same-name locals,
 an uncaptured read, and repair after a missing return or a changed callee signature.
@@ -502,7 +502,7 @@ a zero-argument, `int`-returning block closure and checks
 `Expected exact callback signature callback<string>`. A failed build preserves
 the published bundle. Repairing the closure to return a string in the same
 compiler instance produces fresh-build-equivalent output and invokes the
-repaired callback. Historical callable-local spelling and captures remain deferred.
+repaired callback. Explicit owned callable locals now have the separate storage contract below.
 
 **Block-local callable visibility (`SCOPE-VAR-002`).** The native closure fixture
 declares `$g` inside `if (true)` and prints its return value, `1`. Moving the
@@ -515,23 +515,28 @@ The native fixture retries in the same compiler instance with the closure bound 
 `$g` and `$items[] = $g();`. It checks that the vector has one element and that
 `$items[0]` equals `1`.
 
-**Exact-arity closure invocation (`CLOSURE-CALL-001`, partial).** The native fixture calls
-a two-parameter addition closure as `$h(3, 9)` and checks that it prints `12`.
-Removing the second argument reports `Argument count mismatch for function: h`.
-Restoring the call in the same compiler instance prints `12` again and matches a fresh build.
-Closure parameter defaults and captures remain deferred.
+**Local closure calls and defaults (`CLOSURE-CALL-001`).** Capture-free lambdas accept trailing defaults on their by-value parameters. Local calls use the declaration for omitted or skipped inputs. Typed callbacks retain their full positional arity. The [native tests](../../compiler/tests/capture_free_lambdas_native.py) cover default edits, removal, and fresh-build-equivalent recovery in PHP, C++ and JS.
+
+**Contextual signatures and vector results.** Selected typed callback arguments supply omitted lambda annotations. The captured populated-vector donor now has a retained native proof. [Callable backlog and measurements](closure_callable_backlog.md)
 
 **Explicit closure result type (`CLOSURE-REJECT-001`, partial).** A capture-free
-`function () { return 1; }` reports `Expected : (lambda result type)`.
+`function () { return 1; }` in an inferred local reports `Lambda requires an explicit result type without a callback context`.
 Adding only `: int` in the same compiler instance lets `echo $f();` print `1`.
-The donor's `use ($a)` form remains deferred with the other capture cases.
+
+**By-value captures (`CLOSURE-USE-001`, partial).** PHP block closures in inferred locals accept lists such as `use ($base, $step)`. Each name initializes owned storage under the same copy contract as a local. Shared handles retain identity and move-only cursors reject. Typed callbacks require capture-free callables. [Native snapshot and recovery tests](../../compiler/tests/capture_free_lambdas_native.py)
+
+**Lexical reference captures (`CLOSURE-USE-002`, partial).** Inferred PHP block closures accept `use (&$name)` on stable storage. Aliases retain their original target and nested borrows preserve readonly access. Copying and escaping a borrowing closure remain deferred. [Backlog and native proof](closure_callable_backlog.md)
+
+**Capturing PHP arrows (`ARROW-001`).** Expression-bodied arrows infer by-value captures for referenced enclosing locals and parameters. The [native tests](../../compiler/tests/capture_free_lambdas_native.py) cover snapshots and cross-file recovery. The [parser tests](../../compiler/tests/lambda_parser_state.php) check nested scope propagation.
+
+**Borrowed receiver.** Local PHP block closures accept `use ($this)`. PHP arrows infer a receiver borrow for instance access. Nested closures retain lexical member visibility. [Native receiver and recovery tests](../../compiler/tests/capture_free_lambdas_native.py)
+
+**Owned callable locals.** Fixed by-value `function<R(Args...)>` locals own copyable environments and support presence, reset and replacement. Free functions can publish the same contract as a by-value result or a required by-value parameter. Both use the local ownership check. Resetting a parameter affects the callee’s copy. [Native storage and recovery proof](../../compiler/tests/capture_free_lambdas_native.py)
 
 **Array callable spelling (`CLASS-CALL-010`, partial).** Passing `[$receiver, 'twice']`
-to a `callback<int,int>` parameter reports `Populated collection requires an explicitly typed local initializer`
-at the opening bracket. This is the collection-literal diagnostic. In the named callback
-fixture, changing only the argument to `Arithmetic::twice(...)` in the same compiler
-instance lets the consumer invoke it with `4` and return `8`. A callback-specific
-diagnostic remains an open decision.
+to a `callback<int,int>` parameter reports `A collection literal cannot supply a typed callback`
+at the opening bracket. Replacing the argument with `Arithmetic::twice(...)`
+in the same compiler instance invokes it with `4` and returns `8`.
 
 The original audit classifications follow.
 

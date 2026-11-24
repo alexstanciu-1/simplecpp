@@ -627,7 +627,7 @@
       "pad_start": {"parameters": ["string", "int64", "string"], "required_parameters": 2, "result": "string", "symbol": "scpp::str::pad_bytes", "implementation": "pad_bytes", "pad_side": "left", "flavors": ["cpp", "js"], "flavor_adapters": true, "members": {"cpp": "pad_start", "js": "padStart"}},
       "pad_end": {"parameters": ["string", "int64", "string"], "required_parameters": 2, "result": "string", "symbol": "scpp::str::pad_bytes", "implementation": "pad_bytes", "pad_side": "right", "flavors": ["cpp", "js"], "flavor_adapters": true, "members": {"cpp": "pad_end", "js": "padEnd"}},
       "substr": {"parameters": ["string", "int64", "int64"], "required_parameters": 2, "result": "string", "symbol": "scpp::str::slice_bytes", "implementation": "slice_bytes", "bound": {"php": "length", "cpp": "length", "js": "exclusive_end"}, "flavor_adapters": true, "members": {"cpp": "substr", "js": "slice"}},
-      "str_repeat": {"parameters": ["string", "int64"], "result": "string", "symbol": "scpp::str::repeat", "implementation": "repeat", "flavor_adapters": true, "members": {"cpp": "repeat", "js": "repeat"}}
+      "str_repeat": {"parameters": ["string", "int64"], "signatures": {"php": {"parameter_names": ["string", "times"]}}, "result": "string", "symbol": "scpp::str::repeat", "implementation": "repeat", "flavor_adapters": true, "members": {"cpp": "repeat", "js": "repeat"}}
     },
     "provider": "core.string",
     "type": "string",
