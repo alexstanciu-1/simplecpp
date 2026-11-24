@@ -19,8 +19,16 @@ final class Mt_Rules
 	public static function inspect(ast_node $node, bool $known): ?ast_function_declaration
 	{
 		if (!$known) self::reject($node, 'unsupported operation ' . $node::class);
-		if ($node instanceof ast_name_expression && $node->local_binding() === null)
+		if ($node instanceof ast_name_expression && $node->local_binding() === null) {
+			$binding = $node->declaration();
+			if ($binding instanceof runtime_integer_constant) return null;
+			if ($binding instanceof ast_constant_declaration) {
+				$type = $binding->type_def();
+				if (type_registry::is_numeric_scalar($type) || $type === type_bool::instance()) return null;
+				self::reject($node, 'worker requires a numeric or boolean constant');
+			}
 			self::reject($node, 'worker cannot access global or static storage');
+		}
 		if ($node instanceof ast_local_declaration && !type_registry::is_numeric_scalar($node->type_def()) && $node->type_def() !== type_bool::instance())
 			self::reject($node, 'worker locals must be scalar; a segment cannot escape');
 		if ($node instanceof ast_call_expression) {

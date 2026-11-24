@@ -51,16 +51,19 @@ DISPATCH = """function dispatch(vector<Point> &$rows, vector<int> &$deltas,
 }
 """
 
-MIXED_BATCH = """function mixed_batch(vector<int> &$cells, vector<int> &$alias, int $last): vector<int> {
+MIXED_BATCH = """const int WIDTH = 5;
+const int LIMIT = WIDTH * 2;
+function adjustment(): int { return LIMIT; }
+function mixed_batch(vector<int> &$cells, vector<int> &$alias, int $last): vector<int> {
     return mt_join(single_slot(segment($cells,0,1)),
                    three_slots(segment($cells,1,1), segment($cells,2,1), segment($alias,$last,1)));
 }
 function single_slot(segment<int> $a): int {
-    $a[0] = $a[0] + 10;
+    if (Point::ENABLED) { $a[0] = $a[0] + adjustment(); }
     return $a[0];
 }
 function three_slots(segment<int> $a, segment<int> $b, segment<int> $c): int {
-    $a[0] = $a[0] + 20;
+    $a[0] = $a[0] + 20 + STR_PAD_LEFT;
     $b[0] = $b[0] + 30;
     $c[0] = $c[0] + 40;
     return $a[0] + $b[0] + $c[0];
@@ -83,7 +86,7 @@ PY_HELPER = """def update(rows: segment<Point>, deltas: segment<int>, i: int) ->
 
 
 def sources_for(flavor):
-    sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'mixed.php': MIXED_BATCH, 'point.php': 'struct Point { public int $x = 1; }'}
+    sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'mixed.php': MIXED_BATCH, 'point.php': 'struct Point { public const bool ENABLED = true; public int $x = 1; }'}
     if flavor == 'py':
         return dict(sources, **{'worker.py': PY_WORK, 'helper.py': PY_HELPER})
     f = fixture(flavor)
@@ -145,12 +148,16 @@ def prove(work):
     valid = sources_for('php')
     helper = valid['helper.php']
     cases = [
+        ({'mixed.php': 'global $limit int = 10;' + MIXED_BATCH.replace('return LIMIT;', 'return $limit;')},
+         'MT safety: worker cannot access global or static storage'),
+        ({'mixed.php': 'const string LABEL = "on";' + MIXED_BATCH.replace('Point::ENABLED', 'LABEL === LABEL')},
+         'MT safety: worker requires a numeric or boolean constant'),
         ({'mixed.php': MIXED_BATCH.replace('single_slot(segment($cells,0,1))', 'single_slot()')}, 'matching segment arguments'),
         ({'mixed.php': MIXED_BATCH.replace(', segment($alias,$last,1)', '')}, 'matching segment arguments'),
         ({'helper.php': 'global $counter int = 7;' + helper.replace('return $rows', 'return $counter + $rows')}, 'MT safety'),
         ({'helper.php': helper.replace('return $rows[$i]->x;', 'return $rows;')}, 'conversion'),
         ({'helper.php': helper.replace('return $rows', '$rows[] = 7; return $rows')}, 'Append'),
-        ({'point.php': 'class Shared {} struct Point { public int $x = 1; public Shared $shared; }'}, 'isolated inline'),
+        ({'point.php': 'class Shared {} struct Point { public const bool ENABLED = true; public int $x = 1; public Shared $shared; }'}, 'isolated inline'),
     ]
     for i, (change, error) in enumerate(cases):
         compile_source(app, work / f'invalid-{i}', valid | change, error)
