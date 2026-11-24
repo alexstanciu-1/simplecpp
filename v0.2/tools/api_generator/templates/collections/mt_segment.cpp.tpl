@@ -7,13 +7,15 @@ namespace scpp::mt {
 // The compiler retains the element type; stride is its native sizeof.
 class segment {
     friend struct job;
-    unsigned char* data;
+    const unsigned char* data;
+    bool read_only;
     size_t stride;
     int64_t size, offset, length;
-    segment(unsigned char* data, size_t stride, int64_t size, int64_t offset, int64_t length)
-        : data(data), stride(stride), size(size), offset(offset), length(length) {}
+    segment(const unsigned char* data, size_t stride, int64_t size, int64_t offset, int64_t length, bool read_only)
+        : data(data), read_only(read_only), stride(stride), size(size), offset(offset), length(length) {}
 public:
     int64_t count() const noexcept { return length; }
+    const void* read_at(int64_t index) const;
     void* at(int64_t index) const;
 };
 }

@@ -427,13 +427,13 @@ class ast_call_expression extends ast_expression
 	}
 }
 
-/** An inline launch owns its capture-free worker as receiver and caller-side grants as operands. */
+/** An inline launch owns its capture-free worker as receiver and caller-side binding expressions as operands. */
 final class ast_inline_job extends ast_call_expression
 {
-	/** @param ast_expression[] $grants */
-	public function __construct(ast_lambda_expression $worker, array $grants)
+	/** @param ast_expression[] $inputs @param list<string> $binding_kinds Written access mode for each operand. */
+	public function __construct(ast_lambda_expression $worker, array $inputs, public readonly array $binding_kinds)
 	{
-		parent::__construct($worker->start, $worker->end, 'job', null, $grants, $worker);
+		parent::__construct($worker->start, $worker->end, 'job', null, $inputs, $worker);
 	}
 }
 

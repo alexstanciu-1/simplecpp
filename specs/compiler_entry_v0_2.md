@@ -455,20 +455,26 @@ submission-order integer results as the built-in `mt_join(...)`. A block used as
 a statement still joins all workers. This slice requires the MT segment runtime
 publication and fresh compilation.
 
-An inline worker declares one or more exclusive vector grants with repeated
-`write:` bindings. Each binding introduces a distinct worker-local parameter
+An inline worker declares one or more vector grants with `read:` or `write:`. Each binding introduces a distinct worker-local parameter
 whose segment element type comes from the supplied vector. The grant expressions
-use the caller's scope. The body has its own scope, can use approved constants
+use the caller's scope. A job can interleave these grants with any number of
+`value: $name = expression` bindings. Each accepts a numeric or boolean scalar
+and creates a worker-local copy of its inferred type. The caller evaluates all
+scalar inputs once, in job and binding order, before borrowing any vector storage
+or admitting the batch. Caller-side effects therefore precede admission even
+when a grant is rejected. A suspending caller must await its scalar before the
+parallel block. Only grants participate in bounds and overlap checks. The body has its own scope, can use approved constants
 and checked helpers, and must return an integer on all completing paths.
 
 ```php
 $totals = parallel {
     job (write: $prices = segment($items, 0, $count),
-         write: $fees = segment($charges, 0, $count)) {
+         write: $fees = segment($charges, 0, $count),
+         value: $adjustment = $daily_adjustment) {
         $total = 0;
         $i = 0;
         while ($i < count($prices)) {
-            $prices[$i] = $prices[$i] + $fees[$i];
+            $prices[$i] = $prices[$i] + $fees[$i] + $adjustment;
             $fees[$i] = 0;
             $total += $prices[$i];
             $i += 1;
@@ -479,5 +485,14 @@ $totals = parallel {
 ```
 
 Inline and named entries share batch admission, submission-order results, and
-the joined lifetime. Overlapping exclusive grants are rejected even within one
-inline worker. C++ and JS flavors use bare binding names in the same clauses.
+the joined lifetime. Two readers may overlap on the same vector. Any nonempty
+overlap involving a writer rejects the whole batch before dispatch, including
+overlaps within one job. Empty ranges claim no slots.
+
+A `read:` binding borrows its source slots without copying. Its worker can index
+and count the segment and forward it to a helper taking `read_segment<T>`.
+The compiler checks this contract in the helper body, including writes to fields
+of indexed records. A writable `segment<T>` may also be passed to a reading
+helper. A named worker taking `read_segment<T>` requests a read grant when
+launched with `segment(vector, offset, length)`. Both modes require isolated
+element types. A job consisting entirely of readers is valid. C++ and JS flavors use bare binding names in the same clauses.

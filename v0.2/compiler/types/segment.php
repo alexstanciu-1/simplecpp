@@ -3,12 +3,12 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Exclusive worker parameter. Only the joined launch can create a view over vector slots. */
+/** Borrowed worker parameter. Only the joined launch can create a view over vector slots. */
 final class segment_type extends type_definition implements index_read_type, index_write_type, counted_collection_type
 {
-	public function __construct(public readonly type_definition $element)
+	public function __construct(public readonly type_definition $element, public readonly bool $read_only)
 	{
-		parent::__construct('segment<' . $element->name . '>');
+		parent::__construct(($read_only ? 'read_segment<' : 'segment<') . $element->name . '>');
 	}
 
 	public function cpp_type(): string
@@ -24,7 +24,8 @@ final class segment_type extends type_definition implements index_read_type, ind
 
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
-		if ($value->type_def() instanceof self && $value->type_def()->element === $this->element) return value_conversion::identity;
+		if ($value->type_def() instanceof self && $value->type_def()->element === $this->element
+			&& ($this->read_only || !$value->type_def()->read_only)) return value_conversion::identity;
 		return parent::prepare_scalar_conversion($value, $context);
 	}
 
@@ -41,7 +42,8 @@ final class segment_type extends type_definition implements index_read_type, ind
 
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
-		return '(*static_cast<' . $this->element->cpp_type() . '*>((' . $receiver . ').at(' . $index . ')))';
+		$method = $this->read_only ? 'read_at' : 'at';
+		return '(*static_cast<' . ($this->read_only ? 'const ' : '') . $this->element->cpp_type() . '*>((' . $receiver . ').' . $method . '(' . $index . ')))';
 	}
 
 	public function write_type(): type_definition

@@ -27,6 +27,7 @@ final class Mt_Traversal
 			ast_index_assignment::class => [$node->receiver, $node->index, $node->value],
 			ast_field_expression::class => [$node->receiver],
 			ast_field_assignment::class, ast_property_compound::class => [$node->target, $node->value],
+			ast_not_expression::class => [$node->operand],
 			ast_binary_expression::class => [$node->left, $node->right],
 			default => null,
 		};

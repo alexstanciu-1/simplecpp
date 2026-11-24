@@ -44,6 +44,9 @@ check_blocks($cells);
 $fresh vector<int> = [1,2,3,4];
 $pair = pair_batch($fresh, $fresh, 1);
 echo $pair[0], $pair[1], $fresh[0], $fresh[1];
+check_snapshots();
+$r = read_batch($rows, $fresh, 0);
+echo $r[0], $r[1], $fresh[0];
 return 0;
 """
 
@@ -56,6 +59,37 @@ DISPATCH = """function dispatch(vector<Point> &$rows, vector<int> &$deltas,
 """
 
 MIXED_BATCH = """function parallel(): int { return 7; }
+function read_first(read_segment<Point> $points): int { return $points[0]->x; }
+function relay_read(read_segment<Point> $points): int { return read_first($points); }
+function read_batch(const vector<Point> &$rows, vector<int> &$cells, int $offset): vector<int> {
+    return parallel {
+        relay_read(segment($rows,0,2));
+        job (read: $points = segment($rows,0,1), read: $a = segment($cells,1,1),
+             write: $out = segment($cells,$offset,1), value: $extra = 1) {
+            $out[0] = relay_read($points) + $a[0] + $extra;
+            return $out[0];
+        }
+    };
+}
+function check_snapshots(): void {
+    $snap vector<int> = [5];
+    $seed = 2;
+    $s = parallel {
+        single_slot(segment($snap,0,1));
+        job (value: $first = $seed, write: $dst = segment($snap,1,1),
+             value: $second = extend_input($snap,$seed), value: $rate = 0.5) {
+            if ($rate < 1.0) { $first += 10; }
+            $dst[0] = $first + $second;
+            return $dst[0];
+        }
+    };
+    echo $seed, count($snap), $s[0], $s[1], $snap[1];
+}
+function extend_input(vector<int> &$cells, int &$seed): int {
+    $seed += 1;
+    $cells[] = $seed;
+    return $seed;
+}
 function check_blocks(vector<int> &$cells): void {
     $more = parallel { job (write: $cell = segment($cells,0,1)) { return single_slot($cell); } };
     parallel { single_slot(segment($cells,0,1)); };
@@ -125,9 +159,12 @@ def sources_for(flavor):
     }[flavor]
     body = """{ return parallel {
         work(segment($rows,0,1), segment($deltas,0,1));
-        job (write: $points = segment($rows,1,1), write: $changes = segment($other,$offset,1)) {
-            return update($points, $changes, 0);
+        job (value: $enabled = true, write: $points = segment($rows,1,1),
+             value: $index = $offset - 1, write: $changes = segment($other,$offset,1)) {
+            if (!$enabled) { return 0; }
+            return update($points, $changes, $index);
         }
+        job (read: $empty = segment($rows,0,0)) { return count($empty); }
     }; }"""
     sources['dispatch.' + flavor] = header + (body if flavor == 'php' else body.replace('$', ''))
     f = fixture(flavor)
@@ -157,7 +194,7 @@ def prove(work):
         subprocess.run([*FLAGS, *units, LIBRARY, '-o', binary], check=True)
         for policy in ('sleep', 'active'):
             env = dict(os.environ, SCPP_MT_WAIT=policy)
-            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344' + b'21317' + b'14330'
+            assert subprocess.check_output([binary], env=env, timeout=10) == b'35351356' + b'119911223344' + b'21317' + b'14330' + b'32151515' + b'344'
         if flavor == 'php':
             # Check the transitive header closure in an MT-enabled, mixed-use build.
             view, launch = 'mt_segment.hpp', 'mt_segments.hpp'
@@ -190,11 +227,23 @@ def prove(work):
     helper = valid['helper.php']
     dispatch = valid['dispatch.php']
     cases = [
-        ({'dispatch.php': dispatch.replace('return update($points, $changes, 0);', 'return $offset;')},
+        ({'mixed.php': MIXED_BATCH.replace('return $points[0]->x;', '$points[0]->x = 4; return 4;')},
+         'Cannot write through a read-only segment'),
+        ({'mixed.php': MIXED_BATCH.replace('$out[0] = relay_read', '$a[0] = relay_read')},
+         'Cannot write through a read-only segment'),
+        ({'mixed.php': MIXED_BATCH.replace('return read_first($points);', 'return mutate_points($points);') +
+                       'function mutate_points(segment<Point> $points): int { $points[0]->x = 1; return 1; }'},
+         'conversion from read_segment<Point> to segment<Point>'),
+        ({'mixed.php': MIXED_BATCH.replace('write: $cell = segment($cells,0,1)', 'value: $cell = 1')},
+         'at least one segment binding'),
+        ({'dispatch.php': dispatch.replace('value: $enabled = true', 'value: $enabled = $rows')},
+         'requires a numeric or boolean scalar'),
+        ({'dispatch.php': dispatch.replace('value: $index', 'value: $points')}, 'Duplicate inline job binding: points'),
+        ({'dispatch.php': dispatch.replace('return update($points, $changes, $index);', 'return $offset;')},
          'Unknown or not-yet-initialized local/global: offset'),
         ({'dispatch.php': dispatch.replace('write: $changes', 'write: $points')}, 'Duplicate inline job binding: points'),
-        ({'dispatch.php': dispatch.replace('return update($points, $changes, 0);', 'return $changes;')}, 'conversion'),
-        ({'dispatch.php': dispatch.replace('return update($points, $changes, 0);', 'return forbidden();')
+        ({'dispatch.php': dispatch.replace('return update($points, $changes, $index);', 'return $changes;')}, 'conversion'),
+        ({'dispatch.php': dispatch.replace('return update($points, $changes, $index);', 'return forbidden();')
                           + ' global $counter int = 1; function forbidden(): int { return $counter; }'},
          'MT safety: worker cannot access global or static storage'),
         ({'dispatch.php': valid['dispatch.php'].replace('work(segment($rows,0,1), segment($deltas,0,1));', '1;')},

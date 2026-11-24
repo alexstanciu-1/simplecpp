@@ -1766,27 +1766,30 @@ final class Parser
 		return new ast_parallel_expression($start, $end, $jobs);
 	}
 
-	/** Grant expressions belong to the caller; only their aliases enter the worker body. */
+	/** Binding expressions belong to the caller; only their aliases enter the worker body. */
 	private function inline_job(): ast_inline_job
 	{
 		$c = $this->cursor;
 		$start = $c->take(token_kind::identifier, 'job');
 		$c->take(token_kind::lparen, '(');
 		$parameters = [];
-		$grants = [];
+		$inputs = [];
+		$binding_kinds = [];
 		do {
 			if ($parameters !== []) $c->take(token_kind::comma, ',');
 			$at = $c->position();
-			if ($c->name(token_kind::identifier) !== 'write') throw new diagnostic($c->tokens->source,
-				$c->tokens->tokens[$at]->offset, 'Expected write binding in inline job');
-			$c->take(token_kind::colon, ': after write');
+			$kind = $c->name(token_kind::identifier);
+			if (!in_array($kind, ['read', 'write', 'value'], true)) throw new diagnostic($c->tokens->source,
+				$c->tokens->tokens[$at]->offset, 'Expected read, write or value binding in inline job');
+			$binding_kinds[] = $kind;
+			$c->take(token_kind::colon, ': after binding kind');
 			$at = $c->position();
 			$name = $c->binding_name($c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 			$parameters[] = new ast_parameter_declaration($name, null, count($parameters), $at, $c->position());
-			$c->take(token_kind::assign, '= before segment grant');
-			$grants[] = $this->value();
+			$c->take(token_kind::assign, '= before binding expression');
+			$inputs[] = $this->value();
 		} while ($c->is(token_kind::comma));
-		$c->take(token_kind::rparen, ') after write bindings');
+		$c->take(token_kind::rparen, ') after job bindings');
 		$outer = $this->lexical;
 		$arrow = $this->arrow;
 		$names = $this->lambda_names;
@@ -1800,7 +1803,7 @@ final class Parser
 			$this->arrow = $arrow;
 			$this->lambda_names = $names;
 		}
-		return new ast_inline_job(new ast_lambda_expression($start, $parameters, null, $body), $grants);
+		return new ast_inline_job(new ast_lambda_expression($start, $parameters, null, $body), $inputs, $binding_kinds);
 	}
 
 	/** Parse one primary or prefix expression before postfix indexing. */

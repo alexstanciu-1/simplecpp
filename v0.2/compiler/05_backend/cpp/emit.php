@@ -2606,6 +2606,7 @@ CPP;
 			if ($value->mt_operation === 'mt_join') {
 				$required_headers['scpp/mt_segments.hpp'] = true;
 				$jobs = [];
+				$snapshots = [];
 				$lines = [];
 				foreach ($value->arguments as $i => $launch) {
 					if ($launch instanceof ast_inline_job) {
@@ -2618,20 +2619,36 @@ CPP;
 					}
 					$args = [];
 					$forwarded = [];
-					foreach ($launch->arguments as $slot => $segment) {
+					$fields = [];
+					$initializers = [];
+					foreach ($launch->arguments as $slot => $input) {
+						if ($launch instanceof ast_inline_job && $launch->binding_kinds[$slot] === 'value') {
+							$fields[] = $input->type_def()->cpp_type() . " v$slot;";
+							$initializers[] = $this->value($input, $global_references, $declarations, $required_headers);
+							$forwarded[] = "static_cast<const values_$i*>(context)->v$slot";
+							continue;
+						}
 						$operands = [];
-						foreach ($segment->arguments as $arg) $operands[] = $this->value($arg, $global_references, $declarations, $required_headers);
+						foreach ($input->arguments as $arg) $operands[] = $this->value($arg, $global_references, $declarations, $required_headers);
 						[$owner, $offset, $length] = $operands;
-						$args[] = "::scpp::mt::job::borrow($owner, $offset, $length)";
-						$forwarded[] = "inputs[$slot]";
+						$forwarded[] = 'inputs[' . count($args) . ']';
+						$borrow = $input->type_def()->read_only ? 'borrow_read' : 'borrow';
+						$args[] = "::scpp::mt::job::{$borrow}($owner, $offset, $length)";
 					}
 					$lines[] = "::scpp::mt::segment grants_{$i}[]{" . implode(', ', $args) . '};';
-					$jobs[] = "{grants_$i, [](const ::scpp::mt::segment* inputs) { return $name(" . implode(', ', $forwarded) . '); }}';
+					$context = '';
+					$parameter = '';
+					if ($fields !== []) {
+						$snapshots[] = "const struct values_$i { " . implode(' ', $fields) . " } snapshot_$i{" . implode(', ', $initializers) . '};';
+						$context = "snapshot_$i, ";
+						$parameter = ', const void* context';
+					}
+					$jobs[] = "{grants_$i, {$context}[](const ::scpp::mt::segment* inputs$parameter) { return $name(" . implode(', ', $forwarded) . '); }}';
 				}
 				$lines[] = '::scpp::mt::job jobs[]{' . implode(', ', $jobs) . '};';
 				$lines[] = '::scpp::mt::join(jobs, ' . count($jobs) . ');';
 				$lines[] = $value->type_def()->cpp_type() . ' results; for (const auto& job : jobs) results.append(static_cast<::scpp::int64>(job.result)); return results;';
-				return '([&]() { ' . implode(' ', $lines) . ' }())';
+				return '([&]() { ' . implode(' ', [...$snapshots, ...$lines]) . ' }())';
 			}
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];

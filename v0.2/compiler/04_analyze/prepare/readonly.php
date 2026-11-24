@@ -44,6 +44,9 @@ final class Readonly_Access
 			$site = $site->receiver;
 			if ($site->type_def()->mutates_referenced_value()) return;
 		}
+		$storage = $site instanceof ast_index_expression ? $site->receiver : $site;
+		if ($storage->type_def() instanceof segment_type && $storage->type_def()->read_only)
+			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write through a read-only segment');
 		if ($site instanceof ast_name_expression) self::require_writable($site, $site->local_binding());
 	}
 }

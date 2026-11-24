@@ -12,6 +12,7 @@ using Int = scpp::int64;
 using scpp::mt::segment;
 namespace App {
 Int work_(segment, segment);
+scpp::vector_int64 read_batch_(const Rows&, scpp::vector_int64&, Int);
 scpp::vector_int64 pair_batch_(scpp::vector_int64&, scpp::vector_int64&, Int);
 scpp::vector_int64 mixed_batch_(scpp::vector_int64&, scpp::vector_int64&, Int);
 scpp::vector_int64 dispatch_(Rows&, scpp::vector_int64&, scpp::vector_int64&, Int);
@@ -66,9 +67,21 @@ int main() {
     try { App::pair_batch_(cells, cells, 0); return 7; }
     catch (const std::invalid_argument&) {}
     for (int i = 0; i < 4; ++i) assert(cells.at(i) == i);
+    // A read/write overlap within the second job rejects the entire compiled batch.
+    try { App::read_batch_(rows, cells, 1); return 8; }
+    catch (const std::invalid_argument&) {}
+    for (int i = 0; i < 4; ++i) assert(cells.at(i) == i);
     segment one[]{job::borrow(cells, 0, 1)};
     segment three[]{job::borrow(cells, 1, 1), job::borrow(cells, 2, 1), job::borrow(cells, 0, 1)};
     auto counted = [](const segment*) -> Int { ++entries; return 0; };
+    segment readers[]{job::borrow_read(cells, 0, 1)};
+    assert(readers[0].read_at(0) == one[0].at(0));
+    job writer_first[]{{one, counted}, {readers, counted}};
+    job reader_first[]{{readers, counted}, {one, counted}};
+    for (auto* batch : {writer_first, reader_first}) {
+        try { join(batch, 2); return 9; } catch (const std::invalid_argument&) {}
+        assert(entries == 0);
+    }
     job conflicting[]{{one, counted}, {three, counted}};
     try { join(conflicting, 2); return 6; } catch (const std::invalid_argument&) {}
     assert(entries == 0);

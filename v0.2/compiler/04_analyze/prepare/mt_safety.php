@@ -6,9 +6,14 @@ namespace scpp\compiler;
 /** Closed admission rules for isolated inline slots and operations reachable from a segment worker. */
 final class Mt_Rules
 {
+	public static function scalar(type_definition $type): bool
+	{
+		return type_registry::is_numeric_scalar($type) || $type === type_bool::instance();
+	}
+
 	public static function isolated(type_definition $type): bool
 	{
-		if (type_registry::is_numeric_scalar($type) || $type === type_bool::instance()) return true;
+		if (self::scalar($type)) return true;
 		if (!($type instanceof record_type_definition) || $type->declaration->kind !== record_kind::structure
 			|| $type->base() !== null || $type->declaration->methods !== []) return false;
 		foreach ($type->declaration->fields as $field) if (!self::isolated($field->type_def())) return false;
@@ -24,12 +29,12 @@ final class Mt_Rules
 			if ($binding instanceof runtime_integer_constant) return null;
 			if ($binding instanceof ast_constant_declaration) {
 				$type = $binding->type_def();
-				if (type_registry::is_numeric_scalar($type) || $type === type_bool::instance()) return null;
+				if (self::scalar($type)) return null;
 				self::reject($node, 'worker requires a numeric or boolean constant');
 			}
 			self::reject($node, 'worker cannot access global or static storage');
 		}
-		if ($node instanceof ast_local_declaration && !type_registry::is_numeric_scalar($node->type_def()) && $node->type_def() !== type_bool::instance())
+		if ($node instanceof ast_local_declaration && !self::scalar($node->type_def()))
 			self::reject($node, 'worker locals must be scalar; a segment cannot escape');
 		if ($node instanceof ast_call_expression) {
 			if ($node->cardinality !== null && $node->arguments[0]->type_def() instanceof segment_type) return null;
@@ -38,10 +43,10 @@ final class Mt_Rules
 			$function = $node->implementation();
 			if (!($function instanceof ast_function_declaration) || $function->is_async || $function->returns_reference
 				|| $function->parent instanceof ast_method_owner || count($function->parameters) !== count($node->arguments)
-				|| !($function->return_type_def() === type_void::instance() || type_registry::is_numeric_scalar($function->return_type_def())))
+				|| !($function->return_type_def() === type_void::instance() || self::scalar($function->return_type_def())))
 				self::reject($node, 'unsupported worker helper contract');
 			foreach ($function->parameters as $parameter) {
-				if ($parameter->mode !== passing_mode::value || !($parameter->type_def() instanceof segment_type || type_registry::is_numeric_scalar($parameter->type_def())))
+				if ($parameter->mode !== passing_mode::value || !($parameter->type_def() instanceof segment_type || self::scalar($parameter->type_def())))
 					self::reject($node, 'worker helper requires scalar or segment parameters');
 			}
 			return $function;

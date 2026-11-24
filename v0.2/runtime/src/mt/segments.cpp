@@ -11,9 +11,14 @@
 #include <vector>
 
 namespace scpp::mt {
-void* segment::at(int64_t index) const {
-    if (index < 0 || index >= length) throw std::out_of_range("Exclusive segment index");
+const void* segment::read_at(int64_t index) const {
+    if (index < 0 || index >= length) throw std::out_of_range("Segment index");
     return data + static_cast<size_t>(offset + index) * stride;
+}
+
+void* segment::at(int64_t index) const {
+    if (read_only) throw std::logic_error("Cannot write through a read-only segment");
+    return const_cast<void*>(read_at(index));
 }
 
 namespace {
@@ -112,19 +117,20 @@ public:
 }
 
 void job::admit(const job* jobs, std::size_t count) {
-    struct interval { const void* backing; std::int64_t first, end; };
+    struct interval { const void* backing; std::int64_t first, end; bool read_only; };
     std::vector<interval> admitted;
     for (std::size_t i = 0; i < count; ++i) {
         for (std::size_t slot = 0; slot < jobs[i].count; ++slot) {
             const auto& r = jobs[i].inputs[slot];
             const auto size = r.size;
             if (r.offset < 0 || r.offset > size || r.length < 0 || r.length > size - r.offset)
-                throw std::out_of_range("Exclusive segment bounds");
+                throw std::out_of_range("Segment bounds");
             if (r.length == 0) continue;
-            const interval next{r.data, r.offset, r.offset + r.length};
+            const interval next{r.data, r.offset, r.offset + r.length, r.read_only};
             for (const auto& previous : admitted)
-                if (previous.backing == next.backing && previous.first < next.end && next.first < previous.end)
-                    throw std::invalid_argument("Overlapping exclusive segments");
+                if ((!previous.read_only || !next.read_only) && previous.backing == next.backing && previous.first < next.end && next.first < previous.end)
+                    throw std::invalid_argument(previous.read_only || next.read_only
+                        ? "Overlapping read and write segments" : "Overlapping exclusive segments");
             admitted.push_back(next);
         }
     }

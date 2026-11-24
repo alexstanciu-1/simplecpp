@@ -13,7 +13,18 @@ final class Mt_Provisioning
 		foreach ($batch->arguments as $launch) {
 			if ($launch instanceof ast_inline_job) {
 				$inputs = [];
-				foreach ($launch->arguments as $range) $inputs[] = self::grant($range, $prepare);
+				if (!in_array('write', $launch->binding_kinds, true) && !in_array('read', $launch->binding_kinds, true))
+					self::reject($launch, 'Inline job requires at least one segment binding');
+				foreach ($launch->arguments as $slot => $input) {
+					if ($launch->binding_kinds[$slot] === 'value') {
+						$prepare($input);
+						if ($launch->suspending_operands) self::reject($input, 'Await a scalar before binding it to an inline job');
+						$type = $input->type_def();
+						if (!Mt_Rules::scalar($type))
+							self::reject($input, 'Inline job value binding requires a numeric or boolean scalar');
+						$inputs[] = $type;
+					} else $inputs[] = self::grant($input, $prepare, read_only: $launch->binding_kinds[$slot] === 'read');
+				}
 				$prepare($launch->receiver, new callback_type_definition(type_int64::instance(), $inputs));
 				$dependencies->mt->workers[] = $launch->receiver;
 				$launch->settle_mt('inline_job', type_int64::instance());
@@ -39,7 +50,7 @@ final class Mt_Provisioning
 	}
 
 	/** Infer inline parameters from the admitted element or match a declared worker parameter. */
-	private static function grant(ast_expression $range, \Closure $prepare, ?type_definition $expected = null): segment_type
+	private static function grant(ast_expression $range, \Closure $prepare, ?type_definition $expected = null, bool $read_only = false): segment_type
 	{
 		if ($range::class !== ast_call_expression::class || $range->name !== 'segment'
 			|| $range->qualifier === call_qualifier::local || $range->member_separator !== null || $range->receiver !== null || count($range->arguments) !== 3)
@@ -51,10 +62,10 @@ final class Mt_Provisioning
 		$element = $owner->type_def()->element_type;
 		if ($expected === null) {
 			if (!Mt_Rules::isolated($element)) self::reject($range, 'Segment requires isolated inline elements');
-			$expected = new segment_type($element);
+			$expected = new segment_type($element, $read_only);
 		} elseif (!($expected instanceof segment_type) || $expected->element !== $element)
 			self::reject($range, 'Exclusive segment requires a matching writable local vector');
-		Readonly_Access::write($owner);
+		if (!$expected->read_only) Readonly_Access::write($owner);
 		foreach ([$offset, $length] as $bound) {
 			$prepare($bound);
 			if ($bound->type_def() !== type_int64::instance() || !($bound instanceof ast_integer_expression
