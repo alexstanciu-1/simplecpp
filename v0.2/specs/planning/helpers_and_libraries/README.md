@@ -64,3 +64,5 @@ Ran emit-runtime and emit-compiler from this checkout twice using the host check
 ## Compiler lowering and toolchain measurements
 
 The [lowering know-how note](lowering_know_how.md) tracks compiler actions, their semantic constraints, measured Clang and LLVM costs, and the next controlled comparisons.
+
+The [v0.2 integration process draft](integration_process.md) gives the proposed review sequence, evidence and first enforcement points for new helpers and libraries.
