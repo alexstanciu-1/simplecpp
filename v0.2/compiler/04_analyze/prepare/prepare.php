@@ -2515,9 +2515,9 @@ final class Preparation
 			$slot = $slots[$index] ?? $index;
 			$parameter = $callback ? null : $function->parameters[$slot];
 			$type = $parameter === null ? $function->inputs[$slot] : $parameter->type_def();
-			if ($type instanceof callback_type_definition && $argument instanceof ast_callable_reference) {
+			if ($argument instanceof ast_callable_reference && ($type instanceof callback_type_definition || $type instanceof owned_callable_type)) {
 				$this->expression_visits++;
-				$this->callback_reference($argument, $type);
+				$this->callback_reference($argument, $type instanceof owned_callable_type ? $type->signature : $type);
 			} else {
 				$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
 			}

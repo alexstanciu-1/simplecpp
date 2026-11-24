@@ -3428,6 +3428,8 @@ CPP;
 	/** Literal initialization cannot observe a sibling when the prepared scalar conversion cannot fail. */
 	private static function inert_literal_argument(ast_expression $argument, type_definition $type, int $conversion): bool
 	{
+		// An owning conversion can allocate, and a lambda can snapshot a sibling's mutable storage.
+		if ($type instanceof owned_callable_type) return false;
 		return $argument instanceof ast_callable_reference || $argument instanceof ast_lambda_expression || (($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
 			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
 	}

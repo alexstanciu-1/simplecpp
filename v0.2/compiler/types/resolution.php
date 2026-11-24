@@ -49,10 +49,16 @@ final class Type_Resolution
 		?Dependency_Watches $dependencies, bool $allow_void = false, ?dependency_watcher $watcher = null): ?type_definition
 	{
 		$watcher ??= $function;
-		if ($syntax->name === 'function' && $syntax->first_child !== null && $syntax === $function->return_type_reference
-			&& !$function->returns_reference && !($function->parent instanceof ast_method_owner)) {
-			$function->watch_signature($dependencies);
-			return new owned_callable_type(self::callback_signature($syntax, $symbols, $function, $watcher, $dependencies));
+		if ($syntax->name === 'function' && $syntax->first_child !== null && !($function->parent instanceof ast_method_owner)) {
+			$parameter = $syntax->parent;
+			$is_parameter = $parameter instanceof ast_parameter_declaration && $parameter->parent === $function;
+			if ($is_parameter && ($parameter->mode !== passing_mode::value || $parameter->default_value !== null)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Owned callable parameters must be required by-value parameters');
+			}
+			if ($is_parameter || ($syntax === $function->return_type_reference && !$function->returns_reference)) {
+				$function->watch_signature($dependencies);
+				return new owned_callable_type(self::callback_signature($syntax, $symbols, $function, $watcher, $dependencies));
+			}
 		}
 		if ($syntax instanceof ast_compound_type_reference) {
 			if ($syntax->name === '|') {

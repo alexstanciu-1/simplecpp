@@ -262,6 +262,40 @@ def prove_owned_callable_locals(work):
           exception_type='std::bad_function_call', exception_header='functional', expected_stdout=b'A')
 
 
+def prove_owned_callable_parameters(work):
+    consumer = ('function apply(int $n,function<int(int)> $op):int {'
+                '$result=$op($n);unset($op);if (isset($op)) {return 99;}return $result;}')
+    helper = 'function bump(int &$n):int {$n+=1;return $n;} function twice(int $n):int {return $n*2;}'
+    entry = """
+        $base=3;$f function<int(int)> = fn($n)=>$n+$base;
+        echo apply(2,$f),$f(4);
+        echo apply(op:fn($n)=>$base+$n,n:bump($base));
+        echo apply(n:bump($base),op:fn($n)=>$base+$n);
+        echo apply(4,twice(...));return 8;
+    """
+    forward = 'function forward(function<int(int)> $op):function<int(int)> {return $op;}'
+    relay = ('$empty function<int(int)>;$copy=forward($empty);if ($copy) {return 1;}'
+             '$base=3;$local=fn(int $n):int=>$base+$n;$owned=forward($local);echo $owned(2);return 8;')
+    generator = 'function produce(function<int(int)> $op):Iterator<int> {yield $op(2);}'
+    iterate = ('$base=3;$op function<int(int)> = fn($n)=>$base+$n;'
+               '$it=produce($op);unset($op);foreach ($it as $n) {echo $n;}return 8;')
+    work.mkdir()
+    revisions(work, 'php', dict(main=entry, consumer=consumer, helper=helper), [
+        (None, None, b'577108'), (None, None, b'577108'),
+        ('main', entry.replace('apply(2,$f)', 'apply(2,function(int $n) use (&$base):int {return $base+$n;})'),
+         'cannot erase a borrowed environment'),
+        ('main', entry, b'577108'),
+        ('consumer', consumer.replace('int(int)', 'int()').replace('$op($n)', '$op()'), 'Expected exact callable signature'),
+        ('consumer', consumer, b'577108'),
+        ('consumer', consumer.replace('> $op', '> &$op'), 'Owned callable parameters must be required by-value'),
+        ('consumer', consumer.replace('> $op', '> $op=null'), 'Owned callable parameters must be required by-value'),
+        ('consumer', consumer, b'577108'),
+        ('consumer', consumer + forward + generator, b'577108'),
+        ('main', relay, b'5'),
+        ('main', iterate, b'5'),
+    ])
+
+
 def prove_callable_factories(work):
     factory = 'function makeAdder(int &$base):function<int(int)> {return fn($value)=>$base+$value;}'
     entry = '$n=3;$add=makeAdder($n);$n=9;echo $add(4);return 8;'
@@ -608,6 +642,7 @@ def main():
         prove_receiver_captures(root / 'receiver-captures')
         prove_owned_callable_locals(root / 'owned-callable-locals')
         prove_callable_factories(root / 'callable-factories')
+        prove_owned_callable_parameters(root / 'owned-callable-parameters')
         prove_multiple_int_captures(root / 'multiple-int-captures')
         prove_capture_copy_contract(root / 'capture-copy-contract')
         prove_php_arrow_captures(root / 'php-arrow-captures')

@@ -325,7 +325,7 @@ initializing required and readonly properties before creating a receiver borrow.
 A borrowed `$this` is available only as a receiver. Typed callbacks accept only
 capture-free callables.
 
-### Owned callable locals
+### Owned callable locals and free functions
 
 PHP locals may declare a fixed by-value signature, for example
 `$add function<int(int)> = fn($n) => $n + $offset;`. The signature supplies
@@ -346,6 +346,13 @@ type. The return context supplies omitted closure annotations. For example,
 returns a callable that owns its snapshot of `$base`. The same ownership and
 signature checks apply when returning a concrete closure or an owned callable
 local. Returning an absent local preserves absence.
+
+A required by-value parameter on a PHP free function can also declare
+`function<R(Args...)>`. The argument receives the selected parameter's signature,
+including when the caller supplies a named argument. The callee owns its copy:
+resetting or replacing the parameter leaves the caller's callable available.
+Invoking the parameter uses the full positional signature. Borrowed environments
+and defaulted closure parameters follow the same erasure checks as owned locals.
 
 ### Trailing literal parameter defaults
 
