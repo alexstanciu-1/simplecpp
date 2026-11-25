@@ -207,7 +207,9 @@ final class Cpp_Bundle
 		return $data;
 	}
 
-	/** Retire confirmed source digests without touching generated C++ or acknowledging another writer's build. */
+	/** Retire confirmed source digests without touching generated C++ or acknowledging another writer's build.
+	 * @param array<string,mixed> $state
+	 */
 	public static function confirm_inputs(string $directory, cpp_bundle_snapshot $previous, array $state): void
 	{
 		self::with_lock($directory, true, static function () use ($directory, $previous, $state): void {

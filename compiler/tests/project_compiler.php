@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 namespace scpp\compiler {
-	function time(): int { return $GLOBALS['clock']; }
+	function time(): int
+	{
+		return $GLOBALS['clock'];
+	}
+
 	function hash_file(string $algorithm, string $path): string|false
 	{
 		$GLOBALS['digests'][] = $path;

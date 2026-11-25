@@ -593,6 +593,18 @@ abstract class type_definition
 		return false;
 	}
 
+	/** Positive proof that copying and destroying an independent element has no observable effect. */
+	public function copy_has_no_observable_effects(): bool
+	{
+		return false;
+	}
+
+	/** Only private backing-storage allocation failure may be lost by skipping this collection copy. */
+	public function private_copy_allocation_only(): bool
+	{
+		return false;
+	}
+
 	/** Backend property: copying a plain value cannot call user code, allocate or throw. */
 	public function cpp_trivial_value(): bool
 	{

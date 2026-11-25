@@ -723,6 +723,15 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		$this->preparation_work?->complete($this->dependency_source_key(), $this);
 	}
 
+	/** Query the prepared operation only when lowering this body's private count-reader entry. */
+	public function counts_parameter(ast_parameter_declaration $parameter): bool
+	{
+		if (count($this->statements) !== 1 || !($this->statements[0] instanceof ast_return_statement)) return false;
+		$value = $this->statements[0]->value;
+		return $value instanceof ast_call_expression && $value->cardinality === collection_cardinality::count
+			&& $value->arguments[0] instanceof ast_name_expression && $value->arguments[0]->refers_to($parameter);
+	}
+
 	public function require_prepared(): void
 	{
 		if (!$this->prepared) {
@@ -836,6 +845,16 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		if (($this->parent ?? null) instanceof ast_method_owner) return 'method:' . $this->name();
 		return 'func:' . ($this->is_implicit_entry ? 'main' : $this->name());
+	}
+
+	/** Signature-only eligibility keeps cross-unit declarations stable across reader/writer edits. */
+	public function private_count_input(): ?ast_parameter_declaration
+	{
+		if (count($this->parameters) !== 1 || $this->parent instanceof ast_method_owner || $this->is_async || $this->returns_reference
+			|| $this->return_type_def() !== type_int64::instance()) return null;
+		$input = $this->parameters[0];
+		return $input->mode === passing_mode::value && !($input->type_reference instanceof ast_variadic_type_reference)
+			&& $input->type_def()->private_copy_allocation_only() ? $input : null;
 	}
 
 	/** Written virtual intent is validated before emission; inherited overrides stay virtual. */

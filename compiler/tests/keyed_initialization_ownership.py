@@ -1,6 +1,7 @@
 """Prove keyed factory presizing, equality, partial cleanup and private-input ownership."""
 import argparse
 import json
+import sys
 from pathlib import Path
 from list_initialization_native import ROOT, includes, run
 from list_initialization_ownership import PRELUDE, expression
@@ -117,6 +118,10 @@ int main() {
     unit.write_text(source)
     flags = ['-std=c++23', '-O0' if quick else '-O1', '-g0' if quick else '-g', '-Wall', '-Wextra', '-Werror', '-I', out, *includes(runtime)]
     if sanitize: flags += ['-fsanitize=address,undefined', '-fsanitize-address-use-after-scope', '-fno-omit-frame-pointer']
+    # The probe embeds generated implementation code. Link only the routines it exercises,
+    # since other published carriers may depend on optional module objects.
+    if sys.platform.startswith("linux"):
+        flags += ["-ffunction-sections", "-fdata-sections", "-Wl,--gc-sections"]
     run([cxx, *flags, unit, runtime / 'generated/src/runtime.cpp', '-o', out / 'proof'])
     run([out / 'proof'])
     print(cxx, 'PASS keyed capacity/index/ownership/allocation failure proofs', 'ASan/UBSan' if sanitize else '')

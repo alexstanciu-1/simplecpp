@@ -51,7 +51,7 @@ def source(owner, active):
             f'return read_{owner}($rows); }}')
 
 
-def verify(work, cxx, linker):
+def vector_bundles(work, cxx, linker):
     fixture = ROOT/'compiler/examples/concrete_vector'
     tool = work/'tool'
     tool.mkdir()
@@ -115,15 +115,20 @@ def verify(work, cxx, linker):
                 name for name in names if (Path(folder)/name).relative_to(out) in files])
             for path, payload in native[-1].items():
                 (candidate/path).write_bytes(payload)
-            exe = work/f'app-{revision}'
-            build(candidate, exe, cxx, linker, links)
-            run = subprocess.run([exe], capture_output=True)
             expected = ''.join('7' if owner in active else '0' for owner in OWNERS).encode()
-            assert (run.returncode, run.stdout, run.stderr) == (8, expected, b''), run
+            yield candidate, links, expected
             previous = demands
     finally:
         process.stdin.close()
         assert process.wait() == 0
+
+
+def verify(work, cxx, linker):
+    for revision, (candidate, links, expected) in enumerate(vector_bundles(work, cxx, linker)):
+        exe = work/f'app-{revision}'
+        build(candidate, exe, cxx, linker, links)
+        run = subprocess.run([exe], capture_output=True)
+        assert (run.returncode, run.stdout, run.stderr) == (8, expected, b''), run
 
 
 if __name__ == '__main__':

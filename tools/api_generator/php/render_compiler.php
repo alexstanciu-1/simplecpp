@@ -132,6 +132,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
 \t}
 ";
         }
+        if ($definition['strategy'] === 'integer' && $definition['copy_semantics'] === 'trivial') {
+            $methods .= "\n\tpublic function copy_has_no_observable_effects(): bool { return true; }\n";
+        }
         if ($definition['literal_family'] === 'integer') {
             $accept = implode(' || ', array_map(static fn(string $alias): string => '($name === ' . var_export($alias, true) . ')', $definition['aliases']));
             $nativeSuffix = match ($types[$identity]['native_name']) {

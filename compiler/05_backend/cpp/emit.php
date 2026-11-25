@@ -319,8 +319,16 @@ final class Cpp_Emitter
 			if ($this->headers === null || $this->headers->uses_helper($node, dependency_use::async_wait)) $lines[] = $this->wait_signature($node, $includes) . ';';
 			return implode("\n", $lines);
 		}
+		$input = $node->private_count_input();
+		if ($input !== null) return $this->signature($node, $includes) . ";\n" . $this->count_reader_signature($node, $input) . ';';
 		return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
 			. $this->signature($node, $includes) . ';';
+	}
+
+	private function count_reader_signature(ast_function_declaration $function, ast_parameter_declaration $input): string
+	{
+		return $this->signature_type($function->return_type_def(), false) . ' ' . self::function_name($function)
+			. 'count_reader(const ' . $this->signature_type($input->type_def(), false) . '& ' . $this->name($input) . ')';
 	}
 
 	/** An ordinary blocking entry shares the producer's prepared parameter declarations. @param bool[] $headers */
@@ -680,6 +688,14 @@ CPP;
 				$signature = $function->parent->definition->cpp_type() . '::' . $name . '(scpp_escape_parameter_refs, ' . implode(', ', $refs) . ')';
 			}
 			$definitions[] = $signature . $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+			$count_input = $function->private_count_input();
+			if ($count_input !== null) {
+				$arg = $this->name($count_input);
+				// A body edit that loses the proof resumes ordinary by-value parameter construction.
+				$result = $function->body()->counts_parameter($count_input)
+					? $count_input->type_def()->lower_cpp_cardinality(collection_cardinality::count, $arg) : $name . '(' . $arg . ')';
+				$definitions[] = $this->count_reader_signature($function, $count_input) . ' { return ' . $result . '; }';
+			}
 			if ($function->is_async && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
 				$arguments = array_map($this->forward_argument(...), $function->parameters);
 				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn sync_wait("
@@ -2885,6 +2901,12 @@ CPP;
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
 			$result = $function->return_type_def();
+			$argument = $value->arguments[0] ?? null;
+			if ($argument instanceof ast_name_expression && $argument->local_binding() !== null
+				&& $argument->local_binding()::class === ast_local_declaration::class
+				&& ($input = $function->private_count_input()) !== null && $argument->type_def() === $input->type_def()) {
+				$name .= 'count_reader';
+			}
 			// The value read through a returned reference follows argument cleanup.
 			if ($function->returns_reference) $statement_setup = null;
 			$call = $this->invocation($value, $function, $name, $result, $global_references, $declarations, $required_headers, statement_setup: $statement_setup);

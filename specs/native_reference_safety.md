@@ -10,6 +10,16 @@ A PHP writable loop can lend its selected slot to a direct synchronous free func
 
 See [collection borrows](../compiler/docs/collection_references.md), [object and ownership boundaries](type_use_modifiers.md) and [callable reference-return checks](../compiler/tests/closure_reference_returns_native.py).
 
+## Private collection copies at calls
+
+A by-value collection parameter has independent snapshot semantics. The compiler may omit
+the allocation of its private copy when it proves that failure to allocate that copy is
+the only possible observable difference. The proof covers argument evaluation, aliasing,
+storage lifetime, and the copy and destruction effects of keys and values. Authored
+destructors and user-code failures must remain observable. Allocation failures from
+operations that still execute propagate under their ordinary contracts. An unknown
+effect requires a private copy.
+
 ## Reference parameters and defaults
 
 A readonly reference borrows exact-type stable storage without copying. A default on an admitted reference parameter supplies call-local storage when the argument is omitted. A writable default is fresh for each call. A return may not escape storage created for a default. Explicit arguments retain the ordinary binding rules.
