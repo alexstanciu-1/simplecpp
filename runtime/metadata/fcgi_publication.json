@@ -1,0 +1,17 @@
+{
+  "types": {
+    "fcgi_listener": {"carriers": []},
+    "fcgi_exchange": {"carriers": ["nullable"]},
+    "fcgi_request": {"fields": {"method": "string", "path": "string", "query_string": "string", "body": "string", "header_names": "vector_string", "header_values": "vector_string"}, "carriers": []}
+  },
+  "operations": [
+    {"native":"listen","general":["fcgi_listen"],"parameters":["string","int64"],"result":"fcgi_listener"},
+    {"native":"accept","general":["fcgi_accept"],"parameters":["fcgi_listener","int64"],"result":"nullable_fcgi_exchange"},
+    {"native":"request","general":["fcgi_request_read"],"parameters":["fcgi_exchange"],"result":"fcgi_request"},
+    {"native":"header","general":["fcgi_response_header"],"parameters":["fcgi_exchange","string","string"],"result":"void"},
+    {"native":"reply","general":["fcgi_reply"],"parameters":["fcgi_exchange","int64","string"],"result":"void"},
+    {"native":"abandon","general":["fcgi_abandon"],"parameters":["fcgi_exchange"],"result":"void"},
+    {"native":"close","general":["fcgi_close"],"parameters":["fcgi_listener"],"result":"void"}
+  ],
+  "constants": {}
+}

@@ -8,7 +8,7 @@ function prepareResourceModules(object $publication, array &$plan): void {
     requireThat(!isset($catalogs['filesystem']), 'Filesystem resources belong to the filesystem publication');
     if (isset($publication->filesystem->resources)) $catalogs['filesystem'] = $publication->filesystem->resources;
     foreach ($catalogs as $module => $catalog) {
-        requireThat(in_array($module, ['io', 'process', 'curl', 'mysqli', 'ui', 'webview', 'filesystem'], true), 'Unknown resource module');
+        requireThat(in_array($module, ['io', 'process', 'curl', 'mysqli', 'ui', 'webview', 'fcgi', 'filesystem'], true), 'Unknown resource module');
         fields($catalog, ['types', 'operations', 'constants']);
         $base = $module === 'filesystem' ? substr($plan['filesystem']['header'], 0, -4) . '/' : "scpp/$module/";
         $types = [];
