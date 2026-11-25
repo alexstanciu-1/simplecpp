@@ -160,7 +160,7 @@ foreach (['$xs[]=1;', '$xs[0]=1;', '$xs=$xs;', 'mutate($xs);', 'clean($xs);', 'u
 	'$alias =& $xs;$alias[]=1;', '$alias =& $xs;mutate($alias);'] as $write) {
 	rejects(fn() => $php($readonly . $write . '}return 8;'), 'read-only variadic pack');
 }
-rejects(fn() => $php('function f(int &...$xs):void {} $xs vector<int> = [];f(...$xs);return 8;'), 'Unpacking into a read-only');
+$php('function f(int &...$xs):void {} $xs vector<int> = [];f(...$xs);return 8;');
 rejects(fn() => $php('function f(int &...$xs):int {return 0;} $op function<int(int...)> = f(...);return 8;'), 'Callback target signature mismatch');
 
 rejects(fn() => $php('function &f(int &...$xs):vector<int> {return $xs;}return 8;'), 'exactly one writable parameter');

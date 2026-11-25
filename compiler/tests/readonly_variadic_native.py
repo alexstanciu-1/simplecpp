@@ -30,6 +30,31 @@ mutable = 'function flags(bool ...$xs):int {return count($xs);}'
 readonly = mutable.replace('bool ...', 'bool &...')
 use = adapter + 'echo adapt(flags(...));return 8;'
 
+unpack_provider = '''
+function inspect(vector<int> &$source,int &...$snapshot):int {
+    clean($source);return $snapshot[0]+count($snapshot);
+}
+class Reader {
+    public static function size(int $base,int &...$xs):int {return $base+count($xs);}
+    public function sizeOf(int &...$xs):int {return count($xs);}
+}
+'''
+unpack_entry = '''
+function prefix():int {echo "P";return 3;}
+function items():vector<int> {echo "V";$xs vector<int> = [8];return $xs;}
+$xs vector<int> = [7,9];echo inspect($xs,...$xs),":",count($xs),":";
+echo Reader::size(base:prefix(),...items()),":";
+$r=new Reader();echo $r->sizeOf(...$xs);return 8;
+'''
+unpack_trace = b'9:0:PV4:0'
+
+with TemporaryDirectory(prefix='scpp-readonly-unpack-') as directory:
+    revisions(Path(directory), 'php', dict(main=unpack_entry, provider=unpack_provider), [
+        (None, None, unpack_trace),
+        ('provider', unpack_provider.replace('sizeOf(int &...', 'sizeOf(float &...'), 'Unpacked argument requires vector<float64>'),
+        ('provider', unpack_provider, unpack_trace),
+    ])
+
 with TemporaryDirectory(prefix='scpp-readonly-variadic-') as directory:
     revisions(Path(directory), 'php', dict(main=entry, provider=provider), [
         (None, None, b'B32:9:347:01X'),

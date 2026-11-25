@@ -2597,9 +2597,6 @@ final class Preparation
 		if ($unpacked && ($variadic === null || $supplied !== $variadic + 1)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires one vector after all fixed arguments of a variadic target');
 		}
-		if ($unpacked && !$callback && $function->parameters[$variadic]->is_readonly_pack()) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking into a read-only variadic pack is deferred');
-		}
 		$slots = null;
 		if (isset($call->named)) {
 			if ($callback) throw new diagnostic($call->source(), $call->byte_start(), 'Typed callback calls require positional arguments');

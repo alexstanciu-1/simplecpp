@@ -235,6 +235,11 @@ completed pack is owned storage whose lifetime covers invocation and cleanup. Em
 packs are permitted. Fixed parameters, including their admitted defaults, may precede
 the tail. The tail must remain last and cannot have an explicit default.
 
+A caller may supply the whole tail as one trailing unpacked `vector<T>` of the
+exact pack type after all fixed arguments. The vector expression runs once and
+the callee receives an owned snapshot. In `inspect($items, ...$items)`, clearing
+`$items` through a writable fixed parameter leaves that snapshot intact.
+
 The callee may read, index, iterate, bind read-only local aliases and forward the
 whole pack to an eligible read-only parameter. Mutation, append, replacement,
 cleanup/removal and writable-reference forwarding through the pack or its aliases
@@ -250,7 +255,7 @@ a mutable owned value pack in v0.2.
 
 This scope does not introduce explicit `const T &...$values` spelling, general
 read-only value parameters, wider element types, constructor/anonymous-callable/
-provider/callback variadic bridges, call-site unpacking or asynchronous retention.
+provider/callback variadic bridges or asynchronous retention.
 Those contracts remain separate. Pinned v0.1 evidence executes tested free/static
 scalar read-only packs and rejects direct element writes. Its instance-method
 packing probes fail native compilation; current method support follows the v0.2
