@@ -58,11 +58,8 @@ start the deferred refactor without agreement. This is not an out-of-chat schedu
 - Simple C++ is one language with cpp/php/js syntax flavors. There is one PHP
   flavor. PRJ-selected composed profiles will control policy through common
   analysis; this does not claim profile loading or enforcement already exists.
-- Mine `compiler/my-try/` and `compiler/my-try-cpp/` for reviewed concepts and
-  useful proofs. Their implementations are evidence, not semantic authority.
-  Discuss mined structures with the user before adopting their ownership or
-  representation into `v0.2`; mining alone does not authorize adoption.
-  Do not copy their historical work queues, branch instructions or infrastructure.
+- Review historical designs with the user before adopting their ownership or
+  representation. Current semantic contracts govern implementation.
 - Preserve unrelated work. Keep changes within the agreed ownership area;
   discuss a newly discovered cross-owner redesign rather than silently adding
   compatibility machinery. Do not create empty stages for future functionality.
@@ -208,8 +205,3 @@ native and overall wall time. Record optimization, debug symbols, jobs, linker,
 PCH/cache state and runtime-archive reuse. Distinguish nested/cumulative trace
 timings from parallel wall time; frontend-only timings are partial measurements,
 not complete compilation time.
-
-These rules consolidate the applicable parts of the donor
-[PHP operating rules](../../compiler/my-try/AGENTS.md) and
-[C++ operating rules](../../compiler/my-try-cpp/AGENTS.md). Current user decisions
-and repository semantic authorities take precedence over donor conventions.
