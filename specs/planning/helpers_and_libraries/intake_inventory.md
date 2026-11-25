@@ -2,6 +2,8 @@
 
 Doc Status: planning
 
+[Filesystem family audit and proposed implementation boundary](filesystem_audit.md)
+
 Snapshot of `codex/helpers-and-libs` at `e8b03d67f`, 2026-11-25. The separate pilot at `7936b9bec` supplies experimental evidence for three operations. This inventory makes no language or publication changes.
 
 ## Reading the inventory
