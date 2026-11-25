@@ -122,6 +122,11 @@ $done=process_poll($h); while(!$done){$done=process_poll($h);}
 $o=process_result($h);
 if($o->exit_code!==0 || $o->stdout_text!==(str_repeat("O\0",524288).$input)){return 7;}
 if($o->stderr_text!==str_repeat("E\0",524288)){return 8;}
+$args=["-c","import os, sys; print(os.getcwd(), *sys.argv[1:], sep=chr(10))","",'a b;$x'];
+$h=process_start(PYTHON_EXE,$args,"",0,"/tmp");
+$done=process_poll($h); while(!$done){$done=process_poll($h);}
+$o=process_result($h);
+if($o->exit_code!==0 || $o->stdout_text!==("/tmp\n\n".'a b;$x'."\n")){return 9;}
 return 0;
 '''.replace('CHILD_SCRIPT', json.dumps(child)).replace('PYTHON_EXE', json.dumps(sys.executable)),
           'process_start("/bin/true",[],"",0)')
