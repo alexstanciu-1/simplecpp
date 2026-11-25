@@ -39,7 +39,7 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 
 | Candidate | What remains to settle |
 | --- | --- |
-| Filesystem locks | The filesystem audit reserved fs_lock_empty, fs_lock_try, fs_lock_release and fs_lock_transfer for a separate handle goal. A future decision must cover contention versus error and alias invalidation on transfer. [Lock disposition](filesystem_audit.md) |
+| Filesystem locks | Audited. Recommend all four general operations in the filesystem module. Try replaces only its output slot on acquisition; release and transfer affect all aliases of the held token. The archived Linux cross-process fixture passed. [Family audit](filesystem_locks_audit.md) |
 | Versioned stable hashing | String and span hashes have separate intake. The donors disagree on the algorithm. A persisted hash needs an explicit version and shared byte test vectors. String inputs can be considered independently of publication of a public span type. [Hash comparison](string_families_audit.md#adjacent-hashing-family) |
 | Remaining core and release-only spellings | Reconcile source-visible debug/output, predicates, constants and compatibility aliases against existing language contracts. Classify compiler-emitted evaluation/debug hooks with their owners. Results/errors, conversions, lifetime operations, enum/layout queries and source-language operators already have dedicated evidence rows below. An equivalent language capability alone does not establish a donor spelling or overload. [Source surface index](donor_surfaces.tsv) · [Donor entities](donor_entities.tsv) |
 
