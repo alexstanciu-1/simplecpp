@@ -215,3 +215,7 @@ are retired; vector/hash counts and other scalar wrappers remain unchanged. See
 ## Optional filesystem module
 
 The [filesystem contract](filesystem_module.md) defines the general and PHP names, project visibility, operation signatures and failure channels.
+
+## Optional Stream I/O, Process and curl modules
+
+The [module contracts](stream_process_curl_modules.md) define handle lifetime, flavor visibility, checked results and external dependencies.

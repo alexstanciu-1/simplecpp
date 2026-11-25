@@ -52,7 +52,7 @@ To reproduce both supplemental indexes from the pinned Git objects, run `python3
 
 The [JSON and regex group audit](json_regex_group_audit.md) covers encode/decode, document and nodes, pull reader, then regex as four checkpoints of one goal. The [JSON contract](../../json_module.md) and [regex contract](../../regex_module.md) describe the implemented surfaces. The counts below record the original inventory.
 
-The [Stream I/O, Process and curl audit](stream_process_curl_audit.md) inventories the next three-family group and its proposed source contracts.
+The [Stream I/O, Process and curl audit](stream_process_curl_audit.md) records the donor inventory. The [v0.2 contracts](../../stream_process_curl_modules.md) cover the implemented group.
 
 Use a whole family as the implementation unit. First reconcile its donor specs, catalogs, compiler/type-owned forms, native providers and tests. A narrow probe can settle a contract question. Record the v0.2 disposition of every operation, overload and receiver, including deferred flavor surfaces. Then set up an implementation goal covering the full agreed family and its source-level proofs. Individual performance tuning follows in Stage 2.
 
@@ -70,8 +70,8 @@ Use a whole family as the implementation unit. First reconcile its donor specs, 
 | Boxed container operations | Existing indexing, probes, removal and traversal retain their receiver-specific contracts. Generic map and filter accept table-valued mixed and dynamic, preserving keys, order and family. [Source contract](../../collection_traversal.md#typed-map-and-filter). |
 | Compiler | Storage methods can share names with current container methods. Keep record identity, removal and alias behavior in the comparison. Classify compiler-host utilities independently from source-callable facilities. |
 | Source and tokenizer | Source buffers, spans, line indexes and token buffers bring owner types. Evaluate groups against an actual compiler consumer and the existing tokenizer decisions. |
-| IO and process | Review stream and process handles, cleanup, EOF and operational errors. Filesystem path IO covers a different contract. |
-| curl | Review the handle, response, option constants and external dependency together before admitting wrappers. |
+| IO and process | Implemented byte streams and Linux managed processes. Core CLI, environment and shell helpers retain their separate intake. |
+| curl | Implemented checked general requests and PHP adapters with private libcurl linkage. |
 | Tasks | 28 distinct callable names expand to 406 signatures in the pinned catalog. Compare the modern async/task and multithreading contracts before choosing any donor overload family. |
 | UI and webview | Each has 12 distinct callable names. Review platform dependencies, event/handle ownership and a runnable consumer at library intake. |
 | Release-only PHP and internal forms | Profile aliases, debug hooks, generated-code support, and operators can appear in the same maps as application APIs. Record an explicit disposition when their family is reviewed. |

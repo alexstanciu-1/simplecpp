@@ -16,7 +16,8 @@
         "regex": "regex.module.json",
         "filesystem": "filesystem.module.json",
         "io": "io.module.json",
-        "process": "process.module.json"
+        "process": "process.module.json",
+        "curl": "curl.module.json"
     },
     "artifacts": [
         "../build/clang/libscpp_runtime.a"

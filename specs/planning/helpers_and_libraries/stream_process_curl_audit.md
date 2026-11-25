@@ -61,3 +61,18 @@ The installed pkg-config libcurl reported 8.5.0. The archived Clang curl fixture
 Reuse module-gated metadata, opaque value handles, published fields, concrete result carriers and narrow generated headers from the JSON and regex work. Add only the concrete handle/result pairs each family uses. Keep cleanup in private native implementations. The three donor catalogs depend on core individually. Enabling Stream I/O should not pull in child-process code or libcurl. Keep JS and Python natural spellings for their dedicated flavor reviews, recording the archived JSS io.* mappings.
 
 For each checkpoint, build an executable from its emitted link manifest, exercise the distinguishing states above, disable and restore the module in a resident compiler, and compare recovery with a fresh build. Compile a minimal caller and each selected public header on its own. Check their dependencies for foreign flavor wrappers, stdio implementation details, process internals and curl/curl.h. Finish with a single mixed-flavor project selecting all three modules. Performance measurements belong to Stage 2.
+
+## Stage 1 verification
+
+The [published v0.2 contracts](../../stream_process_curl_modules.md) cover all three checkpoints.
+Local Clang builds exercised each module independently and a PHP/C++ application using all three.
+The executable linked from the emitted manifest. Stream bytes written through PHP passed through
+curl and a managed child, then a C++-flavor caller checked the captured bytes.
+
+The curl HTTP fixture used only loopback and verified redirect count, a 404 response,
+request headers, binary POST and response header lines. A separate file transfer covered
+success with an empty body. The module tests remove and restore manifest selections in a
+resident compiler and compare the recovered C++ with a fresh compilation. Clang also checked
+every published module header independently. JSON and curl passed together with their shared
+checked mixed result. The original build profile passed publication gates and generator parity
+after restoration. Execution and compile-time optimization measurements remain Stage 2 work.

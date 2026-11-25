@@ -169,7 +169,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $indexInterface = ' implements runtime_field_type';
             $fields = [];
             foreach ($moduleTypes[$identity]['fields'] as $field => $type) {
-                $fields[] = "'$field' => type_{$definitions[$type]['class']}::instance()";
+                $class = $definitions[$type]['class'] ?? $type;
+                $fields[] = "'$field' => type_{$class}::instance()";
             }
             $methods .= "\n\tpublic function runtime_field(string \$name): ?type_definition { return match (\$name) { "
                 . implode(', ', $fields) . ", default => null }; }\n";

@@ -133,7 +133,8 @@ function compilerResourceCases(?array $runtime, array $types): array {
                     requireThat(!isset($variants[$type]), 'Duplicate module overload');
                     $variants[$type] = "type_$type::class => $binding";
                 }
-                $call = "new runtime_overloads([$arity => [" . implode(', ', $variants) . "]], argument_index: $index, required_module: 'runtime-$module')";
+                $context = isset($variants['vector_string']) ? ", list_context: type_vector_string::instance()" : '';
+                $call = "new runtime_overloads([$arity => [" . implode(', ', $variants) . "]], argument_index: $index$context, required_module: 'runtime-$module')";
             }
             $cases[] = "\t\t\t'$key' => \$bindings[\$key] ??= $call,";
         }
