@@ -278,8 +278,11 @@ read through Clang exit and executable publication. It releases the lock before
 running the application. On dev002 a real publisher queued for the exclusive
 lock while Clang was paused. The first build printed `1`, publication completed
 while its application was held open, and the next build printed `2` using the
-new translation unit. The combined focused check took 1.92 seconds. Incremental
-Ninja builds and retained service transport remain separate checks.
+new translation unit. The combined focused check took 1.92 seconds. The native driver also invokes the PHP host's saved Ninja graph. Across three
+short-lived invocations on dev002, the two-source application plus generated entry
+required three compiles and one link initially, zero compiles and links unchanged,
+and one compile and one link after a function-body edit. Retained service
+transport remains open.
 [Driver](../../compiler/examples/native_driver/main.php.scpp) ·
 [Native comparison](../../compiler/tests/translated_native_driver.py)
 

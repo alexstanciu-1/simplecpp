@@ -54,19 +54,19 @@ final class Native_Build
 
 	/**
 	 * Call only after successful C++ publication. A retained compiler calls this directly, with no helper process.
-	 * Return native status/output; never expose an old executable as a successful failed build.
+	 * Return native status/output, or publish only the protected graph for a standalone driver.
 	 * @param mixed[] $config
 	 * @return mixed[]
 	 */
-	public static function run(string $bundle, string $directory, array $config /** array<string,mixed> */): array /** array<string,mixed> */
+	public static function run(string $bundle, string $directory, array $config /** array<string,mixed> */, bool $publish_only = false): array /** array<string,mixed> */
 	{
 		$bundle = realpath($bundle);
 		if ($bundle === false) {
 			throw new \RuntimeException('Missing generated bundle');
 		}
-		return Cpp_Bundle::with_reader($bundle, static function (bool $present) use ($bundle, $directory, $config): array {
+		return Cpp_Bundle::with_reader($bundle, static function (bool $present) use ($bundle, $directory, $config, $publish_only): array {
 			if (!$present) throw new \RuntimeException('Missing generated bundle');
-			return self::run_with_bundle($bundle, $directory, $config);
+			return self::run_with_bundle($bundle, $directory, $config, $publish_only);
 		});
 	}
 
@@ -76,7 +76,7 @@ final class Native_Build
 	 * @return array<string,mixed>
 	 */
 	private static function run_with_bundle(string $bundle, string $directory,
-		array $config /** array<string,mixed> */): array /** array<string,mixed> */
+		array $config /** array<string,mixed> */, bool $publish_only): array /** array<string,mixed> */
 	{
 		$manifest = Cpp_Bundle::read($bundle);
 		if (($manifest['translation_units'] ?? []) === []) {
@@ -113,7 +113,7 @@ final class Native_Build
 			throw new \RuntimeException('Cannot enter native build directory');
 		}
 		try {
-			return self::build($units, $libraries, $flags, $link_flags, $config, $directory, $jobs);
+			return self::build($units, $libraries, $flags, $link_flags, $config, $directory, $jobs, $publish_only);
 		}
 		finally {
 			chdir($previous);
@@ -131,7 +131,7 @@ final class Native_Build
 	 */
 	private static function build(array $units /** list<string> */, array $libraries /** list<string> */,
 		array $flags /** list<string> */, array $link_flags /** list<string> */, array $config /** array<string,mixed> */,
-		string $directory, int $jobs /** uint32 */): array /** array<string,mixed> */
+		string $directory, int $jobs /** uint32 */, bool $publish_only): array /** array<string,mixed> */
 	{
 		$cxx = self::executable(self::string($config['cxx'] ?? null, 'cxx'));
 		$ninja = self::executable(self::string($config['ninja'] ?? 'ninja', 'ninja'));
@@ -163,7 +163,16 @@ final class Native_Build
 		$lines[] = 'build program: link ' . implode(' ', $objects)
 			. ' ' . implode(' ', array_map(self::ninja_path(...), $libraries)) . ' | ' . self::CONTEXT_STAMP;
 		$lines[] = 'default program';
-		$graph = implode("\n", $lines) . "\n";
+		// Standalone readers compare the ordered manifest inputs while holding both locks.
+		// ninja_path above rejects embedded line breaks in every recorded path.
+		$inputs = "# scpp build inputs v1\n";
+		foreach ($units as $path) {
+			$inputs .= "# source " . strlen($path) . " " . $path . "\n";
+		}
+		foreach ($libraries as $path) {
+			$inputs .= "# library " . strlen($path) . " " . $path . "\n";
+		}
+		$graph = $inputs . "# end inputs\n" . implode("\n", $lines) . "\n";
 		// Serializes publication and invocation for this build directory, including cold qualification.
 		$lock = fopen($directory . '/.scpp-native.lock', 'c');
 		if (($lock === false) || !flock($lock, \LOCK_EX)) {
@@ -173,6 +182,9 @@ final class Native_Build
 		try
 		{
 			Cpp_Publication::write($directory . '/build.ninja', $graph);
+			if ($publish_only) {
+				return ['graph' => $directory . '/build.ninja'];
+			}
 			$start = hrtime(true);
 			$key = Qualification_Cache::lookup($cxx, $flags, $link_flags, $cache);
 			$lookup_ms = (hrtime(true) - $start) / 1e6;

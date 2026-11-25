@@ -55,6 +55,19 @@ $native = \scpp\compiler\Native_Build::run($generated, $native_directory, $confi
 // Reuse $project; call run() and Native_Build::run() after subsequent source edits.
 ```
 
+## Standalone native driver
+
+On Linux, a caller can use `Native_Build::run($bundle, $directory, $config, publish_only: true)`
+to publish the saved graph under the normal locks. The result contains its `graph` path.
+Invoke the compiled example as `driver --ninja BUNDLE BUILD_DIR ABSOLUTE_NINJA`.
+It acquires the shared bundle lock followed by the exclusive build-directory lock,
+checks the graph's ordered source and library paths against the current manifest,
+and runs Ninja's `program` target with the saved qualification gate. Republish
+the graph after a membership or toolchain configuration change. A body edit can
+reuse the same graph. On success the driver starts the linked application while
+its executable is protected, releases both locks, then forwards the application's
+streams and exit status. A Ninja failure returns its status immediately.
+
 ## Cache and invocation ownership
 
 `Qualification_Cache` reads the existing Python qualification index and record in

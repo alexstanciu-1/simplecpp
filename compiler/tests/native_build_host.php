@@ -34,7 +34,8 @@ while (($line = fgets(STDIN)) !== false)
 			$result['native'] = \scpp\compiler\Native_Build::run($request['bundle'], $request['native'], $request['config']);
 		}
 		else {
-			$result = \scpp\compiler\Native_Build::run($request['bundle'], $request['native'], $request['config']);
+			$result = \scpp\compiler\Native_Build::run($request['bundle'], $request['native'], $request['config'],
+				$request['action'] === 'publish_graph');
 		}
 		echo json_encode(['result' => $result, 'ms' => (hrtime(true) - $start) / 1e6], JSON_THROW_ON_ERROR), "\n";
 	}
