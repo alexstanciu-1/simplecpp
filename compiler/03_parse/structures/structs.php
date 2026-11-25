@@ -267,16 +267,19 @@ final class ast_field_expression extends ast_expression
 /** Plain property write to an instance field or type-owned storage, e.g. Point::$count = 3; */
 final class ast_field_assignment extends ast_statement
 {
+	/** PROPERTIES */
 	/** Native owning instance selection or qualified static property name. */
 	public readonly ast_field_expression|ast_name_expression $target;
 	/** Native owning assigned expression. */
 	public readonly ast_expression $value;
 
+	/** PREP FACTS */
 	/** Prepared fact: true only for a proven terminal whole-value transfer. */
 	public bool $transfer = false;
 	/** Prepared fact: assignment conversion, cleared before each preparation. */
 	public ?int $conversion /** uint16 */ = null;
 
+	/** CONSTRUCTOR */
 	public function __construct(ast_field_expression|ast_name_expression $target, ast_expression $value, int $end /** uint32 */)
 	{
 		parent::__construct($target->start, $end);
@@ -285,6 +288,8 @@ final class ast_field_assignment extends ast_statement
 		$target->attach($this);
 		$value->attach($this);
 	}
+
+	/** METHODS */
 	/** A plain assignment to an immediate field of an inline writable-loop element. */
 	public function selected_record_element(): ?ast_writable_element
 	{
