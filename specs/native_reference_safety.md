@@ -6,6 +6,8 @@ A reference binds eligible stable storage of the declared type. Passing by writa
 
 A return by reference requires a proven origin that survives the call. Locals, temporaries and interior collection slots that can relocate or expire cannot escape as references. Passing a whole vector or hash by reference borrows the caller's named slot for the call. Access through a dynamic key does not prove stable storage. Closure captures by reference must respect the originating storage's lifetime and the callback's escape boundary.
 
+A PHP writable loop can lend its selected slot to a direct synchronous free function under the [scoped element borrow contract](collection_traversal.md#php-writable-vector-and-hash-foreach). The parameter must already support mutable references for that type.
+
 See [collection borrows](../compiler/docs/collection_references.md), [object and ownership boundaries](type_use_modifiers.md) and [callable reference-return checks](../compiler/tests/closure_reference_returns_native.py).
 
 ## Reference parameters and defaults

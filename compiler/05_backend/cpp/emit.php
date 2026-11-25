@@ -1715,13 +1715,14 @@ CPP;
 	}
 
 	/** Read a selected element or identify the native local storage. */
-	private function name(ast_local_binding $binding): string
+	private function name(ast_local_binding $binding, bool $reference = false): string
 	{
 		if ($binding instanceof ast_writable_element) {
 			$loop = $binding->parent;
 			$source = $loop->source_value;
 			$owner = $this->name($source->local_def());
 			$type = $source->type_def();
+			if ($reference) return $type->lower_cpp_iteration_reference($owner, $loop->start);
 			if ($type instanceof key_iterable_type) return $type->lower_cpp_iteration_current_value($owner, 'loop_' . $loop->start . '_iteration_position');
 			return $type->lower_cpp_element_read($owner, 'iteration_index_' . $loop->start);
 		}
@@ -3170,7 +3171,7 @@ CPP;
 				&& !$type->cpp_trivial_value() && $conversion === value_conversion::identity && $argument->type_def() === $type
 				? new Cpp_Staged_Result($type, 'argument_' . $value->start . '_' . $index) : null;
 			$operand = $by_value ? $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
-				logical_root: $conversion === value_conversion::identity, destination: $destination) : $this->name($argument->local_def());
+				logical_root: $conversion === value_conversion::identity, destination: $destination) : $this->name($argument->local_def(), reference: true);
 			if (($variadic !== null || count($parameters) > 1 || $method || $steps !== []) && count($this->async_steps) !== $step_start) {
 				$argument_steps[$index] = array_splice($this->async_steps, $step_start);
 				if ($operand === '' && $destination !== null) {
