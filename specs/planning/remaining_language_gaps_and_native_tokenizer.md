@@ -208,6 +208,14 @@ The selected native design is a direct byte scanner. Use the existing PHP bootst
 
 Proposed ownership is the immutable source snapshot and its token list. Validate the full snapshot for UTF-8, recognize token spans using a byte cursor, and publish the finished token buffer after a successful scan. Tokens carry byte offset, length, and kind. Spelling comes from the retained source. Keep Python indentation and layout behavior in view. The earlier comparison covered only PHP, C++, and JS. Review the Python layout stage and add its own parity coverage before claiming native support for that flavor.
 
+The default test `compiler_translated_source_utf8` verifies the native snapshot
+validator on 33 byte strings against the production tokenizer in all four flavors.
+It covers boundary code points, truncated and overlong sequences, surrogates,
+and an invalid continuation after an earlier lexical error. The runtime helper
+accepts valid input directly. On invalid input the native fixture locates the
+first malformed sequence. Wiring that result into scanner diagnostics and
+token-list publication remains open. [Native fixture](../../compiler/examples/tokenizer/utf8.php.scpp)
+
 Acceptance checks:
 
 1. Compare offset, length, kind, and spelling with the oracle on real inputs, including longest punctuation, flavor keywords, comments, quotes, and token-length limits.
