@@ -89,6 +89,14 @@ if sys.argv[2] == 'process' and not sys.platform.startswith('linux'):
           'process_start("/bin/true",[],"",0)')
 
 if sys.argv[2] == 'process' and sys.platform.startswith('linux'):
+    # Fill both outputs before consuming stdin. Distinct binary patterns expose
+    # truncation, interleaving and swapping the streams.
+    child = """import sys
+for stream, marker in [(sys.stdout.buffer, b'O'), (sys.stderr.buffer, b'E')]:
+    stream.write((marker + bytes(1)) * 524288)
+    stream.flush()
+sys.stdout.buffer.write(sys.stdin.buffer.read())
+"""
     prove('process', r'''
 $args vector<string> =[];
 $h process_handle=process_start("/bin/cat",$args,"a\0b",0); $alias=$h;
@@ -107,8 +115,16 @@ $h=process_start("/bin/sleep",$args,"",0); $done=process_poll($h);
 if($done || isset(process_result($h))){return 5;}
 $ok=process_stop($h); $done=process_poll($h); while(!$done){$done=process_poll($h);}
 $o=process_result($h); if(!$ok || !$o->stopped || $o->timed_out || $o->signal===0){return 6;}
+$input string=str_repeat("I\0",1048576);
+$args=["-c",CHILD_SCRIPT];
+$h=process_start(PYTHON_EXE,$args,$input,0);
+$done=process_poll($h); while(!$done){$done=process_poll($h);}
+$o=process_result($h);
+if($o->exit_code!==0 || $o->stdout_text!==(str_repeat("O\0",524288).$input)){return 7;}
+if($o->stderr_text!==str_repeat("E\0",524288)){return 8;}
 return 0;
-''', 'process_start("/bin/true",[],"",0)')
+'''.replace('CHILD_SCRIPT', json.dumps(child)).replace('PYTHON_EXE', json.dumps(sys.executable)),
+          'process_start("/bin/true",[],"",0)')
 
 if sys.argv[2] == 'curl':
     with tempfile.TemporaryDirectory(prefix='curl-file-') as tmp:
