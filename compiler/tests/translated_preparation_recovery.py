@@ -91,7 +91,7 @@ def host_oracle(work, flavor):
         assert process.wait() == 0
 
 
-def specialized_oracle(work):
+def call_oracle(work):
     app, out = work / 'method-input', work / 'method-output'
     app.mkdir()
     (app / 'module.json').write_text('{}')
@@ -101,9 +101,17 @@ def specialized_oracle(work):
     for role in ('Left', 'Right'):
         name = role.lower() + '_call'
         (app / (name + '.php')).write_text(f'function {name}(): int {{return {role}::read();}}')
+    for name, prefix in [('lex_left', ''), ('lex_right', '$seed int = 9;')]:
+        (app / (name + '.php')).write_text(
+            f'function {name}(): int {{ {prefix} $g = function ():int {{return 7;}}; return $g(); }}')
     result = fresh_build(app, out)
     assert 'error' not in result, result
-    return b''.join(function_text(out, name) for name in ('left_call', 'right_call'))
+    expected = b''.join(function_text(out, name) for name in ('left_call', 'right_call'))
+    for name in ('lex_left', 'lex_right'):
+        body = function_text(out, name)
+        statement, = [line for line in body.splitlines(keepends=True) if line.startswith(b'\treturn var_g_')]
+        expected += statement
+    return expected
 
 
 def driver(input_sets):
@@ -176,14 +184,14 @@ function check_recovery(Return_Syntax $original_changed, Return_Syntax $original
     }
     $entry = $compiler->symbols->functions["missing"];
     $original_head = $entry->head;
-    require_state($broken_body->selected_body() === $original_head, "wrong prepared source target");
+    require_state($broken_body->selected_operand() === $original_head, "wrong prepared source target");
     $replacement = $compiler->publish_declaration($missing);
-    require_state($replacement !== $original_head && $broken_body->selected_body() === $replacement,
+    require_state($replacement !== $original_head && $broken_body->selected_operand() === $replacement,
         "already-prepared caller did not follow declaration replacement");
     $entry->head = null;
-    require_state($broken_body->selected_body() === null, "deleted declaration still visible");
+    require_state($broken_body->selected_operand() === null, "deleted declaration still visible");
     $restored = $compiler->publish_declaration($missing);
-    require_state($broken_body->selected_body() === $restored, "caller lost stable symbol during repair");
+    require_state($broken_body->selected_operand() === $restored, "caller lost stable symbol during repair");
 }
 
 // Test the production split between function_def() and implementation() with two
@@ -194,7 +202,7 @@ function demand(Function_Entry $authored, string $symbol): Called_Method_Instanc
     return new Called_Method_Instance($authored, new Function_Body($head->syntax, $symbol));
 }
 function replace_private(Called_Method_Instance $left_pair, Function_Body $authored): weak<Function_Body> {
-    $old = $left_pair->implementation();
+    $old = $left_pair->private_body;
     if ($old === null) throw Exception::make("Missing private body");
     $observer = weak($old);
     $left_pair->private_body = new Function_Body($authored->syntax, "called_4_Left_4_Base_read");
@@ -211,7 +219,7 @@ function check_specialization(): void {
     $right_call = new Function_Body(new Return_Syntax("right_call", "right_call", "", "read", 0));
     $left_call->settle_preparation($demands["Left"]);
     $right_call->settle_preparation($demands["Right"]);
-    require_state($left_call->selected_body() !== $right_call->selected_body(), "sibling bodies share identity");
+    require_state($left_call->selected_operand() !== $right_call->selected_operand(), "sibling bodies share identity");
     echo $left_call->lower(), $right_call->lower();
     $required = new Return_Syntax("method", "read", "3", "", 0);
     $required->required_parameters = 1;
@@ -226,20 +234,62 @@ function check_specialization(): void {
     require_state($rejected && !$retry->prepared(), "specialized call ignored changed authored signature");
     $method->head = $authored_body;
     $retry->settle_preparation($demands["Left"]);
-    require_state($retry->selected_body() === $left_call->selected_body(), "signature repair lost demand");
+    require_state($retry->selected_operand() === $left_call->selected_operand(), "signature repair lost demand");
     $old_private = replace_private($demands["Left"], $authored_body);
-    require_state(lock($old_private) === null && $retry->selected_body() === $demands["Left"]->private_body,
+    require_state(lock($old_private) === null && $retry->selected_operand() === $demands["Left"]->private_body,
         "prepared caller kept a replaced private implementation");
     $demands->remove("Left");
-    require_state($left_call->selected_body() === null && $retry->selected_body() === null, "retired pair kept alive");
-    require_state($right_call->selected_body() !== null, "retirement invalidated sibling");
+    require_state($left_call->selected_operand() === null && $retry->selected_operand() === null, "retired pair kept alive");
+    require_state($right_call->selected_operand() !== null, "retirement invalidated sibling");
     $demands["Left"] = demand($method, "called_4_Left_4_Base_read");
-    require_state($left_call->selected_body() === null, "retired slot rebound by name");
+    require_state($left_call->selected_operand() === null, "retired slot rebound by name");
     $new_call = new Function_Body($left_call->syntax);
     $new_call->settle_preparation($demands["Left"]);
-    require_state($new_call->selected_body() === $demands["Left"]->implementation(), "new demand chose sibling");
+    require_state($new_call->selected_operand() === $demands["Left"]->implementation(), "new demand chose sibling");
 }
-''' + '\n'.join(calls) + '\ncheck_specialization();\nreturn 8;\n'
+function check_lexical(): void {
+    $syntax = new Return_Syntax("scope", "scope", "", "g", 17);
+    $signature = new Return_Syntax("scope", "lambda", "7", "", 0);
+    $left = new Function_Body($syntax);
+    $right = new Function_Body($syntax);
+    $left->declare_callable("g", 0, $signature);
+    $right->declare_callable("g", 1, $signature);
+    $old_call = new Function_Body($syntax);
+    $sibling = new Function_Body($syntax);
+    $left->prepare_lexical_call($old_call);
+    $right->prepare_lexical_call($sibling);
+    require_state($old_call->selected_operand() !== $sibling->selected_operand(), "lexical scopes shared storage");
+    echo $old_call->lower_return(), $sibling->lower_return();
+
+    $left = new Function_Body($syntax);
+    require_state($old_call->selected_operand() === null, "prepared call kept its replaced body binding alive");
+    require_state($sibling->selected_operand() !== null, "body replacement invalidated sibling");
+    $expired = false;
+    try {
+        $old_call->lower_return();
+    } catch (Exception $error) {
+        $expired = true;
+    }
+    require_state($expired, "lowered a retired lexical call");
+    $required = new Return_Syntax("scope", "lambda", "", "", 0);
+    $required->required_parameters = 1;
+    $left->declare_callable("g", 0, $required);
+    $call = new Function_Body($syntax);
+    $rejected = false;
+    try {
+        $left->prepare_lexical_call($call);
+    } catch (Preparation_Diagnostic $error) {
+        $rejected = $error->detail === "Argument count mismatch" && $error->offset === 17;
+    }
+    require_state($rejected && !$call->prepared(), "invalid lexical call was published");
+    $left = new Function_Body($syntax);
+    $left->declare_callable("g", 0, $signature);
+    $left->prepare_lexical_call($call);
+    require_state($call->selected_operand() !== null && $old_call->selected_operand() === null,
+        "same-name repair resurrected the retired slot");
+    require_state($sibling->lower_return() !== $call->lower_return(), "lexical repair selected sibling storage");
+}
+''' + '\n'.join(calls) + '\ncheck_specialization();\ncheck_lexical();\nreturn 8;\n'
 
 
 def prove(work):
@@ -252,7 +302,7 @@ def prove(work):
         inputs, output = host_oracle(directory, flavor)
         input_sets.append(inputs)
         expected.extend(output)
-    expected.extend(specialized_oracle(work))
+    expected.extend(call_oracle(work))
     app, output = work / 'translated-input', work / 'translated-output'
     app.mkdir()
     (app / 'module.json').write_text('{}')
@@ -261,7 +311,7 @@ def prove(work):
     result = fresh_build(app, output)
     assert 'error' not in result, result
     timing = measure(output, work / 'native', bytes(expected))
-    print(f'Recovery in three flavors and specialized call targets passed (Clang frontend {timing["frontend_ms"]:.1f} ms)', flush=True)
+    print(f'Recovery in three flavors, specialized methods and lexical call targets passed (Clang frontend {timing["frontend_ms"]:.1f} ms)', flush=True)
 
 
 def main():

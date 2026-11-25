@@ -33,20 +33,31 @@ final class Preparation_Diagnostic extends Exception {
 }
 
 // Preparation validates the authored declaration. Lowering consumes the selected implementation.
+interface Call_Operand {
+	public function operand_name(): string;
+}
+
 interface Prepared_Call_Target {
-	public function signature(): ?Function_Body;
+	public function signature(): ?Return_Syntax;
+}
+
+interface Body_Call_Target extends Prepared_Call_Target {
 	public function implementation(): ?Function_Body;
 }
 
-final class Function_Entry implements Prepared_Call_Target {
+final class Function_Entry implements Body_Call_Target {
 	public ?Function_Body $head = null;
 
-	public override function signature(): ?Function_Body { return $this->head; }
+	public override function signature(): ?Return_Syntax {
+		$head = $this->head;
+		if ($head === null) return null;
+		return $head->syntax;
+	}
 	public override function implementation(): ?Function_Body { return $this->head; }
 }
 
 // One instance per demanded (authored method, called type) pair.
-final class Called_Method_Instance implements Prepared_Call_Target {
+final class Called_Method_Instance implements Body_Call_Target {
 	public Function_Entry $method;
 	public ?Function_Body $private_body = null;
 
@@ -55,15 +66,43 @@ final class Called_Method_Instance implements Prepared_Call_Target {
 		$this->private_body = $body;
 	}
 
-	public override function signature(): ?Function_Body { return $this->method->head; }
+	public override function signature(): ?Return_Syntax { return $this->method->signature(); }
 	public override function implementation(): ?Function_Body { return $this->private_body; }
 }
 
-final class Function_Body {
+// Lexical calls validate the callable signature but invoke storage owned by the enclosing body.
+final class Lexical_Callable implements Prepared_Call_Target, Call_Operand {
+	private Return_Syntax $callable_signature;
+	private string $storage;
+
+	public function __construct(Return_Syntax $signature, string $name, int $slot) {
+		$this->callable_signature = $signature;
+		$this->storage = "var_" . $name . "_" . (string)$slot;
+	}
+	public override function signature(): ?Return_Syntax { return $this->callable_signature; }
+	public override function operand_name(): string { return $this->storage; }
+}
+
+final class Function_Body implements Call_Operand {
 	public Return_Syntax $syntax;
 	public string $native_name;
 	private weak<Prepared_Call_Target> $function_symbol;
 	private bool $ready = false;
+	private hash<Lexical_Callable,string> $callables;
+
+	public override function operand_name(): string { return $this->native_name; }
+
+	public function declare_callable(string $name, int $slot, Return_Syntax $signature): void {
+		$this->callables[$name] = new Lexical_Callable($signature, $name, $slot);
+	}
+
+	public function prepare_lexical_call(Function_Body $call): void {
+		$name = $call->syntax->callee;
+		if (!hash_contains($this->callables, $name)) {
+			throw new Preparation_Diagnostic($call->syntax->source, $call->syntax->offset, "Unknown local callable");
+		}
+		$call->settle_preparation($this->callables[$name]);
+	}
 
 	public function __construct(Return_Syntax $syntax, string $native_name = "") {
 		$this->syntax = $syntax;
@@ -76,7 +115,7 @@ final class Function_Body {
 		}
 		if ($target !== null) {
 			$signature = $target->signature();
-			if ($signature === null || $signature->syntax->required_parameters !== 0) {
+			if ($signature === null || $signature->required_parameters !== 0) {
 				throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset, "Argument count mismatch");
 			}
 			$this->function_symbol = weak($target);
@@ -88,23 +127,29 @@ final class Function_Body {
 		return $this->ready;
 	}
 
-	public function selected_body(): ?Function_Body {
+	public function selected_operand(): ?Call_Operand {
 		$entry = lock($this->function_symbol);
 		if ($entry === null) return null;
-		return $entry->implementation();
+		if ($entry instanceof Call_Operand) return object_cast($entry, Call_Operand::class);
+		$target = object_cast($entry, Body_Call_Target::class);
+		return $target->implementation();
 	}
 
-	public function lower(): string {
+	public function lower_return(): string {
 		if (!$this->ready) {
 			throw Exception::make("Function preparation is not complete");
 		}
 		$expression = $this->syntax->integer_spelling . "LL";
 		if ($this->syntax->callee !== "") {
-			$callee = $this->selected_body();
+			$callee = $this->selected_operand();
 			if ($callee === null) throw Exception::make("Prepared call has no live declaration");
-			$expression = $callee->native_name . "()";
+			$expression = $callee->operand_name() . "()";
 		}
-		return "::scpp::int64 " . $this->native_name . "()\n{\n\treturn " . $expression . ";\n}\n";
+		return "\treturn " . $expression . ";\n";
+	}
+
+	public function lower(): string {
+		return "::scpp::int64 " . $this->native_name . "()\n{\n" . $this->lower_return() . "}\n";
 	}
 }
 
