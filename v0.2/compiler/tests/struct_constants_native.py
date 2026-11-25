@@ -9,7 +9,7 @@ from app_namespace_native import artifacts, invoke, service
 from structs_native import build
 
 
-def prove(work, flavor):
+def prove(work, flavor, quick=False):
     app = work / flavor
     app.mkdir()
     entry = app / ('main.' + flavor)
@@ -52,11 +52,12 @@ def prove(work, flavor):
                 assert 'error' not in current and 'error' not in expected, (current, expected)
                 assert artifacts(out) == artifacts(baseline)
                 build(out, work / ('native-' + flavor), prefix + value + b'8')
-                build(baseline, work / f'fresh-native-{flavor}-{rev}', prefix + value + b'8')
+                if not quick:
+                    build(baseline, work / f'fresh-native-{flavor}-{rev}', prefix + value + b'8')
         resident.stdin.close()
 
 
-def private_members(work, flavor):
+def private_members(work, flavor, quick=False):
     app = work / ('private-' + flavor)
     app.mkdir()
     entry, model = [app / (name + '.' + flavor) for name in ('main', 'counter')]
@@ -89,7 +90,7 @@ def private_members(work, flavor):
     ]
     model.write_text(record())
     revisions = []
-    for index, use, error, stdout in probes:
+    for index, use, error, stdout in (probes[-1:] if quick else probes):
         revisions.extend([(entry, use+'return 8;', None, stdout), (model, record([index]), error, None),
                           (model, record(), None, stdout)])
     outsider = 'struct Outsider { '+modifier+api+' { return '+named+'step(); } }'
@@ -117,7 +118,7 @@ def private_members(work, flavor):
             else:
                 assert 'error' not in current and 'error' not in other, (flavor, rev, current, other)
                 assert artifacts(out) == artifacts(baseline)
-                for bundle in (out, baseline):
+                for bundle in ((out,) if quick else (out, baseline)):
                     build(bundle, work / ('build-' + bundle.name), stdout)
         resident.stdin.close()
 
@@ -125,11 +126,12 @@ def private_members(work, flavor):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as tmp:
         work = (args.output or Path(tmp)).resolve()
         work.mkdir(exist_ok=True)
-        for flavor in ('php', 'cpp', 'js'):
-            prove(work, flavor)
-            private_members(work, flavor)
+        for flavor in (('php',) if args.quick else ('php', 'cpp', 'js')):
+            prove(work, flavor, args.quick)
+            private_members(work, flavor, args.quick)
             print(flavor, 'passed', flush=True)

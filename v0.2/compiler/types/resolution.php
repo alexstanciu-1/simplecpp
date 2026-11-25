@@ -9,9 +9,6 @@ final class Type_Resolution
 	/** Runtime types resolve directly. Application types register a body watch even when lookup fails. */
 	public static function local(ast_type_reference $syntax, scope $symbols, ast_function_body $body, ?Dependency_Watches $dependencies): ?type_definition
 	{
-		if ($syntax->name === 'function' && $syntax->first_child !== null) {
-			return new owned_callable_type(self::callback_signature($syntax, $symbols, $body->parent, $body, $dependencies));
-		}
 		return self::storage($syntax, $symbols, $body->scope->namespace, $body, $dependencies);
 	}
 
@@ -19,6 +16,9 @@ final class Type_Resolution
 	public static function storage(ast_type_reference $syntax, scope $symbols, ?string $namespace, dependency_watcher $watcher,
 		?Dependency_Watches $dependencies): ?type_definition
 	{
+		if ($syntax->name === 'function' && $syntax->first_child !== null) {
+			return new owned_callable_type(self::callback_signature($syntax, $symbols, $namespace, $watcher, $dependencies));
+		}
 		$bound = $syntax->first_child?->next_sibling;
 		if ($bound instanceof ast_extent_reference) {
 			$element = self::storage($syntax->first_child, $symbols, $namespace, $watcher, $dependencies);
@@ -49,7 +49,7 @@ final class Type_Resolution
 		?Dependency_Watches $dependencies, bool $allow_void = false, ?dependency_watcher $watcher = null): ?type_definition
 	{
 		$watcher ??= $function;
-		if ($syntax->name === 'function' && $syntax->first_child !== null && !$function->has_receiver()) {
+		if ($syntax->name === 'function' && $syntax->first_child !== null) {
 			$parameter = $syntax->parent;
 			$is_parameter = $parameter instanceof ast_parameter_declaration && $parameter->parent === $function;
 			if ($is_parameter && ($parameter->mode !== passing_mode::value || $parameter->default_value !== null)) {
@@ -57,7 +57,7 @@ final class Type_Resolution
 			}
 			if ($is_parameter || ($syntax === $function->return_type_reference && !$function->returns_reference)) {
 				$function->watch_signature($dependencies);
-				return new owned_callable_type(self::callback_signature($syntax, $symbols, $function, $watcher, $dependencies));
+				return new owned_callable_type(self::callback_signature($syntax, $symbols, $function->namespace, $watcher, $dependencies));
 			}
 		}
 		if ($syntax instanceof ast_compound_type_reference) {
@@ -135,23 +135,33 @@ final class Type_Resolution
 		if ($parameter->mode !== passing_mode::value || $parameter->default_value !== null || $function->has_receiver()) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callback parameters must be required by-value parameters of free functions or static methods');
 		}
-		return self::callback_signature($syntax, $symbols, $function, $watcher, $dependencies);
+		if ($watcher === $function) $function->watch_signature($dependencies);
+		return self::callback_signature($syntax, $symbols, $function->namespace, $watcher, $dependencies);
 	}
 
 	/** Resolve the ordered components shared by function-pointer callbacks and owned callable locals. */
-	private static function callback_signature(ast_type_reference $syntax, scope $symbols, ast_function_declaration $function,
+	private static function callback_signature(ast_type_reference $syntax, scope $symbols, ?string $namespace,
 		dependency_watcher $watcher, ?Dependency_Watches $dependencies): callback_type_definition
 	{
 		$types = [];
+		$modes = [];
 		for ($part = $syntax->first_child; $part !== null; $part = $part->next_sibling) {
-			$type = self::signature($part, $symbols, $function, $dependencies, $types === [], $watcher);
+			$type = self::named($part, $symbols, $namespace, $watcher, $dependencies, $types === []);
 			if (!self::callback_component($type)) {
 				throw new diagnostic($part->source(), $part->byte_start(), 'Unsupported callback signature component: ' . $part->spelling());
 			}
+			if ($types !== [] && $part instanceof ast_callable_reference_component) $modes[count($types) - 1] = passing_mode::reference;
 			$types[] = $type;
 		}
 		$result = array_shift($types);
-		return new callback_type_definition($result, $types);
+		$origin = null;
+		if ($syntax->first_child instanceof ast_callable_reference_component) {
+			$origin = array_key_first($modes);
+			if (count($modes) !== 1 || $types[$origin] !== $result) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Reference return requires exactly one writable parameter of the return type');
+			}
+		}
+		return new callback_type_definition($result, $types, $modes, $origin);
 	}
 
 	/** Inline values and intersection projection are outside the fixed by-value callback ABI. */
@@ -180,14 +190,14 @@ final class Type_Resolution
 
 	/** Share canonical lookup and missing-symbol watches between local and inline field declarations. */
 	public static function named(ast_type_reference $syntax, scope $symbols, ?string $namespace, dependency_watcher $watcher,
-		?Dependency_Watches $dependencies): ?type_definition
+		?Dependency_Watches $dependencies, bool $allow_void = false): ?type_definition
 	{
 		if (in_array($syntax->name, ['shared', 'weak'], true) && $syntax->first_child !== null) {
 			return self::handle($syntax, $symbols, $namespace, $watcher, $dependencies);
 		}
 		$optional = self::optional_type($syntax, $symbols, $namespace, $watcher, $dependencies);
 		if ($optional !== null) return $optional;
-		$type = self::resolve($syntax, false, $symbols, $namespace, $watcher, $dependencies);
+		$type = self::resolve($syntax, $allow_void, $symbols, $namespace, $watcher, $dependencies);
 		if ($type !== null) return $type;
 		return self::application($syntax, $symbols, $watcher, $dependencies);
 	}
@@ -255,7 +265,10 @@ final class Type_Resolution
 			throw new diagnostic($syntax->source(), $syntax->byte_start(),
 				'Type requires exactly ' . ($arity === 1 ? 'one argument: ' : 'two arguments: ') . $syntax->name);
 		}
-		$element = self::argument($child, $symbols, $namespace, $watcher, $dependencies);
+		$element = $child->name === 'function' && $child->first_child !== null && $symbols !== null && $watcher !== null
+			&& ($syntax->name === 'vector' || $syntax->name === 'hash')
+			? callable_signature_index::element(self::callback_signature($child, $symbols, $namespace, $watcher, $dependencies))
+			: self::argument($child, $symbols, $namespace, $watcher, $dependencies);
 		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
 		$published = type_registry::specialize($syntax->name, $element, $key);
 		if ($published !== null) return $published;

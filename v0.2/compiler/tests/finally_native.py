@@ -1,4 +1,6 @@
 """Guaranteed cleanup through normal, exceptional, and delayed-return paths."""
+import argparse
+from functools import partial
 import json
 import os
 from pathlib import Path
@@ -10,7 +12,7 @@ from exceptions_native import catch, fresh_build, native
 from extends_native import runtime, source_edit
 
 
-def prove(work, flavor, library):
+def prove(work, flavor, library, quick=False, run_native=native):
     form = fixture(flavor)
     v, member, infer = form['v'], form['access'], form['infer']
     function = form['function']
@@ -57,7 +59,7 @@ def prove(work, flavor, library):
         initial = invoke(resident)
         assert 'error' not in initial, initial
         expected = (0, b'normal:done:caught:void:inner:outer:saved:replacement:entry', b'')
-        native(output, work / 'normal', expected, library)
+        run_native(output, work / 'normal', expected, library)
         before = artifacts(output)
         manifest = (output / 'manifest.json').read_bytes()
 
@@ -92,7 +94,9 @@ def prove(work, flavor, library):
         fresh_output = work / 'fresh-recovered'
         assert 'error' not in fresh_build(app, fresh_output)
         assert artifacts(output) == artifacts(fresh_output) == before
-        native(output, work / 'recovered', expected, library)
+        run_native(output, work / 'recovered', expected, library)
+        if quick:
+            return
 
         scopes = form['record']('Probe').replace('struct ', 'class ', 1)
         for role in ['protectedGuard', 'caughtGuard', 'finallyGuard']:
@@ -124,7 +128,7 @@ def prove(work, flavor, library):
         source_edit(entry, scopes)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'rethrow', (0, b'cleaned:original', b''), library)
+        run_native(output, work / 'rethrow', (0, b'cleaned:original', b''), library)
 
         replaced = f'''
             try {{
@@ -135,7 +139,7 @@ def prove(work, flavor, library):
         source_edit(entry, replaced)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'replaced', (0, b'new', b''), library)
+        run_native(output, work / 'replaced', (0, b'new', b''), library)
 
         pending_owner = form['record']('Probe').replace('struct ', 'class ', 1)
         pending_owner += form['record']('Observation', form['field']('view', 'weak<Probe>')).replace('struct ', 'class ', 1)
@@ -160,7 +164,7 @@ def prove(work, flavor, library):
         source_edit(entry, pending_owner)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'discarded-return', (0, b'discarded', b''), library)
+        run_native(output, work / 'discarded-return', (0, b'discarded', b''), library)
 
         guard = infer('zero', '0') + f'''
             try {{ echo 1 / {v}zero; return 0; }} {handler} {{ return 6; }} finally {{ echo "guard cleanup"; }}
@@ -168,7 +172,7 @@ def prove(work, flavor, library):
         source_edit(entry, guard)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'guard', (1, b'guard cleanup', b'division_by_zero\n'), library)
+        run_native(output, work / 'guard', (1, b'guard cleanup', b'division_by_zero\n'), library)
 
         checked_return = function('outsideExitRange', 'int', [], 'return 2147483648;') + '''
             try { return outsideExitRange(); } finally { echo "return cleanup"; }
@@ -176,14 +180,14 @@ def prove(work, flavor, library):
         source_edit(entry, checked_return)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'return-conversion', (1, b'return cleanup', b'Entry return is outside native int range\n'), library)
+        run_native(output, work / 'return-conversion', (1, b'return cleanup', b'Entry return is outside native int range\n'), library)
 
         counter = form['local']('i', 'int').removesuffix(';')
         loop = f'for ({counter} = 0; {v}i < 2; {v}i++) {{ continue; }}'
         source_edit(entry, f'try {{ {loop} echo "loop:"; }} finally {{ {loop} echo "cleanup"; }} return 0;')
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'local-transfers', (0, b'loop:cleanup', b''), library)
+        run_native(output, work / 'local-transfers', (0, b'loop:cleanup', b''), library)
 
         step = function('shouldContinue', 'bool', [('n', 'int')], f'echo "T",{v}n; return {v}n < 2;')
         transfers = step + infer('i', '0') + infer('step', '0') + f'''
@@ -208,7 +212,7 @@ def prove(work, flavor, library):
         source_edit(entry, transfers)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'crossing-transfers', (0, b'I0O0I1O1I2O2:2:DT1DT2', b''), library)
+        run_native(output, work / 'crossing-transfers', (0, b'I0O0I1O1I2O2:2:DT1DT2', b''), library)
         valid_edit = transfers.replace('if (' + v + 'i === 0) { continue; }', 'if (' + v + 'i === 0) { break; }')
         source_edit(entry, valid_edit)
         result = invoke(resident)
@@ -216,7 +220,7 @@ def prove(work, flavor, library):
         fresh_output = work / 'fresh-transfer-edit'
         assert 'error' not in fresh_build(app, fresh_output)
         assert artifacts(output) == artifacts(fresh_output)
-        native(output, work / 'edited-transfer', (0, b'I0O0:0:DT1DT2', b''), library)
+        run_native(output, work / 'edited-transfer', (0, b'I0O0:0:DT1DT2', b''), library)
 
         distinct_targets = infer('outer', '0') + infer('inner', '0') + f'''
             for ({v}outer = 0; {v}outer < 2; {v}outer++) {{
@@ -238,7 +242,7 @@ def prove(work, flavor, library):
         source_edit(entry, distinct_targets)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'distinct-targets', (0, b'L0L1S1O0L0L1S1O1:1', b''), library)
+        run_native(output, work / 'distinct-targets', (0, b'L0L1S1O0L0L1S1O1:1', b''), library)
 
         values = form['local']('values', 'vector<int>').removesuffix(';')
         replacement = f'{values} = [1, 2, 3];' + infer('i', '0') + f'''
@@ -259,7 +263,7 @@ def prove(work, flavor, library):
         source_edit(entry, replacement)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'foreach-and-replacement', (0, b'12:replaced:0', b''), library)
+        run_native(output, work / 'foreach-and-replacement', (0, b'12:replaced:0', b''), library)
 
         index = form['local']('idx', 'int').removesuffix(';')
         local_index = form['local']('localIndex', 'int').removesuffix(';')
@@ -283,7 +287,7 @@ def prove(work, flavor, library):
         source_edit(entry, mixed_exits)
         result = invoke(resident)
         assert 'error' not in result, result
-        native(output, work / 'mixed-exits', (0, b'N0N1M0N0N1M1saved', b''), library)
+        run_native(output, work / 'mixed-exits', (0, b'N0N1M0N0N1M1saved', b''), library)
 
         # Edit a callee between a nearest exit and an outward exit under two finalizers.
         choose = function('choose', 'void', [('near', 'bool')], f'''
@@ -304,12 +308,12 @@ def prove(work, flavor, library):
         source_edit(entry, 'choose(true); choose(false); return 0;')
         baseline = invoke(resident)
         assert 'error' not in baseline, baseline
-        native(output, work / 'nearest', (0, b'IFN:IFN:', b''), library)
+        run_native(output, work / 'nearest', (0, b'IFN:IFN:', b''), library)
         outward = choose.replace('                            break;', '                            break 2;')
         source_edit(provider, outward)
         edited = invoke(resident)
         assert edited['preparation']['prepared'] == 1 and [Path(p).name for p in edited['emitted_sources']] == [provider.name], edited
-        native(output, work / 'numbered', (0, b'IFN:IF:', b''), library)
+        run_native(output, work / 'numbered', (0, b'IFN:IF:', b''), library)
         saved = artifacts(output)
         source_edit(provider, outward.replace('break 2;', 'break 3;'))
         error = invoke(resident)
@@ -353,14 +357,14 @@ def prove(work, flavor, library):
         ''')
         routes = invoke(resident)
         assert 'error' not in routes, routes
-        native(output, work / 'numbered-targets', (0, b'LML012', b''), library)
+        run_native(output, work / 'numbered-targets', (0, b'LML012', b''), library)
 
         # An escaping finalizer exception cancels the pending outer break.
         source_edit(entry, f'try {{ for (;;) {{ for (;;) {{ try {{ break 2; }} finally {{ {throw("override")} }} }} }} }} '
                     + handler + f' {{ echo {v}failure{member}get_message(); }} return 0;')
         override = invoke(resident)
         assert 'error' not in override, override
-        native(output, work / 'numbered-replaced', (0, b'override', b''), library)
+        run_native(output, work / 'numbered-replaced', (0, b'override', b''), library)
 
         duplicate = form['local']('failure', 'Exception').removesuffix(';')
         source_edit(entry, f'try {{}} {handler} {{ {duplicate} = {factory}("duplicate"); }} finally {{}} return 0;')
@@ -372,10 +376,13 @@ def prove(work, flavor, library):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     os.environ['XDEBUG_MODE'] = 'off'
     with tempfile.TemporaryDirectory() as directory:
         work = Path(directory)
-        library = runtime(work, 'clang++')
-        for flavor in ['cpp', 'php', 'js']:
-            prove(work / flavor, flavor, library)
+        library = Path(__file__).resolve().parents[2]/'build/clang/libscpp_runtime.a' if quick else runtime(work, 'clang++')
+        for flavor in (['php'] if quick else ['cpp', 'php', 'js']):
+            prove(work / flavor, flavor, library, quick, partial(native, cxx_flags=('-stdlib=libc++',) if quick else ()))
             print(f'{flavor}: finally exits, cleanup order, and incremental recovery passed', flush=True)

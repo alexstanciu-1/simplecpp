@@ -26,7 +26,7 @@ This checkpoint separates implemented language support from translated-compiler 
 | 1.5 Construction-time immutability | Bounded stored-value readonly fields implemented | Valid-data token/source-location proof complete; exception parity, packing, broader readonly/const-method contracts and delayed attachment stay separate |
 | 2 Selection and lookup | Capability-based integer/enum/string match and match(true), collection has/remove/clear and traversal, shared hash_contains and published runtime hash_find implemented | Bounded nullable fallback and local conditional assignment implemented; shared-value lookup and populated typed application tables implemented; general optional value lookup, broader fallback and tokenizer bindings remain |
 | 3 AST relationships | Common class/struct record model, single inheritance, shared base views, virtual/abstract methods, explicit ancestor calls, class/interface checked casts and capability tests, the first class-interface slice, protected instance methods, final classes, and a weak-parent/retained-root lifetime proof implemented | Broader interface relationships, staged attachment and native compiler translation remain |
-| 4 Source failures and cleanup | Typed throw/catch/rethrow, finally with delayed exits, and bounded throwing fallbacks implemented | Typed host failure bindings and translated preparation and publication recovery proofs remain |
+| 4 Source failures and cleanup | Typed throw/catch/rethrow, finally with delayed exits, bounded throwing fallbacks, and bounded translated preparation and publisher recovery proved | Typed host failure bindings remain |
 | 5–7 Translated stages and bootstrap | PHP compiler infrastructure exists and is tested | Native translation proofs, host integration and bootstrap are not completed |
 
 Synchronous yield additionally supports locals, branches, while/do-while/for and
@@ -2106,6 +2106,10 @@ native threading remain deferred; none is required to complete this bounded exam
 | 4.4 | Host failures | Typed bindings for expected misses and operational failures without importing PHP warnings. |
 
 Proof: fail midway through preparation, restore its context and retry successfully. Separately fail output publication and verify staging cleanup.
+
+The [translated preparation proof](../../compiler/docs/failure_cleanup.md#translated-preparation-proof)
+covers active-context restoration, pending membership, same-instance repair,
+and comparison with a fresh build for bounded integer-return bodies.
 
 Basic exception infrastructure may move earlier if required by preceding proofs. Complete recovery behavior before translating substantial analyzer code, to avoid spreading a temporary error protocol throughout it.
 

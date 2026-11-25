@@ -509,7 +509,12 @@ inherited and nested inline fields. A shared handle does not embed the pointee.
 The budget applies to each call individually and measures array payload storage;
 native stack bookkeeping, other fields and recursion have their own costs.
 
-Preparation checks each dimension before multiplying. Native storage uses one
+A fixed array is stored inline in its owner. An instance field of a record
+constructed with new lives inside that record's heap allocation and does not
+consume the function's frame budget. Each array shape and each record's combined
+inline fixed-array payload are capped independently at 4,294,967,295 bytes.
+Preparation checks each dimension before multiplying and checks record payloads
+before adding embedded fields. Native storage uses one
 physical slot for a zero dimension, charged to the budget. Its logical extent is
 zero, so every index fails. Each signed index is checked once against the extent
 of its own dimension before subscripting. A failing access raises

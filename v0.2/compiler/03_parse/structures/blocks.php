@@ -91,22 +91,27 @@ abstract class ast_branch_statement extends ast_statement
 	}
 }
 
+/** One conditional branch or its final else body. */
 final class ast_if_arm extends ast_branch_arm
 {
 }
 
+/** The ordered branches of an if statement. */
 final class ast_if_statement extends ast_branch_statement
 {
 }
 
+/** A case or default label and its statement body. */
 final class ast_switch_arm extends ast_branch_arm
 {
 	/** Prepared flow fact for an explicit native fallthrough annotation. */
 	public bool $falls_through = false;
 }
 
+/** A switch subject and its ordered case bodies. */
 final class ast_switch_statement extends ast_branch_statement
 {
+	/** @param list<ast_switch_arm> $arms */
 	public function __construct(int $start, int $end, public readonly ast_expression $subject, array $arms)
 	{
 		parent::__construct($start, $end, $arms);
@@ -227,6 +232,9 @@ final class ast_try_statement extends ast_statement
 	/** @var ast_catch_clause[] Owned sibling handlers in source selection order. */
 	public readonly array $handlers /** list<ast_catch_clause> */;
 	public readonly ?ast_block $finalizer;
+	/** Prepared non-owning destinations of transfers escaping the protected operation. */
+	public ast_repeating_statement|ast_switch_statement|null $break_target = null;
+	public ?ast_repeating_statement $continue_target = null;
 
 	/** PREP FACTS */
 	/** Prepared fact: a handler can suspend, so its dispatch must run outside the native catch. */
@@ -235,9 +243,6 @@ final class ast_try_statement extends ast_statement
 	public ?int $protected_completion /** uint8 */ = null;
 	/** Prepared fact: exits remaining after the finalizer; null until settled. */
 	public ?int $completion /** uint8 */ = null;
-	/** Prepared non-owning destinations of transfers escaping the protected operation. */
-	public ast_repeating_statement|ast_switch_statement|null $break_target = null;
-	public ?ast_repeating_statement $continue_target = null;
 
 	/** CONSTRUCTOR */
 	/** Attach disjoint lexical regions; an empty written finalizer is still a block. @param ast_catch_clause[] $handlers */

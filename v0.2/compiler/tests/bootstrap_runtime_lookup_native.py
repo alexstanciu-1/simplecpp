@@ -1,4 +1,5 @@
 """Bootstrap lookup representation, real generated overload selection and source-shadow recovery."""
+import argparse
 import tempfile
 from pathlib import Path
 
@@ -6,7 +7,7 @@ from collection_goal_native import revisions
 from object_access_native import syntax
 
 
-def prove(work, flavor):
+def prove(work, flavor, quick=False):
     forms, method, klass, cast = syntax(flavor)
     fn, var, access = forms['function'], forms['v'], forms['access']
     # The registry owns the two descriptors. Lookup returns an existing owner or absence.
@@ -35,7 +36,7 @@ def prove(work, flavor):
     identity = fn('identity', 'int', [('n', 'int')], f'return {var}n;')
     main = main.replace('return 8;', 'echo apply(identity(...));return 8;')
     output = b'1113K14'
-    revisions(work, flavor, dict(types=types, lookup=lookup, main=main, selector=selector, apply=apply, identity=identity), [
+    edits = [
         (None, None, output), (None, None, output),
         ('lookup', lookup.replace('2 =>', f'3 => {group}, 2 =>'), b'1103K14'),
         ('lookup', lookup.replace('2 =>', '"wrong" =>'), 'Hash key requires'),
@@ -50,7 +51,10 @@ def prove(work, flavor):
         ('apply', apply.replace('op(4)', 'op()'), 'Argument count mismatch'),
         ('apply', apply.replace('op(4)', 'op(4,4)'), 'Argument count mismatch'),
         ('apply', apply, output),
-    ], unaffected_source='main.' + flavor, unaffected_revisions={2})
+    ]
+    revisions(work, flavor, dict(types=types, lookup=lookup, main=main, selector=selector, apply=apply, identity=identity),
+              [edits[i] for i in (0, 2, 3, 5, 6)] if quick else edits,
+              unaffected_source='main.' + flavor, unaffected_revisions={1} if quick else {2})
 
 
 def lazy_session(work, flavor):
@@ -92,10 +96,13 @@ def lazy_session(work, flavor):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-runtime-lookup-') as tmp:
-        for flavor in ('php', 'cpp', 'js'):
-            prove(Path(tmp), flavor)
+        for flavor in (('php',) if quick else ('php', 'cpp', 'js')):
+            prove(Path(tmp), flavor, quick)
         lazy = Path(tmp) / "lazy"
         lazy.mkdir()
-        for flavor in ('php', 'cpp', 'js'):
+        for flavor in (('php',) if quick else ('php', 'cpp', 'js')):
             lazy_session(lazy, flavor)

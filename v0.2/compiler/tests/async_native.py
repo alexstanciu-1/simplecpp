@@ -110,6 +110,11 @@ def prove(work):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--quick', action='store_true', help='check callback, alias and edit recovery')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-async-native-') as temporary:
-        prove(args.output.resolve() if args.output else Path(temporary))
+        work = args.output.resolve() if args.output else Path(temporary)
+        if args.quick:
+            prove_callback_and_alias(work)
+        else:
+            prove(work)

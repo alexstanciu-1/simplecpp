@@ -1,4 +1,5 @@
 """Whole-value transfer, destination cleanup and live-source fallback for collection providers."""
+import argparse
 import json
 import shutil
 import subprocess
@@ -6,12 +7,13 @@ import tempfile
 from pathlib import Path
 
 from app_namespace_native import invoke, service
+from application_vectors_native import measure
 from classes_native import fixture
 from extends_native import ROOT, build, runtime
 from parent_methods_native import write_app
 
 
-def prove(work, flavor, libraries):
+def prove(work, flavor, libraries, quick=False):
     s = fixture(flavor)
     v, access = s['v'], s['access']
     definitions, main = '', ''
@@ -77,6 +79,9 @@ def prove(work, flavor, libraries):
     for label in ('IntOwners', 'TextOwners'):
         function = code.split('move' + label + '_(', 1)[1].split('\n}', 1)[0]
         assert '.items = std::move(var_input_0);' in function, function
+    if quick:
+        measure(out, work / "native", expected.encode())
+        return
     for cc, lib in libraries.items():
         executable = work / (flavor + cc)
         build(out, executable, cc, lib, expected.encode())
@@ -88,10 +93,13 @@ def prove(work, flavor, libraries):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-collection-transfer-') as directory:
         root = Path(directory)
         sources = [ROOT / 'runtime' / path for path in ('generated/src/hash.cpp', 'generated/src/boxed.cpp',
             'src/boxed/boxed_value.cpp', 'src/boxed/boxed_conversion.cpp', 'src/hash/packed_key.cpp')]
-        libraries = {'clang++': runtime(root, 'clang++', sources)}
-        for flavor in ('cpp', 'php', 'js'):
-            prove(root, flavor, libraries)
+        libraries = {} if quick else {'clang++': runtime(root, 'clang++', sources)}
+        for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
+            prove(root, flavor, libraries, quick)

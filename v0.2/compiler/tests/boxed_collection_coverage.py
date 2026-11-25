@@ -64,9 +64,9 @@ def prove(work,flavor):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path);args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path);parser.add_argument('--quick',action='store_true');args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-boxed-coverage-') as temporary:
         work=(args.output or Path(temporary)).resolve();work.mkdir(exist_ok=True)
-        results={f:prove(work,f) for f in ['php','cpp','js']}
+        results={f:prove(work,f) for f in (['php'] if args.quick else ['php','cpp','js'])}
         (work/'coverage.json').write_text(json.dumps(results,indent=2)+'\n')
         print(json.dumps(results,indent=2))

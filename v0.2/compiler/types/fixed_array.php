@@ -7,6 +7,7 @@ namespace scpp\compiler;
 final class fixed_array_type extends type_definition implements indexed_collection_type, index_write_type, counted_collection_type
 {
 	/** CONSTANTS */
+	public const int PAYLOAD_LIMIT /** uint32 */ = 4294967295;
 	public const int FRAME_LIMIT /** uint32 */ = 65536;
 
 	/** STATIC PROPERTIES */
@@ -27,8 +28,8 @@ final class fixed_array_type extends type_definition implements indexed_collecti
 		$width = $element instanceof self ? $element->bytes : 1;
 		// Standard C++ needs an addressable placeholder for an empty dimension.
 		$physical = max(1, $this->extent);
-		if ($physical > intdiv(self::FRAME_LIMIT, $width)) {
-			throw new diagnostic($bound->source(), $bound->byte_start(), 'Fixed array exceeds 64 KiB inline storage limit');
+		if ($physical > intdiv(self::PAYLOAD_LIMIT, $width)) {
+			throw new diagnostic($bound->source(), $bound->byte_start(), 'Fixed array exceeds uint32 inline payload capacity');
 		}
 		$this->bytes = $width * $physical;
 		parent::__construct('fixed_array<' . $element->name . ',' . $this->extent . '>');

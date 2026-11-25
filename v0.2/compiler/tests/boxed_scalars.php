@@ -83,11 +83,11 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$factory = "scpp::{$family}::from_integer";
 		foreach (['var_item_2', 'static_cast<scpp::int64>(((var_item_2 > var_key_1)) - ((var_item_2 < var_key_1)))',
 			'number_()', 'static_cast<scpp::int64>(var_small_3)'] as $argument) {
-			verify(str_contains($cpp, "var_x_0.source_set(scpp::boxed_key(var_key_1), $factory($argument));"), "Unexpected $family factory argument: $argument");
+			verify(str_contains($cpp, "var_x_0.source_set(scpp::boxed_text_key{scpp::boxed_key(var_key_1), {}}, $factory($argument));"), "Unexpected $family factory argument: $argument");
 		}
 		verify(!str_contains($cpp, 'write_key')
 			&& str_contains($cpp, '.source_read(scpp::boxed_key(var_key_1))')
-			&& str_contains($cpp, 'var_x_0.source_set(scpp::boxed_key(var_key_1), var_y_4);'), 'Lost key validation or same-family binding');
+			&& str_contains($cpp, 'var_x_0.source_set(scpp::boxed_text_key{scpp::boxed_key(var_key_1), {}}, var_y_4);'), 'Lost key validation or same-family binding');
 		$fixtures[$flavor->name . '-' . $family . '-arguments'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('21!62557')];
 		$literals = $decl($family, 'x', '[]') . $index('x', '"k"') . ' = 8;'
 			. 'echo (int)' . $index('x', '"k"') . ';'
@@ -98,7 +98,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$cpp = (new Cpp_Emitter())->emit($prepare($literals));
 		verify(preg_match('/var_x_0\.source_set\(scpp::boxed_key\(scpp::string\{"k", 1\}\), scpp::' . $family . '::from_integer\(8L{0,2}\)\);/', $cpp) === 1,
 			'Expected a direct keyed store for a boxed integer literal');
-		verify(substr_count($cpp, 'var_x_0.source_set(scpp::boxed_key(') === 5, 'Expected direct boxed literal stores');
+		verify(substr_count($cpp, 'var_x_0.source_set(') === 5, 'Expected direct boxed literal stores');
 		verify(str_contains($cpp, 'var_x_0.source_read(scpp::boxed_key(scpp::string{"k", 1}))')
 			&& str_contains($cpp, ", scpp::{$family}::from_string("), 'Missing string read or string boxing');
 		$fixtures[$flavor->name . '-' . $family . '-literal-store'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('821text')];

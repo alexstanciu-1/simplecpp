@@ -1,3 +1,4 @@
+#include <initializer_list>
 #include "adapter.hpp"
 #include <cassert>
 #include <cstdlib>

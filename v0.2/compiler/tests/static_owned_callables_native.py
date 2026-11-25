@@ -1,11 +1,12 @@
 """Owned callable contracts on selected static methods, including inherited dispatch."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from collection_goal_native import revisions
 
 
-def prove(work):
+def prove(work, quick=False):
     base = """
         class Factory {
             public static function build(function<int(int)> $op):function<int(int)> {return $op;}
@@ -28,6 +29,14 @@ def prove(work):
     """
     trace = b'6:16:15:5'
     work.mkdir()
+    if quick:
+        source = base + child + entry
+        revisions(work, 'php', dict(main=source.replace('int(int)> $task', 'int(string)> $task')), [
+            (None, None, 'Static redeclaration signature must match exactly'),
+            ('main', source.replace('task:$op', 'unknown:$op'), 'Unknown named argument'),
+            ('main', source, trace),
+        ])
+        return
     revisions(work, 'php', dict(main=entry, base=base, child=child), [
         (None, None, trace), (None, None, trace),
         ('child', child.replace('$task', '$renamed'), 'Unknown named argument: task'),
@@ -46,5 +55,8 @@ def prove(work):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--quick', action='store_true')
+    args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-static-owned-callables-') as directory:
-        prove(Path(directory) / 'app')
+        prove(Path(directory) / 'app', args.quick)

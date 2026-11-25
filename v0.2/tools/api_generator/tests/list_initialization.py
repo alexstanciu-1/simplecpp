@@ -13,7 +13,7 @@ from list_initialization_native import run, includes
 from collection_arguments import EMIT
 
 
-def proof(work):
+def proof(work, quick=False):
     work.mkdir(parents=True, exist_ok=True)
     metadata = json.loads((ROOT / 'runtime/metadata/runtime.json').read_text())
     publication = json.loads((ROOT / 'runtime/metadata/publication.json').read_text())
@@ -57,6 +57,21 @@ def proof(work):
             assert 'literal_input' not in (output / 'public' / header).read_text()
         obj = work / 'runtime.o'
         inc = ['-I', output / 'public', '-I', output / 'private', '-I', ROOT / 'runtime/src/sequence', '-I', ROOT / 'runtime/src/numeric']
+        if quick:
+            # Compile one real consumer against this variant's freshly published header.
+            source = '$v vector<int> = [7, 9]; return $v[1];'
+            emit = ['php', '-r', EMIT, str(boot), 'php', source]
+            if variant == 'disabled':
+                rejected = subprocess.run(emit, capture_output=True, text=True)
+                assert rejected.returncode and 'sequence-initializable' in rejected.stderr, rejected
+            else:
+                cpp = run(emit)
+                if variant == 'append':
+                    assert '.append(' in cpp
+                else:
+                    assert '::' + init.get('consume', init['read_only']) + '(' in cpp
+                run(['clang++', '-std=c++23', *inc, '-x', 'c++', '-fsyntax-only', '-'], input=cpp)
+            continue
         for cxx in ('clang++', 'g++'):
             run([cxx, '-std=c++23', '-O2', *inc, '-c', output / 'src/runtime.cpp', '-o', obj])
             for flavor in ('cpp', 'php', 'js'):
@@ -108,5 +123,6 @@ def proof(work):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--quick', action='store_true', help='check compiler/provider compatibility for each publication')
     args = parser.parse_args()
-    proof(args.out.resolve())
+    proof(args.out.resolve(), args.quick)

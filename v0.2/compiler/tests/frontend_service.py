@@ -1,4 +1,5 @@
 """Separate-process frontend service proof using a disposable my-try-simple copy."""
+import argparse
 import concurrent.futures
 import json
 import os
@@ -13,6 +14,11 @@ compiler = Path(__file__).resolve().parents[1]
 sample = compiler.parent / 'samples/my-try-simple'
 php = os.environ.get('PHP_EXECUTABLE') or shutil.which('php')
 env = dict(os.environ, XDEBUG_MODE='off')
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--quick", action="store_true")
+parser.add_argument("--idle-only", action="store_true")
+args = parser.parse_args()
+quick = args.quick or args.idle_only
 records = []
 
 def invoke(app, action=None, success=True):
@@ -26,15 +32,47 @@ def invoke(app, action=None, success=True):
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 
+def prove_idle(app):
+    # Exercise the same idle loop with a one-second deadline, not a test-specific exit path.
+    code = 'require $argv[1]; require $argv[2]; \\scpp\\compiler\\Frontend_Service::serve($argv[3], 1);'
+    idle = subprocess.Popen([php, '-r', code, str(compiler / 'boot.php'),
+                             str(compiler / 'host/frontend_service.php'), str(app)], env=env,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        for _ in range(100):
+            if (app / '.scpp/compiler.sock').exists(): break
+            time.sleep(.01)
+        assert invoke(app, 'status')['idle_seconds'] == 1
+        time.sleep(.65)
+        assert invoke(app, 'status')['running'] is True  # refreshes inactivity
+        time.sleep(.65)
+        assert idle.poll() is None
+        stdout, stderr = idle.communicate(timeout=3)
+        assert idle.returncode == 0, stderr
+        assert not (app / '.scpp/compiler.sock').exists()
+        assert invoke(app, 'status') == {'running': False}
+    finally:
+        if idle.poll() is None:
+            idle.kill()
+            idle.communicate()
+
 with tempfile.TemporaryDirectory(prefix='scpp-service-test-') as temporary:
     app = Path(temporary) / 'app'
     app.mkdir()
     manifest = json.loads((sample / 'module.json').read_text())
-    for name in manifest['sources']:
+    if quick:
+        manifest['sources'] = {'main.phs': 'php', 'helper.phs': 'php'}
+        (app / 'main.phs').write_text('helper(); return 8;')
+        (app / 'helper.phs').write_text('function helper():void { $value int = 1; }')
+    source_count = len(manifest['sources'])
+    for name in (() if quick else manifest['sources']):
         target = app / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(sample / name, target)
     (app / 'module.json').write_text(json.dumps(manifest))
+    if args.idle_only:
+        prove_idle(app)
+        raise SystemExit(0)
     try:
         assert invoke(app, 'status') == {'running': False}
         # Concurrent initial clients must find one detached owner and serialized generations.
@@ -43,22 +81,22 @@ with tempfile.TemporaryDirectory(prefix='scpp-service-test-') as temporary:
         assert len({r['pid'] for r in initial}) == 1
         assert sorted(r['generation'] for r in initial) == [1, 2, 3, 4]
         first = min(initial, key=lambda r: r['generation'])
-        assert first['mode'] == 'full' and first['counts'] == {'added': 257, 'changed': 0, 'removed': 0, 'reused': 0}
+        assert first['mode'] == 'full' and first['counts'] == {'added': source_count, 'changed': 0, 'removed': 0, 'reused': 0}
         assert first['idle_seconds'] == 3600
         records.append(first)
         pid = first['pid']
         for r in initial:
             if r['generation'] != 1:
-                assert r['counts']['reused'] == 257
+                assert r['counts']['reused'] == source_count
         path = next(p for p in manifest['sources'] if p != 'main.phs')
         original = (app / path).read_text()
         (app / path).write_text(original.replace('= 1;', '= 999;'))
         edited = invoke(app)
         assert edited['pid'] == pid and edited['generation'] == 5
-        assert edited['counts'] == {'added': 0, 'changed': 1, 'removed': 0, 'reused': 256}
+        assert edited['counts'] == {'added': 0, 'changed': 1, 'removed': 0, 'reused': source_count - 1}
         records.append(edited)
         unchanged = invoke(app)
-        assert unchanged['pid'] == pid and unchanged['counts']['reused'] == 257
+        assert unchanged['pid'] == pid and unchanged['counts']['reused'] == source_count
         records.append(unchanged)
         (app / path).write_text('this is invalid syntax')
         assert invoke(app, success=False)
@@ -92,29 +130,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-service-test-') as temporary:
         for _ in range(100):
             if not (app / '.scpp/compiler.sock').exists(): break
             time.sleep(.02)
-        # Exercise the same idle loop with a one-second deadline, not a test-specific exit path.
-        code = 'require $argv[1]; require $argv[2]; \\scpp\\compiler\\Frontend_Service::serve($argv[3], 1);'
-        idle = subprocess.Popen([php, '-r', code, str(compiler / 'boot.php'),
-                                 str(compiler / 'host/frontend_service.php'), str(app)], env=env,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        try:
-            for _ in range(100):
-                if (app / '.scpp/compiler.sock').exists(): break
-                time.sleep(.01)
-            assert invoke(app, 'status')['idle_seconds'] == 1
-            time.sleep(.65)
-            assert invoke(app, 'status')['running'] is True  # refreshes inactivity
-            time.sleep(.65)
-            assert idle.poll() is None
-            stdout, stderr = idle.communicate(timeout=3)
-            assert idle.returncode == 0, stderr
-            assert not (app / '.scpp/compiler.sock').exists()
-            assert invoke(app, 'status') == {'running': False}
-        finally:
-            if idle.poll() is None:
-                idle.kill()
-                idle.communicate()
+        if not quick:
+            prove_idle(app)
     finally:
         invoke(app, 'stop')
-print(json.dumps({'checks': 'startup race, edit, reuse, failure retry, app isolation, stop/restart, stale socket, idle expiry passed',
+print(json.dumps({'checks': 'startup race, edit, reuse, failure retry, app isolation, stop/restart, stale socket passed',
                   'invocations': records}, indent=2))

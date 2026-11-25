@@ -14,7 +14,7 @@ from parent_methods_native import write_app
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def prove(work, flavor, libraries):
+def prove(work, flavor, libraries, *, quick=False):
     s = fixture(flavor)
     const = lambda n,t,x: f'const {n}:{t}={x};' if flavor=='js' else f'const {t} {n}={x};'
     labels = const('LABEL','int','1')+const('ALIAS','int','1')+const('SMALL','byte','255')
@@ -54,7 +54,16 @@ def prove(work, flavor, libraries):
     main += s['infer']('a','"a\\0b"')+s['infer']('b',f'copy({v}a)')+f'{v}a="changed";echo {v}b;echo selectText("a\\0b"),selectText("a"),selectText(""),selectText("01"),selectText("1"),selectText("a\\0c"),lazyText(),onlyDefault(),temporaryField();return 8;'
     expected=b'SA4871214675a\0b123459TA4T7H2'
     app,out=work/flavor,work/(flavor+'-out')
-    write_app(app,flavor,{'labels':labels,'types':enum+textenum,'holder':holder,'api':api,'main':main,'idle':fn('idle','int',[],'return 3;')})
+    sources = {'labels':labels,'types':enum+textenum,'holder':holder,'api':api,'main':main,'idle':fn('idle','int',[],'return 3;')}
+    if quick:
+        from collection_goal_native import revisions
+        revisions(work, flavor, sources, [
+            (None, None, expected),
+            ('api', api.replace('default => 9','1 => 9'), 'Duplicate match label'),
+            ('api', api.replace('1 => 8','1 => 6'), expected.replace(b'487',b'467')),
+        ])
+        return
+    write_app(app, flavor, sources)
     result=fresh(app,out);assert 'error' not in result,result
     manifest=json.loads((out/'manifest.json').read_text())
     units={Path(p).stem:u for p,u in manifest['sources'].items()}
@@ -125,5 +134,11 @@ def prove(work, flavor, libraries):
 if __name__=='__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-match-') as temporary:
         work=Path(temporary)
-        libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
-        for flavor in ['cpp','php','js']:prove(work,flavor,libraries)
+        import argparse
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument('--quick', action='store_true')
+        if parser.parse_args().quick:
+            prove(work, 'php', {}, quick=True)
+        else:
+            libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
+            for flavor in ['cpp','php','js']:prove(work,flavor,libraries)

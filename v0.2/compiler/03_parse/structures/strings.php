@@ -39,7 +39,8 @@ class ast_string_expression extends ast_expression
 }
 
 /** Unquoted brace property name whose spelling supplies literal string bytes. */
-final class ast_property_name_string extends ast_string_expression {}
+final class ast_property_name_string extends ast_string_expression {
+}
 
 /** A subrange of a single quoted token, measured in source bytes. */
 trait ast_string_part_range

@@ -6,7 +6,7 @@ from list_initialization_native import ROOT, includes, run
 from list_initialization_ownership import PRELUDE, expression
 
 
-def prove(out, fixtures, cxx, sanitize):
+def prove(out, fixtures, cxx, sanitize, quick=False):
     out.mkdir(parents=True, exist_ok=True)
     runtime = ROOT / 'runtime'
     # Test-only visibility: inspect the actual generated storage, without changing production headers.
@@ -115,7 +115,7 @@ int main() {
 '''.replace('EMITTED', emitted).replace('LARGE', large)
     unit = out / 'proof.cpp'
     unit.write_text(source)
-    flags = ['-std=c++23', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-I', out, *includes(runtime)]
+    flags = ['-std=c++23', '-O0' if quick else '-O1', '-g0' if quick else '-g', '-Wall', '-Wextra', '-Werror', '-I', out, *includes(runtime)]
     if sanitize: flags += ['-fsanitize=address,undefined', '-fsanitize-address-use-after-scope', '-fno-omit-frame-pointer']
     run([cxx, *flags, unit, runtime / 'generated/src/runtime.cpp', '-o', out / 'proof'])
     run([out / 'proof'])
@@ -125,8 +125,14 @@ int main() {
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
-    parser.add_argument('--fixtures', type=Path, required=True)
+    parser.add_argument('--fixtures', type=Path)
     parser.add_argument('--cxx', default='clang++')
     parser.add_argument('--sanitize', action='store_true')
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
-    prove(args.out.resolve(), json.loads(args.fixtures.read_text()), args.cxx, args.sanitize)
+    fixtures = args.fixtures
+    if fixtures is None or not fixtures.exists():
+        args.out.mkdir(parents=True, exist_ok=True)
+        fixtures = args.out / 'fixtures.json'
+        run(['php', ROOT / 'compiler/tests/keyed_initialization.php', fixtures])
+    prove(args.out.resolve(), json.loads(fixtures.read_text()), args.cxx, args.sanitize, args.quick)

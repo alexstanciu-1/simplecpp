@@ -1,4 +1,5 @@
 """Contextual boxed presence and same-instance rebinding of an unchanged indexed comparison."""
+import argparse
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -90,7 +91,10 @@ return 1
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with TemporaryDirectory(prefix='scpp-undefined-') as tmp:
         python_identity(Path(tmp))
-        for flavor in ('php', 'cpp', 'js'):
+        for flavor in (('php',) if quick else ('php', 'cpp', 'js')):
             prove(Path(tmp), flavor)

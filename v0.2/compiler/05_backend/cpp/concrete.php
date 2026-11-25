@@ -131,7 +131,9 @@ final class Cpp_Concrete_Collections
 			$guard = 'SCPP_CONCRETE_' . strtoupper($key);
 			$arguments = [];
 			$includes = $type->cpp_headers();
+			$forwards = '';
 			foreach ($type->concrete_types() as $parameter => $argument) {
+				if ($argument instanceof owned_callable_type) $forwards .= Cpp_Emitter::callable_forwards($argument);
 				$arguments[$parameter] = new cpp_concrete_type($argument, $this->root);
 				$includes = array_merge($includes, $argument->cpp_headers());
 			}
@@ -139,6 +141,7 @@ final class Cpp_Concrete_Collections
 			$body = \Scpp\Api\concreteApplication($type::concrete_recipe(), $arguments, $values, $this->root);
 			$header = "// Concrete application collection; include after complete element declarations.\n#ifndef $guard\n#define $guard\n";
 			foreach (array_unique($includes) as $include) $header .= '#include <' . $include . ">\n";
+			if (($values['mt_segments'] ?? '') === '1') $header .= "namespace scpp::mt { struct job; }\n";
 			$header .= \Scpp\Api\concreteSupport($type::concrete_recipe());
 			foreach ($type->concrete_types() as $argument) {
 				if ($argument instanceof application_collection_type) {
@@ -146,7 +149,7 @@ final class Cpp_Concrete_Collections
 					$header .= '#include "' . $dependency . '.hpp"' . "\n";
 				}
 			}
-			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $body) . "\n#endif\n";
+			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $forwards . $body) . "\n#endif\n";
 		}
 		return $files + $this->destination_headers;
 	}

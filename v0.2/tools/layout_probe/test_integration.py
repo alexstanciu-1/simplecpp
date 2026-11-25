@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--cxx', required=True)
     parser.add_argument('--flag', action='append', default=[])
     parser.add_argument('--work', type=Path, required=True)
+    parser.add_argument("--seed-cache", type=Path, help="verify reuse of the built native-layout cache and one real invalidation")
     args = parser.parse_args()
     args.generator = args.generator.resolve()
     source = Path(__file__).resolve().parents[2]
@@ -33,17 +34,25 @@ def main():
         work = Path(temporary)
         # Copy the driver/source so source invalidation can be tested without editing working code.
         import shutil
-        probe_source = work / 'source/tools/layout_probe'
-        probe_source.mkdir(parents=True)
-        boxed_source = work / 'source/runtime/src/boxed'
-        boxed_source.mkdir(parents=True)
-        shutil.copy2(source / 'runtime/src/boxed/boxed_value.hpp', boxed_source / 'boxed_value.hpp')
-        for name in ['probe.py', 'probe.cpp']:
-            shutil.copy2(driver.parent / name, probe_source / name)
-        command = [sys.executable, '-B', probe_source / 'probe.py', '--cxx', args.cxx,
+        probe_driver = driver
+        if not args.seed_cache:
+            probe_source = work / 'source/tools/layout_probe'
+            probe_source.mkdir(parents=True)
+            boxed_source = work / 'source/runtime/src/boxed'
+            boxed_source.mkdir(parents=True)
+            shutil.copy2(source / 'runtime/src/boxed/boxed_value.hpp', boxed_source / 'boxed_value.hpp')
+            for name in ['probe.py', 'probe.cpp']:
+                shutil.copy2(driver.parent / name, probe_source / name)
+            probe_driver = probe_source / 'probe.py'
+        command = [sys.executable, '-B', probe_driver, '--cxx', args.cxx,
                    *['--flag=' + flag for flag in args.flag], '--out', work / 'native']
         facts_file, context_file = work / 'native/facts.json', work / 'native/context.json'
-        assert 'Generated' in run(command)
+        if args.seed_cache:
+            (work / 'native').mkdir()
+            for name in ('cache.json', 'context.json', 'facts.json', 'probe'):
+                shutil.copy2(args.seed_cache / name, work / 'native' / name)
+        else:
+            assert 'Generated' in run(command)
         facts, context = json.loads(facts_file.read_text()), json.loads(context_file.read_text())
         assert json.loads(run([args.generator, 'validate-target', facts_file, context_file]))['status'] == 'valid'
         timestamps = [p.stat().st_mtime_ns for p in [facts_file, context_file, work / 'native/probe']]
@@ -55,28 +64,29 @@ def main():
         stale = work / 'stale.json'
         stale.write_text(json.dumps(facts))
         run([args.generator, 'validate-target', stale, context_file], ok=False)
-        # Even an unused source comment changes the source fingerprint.
-        with (probe_source / 'probe.cpp').open('a') as stream:
-            stream.write('\n// context invalidation proof\n')
-        assert 'Generated' in run(command)
-        assert json.loads(context_file.read_text())['context_id'] != context['context_id']
-        boxed_context = json.loads(context_file.read_text())
-        with (boxed_source / 'boxed_value.hpp').open('a') as stream:
-            stream.write('\ninline constexpr unsigned scpp_boxed_probe_revision = 1;\n')
-        assert 'Generated' in run(command)
-        assert json.loads(context_file.read_text())['context_id'] != boxed_context['context_id']
-        header = work / 'environment.hpp'
-        header.write_text('inline constexpr unsigned scpp_probe_header_revision = 1;\n')
-        header_command = command + ['--flag=-include', '--flag=' + str(header)]
-        assert 'Generated' in run(header_command)
-        header_context = json.loads(context_file.read_text())
-        header.write_text('inline constexpr unsigned scpp_probe_header_revision = 2;\n')
-        assert 'Generated' in run(header_command)
-        assert json.loads(context_file.read_text())['context_id'] != header_context['context_id']
-        facts_file.write_text('{}')
-        assert 'Generated' in run(command)
-        (work / 'native/cache.json').write_text('[]')
-        assert 'Generated' in run(command)
+        if not args.seed_cache:
+            # Even an unused source comment changes the source fingerprint.
+            with (probe_source / 'probe.cpp').open('a') as stream:
+                stream.write('\n// context invalidation proof\n')
+            assert 'Generated' in run(command)
+            assert json.loads(context_file.read_text())['context_id'] != context['context_id']
+            boxed_context = json.loads(context_file.read_text())
+            with (boxed_source / 'boxed_value.hpp').open('a') as stream:
+                stream.write('\ninline constexpr unsigned scpp_boxed_probe_revision = 1;\n')
+            assert 'Generated' in run(command)
+            assert json.loads(context_file.read_text())['context_id'] != boxed_context['context_id']
+            header = work / 'environment.hpp'
+            header.write_text('inline constexpr unsigned scpp_probe_header_revision = 1;\n')
+            header_command = command + ['--flag=-include', '--flag=' + str(header)]
+            assert 'Generated' in run(header_command)
+            header_context = json.loads(context_file.read_text())
+            header.write_text('inline constexpr unsigned scpp_probe_header_revision = 2;\n')
+            assert 'Generated' in run(header_command)
+            assert json.loads(context_file.read_text())['context_id'] != header_context['context_id']
+            facts_file.write_text('{}')
+            assert 'Generated' in run(command)
+            (work / 'native/cache.json').write_text('[]')
+            assert 'Generated' in run(command)
         run(command + ['--cross-compiling', 'TRUE'], ok=False)
         run(command + ['--flag=--target=aarch64-linux-gnu'], ok=False)
         facts = json.loads(facts_file.read_text())

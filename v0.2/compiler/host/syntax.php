@@ -62,7 +62,7 @@ final class Syntax_Inspection
 		], $file->imports);
 		$result['globals'] = array_map(static fn(ast_global_declaration $global): array => [
 			'name' => $global->short_name, 'qualified_name' => $global->name(), 'type' => $global->type_reference?->spelling(),
-			'initializer' => self::expression($global->initializer), 'span' => self::span($global),
+			'initializer' => $global->initializer === null ? null : self::expression($global->initializer), 'span' => self::span($global),
 		], $file->globals());
 		$result['constants'] = array_map(static fn(ast_constant_declaration $constant): array => [
 			'name' => $constant->short_name, 'qualified_name' => $constant->name(), 'type' => $constant->type_reference?->spelling(),

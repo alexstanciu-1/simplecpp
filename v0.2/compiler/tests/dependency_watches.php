@@ -33,7 +33,8 @@ function verify(bool $ok, string $message): void
 	}
 }
 
-verify(dependency_use::ordered_uses === dependency_use::cases(), 'Dependency use inventory must match enum declaration order');
+verify(dependency_use::enum_helper_uses === array_values(array_filter(dependency_use::cases(),
+	static fn(dependency_use $use): bool => str_starts_with($use->name, 'enum_'))), 'Dependency use inventory must match enum declaration order');
 
 $watches = new Dependency_Watches();
 $a = new symbol_entry();

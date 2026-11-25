@@ -4,7 +4,10 @@ declare(strict_types=1);
 namespace scpp\compiler;
 require_once __DIR__ . '/../boot.php';
 
-/** Time only preparation and inspect the initializer, write, and local read before the return conversion. */
+/**
+ * Time only preparation and inspect the initializer, write, and local read before the return conversion.
+ * @return array{compilation_session,float,array<string,int>}
+ */
 function measure(Project_Compiler $compiler, string $app, ?compilation_session $previous, bool $known): array
 {
 	$session = $compiler->frontend($app, $previous);

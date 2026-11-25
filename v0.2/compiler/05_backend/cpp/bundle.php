@@ -6,11 +6,13 @@ namespace scpp\compiler;
 /** Keeps the validated manifest and pins its inode until a candidate writer checks it. */
 final readonly class cpp_bundle_snapshot
 {
+	/** PROPERTIES */
 	/** @var mixed[] Validated manifest, empty when no bundle has been published. */
 	public array $manifest /** array<string,mixed> */;
 	/** @var resource|null Owns an open handle to the manifest that provided the inventory. */
 	private mixed $handle;
 
+	/** CONSTRUCTOR */
 	/** @param mixed[] $manifest @param resource|null $handle */
 	public function __construct(array $manifest /** array<string,mixed> */, mixed $handle)
 	{
@@ -18,6 +20,13 @@ final readonly class cpp_bundle_snapshot
 		$this->handle = $handle;
 	}
 
+	/** DESTRUCTOR */
+	public function __destruct()
+	{
+		if ($this->handle !== null) fclose($this->handle);
+	}
+
+	/** METHODS */
 	/** Called under the exclusive bundle lock. The pinned inode cannot be reused while this handle is open. */
 	public function matches(string $path): bool
 	{
@@ -26,11 +35,6 @@ final readonly class cpp_bundle_snapshot
 		$current = @stat($path);
 		return $saved !== false && $current !== false
 			&& $saved['dev'] === $current['dev'] && $saved['ino'] === $current['ino'];
-	}
-
-	public function __destruct()
-	{
-		if ($this->handle !== null) fclose($this->handle);
 	}
 
 	/** The manifest stream has one owner. */
@@ -245,7 +249,12 @@ final class Cpp_Bundle
 		});
 	}
 
-	/** The exclusive reservation spans staging, manifest commit, and cleanup of the previous files. */
+	/**
+	 * The exclusive reservation spans staging, manifest commit, and cleanup of the previous files.
+	 * @param list<string> $inputs
+	 * @param array<string,mixed>|null $state
+	 * @param array<string,mixed> $previous
+	 */
 	private static function write_locked(string $directory, cpp_program_output $output,
 		array $inputs /** list<string> */, ?array $state /** array<string,mixed> */,
 		array $previous /** array<string,mixed> */): void

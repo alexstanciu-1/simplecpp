@@ -50,7 +50,7 @@ def sources(flavor):
         'main':'echo read(makeTree(100)),capability(asNode(makeTree(100)));return 8;','idle':fn('idle','int',[],'return 7;')}
 
 
-def native_lifetime(work, flavor, out, libraries, memcheck):
+def native_lifetime(work, flavor, out, libraries, memcheck, *, flags=('-O1',)):
     units=[out/u for u in json.loads((out/'manifest.json').read_text())['translation_units'] if u!='entry.cpp']
     api=next(p for p in units if 'owner_Root makeTree_(' in p.read_text())
     probe=work/(flavor+'-lifetime.cpp')
@@ -123,7 +123,7 @@ int main() {
 ''')
     for cc,lib in libraries.items():
         exe=work/(flavor+'-lifetime-'+cc)
-        r=subprocess.run([cc,'-std=c++23','-O1','-Wall','-Wextra','-Werror','-I',ROOT/'runtime/generated/public',probe,*[u for u in units if u!=api],lib,'-o',exe],capture_output=True,text=True)
+        r=subprocess.run([cc,'-std=c++23',*flags,'-Wall','-Wextra','-Werror','-I',ROOT/'runtime/generated/public',probe,*[u for u in units if u!=api],lib,'-o',exe],capture_output=True,text=True)
         assert r.returncode==0,r.stderr
         r=subprocess.run([exe],capture_output=True);assert (r.returncode,r.stdout,r.stderr)==(0,b'',b''),r
         if memcheck:
@@ -174,8 +174,29 @@ def prove(work, flavor, libraries, memcheck):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path);parser.add_argument('--memcheck',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path);parser.add_argument('--memcheck',action='store_true');parser.add_argument('--quick-runtime', type=Path)
+    args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-parent-lifetime-') as temporary:
         work=(args.output or Path(temporary)).resolve();work.mkdir(exist_ok=True)
-        libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
-        for flavor in ['cpp','php','js']:prove(work,flavor,libraries,args.memcheck)
+        if args.quick_runtime:
+            libraries = {'clang++': args.quick_runtime}
+            app, out = work/'php', work/'out'
+            src = sources('php')
+            write_app(app, 'php', src)
+            resident = service(app, out)
+            try:
+                assert 'error' not in invoke(resident)
+                original = artifacts(out)
+                assert invoke(resident)['preparation']['prepared'] == 0
+                (app/'literal.php').unlink()
+                assert 'requires a record' in invoke(resident)['error'].lower()
+                assert artifacts(out) == original
+                source_edit(app/'literal.php', src['literal'])
+                assert 'error' not in invoke(resident) and artifacts(out) == original
+            finally:
+                resident.stdin.close()
+                resident.wait()
+            native_lifetime(work, 'php', out, libraries, False, flags=('-O0', '-stdlib=libc++'))
+        else:
+            libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
+            for flavor in ['cpp','php','js']:prove(work,flavor,libraries,args.memcheck)

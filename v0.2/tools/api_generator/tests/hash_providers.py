@@ -19,7 +19,7 @@ def run(args, expected=0):
     return result.stdout
 
 
-def proof(work):
+def proof(work, quick=False):
     work.mkdir(parents=True, exist_ok=True)
     metadata = json.loads((ROOT / 'runtime/metadata/runtime.json').read_text())
     publication = json.loads((ROOT / 'runtime/metadata/publication.json').read_text())
@@ -56,7 +56,7 @@ def proof(work):
     assert default['submodules']['nodes']['core.hashes']['requires'] == ['core.carriers', 'core.scalars', 'core.string']
     assert '#include <scpp/numeric.hpp>' not in (runtime / 'public/scpp/hashes.hpp').read_text()
     before = {p.name: p.read_bytes() for p in (compiler / 'types').glob('*.php')}
-    for variant in ('relocated', 'shared_carriers'):
+    for variant in (('shared_carriers',) if quick else ('relocated', 'shared_carriers')):
         m = copy.deepcopy(metadata)
         if variant == 'relocated': m['submodules']['core.hashes']['header'] = 'scpp/maps/typed.hpp'
         else: m['hash']['provider'] = 'core.carriers'
@@ -83,6 +83,8 @@ def proof(work):
     emit(metadata, publication)
     for invalid in ('key', 'value', 'duplicate', 'provider', 'legacy_header', 'cycle', 'nullable', 'construction'):
         m, p = copy.deepcopy(metadata), copy.deepcopy(publication)
+        if quick and invalid not in ('key', 'cycle', 'nullable'):
+            continue
         if invalid in ('key', 'value'): p['hashes']['specializations'][0][invalid] = 'bool_t'
         if invalid == 'duplicate': p['hashes']['specializations'].append(p['hashes']['specializations'][0])
         if invalid == 'provider': m['hash']['provider'] = 'missing'
@@ -115,9 +117,10 @@ def proof(work):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
     if args.output:
-        proof(args.output.resolve())
+        proof(args.output.resolve(), args.quick)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-hash-providers-') as directory:
-            proof(Path(directory))
+            proof(Path(directory), args.quick)

@@ -50,7 +50,11 @@ final class Native_Build
 		});
 	}
 
-	/** The reader reservation spans manifest interpretation and all Ninja reads. */
+	/**
+	 * The reader reservation spans manifest interpretation and all Ninja reads.
+	 * @param array<string,mixed> $config
+	 * @return array<string,mixed>
+	 */
 	private static function run_with_bundle(string $bundle, string $directory,
 		array $config /** array<string,mixed> */): array /** array<string,mixed> */
 	{

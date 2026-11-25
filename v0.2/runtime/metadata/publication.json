@@ -1,6 +1,7 @@
 {
   "version": 1,
   "async_frames": true,
+  "mt_segments": true,
   "modules": ["numeric"],
   "boxed": {"header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
   "namespace": "scpp",

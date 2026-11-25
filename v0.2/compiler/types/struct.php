@@ -208,6 +208,14 @@ final class record_type_definition extends type_definition implements dependency
 			$interface->prepare_layout($symbols, $active, $work);
 			$this->interfaces[] = $interface;
 		}
+		// An uninitialized static callable depends on the signature types in this record's scope.
+		foreach ($this->declaration->static_properties as $property) {
+			if ($property->initializer !== null) continue;
+			$property->reset_preparation();
+			$type = Type_Resolution::storage($property->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
+			if (!$type?->supports_static_property()) throw new diagnostic($property->source(), $property->byte_start(), 'Unsupported static property type');
+			$property->settle_type($type);
+		}
 		$bytes = $this->base()?->array_bytes() ?? 0;
 		$state = record_layout_state::ready;
 		foreach ($this->declaration->fields as $field) {
@@ -262,8 +270,11 @@ final class record_type_definition extends type_definition implements dependency
 				} else type_registry::prepare_literal($field->initializer);
 				$field->conversion = $type->prepare_conversion($field->initializer, conversion_context::typed_destination);
 			}
-			$bytes += $type instanceof self ? $type->array_bytes() : ($type instanceof fixed_array_type ? $type->bytes : 0);
-			if ($bytes > fixed_array_type::FRAME_LIMIT) throw new diagnostic($field->source(), $field->byte_start(), 'Record fixed-array storage exceeds 64 KiB');
+			$field_bytes = $type instanceof self ? $type->array_bytes() : ($type instanceof fixed_array_type ? $type->bytes : 0);
+			if ($field_bytes > fixed_array_type::PAYLOAD_LIMIT - $bytes) {
+				throw new diagnostic($field->source(), $field->byte_start(), 'Record fixed-array storage exceeds uint32 inline payload capacity');
+			}
+			$bytes += $field_bytes;
 			$field->settle_type($type);
 		}
 		unset($active[$this->name]);

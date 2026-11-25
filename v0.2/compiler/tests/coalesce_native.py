@@ -13,7 +13,7 @@ from parent_methods_native import write_app
 ROOT=Path(__file__).resolve().parents[2]
 
 
-def prove(work,flavor,libraries):
+def prove(work,flavor,libraries, *, quick=False):
     s=fixture(flavor);v,a,fn=s['v'],s['access'],s['function']
     def local(n,t,value):
         return {'cpp':f'{t} {n} = {value};','php':f'${n} {t} = {value};','js':f'let {n}:{t} = {value};'}[flavor]
@@ -45,11 +45,19 @@ def prove(work,flavor,libraries):
     main+=local('original','vector<string>',v+'wrapped')+f'if ({v}original[0]!=="old") {{return 97;}}'
     main+='echo resolve(number(false));return 8;'
     expected=b'L0LF9L0303LF9'
-    app,out=work/flavor,work/(flavor+'-out');write_app(app,flavor,{'api':api,'main':main,'idle':fn('idle','int',[],'return 1;')})
+    app,out=work/flavor,work/(flavor+'-out');sources = {'api':api,'main':main,'idle':fn('idle','int',[],'return 1;')}
     # Source signature changes invalidate unchanged coalescing consumers.
     # number has an inner if: reconstruct the other functions from the next signature.
     next_signature=fn('fallback','int',[],'echo "F";return 9;')
     wrong=fn('number','int',[('present','bool')],'return 0;')+api[api.index(next_signature):]
+    if quick:
+        from collection_goal_native import revisions
+        revisions(work, flavor, sources, [
+            (None, None, expected), ('api', wrong, 'nullable carrier'),
+            ('api', api.replace('return 9;', 'return 7;', 1), expected.replace(b'9', b'7')),
+        ])
+        return
+    write_app(app, flavor, sources)
     steps=[(None,None,None,expected),(None,None,None,expected),
            ('api',api.replace('return 9;','return 7;',1),None,expected.replace(b'9',b'7')),('api',api,None,expected),
            ('api',wrong,'nullable carrier',None),(None,None,'nullable carrier',None),('api',api,None,expected),
@@ -101,5 +109,12 @@ def prove(work,flavor,libraries):
 
 if __name__=='__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-coalesce-') as temporary:
-        work=Path(temporary);libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
-        for flavor in ['cpp','php','js']:prove(work,flavor,libraries)
+        work=Path(temporary)
+        import argparse
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument('--quick', action='store_true')
+        if parser.parse_args().quick:
+            prove(work, 'php', {}, quick=True)
+        else:
+            libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}
+            for flavor in ['cpp','php','js']:prove(work,flavor,libraries)

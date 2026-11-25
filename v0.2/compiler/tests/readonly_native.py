@@ -65,7 +65,7 @@ def prove(work,flavor):
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path);args=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path);p.add_argument("--quick",action="store_true");args=p.parse_args()
     with tempfile.TemporaryDirectory(prefix='scpp-readonly-') as tmp:
         work=(args.output or Path(tmp)).resolve();work.mkdir(exist_ok=True)
-        for f in ['php','cpp','js']:prove(work,f)
+        for f in (['php'] if args.quick else ['php','cpp','js']):prove(work,f)

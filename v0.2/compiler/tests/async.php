@@ -36,7 +36,10 @@ function artifacts(string $directory): array /** array<string,string> */
 	return $files;
 }
 
-/** Additional artifacts for the outlined proof, built from the successful session's resolved result types. */
+/**
+ * Additional artifacts for the outlined proof, built from the successful session's resolved result types.
+ * @return array{headers:list<string>,files:object}
+ */
 function publish_task_payloads(Incremental_Project $project): array
 {
 	$session = $project->session();
@@ -479,7 +482,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$block_parent = 'async ' . $signature('choose') . '{{echo "B";await noValue();}return 3;}';
 		$ns = static fn(string $name, string $body): string => "namespace $name { $body }";
 		$root = $flavor === flavor::cpp ? '::' : '\\';
-		$sep = match ($flavor) { flavor::cpp => '::', flavor::js => '.', flavor::php => '\\' };
+		$sep = match ($flavor) {
+			flavor::cpp => '::', flavor::js => '.', flavor::php => '\\'
+		};
 		$job = $signature('job') . '{return 4;}';
 		$shadow = $fn('async_wait', ['x']) . '{return 10+' . $v('x') . ';}';
 		$nested = 'async ' . $signature('relayJob') . '{await async_sleep_ms(1);return async_wait(job());}';

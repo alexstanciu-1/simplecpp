@@ -40,7 +40,10 @@ final class Cpp_Emitter
 	/** A staged owner needs destruction at the end of its consuming operand before a sibling runs. */
 	private int $async_owned_steps = 0;
 	private bool $async_body = false;
-	/** Ordered statements pending in the current coroutine full expression. */
+	/**
+	 * Ordered statements pending in the current coroutine full expression.
+	 * @var list<string>
+	 */
 	private array $async_steps /** list<string> */ = [];
 	/** Owning lowering context for the innermost protected callable collecting exits. */
 	private ?Cpp_Finally_Exit $finally_exit = null;
@@ -91,7 +94,10 @@ final class Cpp_Emitter
 		return $type->lower_cpp_conversion($conversion, $value, $syntax, $source_type, $this->inline_adapters);
 	}
 
-	/** Apply the prepared conversions and publish the operation's runtime dependencies. */
+	/**
+	 * Apply the prepared conversions and publish the operation's runtime dependencies.
+	 * @param array<string,bool> $required_headers
+	 */
 	private function binary_operands(ast_binary_expression $value, string &$left, string &$right, array &$required_headers): void
 	{
 		$type = $value->execution_type();
@@ -131,7 +137,12 @@ final class Cpp_Emitter
 		return $capture ? '([&]() { const auto membership_key = ' . $left . '; return ' . $test . '; }())' : $test;
 	}
 
-	/** A chain can carry scalar literals verbatim. Capture other values before later operands can change them. */
+	/**
+	 * A chain can carry scalar literals verbatim. Capture other values before later operands can change them.
+	 * @param array<string,ast_global_declaration> $global_references
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $required_headers
+	 */
 	private function chain_operand(ast_expression $operand, int $index, string &$steps, array &$global_references,
 		array &$declarations, array &$required_headers): string
 	{
@@ -169,7 +180,7 @@ final class Cpp_Emitter
 				. ($type->backing() === type_string::instance() ? $ordinal++ : type_int64::instance()->lower_cpp_literal($case->initializer)) . ',';
 		}
 		$helper = '';
-		foreach (dependency_use::ordered_uses as $use) {
+		foreach (dependency_use::enum_helper_uses as $use) {
 			if (!$this->needs_enum_helper($node, $use)) continue;
 			$binding = $type->helper_function($use);
 			$includes[$binding->header] = true;
@@ -580,8 +591,8 @@ CPP;
 		$required_headers = [];
 		foreach ($file->globals() as $global) {
 			$type = $global->type_def();
-			$initializer = $this->declaration_initialization($type, $global->initializer, $global->initialization(), $required_headers);
-			$qualifier = $global->initializer instanceof ast_string_expression ? '' : 'constinit ';
+			$initializer = $global->initializer === null ? '{}' : $this->declaration_initialization($type, $global->initializer, $global->initialization(), $required_headers);
+			$qualifier = $global->initializer === null || $global->initializer instanceof ast_string_expression ? '' : 'constinit ';
 			$definitions[] = $qualifier . $type->cpp_type() . ' ' . self::global_name($global)
 				. ' = ' . $initializer . ";\n";
 			foreach ($type->cpp_headers() as $header) {
@@ -706,7 +717,7 @@ CPP;
 		}
 		foreach ($file->declaration_nodes as $node) {
 			if (!($node instanceof ast_enum_declaration)) continue;
-			foreach (dependency_use::ordered_uses as $use) {
+			foreach (dependency_use::enum_helper_uses as $use) {
 				if (!$this->needs_enum_helper($node, $use)) continue;
 				if ($use !== dependency_use::enum_try_from_value) $required_headers['stdexcept'] = true;
 				if ($use === dependency_use::enum_from_value && $this->needs_enum_helper($node, dependency_use::enum_try_from_value)) {
@@ -980,6 +991,22 @@ CPP;
 					if ($continuing && $loop['update'] !== null) $transfer = 'goto ' . $loop['update'] . ';';
 				}
 				$lines[] = "\t" . $transfer;
+			}
+			elseif ($statement instanceof ast_foreach_statement && ($source_type = $statement->source_value->type_def()) instanceof segment_type
+				&& $source_type->key !== null) {
+				$receiver = $this->value($statement->source_value, $global_references, $declarations, $required_headers);
+				$lines[] = "{ const auto hash_view = $receiver; int64_t hash_cursor = 0; while (hash_view.next(hash_cursor)) {";
+				$key = $statement->keys_only ? $statement->value : $statement->key;
+				if ($key !== null) $lines[] = '[[maybe_unused]] const auto& ' . $this->name($key) . ' = *static_cast<const '
+					. $source_type->key->cpp_type() . '*>(hash_view.key(hash_cursor));';
+				if (!$statement->keys_only) {
+					$method = $source_type->read_only ? 'value' : 'writable_value';
+					$qualifier = $source_type->read_only ? 'const ' : '';
+					$lines[] = '[[maybe_unused]] auto& ' . $this->name($statement->value) . ' = *static_cast<' . $qualifier
+						. $source_type->element->cpp_type() . "*>(hash_view.$method(hash_cursor));";
+				}
+				array_push($lines, ...$this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, $resume));
+				$lines[] = '} }';
 			}
 			elseif ($statement instanceof ast_foreach_statement) {
 				$source_type = $statement->source_value->type_def();
@@ -1422,7 +1449,13 @@ CPP;
 		return ['{', ...$body, '}', $label . ':;'];
 	}
 
-	/** Lower entry selection independently of clause order, then let native switch handle transfers. */
+	/**
+	 * Lower entry selection independently of clause order, then let native switch handle transfers.
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,ast_global_declaration> $globals
+	 * @param array<string,bool> $headers
+	 * @return list<string>
+	 */
 	private function switch_lines(ast_switch_statement $syntax, statement_return_target $function,
 		array &$declarations, array &$globals, array &$headers): array
 	{
@@ -1488,7 +1521,13 @@ CPP;
 		return $lines;
 	}
 
-	/** Select a clause before executing its body. A miss index is outside the clause index domain. */
+	/**
+	 * Select a clause before executing its body. A miss index is outside the clause index domain.
+	 * @param list<ast_switch_arm|ast_match_arm> $arms
+	 * @param array<string,ast_global_declaration> $globals
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $headers
+	 */
 	private function carrier_clause_index(carrier_type_definition $carrier, constant_dispatch $dispatch, string $operand,
 		array $arms, array &$globals, array &$declarations, array &$headers): string
 	{
@@ -1513,16 +1552,16 @@ CPP;
 			. $selection . ' return -1; }(' . $operand . '))';
 	}
 
+	/**
+	 * @param array<string,ast_global_declaration> $globals
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $headers
+	 */
 	private function native_case(ast_expression $label, constant_dispatch $dispatch, array &$globals, array &$declarations, array &$headers): string
 	{
 		if ($dispatch === constant_dispatch::enum_switch) return $this->value($label, $globals, $declarations, $headers);
 		$integer = constant_dispatch::integer_label($label) ?? throw new \LogicException('Invalid prepared integer label');
 		return self::integer_spelling($integer);
-	}
-
-	private static function integer_spelling(int $integer /** int64 */): string
-	{
-		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
 	}
 
 	/**
@@ -2158,7 +2197,12 @@ CPP;
 		return $binding === null ? 'static_cast<' . $type->cpp_type() . "&&>($name)" : "$binding->factory($name.data, $count)";
 	}
 
-	/** Release a nested operand's staged owners before evaluating the next sibling. */
+	/**
+	 * Release a nested operand's staged owners before evaluating the next sibling.
+	 * @param array<string,ast_global_declaration> $global_references
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $required_headers
+	 */
 	private function scoped_async_operand(ast_expression $value, array &$global_references, array &$declarations, array &$required_headers,
 		bool &$reorderable, bool $typed_initializer, bool $logical_root, bool $bare_comparison, ?Cpp_Staged_Result $destination): string
 	{
@@ -2301,6 +2345,10 @@ CPP;
 				$global_references, $declarations, $required_headers);
 		}
 		if ($value instanceof ast_field_expression) {
+			if ($value_type instanceof fixed_array_type) {
+				$steps = [];
+				return $this->retained_place($value, $global_references, $declarations, $required_headers, $steps, full_expression: true);
+			}
 			if ($value->receiver instanceof ast_name_expression && $value->receiver->type_def() instanceof shared_record_type_definition
 				&& ($local = $value->receiver->local_binding()) !== null && $local->type_def() instanceof class_union_type_definition) {
 				$pointer = $this->union_pointer($value->receiver, $local, $declarations);
@@ -2459,6 +2507,9 @@ CPP;
 			return $type->lower_cpp_unary($value->operator, $operand);
 		}
 		if ($value instanceof ast_isset_expression) {
+			if ($value->operand instanceof ast_index_expression && $value->operand->type_def() instanceof owned_callable_type) {
+				return $this->indexed_callable_presence($value, $global_references, $declarations, $required_headers);
+			}
 			/** @var presence_test_type $type */
 			$type = $value->operand->type_def();
 			return $type->lower_cpp_presence($this->value($value->operand, $global_references, $declarations, $required_headers));
@@ -2616,12 +2667,24 @@ CPP;
 			return '&' . $name;
 		}
 		if ($value instanceof ast_call_expression) {
+			if ($value->qualifier === call_qualifier::stored_value) {
+				$target = $value->receiver;
+				$signature = $target->type_def()->signature;
+				$this->callable_dependencies($signature, $declarations);
+				$operand = $this->value($target, $global_references, $declarations, $required_headers);
+				$call = $this->invocation($value, $signature, $operand, $value->type_def(), $global_references, $declarations, $required_headers);
+				return $signature->reference_origin !== null && !$borrow_result ? 'static_cast<' . $value->type_def()->cpp_type() . '>(' . $call . ')' : $call;
+			}
 			$callback = $value->callable_binding();
 			if ($callback !== null) {
 				$type = $callback->type_def();
 				$target = $type instanceof lambda_type_definition ? $callback->initializer : ($type instanceof owned_callable_type ? $type->signature : $type);
-				return $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
+				$call = $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
+				$reference = $target instanceof ast_lambda_expression ? $target->returns_reference : $target->reference_origin !== null;
+				return $reference && !$borrow_result
+					? 'static_cast<' . $value->type_def()->cpp_type() . '>(' . $call . ')' : $call;
 			}
+			if ($value->mt_operation === 'mt_join') return $this->joined_batch($value, $global_references, $declarations, $required_headers);
 			if ($value->cardinality !== null) {
 				$receiver = $value->arguments[0];
 				/** @var counted_collection_type $type */
@@ -2853,6 +2916,43 @@ CPP;
 		return 'static_cast<void>(' . $this->value($receiver, $globals, $declarations, $headers) . ')';
 	}
 
+	/** Probe each index once, evaluating later keys only inside successful outer lookups.
+	 * @param ast_global_declaration[] $globals @param ast_function_declaration[] $declarations @param bool[] $headers */
+	private function indexed_callable_presence(ast_isset_expression $test, array &$globals, array &$declarations, array &$headers): string
+	{
+		$path = [];
+		$base = $test->operand;
+		while ($base instanceof ast_index_expression) {
+			$path[] = $base;
+			$base = $base->receiver;
+		}
+		$before = $this->suspensions;
+		$steps = [];
+		$prefix = 'probe_' . $test->start . '_';
+		$place = $this->retained_place($base, $globals, $declarations, $headers, $steps, owner_name: $prefix . 'owner');
+		$receiver = $prefix . 'base';
+		$steps[] = 'const auto& ' . $receiver . ' = ' . $place . ';';
+		$result = $prefix . 'present';
+		$steps[] = 'bool ' . $result . ' = false;';
+		foreach (array_reverse($path) as $i => $access) {
+			[$key, $staged] = $this->staged_operand($access->index, $globals, $declarations, $headers);
+			array_push($steps, ...$staged);
+			$index = $prefix . 'key_' . $i;
+			$steps[] = 'const auto ' . $index . ' = ' . $access->receiver->type_def()->lower_cpp_key($access->index, $key) . ';';
+			$steps[] = 'if (' . $receiver . '.has(' . $index . ')) {';
+			$read = $receiver . '.at(' . $index . ')';
+			$receiver = $prefix . 'item_' . $i;
+			if ($access === $test->operand) $steps[] = $result . ' = ' . $access->type_def()->lower_cpp_presence($read) . ';';
+			else $steps[] = 'const auto& ' . $receiver . ' = ' . $read . ';';
+		}
+		$steps[] = str_repeat('}', count($path));
+		if ($before !== $this->suspensions) {
+			array_push($this->async_steps, ...$steps);
+			return $result;
+		}
+		return '([&]() { ' . implode(' ', $steps) . ' return ' . $result . '; }())';
+	}
+
 	/**
 	 * Select a receiver or writable field and retain its nearest enclosing allocation across operand effects.
 	 * @param ast_global_declaration[] $globals
@@ -2862,8 +2962,14 @@ CPP;
 	 */
 	private function retained_place(ast_expression $receiver, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
-		array &$steps /** list<string> */, ?bool &$inline_storage = null, string $owner_name = 'receiver_owner'): string
+		array &$steps /** list<string> */, ?bool &$inline_storage = null, string $owner_name = 'receiver_owner', bool $full_expression = false): string
 	{
+		if ($receiver instanceof ast_index_expression && $receiver->receiver->type_def() instanceof fixed_array_type) {
+			$type = $receiver->receiver->type_def();
+			$place = $this->retained_place($receiver->receiver, $globals, $declarations, $headers, $steps);
+			$key = $this->value($receiver->index, $globals, $declarations, $headers);
+			return $type->lower_cpp_index($receiver->index, $place, $key);
+		}
 		$fields = [];
 		$base = $receiver;
 		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)) {
@@ -2877,9 +2983,15 @@ CPP;
 				&& $base->local_binding() !== null));
 		$operand = $this->value($base, $globals, $declarations, $headers);
 		if ($base->type_def() instanceof shared_record_type_definition) {
-			$steps[] = 'auto ' . $owner_name . ' = ' . $operand . ';';
-			if ($fields === []) return '*' . $owner_name . '.operator->()';
-			$operand = $owner_name . '->' . array_pop($fields);
+			$owner = $owner_name;
+			if ($full_expression) {
+				// Keep the payload alive through the final index or array copy in this expression.
+				$owner = $base->type_def()->cpp_type() . '(' . $operand . ')';
+			} else {
+				$steps[] = 'auto ' . $owner_name . ' = ' . $operand . ';';
+			}
+			if ($fields === []) return '*' . $owner . '.operator->()';
+			$operand = $owner . '->' . array_pop($fields);
 		}
 		foreach (array_reverse($fields) as $field) $operand .= '.' . $field;
 		return $operand;
@@ -2912,7 +3024,11 @@ CPP;
 		if (!$runtime && $value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
-		if ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
+		if ($callback && $value->qualifier === call_qualifier::stored_value) {
+			$selected = 'selected_callable_' . $value->start;
+			$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
+			$name = $selected;
+		} elseif ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
 			foreach ($operands as $index => $argument) {
 				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index], $value->conversion($index))) continue;
 				// An argument can replace the slot through a closure that borrows it.
@@ -2959,7 +3075,7 @@ CPP;
 			$argument = $operands[$index] ?? $parameter->default_value;
 			$conversion = isset($operands[$index]) ? $value->conversion($index) : $parameter->default_conversion();
 			$type = $callback || $runtime ? $parameter : $parameter->type_def();
-			$by_value = $runtime ? !$function->is_reference($value->named->slots[$index] ?? $index) : $callback || $parameter->mode === passing_mode::value;
+			$by_value = $runtime ? !$function->is_reference($value->named->slots[$index] ?? $index) : ($callback ? $function->input_mode($index) : $parameter->mode) === passing_mode::value;
 			$operand_safe = false;
 			$records_before = $this->record_expressions;
 			$step_start = count($this->async_steps);
@@ -3034,7 +3150,7 @@ CPP;
 			array_push($this->async_steps, ...$steps);
 			return $call;
 		}
-		$return_reference = $function instanceof ast_function_declaration && $function->returns_reference ? '&' : '';
+		$return_reference = $callback ? $function->result_suffix() : ($function instanceof statement_return_target && $function->returns_reference ? '&' : '');
 		if ($steps === []) return $call;
 		return self::staged_call($call, $steps, ' -> ' . ($native_result ?? $result->cpp_type() . $return_reference), $statement_setup);
 	}
@@ -3054,12 +3170,135 @@ CPP;
 	{
 		self::visit_signature_type_dependencies($signature, function (type_definition $component) use (&$declarations): void {
 			if ($component instanceof application_collection_type) $this->concrete_collections->request($component);
-			elseif ($component instanceof enum_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
+			elseif ($component instanceof enum_type_definition || $component instanceof record_type_definition) $declarations[$component->declaration->symbol_key()] = $component->declaration;
 			else $declarations[$component->name] = $component;
 		});
 	}
 
-	/** Emit the concrete closure in place, with its own expression and result conversion. */
+	/**
+	 * Snapshot caller operands, materialize grants with stable storage, then submit one joined batch.
+	 * @param ast_global_declaration[] $global_references
+	 * @param (ast_declaration_interface|type_definition)[] $declarations
+	 * @param bool[] $required_headers
+	 */
+	private function joined_batch(ast_call_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
+		array &$declarations /** array<string,ast_declaration_interface|type_definition> */, array &$required_headers /** array<string,bool> */): string
+	{
+		$required_headers['scpp/mt_segments.hpp'] = true;
+		$jobs = [];
+		$snapshots = [];
+		$lines = [];
+		$dynamic = false;
+		$entries = [];
+		$capped = false;
+		foreach ($value->arguments as $launch) {
+			if ($launch instanceof ast_inline_job && $launch->iteration !== null) {
+				$dynamic = true;
+				if ($launch->arguments[0] instanceof ast_job_repetition) $capped = true;
+			}
+		}
+		$cap = '';
+		if ($value instanceof ast_parallel_expression && $value->receiver !== null) {
+			$expression = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			$required_headers['stdexcept'] = true;
+			$snapshots[] = "const auto workers = $expression;";
+			$snapshots[] = 'if (workers <= 0) throw std::invalid_argument("Group workers must be positive");';
+			$cap = ', workers';
+		}
+		if ($dynamic) {
+			$required_headers['vector'] = true;
+			$required_headers['stdexcept'] = true;
+			$lines[] = 'std::vector<::scpp::mt::job> jobs;';
+		}
+		foreach ($value->arguments as $i => $launch) {
+			$index = $launch instanceof ast_inline_job && $launch->iteration !== null ? $this->name($launch->iteration) : null;
+			if ($launch instanceof ast_inline_job) {
+				$name = $this->lambda($launch->receiver, $global_references, $declarations, $required_headers);
+			} else {
+				$worker = $launch->implementation();
+				$name = self::function_name($worker);
+				$declarations[$name] = $worker;
+				$this->collect_signature_types($worker, $declarations);
+			}
+			$args = [];
+			$forwarded = [];
+			$fields = [];
+			$initializers = [];
+			$scalar_inputs = false;
+			foreach ($launch->arguments as $slot => $input) {
+				if ($launch instanceof ast_inline_job && in_array($launch->binding_kinds[$slot], ['each', 'value'], true)) {
+					$scalar_inputs = true;
+					$fields[] = $input->type_def()->cpp_type() . " v$slot;";
+					$initializers[] = $launch->binding_kinds[$slot] === 'each' ? $index : $this->value($input, $global_references, $declarations, $required_headers);
+					$forwarded[] = "static_cast<const values_$i*>(context)->v$slot";
+					continue;
+				}
+				$operands = [];
+				foreach ($input->arguments as $arg) $operands[] = $this->value($arg, $global_references, $declarations, $required_headers);
+				$owner = $operands[0];
+				if ($index !== null || count($operands) === 2) {
+					$fields[] = "::scpp::mt::segment_range range$slot;";
+					$initializers[] = count($operands) === 2 ? $operands[1] : '{' . $operands[1] . ', ' . $operands[2] . '}';
+					$offset = "snapshot_$i.range$slot.offset";
+					$length = "snapshot_$i.range$slot.length";
+				} else [, $offset, $length] = $operands;
+				$forwarded[] = 'inputs[' . count($args) . ']';
+				$borrow = ($input->type_def()->key === null ? 'borrow' : 'borrow_hash') . ($input->type_def()->read_only ? '_read' : '');
+				$args[] = "::scpp::mt::job::{$borrow}($owner, $offset, $length)";
+			}
+			$grant_list = implode(', ', $args);
+			$context = $scalar_inputs ? "snapshot_$i, " : '';
+			$parameter = $scalar_inputs ? ', const void* context' : '';
+			$worker_call = "[](const ::scpp::mt::segment* inputs$parameter) { return $name(" . implode(', ', $forwarded) . '); }';
+			$layout = "struct values_$i { " . implode(' ', $fields) . ' }';
+			$values = '{' . implode(', ', $initializers) . '}';
+			if ($index !== null) {
+				$settings = $launch->arguments[0];
+				$bound_expr = $settings instanceof ast_job_repetition ? $settings->arguments[0] : $settings;
+				$bound = $this->value($bound_expr, $global_references, $declarations, $required_headers);
+				$snapshots[] = "const auto count_$i = $bound;";
+				$snapshots[] = "if (count_$i < 0) throw std::invalid_argument(\"each bound must be nonnegative\");";
+				$limit = 'INT64_MAX';
+				if ($settings instanceof ast_job_repetition) {
+					$limit = "workers_$i";
+					$expression = $this->value($settings->arguments[1], $global_references, $declarations, $required_headers);
+					$snapshots[] = "const auto $limit = $expression;";
+					$snapshots[] = "if ($limit <= 0) throw std::invalid_argument(\"Job workers must be positive\");";
+				}
+				if ($capped) $entries[] = "{values_list_$i.size(), $limit}";
+				$snapshots[] = "$layout; std::vector<values_$i> values_list_$i; values_list_$i.reserve(count_$i);";
+				$snapshots[] = "for (::scpp::int64 $index = 0; $index < count_$i; ++$index) values_list_$i.push_back($values);";
+				// Reserve all grant storage before publishing pointers into it. Snapshots are already complete.
+				$lines[] = "struct grants_$i { ::scpp::mt::segment slots[" . count($args) . "]; }; std::vector<grants_$i> grants_list_$i; grants_list_$i.reserve(values_list_$i.size());";
+				$lines[] = "for (const auto& snapshot_$i : values_list_$i) { grants_list_$i.push_back({{$grant_list}}); jobs.push_back({grants_list_$i.back().slots, $context$worker_call}); }";
+			} else {
+				if ($capped) $entries[] = '{1, 1}';
+				if ($fields !== []) $snapshots[] = "const $layout snapshot_$i$values;";
+				$lines[] = "::scpp::mt::segment grants_{$i}[]{ $grant_list };";
+				$job = "{grants_$i, $context$worker_call}";
+				if ($dynamic) $lines[] = "jobs.push_back($job);";
+				else $jobs[] = $job;
+			}
+		}
+		if ($capped) {
+			$lines[] = 'const ::scpp::mt::job_entry entries[]{' . implode(', ', $entries) . '};';
+			$group = $cap === '' ? 'INT64_MAX' : 'workers';
+			$lines[] = "::scpp::mt::join(jobs.data(), jobs.size(), $group, entries, " . count($entries) . ');';
+		} elseif ($dynamic) $lines[] = "::scpp::mt::join(jobs.data(), jobs.size()$cap);";
+		else {
+			$lines[] = '::scpp::mt::job jobs[]{' . implode(', ', $jobs) . '};';
+			$lines[] = '::scpp::mt::join(jobs, ' . count($jobs) . "$cap);";
+		}
+		$lines[] = $value->type_def()->cpp_type() . ' results; for (const auto& job : jobs) results.append(static_cast<::scpp::int64>(job.result)); return results;';
+		return '([&]() { ' . implode(' ', [...$snapshots, ...$lines]) . ' }())';
+	}
+
+	/**
+	 * Emit the concrete closure in place, with its own expression and result conversion.
+	 * @param array<string,ast_global_declaration> $globals
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $headers
+	 */
 	private function lambda(ast_lambda_expression $lambda, array &$globals, array &$declarations, array &$headers): string
 	{
 		$type = $lambda->type_def();
@@ -3069,7 +3308,7 @@ CPP;
 		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
 		$parameters = [];
 		foreach ($lambda->parameters as $parameter) {
-			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . $this->name($parameter);
+			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
 		}
 		$environment = $type->borrows_receiver ? ['&scpp_self'] : [];
 		$capture_uses = $type->borrows_receiver ? ["\t(void)scpp_self;"] : [];
@@ -3081,7 +3320,7 @@ CPP;
 			// An explicit capture may be unused in the source body.
 			$capture_uses[] = "\t(void)" . $name . ';';
 		}
-		$header = '[' . implode(', ', $environment) . '](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false);
+		$header = '[' . implode(', ', $environment) . '](' . implode(', ', $parameters) . ') -> ' . $this->signature_type($signature->result, false) . ($lambda->returns_reference ? '&' : '');
 		// Both closure forms lower in a synchronous context, independent of the enclosing operand.
 		$outer = [$this->finally_exit, $this->destination, $this->byte_view, $this->transfer_labels,
 			$this->async_body, $this->async_steps, $this->async_owned_steps, $this->suspensions];
@@ -3093,7 +3332,7 @@ CPP;
 				if ($capture_uses !== []) array_unshift($lines, ...$capture_uses);
 				return $header . " {\n" . implode("\n", $lines) . "\n}";
 			}
-			$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity);
+			$body = $this->value($lambda->body, $globals, $declarations, $headers, logical_root: $lambda->conversion === value_conversion::identity, borrow_result: $lambda->returns_reference);
 			$result = $this->conversion($signature->result, $lambda->conversion, $body, $lambda->body);
 			return $header . ' { return ' . $result . '; }';
 		} finally {
@@ -3218,18 +3457,15 @@ CPP;
 	private function record_signature_forwards(ast_record_declaration $record): string
 	{
 		$forwards = [];
-		$collect = static function (type_definition $type) use (&$forwards): void {
-			if ($type instanceof intersection_type_definition) {
-				$forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
-			} elseif ($type instanceof application_collection_type) {
-				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
-			} elseif ($type instanceof enum_type_definition) {
-				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
-					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
-			} elseif ($type instanceof record_type_definition) {
-				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
-			} elseif ($type instanceof record_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
-		};
+		$collect = self::signature_forward_collector($forwards);
+		foreach ($record->fields as $field) {
+			$type = $field->type_def();
+			if ($type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
+		}
+		foreach ($record->static_properties as $property) {
+			$type = $property->type_def();
+			if ($type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
+		}
 		foreach ($record->definition->constructor()?->parameters ?? [] as $parameter) {
 			self::visit_signature_type_dependencies($parameter->type_def(), $collect);
 		}
@@ -3331,6 +3567,10 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	private static function integer_spelling(int $integer /** int64 */): string
+	{
+		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
+	}
 	/** Each distinct inherited signature needs one override, even when multiple interfaces introduce it. */
 	private static function variance_bridges(ast_record_declaration $record): \Generator
 	{
@@ -3400,6 +3640,32 @@ CPP;
 		return count($constructor->parameters) === 1 && $constructor->parameters[0]->type_def() === $constructor->parent->definition;
 	}
 
+	/** Collect the native declarations needed to name a signature before its component definitions.
+	 * @param string[] $forwards */
+	private static function signature_forward_collector(array &$forwards): \Closure
+	{
+		return static function (type_definition $type) use (&$forwards): void {
+			if ($type instanceof intersection_type_definition) {
+				$forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof application_collection_type) {
+				$forwards[$type->name] = 'class ' . $type->cpp_type() . ";\n";
+			} elseif ($type instanceof enum_type_definition) {
+				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'enum class '
+					. Cpp_Identifier::source($type->declaration->short_name) . ' : ' . $type->storage()->cpp_type() . ";\n");
+			} elseif ($type instanceof record_type_definition) {
+				$forwards[$type->name] = self::namespace_body($type->cpp_namespace(), 'struct ' . Cpp_Identifier::source($type->declaration->short_name) . ";\n");
+			} elseif ($type instanceof record_handle_definition) $forwards[$type->name] = 'struct ' . $type->cpp_type() . ";\n";
+		};
+	}
+
+	/** A concrete container header can name a callable whose arguments include its enclosing class. */
+	public static function callable_forwards(owned_callable_type $type): string
+	{
+		$forwards = [];
+		self::visit_signature_type_dependencies($type, self::signature_forward_collector($forwards));
+		return implode('', $forwards);
+	}
+
 	/** Visit the receiver and outputs, then signature parameters in declaration order. @param \Closure(type_definition):void $visit */
 	public static function visit_signature_application_types(ast_function_declaration $function, \Closure $visit): void
 	{
@@ -3440,6 +3706,7 @@ CPP;
 			foreach ($type->concrete_types() as $argument) self::visit_signature_type_dependencies($argument, $visit);
 			return;
 		}
+		if ($type instanceof segment_type) self::visit_signature_type_dependencies($type->element, $visit);
 		if ($type instanceof nullable_enum_type_definition) $visit($type->payload_type);
 		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) $visit($type);
 	}

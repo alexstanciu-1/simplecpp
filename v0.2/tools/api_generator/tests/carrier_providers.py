@@ -28,8 +28,9 @@ def proof(work):
     mp, pp = work / 'metadata.json', work / 'publication.json'
     runtime, compiler = work / 'runtime', work / 'compiler'
     runner = work / 'resolve.php'
-    runner.write_text('<?php\n' + ''.join('require ' + repr(str(ROOT / 'compiler/types' / (name + '.php'))) + ';\n'
-        for name in ['conversion', 'definition', 'async', 'vector', 'carrier', 'hash', 'boxed'])
+    compiler_root = ROOT / 'compiler'
+    boot = (compiler_root / 'boot.php').read_text().split("require_once __DIR__ . '/generated/", 1)[0]
+    runner.write_text(boot.replace('__DIR__', repr(str(compiler_root)))
         + "foreach (['int64','null','bool','uint8','float64','string','registry'] as $name) require $argv[1].'/types/'.$name.'.php';\n"
         + "$t=\\scpp\\compiler\\type_registry::specialize('nullable',\\scpp\\compiler\\type_registry::integer());\n"
         + "echo json_encode($t === null ? null : [$t->name,$t->cpp_type(),$t->cpp_headers()]);\n")

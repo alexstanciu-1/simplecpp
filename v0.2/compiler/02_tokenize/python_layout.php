@@ -6,6 +6,7 @@ namespace scpp\compiler;
 /** Adds logical line and suite boundaries to the shared scanner's Python lexemes. */
 final class Python_Layout
 {
+	/** PROPERTIES */
 	/** @var int[] */
 	private array $levels /** list<uint32> */ = [0];
 	/** @var token_kind[] */
@@ -13,10 +14,12 @@ final class Python_Layout
 	private int $line_start /** uint32 */ = 0;
 	private bool $pending = false;
 
+	/** CONSTRUCTOR */
 	public function __construct(private readonly source_file $source)
 	{
 	}
 
+	/** METHODS */
 	/** @param token[] $tokens */
 	public function trivia(array &$tokens, string $word, int $offset): void
 	{

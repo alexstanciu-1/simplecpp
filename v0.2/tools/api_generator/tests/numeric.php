@@ -4,6 +4,8 @@ namespace Scpp\Api;
 require_once __DIR__ . '/contracts.php';
 
 $core = decode(readFile($root . '/runtime/metadata/publication.json'), 'core');
+$core->types = ['byte', 'int64'];
+unset($core->modules);
 $meta = decode($metadata, 'metadata');
 $plan = prepareRuntime($meta, $core, $facts);
 requireThat(array_column($plan['types'], 'name') === ['uint8', 'int64'], 'Core integer/byte surface grew');

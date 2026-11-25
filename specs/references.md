@@ -135,10 +135,14 @@ The receiver selects the method. The writable argument supplies the returned slo
 
 An ordinary assignment copies the result. In `$alias =& select($value)`, the
 call runs once and the new name binds to the caller's slot after it succeeds.
-Free functions and final non-overriding instance methods can forward that slot.
-Preparation rejects a direct-call cycle containing a reference-returning function
-or method, including cycles through by-value intermediaries. Other method dispatch,
-reference-returning callbacks, and returns across finally are deferred.
+Directly called inferred PHP closures can declare the same result using
+`fn&(int &$slot):int => $slot` or `function &(int &$slot):int { return $slot; }`.
+A block can return through a local alias of that parameter. Captures and locals
+cannot supply the result. Free functions, final non-overriding instance methods,
+and concrete closures can forward the caller's slot.
+Typed callbacks and owned callables can forward the same slot under an explicit reference-result
+signature. Preparation rejects cycles containing reference returns, including indirect calls
+through compatible targets and by-value intermediaries. Returns across finally remain deferred.
 
 The `compiler/my-try` implementation accepts both inferred and explicitly typed
 local bindings:

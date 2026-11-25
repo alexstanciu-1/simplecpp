@@ -22,7 +22,10 @@ def main():
     parser.add_argument("--emit", action="store_true", help="Compare complete scalar artifact bytes and compile consumers")
     parser.add_argument("--cxx", default="clang++")
     parser.add_argument("--flag", action="append", default=[])
+    parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
+    if args.quick and args.capture:
+        parser.error("Baseline capture requires the full matrix")
     root = Path(__file__).resolve().parents[2]
     args.generator = args.generator.resolve()
     baseline = json.loads(Path(__file__).with_name("scalar_baseline.json").read_text())["cases"]
@@ -77,7 +80,8 @@ def main():
                             obj = case / 'runtime.o'
                             compiled = run(flags + ['-c', generated / 'src/runtime.cpp', '-o', obj])
                             assert compiled.returncode == 0, compiled.stderr
-                            for header in (generated / 'public').rglob('*.hpp'):
+                            headers = [generated / 'public/scpp/arithmetic.hpp'] if args.quick else (generated / 'public').rglob('*.hpp')
+                            for header in headers:
                                 sample = case / 'header.cpp'; sample.write_text('#include "' + str(header.relative_to(generated / 'public')) + '"\nint main() {}\n')
                                 preprocessed = run(flags + ['-E', '-P', sample])
                                 assert preprocessed.returncode == 0, preprocessed.stderr
@@ -85,7 +89,8 @@ def main():
                                 compiled = run(flags + ['-fsyntax-only', sample])
                                 assert compiled.returncode == 0, compiled.stderr
                             if label == 'default-scalars':
-                                for consumer in ['integer_consumer', 'value_consumer', 'floating_consumer']:
+                                consumers = ['value_consumer'] if args.quick else ['integer_consumer', 'value_consumer', 'floating_consumer']
+                                for consumer in consumers:
                                     exe = case / consumer
                                     compiled = run(flags + [root / ('tests/' + consumer + '.cpp'), obj, root / 'runtime/src/numeric/arithmetic.cpp', '-o', exe])
                                     assert compiled.returncode == 0, compiled.stderr
@@ -110,6 +115,16 @@ def main():
                 counts['rejected'] += 1
 
         check('default-scalars', scalar_metadata, publication)
+        if args.quick:
+            invalid = copy.deepcopy(publication)
+            invalid['operators'] = [{'operation': 'add', 'operands': ['null_t', 'int64']}]
+            check('invalid-null-arithmetic', scalar_metadata, invalid, False)
+            broken = copy.deepcopy(scalar_metadata)
+            broken['operations']['add']['public_operator'] = '-'
+            check('invalid-add-binding', broken, publication, False)
+            (args.work / 'summary.json').write_text(json.dumps(counts, indent=2) + '\n')
+            print(json.dumps(counts))
+            return
         # Accept full metadata as a scoped scalar input; optional sections are not validated.
         check('full-metadata-scalar-demand', metadata, publication)
         base = copy.deepcopy(publication)

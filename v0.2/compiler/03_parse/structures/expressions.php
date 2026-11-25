@@ -175,7 +175,8 @@ class ast_binary_expression extends ast_expression
 }
 
 /** Its left operand is a non-owning link to the previous comparison's right operand. */
-final class ast_continued_comparison extends ast_binary_expression {}
+final class ast_continued_comparison extends ast_binary_expression {
+}
 
 /** Strict indexed comparison whose bare RHS can bind to a declaration or denote a missing key. */
 final class ast_key_comparison extends ast_binary_expression

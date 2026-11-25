@@ -87,17 +87,17 @@ def prove(work, flavor, libraries):
         resident.wait()
 
 
-def incremental_native_build(output, native, compiler, library, expected_stdout=b'3', *, expected_status=8):
+def incremental_native_build(output, native, compiler, library, expected_stdout=b'3', *, expected_status=8, cxx_flags=()):
     """Persistent, compiler-specific Ninja graph; stable object names and real compiler depfiles."""
     native.mkdir(exist_ok=True)
     manifest = json.loads((output / 'manifest.json').read_text())
     objects = {unit: 'unit-' + hashlib.sha256(unit.encode()).hexdigest() + '.o'
                for unit in manifest['translation_units']}
-    flags = ' '.join(map(shell, [compiler, '-std=c++23', '-O1', '-g0', '-Wall', '-Wextra',
+    flags = ' '.join(map(shell, [compiler, *cxx_flags, '-std=c++23', '-O1', '-g0', '-Wall', '-Wextra',
                                 '-Werror', '-I', ROOT / 'runtime/generated/public']))
     lines = ['rule compile', f'  command = {flags} -MMD -MF $out.d -c $in -o $out',
              '  depfile = $out.d', '  deps = gcc', 'rule link',
-             f'  command = {shell(compiler)} $in -o $out']
+             f'  command = {" ".join(map(shell, [compiler, *cxx_flags]))} $in -o $out']
     lines += [f'build {obj}: compile {ninja_path(output / unit)}' for unit, obj in objects.items()]
     lines += [f'build program: link {" ".join(objects.values())} {ninja_path(library)}', 'default program']
     graph = native / 'build.ninja'
@@ -227,13 +227,19 @@ def standalone(work, flavor, libraries):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory() as directory:
         work = (args.output or Path(directory)).resolve()
         work.mkdir(exist_ok=True)
-        libraries = {cc: runtime(work, cc) for cc in ['clang++', 'g++']}
-        for flavor in ['cpp', 'php', 'js']:
-            prove(work, flavor, libraries)
-            standalone(work, flavor, libraries)
-            removal_and_native_reuse(work, flavor, libraries)
-            print(flavor, 'concrete adapter lifecycle passed', flush=True)
+        if args.quick:
+            from application_vectors_native import measure
+            prove(work, 'php', {})
+            measure(work/'php-out', work/'native', b'333')
+        else:
+            libraries = {cc: runtime(work, cc) for cc in ['clang++', 'g++']}
+            for flavor in ['cpp', 'php', 'js']:
+                prove(work, flavor, libraries)
+                standalone(work, flavor, libraries)
+                removal_and_native_reuse(work, flavor, libraries)
+                print(flavor, 'concrete adapter lifecycle passed', flush=True)

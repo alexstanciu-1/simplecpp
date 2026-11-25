@@ -307,7 +307,10 @@ def main():
     for field in ['generator', 'facts', 'context', 'work']:
         parser.add_argument('--' + field, type=Path, required=True)
     parser.add_argument('--capture', type=Path, help='Explicit reviewed snapshot capture; never enabled by CTest')
+    parser.add_argument('--quick', action='store_true')
     args = parser.parse_args()
+    if args.quick and args.capture:
+        parser.error('Baseline capture requires the full matrix')
     for field in ['generator', 'facts', 'context']:
         setattr(args, field, getattr(args, field).resolve())
     args.baseline = json.loads(Path(__file__).with_name("runtime_baseline.json").read_text())["cases"]
@@ -321,14 +324,25 @@ def main():
         proof = Parity(args, work)
         string_p = copy.deepcopy(p); string_p.pop('vectors', None); string_p.pop('carriers', None)
         vector_p = copy.deepcopy(p); vector_p.pop('carriers', None)
-        string_cases(proof, m, string_p)
-        vector_cases(proof, m, vector_p)
-        carrier_cases(proof, m, p)
         ownership = json.loads((root / 'tests/ownership/publication.json').read_text())
-        ownership_cases(proof,m,ownership,p)
-        from corpus import cases
-        for case in cases(root):
-            proof.check('G1-' + case.name, case.metadata, case.publication, not case.rejection)
+        if args.quick:
+            families = [
+                ('strings', string_p, ['string', 'storage'], 'other'),
+                ('vectors', vector_p, ['vector', 'read'], 'reference'),
+                ('default-carriers', p, ['carriers', 'extraction'], 'unchecked'),
+                ('ownership-default', ownership, ['ownership', 'binding'], 'external'),
+            ]
+            for name, demand, path, invalid in families:
+                proof.check(name, m, demand)
+                proof.mutations(m, demand, [(path, invalid)], 'metadata')
+        else:
+            string_cases(proof, m, string_p)
+            vector_cases(proof, m, vector_p)
+            carrier_cases(proof, m, p)
+            ownership_cases(proof,m,ownership,p)
+            from corpus import cases
+            for case in cases(root):
+                proof.check('G1-' + case.name, case.metadata, case.publication, not case.rejection)
         report = {'accepted': proof.accepted, 'rejected': proof.rejected}
     if args.capture:
         baseline = json.loads(Path(__file__).with_name('runtime_baseline.json').read_text())

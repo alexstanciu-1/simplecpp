@@ -13,6 +13,7 @@ p.add_argument('--source', type=Path, required=True)
 p.add_argument('--facts', type=Path, required=True)
 p.add_argument('--context', type=Path, required=True)
 p.add_argument('--cxx', required=True)
+p.add_argument('--quick', action='store_true')
 a = p.parse_args()
 metadata = json.loads((a.source/'runtime/metadata/runtime.json').read_text())
 publication = json.loads((a.source/'tests/boxed/publication.json').read_text())
@@ -50,6 +51,12 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
         one, _ = run(metadata, pub)
         source = one/'consumer.cpp'
         source.write_text('#include "scpp/boxed.hpp"\nint main() { scpp::'+family+' value; return value.kind() != scpp::boxed_kind::null; }\n')
+        if a.quick:
+            check = [a.cxx, '-std=c++23', '-stdlib=libc++', '-I'+str(one/'out/public'), '-fsyntax-only', str(source)]
+            subprocess.run(check, check=True)
+            source.write_text('#include "scpp/boxed.hpp"\nscpp::'+absent+' forbidden;\n')
+            assert subprocess.run(check, capture_output=True).returncode != 0
+            continue
         command = [a.cxx, '-std=c++23', '-stdlib=libc++', '-O0', '-I'+str(one/'out/public')]
         for directory in ['numeric', 'sequence', 'boxed', 'hash', 'ownership']:
             command += ['-I'+str(a.source/'runtime/src'/directory)]
@@ -64,6 +71,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
     for families in [[], ['mixed', 'mixed'], ['object'], ['mixed']]:
         pub = copy.deepcopy(publication); pub['boxed']['families'] = families
         run(metadata, pub, accepted=False)
+    if a.quick:
+        bad = copy.deepcopy(facts)
+        del bad['boxed']
+        run(metadata, publication, bad, accepted=False)
+        raise SystemExit(0)
     for key in ['types', 'values', 'string']:
         pub = copy.deepcopy(publication)
         if key == 'string': del pub[key]

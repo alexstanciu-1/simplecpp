@@ -23,18 +23,6 @@ final class Program_Frontend
 		return $this->run($session, $target, Program_Frontend::load_snapshot(...), $sources);
 	}
 
-	/** Disk units already carry their root and relative path. @param source_file[] $snapshots */
-	private static function load_disk(source_unit $unit, array $snapshots /** array<string,source_file> */): source_file
-	{
-		return Program_Loader::load($unit);
-	}
-
-	/** Preserve the caller-supplied snapshot identity and its source label. @param source_file[] $snapshots */
-	private static function load_snapshot(source_unit $unit, array $snapshots /** array<string,source_file> */): source_file
-	{
-		return $snapshots[$unit->path];
-	}
-
 	/**
 	 * Rebuild all source results with the selected loader and its explicit snapshot input.
 	 *
@@ -68,5 +56,17 @@ final class Program_Frontend
 			}
 			throw $error;
 		}
+	}
+
+	/** Disk units already carry their root and relative path. @param source_file[] $snapshots */
+	private static function load_disk(source_unit $unit, array $snapshots /** array<string,source_file> */): source_file
+	{
+		return Program_Loader::load($unit);
+	}
+
+	/** Preserve the caller-supplied snapshot identity and its source label. @param source_file[] $snapshots */
+	private static function load_snapshot(source_unit $unit, array $snapshots /** array<string,source_file> */): source_file
+	{
+		return $snapshots[$unit->path];
 	}
 }

@@ -41,7 +41,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -78,6 +78,13 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     finalizePublicationProviders($plan);
+    if (property_exists($publication, 'mt_segments')) {
+        requireThat(is_bool($publication->mt_segments), 'Invalid MT segment selection');
+        if ($publication->mt_segments) {
+            requireThat(in_array('int64', array_column($plan['vectors'], 'element'), true), 'MT segments require vector<int64> results');
+            $plan['mt_segments'] = true;
+        }
+    }
     $plan['async_frames'] = $publication->async_frames ?? false;
     requireThat(is_bool($plan['async_frames']), 'Invalid async frame selection');
     return $plan;

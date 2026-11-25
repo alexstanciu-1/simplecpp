@@ -60,6 +60,18 @@ $functionMetadata->string->functions->count_bytes = $declaration;
 $declaration->symbol = 'scpp::str::measured_bytes';
 $demand = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
 $demand->string->functions = ['count_bytes'];
+$mtDemand = clone $demand;
+foreach ([false, true] as $enabled) {
+    $mtDemand->mt_segments = $enabled;
+    $mtPlan = prepareRuntime($functionMetadata, $mtDemand, $facts);
+    $runtimeFiles = render($mtPlan);
+    $registry = renderCompiler($functionMetadata, $facts, $mtPlan)['types/registry.php'];
+    requireThat(str_contains($registry, 'HAS_MT_SEGMENTS = ' . ($enabled ? 'true;' : 'false;'))
+        && isset($runtimeFiles['public/scpp/mt_segment.hpp']) === $enabled
+        && isset($runtimeFiles['public/scpp/mt_segments.hpp']) === $enabled
+        && str_contains($runtimeFiles['public/' . $mtPlan['vectors_header']], 'mt_data()') === $enabled,
+        'Compiler and runtime disagree on exclusive segment availability');
+}
 $asyncDemand = clone $demand;
 foreach ([false, true] as $enabled) {
     $asyncDemand->async_frames = $enabled;

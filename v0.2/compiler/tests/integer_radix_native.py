@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import argparse
 import tempfile
 
 from app_namespace_native import artifacts, invoke, service
@@ -17,7 +18,7 @@ def source(flavor, literal, kind='int'):
     return declaration + f' echo (int){name}; return 8;'
 
 
-def prove(work, flavor):
+def prove(work, flavor, quick=False):
     app = work / flavor
     app.mkdir()
     entry = app / ('main.' + flavor)
@@ -39,6 +40,8 @@ def prove(work, flavor):
            ('0x', 'int', 'digits'), ('0o', 'int', 'digits'),
            ('0o78', 'int', 'numeric literal'), ('0x1g', 'int', 'numeric literal'),
            ('0x1.0', 'int', 'numeric literal')]
+    if quick:
+        good = [good[i] for i in (1, 5, 6, 9)]
     with service(app, output) as resident:
         for rev, (literal, kind, expected) in enumerate(good + bad + good[:1]):
             entry.write_text(source(flavor, literal, kind))
@@ -63,6 +66,9 @@ def prove(work, flavor):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-radix-') as directory:
-        for flavor in ('php', 'cpp', 'js'):
-            prove(Path(directory), flavor)
+        for flavor in (('php',) if quick else ('php', 'cpp', 'js')):
+            prove(Path(directory), flavor, quick)

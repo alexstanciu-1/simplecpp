@@ -201,6 +201,7 @@ final class Function_Preparation
 			if (!($value instanceof ast_continued_comparison)) self::expression($value->left);
 			self::expression($value->right);
 		}
+		if ($value instanceof ast_inline_job && $value->iteration !== null) self::expression($value->iteration);
 		if ($value instanceof ast_call_expression || $value instanceof ast_construction_expression) {
 			if ($value instanceof ast_call_expression && $value->receiver !== null) {
 				self::expression($value->receiver);
@@ -262,7 +263,22 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Yield producers require by-value parameters');
 			}
 			$parameter->reset_preparation();
-			$parameter_type = $parameter->type_reference->name === 'callback' && $parameter->type_reference->first_child !== null
+			if (in_array($parameter->type_reference->name, ['segment', 'read_segment', 'hash_segment', 'read_hash_segment'], true) && $parameter->type_reference->first_child !== null) {
+				if (!type_registry::HAS_MT_SEGMENTS) throw new diagnostic($parameter->source(), $parameter->byte_start(), 'MT segments unavailable in this runtime');
+				$child = $parameter->type_reference->first_child;
+				$hash = in_array($parameter->type_reference->name, ['hash_segment', 'read_hash_segment'], true);
+				$key_syntax = $child->next_sibling;
+				if (($key_syntax !== null) !== $hash || $key_syntax?->next_sibling !== null || $parameter->mode !== passing_mode::value
+					|| $parameter->default_value !== null || $declaration->is_async || $type instanceof generator_type_definition || $declaration->parent instanceof ast_method_owner) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Segment requires an ordinary free-function parameter');
+				}
+				$element = Type_Resolution::signature($child, $symbols, $declaration, $dependencies, watcher: $watcher);
+				if ($element === null || !Mt_Rules::isolated($element)) throw new diagnostic($child->source(), $child->byte_start(), 'Segment requires isolated inline elements');
+				$key = $hash ? Type_Resolution::signature($key_syntax, $symbols, $declaration, $dependencies, watcher: $watcher) : null;
+				if ($hash && $key !== type_int64::instance() && $key !== type_string::instance())
+					throw new diagnostic($key_syntax->source(), $key_syntax->byte_start(), 'Hash segment keys must be int or string');
+				$parameter_type = new segment_type($element, str_starts_with($parameter->type_reference->name, 'read_'), $key);
+			} else $parameter_type = $parameter->type_reference->name === 'callback' && $parameter->type_reference->first_child !== null
 				? Type_Resolution::callback($parameter, $symbols, $declaration, $watcher, $dependencies)
 				: Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);
 			if ($parameter_type === null) {
@@ -319,9 +335,9 @@ final class Function_Preparation
 	}
 
 	/** A reference result borrows exactly one fixed writable parameter of the same type. */
-	private static function reference_return_origin(ast_function_declaration $declaration, type_definition $type): int /** uint32 */
+	public static function reference_return_origin(ast_function_declaration|ast_lambda_expression $declaration, type_definition $type): int /** uint32 */
 	{
-		if ($declaration->parent instanceof ast_method_owner && !$declaration->is_direct_final_method()) {
+		if ($declaration instanceof ast_function_declaration && $declaration->parent instanceof ast_method_owner && !$declaration->is_direct_final_method()) {
 			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Method reference return requires a final non-overriding instance method');
 		}
 		$origin = null;

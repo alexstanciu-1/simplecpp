@@ -1,6 +1,7 @@
 """Raw byte arrays, aggregate frame budget and bounds, through all three source flavors."""
 import json
 import subprocess
+import argparse
 import tempfile
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from extends_regressions import forms
 from structs_native import build
 
 
-def prove(work, flavor):
+def prove(work, flavor, quick=False):
     v, access, record, field, _, local, infer = forms(flavor)
     app = work / flavor
     app.mkdir()
@@ -31,7 +32,7 @@ def prove(work, flavor):
     body += f'{v}pad={v}row; {v}row[2]=11; echo count({v}pad),(int){v}pad[2],(int){v}row[2],(int){path}[1][2]; return 8;'
     source_edit(main, body)
     with service(app, output) as resident:
-        for rev, (n, expected) in enumerate([(8191, None), (8192, '64 KiB'), (9223372036854775807, '64 KiB'), (8191, None)]):
+        for rev, (n, expected) in enumerate([(8191, None), (8192, '64 KiB'), (9223372036854775807, 'uint32 inline payload capacity'), (8191, None)]):
             source_edit(provider, model(n))
             result = invoke(resident)
             fresh_dir = work / f'fresh-{flavor}-{rev}'
@@ -55,6 +56,39 @@ def prove(work, flavor):
             with service(app, work / ('invalid-fresh-' + flavor)) as oracle:
                 assert message in failure.get('error', '') and failure['error'] == invoke(oracle)['error'], failure
                 oracle.stdin.close()
+        # Exercise the same large record with heap and inline storage in one session.
+        source_edit(provider, model(32768))
+        heap = infer('box', 'new Envelope()')
+        heap += f'echo (int){path}[32767][3]; {path}[32767][3]=231; echo (int){path}[32767][3]; return 8;'
+        inline = local('box', 'Envelope') + 'return 8;'
+        for revision, program in enumerate((heap, inline, heap)):
+            source_edit(main, program)
+            result = invoke(resident)
+            fresh_dir = work / f'heap-fresh-{flavor}-{revision}'
+            with service(app, fresh_dir) as fresh:
+                oracle = invoke(fresh)
+                fresh.stdin.close()
+            if program == heap:
+                assert 'error' not in result and 'error' not in oracle, (result, oracle)
+                assert artifacts(output) == artifacts(fresh_dir)
+                print(flavor, 'heap record', measure(output, work / f'heap-{flavor}-{revision}', b'0231'), flush=True)
+            else:
+                assert 'Function fixed-array storage exceeds 64 KiB' in result.get('error', ''), result
+                assert result['error'] == oracle['error']
+        replace = {
+            'php': 'function replace(shared<Envelope> &$box): int',
+            'cpp': 'int replace(shared<Envelope>& box)',
+            'js': 'function replace(&box: shared<Envelope>): int',
+        }[flavor]
+        replace += f'{{ {v}box = new Envelope(); return 231; }}'
+        mutation = replace + infer('box', 'new Envelope()') + infer('old', f'{v}box')
+        mutation += f'{path}[32767][3]=replace({v}box);'
+        old_path = f'{v}old{access}packet{access}grid'
+        mutation += f'echo (int){path}[32767][3],(int){old_path}[32767][3]; return 8;'
+        source_edit(main, mutation)
+        assert 'error' not in (result := invoke(resident)), result
+        build(output, work / f'heap-receiver-replacement-{flavor}', b'0231')
+        source_edit(provider, model(8191))
         signature = {'php': 'function accept(Envelope $packet):void', 'cpp': 'void accept(Envelope packet)',
                      'js': 'function accept(packet:Envelope):void'}[flavor]
         source_edit(main, signature + '{' + local('scratch', 'fixed_array<byte,32772>') + '} return 8;')
@@ -76,7 +110,7 @@ def prove(work, flavor):
         assert 'error' not in (result := invoke(resident)), result
         build(output, work / ('zero-' + flavor), b'01')
         rhs = {'php': 'function tick():int', 'js': 'function tick():int', 'cpp': 'int tick()'}[flavor] + ' { echo "R"; return 7; }'
-        for index in ('-1', '4', '4294967296', '9223372036854775807', '(-9223372036854775807-1)'):
+        for index in (('-1', '4') if quick else ('-1', '4', '4294967296', '9223372036854775807', '(-9223372036854775807-1)')):
             access_statement = (f'{path}[0][{index}]=tick();' if index in ('-1', '4294967296') else f'echo (int){path}[0][{index}];')
             source_edit(main, rhs + local('box', 'Envelope') + access_statement + ' return 8;')
             assert 'error' not in (result := invoke(resident)), result
@@ -90,7 +124,7 @@ def prove(work, flavor):
         resident.stdin.close()
 
 
-def named_extents(work, flavor):
+def named_extents(work, flavor, quick=False):
     v, access, record, field, _, local, _ = forms(flavor)
     sep = {'php': '\\', 'cpp': '::', 'js': '.'}[flavor]
 
@@ -109,7 +143,7 @@ def named_extents(work, flavor):
     main = local('box', 'Envelope') + f'echo count({v}box{access}packet{access}bytes),localSize(); return 8;'
     sources = dict(main=main, local_size=local_size, units=units(2), sizes='namespace Sizes {' + prefix + size + '}',
                    packet=f'use const Sizes{sep}PAGE_SIZE as CAP;' + packet, envelope=envelope)
-    revisions(work, flavor, sources, [
+    edits = [
         (None, None, b'44'),
         (None, None, b'44'),
         ('units', units(3), b'66'),
@@ -119,13 +153,17 @@ def named_extents(work, flavor):
         ('sizes', 'namespace Sizes {' + constant('PAGE_SIZE', 'true', 'bool') + '}', 'requires a namespace integer constant'),
         ('sizes', None, 'requires a namespace integer constant'),
         ('sizes', sources['sizes'], b'00'),
-    ])
+    ]
+    revisions(work, flavor, sources, [edits[i] for i in (0, 2, 3, 5)] if quick else edits)
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--quick", action="store_true")
+    quick = parser.parse_args().quick
     with tempfile.TemporaryDirectory(prefix='scpp-fixed-array-') as tmp:
         named = Path(tmp) / 'named'
         named.mkdir()
-        for language in ('php', 'cpp', 'js'):
-            named_extents(named, language)
-            prove(Path(tmp), language)
+        for language in (('php',) if quick else ('php', 'cpp', 'js')):
+            named_extents(named, language, quick)
+            prove(Path(tmp), language, quick)

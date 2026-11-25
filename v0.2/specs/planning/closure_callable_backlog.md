@@ -15,8 +15,14 @@ The [closure specification](../../../specs/language/closures.md) owns semantics.
 | Implemented · Free-function callable factories | PHP free functions return an owned callable by value with the existing local conversion. The native proof covers snapshot lifetime, borrow rejection, absent returns, nominal inputs, cross-file arity edits and recovery. |
 | Implemented · Free-function owned callable parameters | Required by-value parameters supply the signature for inline closures and named callable references. The native proof covers independent reset, named argument evaluation order, forwarding absence, and signature edits and repair. |
 | Implemented · Static method owned callable parameters and returns | Static methods reuse the free-function ownership checks. Native revisions exercise late static dispatch, exact redeclarations, selected parameter names and cross-file signature repair. |
-| Other callable storage boundaries | Next, consider instance method parameters and returns, including override and interface signature checks. Fields and containers require their own storage and invocation proofs. |
-| Richer signatures | Reference inputs and returns require per-parameter modes, return origins and alias checks through indirect calls. Variadics additionally require pack binding and ordered conversion. Preserve positional full-arity invocation of today's fixed typed callbacks. |
+| Implemented · Instance method owned callable parameters and returns | Interface and base-class calls use exact callable contracts. Native tests cover dynamic dispatch, cross-file override edits and recovery, escaping field snapshots and rejected receiver borrows. |
+| Implemented · Owned callable instance fields | Class and struct fields default to absent, use contextual assignment and support invocation through a parenthesized field read. Native revisions cover replacement during argument evaluation, absent calls, rejected borrows and cross-file signature repair. |
+| Implemented · Owned callable static properties | Each declaring class or struct owns one initially absent slot. Native revisions cover cross-file replacement during a call, borrowed captures, absent invocation and signature repair. |
+| Implemented · Typed callable containers | Vectors and hashes store fixed-signature owned callables. Native tests cover indexed selection during replacement, copies, lazy keyed presence, borrowed-capture rejection and cross-file signature repair. |
+| Implemented · Mutable reference inputs | Typed callbacks and owned callables use explicit reference inputs, exact target matching and the direct-call storage binder. |
+| Implemented · Concrete PHP closure reference returns | Directly called inferred arrows and blocks borrow one whole writable parameter. Native revisions cover origin checks, cycles, alias versus copy, and cross-file recovery. |
+| Implemented · Indirect reference returns | Fixed-arity typed callbacks and owned callables preserve the caller-owned result slot. Cycle validation groups compatible targets by exact signature. |
+| Richer signatures | Variadics require pack binding and ordered conversion. Preserve positional full-arity invocation of today's fixed typed callbacks. |
 
 Contextual completion uses the existing preparation pass and callback ABI. The vector regression and the diagnostic add no work to successful compilation. The remaining items need lifetime, representation or calling-convention work. Reassess those designs and measure representative callers before enabling them.
 
@@ -47,3 +53,32 @@ For free-function factory returns, the unchanged 12,981-byte fixture took 8.285 
 For by-value owned callable parameters, the unchanged 12,981-byte fixture took 7.963 ms at `fb587a806` and 7.627 ms with the change. These are medians of four pinned process medians per version, alternating pair order after native tests completed. The ranges overlapped (7.619–8.151 and 7.600–7.950 ms). This measures preparation for existing callback arguments.
 
 For static method callable signatures, the same unchanged fixture took 9.318 ms at `4f5019d31` and 11.101 ms with the change after the native tests completed. Four pinned process medians ranged from 8.983–12.272 and 10.115–12.027 ms respectively. An earlier run overlapping native tests gave 9.508 and 8.450 ms. The direction changed between runs, so these measurements do not establish a reliable preparation cost.
+
+### Indirect reference-result preparation
+
+The [reproducible PHP probe](benchmarks/callables/reference_results.php) compares commit
+`5a1cdba8f` with this implementation. Six paired rounds alternated version order on CPU 2
+using PHP 8.5.7 CLI and Xdebug off. Each table entry is the median of six process medians,
+in milliseconds. Fresh samples time declaration and body preparation through cycle validation
+after parsing. Each process took eight warm-ups and 31 measured samples. The incremental
+cases took eight warm-up edit/recovery pairs and 61 measured pairs per process. Timing
+excludes file edits, frontend publication, C++ emission and Clang. No native tests ran
+during these rounds.
+
+| Preparation fixture | Before (ms) | After (ms) | Change |
+| --- | ---: | ---: | ---: |
+| Existing by-value callbacks, 400 locals and 128 closure arguments | 16.409 | 17.322 | +5.6% |
+| 32 indirect callers and 32 matching targets reachable from a reference-returning function | 5.619 | 5.883 | +4.7% |
+| 128 indirect callers and 128 matching targets | 18.834 | 20.999 | +11.5% |
+| Cross-file direct result marker removal / restoration | 0.516 / 0.501 | 0.521 / 0.523 | +1.1% / +4.5% |
+| Cross-file value callback target mismatch / restoration | 0.374 / 0.444 | 0.366 / 0.433 | −2.1% / −2.6% |
+| Cross-file owned reference-result target mismatch / restoration | unavailable | 0.440 / 0.430 | — |
+
+The shared-signature fixtures use code accepted by both versions and include by-value
+indirect calls in the reachable reference-cycle graph. Four times as many callers and
+targets took 3.6 times as long on the updated compiler. In the by-value fixture the
+process medians ranged from 15.459–18.644 ms before and 15.825–20.968 ms after.
+These ranges overlap. The observed differences are workload measurements, with
+substantial run-to-run variation. All three incremental cases queued two bodies on
+the failing edit, left one pending after the diagnostic, and prepared two on recovery.
+The owned reference-result spelling first works in this implementation.

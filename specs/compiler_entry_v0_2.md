@@ -255,11 +255,19 @@ Pass a source function as `name(...)`. A type-qualified reference such as
 `Math::twice(...)` (PHP and C++) or `Math.twice(...)` (JS) can select a
 static method using normal name lookup and access checks. The ellipsis forms
 a reference without invoking its target. The expected types and arity must
-match the target's required by-value signature exactly. Inside the accepting
+match the target's required signature exactly, including each input's passing mode. Inside the accepting
 function, invoke the parameter with ordinary call syntax (`$op(value)` in PHP,
 `op(value)` in C++ and JS), or forward it to another matching callback
-parameter. Invocation uses the ordinary argument conversions, evaluation
-contract and exception propagation.
+parameter. A trailing `&` marks a mutable reference input, as in
+`callback<void,int&>`. It uses the direct-call rules for exact writable storage,
+aliasing and invalidation of caller value facts. Value inputs use ordinary
+conversions. A result marker in `callback<R&,Args...>` or `function<R&(Args...)>`
+makes the result a writable alias of the one reference input, whose type must be
+exactly `R`. The target must declare the same result mode and origin. In PHP,
+`$a =& $op($x)` binds to the caller's slot after a successful invocation, while
+`$a = $op($x)` copies the value. A stored callable may be reset or replaced while
+that alias remains live. The existing capture and ownership rules apply.
+Invocation follows the usual evaluation and exception contracts.
 
 The C++ backend passes a typed native function pointer. Instance method
 references and persistent callback storage are outside this slice.
@@ -270,7 +278,8 @@ A lambda passed directly to a selected `callback<R,Args...>` parameter may omit
 input and result annotations independently. For example, `apply(fn($x) => $x)`
 uses the selected callback's first input and result. This applies to PHP block
 closures and to expression-bodied arrows in PHP, C++ and JS. Arity and authored
-annotations must match the expected signature exactly. An inferred local closure
+annotations must match the expected signature exactly. A reference input requires a written
+`&` on the closure parameter even when its type is omitted. An inferred local closure
 still requires all annotations at its initializer. A void arrow such as `fn(): void => ping()` evaluates its void
 body once. Functions, methods, and PHP block closures follow the same rule for
 `return ping();`. Exceptions propagate through the usual handlers and finalizers.
@@ -325,13 +334,14 @@ initializing required and readonly properties before creating a receiver borrow.
 A borrowed `$this` is available only as a receiver. Typed callbacks accept only
 capture-free callables.
 
-### Owned callables in locals, free functions and static methods
+### Owned callables in locals, functions, methods and properties
 
-PHP locals may declare a fixed by-value signature, for example
+PHP locals may declare a fixed-arity signature, for example
 `$add function<int(int)> = fn($n) => $n + $offset;`. The signature supplies
 omitted component types. An exact concrete closure with copyable by-value captures
 can initialize or replace the target. Borrowed environments and defaulted
-parameters reject at this boundary. The C++ representation is `std::function`.
+parameters reject at this boundary. Mutable reference inputs such as `function<void(int&)>`
+borrow the caller's storage for each invocation under the same rules as typed callbacks. The C++ representation is `std::function`.
 
 Copying the local copies its environment under ordinary value semantics, including
 shared-handle identity. A declaration without an initializer starts absent.
@@ -340,22 +350,49 @@ Invocation takes positional arguments at full arity. An argument can replace the
 local for subsequent calls. The current invocation retains its selected target.
 Calling absent storage throws `std::bad_function_call` after argument evaluation.
 
-A PHP free function or static method can publish the same fixed signature as its by-value return
+A PHP free function, static method or instance method can publish the same fixed signature as its by-value return
 type. The return context supplies omitted closure annotations. For example,
 `function makeAdder(int $base): function<int(int)> { return fn($n) => $base + $n; }`
 returns a callable that owns its snapshot of `$base`. The same ownership and
 signature checks apply when returning a concrete closure or an owned callable
 local. Returning an absent local preserves absence.
 
-A required by-value parameter on either declaration can also use
+A required by-value parameter on these declarations can also use
 `function<R(Args...)>`. The argument receives the selected parameter's signature,
 including when the caller supplies a named argument. The callee owns its copy:
 resetting or replacing the parameter leaves the caller's callable available.
 Invoking the parameter uses the full positional signature. Borrowed environments
 and defaulted closure parameters follow the same erasure checks as owned locals.
 
-A static method redeclaration must match the callable representation and the exact
-input and result types. Named arguments use the selected declaration’s parameter names.
+Static redeclarations, instance overrides and interface implementations must match the
+callable representation and its input and result types exactly. Named arguments use
+the parameter names from the declaration selected at the call site.
+
+An instance method can copy a field into a local and return a closure that captures
+that local by value. Returning a closure that borrows `$this` fails the ownership check.
+
+A PHP class or struct can declare an instance field such as `public function<int(int)> $run;`.
+The field starts absent. Assignment supplies the expected signature and applies the same
+ownership check as a local. `($object->run)(arg())` evaluates the receiver once and
+selects the field’s current callable before evaluating `arg()`. Replacing the field
+during argument evaluation affects subsequent calls. Calling an absent target throws
+`std::bad_function_call` after argument evaluation. The spelling `$object->run(...)`
+with actual arguments continues to select a method.
+
+A static property such as `public static function<int(int)> $run;` starts absent.
+Each declaring class or struct owns one slot shared across compilation units.
+An assignment through `self::$run` sets the target observed by `(Handler::$run)(4)`.
+Static property calls follow the same snapshot, absence and ownership rules as instance
+field calls. Install the callable in executable code after declaration.
+
+A typed vector or hash can store an owned callable, for example
+`$ops vector<function<int(int)>> = [fn($n) => $n + 1];` or
+`$ops hash<function<int(int)>,string> = ["add" => fn($n) => $n + 1];`.
+Literals, indexed writes and appends use the element signature and its ownership checks.
+An indexed call such as `$ops["add"](arg())` selects the target before evaluating
+arguments. Container copies own independent entries. Keyed `isset` requires every
+index on the path to exist and the final callable to be present. A missing index
+skips the remaining keys and leaves the container untouched.
 
 ### Trailing literal parameter defaults
 
@@ -437,3 +474,167 @@ for truthiness, lexical scopes and completion. Value-returning functions may ret
 through an exhaustive chain rather than a direct final return. Statements after a
 structurally guaranteed return remain rejected. Value facts no longer cross branch
 boundaries, while existing reference-call invalidation remains in effect.
+
+## Parallel block expressions
+
+In the PHP, C++, and JS flavors, `parallel` followed by `{` introduces a
+joined batch in expression position. Ordinary calls such as `parallel()`
+retain normal name lookup. The body contains one or more entries. A direct worker call ends with a
+semicolon. An inline worker ends with its closing brace. The surrounding statement follows its ordinary terminator
+rule. For example, with two disjoint ranges in a PHP-flavor vector:
+
+```php
+$totals = parallel {
+    update(segment($rows, 0, $split));
+    update(segment($rows, $split, $remaining));
+};
+```
+
+This form has the same worker contracts, whole-batch admission, join and
+submission-order integer results as the built-in `mt_join(...)`. A block used as
+a statement still joins all workers. This slice requires the MT segment runtime
+publication and fresh compilation.
+
+An inline worker declares one or more vector grants with `read:` or `write:`. Each binding introduces a distinct worker-local parameter
+whose segment element type comes from the supplied vector. The grant expressions
+use the caller's scope. A job can interleave these grants with any number of
+`value: $name = expression` bindings. Each accepts a numeric or boolean scalar
+and creates a worker-local copy of its inferred type. The caller evaluates all
+scalar inputs and two-argument segment range expressions once, in job and binding order, before borrowing any vector storage
+or admitting the batch. Caller-side effects therefore precede admission even
+when a grant is rejected. A suspending caller must await these inputs before the
+parallel block. Only grants participate in bounds and overlap checks. The body has its own scope, can use approved constants
+and checked helpers, and must return an integer on all completing paths.
+
+```php
+$totals = parallel {
+    job (write: $prices = segment($items, 0, $count),
+         write: $fees = segment($charges, 0, $count),
+         value: $adjustment = $daily_adjustment) {
+        $total = 0;
+        $i = 0;
+        while ($i < count($prices)) {
+            $prices[$i] = $prices[$i] + $fees[$i] + $adjustment;
+            $fees[$i] = 0;
+            $total += $prices[$i];
+            $i += 1;
+        }
+        return $total;
+    }
+};
+```
+
+Inline and named entries share batch admission, submission-order results, and
+the joined lifetime. Two readers may overlap on the same vector. Any nonempty
+overlap involving a writer rejects the whole batch before dispatch, including
+overlaps within one job. Empty ranges claim no slots.
+
+A `read:` binding borrows its source slots without copying. Its worker can index
+and count the segment and forward it to a helper taking `read_segment<T>`.
+The compiler checks this contract in the helper body, including writes to fields
+of indexed records. A writable `segment<T>` may also be passed to a reading
+helper. A named worker taking `read_segment<T>` requests a read grant when
+launched with `segment(vector, offset, length)`. Both modes require isolated
+element types. A job consisting entirely of readers is valid. C++ and JS flavors use bare binding names in the same clauses.
+
+### Hash segments
+
+For a local `hash<V,K>`, `segment(table, offset, length)` grants consecutive live
+entries in insertion order. The same rule applies to `segment(table, range)`.
+Deleting a key removes it from the count, replacing its value preserves its
+position, and reinserting a deleted key places it last. For example, deleting
+`b` from `[a,b,c,d]` and reinserting it gives `[a,c,d,b]`. Offset 1 and length
+2 grant `c,d`. Offset equal to the live count is valid for an empty segment.
+
+Use `foreach ($slice as $key => $value)` to visit the grant. The key is always
+read-only. With `write:`, assigning to the loop value or one of its record
+fields updates that entry in place. With `read:`, both bindings are read-only.
+Named helpers take `hash_segment<V,K>` or `read_hash_segment<V,K>`. Keys may
+be integers or strings, and values must satisfy the vector segment isolation
+rules. The grant permits forward traversal and counting. The hash structure
+stays fixed until join. Admission compares logical intervals on the same
+backing hash across the entire batch, including aliases. Readers may overlap.
+Any nonempty overlap involving a writer rejects the batch before dispatch.
+
+### Balanced vector partitions
+
+With the MT segment runtime enabled, `balanced_range(length, parts, part)`
+returns a `segment_range` value with two read-only integer fields, `offset` and
+`length`. All three arguments are integers. The helper requires `length >= 0`,
+`parts > 0`, and a zero-based `part` less than `parts`. Invalid inputs raise a
+runtime error. The first `length % parts` partitions receive one extra slot.
+For 10 slots and 3 partitions the results are (0, 4), (4, 3), and (7, 3).
+When partitions outnumber slots, trailing partitions are empty at the end.
+
+A range can be copied, passed to a helper, or returned. It contains no vector
+reference. Both named and inline jobs accept `segment(vector, range)`; each
+grant is checked against its actual vector at admission. For example:
+
+```php
+$range = balanced_range(count($input), $parts, $part);
+$results = parallel {
+    job (read: $src = segment($input, $range),
+         write: $dst = segment($output, $range)) {
+        $i = 0;
+        while ($i < count($src)) {
+            $dst[$i] = $src[$i];
+            $i += 1;
+        }
+        return $i;
+    }
+};
+```
+
+### Runtime-sized parallel batches
+
+In brace flavors, `parallel (workers: limit) { ... }` takes a positive integer
+limit evaluated once before any entry. The cap includes the caller. A cap of one
+runs the admitted jobs on the caller. Omitting the setting uses available pool
+capacity.
+
+An inline job can begin with `each: $part in 0 ..< $parts`. The caller evaluates
+the nonnegative integer bound once when it reaches the entry. For each index
+in ascending order, it evaluates the bindings once in written order. The index
+is a read-only integer visible to those bindings and to that job's body.
+A zero bound skips the entry and its bindings. Other entries still run;
+a group that expands to zero jobs returns an empty result vector.
+
+```php
+$results = parallel (workers: 4) {
+    job (each: $part in 0 ..< $parts,
+         write: $rows = segment($headers, balanced_range($count, $parts, $part))) {
+        return scan_headers($rows);
+    }
+};
+```
+
+The compiler checks the body once. The caller completes all snapshots before
+borrowing storage, then admits all grants in the expanded group before dispatch.
+A conflict in the final iteration rejects the entire batch even under a cap of
+one. Results follow entry order and, within a repeated entry, index order.
+
+A repeated entry may put `workers: limit` immediately after `each:`. The caller
+evaluates the bound and then the limit once, before binding any iterations,
+including when the bound is zero. The limit must be a positive integer and uses
+caller scope. It limits concurrent instances of this written entry. Two entries
+calling the same function have independent limits.
+
+For example, with twelve partitions this group can run three scans alongside
+both sibling calls when five participants are available:
+
+```php
+$results = parallel (workers: 5) {
+    job (each: $part in 0 ..< $parts, workers: 3,
+         write: $rows = segment($headers, balanced_range($count, $parts, $part))) {
+        return scan_headers($rows);
+    }
+    check_symbols(segment($symbols, 0, $symbol_count));
+    check_routes(segment($routes, 0, $route_count));
+};
+```
+
+The scheduler divides a capped entry into at most its limit of balanced,
+contiguous chunks. Each chunk runs its iterations sequentially. Fewer pool
+participants can run several chunks in sequence. Batch admission still checks
+all grants together, including grants in the same chunk. Results and worker
+failures retain their original iteration slots.

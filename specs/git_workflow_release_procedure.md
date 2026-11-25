@@ -53,11 +53,10 @@ The `codex/` prefix may still be used for temporary AI-local working branches wh
 
 ### v0.2 integration exception
 
-By explicit user decision, `v0.2/develop` is the integration branch for the
-compiler replacement work, initially in the existing worktree. It starts from
-research checkpoint `044f6a65`, preserving the committed latency handoff.
-For this development line, feature branches start from and target
-`v0.2/develop` instead of `develop`. This branch is not release-ready history.
+For v0.2 compiler replacement work, start feature branches from
+`v0.2/develop-php` and target `v0.2/develop-php` in pull requests.
+This integration line began on `v0.2/develop` at research checkpoint
+`044f6a65`, preserving the committed latency handoff.
 The existing `main` and `develop` branches are not renamed or reset.
 Release publication still uses the release/PR/tag procedure below; reconciliation
 of the two integration lines must be decided before opening the v0.2 release.

@@ -9,6 +9,7 @@ final class Readonly_Access
 	public static function field(ast_field_expression $site): ast_instance_field
 	{
 		$type = $site->receiver->type_def();
+		if ($type instanceof type_segment_range) throw new diagnostic($site->source(), $site->byte_start(), 'Cannot modify a segment_range field');
 		if ($type instanceof shared_record_type_definition) $type = $type->payload;
 		return $type->field($site->field) ?? throw new \LogicException('Unresolved field');
 	}
@@ -19,14 +20,27 @@ final class Readonly_Access
 		while ($binding instanceof ast_closure_capture && $binding->by_reference) {
 			$binding = $binding->initializer->local_def();
 		}
+		if ($binding instanceof ast_produced_binding && $binding->parent instanceof ast_foreach_statement) {
+			$loop = $binding->parent;
+			$type = $loop->source_value->type_def();
+			if ($type instanceof segment_type && ($type->read_only || $loop->keys_only || $loop->key === $binding)) return $binding;
+		}
+		if (($binding instanceof ast_produced_binding && $binding->parent instanceof ast_inline_job)
+			|| ($binding instanceof ast_parameter_declaration && $binding->parent instanceof ast_lambda_expression
+				&& $binding->parent->parent instanceof ast_inline_job && $binding->parent->parent->iteration !== null && $binding->id === 0)) return $binding;
 		return $binding instanceof ast_closure_capture
 			|| ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::readonly_reference) ? $binding : null;
 	}
 
+	/** Diagnose writes at the source binding that supplies the read-only storage. */
 	public static function require_writable(ast_node $site, ?ast_local_binding $binding): void
 	{
 		$origin = self::readonly_origin($binding);
 		if ($origin !== null) {
+			if ($origin instanceof ast_produced_binding && $origin->parent instanceof ast_foreach_statement)
+				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write to a read-only hash segment binding: ' . $origin->short_name);
+			if ($origin instanceof ast_produced_binding || ($origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::value))
+				throw new diagnostic($site->source(), $site->byte_start(), 'The each index is read-only');
 			$message = $origin instanceof ast_closure_capture ? 'Cannot write to by-value capture: ' : 'Cannot write through read-only reference: ';
 			throw new diagnostic($site->source(), $site->byte_start(), $message . $origin->short_name);
 		}
@@ -44,6 +58,9 @@ final class Readonly_Access
 			$site = $site->receiver;
 			if ($site->type_def()->mutates_referenced_value()) return;
 		}
+		$storage = $site instanceof ast_index_expression ? $site->receiver : $site;
+		if ($storage->type_def() instanceof segment_type && $storage->type_def()->read_only)
+			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write through a read-only segment');
 		if ($site instanceof ast_name_expression) self::require_writable($site, $site->local_binding());
 	}
 }

@@ -35,9 +35,13 @@ class ast_type_reference extends ast_node
 			return $this->name;
 		}
 		if ($this->name === 'function') {
-			$inputs = [];
-			for ($part = $this->first_child->next_sibling; $part !== null; $part = $part->next_sibling) $inputs[] = $part->spelling();
-			return 'function<' . $this->first_child->spelling() . '(' . implode(',', $inputs) . ')>';
+			$signature = 'function<' . $this->first_child->spelling() . '(';
+			$separator = '';
+			for ($part = $this->first_child->next_sibling; $part !== null; $part = $part->next_sibling) {
+				$signature .= $separator . $part->spelling();
+				$separator = ',';
+			}
+			return $signature . ')>';
 		}
 		$name = $this->name . '<';
 		$separator = '';
@@ -48,6 +52,15 @@ class ast_type_reference extends ast_node
 		return $name . '>';
 	}
 
+}
+
+/** A writable reference component in a callable signature, e.g. callback<int&,int&>. */
+final class ast_callable_reference_component extends ast_type_reference
+{
+	public function spelling(): string
+	{
+		return parent::spelling() . '&';
+	}
 }
 
 /** A fixed-array dimension. A named dimension uses the namespace constant path in name. */

@@ -31,7 +31,7 @@ final class Cpp_Headers
 		$root = $program->session?->cpp_namespace ?? 'App';
 		foreach ($program->files as $file) {
 			foreach ($file->declaration_nodes as $node) {
-				if ($node instanceof ast_enum_declaration) $uses = dependency_use::ordered_uses;
+				if ($node instanceof ast_enum_declaration) $uses = dependency_use::enum_helper_uses;
 				elseif ($node instanceof ast_function_declaration && $node->is_constructor()) {
 					if ($node->parent->is_final || count($node->parameters) < 2) continue;
 					$uses = [dependency_use::reordered_base];
