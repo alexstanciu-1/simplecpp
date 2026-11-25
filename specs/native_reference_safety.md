@@ -21,6 +21,22 @@ overrides and interface implementations must preserve both the canonical collect
 type and the read-only reference mode. Dispatch preserves the caller’s slot.
 [Method and signature-edit tests](../compiler/tests/readonly_collection_methods_native.py).
 
+## Read-only collection inputs on PHP callables
+
+A closure declares a collection borrow as `const vector<int> &$view` or
+`const hash<int,string> &$view`. In a context with an expected signature it
+can write `const &$view` and infer the collection type. The passing mode must
+match explicitly. For example, `callback<int,const vector<int>&>` accepts a
+capture-free target returning an integer. An owned callable with the same input
+has type `function<int(const vector<int>&)>` and may own by-value captures.
+
+Both forms bind an exact-type named slot for the duration of each invocation.
+They support forwarding the borrow and observing a mutation through another
+argument bound to the same slot. Value, mutable-reference, and read-only-reference
+inputs identify distinct callable types, including in typed collections.
+Only a writable input can supply a reference result.
+[Callable borrow and recovery tests](../compiler/tests/readonly_callable_inputs_native.py).
+
 ## Same-origin returns
 
 Every returning path must identify the same surviving reference parameter. A local alias may name that storage. Returning the alias does not extend a local variable's lifetime. Follow the source and callable-specific preparation checks for admitted forms.

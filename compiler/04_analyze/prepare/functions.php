@@ -297,7 +297,7 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}
 			if ($parameter->mode === passing_mode::readonly_reference) {
-				$collection = $parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition;
+				$collection = Type_Resolution::readonly_collection_input($parameter_type);
 				if ($declaration->parent instanceof ast_method_owner) {
 					if (!$collection || !($declaration->parent instanceof ast_record_declaration)
 						|| $declaration->is_constructor() || $declaration->is_destructor()) {

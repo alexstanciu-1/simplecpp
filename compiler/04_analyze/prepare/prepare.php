@@ -2059,7 +2059,10 @@ final class Preparation
 				? ($expected?->inputs[$index] ?? $transform_element ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
 				: Type_Resolution::signature($syntax, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
 			if ($index === $variadic) Function_Preparation::require_pack_type($parameter, $type);
-			if ((!Type_Resolution::callback_component($type) && !($transform_element !== null && $type instanceof record_type_definition)) || $parameter->mode === passing_mode::readonly_reference) {
+			if ($parameter->mode === passing_mode::readonly_reference && !Type_Resolution::readonly_collection_input($type)) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only callable references require a vector or hash input');
+			}
+			if (!Type_Resolution::callback_component($type) && !($transform_element !== null && $type instanceof record_type_definition)) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
 			}
 			$parameter->settle_type($type);
@@ -2069,7 +2072,7 @@ final class Preparation
 			}
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
-			if ($parameter->mode === passing_mode::reference) $modes[$index] = $parameter->mode;
+			if ($parameter->mode !== passing_mode::value) $modes[$index] = $parameter->mode;
 		}
 		$borrowed /** array<uint32,ast_closure_capture> */ = [];
 		$writes /** list<uint32> */ = [];

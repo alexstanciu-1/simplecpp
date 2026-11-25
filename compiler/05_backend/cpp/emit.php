@@ -3455,7 +3455,7 @@ CPP;
 		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
 		$parameters = [];
 		foreach ($lambda->parameters as $parameter) {
-			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
+			$parameters[] = '[[maybe_unused]] ' . $parameter->mode->qualify($this->signature_type($parameter->type_def(), false)) . ' ' . $this->name($parameter);
 		}
 		$environment = $type->borrows_receiver ? ['&scpp_self'] : [];
 		$capture_uses = $type->borrows_receiver ? ["\t(void)scpp_self;"] : [];

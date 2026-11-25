@@ -118,6 +118,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$implementation = 'class Reader implements Sized {' . str_replace('public static', 'public override', $size) . '}';
 		$prepare($contract . $implementation . 'return 8;');
 		rejects(fn() => $prepare($contract . str_replace('const ', '', $implementation) . 'return 8;'), 'signature must match exactly');
+		$apply = 'function apply(callback<int,const vector<int>&> $read,vector<int> &$v):int {return $read($v);}';
+		$call = '$v vector<int> = [1];return apply(fn(const &$view)=>count($view),$v);';
+		$prepare($apply . $call);
+		rejects(fn() => $prepare($apply . str_replace('const &$view', '&$view', $call)), 'Expected exact callback signature');
 	}
 	// A changed local and two aliased reference parameters must not reuse old range proofs.
 	$set = $fn('large', [$p('v', 'int', true)], 'int', $var('v') . '=300; return 1;');

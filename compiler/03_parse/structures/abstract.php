@@ -17,6 +17,16 @@ enum passing_mode: int
 	case value = 0;
 	case reference = 1;
 	case readonly_reference = 2;
+
+	/** Spell a callable input with its reference qualification in source or native type syntax. */
+	public function qualify(string $type): string
+	{
+		return match ($this) {
+			self::value => $type,
+			self::reference => $type . '&',
+			self::readonly_reference => 'const ' . $type . '&',
+		};
+	}
 }
 
 /**

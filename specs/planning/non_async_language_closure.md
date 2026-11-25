@@ -14,7 +14,7 @@ The inventory pass is complete. Direct translation still has language gaps. The 
 
 ### Collections and borrowing backlog
 
-Status at the virtual and interface read-only collection method slice. This tracks PHP collection traversal and
+Status at the read-only callable input slice. This tracks PHP collection traversal and
 borrowing. The rows group language decisions by the proof they need. They are
 different sizes and should not be used to calculate a percentage complete.
 
@@ -27,7 +27,7 @@ different sizes and should not be used to calculate a percentage complete.
 
 | Remaining work | Status | Decision or acceptance case |
 | --- | --- | --- |
-| 2. Explicit read-only collection parameters on methods and callables | Direct, virtual and interface method calls delivered | Native tests cover alias visibility, override-mode mismatches and cross-file recovery. Constructors, closures, and typed or owned callable adaptation remain separate decisions. A read-only borrow may observe changes made through another writable alias. [Declaration checks](../../compiler/04_analyze/prepare/functions.php) |
+| 2. Explicit read-only collection parameters on methods and callables | Methods, closures, typed callbacks and owned callables delivered | Constructor admission remains a separate decision. Native tests cover alias visibility, mode mismatches and cross-file recovery. A read-only borrow may observe changes made through another writable alias. [Declaration checks](../../compiler/04_analyze/prepare/functions.php) |
 | 3. Scoped borrows of a selected element | Design decision | Today a loop binding writes through an index or key, and an inline record can be changed by copying, editing and assigning it back. Decide whether a selected element may be passed to a read-only or mutable reference helper, mutated in place, or captured for a strictly lexical use. Prove what happens when the helper re-enters, aliases the collection, or throws after a write. |
 | 4. Durable aliases and reference returns into elements | Deferred lifetime design | Covers `$item =& $v[$i]`, escaping captures, and returning an interior slot by reference. Specify what happens after vector relocation, hash removal and reinsertion of the same key, or whole-container replacement. A stable reference to the container variable alone does not identify a surviving element. [Reference safety](../native_reference_safety.md) |
 | 5. Automatic read-only borrow inference | Optimization debt | Start with by-value parameters. Consider local copies after the parameter proof. Preserve snapshots across argument evaluation, other aliases, forwarding and escapes. Measure eliminated copies and preparation cost, and invalidate the proof after a relevant caller or callee edit. [Inference debt](#compiler-debt-for-inferred-read-only-borrows) |
