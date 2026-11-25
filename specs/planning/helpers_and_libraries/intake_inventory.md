@@ -54,7 +54,7 @@ Use a whole family as the implementation unit. First reconcile its donor specs, 
 
 | Family | Evidence on v0.2 and proposed treatment |
 | --- | --- |
-| Strings | Of 54 distinct my-try string names, 22 have matching registry spellings and two are pilot-only. v0.2 also has additions such as PHP `str_repeat` and `stripos`. Compare byte, UTF-8 and grapheme operations separately. Builder types and their methods form a separate lifetime/API decision. |
+| Strings | [Combined byte, Unicode and builder audit](string_families_audit.md). Of 54 distinct my-try string names, 22 have matching registry spellings and two are pilot-only. v0.2 also has additions such as PHP `str_repeat` and `stripos`. Compare byte, UTF-8 and grapheme operations separately. Builder types and their methods form a separate lifetime/API decision. |
 | Filesystem | Five general free bindings exist: `fs_get`, `fs_put`, `fs_rename`, `fs_remove`, `fs_stage`. The donor filesystem catalog has 35 distinct names. Four match the registry; `fs_stage` comes from the v0.2 side. Audit the full filesystem family. Use the get/put pair to probe flavor adaptation. Check failed read versus empty bytes and failed write versus zero bytes written. |
 | Regex | The optional PCRE2 module publishes neutral `regex_test`, `regex_find_span`, and PHP-only `preg_match`. The historical match/capture/replace APIs include different outputs and callback contracts. Compare each signature independently. |
 | Datetime | Stage 1 implemented all 11 general names, including exact unsigned clock transport. [Source probes and proposed scope](datetime_audit.md). [Module contract](../../datetime_module.md) |
