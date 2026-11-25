@@ -37,6 +37,7 @@ def proof(work, quick=False, cache_only=False):
     published = json.loads((ROOT / 'runtime/metadata/publication.json').read_text())
     published['types'] = ['int64', 'byte']
     published.pop('modules', None)
+    published['text_helpers'].remove('stable_hash_string_u64')
     published.pop('mt_segments', None)
     published.pop('async_frames', None)
     published['vectors'].pop('header', None)  # Provider metadata owns the relocatable spelling.
@@ -608,7 +609,6 @@ def cached_application_proof(work, original, facts, context, publication, quick=
     work.mkdir(exist_ok=True)
     (work / 'tools').symlink_to(ROOT / 'tools', target_is_directory=True)
     compiler = work / 'compiler'
-    (work / 'tools').symlink_to(ROOT / 'tools', target_is_directory=True)
     # Copy the implementation so Project_Changes scans the test publication, not production PHP.
     for source in (ROOT / 'compiler').rglob('*.php'):
         relative = source.relative_to(ROOT / 'compiler')

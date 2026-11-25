@@ -35,7 +35,7 @@ def proof(work, quick=False):
             m['submodules']['core.vectors']['header'] = 'scpp/collections/input.hpp'
             init.update(read_only='copy_inputs', consume='consume_inputs', input='input_storage', stack_bytes=1, inline_elements={'integer':0,'string':0})
         if variant == 'reduced':
-            for key in ('hashes', 'carriers', 'string', 'boxed'): p.pop(key, None)
+            for key in ('hashes', 'carriers', 'string', 'boxed', 'cli_helpers', 'text_helpers', 'text_builders'): p.pop(key, None)
             p['vectors']['specializations'] = [p['vectors']['specializations'][0]]
         if variant == 'append': m['vector']['initialization'].pop('bulk')
         if variant == 'disabled': m['vector'].pop('initialization')

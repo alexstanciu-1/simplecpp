@@ -6,7 +6,7 @@ def prepared_provider_headers(plan, runtime):
     headers = {graph['nodes'][provider]['header'] for provider in graph['published']}
     for function in plan.get('string_functions', {}).values():
         headers.update(adapter['header'] for adapter in function.get('adapters', {}).values())
-    for family in ('text_helpers', 'text_builders'):
+    for family in ('text_helpers', 'text_builders', 'cli_helpers'):
         headers.update(item['header'] for item in plan.get(family, {}).values())
     implode = plan.get('string_functions', {}).get('implode', {})
     if 'php' in implode.get('adapters', {}) and any(

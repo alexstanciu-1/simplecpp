@@ -100,6 +100,7 @@ def proof(work):
     # Retire functions whose core or PHP adapter result needs a carrier as well.
     absent['string']['functions'] = [name for name in absent['string']['functions']
         if name not in ('hex2bin', 'strpos', 'stripos', 'strrpos', 'strripos')]
+    del absent['cli_helpers']['environment']
     absent['text_helpers'].remove('string_byte_find')
     removed = emit(metadata, absent)
     assert 'nullable_int64' not in removed['submodules']['type_exports']
