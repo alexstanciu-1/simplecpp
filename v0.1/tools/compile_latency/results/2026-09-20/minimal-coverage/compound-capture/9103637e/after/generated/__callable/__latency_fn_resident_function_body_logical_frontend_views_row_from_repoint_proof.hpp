@@ -1,8 +1,0 @@
-#include <scpp/lang/php.hpp>
-#pragma once
-namespace scpp {
-class CompilerProjectRunReport;
-struct ResidentFunctionBodyLogicalFrontendViewRow;
-struct ResidentFunctionBodySourceUnitRepointProofRow;
-ResidentFunctionBodyLogicalFrontendViewRow __latency_fn_resident_function_body_logical_frontend_views_row_from_repoint_proof(shared_p<CompilerProjectRunReport> report, ResidentFunctionBodySourceUnitRepointProofRow proof);
-}

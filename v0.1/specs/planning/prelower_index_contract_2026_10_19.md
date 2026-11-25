@@ -12,7 +12,7 @@ The prepared declaration `function demand(hash<int,int> &$items): void {}` is va
 in both modes. Ordinary generated C++ builds and runs. Concrete substitution fails
 its native layout probe: `hash_t<ConcreteInt, ConcreteInt>` fails the runtime's
 `typed_hash_key` assertion because `key_ops<ConcreteInt>` is unavailable.
-See [Clang diagnostic](results/prelower_index_contract_2026_10_19/concrete-build.stderr).
+See [Clang diagnostic](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/specs/planning/results/prelower_index_contract_2026_10_19/concrete-build.stderr).
 
 The focused shared-runner probe passed its expected outcomes in 6.59s, using CLI
 fallback. Local evidence/scripts: `/tmp/prelower-index-contract/`. This is a reproduced

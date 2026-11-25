@@ -103,7 +103,7 @@ Confirmed evidence distinctions:
   expectations, stale boxed-operation rejection candidates, and a property-mutation
   rejection candidate. Their semantic disposition is pending targeted inspection.
 
-The archived [diagnostic checkpoint](language_verification_evidence/logs-checkpoint-01.json.gz)
+The archived [diagnostic checkpoint](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-01.json.gz)
 contains per-command stdout/stderr, suite logs and available journals. Full build
 artifacts remain on dev002. No compiler/runtime files changed during verification.
 
@@ -182,7 +182,7 @@ from that missing-header diagnostic. Original failures and each retry are separa
 
 The final runtime-handle replay passed with its original include path restored.
 All 20 targeted runtime-failure observers now pass in the labelled adapted lanes.
-The [third evidence checkpoint](language_verification_evidence/logs-checkpoint-03.json.gz)
+The [third evidence checkpoint](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-03.json.gz)
 retains current logs and exact probe scripts. Coverage now has 11 passed checks,
 one reproduced failing check and two dependent blocked checks; 105 still require
 reconciliation or probes. Those counts describe the finite checklist, not the
@@ -213,7 +213,7 @@ retains all 198 declarations; 28 datetime/regex signatures have verified-use evi
 one regex signature has admission-only evidence, and 169 remain unreviewed. This
 is signature-level progress, not full boundary or module-isolation coverage.
 
-The [fourth evidence checkpoint](language_verification_evidence/logs-checkpoint-04.json.gz)
+The [fourth evidence checkpoint](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-04.json.gz)
 contains execution logs, replay outcomes and exact supplemental tools. The checklist
 now has **18 passed, one failed, two blocked and 98 awaiting reconciliation/probes**.
 The verification goal remains active. No compiler/runtime fixes were made, and no
@@ -245,7 +245,7 @@ specified hash-derived shapes. LV30.001/003 source semantics are verified with t
 linkage limitation; integration checks retain V-R01. The independent regex JIT probe
 matches PCRE2 configuration plus actual trivial JIT compilation, closing LV31.005.
 
-[Checkpoint five](language_verification_evidence/logs-checkpoint-05.json.gz) retains
+[Checkpoint five](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-05.json.gz) retains
 the production failure, isolated replay and exact probe tools. Coverage is now
 **27 passed, one failed, two blocked, one explicitly deferred, 88 pending**. Runtime
 signature coverage is **33 verified-use / 165 unreviewed**; per-entry limitations
@@ -265,7 +265,7 @@ comparison domains, unsigned large values and signedness rejection are covered;
 per-pair min/max narrowing behavior is not. Emitted cast text does not establish
 that missing value oracle. LV03.003 retains the full boundary-grid obligation.
 
-[Checkpoint six](language_verification_evidence/logs-checkpoint-06.json.gz) retains
+[Checkpoint six](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-06.json.gz) retains
 the exact probes and logs. Coverage is **32 passed, one failed, two blocked, one
 deferred and 83 pending**. The verification goal remains active; no compiler or
 runtime repair was made.
@@ -292,7 +292,7 @@ LV08.003 reproduces **S06** using a builtin-free brace-free if/else program:
 by this grammar restriction; its downstream strpos gap is separate. S06 is a
 light-discussion parser item, not a permanent source incompatibility.
 
-[Checkpoint seven](language_verification_evidence/logs-checkpoint-07.json.gz) retains
+[Checkpoint seven](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-07.json.gz) retains
 exact scripts, diagnostics and traces. Coverage is **36 passed, two failed, two
 blocked, one deferred and 78 pending**. No compiler/runtime fixes were made.
 
@@ -333,7 +333,7 @@ payloads also reject. Their explicit current deferrals are mapped separately;
 LV22.003 still needs exact v0.1 baseline comparison before closure. No permanent
 compatibility exception is inferred merely from a deferred catalog card.
 
-[Checkpoint eight](language_verification_evidence/logs-checkpoint-08.json.gz) preserves
+[Checkpoint eight](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-08.json.gz) preserves
 all source hashes and diagnostics. Coverage is **42 passed, three failed, two
 blocked, one deferred and 71 pending**. No compiler/runtime fixes were made.
 
@@ -353,7 +353,7 @@ no conflict-resolution policy is inferred. V-D03/04/05 retain the separate
 normal-discussion causes. These are current deferrals, not permanent compatibility
 exceptions.
 
-[Checkpoint nine](language_verification_evidence/logs-checkpoint-09.json.gz) retains
+[Checkpoint nine](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-09.json.gz) retains
 the new source hashes and diagnostics. Coverage is **45 passed, three failed, two
 blocked, two deferred and 67 pending**. No compiler/runtime fixes were made.
 
@@ -373,7 +373,7 @@ Clang fails, no successful result is returned, and `.scpp-native.status` becomes
 source-preparation failure, manifest/digest identity, shared/exclusive lock contention
 and recovery without overwriting committed valid files.
 
-[Checkpoint ten](language_verification_evidence/logs-checkpoint-10.json.gz) retains
+[Checkpoint ten](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-10.json.gz) retains
 the exact fault probe and observations. Coverage is **50 passed, three failed,
 two blocked, two deferred and 62 pending**. No compiler/runtime fixes were made.
 
@@ -393,7 +393,7 @@ callable null assignment; that unsupported fixture is retained separately, and t
 successful version uses the specified `clean()` operation. No compiler bug is
 inferred from that authoring error.
 
-[Checkpoint eleven](language_verification_evidence/logs-checkpoint-11.json.gz) retains
+[Checkpoint eleven](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-11.json.gz) retains
 both attempts and source hashes. Coverage is **54 passed, three failed, two blocked,
 two deferred and 58 pending**. No compiler/runtime fixes were made.
 
@@ -410,7 +410,7 @@ acquisition leaves ownership intact; failure after acquisition destroys once; sh
 argument retention survives release by a later argument; a locked weak observer
 keeps the object alive until unwind, then expires. No double destruction occurs.
 
-[Checkpoint twelve](language_verification_evidence/logs-checkpoint-12.json.gz) retains
+[Checkpoint twelve](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-12.json.gz) retains
 the source hash, trace and tool. Coverage is **57 passed, three failed, two blocked,
 two deferred and 55 pending**. No compiler/runtime fixes were made.
 
@@ -428,7 +428,7 @@ once. Duplicate hash construction prints `ABDD`: both value effects precede runt
 rejection and both temporary objects are destroyed. Duplicate record fields reject
 during preparation, consistent with their statically known input contract.
 
-[Checkpoint thirteen](language_verification_evidence/logs-checkpoint-13.json.gz)
+[Checkpoint thirteen](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-13.json.gz)
 retains exact sources, hashes, diagnostics and traces. Coverage is **60 passed, three
 failed, two blocked, two deferred and 52 pending**. No compiler/runtime fixes were made.
 
@@ -451,7 +451,7 @@ fresh artifacts agree at every phase. The first attempt used int32 mutation and 
 the documented mutation gate; that evidence is retained separately. The successful
 type edit uses supported int-to-mixed storage and makes no fixed-width operator claim.
 
-[Checkpoint fourteen](language_verification_evidence/logs-checkpoint-14.json.gz)
+[Checkpoint fourteen](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-14.json.gz)
 retains tools, source hashes, diagnostics and outputs. Coverage is **64 passed, three
 failed, two blocked, two deferred and 48 pending**. No compiler/runtime fixes were made.
 
@@ -473,7 +473,7 @@ padding and int/float formatting. Runtime coverage is **81 verified-use / 117
 unreviewed**. Builder reconciliation remains open, so LV12.002 and LV30.002 remain
 pending. Per-declaration exhaustive invalid-input/provider coverage is not implied.
 
-[Checkpoint fifteen](language_verification_evidence/logs-checkpoint-15.json.gz)
+[Checkpoint fifteen](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-15.json.gz)
 retains the original failure, labelled replay and new probes. Checklist coverage is
 **67 passed, three failed, two blocked, two deferred and 45 pending**. No compiler
 or runtime fixes were made.
@@ -491,7 +491,7 @@ production entry catch. The original failure and adapted observer lanes remain
 separate under V-H01; no source or compiler semantics were changed. Exhaustive
 allocation failure and individual disabled-name lookup coverage are not claimed.
 
-[Checkpoint sixteen](language_verification_evidence/logs-checkpoint-16.json.gz)
+[Checkpoint sixteen](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-16.json.gz)
 retains the observer evidence. Runtime coverage is **103 verified-use / 95 unreviewed**.
 Checklist coverage is **69 passed, three failed, two blocked, two deferred and 43
 pending**. No compiler/runtime fixes were made.
@@ -509,7 +509,7 @@ and observes a substantial RSS increase with peak >= current usage. Wrong argume
 type and arity reject. This proves Linux behavior and allocation sensitivity, not
 allocator-internal precision or platform portability.
 
-[Checkpoint seventeen](language_verification_evidence/logs-checkpoint-17.json.gz)
+[Checkpoint seventeen](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-17.json.gz)
 retains exact source and observed numbers. Runtime coverage is **124 verified-use /
 74 unreviewed**. Core vector/hash declaration protocols remain open with container
 checks. Checklist coverage remains **69 passed, three failed, two blocked, two
@@ -532,7 +532,7 @@ the corrected observer and actual diagnostics. No uniform exception subtype is c
 The 39 unseeded semantic rows remain a separate open task (LV15.003); these broader
 fixture proofs do not silently substitute for that requested row reconciliation.
 
-[Checkpoint eighteen](language_verification_evidence/logs-checkpoint-18.json.gz)
+[Checkpoint eighteen](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-18.json.gz)
 retains both probe attempts. Coverage is **75 passed, three failed, two blocked, two
 deferred and 37 pending**. Runtime declaration counts are unchanged. No compiler or
 runtime fixes were made.
@@ -554,7 +554,7 @@ remain preserved; no compiler behavior was changed.
 V-H09 tracks the permanent matrix-generator coverage gap. These supplemental tests
 verify the rows but do not claim the generator now emits them.
 
-[Checkpoint nineteen](language_verification_evidence/logs-checkpoint-19.json.gz)
+[Checkpoint nineteen](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-19.json.gz)
 retains exact rows, sources and observers. Coverage is **76 passed, three failed,
 two blocked, two deferred and 36 pending**. No compiler/runtime fixes were made.
 
@@ -570,7 +570,7 @@ comparison expressions, in both operand orders. Only the first failure occurs: l
 conversion gives counter 1; division-first gives counter 2 and exact `division_by_zero`.
 Lazy &&/||/ternary/coalesce alternatives run neither failure and leave counter zero.
 
-[Checkpoint twenty](language_verification_evidence/logs-checkpoint-20.json.gz)
+[Checkpoint twenty](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-20.json.gz)
 retains the exact source, native observer and diagnostics. Coverage is **79 passed,
 three failed, two blocked, two deferred and 33 pending**. No compiler/runtime fixes
 were made.
@@ -586,7 +586,7 @@ declaration in another file without changing the consumer. Both the edit and ret
 reject with empty emitted artifacts. Repair restores identical output, and a fresh
 build agrees. Multi-root discovery/export visibility remains separate LV25.004.
 
-[Checkpoint twenty-one](language_verification_evidence/logs-checkpoint-21.json.gz)
+[Checkpoint twenty-one](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-21.json.gz)
 retains source, diagnostics and native results. Coverage is **81 passed, three failed,
 two blocked, two deferred and 31 pending**. No compiler/runtime fixes were made.
 
@@ -603,7 +603,7 @@ move/destruction trace `TF1:1`. The initial unique fixture used unsupported
 `clean(unique)`; the corrected fixture observes ordinary caller-scope cleanup.
 Both attempts remain available.
 
-[Checkpoint twenty-two](language_verification_evidence/logs-checkpoint-22.json.gz)
+[Checkpoint twenty-two](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-22.json.gz)
 retains exact sources and observations. Coverage is **82 passed, three failed, two
 blocked, two deferred and 30 pending**. No compiler/runtime fixes were made.
 
@@ -620,7 +620,7 @@ Call-site unpacking rejects. Earlier named/default/reference rejection probes co
 the bounded combination inventory; V-D07 records excluded forms for discussion,
 without claiming that parser rejection verifies named-argument binding semantics.
 
-[Checkpoint twenty-three](language_verification_evidence/logs-checkpoint-23.json.gz)
+[Checkpoint twenty-three](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-23.json.gz)
 retains all sources and diagnostics. Coverage is **84 passed, three failed, two
 blocked, two deferred and 28 pending**. No compiler/runtime fixes were made.
 
@@ -642,7 +642,7 @@ preserved for mixed and dynamic. V-H04 consolidates both stale expectations. A n
 observer initially used mixed's is_int API on dynamic; its corrected checked accessor
 proof and the failed attempt are both retained. No compiler change was required.
 
-[Checkpoint twenty-four](language_verification_evidence/logs-checkpoint-24.json.gz)
+[Checkpoint twenty-four](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-24.json.gz)
 retains the new grid and all replay attempts. Coverage is **88 passed, three failed,
 two blocked, two deferred and 24 pending**. No compiler/runtime fixes were made.
 
@@ -657,7 +657,7 @@ For each family, a later argument clears the caller's original root exactly once
 The earlier value argument remains readable in the callee. A separate case starts
 with no additional alias and confirms the call-held value survives root removal.
 
-[Checkpoint twenty-five](language_verification_evidence/logs-checkpoint-25.json.gz)
+[Checkpoint twenty-five](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-25.json.gz)
 retains source and native assertions. Coverage is **89 passed, three failed, two
 blocked, two deferred and 23 pending**. No compiler/runtime fixes were made.
 
@@ -676,7 +676,7 @@ transfer, release and reacquisition. Shared-mode acquisition and additional lock
 failure/lifetime axes remain explicitly open; copied-byte equality is also not
 claimed by the filesystem copy success check.
 
-This reconciliation uses [checkpoint twenty-five](language_verification_evidence/logs-checkpoint-25.json.gz),
+This reconciliation uses [checkpoint twenty-five](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-25.json.gz),
 without rerunning already successful remote checks. The 119-check totals remain
 **89 passed, three failed, two blocked, two deferred and 23 pending**. No compiler
 or runtime changes were made; the verification goal remains active.
@@ -697,7 +697,7 @@ exclusive contention and reacquisition after both releases. Shared acquisition o
 a missing file returns an error, consistent with its read-only-open contract.
 The first fixture redeclared a variable; the next incorrectly assumed shared opens
 create files. A diagnostic variant located that failure. All attempts remain in
-[checkpoint twenty-six](language_verification_evidence/logs-checkpoint-26.json.gz),
+[checkpoint twenty-six](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-26.json.gz),
 including exact source, hashes, commands and final output.
 
 LV31.002 is verified using the original opaque-handle value/rejection/reset checks,
@@ -724,7 +724,7 @@ Vector/hash evidence links the existing construction, reads/writes, probes,
 iteration, generic and Result payload checks. Regex constants have direct split
 behavior evidence; exhaustive flag combinations and separate numeric-value checks
 are not claimed. All referenced observations are retained in
-[checkpoint twenty-six](language_verification_evidence/logs-checkpoint-26.json.gz).
+[checkpoint twenty-six](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-26.json.gz).
 
 Totals are **91 passed, three failed, two blocked, two deferred and 21 pending**.
 This was evidence reconciliation without rerunning successful remote programs.
@@ -745,7 +745,7 @@ CH09 explicitly defers the broader extensions. V-D08 records this current deferr
 separately from missing support, without making it a permanent compatibility
 exception or claiming that those enum features work.
 
-[Checkpoint twenty-seven](language_verification_evidence/logs-checkpoint-27.json.gz)
+[Checkpoint twenty-seven](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-27.json.gz)
 retains exact sources, hashes, commands and diagnostics. Totals are **92 passed,
 three failed, three blocked, two deferred and 19 pending**. No compiler/runtime
 fixes were made; verification remains active.
@@ -766,7 +766,7 @@ repair/reset/fresh output agrees. Explicitly excluded joins remain rejected.
 
 The broader LV07.003 wrapper-state enumeration stays open pending an explicit
 case map; these checks do not imply every wrapper combination works. Evidence
-remains in [checkpoint twenty-seven](language_verification_evidence/logs-checkpoint-27.json.gz).
+remains in [checkpoint twenty-seven](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-27.json.gz).
 Totals are **94 passed, three failed, three blocked, two deferred and 17 pending**.
 No compiler/runtime fixes were made.
 
@@ -787,7 +787,7 @@ uses explicit int conversion to distinguish 0.0/1.5; all four then pass. The ori
 admission failure remains evidence for the separate operator audit, not a wrapper
 failure or a silent change of compiler semantics.
 
-[Checkpoint twenty-eight](language_verification_evidence/logs-checkpoint-28.json.gz)
+[Checkpoint twenty-eight](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-28.json.gz)
 retains exact sources, observers, hashes and both runs. Totals are **96 passed,
 three failed, three blocked, two deferred and 15 pending**. No compiler/runtime
 fixes were made.
@@ -808,7 +808,7 @@ records absent project-manifest/dependency/export-policy and provider-selection
 CLI integration. Compiler API module support is not proof of those workflows.
 The separately documented checked current-build/run reader remains deferred.
 
-[Checkpoint twenty-nine](language_verification_evidence/logs-checkpoint-29.json.gz)
+[Checkpoint twenty-nine](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-29.json.gz)
 retains the probe and logs. Totals are **96 passed, three failed, five blocked,
 two deferred and 13 pending**. No compiler/runtime fixes were made.
 
@@ -850,7 +850,7 @@ linkage V-R01 or project CLI composition V-P01. The frozen planning inventory is
 unchanged; its introductory plan text now directs readers to current evidence
 instead of incorrectly saying all execution results remain unverified.
 
-[Checkpoint thirty](language_verification_evidence/logs-checkpoint-30.json.gz)
+[Checkpoint thirty](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-30.json.gz)
 retains source, hash, commands, build report and output. Totals are **97 passed,
 three failed, six blocked, two deferred and 11 pending**. No compiler/runtime
 fixes were made; the goal remains active.
@@ -876,7 +876,7 @@ prevent destination conversion from hiding a wrong inferred result type. All
 50 opposite-signedness pairs reject addition; existing preparation tests separately
 check mixed-sign comparison rejection and exact conversion facts.
 
-[Checkpoint thirty-one](language_verification_evidence/logs-checkpoint-31.json.gz)
+[Checkpoint thirty-one](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-31.json.gz)
 retains both attempts and both grids. Totals are **99 passed, three failed, six
 blocked, two deferred and nine pending**. No compiler/runtime fixes were made.
 
@@ -896,7 +896,7 @@ construction/signedness/JSON changes and explicit span deferral carry contracts;
 php::microtime migration stays an open decision. No later masked statement is
 claimed verified by first-blocker review.
 
-[Checkpoint thirty-two](language_verification_evidence/logs-checkpoint-32.json.gz)
+[Checkpoint thirty-two](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-32.json.gz)
 contains the audit and prior migration evidence. Totals are **101 passed, three
 failed, six blocked, two deferred and seven pending**. No compiler/runtime fixes
 were made; verification and final catalog reconciliation remain active.
@@ -912,7 +912,7 @@ concrete signatures sharing one provider, source producer invalidation and repai
 Those passing assertions do not prove selective preservation across live catalog
 changes. No new hot-reload requirement or implementation is introduced.
 
-Existing evidence is in [checkpoint thirty-two](language_verification_evidence/logs-checkpoint-32.json.gz).
+Existing evidence is in [checkpoint thirty-two](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-32.json.gz).
 Totals are **101 passed, three failed, six blocked, three deferred and six pending**.
 No compiler/runtime fixes were made; verification remains active.
 
@@ -929,7 +929,7 @@ source/value test per disabled declaration. Existing source-level disabled-modul
 negatives remain complementary. LV29.003 stays open for the declared-failure audit;
 its scope is not reduced to visibility.
 
-[Checkpoint thirty-three](language_verification_evidence/logs-checkpoint-33.json.gz)
+[Checkpoint thirty-three](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-33.json.gz)
 retains the probe, exact input ledger, hashes and results. Check totals remain
 **101 passed, three failed, six blocked, three deferred and six pending**.
 No compiler/runtime fixes were made.
@@ -966,7 +966,7 @@ Repair equals the prior valid edited output and a fresh compiler. All six initia
 changed and repaired generated programs execute with their exact output oracle.
 The LV03/LV26 rows in the incremental map are now verified for these focused edits.
 
-[Checkpoint thirty-four](language_verification_evidence/logs-checkpoint-34.json.gz)
+[Checkpoint thirty-four](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-34.json.gz)
 retains driver, source phases, hashes, diagnostics and native executions. LV34.003
 remains open for the other per-feature evidence reconciliation. Overall totals
 remain **101 passed, three failed, six blocked, three deferred and six pending**.
@@ -982,7 +982,7 @@ lowering-helper review, and 116 are absent from metadata.
 
 On dev002, all 116 absent names fail source resolution with all eight current
 modules configured; every failure leaves the published artifact set empty.
-[Checkpoint thirty-five](language_verification_evidence/logs-checkpoint-35.json.gz)
+[Checkpoint thirty-five](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-35.json.gz)
 contains the exact input, probe driver, command log and per-name diagnostics.
 These zero-argument probes establish name-resolution absence only. They do not
 prove valid-call behavior or that every old symbol-map entry was a public API.
@@ -1021,7 +1021,7 @@ with no new execution or compiler/runtime changes. Check totals are unchanged.
 Eight new strict-source probes on dev002 confirm unresolved calls for seven vector
 helpers, including both `vector_compact` arities. All reach function resolution
 with explicit `vector<int>` declarations; none depends on legacy comment syntax.
-[Checkpoint thirty-six](language_verification_evidence/logs-checkpoint-36.json.gz)
+[Checkpoint thirty-six](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-36.json.gz)
 archives the exact probes, hashes, commands and diagnostics. These are successful
 negative observations, not successful implementations of the APIs.
 
@@ -1089,7 +1089,7 @@ module audit, but independent normative authority remains unresolved.
 The remaining name exposes a real overload gap: `regex_replace(pattern,
 replacement, subject, limit)` is documented but absent. A dev002 control admits
 the three-argument call; the four-argument call rejects on arity with no artifacts.
-[Checkpoint thirty-seven](language_verification_evidence/logs-checkpoint-37.json.gz)
+[Checkpoint thirty-seven](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-37.json.gz)
 retains both exact sources and diagnostics. V-R09 records the known provider
 limit/count overload collision and requires normal discussion, separate from
 regex filtering's semantic conflict and callback ABI integration.
@@ -1109,7 +1109,7 @@ members, fractional/exponent integer spellings and signed-64 overflow. Failed
 integer `take` preserves 73 and sets the error; a successful retry returns 1 and
 clears it. Member presence distinguishes absent keys from present null/false.
 
-[Checkpoint thirty-eight](language_verification_evidence/logs-checkpoint-38.json.gz)
+[Checkpoint thirty-eight](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-38.json.gz)
 archives both attempts. The first fixture incorrectly used `isset(error)`; the
 corrected fixture uses documented error message getters. No production source was
 adapted. The exact passing output is `28:preserved:recovered:presence`.
@@ -1130,7 +1130,7 @@ previous document containing integer 7; every subsequent valid parse clears both
 the diagnostic record and ordinary error. Depths 1, 128 and 256 succeed, while
 opening the next container beyond the configured limit fails.
 
-[Checkpoint thirty-nine](language_verification_evidence/logs-checkpoint-39.json.gz)
+[Checkpoint thirty-nine](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-39.json.gz)
 retains source bytes as hex, expected categories/offsets, commands and outcomes.
 The initial fixture redeclared locals; the corrected fixture declares them once.
 All twelve JSON document-family functions now have focused failure proofs in the
@@ -1148,7 +1148,7 @@ sentinel, and their existing positive/nonpositive-sleep execution is linked.
 Four new production-published native programs on dev002 prove minimum/maximum
 signed-64 timestamps fail UTC and local conversion through the documented runtime
 exception. The production entry emits the diagnostic, returns 1 and emits no stdout.
-[Checkpoint forty](language_verification_evidence/logs-checkpoint-40.json.gz)
+[Checkpoint forty](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-40.json.gz)
 archives commands, sources, diagnostics and passing outcomes.
 
 `dt_format_now` is explicitly recorded as requiring host fault injection for its
@@ -1167,7 +1167,7 @@ continued contention after that failure, released-token transfer rejection and
 successful reacquisition after release. Exact stdout is
 `15:empty:unfinished:closed:owned:released:retry`.
 
-[Checkpoint forty-one](language_verification_evidence/logs-checkpoint-41.json.gz)
+[Checkpoint forty-one](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-41.json.gz)
 archives the source, commands and outcomes. The failure ledger now maps all 27
 filesystem/process function rows, combining this probe with inspected existing
 filesystem failures/snapshot/path executions and prior live-stop/transfer proofs.
@@ -1187,7 +1187,7 @@ returns a successful empty capture vector. Two independent programs prove split
 limit -2 and offset-capture flag 4 raise the documented errors through production
 entry handling (exit 1), with real PCRE2 provider linkage.
 
-[Checkpoint forty-two](language_verification_evidence/logs-checkpoint-42.json.gz)
+[Checkpoint forty-two](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-42.json.gz)
 retains all attempts. The first pattern fixture incorrectly requested two outputs
 from a falseable `take`; the corrected one-output fixture passes. The two already
 passing exception cases were not rerun. No compiler/runtime adaptation was made.
@@ -1206,7 +1206,7 @@ runtime diagnostics and exit 1. The five prior adapted exception observers also
 pass for negative/past-end byte reads, excessive slice width, line zero and reverse
 mapping overflow; their distinct observer lane is retained.
 
-[Checkpoint forty-three](language_verification_evidence/logs-checkpoint-43.json.gz)
+[Checkpoint forty-three](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-43.json.gz)
 archives the new proofs. All thirteen source function rows now have scoped failure
 reconciliation. Operations without small-input failure arguments are distinguished
 from bounds-checked calls. Huge buffers/line tables and allocation failures remain
@@ -1224,7 +1224,7 @@ semantics were changed. Unsupported boxed formatting/joining stays separate.
 
 The review found one missing arity-specific proof. A new dev002 production-build
 probe confirms `explode("", "abc", 2)` reports the separator error with exit1 and
-empty stdout. [Checkpoint forty-four](language_verification_evidence/logs-checkpoint-44.json.gz)
+empty stdout. [Checkpoint forty-four](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-44.json.gz)
 retains its command/source/outcome evidence, closing that probe gap.
 
 Explicit byte/Unicode helpers retain a boundary-evidence-only status where the
@@ -1259,7 +1259,7 @@ The remaining direct core probe passes on dev002: calling `get_message()` on an
 absent Exception reaches the shared-pointer guard. Production entry handling emits
 the present-pointer diagnostic, returns 1 and emits no stdout. This is distinct
 from the previously verified absent-throw guard.
-[Checkpoint forty-five](language_verification_evidence/logs-checkpoint-45.json.gz)
+[Checkpoint forty-five](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-45.json.gz)
 archives the exact source, command, build and result.
 
 LV29.003 now links the complete declaration, visibility and failure ledgers instead
@@ -1276,7 +1276,7 @@ test-only `localtime_r` wrapper encounters one injected null conversion, reports
 the documented runtime error and exits 1 with no stdout. Neither server time nor
 production code changed. This is an explicit-provider/injected-host proof, not
 production cache linkage evidence.
-[Checkpoint forty-six](language_verification_evidence/logs-checkpoint-46.json.gz)
+[Checkpoint forty-six](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-46.json.gz)
 retains wrapper/source hashes, control and injected commands, and diagnostics.
 
 LV29.003 is now passed for its declared obligation: map each of the 198 public
@@ -1338,7 +1338,7 @@ rejections; every rejection leaves artifacts empty. Both increment and decrement
 admit for canonical integers and mixed/dynamic. Float comparisons and lifted
 nullable/Result arithmetic reject in this snapshot.
 
-[Checkpoint forty-seven](language_verification_evidence/logs-checkpoint-47.json.gz)
+[Checkpoint forty-seven](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-47.json.gz)
 and the [admission ledger](language_verification_operator_admission.json) retain
 all exact sources, hashes and diagnostics. This is a preliminary observation grid,
 not a normative expectation oracle or generated-native execution count. In

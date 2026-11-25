@@ -2,6 +2,12 @@
 
 Doc Status: supporting
 
+The `simplecpp-active.zip` release asset contains the compiler, runtime, specs and tests. The **Active source ZIP** workflow can also package a selected branch on demand. To produce the same archive locally, run this command from the repository root.
+
+```sh
+git archive --format=zip --prefix=simplecpp/ -o simplecpp-active.zip HEAD -- . ':!v0.1'
+```
+
 Runtime public APIs follow the [minimal public header rule](specs/runtime_public_headers.md).
 
 This is the active destination for explicitly reviewed reuse slices. The compiler, runtime, tools and tests build from the repository root. Normal external compiler,

@@ -28,7 +28,7 @@ Tests ran on `alex-ai@dev002.travelfuse.ro` under `/home/alex-ai/language-verifi
 - Frozen HEAD: `d675aca8251374555c9191067793175b43d8a79c`.
 - Snapshot: 6178 files; source archive SHA-256 `b7958fd2f53b3ee901595ff6844cd220147d8d48cb1cd287c3d7fe402c9fd71a`.
 - v0.1 reference: `75de94c71e37060c564b6ade19850b7686bd457a`, checked against local/GitHub references at checkpoint 32; latest tag and release branch are separately recorded.
-- Evidence: [coverage ledger](language_verification_coverage.json), [progress chronology](language_verification_progress.md), and [checkpoint 75 archive](language_verification_evidence/logs-checkpoint-75.json.gz). Per-check runs and earlier checkpoints retain the original and adapted lanes. The archived environment records Clang 18.1.3 and PHP 8.2 for the initial host; subsequent integrations use the private PHP 8.5 launcher recorded in their command evidence. Environment failures remain separate from compiler failures.
+- Evidence: [coverage ledger](language_verification_coverage.json), [progress chronology](language_verification_progress.md), and [checkpoint 75 archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/language_verification_evidence/logs-checkpoint-75.json.gz). Per-check runs and earlier checkpoints retain the original and adapted lanes. The archived environment records Clang 18.1.3 and PHP 8.2 for the initial host; subsequent integrations use the private PHP 8.5 launcher recorded in their command evidence. Environment failures remain separate from compiler failures.
 
 ## Coverage by family
 
