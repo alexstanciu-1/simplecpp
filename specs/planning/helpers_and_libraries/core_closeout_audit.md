@@ -33,3 +33,12 @@ Audited against v0.2 at `cfd9f27c9`, the release at `d2f63e37e`, and my-try at `
 Used fresh temporary executable projects with general API enabled. Each probe had its own compiler process. Compiled and ran accepted echo and padding callers with Clang against the emitted manifest; checked preparation diagnostics for absent names. Compared module constants by name and value. Reran six existing CTest cases covering output, echo chains, carrier values and exceptions, including their native fixtures. Donor overload details came from the pinned core catalog, release PHP generator and JSS emitter, and native provider headers. No performance claim follows from these checks.
 
 The remaining implementation recommendation for helper intake is **one exact-mixed predicate family**. The broader echo work already has an owner and a debt note. Debug formatting, PHP compatibility, and process memory measurements can be revisited independently. This audit proposes dispositions; publishing the predicate family and accepting or revising the deferrals remain separate decisions.
+
+### Predicate implementation outcome
+
+All three exact-mixed predicates are published for PHP and the general API. The
+source-to-native test covers their tag results, single evaluation, type and arity
+diagnostics, and flavor visibility. In a Clang -O2 compilation of boxed.cpp
+without LTO, each native predicate contains one call to the private boxed tag
+accessor, an integer equality comparison and a return. This records the Stage 1
+boundary for the later optimization pass.

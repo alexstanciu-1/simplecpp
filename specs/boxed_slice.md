@@ -157,3 +157,17 @@ Arithmetic results retain the boxed family; ordering returns bool. String compou
 PHP `.=` versus C++/JS `+=`; PHP numeric `+=` rejects string payloads. Scalar division,
 shift and power guards remain in effect. Nested indexing remains deferred. These additions
 introduce no public object layout or additional boxed kinds.
+
+## Exact mixed type predicates
+
+The general API and PHP flavor publish `is_bool(mixed): bool`,
+`is_int(mixed): bool`, and `is_float(mixed): bool`. Each observes its single
+argument once, by const reference, and tests its stored kind. False has boolean
+kind, zero has integer kind, and an integral-valued float has floating kind.
+Null, strings (including numeric strings), and containers return false for all
+three. The operation only reads the tag, including for a temporary mixed value.
+
+The argument must already have source type mixed. Passing a plain scalar,
+dynamic or a nullable scalar is a type error. The returned bool is a snapshot
+and introduces no flow-sensitive narrowing. Each predicate lowers to the same
+native function for both its PHP and general spelling.

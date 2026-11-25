@@ -1266,6 +1266,7 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
+    "mixed_predicates": {"is_bool": "boolean", "is_int": "integer", "is_float": "floating"},
     "initialization": "ordered_family_literals",
     "transfer_assignment": "private_value_nothrow",
     "scalar_kinds": ["null_t", "bool_t", "int64", "float64", "string"],

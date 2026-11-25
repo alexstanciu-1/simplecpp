@@ -3,7 +3,7 @@
   "async_frames": true,
   "mt_segments": true,
   "modules": ["numeric"],
-  "boxed": {"header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
+  "boxed": {"mixed_predicates": ["is_bool", "is_int", "is_float"], "header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
   "namespace": "scpp",
   "types": [
     "int64",

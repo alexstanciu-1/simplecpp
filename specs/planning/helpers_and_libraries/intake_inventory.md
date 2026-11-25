@@ -15,6 +15,7 @@ Reconciled against `codex/helpers-and-libs` through `cfd9f27c9` on 2026-11-25. A
 | Stable string hashing | Both general helpers publish the same FNV-1a 64-bit fingerprint, as lowercase hex or an unsigned numeric value. [Contract](../../runtime_api_summary.md#stable-string-fingerprints) · [Donor vectors](stable_hash_audit.md) |
 | Vector construction and capacity | Fill, capacity, reserve, resize, compact and both clear spellings. [Family audit](vector_capacity_audit.md) |
 | Typed vector/hash operations and map/filter | Construction, indexing, mutation, membership, removal, clear and traversal. The six general transform names cover generic, sequence and keyed cases for their admitted receivers. [Operations](typed_container_operations_audit.md) · [Transforms](collection_map_filter_audit.md) |
+| Exact-mixed type predicates | PHP and general is_bool, is_int and is_float observe the mixed tag. [Contract](../../boxed_slice.md#exact-mixed-type-predicates) |
 | Boxed collections | Table-valued mixed and dynamic support indexing, probes, mutation, traversal and same-family generic map/filter. Keys and order survive transforms, with mixed copy-on-write and dynamic shared identity. [Contract](../../collection_traversal.md) |
 | JSON codec, document/nodes, pull reader | Checked encode/decode for the published types, immutable documents with retained nodes and diagnostics, and a checked pull reader with a shared cursor. [Contract](../../json_module.md) |
 | Regex | General PCRE2 operations and ten PHP preg names, including captures, output parameters, split, filter and callback replacement. [Contract](../../regex_module.md) |
@@ -36,13 +37,9 @@ Reconciled against `codex/helpers-and-libs` through `cfd9f27c9` on 2026-11-25. A
 | Async/task helpers | Cooperative suspension and joined parallel batches exist. Background ownership, cancellation, progress and intermediate publication await a concurrency use case. [Task audit](async_mysqli_ui_webview_audit.md#asynctask-helpers) |
 | Flavor and platform expansion | Separate flavor reviews own PHP date/time compatibility, indexed unset, donor container aliases and additional natural JS/Python APIs. Additional database engines, widget toolkits and non-Linux desktop providers are outside the selected contracts. |
 
-### Remaining Stage 1 decisions
+### Stage 1 closeout
 
-| Candidate | What remains to settle |
-| --- | --- |
-| Exact-mixed type predicates | Audit recommends implementing `is_bool(mixed)`, `is_int(mixed)` and `is_float(mixed)` together. Other core spellings and release aliases now have individual dispositions. [Core closeout audit](core_closeout_audit.md) |
-
-**Closeout.** The remaining core inventory has been audited. The predicate family awaits a decision and implementation. Broader echo coverage is tracked by the compiler. Debug formatting, process-memory metrics and flavor compatibility have proposed deferrals.
+The selected predicate family is operational. The [core closeout audit](core_closeout_audit.md) records the remaining flavor and tooling deferral recommendations. Broader echo coverage remains compiler-owned.
 
 **Visibility.** C++ uses general names by default. PHP, JS and Python can add them with `"general_api": true` on the root project. Selecting a module remains a separate requirement. [Module and lookup contract](../../../compiler/docs/modules.md)
 

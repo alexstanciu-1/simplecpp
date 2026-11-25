@@ -297,6 +297,13 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         if (!isset($runtime['boxed_dispatch'])) continue;
         $source = $family['name'];
         $header = providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $source)['provider']);
+        if ($source === 'mixed') {
+            foreach (array_keys($runtime['mixed_predicates'] ?? []) as $name) {
+                $function = "new runtime_function('$name', [type_mixed::instance()], type_bool::instance(), '::scpp::$name', '$header', const_reference_mask: 1)";
+                // Select on the operand's own type before contextual typing can construct a mixed literal.
+                $runtimeCases[] = "\t\t\t'php:func:$name', 'general:func:$name' => \$bindings['mixed:$name'] ??= new runtime_overloads([1 => [type_mixed::class => $function]]),";
+            }
+        }
         foreach ($family['source_collection']['methods'] as $name => $binding) {
             if ($name === 'clear') {
                 $keys = array_map(static fn($flavor) => var_export("$flavor:$source:$name", true), ['php', 'cpp', 'js']);
