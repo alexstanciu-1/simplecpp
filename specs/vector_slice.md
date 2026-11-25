@@ -13,7 +13,7 @@ The vector metadata record binds the source family to private std::vector storag
 a published signed count type (currently int64), value-copy reads and explicit set
 mutation. It admits registered integer, floating, boolean, null and string element
 families. Publication requests concrete specializations; the default emits
-vector_int64 and vector_string in scpp/vectors.hpp. There is no public vector<T>
+vector_int64, vector_string, vector_float64 and vector_bool_t in scpp/vectors.hpp. There is no public vector<T>
 template or standard container alias. The compiler now resolves source vector<T> and
 element aliases to a requested concrete identity through the shared export plan;
 [typed empty construction, append and indexed reads](../compiler/docs/vector_operations.md)

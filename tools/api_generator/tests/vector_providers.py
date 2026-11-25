@@ -71,7 +71,7 @@ def proof(work, quick=False):
     observations = [['int64', '(receiver).size()'], ['bool_t', '(receiver).empty()']]
     assert binding() == ['vector<int64>', 'scpp::vector_int64', ['scpp/vectors.hpp'], observations]
     names = sorted(v['name'] for v in baseline['vectors'])
-    assert names == ['vector_int64', 'vector_string']
+    assert names == ['vector_bool_t', 'vector_float64', 'vector_int64', 'vector_string']
     for name in names:
         assert baseline['submodules']['type_exports'][name] == {'symbol': 'scpp::' + name, 'provider': 'core.vectors'}
     assert baseline['submodules']['groups']['vectors']['types'] == names

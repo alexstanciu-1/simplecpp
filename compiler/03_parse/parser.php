@@ -901,9 +901,10 @@ final class Parser
 					$this->cursor->take(token_kind::ampersand, '& after const parameter type');
 					$mode = passing_mode::readonly_reference;
 				} else $mode = $this->parameter_mode();
-				if ($mode === passing_mode::value && $this->cursor->tokens->source->flavor === flavor::php
+				if (($mode === passing_mode::value || (!$lambda && $mode === passing_mode::reference)) && $this->cursor->tokens->source->flavor === flavor::php
 					&& $this->cursor->is(token_kind::ellipsis)) {
-					$type = new ast_variadic_type_reference($type, $this->cursor->take(token_kind::ellipsis, '...') + 1);
+					$type = new ast_variadic_type_reference($type, $this->cursor->take(token_kind::ellipsis, '...') + 1, $mode === passing_mode::reference);
+					$mode = passing_mode::value;
 				}
 				$name = $this->cursor->binding_name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);

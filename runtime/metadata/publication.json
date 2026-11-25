@@ -747,7 +747,9 @@
           "not_equal"
         ],
         "casts_from": []
-      }
+      },
+      {"element": "float64", "native_index": false, "native_value": "none", "operations": [], "casts_from": []},
+      {"element": "bool_t", "native_index": false, "native_value": "none", "operations": [], "casts_from": []}
     ]
   },
   "carriers": {

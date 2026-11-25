@@ -172,7 +172,7 @@ final class Method_Preparation
 		if (!$exact && ($method->is_static || !self::widens($method->return_type_def(), $base->return_type_def(), $symbols, $dependencies, $watcher))) return null;
 		foreach ($method->parameters as $i => $parameter) {
 			$original = $base->parameters[$i];
-			if ($parameter->mode !== $original->mode || ($parameter->default_value === null) !== ($original->default_value === null)) return null;
+			if ($parameter->is_readonly_pack() !== $original->is_readonly_pack() || $parameter->mode !== $original->mode || ($parameter->default_value === null) !== ($original->default_value === null)) return null;
 			$provided = $parameter->type_def();
 			$required = $original->type_def();
 			if ($provided->matches($required)) continue;

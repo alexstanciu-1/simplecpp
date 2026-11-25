@@ -40,6 +40,11 @@ final class ast_parameter_declaration extends ast_node implements ast_local_bind
 	}
 
 	/** METHODS */
+	public function is_readonly_pack(): bool
+	{
+		return $this->type_reference instanceof ast_variadic_type_reference && $this->type_reference->read_only;
+	}
+
 	public function duplicate_category(): declaration_duplicate_category
 	{
 		return declaration_duplicate_category::local_binding;

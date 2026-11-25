@@ -150,10 +150,23 @@ $named_variadic = (new Program_Frontend())->prepare_sources('main', [
 $fixtures['named_variadic'] = ['files' => Cpp_Program::emit($named_variadic)->files, 'stdout_hex' => bin2hex('1234561436')];
 // PHP follows the normative type-before-name signature; shorthand and deferred features reject.
 $php = static fn(string $code) => (new Source_Frontend())->prepare(new source_file('php', $code, flavor::php), new entry_target(31));
-foreach (['function f($x int): void {}', 'function f(int &...$x): void {}',
+foreach (['function f($x int): void {}', 'function f(const int &...$x): void {}',
 	'function f(int $x, int $x): void {}'] as $invalid) {
 	rejects(fn() => $php($invalid . 'return 8;'), str_contains($invalid, 'int $x,') ? 'Duplicate local' : 'Expected');
 }
+
+$readonly = 'function mutate(vector<int> &$v):void {} function check(int &...$xs):void {';
+foreach (['$xs[]=1;', '$xs[0]=1;', '$xs=$xs;', 'mutate($xs);', 'clean($xs);', 'unset($xs);',
+	'$alias =& $xs;$alias[]=1;', '$alias =& $xs;mutate($alias);'] as $write) {
+	rejects(fn() => $php($readonly . $write . '}return 8;'), 'read-only variadic pack');
+}
+rejects(fn() => $php('function f(int &...$xs):void {} $xs vector<int> = [];f(...$xs);return 8;'), 'Unpacking into a read-only');
+rejects(fn() => $php('function f(int &...$xs):int {return 0;} $op function<int(int...)> = f(...);return 8;'), 'Callback target signature mismatch');
+
+rejects(fn() => $php('function &f(int &...$xs):vector<int> {return $xs;}return 8;'), 'exactly one writable parameter');
+rejects(fn() => $php('struct Item {public int $n=0;} function f(Item &...$xs):void {}return 8;'), 'canonical int, float, bool or string');
+rejects(fn() => $php('class Item {public function __construct(int &...$xs) {}}return 8;'), 'named ordinary function');
+rejects(fn() => $php('$f=fn(int &...$xs):int => count($xs);return 8;'), 'Expected');
 
 $variadic = 'function gather(int $base=2,int ...$xs):int {echo $base;foreach ($xs as $x) {echo $x;}return count($xs);}';
 $php($variadic . 'echo gather(),gather(1,3,5);return 8;');

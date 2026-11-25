@@ -936,7 +936,7 @@ final class Preparation
 		}
 		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
 			&& ($this->enclosing_lambda !== null || !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
-		if (!($origin instanceof ast_local_declaration) && !$reference_parameter) {
+		if (!($origin instanceof ast_local_declaration) && !$reference_parameter && !($origin instanceof ast_parameter_declaration && $origin->is_readonly_pack())) {
 			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
 		}
 		$type = $origin->type_def();
@@ -2596,6 +2596,9 @@ final class Preparation
 		$unpacked = $call->unpacked ?? false;
 		if ($unpacked && ($variadic === null || $supplied !== $variadic + 1)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires one vector after all fixed arguments of a variadic target');
+		}
+		if ($unpacked && !$callback && $function->parameters[$variadic]->is_readonly_pack()) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking into a read-only variadic pack is deferred');
 		}
 		$slots = null;
 		if (isset($call->named)) {
