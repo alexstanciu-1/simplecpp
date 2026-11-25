@@ -267,6 +267,14 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
+    if (in_array('implode', $publication->string->functions ?? [], true)
+        && in_array('string', array_column($publication->hashes->specializations ?? [], 'value'), true)) {
+        $headers[] = 'scpp/php/implode_hash.hpp';
+    }
+    foreach (names($publication->text_helpers ?? []) as $name) {
+        $headers[] = textHelperHeader($name);
+        if ($name === 'string_byte_find') $headers[] = 'scpp/value_error.hpp';
+    }
     if (isset($publication->datetime)) {
         $header = headerPath(at($publication->datetime, 'header'));
         foreach (names(at($publication->datetime, 'operations')) as $name) {

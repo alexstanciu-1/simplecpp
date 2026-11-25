@@ -1784,7 +1784,7 @@ final class Preparation
 			$selection_index = $runtime->argument_index;
 			$selected = $operands[$selection_index];
 			if ($selected !== $prepared) {
-				$this->value($selected);
+				$this->value($selected, destination: $selected instanceof ast_collection_expression ? $runtime->list_context : null);
 				$prepared = $selected;
 			}
 			$runtime = $variants[$selected->type_def()::class] ?? null;
@@ -1802,7 +1802,7 @@ final class Preparation
 			if ($argument !== $prepared && $argument !== $call->receiver) {
 				$this->value($argument, destination: $type);
 			}
-			if ($index === 0 && $runtime->receiver_method) {
+			if ($index === 0 && $runtime->receiver_method && $call->receiver !== null) {
 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
 				if ($runtime->is_reference(0)) Readonly_Access::write($argument, true);
 				if ($runtime->is_reference(0) && $argument instanceof ast_name_expression) {

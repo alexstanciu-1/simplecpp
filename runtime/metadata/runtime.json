@@ -1108,6 +1108,13 @@
       }
     }
   },
+  "text_helpers": {
+    "string_byte_len": ["int64", "string"],
+    "string_byte_at": ["int64", "string", "int64"],
+    "string_byte_slice": ["string", "string", "int64", "int64"],
+    "string_byte_slice_equals": ["bool_t", "string", "int64", "int64", "string"],
+    "string_byte_find": ["result_or_false_int64", "string", "string", "int64"]
+  },
   "datetime": {
     "binding": "native_datetime",
     "general_names": {

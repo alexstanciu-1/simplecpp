@@ -141,3 +141,21 @@ known LSan limitation; no clean LSan run is claimed.
 ## Byte positions
 
 String length and indexed access count encoded bytes, including embedded NUL. For example, the UTF-8 encoding of `é中😀` has length 9. Indexing outside the stored bytes throws. Compiler offsets and source spans likewise count bytes. See the [source string bindings](../compiler/docs/strings.md#metadata-declared-byte-functions).
+
+## Explicit byte helpers
+
+The general API publishes the following operations independently. C++ flavor
+can use selected general names by default. Other flavors require general_api.
+All positions and lengths here count bytes, including embedded NUL.
+
+| Operation | Result and bounds |
+| --- | --- |
+| string_byte_len(s) | int. Lowered as the size of the string. |
+| string_byte_at(s, i) | int in 0…255, or −1 outside [0,size). |
+| string_byte_slice(s, i, n) | Owned string. Negative bounds or a start past the end produce empty. An overrun truncates. |
+| string_byte_slice_equals(s, i, n, literal) | bool. Match exactly n bytes in a fully contained window, including the empty window at the end. |
+| string_byte_find(s, needle[, i]) | result_or_false<int>. Start defaults to zero and must be in [0,size], otherwise ValueError. Empty needle can match at the end. A hit at zero is present. |
+
+PHP implode(separator, parts) also accepts a published hash with string values
+and either integer or string keys. It joins the values in iteration order and
+preserves empty values and embedded NUL bytes.

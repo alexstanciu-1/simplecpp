@@ -344,8 +344,19 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                     $names = array_map(static fn(string $label): string => var_export($label, true), $adapter['parameter_names']);
                     $required .= ', parameter_names: [' . implode(', ', $names) . ']';
                 }
-                $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
-                    . implode(', ', $arguments) . "], type_$adapterResult::instance(), '$symbol', '$header'$adapterFlavor$required),";
+                $call = "new runtime_function('$name', [" . implode(', ', $arguments)
+                    . "], type_$adapterResult::instance(), '$symbol', '$header'$adapterFlavor$required)";
+                if ($key === 'php:func:implode' && ($hashes = stringJoinHashes($runtime)) !== []) {
+                    $vector = $runtimeTypes[$types[1]];
+                    $variants = ["type_$vector::class => $call"];
+                    foreach ($hashes as $hash) {
+                        $type = 'type_' . $hash['name'];
+                        $variants[] = "$type::class => new runtime_function('implode', [type_string::instance(), $type::instance()], type_string::instance(), '::scpp::php::implode', 'scpp/php/implode_hash.hpp', const_reference_mask: 3)";
+                    }
+                    $call = 'new runtime_overloads([2 => [' . implode(', ', $variants)
+                        . "]], argument_index: 1, list_context: type_$vector::instance())";
+                }
+                $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= $call,";
             }
             continue;
         }
@@ -354,6 +365,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $labels = implode(', ', array_map(static fn($key) => var_export($key, true), $keys));
         $runtimeCases[] = "\t\t\t$labels => \$bindings['$name'] ??= new runtime_function('$name', ["
             . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
+    }
+    foreach ($runtime['text_helpers'] ?? [] as $name => $binding) {
+        $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings[\$key] ??= " . compilerTextBinding($name, $binding, $runtimeTypes) . ',';
     }
     foreach ($runtime['datetime']['operations'] ?? [] as $op) {
         $name = $op['source_name'];
