@@ -2,12 +2,75 @@
 from contextlib import closing
 import json
 from pathlib import Path
+import select
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
+
+from app_namespace_native import service
 
 from translated_vector_recipe import ROOT, build, fresh, vector_bundles
+
+
+def wait_until(check, description):
+    deadline = time.monotonic() + 10
+    while not check():
+        assert time.monotonic() < deadline, description
+        time.sleep(.01)
+
+
+def verify_publication(work, driver, cxx, flags):
+    app, bundle = work/'revision-app', work/'revision-bundle'
+    app.mkdir()
+    (app/'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {
+        'runtime': {'modules': ['filesystem', 'datetime']}}}))
+    main = app/'main.php'
+    release_app = work/'release-app'
+    main.write_text(f'while (!fs_exists("{release_app}")) {{ dt_sleep_ms(1); }} echo 1; return 0;')
+    fresh(app, bundle)
+    exe = work/'revision-executable'
+    ready, resume = work/'clang-ready', work/'resume-clang'
+    wrapper = work/'pause-clang'
+    wrapper.write_text(f'#!/bin/sh\ntouch "{ready}"\nwhile [ ! -f "{resume}" ]; do sleep .01; done\n'
+                       f'exec {shlex.quote(cxx)} "$@"\n')
+    wrapper.chmod(0o755)
+    args = [driver, bundle, exe]
+    child = subprocess.Popen([*args, wrapper, *flags], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    writer = service(app, bundle)
+    try:
+        wait_until(ready.exists, 'Clang never entered')
+        (app/'second.php').write_text('function second(): int { return 2; }')
+        main.write_text('echo second(); return 0;')
+        writer.stdin.write('"run"\n')
+        writer.stdin.flush()
+        # Linux reports queued flock requests with the waiting PID and target inode.
+        inode = (bundle/'.scpp-bundle.lock').stat().st_ino
+        def publisher_waits():
+            for line in Path('/proc/locks').read_text().splitlines():
+                fields = line.split()
+                if fields[1:6] == ['->', 'FLOCK', 'ADVISORY', 'WRITE', str(writer.pid)]:
+                    if fields[6].rsplit(':', 1)[-1] == str(inode):
+                        return True
+            return False
+
+        wait_until(publisher_waits, 'publisher never queued behind native build')
+        resume.touch()
+        assert select.select([writer.stdout], [], [], 10)[0], 'application retained the build lock'
+        result = json.loads(writer.stdout.readline())
+        assert 'error' not in result, result
+        release_app.touch()
+        stdout, stderr = child.communicate(timeout=10)
+        assert (child.returncode, stdout, stderr) == (0, b'1', b''), (stdout, stderr)
+    finally:
+        resume.touch()
+        release_app.touch()
+        child.communicate(timeout=10)
+        writer.stdin.close()
+        writer.wait(timeout=10)
+    assert subprocess.check_output([*args, cxx, *flags], timeout=10) == b'2'
 
 
 def verify(work, cxx, linker):
@@ -38,6 +101,7 @@ def verify(work, cxx, linker):
     assert (reference.returncode, reference.stdout, reference.stderr) == (8, expected, b''), reference
     success = subprocess.run(command, capture_output=True, timeout=30)
     assert (success.returncode, success.stdout, success.stderr) == (8, expected, b''), success
+    verify_publication(work, driver, cxx, flags)
     saved = exe.read_bytes()
 
     # Introduce a deterministic native compile failure after a successful publication.
