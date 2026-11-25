@@ -1,0 +1,34 @@
+// One C++ escape for a non-NUL byte, preserving printable ASCII.
+function cpp_literal_byte(int $code): string {
+	return match ($code) {
+		34 => "\\\"",
+		92 => "\\\\",
+		10 => "\\n",
+		13 => "\\r",
+		9 => "\\t",
+		default => ($code >= 32 && $code <= 126)
+			? string_byte_from_int($code)
+			: "\\" . string_byte_from_int(48 + ($code >> 6))
+				. string_byte_from_int(48 + (($code >> 3) & 7))
+				. string_byte_from_int(48 + ($code & 7)),
+	};
+}
+
+// Port of Cpp_String_Literals::bytes. Indexes address the original bytes.
+function cpp_literal_bytes(string $bytes): string {
+	$literal = "\"";
+	$length = strlen($bytes);
+	for ($index = 0; $index < $length; ++$index) {
+		$code int = (int) $bytes[$index];
+		if ($code === 0) {
+			$next = $index + 1 < $length ? (int) $bytes[$index + 1] : 0;
+			$literal .= ($next >= 48 && $next <= 55) ? "\\000" : "\\0";
+		} elseif ($code === 63 && $index > 0 && (int) $bytes[$index - 1] === 63 && $index + 1 < $length
+			&& str_contains("=/'()!<>-", string_byte_from_int((int) $bytes[$index + 1]))) {
+			$literal .= "\\?";
+		} else {
+			$literal .= cpp_literal_byte($code);
+		}
+	}
+	return $literal . "\"";
+}

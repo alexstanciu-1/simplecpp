@@ -1,0 +1,18 @@
+{
+  "retained_unit": "tokenization.php",
+  "captured_unit_cases": 41,
+  "additional_oracle_cases": 261,
+  "new_batch_cases": 2,
+  "pending_units": [
+    "variable_tokens.php",
+    "lexical_updates.php"
+  ],
+  "sha256": {
+    "compiler/reference/pre-rewrite/tests/02_tokenize/tokenization.php": "80525fc08ecb232027fa1bcea06bf84ba49d141eb28a2030701ab3774034e017",
+    "compiler/reference/pre-rewrite/src/02_tokenize/tokenize.php": "03172258b4038114b7a5d1528d4e34f7175c2b26a765575fc2d55dc08757da85",
+    "compiler/reference/pre-rewrite/src/02_tokenize/structures.php": "490c229509e8ed31eb4cb3022d76b315e7846e20fff29a221ee72b88762e288a",
+    "compiler/tests/tokenizer/reuse_tests.php": "e915ab49ffc5b46eff4b4496bfc225721fdd39def04e8cd17b866d0fe9d85825",
+    "compiler/tests/tokenizer/reference_support.php": "c92bc492fe29a6f31f13f0229e53ed1654182c22b7205143185e4a4aa1f604e8"
+  },
+  "runtime_preparation": "Unchanged; remains PHP as-is by user instruction."
+}

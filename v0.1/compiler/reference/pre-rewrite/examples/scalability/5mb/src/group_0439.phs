@@ -1,0 +1,384 @@
+function sample_014049(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014050(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014051(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014052(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014053(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014054(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014055(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014056(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014057(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014058(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014059(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014060(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014061(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014062(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014063(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014064(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014065(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014066(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014067(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014068(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014069(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014070(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014071(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014072(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014073(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014074(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014075(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014076(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014077(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014078(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014079(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}
+function sample_014080(): int {
+    visit();
+    $value int = seed();
+    $copy int = $value;
+    {
+        $value int = 7;
+        $value = $value;
+        $copy = $copy;
+    }
+    $value = $copy;
+    return $value;
+}

@@ -1,0 +1,83 @@
+commit 1a24a85dbf58c46b78ae905e8d374107b509aa18
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Wed Aug 12 06:05:20 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Wed Aug 12 06:05:20 2026 +0300
+
+    Export backend call argument rows for FN proof
+
+diff --git a/compiler/src/compile/pipeline/compiler_project_runner.phs b/compiler/src/compile/pipeline/compiler_project_runner.phs
+index 222feabf..1bab9987 100644
+--- a/compiler/src/compile/pipeline/compiler_project_runner.phs
++++ b/compiler/src/compile/pipeline/compiler_project_runner.phs
+@@ -183,6 +183,7 @@ final class compiler_project_runner {
+ 		$preflight FunctionBodyTextEmissionPreflightArtifact = llvm_text_from_plan::preflight_from_emission($emission);
+ 		$moduleText string = backend_module_composition::module_text_for_entry($symbols, $entrySymbol, $entryModel, $entrySource, $emission, $backendRequests);
+ 		compiler_export_artifacts::write_stage_text($config, "lowering.tsv", compiler_export_artifacts::lowering_tsv($plan, $backendRequests, $emission, $preflight));
++		compiler_export_artifacts::write_stage_text($config, "backend_call_arguments.tsv", compiler_export_artifacts::backend_call_arguments_tsv($symbols, $entryModel, $entrySource));
+ 		compiler_export_artifacts::write_stage_text($config, "llvm_text.ll", $moduleText);
+ 		output_paths::ensure_parent_and_dir(fs_dirname($config->native_out_dir), $config->native_out_dir);
+ 		$writeReport ArtifactWriteReportRecord = artifact_writes::report_from_llvm_text_preflight($config, llvm_text_from_plan::preflight_by_id($preflight, structure_row_ids::uint32_from_int(1)), $moduleText);
+diff --git a/compiler/src/compile/support/compiler_export_artifacts.phs b/compiler/src/compile/support/compiler_export_artifacts.phs
+index 53a4796a..5dbf194f 100644
+--- a/compiler/src/compile/support/compiler_export_artifacts.phs
++++ b/compiler/src/compile/support/compiler_export_artifacts.phs
+@@ -37,6 +37,28 @@ final class compiler_export_artifacts {
+ 		return pure_tdd_stage_artifacts::lowering_tsv($plan, $requests, $emission, $preflight);
+ 	}
+ 
++	public static function backend_call_arguments_tsv(ProjectSymbolIndex $symbols, FrontendModel $model, string $sourceText): string {
++		$text string = pure_tdd_stage_artifacts::backend_call_arguments_tsv();
++		foreach ($symbols->rows as $symbol) {
++			$references ProjectReferenceResolution = project_reference_resolution::new_artifact(1);
++			$reference ProjectReferenceResolutionRow = compiler_entry_backend::direct_call_reference_from_frontend($references, $symbols, $model, $sourceText, $symbol);
++			if ((int)$reference->resolution_kind_id === (int)project_reference_resolution::resolution_kind_no_call_expression_id()
++				|| (int)$reference->status_id !== (int)project_reference_resolution::status_resolved_id()) {
++				continue;
++			}
++			$contracts ProjectCallableContractArtifact = project_callable_contracts::new_artifact(1);
++			project_callable_contracts::append_from_reference($contracts, $reference, $references, $symbols);
++			if ((int)$contracts->contract_count === 0) {
++				continue;
++			}
++			$contract ProjectCallableContractRow = project_callable_contracts::row_by_id($contracts, structure_row_ids::uint32_from_int(1));
++			$actualArguments vector<ProjectReferenceActualArgumentRow> = project_reference_resolution::actual_argument_rows($references, $reference);
++			$requests BackendRequestAuthorizationArtifact = backend_preflight_requests::backend_request_artifact_from_direct_call_contract_with_actual_args($contract, $symbols, $actualArguments);
++			pure_tdd_stage_artifacts::append_backend_call_arguments_tsv($text, $symbol->symbol_id, $requests);
++		}
++		return $text;
++	}
++
+ 	public static function write_execution_jsons_if_requested(CompilerProjectRunReport $report): bool {
+ 		return compiler_execution_artifacts::write_execution_jsons_if_requested($report);
+ 	}
+diff --git a/compiler/src/compile/support/pure_tdd_stage_artifacts.phs b/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
+index d804f9e5..b370d995 100644
+--- a/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
++++ b/compiler/src/compile/support/pure_tdd_stage_artifacts.phs
+@@ -185,4 +185,25 @@ final class pure_tdd_stage_artifacts {
+ 		}
+ 		return $text;
+ 	}
++
++	public static function append_backend_call_arguments_tsv(string &$text, uint32 $ownerSymbolId, BackendRequestAuthorizationArtifact $requests): void {
++		foreach ($requests->call_arguments as $row) {
++			$request BackendRequestAuthorizationRow = backend_preflight_requests::backend_request_by_id($requests, $row->owner_row_id);
++			$text = $text
++				. (int)$ownerSymbolId . "\t"
++				. (int)$row->owner_row_id . "\t"
++				. (int)$request->status_id . "\t"
++				. (int)$request->blocked_reason_id . "\t"
++				. (int)$row->argument_source_row_id . "\t"
++				. (int)$row->type_ref_id . "\t"
++				. (int)$row->value . "\t"
++				. (int)$row->position . "\t"
++				. (int)$row->flags . "\n";
++		}
++	}
++
++	public static function backend_call_arguments_tsv(): string {
++		$text string = "owner_symbol_id\towner_row_id\trequest_status_id\trequest_blocked_reason_id\targument_source_row_id\ttype_ref_id\tvalue\tposition\tflags\n";
++		return $text;
++	}
+ }

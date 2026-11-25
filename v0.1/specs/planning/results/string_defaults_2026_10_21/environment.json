@@ -1,0 +1,32 @@
+{
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin",
+  "php": "PHP 8.5.7 (cli) (built: Jun  6 2026 05:36:56) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.7, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.7, Copyright (c), by Zend Technologies",
+  "rust": "rustc 1.75.0 (82e1608df 2023-12-21) (built from a source tarball)",
+  "python": "Python 3.12.3",
+  "node": "v22.23.1",
+  "java": "openjdk version \"21.0.12.1\" 2026-08-18\nOpenJDK Runtime Environment (build 21.0.12.1+1-1-24.04.4-Ubuntu)\nOpenJDK 64-Bit Server VM (build 21.0.12.1+1-1-24.04.4-Ubuntu, mixed mode, sharing)",
+  "revision": "04a23a22fb5ea7dca06243db6651abc65f950ef1",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu": "AMD Ryzen 5 PRO 4650G with Radeon Graphics",
+  "pinned_cpu": 0,
+  "corpus_sha256": "3201ae19cdf7631392e33fcc9014222b99f694eacbd91a9ceb230682822d1c1e",
+  "sources": {
+    "README.md": "e4f94d808017e1b6c912e8d87e60b4cb75499c050e0e19b970379de3d156b6d8",
+    "bench.php": "686ee171277acd8268ebe8281e287defad8d5e41dfab936bbb0eb35513bca08a",
+    "report.py": "bae4162cdfcaa29a38ce6cb23fe2f27bdcc2415d6481d1eb3a62b0e9d84cf61c",
+    "Bench.java": "9923ede3c075d03d65461b9a1c2e62151c95d7b2ca7dce9169ba6461364c68ed",
+    "bench.js": "c5b0a0dcb2a8f0f24fb2f9c37d4a0dbc6b87ffe00d993510a368eb2cc0af933d",
+    "bench.rs": "9f9a16047151c6a1161b6a3f1c1907dd862e0add134bbf455d389860fab51d28",
+    "run.py": "501f572216e91fd3893f9c065ee770b9b1762cd228661e12b480e0ea3289db02",
+    "bench.py": "c7a186842814ee759a2e3c1d12acd886efaa1c0ff78f7a847470cbdd2cd1e91f",
+    "bench.cpp": "582e0db0dc7cec0004f9397a718136fbb71893a7f059f2748df05ad1983a4441",
+    "main.phs": "82f02a63578c30b838a11902665842f3d29206d14b292f1817b36f1bd5eb230a"
+  },
+  "executables": {
+    "cpp": "80467d93762119b5b43699e3c1441118e2c9db493e93809058955185808fb5b4",
+    "rust": "26843bd2cd6ddb1e901dfaf3978bbfc7145742c87e5e58e63a8d68d568e3a676",
+    "java": "fc9ebe229d5c2c759d6e93a8a045fea1a457c28d958ee2d54787868c775fbb61",
+    "concrete": "652e1d98d804a6d96910318954d1eb5e4c4ac01b7151eb4b515147a2b6e99357",
+    "ordinary": "16630cc8bc78caabb684a4c601b7bb6aa85be01551304d3872e30324e09d800d"
+  }
+}

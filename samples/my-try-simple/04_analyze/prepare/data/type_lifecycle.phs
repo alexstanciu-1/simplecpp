@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/data/type_lifecycle.phs
+function sample_unit_078(): void
+{
+    $value int = 79;
+    sample_unit_079();
+    return;
+}

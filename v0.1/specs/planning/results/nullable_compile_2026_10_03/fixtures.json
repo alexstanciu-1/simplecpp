@@ -1,0 +1,398 @@
+[
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_null_isset.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_null_empty.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_absent.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_zero.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_false.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_float.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_string_empty.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_string_zero.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_present.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_plain_false.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_plain_zero.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_plain_float.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_plain_string.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_once.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_isset_once.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_nonmutating.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_throw_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_empty.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_zero.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_present.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_both_empty.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_scalar_left.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_scalar_zero.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_bool.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_float.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_string.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_once.cpp",
+    "exit_code": 4
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_fallback_once.cpp",
+    "exit_code": 9
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_left.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_right.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_wrap_left.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_wrap_right.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_copy.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_lazy.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_required_empty.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_required_empty_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_empty.cpp",
+    "exit_code": 2
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_zero.cpp",
+    "exit_code": 2
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_false.cpp",
+    "exit_code": 2
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_true.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_float.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_string.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_string_zero.cpp",
+    "exit_code": 2
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_string_empty.cpp",
+    "exit_code": 2
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_elseif.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_while.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_do.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_for.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_condition_once.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_empty.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_zero.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_false.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_string.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_string_empty.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_float.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_scalar.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_lazy.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_once.cpp",
+    "exit_code": 9
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_skip.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_chain.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_precedence.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_logic.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_value.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_throw_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_empty.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_default_empty.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_present.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_reset.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_reassign.cpp",
+    "exit_code": 8
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_copy.cpp",
+    "exit_code": 4
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_copy_empty.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_false_present.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_zero_present.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_float.cpp",
+    "exit_code": 3
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_string_empty_present.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_string_copy.cpp",
+    "exit_code": 7
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_alias.cpp",
+    "exit_code": 2
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_calls.cpp",
+    "exit_code": 6
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_return_null.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_return_value.cpp",
+    "exit_code": 5
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_argument_extract.cpp",
+    "exit_code": 8
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_null_argument.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_compare_once.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_extract_once.cpp",
+    "exit_code": 8
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_store_error.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_store_error_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_reference.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_for.cpp",
+    "exit_code": 1
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_ternary_statement.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_empty_extract.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_empty_extract_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_empty_string_extract.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_empty_string_extract_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_empty_argument.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_empty_argument_throw.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_explicit_string.cpp",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_explicit_string_value.cpp",
+    "exit_code": 0
+  }
+]

@@ -1,0 +1,16 @@
+struct element_row {
+    uint32 $value = 0;
+}
+
+struct record_hash {
+    public $items hash<element_row>;
+}
+
+$element element_row = [];
+$element->value = 7;
+$items hash<element_row> = ["key" => $element];
+$original record_hash = [];
+$original->items = $items;
+$copy record_hash = $original;
+$copy->items["key"]->value = 9;
+echo $original->items["key"]->value, ":", $copy->items["key"]->value, "\n";

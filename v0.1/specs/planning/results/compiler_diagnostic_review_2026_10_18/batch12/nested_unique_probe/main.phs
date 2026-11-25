@@ -1,0 +1,1 @@
+$h vector<hash<unique<int>>>; return isset($h[0]['x']) ? 1 : 0;

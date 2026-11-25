@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/exceptions.phs
+function sample_unit_107(): void
+{
+    $value int = 108;
+    sample_unit_108();
+    return;
+}

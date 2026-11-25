@@ -1,0 +1,2 @@
+def build():
+    return [dict(mode=mode,expected=expected) for mode,expected in [('fresh','accepted'),('body_replaced','accepted'),('changed_dependency','accepted'),('full','accepted'),('removed','accepted'),('cycle','Recursive ownership summary dependencies are unsupported: parent, leaf'),('missing','Missing ownership preparation input: leaf -> missing'),('duplicate','Duplicate ownership request')]]

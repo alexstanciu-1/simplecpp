@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "Instance call requires a class, struct or interface receiver\n"
-}

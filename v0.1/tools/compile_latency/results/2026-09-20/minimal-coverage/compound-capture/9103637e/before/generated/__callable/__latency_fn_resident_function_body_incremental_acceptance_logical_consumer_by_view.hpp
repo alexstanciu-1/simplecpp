@@ -1,0 +1,8 @@
+#include <scpp/lang/php.hpp>
+#pragma once
+namespace scpp {
+class CompilerProjectRunReport;
+struct ResidentFunctionBodyLogicalFrontendConsumerDescriptorRow;
+struct ResidentFunctionBodyLogicalFrontendViewRow;
+ResidentFunctionBodyLogicalFrontendConsumerDescriptorRow __latency_fn_resident_function_body_incremental_acceptance_logical_consumer_by_view(shared_p<CompilerProjectRunReport> report, ResidentFunctionBodyLogicalFrontendViewRow view);
+}

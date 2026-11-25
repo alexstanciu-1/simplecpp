@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "artifact": "scpp_generator_config",
+  "generation": {
+    "emit_headers": true,
+    "emit_sources": true,
+    "emit_forward_declarations": true,
+    "emit_runtime_umbrella_header": true,
+    "emit_memory_helpers": true,
+    "emit_named_cast_helpers": true,
+    "named_cast_template": "cast<To>(value)",
+    "sort_generated_members": true,
+    "group_output_by_type": true,
+    "emit_assignment_operators": true
+  }
+}

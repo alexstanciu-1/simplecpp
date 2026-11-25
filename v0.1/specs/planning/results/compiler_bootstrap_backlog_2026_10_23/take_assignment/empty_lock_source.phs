@@ -1,0 +1,5 @@
+// Portable facade: operational errors throw; contention remains false.
+function scpp_portability_lock_empty(): file_lock_handle {
+    $out file_lock_handle;
+    return $out;
+}

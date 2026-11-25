@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile note in fixture.phs:15: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/fixture.cpp:40:38), (lambda at ../generated/fixture.cpp:40:116), (lambda at ../generated/fixture.cpp:40:158)>' requested here
+Generated location: .prism/generated/fixture.cpp:40:25
+Compile note in fixture.phs:17: in instantiation of function template specialization 'scpp::create<scpp::type_model::Runtime_Callable_Abi, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+Generated location: .prism/generated/fixture.cpp:42:126
+Compile note in src/04_analyze/type_model/data/callables.phs:33: argument 1 passed to __construct expects nullable<shared_p<type_model::Runtime_Abi_Position>>, got int
+Generated location: .prism/generated/src/04_analyze/type_model/data/callables.hpp:42:2
+Additional remapped diagnostics: 2
+Raw compiler excerpt:
+fixture.cpp:40:25: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/fixture.cpp:40:38), (lambda at ../generated/fixture.cpp:40:116), (lambda at ../generated/fixture.cpp:40:158)>' requested here
+fixture.cpp:42:126: note: in instantiation of function template specialization 'scpp::create<scpp::type_model::Runtime_Callable_Abi, const scpp::string_t &, scpp::string_t, int &, scpp::vector_t<scpp::shared_p<scpp::type_model::Runtime_Abi_Position>> &>' requested here
+callables.hpp:42:2: note: candidate constructor not viable: no known conversion from 'int' to 'nullable<shared_p<type_model::Runtime_Abi_Position>>' for 3rd argument
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

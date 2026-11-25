@@ -1,0 +1,25 @@
+{
+  "source_and_tests": {
+    "compiler/src/04_analyze/type_model/data/representations.php": "21b67410f67c287399ab69d27e961eee288ad3ee4108fd0a8e099484064b5faa",
+    "compiler/src/04_analyze/type_model/data/type_record.php": "e769dc4c6992ee00266ef37367a3e236fa07d12326cffb63ba83a126762e3808",
+    "compiler/src/04_analyze/type_model/result_contracts.php": "a7ef024e42fbc4cbb537a362149d984f818a460001320d912d82558a73e98e8f",
+    "compiler/src/04_analyze/type_model/data/store.php": "e74beda89e5c6800e1f64925a7bb86c4793f39816b6824b48179c83e0653994c",
+    "compiler/src/04_analyze/resolve_types/utilities/type_cache.php": "65da628b89978fa0f8d33eaa6248231dea856219324bce1ef4586c171e20c791",
+    "compiler/tests/type_store/probe.php": "87dec9eeafb441d1a0b76d36a8586c6877361706cca8e7bddaf1f2476bcf8ec1",
+    "compiler/tests/type_store/oracle.php": "7a1a9d4e1d0096979b27c83b16f58e04ec9efb85bb16c420cea71cce02af30d5",
+    "compiler/tests/type_store/run.py": "0da613bb3a0d97c373c0bf6ebe5f7c583173b3c873db62931d715df740a0751f",
+    "compiler/tests/type_store/purity.php": "2ab5824cca86c4525380f169acf5d162296490ec1ede9343b076f5bd8ebb162c"
+  },
+  "reference_sha256": {
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/store.php": "0cb72eaefb9c53245e360154de5c4664c4c446c9892e4b253f1c7c6e6d383155",
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/representations.php": "e42d15746723cb4ec4814c268a35604f498ed4e2c5065df9f333d393b0049304",
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/result_contracts.php": "9b6a6195465c36237b6fd4ef35cf22ae096d457db4985c9545ea6a9d43b2d0ad",
+    "compiler/reference/pre-rewrite/src/04_analyze/resolve_types/utilities/type_cache.php": "125e8498a0fcd85fc90b0dc6bde8f95a46f4c8c4d61758d56b37c3c8d372459c",
+    "compiler/reference/pre-rewrite/tests/04_analyze/type_model/semantic_calls.php": "aabaf7ea5486a924a81736bf97e45d91c1fd9265ad64341c91f062527ef0ce6f",
+    "compiler/reference/pre-rewrite/tests/04_analyze/type_model/type_context.php": "02479dc7d6384f7b6664dfd5d2cd87191cbad8947db6e052620a3d62787d9ee6",
+    "compiler/reference/pre-rewrite/tests/04_analyze/type_model/type_reuse.php": "45cf60e9b6e43835bb710ecb3b9c9221298a2f592905275c92c7971a96f11b42",
+    "compiler/reference/pre-rewrite/tests/04_analyze/type_model/type_storage.php": "7a960c528d7ef5ecbb90f82de5c9d2510bfa6eff9b4463a424abe8d33a311e7c",
+    "compiler/reference/pre-rewrite/tests/04_analyze/type_model/type_definitions.php": "6aef17c18976ad4188a1d0da846ac5034cdf62f20a6f1454680a99ae033386a3"
+  },
+  "retained_execution": "Direct retained Type_Store constructors/interner/clone/result-contract calls. Original full session suites were not run."
+}

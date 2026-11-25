@@ -1,7 +1,0 @@
-// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/capabilities.phs
-function sample_unit_092(): void
-{
-    $value int = 93;
-    sample_unit_093();
-    return;
-}

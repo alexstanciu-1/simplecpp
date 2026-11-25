@@ -1,0 +1,4 @@
+function run(): int
+{
+	return false ? 1 : 2;
+}

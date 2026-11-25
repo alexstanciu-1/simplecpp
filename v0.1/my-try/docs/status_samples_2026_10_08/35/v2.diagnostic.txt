@@ -1,0 +1,2 @@
+S2S generation failed: S2S needs one resolved type for array
+

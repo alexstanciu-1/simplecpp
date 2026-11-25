@@ -4,7 +4,7 @@ Doc Status: normative
 This bounded contract covers class-to-class and struct-to-struct single inheritance.
 It extends the CH10 member contracts with abstract methods and interface implementation.
 Interface-typed shared handles and shared derived/base upcasts are enabled below. Availability and evidence
-are tracked in [CH11](../compiler/my-try/docs/catalog/11_inheritance.md).
+are tracked in CH11.
 
 ## Layout and lookup
 
@@ -47,7 +47,7 @@ not PHP's broader family access. Diagnose violations during preparation.
 
 Protected static members have no instance-receiver restriction. Expression-qualified
 static access still evaluates its qualifier once under the existing CH10 contract.
-Potential broader protected access is [non-blocking discussion debt](../compiler/my-try/docs/catalog/15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access), not current behavior.
+Potential broader protected access is non-blocking discussion debt, not current behavior.
 
 ## Construction, copying and cleanup
 
@@ -277,7 +277,7 @@ Keys need not be unique or monotonic and no lookup/index is built from them.
 Inherited/multiple capability contracts remain deferred.
 [Yield producers](generators_v0_2.md) reuse the same traversal capability with concrete
 move-only generated cursors; this does not change user-authored struct copy behavior.
-See [implementation and proofs](../v0.2/compiler/docs/iterator.md).
+See [implementation and proofs](../compiler/docs/iterator.md).
 
 ## Interface implementation
 
@@ -314,7 +314,7 @@ view, not a replacement implementation. For an inherited final virtual method, t
 interface binding targets the existing final slot without overriding it. The
 descendant's source-facing entry remains unambiguous and final; later descendants
 cannot replace the method. Existing base/interface views retain their implementation.
-See [CH11-INTERFACE-FINAL-01](../compiler/my-try/docs/catalog/11_inheritance.md#ch11-interface-final-01--inherited-final-virtual-forwarding).
+See CH11-INTERFACE-FINAL-01.
 
 C++ interface edges use public virtual inheritance so diamonds share the same interface
 subobject. Concrete record-base inheritance is unchanged. Interface destruction is
@@ -476,7 +476,7 @@ The existing expression-qualified static-call contract selects the qualifier's d
 concrete record type, not its runtime implementing class. Interface contracts do not
 identify a static implementation body. Runtime selection, absent-handle behavior and
 any static-interface declaration protocol are deferred to
-[CH15](../compiler/my-try/docs/catalog/15_blocking_debt.md#ch15-interface-static-01--interface-qualified-static-dispatch).
+CH15.
 Use an explicit concrete static target or an ordinary interface instance method.
 
 ### Late-static calls and shared factories
@@ -519,7 +519,7 @@ cross-file calls, `static::` methods/properties/constants and shared-class `new 
 Runtime-called-type propagation through ordinary instance methods requires a separate
 design; `static::`/`new static` without a concrete called-type context reject. Do not
 substitute a receiver's declared type silently. See the
-[implementation plan](../compiler/my-try/docs/planning/called_type_instances.md).
+implementation plan.
 
 ### Current rejection boundary
 

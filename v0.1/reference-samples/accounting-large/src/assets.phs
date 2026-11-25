@@ -1,0 +1,225 @@
+abstract class DepreciationPolicy {
+    abstract public function charge(int $cost, int $residual, int $life, int $elapsed, int $accumulated): AmountResult;
+
+    public function valid_inputs(int $cost, int $residual, int $life, int $elapsed, int $accumulated): bool {
+        if ($cost <= 0 || !MoneyRules::accepts($cost) || $residual < 0 || $residual > $cost) {
+            return false;
+        }
+        if ($life <= 0 || $life > 1200 || $elapsed < 0 || $elapsed >= $life) {
+            return false;
+        }
+        return $accumulated >= 0 && $accumulated <= $cost - $residual;
+    }
+}
+
+class StraightLineDepreciation extends DepreciationPolicy {
+    public function charge(int $cost, int $residual, int $life, int $elapsed, int $accumulated): AmountResult {
+        $result AmountResult = new AmountResult();
+        if (!$this->valid_inputs($cost, $residual, $life, $elapsed, $accumulated)) {
+            $result->reason = "depreciation.inputs";
+            return $result;
+        }
+        $target AmountResult = MoneyRules::prorate($cost - $residual, $elapsed + 1, $life);
+        if (!$target->valid || $target->amount < $accumulated) {
+            $result->reason = "depreciation.schedule";
+            return $result;
+        }
+        $result->valid = true;
+        $result->amount = $target->amount - $accumulated;
+        return $result;
+    }
+}
+
+class DecliningBalanceDepreciation extends DepreciationPolicy {
+    public int $basis_points = 2000;
+
+    public function charge(int $cost, int $residual, int $life, int $elapsed, int $accumulated): AmountResult {
+        $result AmountResult = new AmountResult();
+        if (!$this->valid_inputs($cost, $residual, $life, $elapsed, $accumulated)) {
+            $result->reason = "depreciation.inputs";
+            return $result;
+        }
+        if ($this->basis_points < 1 || $this->basis_points > 10000) {
+            $result->reason = "depreciation.rate";
+            return $result;
+        }
+        $remaining int = $cost - $residual - $accumulated;
+        if ($elapsed + 1 === $life) {
+            $result->valid = true;
+            $result->amount = $remaining;
+            return $result;
+        }
+        $rated AmountResult = MoneyRules::rate($cost - $accumulated, $this->basis_points);
+        if (!$rated->valid) {
+            return $rated;
+        }
+        $result->valid = true;
+        $result->amount = $rated->amount;
+        if ($result->amount > $remaining) {
+            $result->amount = $remaining;
+        }
+        return $result;
+    }
+}
+
+class FixedAsset {
+    public string $code = "";
+    public string $description = "";
+    public int $cost = 0;
+    public int $residual = 0;
+    public int $life = 0;
+    public int $elapsed = 0;
+    public int $accumulated = 0;
+    public int $last_depreciation_period = 0;
+    public bool $disposed = false;
+    public DepreciationPolicy $policy;
+
+    public function carrying_amount(): int {
+        if ($this->disposed) {
+            return 0;
+        }
+        return $this->cost - $this->accumulated;
+    }
+}
+
+class AssetRegister {
+    private $assets hash<FixedAsset> = [];
+    private $asset_order vector<string> = [];
+
+    public function acquire(GeneralLedger $ledger, string $code, string $description, int $cost, int $residual, int $life, DepreciationPolicy $policy): AccountingCheck {
+        if ($code === "" || $description === "" || isset($this->assets[$code])) {
+            return accounting_failure("asset.identity", "Asset code and description must be new and nonempty");
+        }
+        if (!$policy->valid_inputs($cost, $residual, $life, 0, 0)) {
+            return accounting_failure("asset.amounts", "Asset cost, residual value, or life is invalid");
+        }
+        $preview AmountResult = $policy->charge($cost, $residual, $life, 0, 0);
+        if (!$preview->valid) {
+            return accounting_failure($preview->reason, "Depreciation policy rejected acquisition");
+        }
+        if ($cost > $ledger->balance_of("bank")) {
+            return accounting_failure("asset.funds", "Bank cannot fund asset acquisition");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "asset-acquisition:" . $code;
+        $entry->origin = "fixed-assets";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit("fixed-assets", $cost, $description);
+        $entry->add_credit("bank", $cost, $description);
+        $check AccountingCheck = $ledger->post($entry);
+        if (!$check->accepted) {
+            return $check;
+        }
+        $asset FixedAsset = new FixedAsset();
+        $asset->code = $code;
+        $asset->description = $description;
+        $asset->cost = $cost;
+        $asset->residual = $residual;
+        $asset->life = $life;
+        $asset->policy = $policy;
+        $this->assets[$code] = $asset;
+        $this->asset_order[] = $code;
+        return accounting_success();
+    }
+
+    public function depreciate(GeneralLedger $ledger, string $code): AccountingCheck {
+        if (!isset($this->assets[$code])) {
+            return accounting_failure("asset.missing", $code);
+        }
+        $asset FixedAsset = $this->assets[$code];
+        if ($asset->disposed || $asset->elapsed >= $asset->life) {
+            return accounting_failure("asset.finished", $code);
+        }
+        $period int = $ledger->current_period();
+        if ($asset->last_depreciation_period === $period) {
+            return accounting_failure("asset.period-duplicate", $code);
+        }
+        $charge AmountResult = $asset->policy->charge($asset->cost, $asset->residual, $asset->life, $asset->elapsed, $asset->accumulated);
+        if (!$charge->valid || $charge->amount < 0 || $charge->amount > $asset->cost - $asset->residual - $asset->accumulated) {
+            return accounting_failure("asset.charge", "Depreciation policy returned an invalid charge");
+        }
+        if ($charge->amount > 0) {
+            $entry JournalEntry = new JournalEntry();
+            $entry->reference = "depreciation:" . (string)$period . ":" . $code;
+            $entry->origin = "fixed-assets";
+            $entry->period = $period;
+            $entry->add_debit("depreciation-expense", $charge->amount, $code);
+            $entry->add_credit("accumulated-depreciation", $charge->amount, $code);
+            $check AccountingCheck = $ledger->post($entry);
+            if (!$check->accepted) {
+                return $check;
+            }
+        }
+        $asset->accumulated += $charge->amount;
+        $asset->elapsed += 1;
+        $asset->last_depreciation_period = $period;
+        return accounting_success();
+    }
+
+    public function dispose(GeneralLedger $ledger, string $code, string $reference, int $proceeds): AccountingCheck {
+        if (!isset($this->assets[$code]) || $reference === "") {
+            return accounting_failure("asset.disposal-identity", "Asset and disposal reference are required");
+        }
+        $asset FixedAsset = $this->assets[$code];
+        if ($asset->disposed) {
+            return accounting_failure("asset.disposed", $code);
+        }
+        if ($proceeds < 0 || !MoneyRules::accepts($proceeds)) {
+            return accounting_failure("asset.proceeds", "Disposal proceeds must be nonnegative and bounded");
+        }
+        $carrying int = $asset->carrying_amount();
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "asset-disposal:" . $reference;
+        $entry->origin = "fixed-assets";
+        $entry->period = $ledger->current_period();
+        if ($proceeds > 0) {
+            $entry->add_debit("bank", $proceeds, $code);
+        }
+        if ($asset->accumulated > 0) {
+            $entry->add_debit("accumulated-depreciation", $asset->accumulated, $code);
+        }
+        $entry->add_credit("fixed-assets", $asset->cost, $code);
+        if ($proceeds < $carrying) {
+            $entry->add_debit("asset-loss", $carrying - $proceeds, $code);
+        } else if ($proceeds > $carrying) {
+            $entry->add_credit("asset-gain", $proceeds - $carrying, $code);
+        }
+        $check AccountingCheck = $ledger->post($entry);
+        if ($check->accepted) {
+            $asset->disposed = true;
+        }
+        return $check;
+    }
+
+    public function total_cost(): int {
+        $total int = 0;
+        foreach ($this->asset_order as $code) {
+            $asset FixedAsset = $this->assets[$code];
+            if (!$asset->disposed) {
+                $total += $asset->cost;
+            }
+        }
+        return $total;
+    }
+
+    public function total_depreciation(): int {
+        $total int = 0;
+        foreach ($this->asset_order as $code) {
+            $asset FixedAsset = $this->assets[$code];
+            if (!$asset->disposed) {
+                $total += $asset->accumulated;
+            }
+        }
+        return $total;
+    }
+
+    public function reconcile(GeneralLedger $ledger): AccountingCheck {
+        if ($this->total_cost() !== $ledger->balance_of("fixed-assets")) {
+            return accounting_failure("assets.cost-control", "Asset register cost differs from general ledger");
+        }
+        if ($this->total_depreciation() !== -$ledger->balance_of("accumulated-depreciation")) {
+            return accounting_failure("assets.depreciation-control", "Asset register depreciation differs from general ledger");
+        }
+        return accounting_success();
+    }
+}

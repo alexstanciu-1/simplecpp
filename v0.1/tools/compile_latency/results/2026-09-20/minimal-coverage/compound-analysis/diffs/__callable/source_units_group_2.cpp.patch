@@ -1,0 +1,56 @@
+--- before/__callable/source_units_group_2.cpp
++++ after/__callable/source_units_group_2.cpp
+@@ -59,7 +59,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-SourceReadDescriptorRow __latency_fn_source_units_source_read_descriptor_row(const ProjectManifestSourceRow& source, int_t<> manifestOrder) {
++SourceReadDescriptorRow __latency_fn_source_units_source_read_descriptor_row(ProjectManifestSourceRow source, int_t<> manifestOrder) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_descriptor_row", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[26]);
+ 	SourceReadDescriptorRow row = SourceReadDescriptorRow{};
+ 	row->descriptor_id = __latency_fn_structure_row_ids_uint32_from_int(manifestOrder);
+@@ -78,7 +78,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-SourceReadResultRow __latency_fn_source_units_source_read_result_row(const SourceReadDescriptorRow& descriptor, const string_t& sourceText, bool_t readOk) {
++SourceReadResultRow __latency_fn_source_units_source_read_result_row(SourceReadDescriptorRow descriptor, const string_t& sourceText, bool_t readOk) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_result_row", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[27]);
+ 	SourceReadResultRow row = SourceReadResultRow{};
+ 	row->result_id = descriptor->descriptor_id;
+@@ -103,7 +103,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_manifest(const shared_p<ProjectManifest>& manifest) {
++shared_p<SourceReadTable> __latency_fn_source_units_source_read_table_from_manifest(shared_p<ProjectManifest> manifest) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_table_from_manifest", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[28]);
+ 	shared_p<SourceReadTable> table = create<SourceReadTable>();
+ 	__latency_fn_source_units_reserve_source_read_table(table, manifest->source_count);
+@@ -141,7 +141,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-shared_p<SourceReadTable> __latency_fn_source_units_source_read_descriptor_table_from_manifest(const shared_p<ProjectManifest>& manifest) {
++shared_p<SourceReadTable> __latency_fn_source_units_source_read_descriptor_table_from_manifest(shared_p<ProjectManifest> manifest) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_descriptor_table_from_manifest", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[29]);
+ 	shared_p<SourceReadTable> table = create<SourceReadTable>();
+ 	__latency_fn_source_units_reserve_source_read_table(table, manifest->source_count);
+@@ -170,7 +170,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-int_t<std::uint32_t> __latency_fn_source_units_source_read_result_metadata_bytes(const shared_p<SourceReadTable>& sourceReads) {
++int_t<std::uint32_t> __latency_fn_source_units_source_read_result_metadata_bytes(shared_p<SourceReadTable> sourceReads) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_result_metadata_bytes", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[30]);
+ 	int_t<> descriptorBytes = required_cast<int_t<>>((cast<int_t<>>(sourceReads->descriptor_count) * static_cast<int_t<> >(32)));
+ 	int_t<> resultBytes = required_cast<int_t<>>((cast<int_t<>>(sourceReads->result_count) * static_cast<int_t<> >(52)));
+@@ -181,7 +181,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-int_t<std::uint32_t> __latency_fn_source_units_source_read_line_count(const shared_p<SourceReadTable>& sourceReads) {
++int_t<std::uint32_t> __latency_fn_source_units_source_read_line_count(shared_p<SourceReadTable> sourceReads) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_line_count", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[31]);
+ 	int_t<> total = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	auto __latency_local_0 = sourceReads->results;

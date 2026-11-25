@@ -1,0 +1,3 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+bool.false						supported	deterministic_value	bool_t	bool.true	true	logical_not.bool.false	runtime_success		Logical not flips false to true.
+bool.true						supported	deterministic_value	bool_t	bool.false	true	logical_not.bool.true	runtime_success		Logical not flips true to false.

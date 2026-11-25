@@ -1,3 +1,0 @@
-$ret int = 8;
-
-return $ret;

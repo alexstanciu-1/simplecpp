@@ -1,0 +1,5 @@
+class Token { public uint32 $offset; }
+$token = new Token();
+$token->offset = 12;
+$result int = $token->offset;
+return $result;

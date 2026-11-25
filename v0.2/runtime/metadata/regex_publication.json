@@ -1,3 +1,0 @@
-{
-  "functions": ["regex_find_span", "regex_test", "preg_match"]
-}

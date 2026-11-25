@@ -1,0 +1,5 @@
+src/.prism/
+__pycache__/
+/build/
+/prototype/nbproject/private/
+*.scpp-compile.lock

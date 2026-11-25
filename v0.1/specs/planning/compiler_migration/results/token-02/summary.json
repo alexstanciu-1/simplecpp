@@ -1,0 +1,295 @@
+{
+  "workspace": "/tmp/scpp-context-port-afzuqs12",
+  "target_revision": "8cc4d8ff7eb395c6cc69219f25bef960323bce45",
+  "commands": [
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "--check"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.047
+    },
+    {
+      "label": "php",
+      "command": [
+        "php",
+        "-r",
+        "require $argv[1]; require $argv[2]; require $argv[3]; require $argv[4];",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/bootstrap.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/compile/state.php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/src/02_tokenize/structures.php",
+        "/tmp/scpp-context-port-afzuqs12/php/main.php"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.046
+    },
+    {
+      "label": "convert",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.052
+    },
+    {
+      "label": "reuse",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 0,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-0",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-1",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-2",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.046
+    },
+    {
+      "label": "reject-3",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.045
+    },
+    {
+      "label": "reject-4",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-5",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.046
+    },
+    {
+      "label": "reject-6",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.048
+    },
+    {
+      "label": "reject-7",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.05
+    },
+    {
+      "label": "reject-8",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-9",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-10",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-11",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-12",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.053
+    },
+    {
+      "label": "reject-13",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.049
+    },
+    {
+      "label": "reject-14",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.047
+    },
+    {
+      "label": "reject-15",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.049
+    },
+    {
+      "label": "reject-16",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+        "/tmp/scpp-context-port-afzuqs12/php",
+        "/tmp/scpp-context-port-afzuqs12/phpp"
+      ],
+      "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "exit_code": 1,
+      "seconds": 0.049
+    },
+    {
+      "label": "init",
+      "command": [
+        "php",
+        "/tmp/scpp-v0.1.76-probe/bin/scpp.php",
+        "init",
+        "--php-profile=strict"
+      ],
+      "cwd": "/tmp/scpp-context-port-afzuqs12/phpp",
+      "exit_code": 0,
+      "seconds": 0.154
+    },
+    {
+      "label": "native",
+      "command": [
+        "php",
+        "/tmp/scpp-v0.1.76-probe/bin/scpp.php",
+        "run",
+        "--build-runtime"
+      ],
+      "cwd": "/tmp/scpp-context-port-afzuqs12/phpp",
+      "exit_code": 0,
+      "seconds": 16.53
+    }
+  ],
+  "compiler_fixtures": [
+    "compile/compile_driver.php",
+    "compile/incremental_policy.php",
+    "02_tokenize/tokenization.php",
+    "02_tokenize/variable_tokens.php",
+    "02_tokenize/lexical_updates.php"
+  ],
+  "passed": true,
+  "expected_stdout": "initial=0\nshared=1\nnext=0\nprevious=1\nrebound=0\nretained=1\ndefault=1\n0:0\ntoken-shared=1\n7:3\nindependent=1\n",
+  "target_clean": true
+}

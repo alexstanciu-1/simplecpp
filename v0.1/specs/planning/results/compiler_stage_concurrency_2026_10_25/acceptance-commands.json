@@ -1,0 +1,74 @@
+[
+  {
+    "name": "tsan-smoke",
+    "seconds": 1.006,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "native-1",
+    "seconds": 61.053,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "native-2",
+    "seconds": 52.5,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "native-32",
+    "seconds": 43.206,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "native-32-repeat",
+    "seconds": 42.304,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "smoke-compile-concrete",
+    "seconds": 0.132,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "smoke-build-concrete",
+    "seconds": 34.628,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "smoke-run-concrete",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "smoke-compile-ordinary",
+    "seconds": 0.126,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "smoke-build-ordinary",
+    "seconds": 26.286,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "smoke-run-ordinary",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "tsan-full",
+    "seconds": 671.833,
+    "code": 0,
+    "expected": 0
+  }
+]

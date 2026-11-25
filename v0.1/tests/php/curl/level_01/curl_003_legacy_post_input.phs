@@ -1,0 +1,28 @@
+$url = $argv[1];
+$ch = curl_init($url . "/echo-post");
+$body = "alpha=1&beta=two";
+
+if ($ch === false) {
+	echo "INIT_FAIL\n";
+} else {
+	$headers = [];
+	$headers[] = "Content-Type: application/x-www-form-urlencoded";
+	$headers[] = "X-Test: curl-legacy-post";
+
+	echo curl_setopt($ch, CURLOPT_RETURNTRANSFER, true) ? "T\n" : "F\n";
+	echo curl_setopt($ch, CURLOPT_POST, true) ? "T\n" : "F\n";
+	echo curl_setopt($ch, CURLOPT_POSTFIELDS, $body) ? "T\n" : "F\n";
+	echo curl_setopt($ch, CURLOPT_HTTPHEADER, $headers) ? "T\n" : "F\n";
+
+	$out = curl_exec($ch);
+	$reply = "";
+	if (!take($reply, $out)) {
+		echo "EXEC_FAIL\n";
+	} else {
+		echo $reply, "\n";
+		echo strlen($reply), "\n";
+		echo curl_getinfo($ch, CURLINFO_RESPONSE_CODE), "\n";
+	}
+
+	echo curl_close($ch) ? "T\n" : "F\n";
+}

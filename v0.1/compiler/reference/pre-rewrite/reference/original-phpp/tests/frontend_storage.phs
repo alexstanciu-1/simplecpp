@@ -1,0 +1,168 @@
+use function compile\prepare_compiler_update;
+
+// Storage proof only: construct a tree directly, without pretending to parse.
+function check_storage(bool $condition, string $message): void {
+    if (!$condition) {
+        throw new Exception($message);
+    }
+}
+
+// A complete named-function syntax fixture using the ordinary block/return nodes.
+function append_function_fixture(\parse\Syntax_Tree $tree): uint32 {
+    $base int = count($tree->nodes);
+    $node \parse\syntax_node = [];
+    $node->kind = \parse\syntax_kind::function_declaration;
+    $node->first_child_id = $base + 2;
+    $tree->nodes[] = $node;
+    $node = [];
+    $node->kind = \parse\syntax_kind::name;
+    $node->next_sibling_id = $base + 3;
+    $tree->nodes[] = $node;
+    $node = [];
+    $node->kind = \parse\syntax_kind::parameter_list;
+    $node->next_sibling_id = $base + 4;
+    $tree->nodes[] = $node;
+    $node = [];
+    $node->kind = \parse\syntax_kind::name;
+    $node->next_sibling_id = $base + 5;
+    $tree->nodes[] = $node;
+    $node = [];
+    $node->kind = \parse\syntax_kind::block;
+    $node->first_child_id = $base + 6;
+    $tree->nodes[] = $node;
+    $node = [];
+    $node->kind = \parse\syntax_kind::return_statement;
+    $node->first_child_id = $base + 7;
+    $tree->nodes[] = $node;
+    $node = [];
+    $node->kind = \parse\syntax_kind::integer_literal;
+    $tree->nodes[] = $node;
+    $function_id uint32 = $base + 1;
+    return $function_id;
+}
+
+$tokens \tokenize\Token_Buffer = new \tokenize\Token_Buffer();
+$tokens->source_file_id = 1;
+$item \tokenize\token = [];
+$item->kind = \tokenize\token_kind::integer_literal;
+$item->start = 7;
+$item->length = 70000;
+$tokens->rows[] = $item;
+$item->length = 2;
+$tokens->rows[] = $item;
+check_storage((int)$tokens->rows[0]->length === 70000, "token rows must be independent inline values");
+check_storage((int)$tokens->rows[1]->length === 2, "token append must preserve the new value");
+
+$tree \parse\Syntax_Tree = new \parse\Syntax_Tree();
+$tree->source_file_id = 1;
+$file \parse\File_Frontend = new \parse\File_Frontend();
+$file->source_file_id = 1;
+$file->tokens = $tokens;
+$file->syntax = $tree;
+$file->entry_body_id = 1;
+$node \parse\syntax_node = [];
+$node->kind = \parse\syntax_kind::block;
+$node->first_child_id = 2;
+$tree->nodes[] = $node;
+$node = [];
+$node->kind = \parse\syntax_kind::return_statement;
+$node->first_child_id = 3;
+$node->next_sibling_id = 4;
+$tree->nodes[] = $node;
+$node = [];
+$node->kind = \parse\syntax_kind::integer_literal;
+$node->span->start = 7;
+$node->span->length = 2;
+$tree->nodes[] = $node;
+$node = [];
+$node->kind = \parse\syntax_kind::return_statement;
+$node->first_child_id = 5;
+$tree->nodes[] = $node;
+$node = [];
+$node->kind = \parse\syntax_kind::call_expression;
+$node->first_child_id = 6;
+$tree->nodes[] = $node;
+$node = [];
+$node->kind = \parse\syntax_kind::name;
+$tree->nodes[] = $node;
+
+$first_entity_id uint32 = append_function_fixture($tree);
+$second_entity_id uint32 = append_function_fixture($tree);
+$file->defined_entities[] = $first_entity_id;
+$file->defined_entities[] = $second_entity_id;
+
+// Force vector growth after linking; IDs must still identify the original rows.
+$i int = 0;
+while ($i < 4096) {
+    $tree->nodes[] = $node;
+    $i = $i + 1;
+}
+$root \parse\syntax_node = $tree->nodes[(int)$file->entry_body_id - 1];
+check_storage($root->kind === \parse\syntax_kind::block, "file entry must use an ordinary body block");
+$statement_id uint32 = $root->first_child_id;
+$statements int = 0;
+while ((int)$statement_id !== 0) {
+    $statement \parse\syntax_node = $tree->nodes[(int)$statement_id - 1];
+    check_storage($statement->kind === \parse\syntax_kind::return_statement, "statement order must follow sibling IDs");
+    $value \parse\syntax_node = $tree->nodes[(int)$statement->first_child_id - 1];
+    if ($statements === 0) {
+        check_storage($value->kind === \parse\syntax_kind::integer_literal, "first return must reference its literal");
+    } else {
+        check_storage($value->kind === \parse\syntax_kind::call_expression, "second return must reference its call");
+        $callee \parse\syntax_node = $tree->nodes[(int)$value->first_child_id - 1];
+        check_storage($callee->kind === \parse\syntax_kind::name, "nested expression must reference its callee");
+    }
+    $statement_id = $statement->next_sibling_id;
+    $statements = $statements + 1;
+}
+check_storage($statements === 2, "body traversal must handle multiple statements");
+
+check_storage(count($file->defined_entities) === 2, "file must retain multiple top-level definitions");
+check_storage($file->defined_entities[0] === $first_entity_id && $file->defined_entities[1] === $second_entity_id, "entity order must survive syntax-vector growth");
+foreach ($file->defined_entities as $entity_id) {
+    check_storage($entity_id !== $file->entry_body_id, "implicit entry must be separate from named entities");
+    $entity \parse\syntax_node = $tree->nodes[(int)$entity_id - 1];
+    check_storage($entity->kind === \parse\syntax_kind::function_declaration, "entity IDs must identify declarations");
+    $name \parse\syntax_node = $tree->nodes[(int)$entity->first_child_id - 1];
+    $parameters \parse\syntax_node = $tree->nodes[(int)$name->next_sibling_id - 1];
+    $return_type \parse\syntax_node = $tree->nodes[(int)$parameters->next_sibling_id - 1];
+    $body \parse\syntax_node = $tree->nodes[(int)$return_type->next_sibling_id - 1];
+    check_storage($body->kind === $root->kind, "named functions and file entry must share the block representation");
+    $statement \parse\syntax_node = $tree->nodes[(int)$body->first_child_id - 1];
+    check_storage($statement->kind === \parse\syntax_kind::return_statement, "function body must retain its statements");
+}
+
+$other \parse\Syntax_Tree = new \parse\Syntax_Tree();
+$other->source_file_id = 2;
+check_storage(count($other->nodes) === 0, "file tables must have separate storage");
+$declarations_only \parse\File_Frontend = new \parse\File_Frontend();
+$declarations_only->source_file_id = 2;
+$declarations_only->tokens = new \tokenize\Token_Buffer();
+$declarations_only->tokens->source_file_id = 2;
+$declarations_only->syntax = $other;
+$declarations_only->entry_body_id = 1;
+$node = [];
+$node->kind = \parse\syntax_kind::block;
+$other->nodes[] = $node;
+$empty_entry \parse\syntax_node = $other->nodes[(int)$declarations_only->entry_body_id - 1];
+check_storage(count($declarations_only->defined_entities) === 0 && (int)$empty_entry->first_child_id === 0, "empty file must retain an empty entry block");
+$declarations_only->defined_entities[] = append_function_fixture($other);
+check_storage((int)$other->nodes[(int)$declarations_only->entry_body_id - 1]->first_child_id === 0, "adding a declaration must leave entry statements empty");
+check_storage(count($file->defined_entities) === 2 && count($declarations_only->defined_entities) === 1, "file entity lists must have separate storage");
+check_storage(layout_sizeof(\read_sources\source_span) === 8, "source span must contain only two uint32 values");
+check_storage(layout_sizeof(\tokenize\token) <= 16, "token layout must remain compact");
+check_storage(layout_sizeof(\parse\syntax_node) <= 24, "syntax node layout must remain compact");
+echo "frontend storage ok: span=", layout_sizeof(\read_sources\source_span), ", token=", layout_sizeof(\tokenize\token), ", node=", layout_sizeof(\parse\syntax_node), " bytes\n";
+
+// Failed manifest preparation must not publish a fabricated compiler result.
+$session \compile\Compiler_Session = new \compile\Compiler_Session();
+$blocked bool = false;
+try {
+    prepare_compiler_update($session, "__missing_project_manifest__.json");
+} catch (Exception $exception) {
+    $blocked = true;
+}
+check_storage($blocked, "failed preparation must not report success");
+check_storage((int)$session->generation === 0, "failed preparation must not publish a generation");
+check_storage(count($session->sources->files) === 0, "failed preparation must leave published sources intact");
+echo "failed manifest preparation preserves session state\n";

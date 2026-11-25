@@ -1,0 +1,6 @@
+$base = 10;
+$add = function (int $x, int $y) use ($base): int {
+	return $base + $x + $y;
+};
+
+echo $add(2, 3), "\n";

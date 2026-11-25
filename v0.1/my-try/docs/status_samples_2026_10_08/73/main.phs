@@ -1,0 +1,7 @@
+function failed(error $reason): result<int> { return $reason; }
+$value dynamic;
+$reason error;
+if (!take($value, $reason, json_decode("{"))) {
+    $failure = failed($reason);
+}
+return 0;

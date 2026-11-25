@@ -1,0 +1,58 @@
+function run_accounting_workload(): int {
+    $ledger GeneralLedger = new GeneralLedger();
+    $ledger->add_account("bank", "Operating bank", AccountCategory::Asset);
+    $ledger->add_account("receivables", "Trade receivables", AccountCategory::Asset);
+    $ledger->add_account("revenue", "Sales revenue", AccountCategory::Revenue);
+    $ledger->add_account("tax-payable", "Output tax", AccountCategory::Liability);
+    $invoice SalesInvoice = new SalesInvoice();
+    $invoice->number = "INV-001";
+    $invoice->net_amount = 10000;
+    $invoice->tax_amount = 2000;
+    $sales SalesService = new SalesService();
+    $issued AccountingCheck = $sales->issue($ledger, $invoice);
+    if (!$issued->accepted) {
+        echo $issued->code, "\n";
+        return 1;
+    }
+    $paid AccountingCheck = $sales->receive($ledger, $invoice, "PAY-001", 7000);
+    if (!$paid->accepted) {
+        echo $paid->code, "\n";
+        return 2;
+    }
+    $expected int = 5000;
+    $matches = function (int $actual) use ($expected): bool {
+        return $actual === $expected;
+    };
+    $report TrialBalance = $ledger->trial_balance();
+    if (!$report->is_balanced() || !$matches($invoice->outstanding())) {
+        return 3;
+    }
+    if ($ledger->balance_of("bank") !== 7000 || $ledger->balance_of("receivables") !== 5000) {
+        return 4;
+    }
+    $duplicate AccountingCheck = $sales->receive($ledger, $invoice, "PAY-001", 1000);
+    if ($duplicate->accepted || $ledger->entry_count() !== 2 || $invoice->outstanding() !== 5000) {
+        return 5;
+    }
+    echo "accounting workload: invoice/payment/trial-balance checks passed\n";
+    return 0;
+}
+
+$status int = run_accounting_workload();
+$checks WorkloadChecks = new WorkloadChecks();
+$checks->equal($status, 0, "invoice/payment/trial-balance vertical slice");
+check_money_rules($checks);
+check_calendar_rules($checks);
+check_ledger_rejections($checks);
+check_inventory_flow($checks);
+check_purchasing_flow($checks);
+check_asset_flow($checks);
+check_budget_flow($checks);
+check_sales_snapshot($checks);
+check_bank_flow($checks);
+check_adjustment_flow($checks);
+check_integrated_company($checks);
+$checks->report();
+if ($status !== 0) {
+    echo "accounting workload failed: ", $status, "\n";
+}

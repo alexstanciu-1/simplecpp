@@ -91,4 +91,4 @@ or cursor template machinery. Reuse the metadata-defined Iterator identity and
 existing type conversions. Output/capture types belong to the function's signature; source-owned lowering
 adds concrete slots for prepared locals and publishes their layout after the join;
 resume-state numbering and statement segmentation belong to private lowering.
-See [implementation and verification](../v0.2/compiler/docs/yield.md).
+See [implementation and verification](../compiler/docs/yield.md).

@@ -1,6 +1,0 @@
-#include <scpp/lang/php.hpp>
-#pragma once
-namespace scpp {
-struct ResidentFunctionBodyLogicalFrontendReferenceCandidateRow;
-bool_t __latency_fn_resident_function_body_summary_project_references_candidate_has_reference(ResidentFunctionBodyLogicalFrontendReferenceCandidateRow candidate);
-}

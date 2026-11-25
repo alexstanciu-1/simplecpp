@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/02_tokenize/tokens.phs
+function sample_unit_006(): void
+{
+    $value int = 7;
+    sample_unit_007();
+    return;
+}

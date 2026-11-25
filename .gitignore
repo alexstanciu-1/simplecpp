@@ -1,127 +1,34 @@
-# =========================
-# C++ / Build Artifacts
-# =========================
-
-# Build dirs
 /build/
-# /bin/
+/runtime/generated/
 /out/
 /cmake-build-*/
 
-# CMake
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-compile_commands.json
+# In-source CMake/Ninja/CTest output (use the build presets instead).
+build.ninja
+rules.ninja
+.ninja_deps
+.ninja_log
+CTestTestfile.cmake
+DartConfiguration.tcl
+Testing/
+
+# Machine-local configuration and disposable instrumentation output.
 CMakeUserPresets.json
+*.profraw
+*.profdata
+*.gcda
+*.gcno
+/coverage/
 
-# Object / binaries
-*.o
-*.obj
-*.so
-*.a
-*.dll
-*.exe
-*.out
+# Published dependency snapshots, if introduced by the compiler build.
+/compiler/dependencies/
+.scpp-token-cache/
+.scpp-portability-index.json
 
-# Debug / profiling
-*.log
-*.dSYM/
-*.prof
+# Disposable compiler output, including caches left by retired builds.
+/compiler/target/
 
+/compiler/generated/
 
-# =========================
-# Project-Specific (Simple C++)
-# =========================
-
-tests/temp*
-tests/temp**
-
-# scpp project build output
-.prism/
-
-# Sandbox
-sandbox/
-
-# Runtime test outputs
-tests/.runtime/
-tests/.runtime_san_*/
-tests/.run-tests/
-tests/runtime/native/output/
-tests/runtime/native/*.out
-
-tests/**/*.json.cpp
-tests/**/*.cpp.json
-tests/**/*.json.php
-tests/**/*.php.json
-tests/**/*.json.phs
-tests/**/*.phs.json
-
-# Generator / AST artifacts
-*.ast.json
-*.tmp.json
-*.dump
-*.phs.json
-
-*.test-results.json
-
-mem_container/
-
-
-# =========================
-# PHP / Tooling
-# =========================
-
-# Composer
-/vendor/
-composer.lock
-node_modules/
-
-# IDEs
-.idea/
-.vscode/
-
-# PHP temp
-*.cache
-*.log
-
-# =========================
-# NetBeans
-# =========================
-
-# Project config (user-specific)
-nbproject/
-nbproject/private/
-
-# Build / dist (NetBeans-managed)
-nbproject/build-impl.xml
-nbbuild/
-dist/
-build/
-
-# Cache / temp
-nbproject/private/cache/
-.nb-gradle/
-.dev-deploy/
-
-# Python bytecode and local compiler experiments (curated evidence lives in specs/planning/results/)
 __pycache__/
-/compiler/my-try/temp/
-
-# Disposable Python test/tool caches (keep authored fixtures and evidence).
 *.pyc
-*.pyo
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# OS metadata
-.DS_Store
-Thumbs.db
-
-# Compiler-generated module inventories (never configuration).
-module.sources.json
-
-# App-local incremental frontend service state.
-.scpp/

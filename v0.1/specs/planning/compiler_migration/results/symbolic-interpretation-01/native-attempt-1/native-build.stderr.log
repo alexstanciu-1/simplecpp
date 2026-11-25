@@ -1,0 +1,11 @@
+STAN pre-build check failed: 2 compile-errors
+
+[compile-error] Function `check_templates\Terms::field` declared as `Type_Term` may exit without returning a value.
+  at src/04_analyze/check_templates/terms.phs:112
+
+[compile-error] Function `check_templates\Terms::provider_type` declared as `Type_Term` may exit without returning a value.
+  at src/04_analyze/check_templates/terms.phs:170
+
+Build stopped before C++ generation/compilation.
+To build without STAN, run `scpp build --no-stan`.
+Run `scpp stan` for the full static-analysis report.

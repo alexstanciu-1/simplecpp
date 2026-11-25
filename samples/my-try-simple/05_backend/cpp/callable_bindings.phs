@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/callable_bindings.phs
+function sample_unit_147(): void
+{
+    $value int = 148;
+    sample_unit_148();
+    return;
+}

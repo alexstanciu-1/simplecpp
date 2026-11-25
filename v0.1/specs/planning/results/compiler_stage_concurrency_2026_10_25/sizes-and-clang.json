@@ -1,0 +1,1090 @@
+{
+  "threshold_bytes": {
+    "cpp": 200000,
+    "hpp": 100000
+  },
+  "clang_compile_jobs": 32,
+  "clang_units": 505,
+  "slowest_clang_units": [
+    {
+      "file": "runtime/include/core/runtime.cpp",
+      "bytes": 482,
+      "clang_wall_seconds": 18.57,
+      "clang_peak_rss_kib": 383644
+    },
+    {
+      "file": "specializations/containers_b7f.cpp",
+      "bytes": 82260,
+      "clang_wall_seconds": 8.03,
+      "clang_peak_rss_kib": 306124
+    },
+    {
+      "file": "specializations/containers_b4c.cpp",
+      "bytes": 68188,
+      "clang_wall_seconds": 7.07,
+      "clang_peak_rss_kib": 286220
+    },
+    {
+      "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+      "bytes": 1091499,
+      "clang_wall_seconds": 7.01,
+      "clang_peak_rss_kib": 168672,
+      "source_hint": "03_parse/parser.phs"
+    },
+    {
+      "file": "specializations/containers_bd8.cpp",
+      "bytes": 100400,
+      "clang_wall_seconds": 6.89,
+      "clang_peak_rss_kib": 284532
+    },
+    {
+      "file": "specializations/containers_b18.cpp",
+      "bytes": 70789,
+      "clang_wall_seconds": 6.84,
+      "clang_peak_rss_kib": 284728
+    },
+    {
+      "file": "specializations/containers_bd0.cpp",
+      "bytes": 110190,
+      "clang_wall_seconds": 6.81,
+      "clang_peak_rss_kib": 279392
+    },
+    {
+      "file": "specializations/containers_b16.cpp",
+      "bytes": 78163,
+      "clang_wall_seconds": 6.71,
+      "clang_peak_rss_kib": 278016
+    },
+    {
+      "file": "specializations/containers_baa.cpp",
+      "bytes": 83300,
+      "clang_wall_seconds": 6.68,
+      "clang_peak_rss_kib": 282060
+    },
+    {
+      "file": "specializations/containers_b69.cpp",
+      "bytes": 77861,
+      "clang_wall_seconds": 6.58,
+      "clang_peak_rss_kib": 280004
+    },
+    {
+      "file": "specializations/containers_bd9.cpp",
+      "bytes": 71929,
+      "clang_wall_seconds": 6.53,
+      "clang_peak_rss_kib": 276224
+    },
+    {
+      "file": "specializations/containers_b61.cpp",
+      "bytes": 78897,
+      "clang_wall_seconds": 6.49,
+      "clang_peak_rss_kib": 284360
+    },
+    {
+      "file": "specializations/containers_bec.cpp",
+      "bytes": 73837,
+      "clang_wall_seconds": 6.49,
+      "clang_peak_rss_kib": 273356
+    },
+    {
+      "file": "specializations/containers_b36.cpp",
+      "bytes": 76041,
+      "clang_wall_seconds": 6.45,
+      "clang_peak_rss_kib": 272896
+    },
+    {
+      "file": "specializations/containers_b6e.cpp",
+      "bytes": 65660,
+      "clang_wall_seconds": 6.39,
+      "clang_peak_rss_kib": 273568
+    }
+  ],
+  "largest_compiled_units": [
+    {
+      "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+      "bytes": 1091499,
+      "clang_wall_seconds": 7.01,
+      "clang_peak_rss_kib": 168672,
+      "source_hint": "03_parse/parser.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+      "bytes": 984266,
+      "clang_wall_seconds": 4.32,
+      "clang_peak_rss_kib": 146728,
+      "source_hint": "03_parse/structures/structures_specialization.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+      "bytes": 659750,
+      "clang_wall_seconds": 4.27,
+      "clang_peak_rss_kib": 150708,
+      "source_hint": "05_backend/cpp/generate.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+      "bytes": 552598,
+      "clang_wall_seconds": 3.37,
+      "clang_peak_rss_kib": 142432,
+      "source_hint": "04_analyze/prepare/worker.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+      "bytes": 528630,
+      "clang_wall_seconds": 2.74,
+      "clang_peak_rss_kib": 132408,
+      "source_hint": "03_parse/types/model.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+      "bytes": 516279,
+      "clang_wall_seconds": 3.45,
+      "clang_peak_rss_kib": 142468,
+      "source_hint": "05_backend/cpp/declarations.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+      "bytes": 502068,
+      "clang_wall_seconds": 3.24,
+      "clang_peak_rss_kib": 134388,
+      "source_hint": "05_backend/cpp/syntax.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+      "bytes": 414257,
+      "clang_wall_seconds": 2.6,
+      "clang_peak_rss_kib": 135236,
+      "source_hint": "05_backend/cpp/runtime_operations.phs"
+    },
+    {
+      "file": "units/n6d61696e/n636f6d70696c65722f72756e74696d655f636174616c6f672f7265616465722e706873.cpp",
+      "bytes": 299600,
+      "clang_wall_seconds": 2.21,
+      "clang_peak_rss_kib": 124944,
+      "source_hint": "compiler/runtime_catalog/reader.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f6465636c61726174696f6e732e706873.cpp",
+      "bytes": 280387,
+      "clang_wall_seconds": 1.38,
+      "clang_peak_rss_kib": 120812,
+      "source_hint": "03_parse/structures/structures_declarations.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f65787072657373696f6e732e706873.cpp",
+      "bytes": 270729,
+      "clang_wall_seconds": 1.43,
+      "clang_peak_rss_kib": 130100,
+      "source_hint": "04_analyze/prepare/semantics/expressions.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30365f6e61746976652f6370705f6275696c642e706873.cpp",
+      "bytes": 260588,
+      "clang_wall_seconds": 1.77,
+      "clang_peak_rss_kib": 131648,
+      "source_hint": "06_native/cpp_build.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f6974657261746f72732e706873.cpp",
+      "bytes": 258144,
+      "clang_wall_seconds": 1.64,
+      "clang_peak_rss_kib": 124140,
+      "source_hint": "03_parse/structures/iterators.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f646174615f636f6e737472756374696f6e2e706873.cpp",
+      "bytes": 206853,
+      "clang_wall_seconds": 1.5,
+      "clang_peak_rss_kib": 124388,
+      "source_hint": "05_backend/cpp/data_construction.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f747970655f636f6e7472616374732e706873.cpp",
+      "bytes": 195604,
+      "clang_wall_seconds": 1.39,
+      "clang_peak_rss_kib": 130532,
+      "source_hint": "04_analyze/prepare/semantics/type_contracts.phs"
+    }
+  ],
+  "outputs": {
+    "published": {
+      "file_count": 6647,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3594653
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 811865
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 659750,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 552598,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 528630,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 414257,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 54135
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 46906
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 33632
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 811865
+        },
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3594653
+        },
+        {
+          "file": "units/n6d61696e/n636f6d70696c65722f72756e74696d655f636174616c6f672f7265616465722e706873.cpp",
+          "bytes": 299600,
+          "source_hint": "compiler/runtime_catalog/reader.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f6974657261746f72732e706873.cpp",
+          "bytes": 258144,
+          "source_hint": "03_parse/structures/iterators.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 414257,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 659750,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 528630,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f646174615f636f6e737472756374696f6e2e706873.cpp",
+          "bytes": 206853,
+          "source_hint": "05_backend/cpp/data_construction.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 280387,
+          "source_hint": "03_parse/structures/structures_declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f65787072657373696f6e732e706873.cpp",
+          "bytes": 270729,
+          "source_hint": "04_analyze/prepare/semantics/expressions.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30365f6e61746976652f6370705f6275696c642e706873.cpp",
+          "bytes": 260588,
+          "source_hint": "06_native/cpp_build.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 552598,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        }
+      ],
+      "headers_over_100kb": []
+    },
+    "jobs-1/published": {
+      "file_count": 6531,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3530654
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 786597
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 636124,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 490328,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 483241,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 413526,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 47616
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 44202
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 32335
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 786597
+        },
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3530654
+        },
+        {
+          "file": "units/n6d61696e/n636f6d70696c65722f72756e74696d655f636174616c6f672f7265616465722e706873.cpp",
+          "bytes": 299600,
+          "source_hint": "compiler/runtime_catalog/reader.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f6974657261746f72732e706873.cpp",
+          "bytes": 258144,
+          "source_hint": "03_parse/structures/iterators.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 413526,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 636124,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 483241,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f646174615f636f6e737472756374696f6e2e706873.cpp",
+          "bytes": 204223,
+          "source_hint": "05_backend/cpp/data_construction.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 280387,
+          "source_hint": "03_parse/structures/structures_declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f65787072657373696f6e732e706873.cpp",
+          "bytes": 270729,
+          "source_hint": "04_analyze/prepare/semantics/expressions.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30365f6e61746976652f6370705f6275696c642e706873.cpp",
+          "bytes": 260588,
+          "source_hint": "06_native/cpp_build.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 490328,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        }
+      ],
+      "headers_over_100kb": []
+    },
+    "jobs-2/published": {
+      "file_count": 6531,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3530654
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 786597
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 636124,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 490328,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 483241,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 413526,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 47616
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 44202
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 32335
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 786597
+        },
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3530654
+        },
+        {
+          "file": "units/n6d61696e/n636f6d70696c65722f72756e74696d655f636174616c6f672f7265616465722e706873.cpp",
+          "bytes": 299600,
+          "source_hint": "compiler/runtime_catalog/reader.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f6974657261746f72732e706873.cpp",
+          "bytes": 258144,
+          "source_hint": "03_parse/structures/iterators.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 413526,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 636124,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 483241,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f646174615f636f6e737472756374696f6e2e706873.cpp",
+          "bytes": 204223,
+          "source_hint": "05_backend/cpp/data_construction.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 280387,
+          "source_hint": "03_parse/structures/structures_declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f65787072657373696f6e732e706873.cpp",
+          "bytes": 270729,
+          "source_hint": "04_analyze/prepare/semantics/expressions.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30365f6e61746976652f6370705f6275696c642e706873.cpp",
+          "bytes": 260588,
+          "source_hint": "06_native/cpp_build.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 490328,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        }
+      ],
+      "headers_over_100kb": []
+    },
+    "jobs-32/published": {
+      "file_count": 6531,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3530654
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 786597
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 636124,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 490328,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 483241,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 413526,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 47616
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 44202
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 32335
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 786597
+        },
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3530654
+        },
+        {
+          "file": "units/n6d61696e/n636f6d70696c65722f72756e74696d655f636174616c6f672f7265616465722e706873.cpp",
+          "bytes": 299600,
+          "source_hint": "compiler/runtime_catalog/reader.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f6974657261746f72732e706873.cpp",
+          "bytes": 258144,
+          "source_hint": "03_parse/structures/iterators.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 413526,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 636124,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 483241,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f646174615f636f6e737472756374696f6e2e706873.cpp",
+          "bytes": 204223,
+          "source_hint": "05_backend/cpp/data_construction.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 280387,
+          "source_hint": "03_parse/structures/structures_declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f65787072657373696f6e732e706873.cpp",
+          "bytes": 270729,
+          "source_hint": "04_analyze/prepare/semantics/expressions.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30365f6e61746976652f6370705f6275696c642e706873.cpp",
+          "bytes": 260588,
+          "source_hint": "06_native/cpp_build.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 490328,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        }
+      ],
+      "headers_over_100kb": []
+    },
+    "jobs-32-repeat/published": {
+      "file_count": 6531,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3530654
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 786597
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 636124,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 490328,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 483241,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 413526,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 47616
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 44202
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 32335
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [
+        {
+          "file": "specializations/layout_1.cpp",
+          "bytes": 786597
+        },
+        {
+          "file": "specializations/layout.cpp",
+          "bytes": 3530654
+        },
+        {
+          "file": "units/n6d61696e/n636f6d70696c65722f72756e74696d655f636174616c6f672f7265616465722e706873.cpp",
+          "bytes": 299600,
+          "source_hint": "compiler/runtime_catalog/reader.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f6974657261746f72732e706873.cpp",
+          "bytes": 258144,
+          "source_hint": "03_parse/structures/iterators.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f72756e74696d655f6f7065726174696f6e732e706873.cpp",
+          "bytes": 413526,
+          "source_hint": "05_backend/cpp/runtime_operations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f67656e65726174652e706873.cpp",
+          "bytes": 636124,
+          "source_hint": "05_backend/cpp/generate.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f73796e7461782e706873.cpp",
+          "bytes": 502068,
+          "source_hint": "05_backend/cpp/syntax.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f74797065732f6d6f64656c2e706873.cpp",
+          "bytes": 483241,
+          "source_hint": "03_parse/types/model.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f646174615f636f6e737472756374696f6e2e706873.cpp",
+          "bytes": 204223,
+          "source_hint": "05_backend/cpp/data_construction.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 280387,
+          "source_hint": "03_parse/structures/structures_declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873.cpp",
+          "bytes": 1091499,
+          "source_hint": "03_parse/parser.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f65787072657373696f6e732e706873.cpp",
+          "bytes": 270729,
+          "source_hint": "04_analyze/prepare/semantics/expressions.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30365f6e61746976652f6370705f6275696c642e706873.cpp",
+          "bytes": 260588,
+          "source_hint": "06_native/cpp_build.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6465636c61726174696f6e732e706873.cpp",
+          "bytes": 516279,
+          "source_hint": "05_backend/cpp/declarations.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30335f70617273652f737472756374757265732f737472756374757265735f7370656369616c697a6174696f6e2e706873.cpp",
+          "bytes": 984266,
+          "source_hint": "03_parse/structures/structures_specialization.phs"
+        },
+        {
+          "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f776f726b65722e706873.cpp",
+          "bytes": 490328,
+          "source_hint": "04_analyze/prepare/worker.phs"
+        }
+      ],
+      "headers_over_100kb": []
+    }
+  }
+}

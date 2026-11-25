@@ -1,0 +1,395 @@
+[
+  {
+    "name": "context_int",
+    "source": "function f(): int { return \"abc\"; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "context_byte",
+    "source": "function f(): uint8 { return \"abc\"; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_byte"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "context_without_default",
+    "source": "function f(): int { return \"abc\"; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": false,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "empty_literal",
+    "source": "function f(): int { return \"\"; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "binary_literal",
+    "source": "function f(): int { return \"A\\0\\xff\\n\"; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"4100ff0a\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "utf8_literal",
+    "source": "function f(): int { return \"\u00e9\ud83d\ude00\"; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"c3a9f09f9880\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "single_quote",
+    "source": "function f(): int { return '\\n'; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"5c6e\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "direct_span",
+    "source": "function f(): int { return span_size(\"abc\"); } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "span_size"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "span_no_default",
+    "source": "function f(): int { return span_size(\"abc\"); } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "span_size"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": false,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "default_expression",
+    "source": "function f(): int { \"abc\"; return 0; } return 0;",
+    "values": 3,
+    "statements": 2,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "echo_literal",
+    "source": "function f(): int { echo \"abc\"; return 0; } return 0;",
+    "values": 3,
+    "statements": 2,
+    "calls": 2,
+    "targets": [
+      "literal_int",
+      "print_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1,
+      2
+    ]
+  },
+  {
+    "name": "echo_integer",
+    "source": "function f(): int { echo 42; return 0; } return 0;",
+    "values": 2,
+    "statements": 2,
+    "calls": 1,
+    "targets": [
+      "print_int"
+    ],
+    "bytes": [],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "echo_context_byte",
+    "source": "function f(): int { $x uint8 = \"abc\"; echo $x; return 0; } return 0;",
+    "values": 4,
+    "statements": 3,
+    "calls": 2,
+    "targets": [
+      "literal_byte",
+      "print_byte"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1,
+      3
+    ]
+  },
+  {
+    "name": "echo_operands",
+    "source": "function f(): int { echo \"a\", 7, \"b\"; return 0; } return 0;",
+    "values": 6,
+    "statements": 4,
+    "calls": 5,
+    "targets": [
+      "literal_int",
+      "print_int",
+      "print_int",
+      "literal_int",
+      "print_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"61\"}",
+      "{\"hex\":\"62\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "name": "nested_provider",
+    "source": "function f(): int { echo span_size(\"abc\"); return 0; } return 0;",
+    "values": 3,
+    "statements": 2,
+    "calls": 2,
+    "targets": [
+      "span_size",
+      "print_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "",
+    "fall": false,
+    "arguments": [
+      1,
+      2
+    ]
+  },
+  {
+    "name": "no_default",
+    "source": "function f(): int { \"abc\"; return 0; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": false,
+    "error": "No byte-literal construction contract for this context",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "echo_no_default",
+    "source": "function f(): int { echo \"abc\"; return 0; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": false,
+    "error": "No byte-literal construction contract for this context",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "no_context_binding",
+    "source": "function f(): int32 { return \"abc\"; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "No byte-literal construction contract for this context",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "no_echo_binding",
+    "source": "function f(): int { echo true; return 0; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "No echo contract for this value type",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  },
+  {
+    "name": "unicode_escape",
+    "source": "function f(): int { return \"\\u{41}\"; } return 0;",
+    "values": 2,
+    "statements": 1,
+    "calls": 1,
+    "targets": [
+      "literal_int"
+    ],
+    "bytes": [
+      "{\"hex\":\"616263\"}"
+    ],
+    "default": true,
+    "error": "Unicode escape syntax is not supported; use UTF-8 literal bytes",
+    "fall": false,
+    "arguments": [
+      1
+    ]
+  }
+]

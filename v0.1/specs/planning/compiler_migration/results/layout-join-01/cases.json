@@ -1,0 +1,150 @@
+[
+  {
+    "mode": "new",
+    "accept": true
+  },
+  {
+    "mode": "reversed",
+    "accept": true
+  },
+  {
+    "mode": "partial",
+    "accept": true
+  },
+  {
+    "mode": "reuse",
+    "accept": true
+  },
+  {
+    "mode": "removed",
+    "accept": true
+  },
+  {
+    "mode": "empty",
+    "accept": true
+  },
+  {
+    "mode": "opaque",
+    "accept": true
+  },
+  {
+    "mode": "provider",
+    "accept": true
+  },
+  {
+    "mode": "provider_target",
+    "accept": false
+  },
+  {
+    "mode": "provider_layout",
+    "accept": false
+  },
+  {
+    "mode": "provider_size",
+    "accept": false
+  },
+  {
+    "mode": "provider_alignment",
+    "accept": false
+  },
+  {
+    "mode": "provider_count",
+    "accept": false
+  },
+  {
+    "mode": "provider_offset",
+    "accept": false
+  },
+  {
+    "mode": "duplicate_task",
+    "accept": false
+  },
+  {
+    "mode": "unknown_task",
+    "accept": false
+  },
+  {
+    "mode": "task_definition",
+    "accept": false
+  },
+  {
+    "mode": "task_config",
+    "accept": false
+  },
+  {
+    "mode": "task_input",
+    "accept": false
+  },
+  {
+    "mode": "task_fields",
+    "accept": false
+  },
+  {
+    "mode": "task_type_count",
+    "accept": false
+  },
+  {
+    "mode": "task_field_identity",
+    "accept": false
+  },
+  {
+    "mode": "task_field_spelling",
+    "accept": false
+  },
+  {
+    "mode": "task_policy",
+    "accept": false
+  },
+  {
+    "mode": "missing_result",
+    "accept": false
+  },
+  {
+    "mode": "duplicate_result",
+    "accept": false
+  },
+  {
+    "mode": "unexpected_result",
+    "accept": false
+  },
+  {
+    "mode": "equal_result_task",
+    "accept": false
+  },
+  {
+    "mode": "result_definition",
+    "accept": false
+  },
+  {
+    "mode": "result_config",
+    "accept": false
+  },
+  {
+    "mode": "result_lineage",
+    "accept": false
+  },
+  {
+    "mode": "result_dependency",
+    "accept": false
+  },
+  {
+    "mode": "result_field_identity",
+    "accept": false
+  },
+  {
+    "mode": "result_spelling",
+    "accept": false
+  },
+  {
+    "mode": "missing_previous",
+    "accept": false
+  },
+  {
+    "mode": "stale_previous",
+    "accept": false
+  },
+  {
+    "mode": "stale_lineage",
+    "accept": false
+  }
+]

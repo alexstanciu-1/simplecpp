@@ -206,7 +206,7 @@ availability; compile-time numeric signs are evaluated by constant preparation.
 
 ## PHP-first typed literal constants — 2026-11-04
 
-The active `v0.2/compiler/` requires explicit types. Initializers accept literals and bounded integer arithmetic. This is an amendment to the earlier inferred-constant delivery
+The active `compiler/` requires explicit types. Initializers accept literals and bounded integer arithmetic. This is an amendment to the earlier inferred-constant delivery
 boundary above, not a claim that the donor implements these new forms:
 
 ```text

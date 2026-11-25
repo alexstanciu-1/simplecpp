@@ -1,0 +1,471 @@
+# Ownership and reference intent
+Doc Status: supporting
+
+PHP uses ordinary shared object references. Native reference classes use shared
+handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
+`@reference.weak` alone does not implement expiration or reclaim cycles.
+
+| Annotation | Intent |
+| --- | --- |
+| `@storage.owner` | Owns collection membership |
+| `@ownership owner` | Owns a direct record or syntax child |
+| `@storage.reference path` | Observes a record in the named collection |
+| `@reference.source path` | Reference provenance in a direct/transient graph |
+| `@reference.weak` | Non-retaining/backward/index intent |
+| `@storage.index path` | Position in the named collection |
+| `@storage.boundary path` | Exclusive boundary, possibly equal to count |
+
+## Current graph
+
+Exception membership belongs to existing relationship facts; the source-base link
+remains weak and no fabricated runtime source declaration is retained. Throw/catch
+uses one shared payload and ordinary catch-local lifetime. Prelowered extraction
+borrows the active transport only while obtaining that owned handle. Finally owns
+inline pending-exception state until replay/replacement; the representation uses
+the existing specialization/layout owner. Inherited runtime methods on `$this`
+borrow its payload for the call, without inventing a shared owner.
+
+Typed source Iterator contracts are owned by the existing type-contract work record.
+They retain weak links to the five original method declarations and canonical
+key/value types. Foreach owns prepared calls to those methods through its existing
+iteration facts. Signature/name dependencies use the normal preparation scheduler;
+reset and retirement discard these facts with their owners. Generated source loops
+retain one shared receiver handle until loop exit, including early exit/unwinding.
+This adds no independent lifetime graph or source-interface membership owner.
+
+`Model::$runtime_metadata` also owns unresolved ordinary type/parameter/default records
+and separate `cpp_types` bindings. These immutable-by-contract inputs own neither
+canonical identities nor workers. The transient startup type worker indexes recipes
+and checks default dependencies, then expires. The normal type registry, source
+exposures and provider catalog own installed definitions; backend bindings remain
+separate. Type resets rebuild from retained metadata without reading JSON again.
+
+`Model::$runtime_constants` owns settled module constants and their typed values.
+Language scope indexes these identities; prepared constant references use the existing
+constant-target protocol. Type-root reset replaces this inventory together with runtime
+callables, resolving the retained startup metadata without rereading JSON. Constants
+have no backend-symbol bindings; C++ consumes their settled values.
+
+Synthesized record initialization facts share the base's completed initialization
+contract in an acyclic ancestry graph and own only local input membership. The base
+link retains settled facts, never workers or copied source members. Normal declaration
+dependencies invalidate descendants; reset/retirement releases these facts. The
+ordered input query builds a transient view sharing original input/default identities.
+
+Original `collected_method` identities own their called-type `callable_instance`
+inventory. Instances own private parsed fragments/working methods; origin, called
+record, captured called scope and working-method context backlinks are weak. The
+working declaration retains the original lexical declaring type, not the called
+type. Private source retirement/reset uses the coordinator protocol shared with
+traits. Static source calls select these instances, but they never become source
+member lookup entries. Call-shape edits conservatively retire demand families before
+rebuilding current requests; see the [implementation plan](../planning/called_type_instances.md).
+
+Consumer-owned `trait_instance` records retain a private parsed fragment and its
+collection (not a second published source), with independent tokens, scopes and
+working members. The consumer backlink is weak. Member origin links preserve
+provenance; the private lexical scope observes the trait's source scope, while each
+working method weakly observes the consumer as declaring type. Explicit semantic
+retirement followed by collection disposal works per instance. The successful parse
+join retires stale instances before disposing source scopes. Automatic selection,
+replacement, preparation reset and full reset include private collections; see
+the [trait plan](../planning/trait_member_instances.md).
+
+Trait requirements use the same consumer-owned working syntax/signature records,
+without executable body work. Prepared type contracts reference these requirement
+identities separately from selected method decisions, including inherited obligations.
+There is no second requirement syntax owner; ordinary private-collection retirement
+invalidates and releases them with the rest of the contributed members.
+
+`collected_method` weakly observes its `collected_member_owner` through
+`declaring_type()`; member constants use the same optional weak owner role.
+Records and interfaces share that identity contract, not layout. Member scopes and
+syntax remain the original owners; inherited lookup must not copy declarations
+into a second retained member inventory. Transient `preparation_context::member_owner`
+tracks access context separately from an actual instance receiver.
+
+The same collected owner has separate `relationship_work`. That analysis work owns
+direct ancestry facts; the optional record base is weak, and the interface vector
+observes original collected identities without copying members. Only acyclic resolved
+facts publish. Retirement clears facts and both directions of scheduler dependencies;
+reset clears facts and marks the work pending. Inherited lookup results are transient
+identity/declaring-owner pairs, not another retained inventory or layout owner.
+
+The parallel `contract_work` owns post-layout virtual decisions and unresolved
+abstract obligations. Decisions weakly observe original local/overridden methods;
+the obligation vector references original declarations, never copies their schemas.
+It follows the same dependency/reset/retirement protocol. Callable `retired_bodies`
+temporarily owns detached executable syntax through the coordinator's semantic
+retirement/frontend disposal boundary. Body work never substitutes signature identity.
+
+The same collected owner retains `lifecycle_work` for declaration-only destruction
+access. Its scalar visibility snapshot owns no syntax, layout or callable references.
+Base cleanup and storage consumers use normal dependency edges; reset/retirement
+clear the snapshot and unlink registrations through the existing worker protocol.
+
+Interface contract work has the same owner/lifecycle but no accompanying record layout.
+Satisfied interface requirements retain original declaration identities for descendant
+validation. Local inherited-dispatch decisions weakly observe the unchanged source
+method and their descendant dispatch owner. Dispatch bindings weakly observe required
+and implementation methods and their respective slot owners; they own conversion-only
+adaptation snapshots, never workers, copied syntax or runtime objects. Normal contract
+retirement drops these facts. Reference-cycle analysis uses bindings transiently;
+C++ spelling and bridge definitions remain backend-owned.
+
+Prepared expressions own their optional storage-place record. A place weakly observes
+the selected `prepared_storage` fact and, for direct struct-field projection, shares
+the base place. Whole-storage roots identify the original declaration/parameter, not
+an assignment fact. This graph retains neither syntax nor transient local environments
+or workers. Ordinary preparation cleanup removes attached place-bearing facts; reuse
+must follow the existing declaration-fact identity and retirement protocol. Symbolic
+reference-return contracts retain only a parameter index, never caller storage. These
+records describe origin, not permission to escape or ownership of the runtime value.
+
+Property places may observe registry-owned `registered_property` facts, which have
+no collected declaration. Property writes share the destination place and conversion
+facts rather than creating a local binding identity. Source-local storage alone
+participates in invocation lifetime membership. Static-property roots remain gated
+from escaping borrows; projecting an instance property follows the receiver's root
+lifetime and existing heap restriction. Backend property bindings index exact current
+property-definition identities, so old facts cannot silently acquire a new configuration's symbol.
+The catalog owns each definition recipe and the lazily materialized storage inventory.
+Storage instances share their recipe and selected canonical owner, without syntax or
+worker backlinks. Selection-local `runtime_type_bindings` are transient; property and
+callable substitution share them without retaining invocation contexts. Registry resets
+discard both recipes and storage; dependency checks still run on cached storage access.
+
+Plain class/struct properties share that place model. A heap projection marks its
+path non-borrowable; nested inline projections inherit this restriction. Writability
+still follows the root access contract. No native alias/reference argument may expose
+those heap-backed interiors. Inline class and struct projections remain borrowable
+under existing stable-root rules. Property facts retain storage/payload classification;
+they neither own a runtime handle nor extend its lifetime.
+
+Place access is queried from the root parameter's read-only/writable contract;
+aliases and stable field projections preserve it. Addressability does not imply
+writability. This restricts an access path, not every other alias or copied handle
+to the same runtime object; it neither adds exclusive borrowing nor deep freezing.
+
+Alias declaration facts share the original place in `alias_target`, never the target
+expression or another syntax edge. Reference-return facts similarly share the verified
+place. Transient body contexts hold the expected reference parameter for every return;
+the statement-position gate is removed. Completion analysis independently rejects
+fallthrough. The parameter fact is not copied into callable contracts. Local aliases require
+earlier visible storage and cannot rebind or escape their lexical owner. Calls preserve
+the supplying argument's place, not a new lambda-local or callee-parameter lifetime.
+
+The post-preparation reference-cycle audit owns transient vertices and integer call
+edges. It observes live collected definitions and settled call targets; no vertex or
+worker is retained afterward and edges cannot create shared-handle cycles. Preparation
+failure marks affected reference-return body work dirty through the existing scheduler,
+so a cycle cannot leave a reusable ready fragment behind.
+
+Model owns modules, language scope and the namespace registry. Namespace identities
+own published member scopes; Model's global_scope is a convenience alias to the
+global namespace's member scope. Scope-to-namespace backlinks are weak. Lexical
+children inherit source identity through scope ancestry, whereas every namespace's
+published scope parents directly to language scope, not a parent namespace.
+The registry resets with syntax; global and named source bodies publish through it.
+Sequential analysis may intern empty lookup-only namespace pools after the parse
+join, retaining missing-target observations through the same member-scope owner.
+Plain lookup never interns them. Future parallel preparation must synchronize this
+registration; the current preparation worker is sequential. Parser registration
+continues under its existing publication lock.
+Body-local scopes index their namespace body's import syntax without publishing it.
+Lookup snapshots may retain replaced import nodes until analysis detaches observations;
+import nodes have no back-reference to the scope or body. Their identity is a binding,
+not a target definition. Import edits record a persistent source-change flag, while
+analysis owns validation, subscriptions and successful acknowledgement.
+Modules own source records; sources
+own file/token/parse state and observe their module. Tokens own captured text and
+token records. Parsed files own typed AST roots, collected records and applicable
+scopes. Specialized node families own named children; the abstract statement body
+is reused inside each source `namespace_body_node`. A file owns the active namespace
+body inventory; a separate retirement inventory keeps removed occurrences alive
+until analysis unlinks their work and frontend disposal releases them. Retired bodies
+are not active inspection children. Token normalization waits while that retirement
+inventory is nonempty. Prior lexical scopes stay strongly owned by
+`collected_file.retired_scopes` until join-ordered frontend disposal, even when a
+successful parse selects a smaller current scope inventory. Failed parsing preserves
+old and partial occurrences for retry. Global and named parsing share this protocol.
+The abstract statement body
+owns its ordered statements. Conditional arms own their block and successor arm;
+there is no payload or generic parent/sibling graph. Loops own their block body and
+typed header children. Prepared control transfers observe the enclosing breakable
+syntax through a supported weak field, not an owning back-edge. Invocation-local
+preparation/emission contexts restore their nearest transfer targets after each loop
+or switch. Switches own ordered case groups, groups own labels and an ordinary block
+body, and value labels own their constant expression. No group adds a parser scope
+or independent preparation-work owner; its lexical environment is transient.
+
+Conditional expressions own two or three expression children. Shorthand owns its
+condition once; the evaluated-value snapshot is an emission-local temporary, not
+another syntax edge or retained variable. Result facts are non-addressable values.
+Match expressions own the selector and source-ordered arms, each owning labels and
+one result expression. Default is an arm with no labels, not a second owning fallback
+edge. Its delayed emission and the selector snapshot are backend-local; no new scope,
+statement body, transfer target or work identity is retained.
+
+Functions own signature scopes; structs own member scopes. File/body scopes observe
+owners retained by the parsed file. Occurrences observe syntax, collection and scope;
+name-bearing nodes observe their canonical occurrence. Scope indexes reference
+those same records. Publication shares identities rather than copying definitions.
+
+Enums own optional backing-type syntax and ordered case nodes; each case owns its
+optional value expression. Cases have no namespace constant occurrence or parent
+backlink. The enum's collected source-type identity shares the ordinary declaration
+inventory; the generalized semantic-definition association observes it weakly.
+No new scope or registry root is introduced. Ordinary declaration work owns enum
+completion/dependencies. Published `prepared_enum` snapshots own ordered case facts
+without syntax backlinks; prepared case references share the selected immutable
+snapshot entry. Effective-equal edits preserve facts; changed inventories publish
+new snapshots and invalidate consumers through the existing work graph.
+
+Prepared facts retain canonical types and reference collected declarations.
+Record method indexes reference collection-owned identities, not signature snapshots.
+Method signatures depend on their record; calls depend on both record membership and
+the selected signature. Call syntax owns its optional receiver; prepared receiver-call
+facts contain only canonical type and lifetime policy, with no syntax/worker backlink.
+Generated shared-call temporaries retain the selected receiver through argument
+evaluation and invocation; inline calls borrow only admitted stable storage.
+Construction property-default facts also retain the property-owned initializer syntax
+as a forward reference, never its enclosing property or a processing worker. The
+ordinary syntax maintenance path clears that expression's preparation. Source record
+initialization contracts own named inputs sharing callable parameter contracts;
+synthesized inputs also reference their prepared fields. Construction consumers
+observe the schema through normal declaration/signature dependencies. Neither input views
+nor runtime references escape from these compile-time links. Constant defaults remain
+immutable value snapshots; rebuilt construction defaults are conservatively unequal.
+Calls weakly observe a `callable_definition_i` owned by source collection, the runtime
+callable catalog or the language scope. Fixed targets expose `callable_target_i`;
+compiler definitions acquire concrete signatures during argument-driven analysis.
+Generic runtime definitions likewise own immutable registry-resolved type patterns,
+while selected concrete signatures belong to prepared calls. Their inference maps
+are transient preparation data, not registry roots or source-derived capability
+caches. Backend bindings retain the provider identity, never a call-specific clone;
+semantic reset rebuilds patterns and bindings from retained startup metadata.
+Their declaration-independent signature shares parameter contracts
+with source parameter storage facts where applicable. Runtime free functions and factories have no
+source AST or collected-parameter requirement. C++ callable bindings retain their
+exact registered target and are reset with the runtime callable/type roots; they
+never become the owner of source semantic facts. See [callable contracts](MODEL.md#callable-contracts).
+Scope runtime-function pools are non-owning indexes of catalog identities, separate
+from source collection membership. Both feed name-pool observations; retiring source
+declarations must never remove installed runtime targets.
+Language scopes strongly own compiler-function definitions, separately from source
+retirement membership. Call-owned specialization facts share immutable prepared enum
+metadata; they never retain workers or syntax. C++ fragments may retain those same
+read-only helper requests across body reuse. Only live fragments contribute to
+artifact assembly, so unused helper artifacts disappear without a new semantic root.
+C++ fragments also own runtime ABI operation requests: canonical input/result/path
+types and settled operation/conversion decisions or runtime callable/initializer
+bindings. These backend requests are immutable after publication, contain no syntax,
+workers or compact engine IDs, and add no semantic registry. Fragment replacement
+or removal drops them; assembly replays live requests into an invocation-local engine.
+Transient physical operand records do not retain source owners or lifetime analysis.
+Nonempty initializer requests reuse this ownership, retaining the selected factory
+and converted input types, not entries or literal length. Their generated inline
+buffer owns the original runtime initializer buffer for one synchronous call. It
+cannot be copied or moved; entry snapshots remain in the ordinary emitter's scopes.
+Native RAII releases partial contents on append/conversion/factory failure.
+Source construction requests retain settled construction facts and, when selected,
+the existing prepared constructor call, together with the canonical result. They
+reuse fragment retirement and replay. Source payload declarations and methods remain in their existing
+fragments; a transient native-source context selects ordinary physical bindings.
+Assembly separates native method/static/dispatch implementation units from
+application functions. No alternate retained payload graph or specialization cache
+is introduced. Representation demand does not expand into unused ownership forms.
+Source instance method requests retain the existing settled prepared call facts.
+The ordinary call lambda owns receiver retention and ordered argument snapshots;
+the bridge borrows their native addresses for the synchronous invocation. Inline
+receivers and reference arguments preserve storage identity. Result callbacks borrow
+the same addresses until construction finishes and do not escape the invocation.
+Only inputs admitted as mutable by the prepared parameter boundary regain mutable
+pointers inside the result callback.
+
+Runtime argument facts retain source positions, not syntax backlinks. Compiler-call
+preparation may consume type-marker syntax before admitting runtime arguments;
+the ordinary call owns the complete source argument list and its type occurrences.
+Derived source-record capabilities are owned by `prepared_record`, alongside its
+prepared fields. Registry definitions retain identity and registered contracts;
+they do not cache a second mutable copy of source-derived capabilities. The transient
+`Capability_Preparation` query requires declaration completion and registers the
+consumer dependency before reading them. Unknown/failed preparation is not a negative
+capability answer. Nested changes propagate even when canonical type IDs are stable.
+
+Constant lookup indexes share `constant_target_i` identities: registered targets are
+scope-owned, source targets are collected definitions. A constant declaration owns
+its initializer and settled value; initializer references weakly observe targets and
+share immutable value snapshots. Values have no source backlinks. Source constants
+use ordinary declaration-work edges and join-ordered retirement; no parallel graph
+or runtime-storage owner is introduced. Changed values replace facts, never mutate
+already published snapshots retained by consumers.
+
+Declaration work belongs to collected definitions; body work belongs to body nodes.
+Each body-work record weakly observes its exact executable body; its source-file
+link supplies provenance, not an implicit `root->body` selection. Parser replacement
+detaches the old body's attachment, rebinds that observer and attaches the same work
+to the new body. This structural transfer does not change scheduling or settled facts.
+Dependency and lookup memberships currently use strong identity containers with
+explicit unlinking. C++ fragments refer to existing work identities. Retained model
+records never own workers or operation contexts.
+
+## Explicit nullability and publication
+
+Closure syntax owns its signature scope and a distinct body scope, alongside the
+ordinary function body whose scope link is weak. This keeps nested scopes alive
+when an enclosing body is reused without reparsing its closures. Parsing retains
+the signature/body scopes in the existing failure inventory before collecting
+observers, so a failed unattached expression cannot leave expired scope links.
+`collected_file::anonymous_callables` owns anonymous identity records; each owns its
+original expression. The expression-to-identity and identity-to-collection backlinks
+are weak, so no new owning cycle is introduced. Parser reconciliation marks obsolete
+membership; join-ordered frontend disposal removes it before dropping retired scopes.
+These records survive failed parses for retry, but deleted Storage IDs are never reused.
+Closures are not published as named declarations. Each identity owns optional
+anonymous signature work; its syntax body owns anonymous body work. Work observes
+the identity weakly. Analysis severs dependencies and semantic attachments before
+frontend disposal, and on reset. Enclosing-body cleanup skips nested closures,
+whose expression facts retain their concrete semantic type. The separate closure
+type index observes anonymous identities weakly and retires entries with them.
+Anonymous signature work additionally retains a canonical expected-type input, never
+the consuming AST/environment/worker. Creation-site preparation refreshes this input;
+signature queries preserve it, and retirement/reset clears it. Resolved signature facts
+do not overwrite omitted source annotations or create contextual syntax occurrences.
+Type registry definitions never retain source syntax or callable preparation.
+Nested closures have independently scheduled workers
+which own their facts. Shared callable inspection retains the syntax owner only for the
+cursor lifetime and follows the existing ordered children.
+
+Capture preparation also settles a bounded transfer classification independently of
+copyability. Closure environments retain the resulting value permission; callable
+erasure, copying and provider adaptation preserve it. This capability describes
+captured storage, not general thread safety of the body. Unknown capture domains
+remain denied. No secondary capture registry or lifetime owner is introduced.
+
+Capture entries own a variable-reference child and passing mode. A prepared reference
+capture owns a `storage_borrow`: its place weakly observes original prepared storage,
+and its lifetime point retains only a neutral region/order. Region parents point upward;
+no region owns syntax, storage, local environments, workers or child regions. Local
+environment storage-to-lifetime indexes are transient. Parameter signature facts acquire
+no invocation lifetime fields. Rebuilt contexts create fresh regions; newly supplied
+capture inputs replace old origins, and retirement clears capture environments. Anonymous
+invocation guarantees are transient and derived from settled captures, not owning
+back-links to the creating environment or a second retained escape graph.
+
+A receiver capture's place weakly observes the original signature-owned
+`prepared_receiver`. Its method declaration supplies lexical access context; no new
+retained receiver, member-owner link or owning runtime handle is introduced. Method
+repreparation establishes a fresh invocation region and refreshes capture inputs.
+
+Expression invocations share collected call occurrences with named calls but do not
+enter named lookup. Reference-cycle analysis builds an invocation-local graph over
+named and anonymous targets and their body scopes. Vertices temporarily retain target,
+optional body and diagnostic label; graph results feed ordinary body-work failure
+handling. No second retained call graph or new lifetime owner is introduced.
+
+An authored constructor's function body owns optional base-initialization facts. They
+weakly observe the leading source call (when explicit) and share its admitted call
+contract; they do not retain a worker or duplicate source arguments. Body cleanup
+clears the facts, including on failure/reset. The base initializer's C++ fragment is
+body-owned, so a parent-argument edit cannot leave stale signature-cached initialization.
+An inherited effective constructor observes the original ancestor declaration and
+signature; it adds no child method or parameter inventory.
+
+Constructor signatures own an optional `prepared_receiver` and named input schema.
+The receiver weakly observes the collected method; a method weakly observes its
+declaring record. Body contexts are transient observers, not retained owners.
+`set:` parameter facts retain the selected prepared property, while schema entries
+share the same parameter contracts used by positional calls. Synthesized entries
+observe public property facts. Neither schema retains an analysis worker or adds
+another type-registry cache. Constructor signature work depends on record completion;
+record facts observe constructor identity without requiring its signature, including
+inherited identity. This avoids layout/signature cycles for constructor parameters
+naming descendants. Callers depend on both relevant declarations, not
+the constructor body. Backend assembly combines layout and member declarations
+without making record preparation depend on the backend.
+
+Required fields may be populated after construction, but must be assigned before
+read or publication. `?T` means absence is usable state and needs explicit reset and
+checked extraction. An empty collection is valid, not absent. Weak intent does not
+make a required relationship nullable.
+
+Parsing may register a declaration before completing its fields. Its file remains
+incomplete and later phases wait for a successful join. Mutation is not transactional;
+failed parses retain partial identities for retry. The parsed file keeps its previous
+scope owners and newly selected scopes throughout parsing, including after failure.
+Only successful parsing replaces that inventory with the selected scopes; weak
+namespace-body scope observers are published only after selection has retained
+their scope, before the constructing local handle can expire. Reused occurrences
+select that same scope owner rather than relying on PHP references to prolong it.
+Weak body observers must never outlive their scope owners during this handoff. Retired nodes must not re-enter
+the active graph. Stage entry checks reject incomplete/deleted owners; cleanup may
+visit them. See [lifecycle](../lifecycle/incremental.md).
+
+Acquire weak links through `weakref_get` before use. Same-type nullable required
+returns use their checked return boundary; genuine class narrowing uses `object_cast`.
+Keep an owning parsed-file/model handle when native scope observers must remain
+usable. PHP behavior does not prove native expiration or cycle reclamation.
+
+## Mutation responsibilities
+
+Stage workers own their processing and must not invoke later-stage processing or
+change later-stage scheduling policy. They may share typed structures, stable
+identities and attached results. The coordinator owns stage sequencing and reset
+order; a shared data link does not transfer algorithm ownership. Parser-called
+collection belongs to `03_parse/collect/`. Backend bindings and naming belong only
+to their backend. Existing cross-stage hooks and retirement/invalidation exceptions
+are inventoried in the [stage-boundary audit](../planning/stage_boundary_audit.md),
+with repairs sequenced by the [stage-owned processing plan](../planning/stage_owned_processing.md).
+AST preparation/C++ hooks and collected callable/work-selection processing hooks
+have been removed. Stage workers own dispatch/traversal and attached-fact processing.
+Analysis-internal work dispatch also belongs to the worker, not retained records.
+Observed name resolution belongs to analysis; shared lexical lookup cannot invoke
+preparation observation. Scope subscription containers retain shared identities,
+with analysis removing a scope observation only after its last consumer detaches.
+Parsing transfers work identity but never sets preparation scheduling state.
+Analysis consumes persistent source-change flags and owns semantic retirement.
+The lifecycle coordinator validates the parse join, orders semantic unlinking,
+then calls frontend `Collection_Retirement` for membership/type-association/syntax
+disposal. C++ generation never clears the semantic change handoff: `Compiler::cpp()`
+acknowledges every consumed source after publishing the complete successful artifact set. Standalone generation
+leaves the handoff intact. Backend reads use `Preparation_Status`/`Type_Queries`,
+not preparation workers;
+neutral maintenance remains a structural facility with caller-controlled recursion.
+
+Workers maintain indexes when indexed names/membership change. Scope methods expose
+encapsulated membership operations; publication policy stays in `Scope_Publication`.
+Removal leaves previously acquired object handles alive but does not authorize those
+handles as current compiler data. Collection positions are not live counts.
+
+[Storage](../storage/STORAGE.md) defines shared membership and snapshots.
+[AST layout](ast_layout.md) defines typed ownership and inspection.
+[Portability review](../portability/REVIEW.md) tracks lifetime/publication proof gaps.
+
+## Concrete specialization layout dependencies
+
+The C++ binding owner selects physical implementation arguments from existing
+canonical types and runtime bindings. `cpp_type::headers` already describes the
+required headers; the lifecycle worker copies these into engine-owned
+`cpp_specialization_entry::layout_dependencies`. There is no second per-type layout
+list. The declaration emitter copies its assembled header dependencies into
+`cpp_artifact::header_dependencies`, finalized before appending the artifact.
+
+The existing engine uses those assembly-only links to order native layout batches
+through both concrete headers and shared source definitions. It does not walk source
+fields/signatures again or inspect method bodies. Native headers require no generated
+batch; a generated representation header becomes usable after its layout probe.
+Cycles reject before output publication. The native builder resolves/cache-validates
+batches in publication order. Preparation, source identity and registry ownership
+remain unchanged; no retained semantic dependency registry was added.
+
+## Provider layout argument requirements
+
+C++ binding argument records retain the provider's declaration-only layout permission,
+independent of stored/payload spelling and pointer interfaces. CPP_Types resolves the
+same native type twice where needed: conservative operation dependencies and the
+provider-admitted layout requirements. CPP_Opaque_Representation stores layout aliases
+and layout dependencies on the existing specialization entry, while implementation
+text keeps complete operation dependencies. No second type identity, dependency graph,
+or global layout cache is added. Stored inline values keep complete layouts; a handle's
+payload declaration is sufficient only where its actual representation admits it.

@@ -1,0 +1,366 @@
+# Canonical type definitions and conversions
+
+Doc Status: supporting
+
+Current representation: [native scalar aliases](../../specs/native_scalar_aliases.md) supersedes earlier scalar wrapper spellings and extraction adapters.
+
+The [scalar contract](../../specs/compiler_scalars_v0_2.md) owns semantics.
+The API generator emits canonical `type_int64`, `type_null`, `type_bool`,
+`type_uint8`, `type_float64` and `type_string` definitions plus `type_registry`. `int` and `int64` share one identity;
+bool/null use the existing metadata identities bool_t/null_t internally. Instances
+are shared definitions, never occurrence-specific records. `type_void` remains a
+small handwritten non-value definition.
+
+Application [integer enums](enums.md) have one AST-owned nominal definition,
+with separate source backing and compact storage references. They share application
+type publication with structs; they are not generated runtime scalar identities.
+
+The agreed next model is [scalar families and conversions](../../specs/planning/scalar_families_and_conversions.md).
+The [byte/uint8 identity migration](byte_alias.md), integer operation groups and [active numeric family conversions](family_conversions.md) are implemented.
+
+Published vector specializations also have canonical generated definitions, derived
+from the validated runtime export plan. `Type_Resolution` resolves written argument
+nodes once at declaration boundaries. See [vector type resolution](vector_types.md);
+the bounded [vector operations](vector_operations.md) reuse generated element conversions.
+
+Published [hash identities](hash_types.md) now resolve `hash<Value,Key>` through the same
+export/provider mechanism. The default publication includes the four int64/string pairs;
+the bounded [hash operations](hash_operations.md) support empty construction, keyed writes and copied reads.
+
+The four [carrier families](carrier_types.md) use one `carrier_type_definition` base and
+the same published-specialization resolution path. [Packed conversion codes](carrier_values.md)
+compose checked extraction, existing payload conversion and wrapping without allocating conversion objects.
+
+The default publication exports `mixed` and `dynamic` independently. Both generated
+definitions extend `boxed_type_definition`. Their preparation handlers select admission
+and result type directly. Runtime tag dispatch implements the corresponding scalar rule.
+For example, with a dynamic operand, `2.0 + x` has type dynamic, `2.0 + (float)x`
+has type float64, and `2 < x` has type bool. See the [boxed runtime API](../../specs/boxed_slice.md).
+
+## Metadata and generated code
+
+`runtime/metadata/runtime.json` owns:
+
+- `compiler.modules.default-runtime.types`: always-active membership.
+- `types.int64`: signedness and width; exact decimal limits are computed during generation.
+- `types.uint8`: canonical unsigned width/storage; `integer_aliases` supplies byte.
+- `values`: runtime bool/null representation contracts.
+- `source_types` and `compiler.value_types`: source names, generated type classes,
+  compiler representations and boolean/null literal spellings and values.
+- `compiler.arithmetic`: same-type int64 operators, result, native overflow and lowering policies; see [arithmetic](arithmetic.md).
+- `compiler.integer_operators`: integer arithmetic/comparisons, bitwise/shifts, compounds, unary operations, updates and truthiness.
+- `compiler.updates` / `compiler.unary`: remaining explicit floating capabilities and native lowering/overflow policy.
+- `compiler.mixed_numeric_operators`: integer/floating family promotion and floating-destination compound permission.
+- `compiler.strict_identity`, `compiler.three_way`, `compiler.power`, `compiler.concatenation`: bounded scalar groups with explicit identity, promotion, runtime and flavor policies.
+- `compiler.comparisons`: admitted same-type pairs, operators, result identity and native lowering strategy.
+  See [comparisons](comparisons.md) for ownership and sequencing.
+- `compiler.integer_literals`: decimal plus hexadecimal `0x` and octal `0o` prefixes, checked overflow and signed literal suffix policy.
+- `compiler.floating_literals`: decimal radix, reject overflow, gradual signed-zero
+  underflow and nearest/ties-even rounding.
+- `compiler.conversion_families`: family algorithms and allowed contexts, expanded into transient concrete rows during generation.
+- `checked_conversions`: shared runtime header/prefix for canonical named conversion functions.
+  Runtime-checked compiler bindings resolve by source/destination identity; no per-type wrapper binding.
+  Scalar cross-family rules must also be admitted by runtime `scalar_casts`.
+
+Generation validates the bounded policies, native facts and supported strategies.
+Byte's width/storage facts are no longer hard-coded in the runtime scalar registry.
+Generated methods contain direct branches; compilation does not interpret metadata
+or build a conversion matrix. Unsupported policies fail before publication.
+
+The output is `compiler/generated/types/{int64,null,bool,uint8,float64,string,registry}.php` plus
+`compiler/generated/bindings/entry.php` and inventory version 17. Generated PHP is not tracked. CMake lists the byproducts and
+checks freshness; regeneration cleans only the dedicated PHP/JSON extension set.
+
+Registration is normalized once by `compilerTypePlan()` in the API generator. The
+active module members select definitions, including int64 through the same
+`compiler.value_types` inventory as the other types. The plan supplies both the
+individual classes and the registry; there is no second exact membership list.
+Shared `source_types` spellings are merged with supplementary `source_names` from
+the compiler rows. For example, `int` comes from `source_types`, while `int64` is
+an extra compiler spelling. Removing or adding an extra spelling changes both
+`accepts_name()` and registry lookup. Cross-type spelling collisions and duplicate
+module ownership are errors.
+
+This remains a default-runtime-only slice. Existing parser/literal roles must be
+present; unsupported type strategies, class ABI names and representations fail at
+generation time. The normalized plan is generation-time data, not a new compiler
+runtime structure. Optional module activation and arbitrary generated class renaming
+are not implemented. The registration refactor preserves all eight generated files
+byte-for-byte with the default metadata, including the inventory version.
+
+## Shared type contract
+
+- `accepts_name()` and `type_registry::resolve()` provide canonical registration.
+- `type_registry::literal()` supplies generated literal spelling lookup to the parser.
+- Generated `supports_compound($operator)` separates compound syntax availability from arithmetic admission.
+- Generated `binary_result(operator, right_type)` supplies shared operator admission without requiring syntax.
+- `prepare_binary()` attaches ordinary expression facts using that query; compound writes use it directly.
+- `lower_cpp_binary()` emits the approved operation.
+- `prepare_literal()` validates a literal and attaches its value/type to the AST.
+- `prepare_conversion(value, context)` selects a packed `value_conversion` integer at a destination boundary.
+- `evaluate_constant(conversion, expression)` preserves source unknownness and derives the converted fact.
+- `convert_constant(conversion, value)` converts a supplied payload or returns `constant_evaluation::unavailable`.
+- `supports_update()` and `lower_cpp_update()` admit and emit discarded-value updates.
+- `cpp_type()` and `lower_cpp_literal()` consume settled source facts.
+- `lower_cpp_conversion(conversion, expression)` emits the approved operation, without resolving types again.
+- `cpp_trivial_value()` and `cpp_binary_reorderable()` are generated backend-only safety queries; see [direct lowering](direct_lowering.md).
+- `cpp_headers()` declares public storage headers; `conversion_headers()` adds conversion-specific headers.
+
+Common same-type identity behavior lives in the base definition. Generated overrides
+implement the metadata-listed conversions. Removing a conversion row removes its
+handler branches. There is no prepared-value hierarchy or allocated conversion object.
+
+A written declaration type supplies explicit intent, so `$v byte = 8;` is legal.
+This is a declaration-bound conversion, not a synthetic cast node. Global inference
+preserves the literal's source type. Local [inference](inference.md) preserves the
+initializer's type except null; it does not authorize explicit conversion. Written casts use the same conversion path.
+
+## AST-owned facts
+
+`ast_keyword_expression` retains the exact literal word and token range. The existing
+expression facts now hold `int|float|bool|null` plus `constant_known`, preserving the
+separation between a known null, unknown payload and unprepared type. `ast_float_expression` retains source tokens and a rounded binary64 payload through
+these same facts; no second prepared-literal object is introduced. String literals retain byte-specific facts, described in [the string slice](strings.md).
+Their scalar constant payload stays unknown; references do not copy bytes.
+
+Local declarations retain the converted payload, known flag and approved initialization
+operation. Global declarations own a general scalar expression child and approved
+initialization operation; their checked literal remains on the child. Neither
+conversion mutates the operand's original type/value. Global read occurrences stay
+unknown and use their stable symbol links. Reset clears all new prepared facts.
+
+Publication's lightweight global contract fingerprint includes the inferred literal
+type. Changing an inferred global from integer to bool/null/float invalidates its observers;
+a value-only edit retains the existing selective-reuse behavior. No new dependency
+owner or additional watcher graph is introduced.
+
+## Native lowering
+
+Scalar storage uses metadata-exported names. A source null declaration uses
+`scpp::null_t` from `core.scalars`, and its literal lowers to `nullptr`.
+
+Known valid byte conversions emit a native static cast. Unknown int64-to-byte values
+currently reuse `(scpp::uint8{value}).native_value()` and include only the public
+`scpp/integers.hpp` header. This preserves the established checked-conversion behavior
+and evaluates the operand once. A lighter native public helper can replace it later
+if measurements justify that work. No private runtime headers are emitted.
+
+Bool-to-int and byte-to-int use native static casts; int-to-bool uses `value != 0`.
+Float conversions and exact hexadecimal literal emission are described in
+[the floating implementation](floating.md). Unknown float-to-int conversion reuses
+the public runtime wrappers, while proven-safe conversions emit native casts.
+Prepared conversion facts select these paths. The emitter does not reinterpret
+metadata, mutate facts, resolve source symbols or permit C++ to decide source validity.
+
+Echo and entry returns are explicitly restricted to their existing supported types.
+Operators, overloads, source cast syntax, nullable values, optional modules and
+additional types remain deferred.
+
+## Verification
+
+`tests/scalars.php` covers all three flavors, constant/unknown conversions, null
+readiness, mismatches and byte overflow, public includes, lowering purity, inspection
+and inferred-global incremental invalidation. `tests/scalars_native.py` compiles and
+runs each flavor and checks runtime boundaries, single operand evaluation and unchanged
+destination on failure. Generator tests validate fresh definitions, conversion removal,
+metadata rejection and extension-scoped cleanup. All 33 selected compiler/generator/freshness
+CTests passed, with the scalar test rerun after repairing a stale generated int64 file.
+
+Native proof artifacts: `build/core-scalars-proof-2026-11-04/`. O2/g0, libc++,
+mold, Ninja -j8, no PCH/LTO, prebuilt runtime archive. Single instrumented runs, not
+comparative performance claims:
+
+| Flavor | Native wall ms | Clang frontend ms | LLVM backend ms | Link command ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp | 144.57 | 9.61 | 8.26 | 76 |
+| php | 114.02 | 8.16 | 6.23 | 58 |
+| js | 125.99 | 10.45 | 7.97 | 62 |
+
+All generated programs printed `0125581` and exited 8. LLVM includes optimization and
+code generation; trace totals exclude driver/startup work and are not an additive
+breakdown of wall time. Raw JSON retains optimizer/codegen detail. PHP fixture generation
+and its semantic/incremental assertions took 61.36 ms in that run.
+
+Explicit source casts use these same handlers without new generated definitions or conversion tables. See [cast ownership and proofs](casts.md).
+
+[Conversion contexts and operator promotion](conversion_contexts.md) separate boundary
+permission from operator-specific execution rules; generated conversion lowering is shared.
+
+Arithmetic helpers, checked-conversion wrappers and string storage use [named runtime bindings](runtime_bindings.md).
+
+Copy semantics and operation-local lowering safety are declared in compiler metadata; see [safety ownership and verification](runtime_bindings.md#copy-semantics-and-lowering-safety).
+
+## Declaration support policy
+
+Each `compiler.value_types` record explicitly declares `declarations.inferred_local`
+and `declarations.global_storage`. These are current compiler capabilities, separate
+from runtime representation and conversion permissions. Missing/nonboolean fields fail
+generation. Generated `supports_inferred_local()` and `supports_global_storage()` queries
+return constants; unknown/non-value types inherit conservative false defaults.
+
+Current policy: int64, bool, byte and float64 support both; null permits global storage
+but not local inference; string permits local inference but not global storage. Typed
+null locals and string constants remain supported. String globals and nullable inference
+are still deferred. The parser's existing global-initializer syntax restriction is also
+unchanged: quoted string globals can fail before declaration preparation.
+
+Preparation selects the type, asks the capability, and retains the original diagnostic
+text and location. Declaration traversal, conversions, cached AST facts and incremental
+watching remain unchanged. No AST/session/runtime structures were added; only the
+normalized generation-time type record gains declaration-policy fields.
+
+`tests/declaration_policy.php` checks typed locals, inferred locals and global policy in
+cpp/php/js, including exact existing diagnostic text. Repeated failures (including retry
+without edits) and recovery compare emitted output with fresh compilation, and no-op runs
+prepare no bodies. Six native recovery programs print `ok` and exit 8. Raw results and
+Clang traces: `build/declaration-policy-proof/`.
+
+Single-run timings: O2/g0, libc++, Ninja8, mold, no PCH/LTO, prebuilt runtime and fresh
+instrumented application objects. Cumulative stage traces are not additive wall time.
+
+| Fixture | Native ms | Frontend ms | LLVM ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp_local | 143.45 | 9.80 | 13.81 | 72.00 |
+| cpp_global | 149.18 | 15.93 | 14.14 | 77.00 |
+| php_local | 137.29 | 13.15 | 12.49 | 70.00 |
+| php_global | 153.12 | 11.99 | 12.71 | 75.00 |
+| js_local | 142.30 | 11.73 | 13.29 | 68.00 |
+| js_global | 134.51 | 10.62 | 10.13 | 72.00 |
+
+## Literal-family registration
+
+`compiler.value_types.*.literal_family` selects `integer`, `floating`, `string`,
+`keyword` or explicit null. Byte has no literal family: a written byte destination
+converts an integer value. Bool/null own distinct keyword spellings in the same family.
+The generation-time `compilerLiteralFamilies()` plan validates exactly one owner for
+each required structural family, compatible preparation strategies and unique keyword
+spellings. Missing/unknown families and conflicting registrations reject before publication.
+
+The registry template no longer names concrete literal type classes. Generation emits
+AST-family dispatch and canonical `integer()`, `floating()` and `string()` accessors
+from registrations. AST class vocabulary remains compiler-owned. String fact settlement
+now uses `type_registry::string()`, matching integer/floating settlement. Floating and
+string literal-method templates are selected through their registered families.
+
+Token recognition, grammar, string decoding, numeric validation, diagnostics and source
+positions remain handwritten and unchanged. No AST properties, prepared facts, symbol
+entries or runtime structures were added. The normalized type record gains only the
+family field, and the generated registry gains the string accessor. There is no metadata
+lookup or new per-expression allocation during compilation.
+
+Twelve focused CTests pass, including generator mutations and the new
+`tests/literal_families.php` identity/recovery checks. All flavors exercise integer,
+floating, bool, null and string literals, overflow/escape failures, retry without edits,
+family changes and recovery against fresh emitted output. No-op runs prepare no bodies.
+Fifteen native recovery programs pass. Existing native string byte/copy proofs also pass.
+Raw recovery traces/results: `build/literal-family-proof/`; string proofs:
+`build/literal-family-proof-strings/`.
+
+Single-run ranges across successful literal-family recovery states, O2/g0, libc++,
+Ninja8, mold, no PCH/LTO, prebuilt runtime, fresh instrumented application objects.
+These are correctness runs, not comparative benchmarks. Trace stage sums are not
+additive wall-time components.
+
+| Flavor | Native ms | Frontend ms | LLVM ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| cpp | 135.20–151.23 | 10.08–16.99 | 11.99–14.30 | 64.00–81.00 |
+| php | 122.94–135.67 | 9.16–14.05 | 9.54–12.19 | 62.00–78.00 |
+| js | 127.21–138.92 | 8.22–14.80 | 9.58–13.39 | 65.00–73.00 |
+
+The [integer family slice](integer_promotion.md) derives active int64/uint8 arithmetic
+and comparisons from grouped metadata and the shared runtime promotion policy.
+
+## Prefixed integer literals
+
+All three flavors accept `0x`/`0X` hexadecimal and `0o`/`0O` octal literals.
+They retain canonical int64 identity and use existing generated checked conversions at typed destinations.
+Leading-zero unprefixed literals stay decimal (`0755` is 755, `08` is 8).
+No binary prefixes, digit separators, suffixes or unsigned literal inference are introduced.
+
+The tokenizer owns digit grammar and numeric error locations. Metadata declares the prefix radices,
+and the generated int64 handler decodes with negative checked accumulation so signed minimum is exact.
+The existing decimal fast path stays unchanged. A direct signed prefixed token is retained as one
+ast_integer_expression, including `-0x8000000000000000`; power still binds before unary minus.
+No AST fields, conversion codes or runtime ABI change. Lowering emits the existing decimal C++ literals.
+Malformed prefixes/digits and int64 overflow reject; typed byte destinations still reject values outside 0..255.
+The native radix proof covers boundaries, leading zeros, power precedence and incremental errors/retry/recovery
+against fresh emitted artifacts in PHP, C++ and JS flavors.
+
+## Unavailable constant evaluation
+
+Conversion evaluation can return the singleton `constant_evaluation::unavailable` when no scalar
+fact is available. A known input does not guarantee an evaluable output. Generated text conversions,
+boxed/carrier boundaries and future limited host evaluations use this outcome instead of known null.
+`type_definition::evaluate_constant()` first checks source knownness, then invokes conversion evaluation.
+Casts, local declarations, named constants and plain assignments use that common boundary.
+
+The enum is transient. AST payloads stay `int|float|bool|null`; settlement normalizes unavailable
+into null with `constant_known=false`. Known null, false and zero retain their identity and knownness.
+References preserve those facts and normal preparation reset clears them. No result object is allocated,
+no symbol dependencies change, and uint64 activation remains separate. See the
+[uint64 bootstrap debt](../../specs/planning/uint64_constant_evaluation_debt.md).
+
+
+### Source identity during conversion lowering
+
+Checked conversion codes remain compact and independent of the source representation.
+Lowering reads the existing expression type; synthesized compound operands pass the
+existing destination or execution type through the optional `source_type` argument.
+Carrier extraction replaces that identity with its payload type before scalar lowering,
+including when the destination wraps the converted payload again.
+
+Generated checked dispatch selects the named runtime helper by that canonical identity.
+Missing or unsupported checked-source identity is an internal error, never an implicit
+int64 fallback. This adds no retained AST facts and changes no preparation or admission.
+Optional integer-width activation remains a separate slice.
+
+### Optional integer widths
+
+Select the existing runtime through `"dependencies": {"runtime": {"modules": ["numeric"]}}`
+in the application module manifest to enable `int8`, `int16`, `int32`, `uint16` and
+`uint32`. Their shared generated definitions are registered at compiler boot, while
+the immutable session availability context gates source resolution. Core int/int64 and
+byte/uint8 remain available without this selection. uint64 remains unavailable.
+
+Generated handlers reuse integer family conversions, arithmetic, comparisons, unary,
+updates, truthiness, bitwise operations and checked shifts. Signed narrowing uses the
+same generated minimum/maximum check as unsigned narrowing. Same-type operations retain
+their representation; admitted mixed integer operations execute in int64. Different
+unsigned widths temporarily have no arithmetic, ordinary comparison or spaceship
+promotion (including compound forms), since the agreed result/execution type is uint64.
+Explicit checked conversions, canonical strict identity and independent shift counts
+do not require that common-domain promotion and retain their existing rules.
+
+No AST fields, prepared records, dependency indexes or preparation traversal changed.
+Each new definition is one canonical shared object. Scalar values remain PHP integers;
+conversion codes and compound execution-type facts are unchanged. Literal identity and
+range remain int64. Generated lowerings select native aliases and named runtime helpers.
+Narrow unsigned multiplication explicitly avoids signed C++ integer-promotion overflow.
+
+The runtime publication includes these concrete aliases and conversions; its generated
+arithmetic helper bodies reuse the existing private algorithms. Applications include
+only their required public providers. Rebuild the runtime when changing its publication.
+
+Verification: `compiler_optional_integers` and `compiler_optional_integers_native`
+exercise all three flavors, representation boundaries, conversion source dispatch,
+numeric promotion identities, compounds, module isolation, failed retries and
+incremental/fresh recovery. Optional widths do not add new collection specializations,
+boxed kinds, direct echo bindings, or a power-operator contract.
+
+
+Measured numeric-matrix native builds (single sample per flavor, 2026-11-14):
+O2/g0, Ninja8, mold, libc++, no PCH/LTO, fresh instrumented application objects,
+prebuilt runtime. Frontend and LLVM are trace measurements; linker is the Ninja
+link-command duration. They are not additive end-to-end wall measurements.
+
+| Flavor | Native wall ms | Clang frontend ms | LLVM backend ms | Link ms |
+| --- | ---: | ---: | ---: | ---: |
+| PHP | 302.45 | 69.52 | 69.64 | 57 |
+| C++ | 304.76 | 79.35 | 70.37 | 53 |
+| JS | 298.83 | 66.83 | 66.76 | 56 |
+
+PHP fixture generation took 302.65 ms for the full test workload, including diagnostics
+and repeated incremental/fresh compilations; it is not a single-source compiler timing.
+All 57 native fixtures passed, and the unsigned multiplication matrix also passed
+UBSan (expected program exit 8). No performance comparison with an earlier identical
+fixture is claimed.

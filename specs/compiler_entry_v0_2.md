@@ -1,7 +1,7 @@
 # v0.2 compiler integer entry slice
 
 Doc Status: normative
-Scope: the bounded PHP compiler rebuild under `v0.2/compiler/`.
+Scope: the bounded PHP compiler rebuild under `compiler/`.
 
 ## Source contract
 
@@ -159,7 +159,7 @@ string literal. Single quotes decode only escaped quote/backslash. Double quotes
 support `\\`, `\"`, `\$`, `\n`, `\r`, `\t` and isolated `\0`. Unsupported escapes
 and interpolation diagnose. General string expressions and multiple operands are
 not yet implemented; these restrictions do not redefine the full output contract.
-See [implementation and debt](../v0.2/compiler/docs/output_slice.md).
+See [implementation and debt](../compiler/docs/output_slice.md).
 
 ## Implicit entry representation
 

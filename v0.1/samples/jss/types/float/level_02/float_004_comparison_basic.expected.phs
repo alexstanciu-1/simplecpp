@@ -1,0 +1,14 @@
+$a float = 1.5;
+$b float = 2.5;
+if ($a < $b) {
+	echo "T";
+} else {
+	echo "F";
+}
+echo "\n";
+if ($b > $a) {
+	echo "T";
+} else {
+	echo "F";
+}
+echo "\n";

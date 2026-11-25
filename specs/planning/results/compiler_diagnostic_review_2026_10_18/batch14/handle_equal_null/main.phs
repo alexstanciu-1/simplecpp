@@ -1,1 +1,0 @@
-class C {} $c C; return $c === null ? 0 : 1;

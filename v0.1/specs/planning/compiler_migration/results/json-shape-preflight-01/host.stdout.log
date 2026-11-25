@@ -1,0 +1,8 @@
+{} => {} | Required settings: source_folders and entry
+[] => [] | Required settings: source_folders and entry
+{"0":"src"} => {"0":"src"} | Required settings: source_folders and entry
+["src"] => ["src"] | Required settings: source_folders and entry
+{"source_folders":{},"entry":"a.phs"} => {"source_folders":{},"entry":"a.phs"} | source_folders must be a list
+{"source_folders":[],"entry":"a.phs"} => {"source_folders":[],"entry":"a.phs"} | source_folders must be a nonempty list of paths
+{"source_folders":{"0":"src"},"entry":"a.phs"} => {"source_folders":{"0":"src"},"entry":"a.phs"} | source_folders must be a list
+{"source_folders":["src"],"entry":"a.phs"} => {"source_folders":["src"],"entry":"a.phs"} | accepted

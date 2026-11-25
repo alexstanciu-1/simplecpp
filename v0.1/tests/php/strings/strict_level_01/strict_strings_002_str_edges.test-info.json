@@ -1,0 +1,50 @@
+{
+    "id": "strict_strings_002_str_edges",
+    "feature": "strings",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "ef\nbcd\n0\nhi\nhi--\n--hi\na|b,c\na|b\n4\n2\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "strings"
+    ],
+    "notes": "Strict string edge behavior should stay deterministic for offsets, masks, and explode limits.",
+    "build": {
+        "sanitizers": null
+    }
+}

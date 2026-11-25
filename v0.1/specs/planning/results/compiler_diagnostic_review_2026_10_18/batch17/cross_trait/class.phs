@@ -1,0 +1,1 @@
+namespace App; use Lib\T; class C { use T; }

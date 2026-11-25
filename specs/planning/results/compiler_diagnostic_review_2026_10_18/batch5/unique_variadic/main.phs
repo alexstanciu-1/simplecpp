@@ -1,1 +1,0 @@
-function f(unique<int> ...$xs): void {} f(); return 0;

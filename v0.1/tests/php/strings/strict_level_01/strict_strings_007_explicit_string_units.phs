@@ -1,0 +1,12 @@
+$text string = "aăé";
+
+echo string_byte_len($text), "\n";
+echo string_utf8_codepoint_count($text), "\n";
+echo string_grapheme_count($text), "\n";
+echo string_byte_at($text, 1), "\n";
+echo string_utf8_codepoint_at($text, 1), "\n";
+echo (string_byte_find($text, "ă") ?? -1), "\n";
+echo string_byte_slice($text, 1, 2), "\n";
+echo string_utf8_slice_codepoints($text, 2, 2), "\n";
+echo string_grapheme_slice($text, 2, 1), "\n";
+echo string_byte_slice_equals($text, 1, 2, "ă") ? "Y\n" : "N\n";

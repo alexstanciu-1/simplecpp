@@ -1,0 +1,28 @@
+{
+  "host": "tf-dev002",
+  "cpu": 0,
+  "rounds": 3,
+  "validated_batches": 5292,
+  "sources": {
+    "bench.js": "c5b0a0dcb2a8f0f24fb2f9c37d4a0dbc6b87ffe00d993510a368eb2cc0af933d",
+    "publish.php": "f8c6fe18dedd140ea74ed469eb98d036b99a956714aa1cab9d3394a864c38559",
+    "runtime_pair.py": "4efbf2335c21bb12f32f0b7fbf2bb9f0ac0f332654397ed3a27b8cb1ac8dfcea",
+    "run.py": "8025de30b082e8a1abf14c6a6e46f19213fff96b62259a3c759c381c45a8cb73",
+    "main.phs": "b47edd65137116f9b59d45ceb76f8ddee007a3e2553c62f541c5a8adcbec4415",
+    "bench_fence.hpp": "e5a6cade6a5a1936d733d2b8ce5b8f4c73d506fcca5a30d48336370adea51a89",
+    "bench.php": "686ee171277acd8268ebe8281e287defad8d5e41dfab936bbb0eb35513bca08a",
+    "bench.cpp": "582e0db0dc7cec0004f9397a718136fbb71893a7f059f2748df05ad1983a4441",
+    "README.md": "d30dc4391b7cc8f8e3a231baa473ef126ac7b8b1701863b059f58d181d5b748c",
+    "Bench.java": "9923ede3c075d03d65461b9a1c2e62151c95d7b2ca7dce9169ba6461364c68ed",
+    "bench.py": "c7a186842814ee759a2e3c1d12acd886efaa1c0ff78f7a847470cbdd2cd1e91f",
+    "compare_runs.py": "3fed050ae389746b122a9e27057c52a86334dd8041a1eb1beea094d8e1cb3594",
+    "report.py": "bae4162cdfcaa29a38ce6cb23fe2f27bdcc2415d6481d1eb3a62b0e9d84cf61c",
+    "bench.rs": "9f9a16047151c6a1161b6a3f1c1907dd862e0add134bbf455d389860fab51d28"
+  },
+  "executables": {
+    "before_concrete": "e1f2e4b476ca88adeec114afda1b190f7fc29d60d682e9303aa6f4190de61aea",
+    "before_ordinary": "125326fed10be78d1ffb8996089b29966e96d6ec36dcfb4179ab529126f010d1",
+    "after_concrete": "0973952fede27a161b7a9f5d0bf32036f8f72ddfa9dba4fea1261992815a5968",
+    "after_ordinary": "55e932db2e29cca22946ecf9de6bf4beefdab18f362523b1aaca227ab22b6a21"
+  }
+}

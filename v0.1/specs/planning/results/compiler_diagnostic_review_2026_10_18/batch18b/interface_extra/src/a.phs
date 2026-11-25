@@ -1,0 +1,1 @@
+class A implements I { function f(): int { return 1; } }

@@ -1,0 +1,16 @@
+{
+  "php_outcomes": 98,
+  "native_outcomes": 98,
+  "host_purity_assertions": 5,
+  "checker_corrections": 1,
+  "checker_reason": "Bitwise AND unsupported; use bounded integer power-of-two validation.",
+  "native_build_command_attempts": 2,
+  "native_failure_corrective_cycles": 1,
+  "native_failure_reason": "STAN falsely reports possible missing returns for terminal-throw codecs; explicit result branches/common return adopted.",
+  "cpp_compilation_attempts": 1,
+  "native_behavior_attempts": 1,
+  "final_ready_files": 44,
+  "converter_changes": false,
+  "framework_changes": false,
+  "target_changes": false
+}

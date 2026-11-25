@@ -1,0 +1,368 @@
+[
+  {
+    "name": "policy-switches",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/proof.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.425,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "Retained backend policy switching"
+  },
+  {
+    "name": "cpp-runtime-build",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++23",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-pthread",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include/core/runtime.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/fixture-runtime.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 10.299,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-2-unit-0",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O2",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2.artifacts-c2oaas1j/sources",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2.artifacts-c2oaas1j/sources/units/n6d61696e/n74797065732e706873.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2.artifacts-c2oaas1j/sources/units/n6d61696e/n74797065732e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 2.861,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-2-unit-1",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O2",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2.artifacts-c2oaas1j/sources",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2.artifacts-c2oaas1j/sources/entry.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2.artifacts-c2oaas1j/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 4.645,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-2-link",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O2",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2.artifacts-c2oaas1j/sources/units/n6d61696e/n74797065732e706873.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2.artifacts-c2oaas1j/sources/entry.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/fixture-runtime.o",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.306,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "execute-2",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-2"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.003,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-0-unit-0",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O0",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0.artifacts-azt7rpof/sources",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0.artifacts-azt7rpof/sources/units/n6d61696e/n74797065732e706873.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0.artifacts-azt7rpof/sources/units/n6d61696e/n74797065732e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 2.518,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-0-unit-1",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O0",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0.artifacts-azt7rpof/sources",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0.artifacts-azt7rpof/sources/entry.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0.artifacts-azt7rpof/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 3.988,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-0-link",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O0",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0.artifacts-azt7rpof/sources/units/n6d61696e/n74797065732e706873.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0.artifacts-azt7rpof/sources/entry.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/fixture-runtime.o",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.299,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "execute-0",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-1-unit-0",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1.artifacts-oeef2x53/sources",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1.artifacts-oeef2x53/sources/units/n6d61696e/n74797065732e706873.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1.artifacts-oeef2x53/sources/units/n6d61696e/n74797065732e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 2.609,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-1-unit-1",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1.artifacts-oeef2x53/sources",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1.artifacts-oeef2x53/sources/entry.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1.artifacts-oeef2x53/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 5.652,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-1-link",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O1",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1.artifacts-oeef2x53/sources/units/n6d61696e/n74797065732e706873.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1.artifacts-oeef2x53/sources/entry.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/fixture-runtime.o",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.344,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "execute-1",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-1"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.006,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-3-unit-0",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O3",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3.artifacts-8zypcuzy/sources",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3.artifacts-8zypcuzy/sources/units/n6d61696e/n74797065732e706873.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3.artifacts-8zypcuzy/sources/units/n6d61696e/n74797065732e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 3.703,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-3-unit-1",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O3",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3.artifacts-8zypcuzy/sources",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3.artifacts-8zypcuzy/sources/entry.cpp",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3.artifacts-8zypcuzy/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 8.15,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "mode-3-link",
+    "command": [
+      "/usr/bin/clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-O3",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3.artifacts-8zypcuzy/sources/units/n6d61696e/n74797065732e706873.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3.artifacts-8zypcuzy/sources/entry.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/fixture-runtime.o",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.694,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "execute-3",
+    "command": [
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/allocation-policy-20261016/focused-ownership/app-3"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.006,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]
