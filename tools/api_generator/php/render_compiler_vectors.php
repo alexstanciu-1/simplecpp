@@ -67,8 +67,10 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
     $cases = [];
     $application = false;
     $family = isset($metadata->vector) ? textValue(at($metadata->vector, 'source_type')) : null;
-    foreach ($runtime['vectors'] ?? [] as $vector) {
+    foreach ([...($runtime['vectors'] ?? []), ...($runtime['regex_vectors'] ?? [])] as $vector) {
         $element = $vector['element'];
+        if (!isset($definitions[$element]) && isset($runtime['regex_capture_publication'])
+            && in_array($element, ['vector_string', 'hash_string_string'], true)) $definitions[$element] = ['class' => $element];
         if (!isset($definitions[$element])) continue;
         $export = typeExport($runtime['submodules'], $vector['name']);
         $header = providerHeader($runtime['submodules'], $export['provider']);

@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace {
 using namespace std::literals;
@@ -359,7 +360,7 @@ namespace {
 template<class Field>
 void capture_fields(const capture_pattern& pattern, std::string_view subject, int count, Field field) {
     for (int i = 0; i < count; ++i)
-        field(static_cast<int64>(i), scpp::mixed::from_string(owned(pattern.capture(subject, i))));
+        field(static_cast<int64>(i), owned(pattern.capture(subject, i)));
     uint32_t names = 0, stride = 0;
     PCRE2_SPTR table = nullptr;
     pcre2_pattern_info(pattern.code.get(), PCRE2_INFO_NAMECOUNT, &names);
@@ -368,8 +369,8 @@ void capture_fields(const capture_pattern& pattern, std::string_view subject, in
     for (uint32_t i = 0; i < names; ++i) {
         const auto* entry = table + i * stride;
         const int group = entry[0] * 256 + entry[1];
-        field(string{reinterpret_cast<const char*>(entry + 2)}, mixed::from_string(
-            group < count ? owned(pattern.capture(subject, group)) : string{}));
+        field(string{reinterpret_cast<const char*>(entry + 2)},
+            group < count ? owned(pattern.capture(subject, group)) : string{});
     }
 }
 
@@ -385,7 +386,8 @@ result_or_false_int64 php_matches(const string& pattern, const string& subject, 
         ++hits;
         if (matches) {
             auto row = mixed::container();
-            capture_fields(compiled, text, count, [&](const auto& key, mixed value) {
+            capture_fields(compiled, text, count, [&](const auto& key, const string& capture) {
+                auto value = mixed::from_string(capture);
                 if (all && flags != 2) {
                     auto column = output.has(key) ? output.read(key) : mixed::container();
                     column.append(std::move(value));
@@ -483,5 +485,87 @@ result_or_false_mixed preg_filter(const string& pattern, const string& replaceme
 }
 result_or_false_mixed preg_filter(const string& pattern, const string& replacement, const mixed& input) {
     return preg_filter(pattern, replacement, input, -1);
+}
+}
+
+namespace {
+string capture_key(int64 number) { return owned(std::to_string(number)); }
+const string& capture_key(const string& name) { return name; }
+
+hash_string_string named_row(const capture_pattern& compiled, std::string_view text, int count) {
+    hash_string_string row;
+    capture_fields(compiled, text, count, [&](const auto& key, string value) {
+        row.set(capture_key(key), std::move(value));
+    });
+    return row;
+}
+
+vector_string numbered_row(const capture_pattern& compiled, std::string_view text, int count) {
+    vector_string row;
+    for (int i = 0; i < count; ++i) row.append(owned(compiled.capture(text, i)));
+    return row;
+}
+
+template<class Result, class Rows, class Collect>
+Result collect_matches(const string& pattern, const string& subject, int64 offset, Collect collect) {
+    capture_pattern compiled(pattern);
+    Rows rows;
+    const auto text = bytes(subject);
+    if (!compiled.data || !compiled.each(text, capture_offset(offset, subject.size()), [&](int count, size_t, size_t) {
+        return collect(rows, compiled, text, count);
+    })) return Result::from_false();
+    return Result{std::move(rows)};
+}
+}
+
+namespace scpp::regex {
+result_or_false_hash_string_string match_named(const string& pattern, const string& subject, int64 offset) {
+    return collect_matches<result_or_false_hash_string_string, hash_string_string>(pattern, subject, offset,
+        [](auto& row, const auto& compiled, auto text, int count) {
+            row = named_row(compiled, text, count);
+            return false;
+        });
+}
+result_or_false_vector_hash_string_string match_all_named(const string& pattern, const string& subject, int64 offset) {
+    return collect_matches<result_or_false_vector_hash_string_string, vector_hash_string_string>(pattern, subject, offset,
+        [](auto& rows, const auto& compiled, auto text, int count) {
+            rows.append(named_row(compiled, text, count));
+            return true;
+        });
+}
+result_or_false_vector_vector_string match_all(const string& pattern, const string& subject, int64 offset) {
+    return collect_matches<result_or_false_vector_vector_string, vector_vector_string>(pattern, subject, offset,
+        [](auto& rows, const auto& compiled, auto text, int count) {
+            rows.append(numbered_row(compiled, text, count));
+            return true;
+        });
+}
+result_or_false_vector_vector_string match_all_pattern_order(const string& pattern, const string& subject, int64 offset) {
+    auto matches = match_all(pattern, subject, offset);
+    if (!matches.has_value()) return result_or_false_vector_vector_string::from_false();
+    auto rows = matches.value();
+    std::vector<vector_string> columns;
+    for (int64 i = 0; i < rows.size(); ++i) {
+        auto row = rows.at(i);
+        while (columns.size() < static_cast<size_t>(row.size()))
+            columns.push_back(vector_string::filled(i, string{}));
+        for (size_t j = 0; j < columns.size(); ++j)
+            columns[j].append(j < static_cast<size_t>(row.size()) ? row.at(static_cast<int64>(j)) : string{});
+    }
+    vector_vector_string result;
+    for (auto& column : columns) result.append(std::move(column));
+    return result_or_false_vector_vector_string{std::move(result)};
+}
+result_or_false_hash_string_string match_named(const string& pattern, const string& subject) {
+    return match_named(pattern, subject, 0);
+}
+result_or_false_vector_vector_string match_all(const string& pattern, const string& subject) {
+    return match_all(pattern, subject, 0);
+}
+result_or_false_vector_hash_string_string match_all_named(const string& pattern, const string& subject) {
+    return match_all_named(pattern, subject, 0);
+}
+result_or_false_vector_vector_string match_all_pattern_order(const string& pattern, const string& subject) {
+    return match_all_pattern_order(pattern, subject, 0);
 }
 }

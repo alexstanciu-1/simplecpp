@@ -349,7 +349,7 @@ function finalizePublicationProviders(array &$plan): void {
         $plan['string_library']['requires'][] = $binding['direct_provider'];
     }
     foreach ($plan['carriers'] ?? [] as $carrier) $published[] = typeExport($providers, $carrier['name'])['provider'];
-    foreach (['string', 'string_view', 'string_library', 'search_policy', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'filesystem', 'regex'] as $family) {
+    foreach (['string', 'string_view', 'string_library', 'search_policy', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'regex_capture_publication', 'filesystem', 'regex'] as $family) {
         if (!isset($plan[$family])) continue;
         $declaration = $plan[$family];
         $id = $declaration['provider'];

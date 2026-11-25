@@ -56,6 +56,19 @@ def fixture(flavor):
             statements.append(f'if ({value} !== "{expected}") {{ return 8; }}')
     if flavor == 'php':
         statements.append(r'''
+$named hash<string,string> = regex_match_named("/(?<tag>a)/", "a");
+if ($named["0"] !== "a" || $named["tag"] !== "a") { return 31; }
+$rows vector<vector<string>> = regex_match_all("/(a)?b/", "bab");
+$second vector<string> = $rows[1];
+if (count($rows) !== 2 || $second[1] !== "a") { return 32; }
+$rows = regex_match_all_pattern_order("/(a)?b/", "bab");
+$second = $rows[1];
+if ($second[0] !== "" || $second[1] !== "a") { return 33; }
+$namedRows vector<hash<string,string>> = regex_match_all_named("/(?<tag>a)/", "aa", -1);
+$named = $namedRows[0];
+if (count($namedRows) !== 1 || $named["tag"] !== "a") { return 34; }
+$nestedFail result_or_false<vector<vector<string>>> = regex_match_all("/[/", "");
+if (isset($nestedFail)) { return 35; }
 $boxes mixed = ["p"=>"ax", "q"=>"xz", "r"=>"!"];
 $kept result_or_false<mixed> = preg_grep("/x/", $boxes);
 $values mixed = $kept;

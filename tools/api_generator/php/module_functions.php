@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
+require_once __DIR__ . '/regex_captures.php';
+
 const FUNCTION_MODULES = ['filesystem', 'regex'];
 
 /** Resolve the published module signatures once for both native and compiler rendering. */
@@ -20,6 +22,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $namespace = textValue(at($catalog, 'namespace'));
     requireThat(preg_match('/^scpp(?:::[A-Za-z_][A-Za-z_0-9]*)+$/D', $namespace) === 1, 'Invalid module namespace');
 
+    if ($family === 'regex') prepareRegexCaptureTypes($publication->regex->functions, $header, $plan);
     $functions = [];
     $requires = [];
     $nativeNames = [];
@@ -121,6 +124,7 @@ function moduleFunctionTypeExport(array $plan, string $type): array {
         || (isset($plan['string']) && $identity === 'string')
         || (isset($plan['boxed_dispatch']) && in_array($identity, array_column($plan['boxed']['families'], 'name'), true))
         || in_array($identity, array_column($plan['vectors'] ?? [], 'name'), true)
+        || in_array($identity, array_column($plan['regex_carriers'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['carriers'] ?? [], 'name'), true),
         'Module function requires a published type: ' . $type);
     return typeExport($plan['submodules'], $identity) + ['identity' => $identity];

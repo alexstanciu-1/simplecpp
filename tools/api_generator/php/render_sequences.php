@@ -363,19 +363,19 @@ function renderString(array $plan, array &$groups): array {
     return [$typeDeclarations, $d];
 }
 
-function renderVectors(array $plan): array {
+function renderVectors(array $plan, string $access = 'vector_access'): array {
     $h = !empty($plan['mt_segments']) ? "namespace scpp::mt { struct job; }\n" : '';
-    $h .= "namespace scpp {\nnamespace detail { struct vector_access; }\n";
+    $h .= "namespace scpp {\nnamespace detail { struct $access; }\n";
     $d = '';
     $instances = [];
     foreach($plan['vectors'] as $v) {
         $h .= "class {$v['name']};\n";
         $element = new RuntimeConcreteType($plan, $v['element']);
         $instances[$v['name']] = concreteTemplate(vectorConcreteRecipe($v), ['e' => $element],
-            ['mt_segments' => !empty($plan['mt_segments']) ? '1' : '', 'capacity_helpers' => !empty($v['capacity_helpers']) ? '1' : '', 'qual' => $v['element'] === 'string' ? 'const ' : '', 'ref' => $v['element'] === 'string' ? '&' : '', 'enable_reserve' => $v['enable_reserve'], 'n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::vector_access'] + $v['traversal'], 'scpp');
+            ['mt_segments' => !empty($plan['mt_segments']) ? '1' : '', 'capacity_helpers' => !empty($v['capacity_helpers']) ? '1' : '', 'qual' => ($v['element'] === 'string' || $access !== 'vector_access') ? 'const ' : '', 'ref' => ($v['element'] === 'string' || $access !== 'vector_access') ? '&' : '', 'enable_reserve' => $v['enable_reserve'], 'n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::' . $access] + $v['traversal'], 'scpp');
         $d .= $instances[$v['name']]['storage'];
     }
-    $d .= "namespace detail { struct vector_access {\n";
+    $d .= "namespace detail { struct $access {\n";
     foreach($plan['vectors'] as $v) {
         $d .= $instances[$v['name']]['access'];
     }
@@ -384,7 +384,7 @@ function renderVectors(array $plan): array {
         $n = $v['name'];
         $e = $v['element'];
         $count = $v['count_type'];
-        $vars = compact('n', 'e', 'count') + ['access' => 'detail::vector_access'] + $v['traversal'];
+        $vars = compact('n', 'e', 'count') + ['access' => 'detail::' . $access] + $v['traversal'];
         $h .= "class $n final {\npublic:\n" . $instances[$n]['declaration'];
         $d .= $instances[$n]['definition'];
         if (($v['initialization']['bulk'] ?? null) !== null) {
@@ -449,7 +449,7 @@ function renderVectors(array $plan): array {
         $h .= scalarInputFences($plan, 'has', [[$count]], false, ' const');
         $h .= scalarInputFences($plan, 'append', array_map(static fn(string $type): array => [$type], $values));
         $h .= scalarInputFences($plan, 'set', $sets);
-        $h .= "private:\n" . $instances[$n]['private_declaration'] . "    struct storage;\n    storage* storage_ = nullptr;\n    friend struct detail::vector_access;\n};\n";
+        $h .= "private:\n" . $instances[$n]['private_declaration'] . "    struct storage;\n    storage* storage_ = nullptr;\n    friend struct detail::$access;\n};\n";
         foreach($v['operations'] as $op) {
             $sig = "bool_t operator{$op['symbol']}(const $n& left, const $n& right)";
             $h .= "$sig;\n";
