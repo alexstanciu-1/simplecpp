@@ -39,7 +39,7 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 
 | Candidate | What remains to settle |
 | --- | --- |
-| Versioned stable hashing | String and span hashes have separate intake. The donors disagree on the algorithm. A persisted hash needs an explicit version and shared byte test vectors. String inputs can be considered independently of publication of a public span type. [Hash comparison](string_families_audit.md#adjacent-hashing-family) |
+| Versioned stable hashing | Audited. Propose the two string helpers with my-try FNV-1a 64-bit semantics. The release donor changed results across standard libraries. Defer byte-span helpers with the span type. [Donor comparison and test vectors](stable_hash_audit.md) |
 | Remaining core and release-only spellings | Reconcile source-visible debug/output, predicates, constants and compatibility aliases against existing language contracts. Classify compiler-emitted evaluation/debug hooks with their owners. Results/errors, conversions, lifetime operations, enum/layout queries and source-language operators already have dedicated evidence rows below. An equivalent language capability alone does not establish a donor spelling or overload. [Source surface index](donor_surfaces.tsv) · [Donor entities](donor_entities.tsv) |
 
 **Closeout.** The agreed implementations are operational. To close the broader mining pass, choose implement, defer or assign an owner for the remaining candidates and record the core spelling decisions. The CLI/environment group has completed implementation.
