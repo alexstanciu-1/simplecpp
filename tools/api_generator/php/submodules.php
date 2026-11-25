@@ -280,6 +280,9 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         if ($name === 'string_byte_find') $headers[] = 'scpp/value_error.hpp';
     }
     if (isset($publication->json)) {
+        foreach (['document', 'pull_reader'] as $feature) {
+            if ($publication->json->$feature ?? false) $headers[] = moduleOperationHeader($publication->json->header, $feature);
+        }
         foreach (names($publication->json->operations) as $id) {
             requireThat(isset(JSON_OPERATIONS[$id]), 'Unknown JSON operation');
             $headers[] = moduleOperationHeader(headerPath($publication->json->header), $id);

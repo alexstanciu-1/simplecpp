@@ -9,6 +9,7 @@
   },
   "json": {
     "header": "scpp/json.hpp",
+    "document": true,
     "operations": [
       "decode",
       "decode_mixed",

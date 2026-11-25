@@ -1407,6 +1407,12 @@ final class Preparation
 			$this->value($syntax->receiver, $initializing);
 			$type = $syntax->receiver->type_def();
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
+			if ($type instanceof runtime_field_type) {
+				$field = $type->runtime_field($syntax->field);
+				if ($field === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown field ' . $type->name . '.' . $syntax->field);
+				$syntax->settle_field($field);
+				return;
+			}
 			if ($type instanceof type_segment_range) {
 				if ($syntax->field !== 'offset' && $syntax->field !== 'length') throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown segment_range field: ' . $syntax->field);
 				$syntax->settle_field(type_int64::instance());

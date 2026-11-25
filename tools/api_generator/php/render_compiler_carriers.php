@@ -27,10 +27,10 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             . "\tpublic static function instance(): self { return self::\$instance ??= new self(); }\n}\n";
         $literals[] = "\t\t\t$name => $class::instance(),";
     }
-    foreach ($runtime['carriers'] ?? [] as $carrier) {
+    foreach ([...($runtime['carriers'] ?? []), ...($runtime['json_carriers'] ?? [])] as $carrier) {
         $payload = $payloads[$carrier['payload']] ?? null;
         if ($payload === null) continue;
-        $export = typeExport($runtime['submodules'], $carrier['name']);
+        $export = isset($carrier['header']) ? ['symbol' => 'scpp::' . $carrier['name']] : typeExport($runtime['submodules'], $carrier['name']);
         $class = 'type_' . $carrier['name'];
         $typeNames[$carrier['family'] . '<' . $carrier['payload'] . '>'] = $typeNames[$carrier['name']] = $carrier['name'];
         $sentinelCases = [];
@@ -58,7 +58,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             '@access@' => $carrier['payload_access'],
             '@class@' => $class, '@family@' => var_export($carrier['family'], true),
             '@payload@' => $payload['class'], '@cpp@' => var_export($export['symbol'], true),
-            '@header@' => var_export(providerHeader($runtime['submodules'], $export['provider']), true),
+            '@header@' => var_export($carrier['header'] ?? providerHeader($runtime['submodules'], $export['provider']), true),
         ]);
         $cases[$carrier['family']][] = "\t\t\t" . $payload['class'] . "::instance() => $class::instance(),";
     }

@@ -137,3 +137,15 @@ and json_encode(value) → result<string>. The general surface adds
 json_decode_mixed(string) → result<mixed> and publishes the same decode and
 encode contracts. Exact argument type selects each of the ten encode overloads,
 including nullable scalars. General names follow project visibility.
+
+## Document and node publication
+
+The document selection publishes immutable document and node values. A copied
+node retains the document arena, including after replacement of the originating
+document. Parsing validates complete UTF-8, unique decoded object member names,
+and a caller-supplied container depth from 1 to 256 (default 128). A nullable
+diagnostic receives category, byte offset and message on failure and resets on
+success. The returned result carries either a complete document or an error.
+Node accessors preserve shape, source member order and exact number tokens.
+Integer extraction accepts lexical signed int64 integers. All access failures
+are checked results.

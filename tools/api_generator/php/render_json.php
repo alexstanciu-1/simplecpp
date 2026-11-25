@@ -46,6 +46,7 @@ function renderJson(array $plan, array &$files): void {
     foreach ($signatures as $name => $arguments) $h .= scalarInputFences($plan, $name, $arguments);
     $files['public/' . $module['header']] = $h . "}\n";
     $files['src/json.cpp'] = $d . "}\n";
+    renderJsonHandles($plan, $files);
 }
 
 function jsonNativeArgument(array $operation, string $source): string {

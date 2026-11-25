@@ -93,10 +93,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             'required_module' => $module];
         $optionalRequires .= "require_once __DIR__ . '/$identity.php';\n";
     }
-    foreach ($runtime['text_builders'] ?? [] as $identity => $builder) {
+    foreach (($runtime['text_builders'] ?? []) + ($runtime['json_handles'] ?? []) as $identity => $builder) {
         $definitions[$identity] = ['class' => $identity, 'cpp' => "::scpp::$identity",
-            'cpp_header' => $builder['header'], 'aliases' => [$identity], 'strategy' => 'builder',
-            'literal_family' => null, 'literals' => [], 'copy_semantics' => 'owning', 'required_module' => null,
+            'cpp_header' => $builder['header'], 'aliases' => [$identity], 'strategy' => $builder['strategy'] ?? 'builder',
+            'literal_family' => null, 'literals' => [], 'copy_semantics' => 'owning', 'required_module' => $builder['module'] ?? null,
             'declarations' => ['inferred_local' => true, 'global_storage' => true, 'instance_field' => true]];
         $optionalRequires .= "require_once __DIR__ . '/$identity.php';\n";
     }
@@ -164,6 +164,15 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             ]) : compilerLiteralMethods($definition);
         if ($definition['literal_family'] === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/strings/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
         $indexInterface = $definition['strategy'] === 'builder' ? ' implements text_builder_type' : '';
+        if (isset($runtime['json_handles'][$identity]['fields'])) {
+            $indexInterface = ' implements runtime_field_type';
+            $fields = [];
+            foreach ($runtime['json_handles'][$identity]['fields'] as $field => $type) {
+                $fields[] = "'$field' => type_{$definitions[$type]['class']}::instance()";
+            }
+            $methods .= "\n\tpublic function runtime_field(string \$name): ?type_definition { return match (\$name) { "
+                . implode(', ', $fields) . ", default => null }; }\n";
+        }
         if ($identity === 'string' && isset($runtime['string_index_read'])) {
             $read = $runtime['string_index_read'];
             requireThat(isset($definitions[$read['key']], $definitions[$read['result']]), 'Compiler string index requires key and result types');

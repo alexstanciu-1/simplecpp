@@ -492,44 +492,53 @@ function renderCarriers(array $plan, array &$groups): array {
     }
     foreach($plan['carriers'] as $c) {
         $n = $c['name'];
-        $p = $c['payload'];
-        $result = $c['family'] === 'result';
-        $nullable = $c['family'] === 'nullable';
-        [$lh, $ld] = lifecycle($n);
-        $vars = compact('n', 'p', 'result', 'lh', 'ld') + ['explicit' => str_starts_with($c['extraction'], 'implicit') ? '':'explicit ', 'error_type' => $result ? ', error_t':''];
-        $constructors = [[$p]];
-        if ($nullable) $constructors[] = ['null_t'];
-        if ($result) $constructors[] = ['error_t'];
-        $class = template('carriers/carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
-        $d .= template('carriers/carrier_storage', $vars) . template('carriers/carrier_value_definition', $vars) . ' ';
-        if($result) {
-            $d .= "if (!storage_) return $p{}; ";
-        }
-        $d .= "if (!storage_) throw std::runtime_error(\"carrier_no_value\"); return storage_->content.value(); }\n$n::operator $p() const { return value(); }\n";
-        if($nullable) {
-            $class .= "    explicit $n(null_t) noexcept;\n";
-            $d .= "$n::$n(null_t) noexcept {}\n";
-        }
-        if($result) {
-            $class .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n";
-            $d .= template('carriers/carrier_error_definition', $vars);
-        }
-        else {
-            $class .= "    void reset() noexcept;\n";
-            $d .= "void $n::reset() noexcept { delete storage_; storage_ = nullptr; }\n";
-            if(!$nullable) {
-                $class .= "    static $n from_false() noexcept;\n    bool_t is_false() const noexcept;\n";
-                $d .= template('carriers/carrier_false_definition', $vars);
-            }
-            if($c['family'] === 'result_or_bool') {
-                $class .= "    static $n from_true();\n    bool_t is_true() const noexcept;\n";
-                $d .= template('carriers/carrier_true_definition', $vars);
-            }
-        }
-        $class .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
+        [$class, $implementation] = renderCarrier($plan, $c);
+        $d .= $implementation;
         $provider = typeExport($plan['submodules'], $n)['provider'];
         if ($provider === $plan['carrier_publication']['provider']) $h .= $class;
         else $groups[] = ['provider' => $provider, 'system' => [], 'declarations' => "namespace scpp {\n$class}\n"];
     }
     return [$h . "}\n", $d];
+}
+
+/** Render one concrete carrier; module-owned payloads can use the same transport in their own archive. */
+function renderCarrier(array $plan, array $c): array {
+    $d = '';
+    $n = $c['name'];
+    $p = $c['payload'];
+    $result = $c['family'] === 'result';
+    $nullable = $c['family'] === 'nullable';
+    [$lh, $ld] = lifecycle($n);
+    $vars = compact('n', 'p', 'result', 'lh', 'ld') + ['explicit' => str_starts_with($c['extraction'], 'implicit') ? '':'explicit ', 'error_type' => $result ? ', error_t':''];
+    $constructors = [[$p]];
+    if ($nullable) $constructors[] = ['null_t'];
+    if ($result) $constructors[] = ['error_t'];
+    $class = template('carriers/carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
+    $d .= template('carriers/carrier_storage', $vars) . template('carriers/carrier_value_definition', $vars) . ' ';
+    if($result) {
+        $d .= "if (!storage_) return $p{}; ";
+    }
+    $d .= "if (!storage_) throw std::runtime_error(\"carrier_no_value\"); return storage_->content.value(); }\n$n::operator $p() const { return value(); }\n";
+    if($nullable) {
+        $class .= "    explicit $n(null_t) noexcept;\n";
+        $d .= "$n::$n(null_t) noexcept {}\n";
+    }
+    if($result) {
+        $class .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n";
+        $d .= template('carriers/carrier_error_definition', $vars);
+    }
+    else {
+        $class .= "    void reset() noexcept;\n";
+        $d .= "void $n::reset() noexcept { delete storage_; storage_ = nullptr; }\n";
+        if(!$nullable) {
+            $class .= "    static $n from_false() noexcept;\n    bool_t is_false() const noexcept;\n";
+            $d .= template('carriers/carrier_false_definition', $vars);
+        }
+        if($c['family'] === 'result_or_bool') {
+            $class .= "    static $n from_true();\n    bool_t is_true() const noexcept;\n";
+            $d .= template('carriers/carrier_true_definition', $vars);
+        }
+    }
+    $class .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
+    return [$class, $d];
 }
