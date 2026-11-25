@@ -997,6 +997,17 @@ CPP;
 				}
 				$lines[] = "\t" . $transfer;
 			}
+			elseif ($statement instanceof ast_foreach_statement && $statement->value instanceof ast_writable_element) {
+				$source = $statement->source_value;
+				$owner = $this->name($source->local_def());
+				$index = 'iteration_index_' . $statement->start;
+				$limit = 'iteration_limit_' . $statement->start;
+				$count = $source->type_def()->lower_cpp_cardinality(collection_cardinality::count, $owner);
+				$lines[] = "for (scpp::int64 $index = 0, $limit = $count; $index < $limit; ++$index) {";
+				if ($statement->key !== null) $lines[] = '[[maybe_unused]] auto ' . $this->name($statement->key) . ' = ' . $index . ';';
+				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, null) as $line) $lines[] = "\t" . $line;
+				$lines[] = '}';
+			}
 			elseif ($statement instanceof ast_foreach_statement && ($source_type = $statement->source_value->type_def()) instanceof segment_type
 				&& $source_type->key !== null) {
 				$receiver = $this->value($statement->source_value, $global_references, $declarations, $required_headers);
@@ -1701,8 +1712,22 @@ CPP;
 
 	private function name(ast_local_binding $binding): string
 	{
+		if ($binding instanceof ast_writable_element) {
+			$loop = $binding->parent;
+			$source = $loop->source_value;
+			return $source->type_def()->lower_cpp_element_read($this->name($source->local_def()), 'iteration_index_' . $loop->start);
+		}
 		return ($this->generator_locals[$binding->storage_id()] ?? null)
 			?? 'var_' . self::name_component($binding->declaration_key()) . '_' . $binding->storage_id();
+	}
+
+	/** Write immediately through the same checked vector setter as an indexed assignment. */
+	private function iteration_store(ast_writable_element $element, string $value): string
+	{
+		$loop = $element->parent;
+		$source = $loop->source_value;
+		$value = 'static_cast<' . $element->type_def()->cpp_type() . '>(' . $value . ')';
+		return $source->type_def()->lower_cpp_write($this->name($source->local_def()), 'iteration_index_' . $loop->start, $value);
 	}
 
 	/**
@@ -1731,6 +1756,11 @@ CPP;
 			$name = 'compound_target';
 		} else {
 			$name = $property ? $this->value($destination, $global_references, $declarations, $headers) : $this->name($destination);
+		}
+		if ($destination instanceof ast_writable_element) {
+			$snapshot = $snapshot_name . ' = ' . $this->compound_left($statement, $type, $name, $headers);
+			$right = $this->value($statement->value, $global_references, $declarations, $headers);
+			return $this->iteration_store($destination, $this->compound_result($statement, $type, $snapshot_name, $right, $headers));
 		}
 		$execution = $statement->execution_type();
 		$before = $this->suspensions;
@@ -2037,7 +2067,8 @@ CPP;
 		}
 		if ($statement instanceof ast_reset_statement) {
 			$local = $statement->local_def();
-			return $this->name($local) . ' = ' . $local->type_def()->cpp_type() . '{}';
+			$empty = $local->type_def()->cpp_type() . '{}';
+			return $local instanceof ast_writable_element ? $this->iteration_store($local, $empty) : $this->name($local) . ' = ' . $empty;
 		}
 		if ($statement instanceof ast_update_statement) {
 			return $this->local_update($statement);
@@ -2109,12 +2140,21 @@ CPP;
 			$assignment = $this->name($statement) . ' = ' . $this->conversion($type, $conversion, $operand, $value) . ';';
 			return $prefix . ";\n" . $this->async_statement($assignment);
 		}
-		return $this->binding_initialization($statement, $prefix, $this->conversion($type, $conversion, $operand, $value));
+		$converted = $this->conversion($type, $conversion, $operand, $value);
+		if ($statement instanceof ast_storage_write && $statement->local_def() instanceof ast_writable_element) {
+			return $this->iteration_store($statement->local_def(), $converted);
+		}
+		return $this->binding_initialization($statement, $prefix, $converted);
 	}
 
 	private function local_update(ast_update_statement $update): string
 	{
 		$local = $update->local_def();
+		if ($local instanceof ast_writable_element) {
+			$operation = $local->type_def()->lower_cpp_update($update->operator, 'element', $update->postfix);
+			return '([&]() { auto element = ' . $this->name($local) . '; auto result = ' . $operation . '; '
+				. $this->iteration_store($local, 'element') . '; return result; }())';
+		}
 		return $local->type_def()->lower_cpp_update($update->operator, $this->name($local), $update->postfix);
 	}
 
@@ -2867,8 +2907,8 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
 		bool &$reorderable = false): string
 	{
-		$reorderable = $value->type_def()->cpp_trivial_value();
 		$declaration = $value->declaration();
+		$reorderable = !($declaration instanceof ast_writable_element) && $value->type_def()->cpp_trivial_value();
 		if ($declaration instanceof ast_enum_case) {
 			return $declaration->parent->definition->cpp_case($declaration);
 		}

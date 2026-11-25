@@ -612,6 +612,7 @@ final class Parser
 		$start = $c->position();
 		$python = $grammar instanceof Python_Grammar;
 		$requires_key = !$python && $c->keyword('for');
+		$writable = false;
 		$key = null;
 		$header = $collector->child();
 		if ($python || $requires_key) {
@@ -637,18 +638,22 @@ final class Parser
 			$source = $this->value();
 			$c->take_keyword('as');
 			$kind = $c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+			$writable = $kind === token_kind::variable && $c->is(token_kind::ampersand);
+			if ($writable) $c->take(token_kind::ampersand, '&');
 			$value_pos = $c->position();
 			$name = $c->binding_name($kind);
-			if ($c->is(token_kind::arrow)) {
+			if (!$writable && $c->is(token_kind::arrow)) {
 				$c->take(token_kind::arrow, '=>');
 				$key = $header->produced_binding($name, $value_pos, true);
+				$writable = $kind === token_kind::variable && $c->is(token_kind::ampersand);
+				if ($writable) $c->take(token_kind::ampersand, '&');
 				$value_pos = $c->position();
 				$name = $c->binding_name($kind);
 				if ($name === $key->short_name) throw new diagnostic($c->tokens->source, $c->offset(), 'Foreach key and value must have different names');
 			}
 			$c->take(token_kind::rparen, ')');
 		}
-		$value = $header->produced_binding($name, $value_pos, !$collector->has_local($name));
+		$value = $header->produced_binding($name, $value_pos, !$collector->has_local($name), $writable);
 		$body = $this->lexical_block($grammar, $header, '{ (braced foreach body)');
 		$this->lexical = $collector;
 		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope(), $requires_key);

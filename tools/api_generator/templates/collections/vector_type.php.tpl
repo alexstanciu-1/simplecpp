@@ -54,6 +54,12 @@ final class @class@ extends vector_type_definition@interfaces@
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
 		$index = @count@::instance()->lower_cpp_exact_argument($key, value_conversion::identity, $index);
+		return $this->lower_cpp_element_read($receiver, $index);
+	}
+
+	/** Read through an already typed native index, including an iteration position. */
+	public function lower_cpp_element_read(string $receiver, string $index): string
+	{
 		return '(' . $receiver . ').@index@(' . $index . ')';
 	}
 

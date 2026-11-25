@@ -151,7 +151,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$emit('empty', $decl('vector<int>', 'items', '[]') . $decl('int', 'value', '99') . $loop($v('items'), '') . 'echo ' . $v('value') . ';return 8;', '99');
 	rejects(fn() => $prepare($decl('int', 'n', '1') . $loop($v('n'), '') . 'return 8;'), 'iterable');
 	rejects(fn() => $prepare($setup . $loop($v('items'), '') . 'echo ' . $v('value') . ';return 8;'), 'Unknown');
-	rejects(fn() => $prepare($setup . 'foreach (' . $v('items') . ' as &' . $v('value') . ') {} return 8;'), 'Expected');
+	if ($flavor === flavor::php) {
+		$emit('writable', $setup . 'foreach ($items as $key => &$value) {$value+=2;echo $items[$key];}return 8;', '345');
+	} else rejects(fn() => $prepare($setup . 'foreach (' . $v('items') . ' as &' . $v('value') . ') {} return 8;'), 'Expected');
 }
 if (isset($argv[1])) file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
 echo "Foreach: all families, mutation, scopes and incremental recovery passed\n";

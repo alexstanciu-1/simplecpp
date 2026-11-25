@@ -62,8 +62,29 @@ Across source flavors, traversal of an unmodified typed hash visits live entries
 Mutation during traversal has no stable visitation promise: entries may shift, disappear, change or
 be replaced. Bounds and hole checks prevent invalid slot access; no old entry
 sequence is preserved. Independent loops have independent integer positions.
-Concurrent mutation, escaping element references and by-reference foreach are not
-supported. These methods do not make arbitrary dangling native references safe.
+This value traversal protocol excludes concurrent mutation and escaping element
+references. These methods do not make arbitrary dangling native references safe.
+
+## PHP writable vector foreach
+
+In a synchronous body, `foreach ($items as &$item)` and
+`foreach ($items as $key => &$item)` require a named, writable local that owns
+a typed vector. The element name is fresh and scoped to the loop. Each iteration
+selects one index. Changing the optional key variable leaves the selection intact.
+
+Reading the element reads the current slot. Assignments and supported compound
+updates replace it immediately. Reads through another name for the vector see
+the completed write, including before a break, return or exception. A by-value
+capture takes the current element value. Shared handles retain object identity.
+For inline records, edit a value copy and assign the whole element back.
+
+The vector must keep its size, order and storage throughout the loop. Preparation
+rejects append, removal, resize, reserve, reset, replacement and mutable reference
+calls on the vector or a lexical alias. A closure with a mutable capture of that
+storage cannot be invoked during the loop. By-value and read-only helper calls
+remain eligible. The element cannot serve as reference storage for a call, local
+alias, reference capture or segment grant. Ordinary indexed writes to existing
+slots remain visible through the loop binding.
 
 ## Typed map and filter
 

@@ -54,6 +54,8 @@ final class Preparation
 	private int $name_lookups /** uint32 */ = 0;
 	/** Native non-owning innermost active loop within this callable. */
 	private ?ast_repeating_statement $loop = null;
+	/** Active writable vector loops, keyed by canonical local storage ID in this callable. @var array<int,true> */
+	private array $iterated_vectors = [];
 	/** Reachable nonlocal exits, keyed by destination token and direction. @var bool[] */
 	private array $outward = [];
 	/** Current finalizer boundary for lexical transfer checks. */
@@ -330,6 +332,7 @@ final class Preparation
 					$this->writable_property($statement->receiver, payload: true);
 				} else {
 					$this->value($statement->receiver);
+					if ($statement->receiver instanceof ast_name_expression) $this->require_vector_available($statement, $statement->receiver->local_binding());
 					Readonly_Access::write($statement->receiver, true);
 					if ($statement->receiver->local_binding() === null) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
@@ -757,6 +760,15 @@ final class Preparation
 	{
 		$this->value($statement->source_value);
 		$source_type = $statement->source_value->type_def();
+		$vector = null;
+		if ($statement->value instanceof ast_writable_element) {
+			$vector = $statement->source_value instanceof ast_name_expression ? $statement->source_value->local_binding() : null;
+			if (!($vector instanceof ast_local_declaration)
+				|| !($source_type instanceof vector_type_definition) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires an owned local vector in a synchronous body');
+			}
+			$this->require_vector_available($statement, $vector);
+		}
 		$segment = $source_type instanceof segment_type && $source_type->key !== null;
 		$type = $source_type->iteration();
 		$python = $source->flavor === flavor::python;
@@ -788,6 +800,12 @@ final class Preparation
 			$this->dependencies?->watch($this->symbols->entry($method->symbol_key()), $this->owner);
 		}
 		$destination = $this->find_local($statement->value->short_name);
+		if ($destination !== null) {
+			$this->require_vector_available($statement, $destination);
+			if ($vector !== null || $destination instanceof ast_writable_element) {
+				throw new diagnostic($source, $statement->value->byte_start(), 'Writable foreach requires a fresh element binding');
+			}
+		}
 		if ($segment && $destination !== null) throw new diagnostic($source, $statement->value->byte_start(), 'Hash segment traversal requires a fresh loop binding');
 		Readonly_Access::require_writable($statement->value, $destination);
 		$output = $segment ? ($statement->keys_only ? $source_type->key : $source_type->element)
@@ -813,10 +831,12 @@ final class Preparation
 			$this->local_frames[] = [];
 			$outer_loop = $this->loop;
 			$this->loop = $statement;
+			if ($vector !== null) $this->iterated_vectors[$vector->storage_id()] = true;
 			try {
 				$completion = $this->sequence($statement->body->statements, $source, $target, $function);
 			}
 			finally {
+				if ($vector !== null) unset($this->iterated_vectors[$vector->storage_id()]);
 				$this->loop = $outer_loop;
 				array_pop($this->local_frames);
 			}
@@ -913,6 +933,14 @@ final class Preparation
 		$this->array_bytes += $bytes;
 	}
 
+	/** Aliases resolve to the same storage as the original vector. */
+	private function require_vector_available(ast_node $site, ?ast_local_binding $binding): void
+	{
+		if ($binding !== null && isset($this->iterated_vectors[$binding->storage_id()])) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot structurally mutate or borrow the vector during writable foreach');
+		}
+	}
+
 	/** Publish a second lexical name for already-live storage without reading or copying it. */
 	private function local_alias(ast_local_alias $declaration): void
 	{
@@ -934,6 +962,8 @@ final class Preparation
 		} else {
 			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
 		}
+		$this->require_vector_available($target, $origin);
+		if ($origin instanceof ast_writable_element) throw new diagnostic($source, $target->byte_start(), 'Cannot alias a writable foreach element');
 		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
 			&& ($this->enclosing_lambda !== null || !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
 		if (!($origin instanceof ast_local_declaration) && !$reference_parameter && !($origin instanceof ast_parameter_declaration && $origin->is_readonly_pack())) {
@@ -1118,6 +1148,7 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(),
 				'Assignment requires an existing local; global writes are deferred: ' . $name);
 		}
+		$this->require_vector_available($site, $local);
 		Readonly_Access::require_writable($site, $local);
 		return $local;
 	}
@@ -1126,7 +1157,8 @@ final class Preparation
 	private function record_assignment(ast_local_binding $local, ?ast_assignment_statement $write): void
 	{
 		unset($this->guards[$local->storage_id()]);
-		$this->latest_writes[$local->storage_id()] = $write;
+		// A separately indexed write can change the slot before the next binding read.
+		$this->latest_writes[$local->storage_id()] = $local instanceof ast_writable_element ? null : $write;
 	}
 
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
@@ -1771,6 +1803,9 @@ final class Preparation
 			throw new diagnostic($argument->source(), $argument->byte_start(),
 				'Reference argument requires stable variable storage: a named local or parameter');
 		}
+		if ($storage instanceof ast_writable_element) {
+			throw new diagnostic($argument->source(), $argument->byte_start(), 'Writable foreach element cannot bind a reference parameter');
+		}
 		if ($storage->type_def() !== $type) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
 		}
@@ -1784,6 +1819,7 @@ final class Preparation
 	private function invalidate_references(ast_expression $call, array $writes /** list<uint32> */): void
 	{
 		foreach ($writes as $id) {
+			if (isset($this->iterated_vectors[$id])) throw new diagnostic($call->source(), $call->byte_start(), 'Call may mutate the vector during writable foreach');
 			$read = $this->guard_reads[$id] ?? null;
 			if ($read !== null && ($read < $call->start || $read >= $call->end)) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Separate guarded argument use and mutable reference access into different expressions');
@@ -2021,6 +2057,8 @@ final class Preparation
 			if ($capture->by_reference) {
 				// Different capture names can borrow the same slot through local aliases.
 				$origin = $capture->initializer->local_def();
+				$this->require_vector_available($capture, $origin);
+				if ($origin instanceof ast_writable_element) throw new diagnostic($capture->source(), $capture->byte_start(), 'Cannot capture a writable foreach element by reference');
 				$id = $origin->storage_id();
 				if (!isset($borrowed[$id])) {
 					$borrowed[$id] = $capture;

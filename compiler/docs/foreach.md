@@ -10,7 +10,9 @@ PHP uses `foreach ($items as $key => $value) { ... }`; C++ and JS use
 Python uses an indented for name in source suite for typed vector elements or typed hash keys.
 JS also supports for (name in source) with a braced body for typed hash keys.
 Both key-only forms share the existing destination and loop scope rules and materialize only the key.
-Reference bindings, destructuring and nullable unwrapping are deferred.
+PHP writable vector bindings use the [indexed write-through contract](../../specs/collection_traversal.md#php-writable-vector-foreach).
+Preparation tracks active vector storage IDs while visiting the body and checks mutable call effects against those IDs.
+Lowering uses a private index and the vector's generated count, read and set operations. Destructuring and nullable unwrapping are deferred.
 Concrete [yield producers](yield.md) reuse this traversal path.
 [Iterator<T> and Iterator<T,K> structs](iterator.md) support custom traversal. Scalar/null
 boxed sources throw, including on a later advance after replacement. Statically noniterable sources are preparation errors.

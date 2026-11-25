@@ -83,6 +83,7 @@ final class Mt_Provisioning
 		$container = $owner->type_def();
 		if ($owner::class !== ast_name_expression::class || $owner->local_binding() === null || !($container instanceof vector_type_definition || $container instanceof hash_type_definition))
 			self::reject($owner, 'Segment requires a matching local vector or hash');
+		if ($owner->local_binding() instanceof ast_writable_element) self::reject($range, 'Writable foreach element cannot supply segment storage');
 		$key = $container instanceof hash_type_definition ? $container->key_type : null;
 		if ($key !== null && $key !== type_int64::instance() && $key !== type_string::instance())
 			self::reject($range, 'Hash segment keys must be int or string');

@@ -138,9 +138,10 @@ final class Body_Collection
 	}
 
 	/** Collect a produced header name without inventing an initializer or scanning its body. */
-	public function produced_binding(string $name, int $start /** uint32 */, bool $declare): ast_produced_binding
+	public function produced_binding(string $name, int $start /** uint32 */, bool $declare, bool $writable = false): ast_produced_binding
 	{
-		$binding = new ast_produced_binding($name, $start, $this->storage_owner->next_id++);
+		$id = $this->storage_owner->next_id++;
+		$binding = $writable ? new ast_writable_element($name, $start, $id) : new ast_produced_binding($name, $start, $id);
 		if ($declare) {
 			$this->declarations->declare($binding);
 			$this->local_names[$name] = $binding;
