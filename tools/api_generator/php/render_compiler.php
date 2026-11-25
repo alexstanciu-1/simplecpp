@@ -412,6 +412,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $module = var_export($runtime[$family]['module'], true);
             $refs = $binding['reference_mask'] ? ', reference_mask: ' . $binding['reference_mask'] : '';
             $mask = $binding['const_reference_mask'];
+            if ($binding['required_parameters'] < count($types)) $refs .= ', required_parameters: ' . $binding['required_parameters'];
             $surface = $binding['flavor'] ?? $binding['surface'] ?? null;
             $key = ($surface === null ? '' : $surface . ':') . 'func:' . $name;
             $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["

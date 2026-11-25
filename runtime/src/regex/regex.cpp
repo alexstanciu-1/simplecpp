@@ -3,6 +3,7 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #include <memory>
+#include <string>
 #include <string_view>
 
 namespace {
@@ -109,4 +110,35 @@ scpp::result_int64 scpp::regex::find_span(const string& pattern, const string& s
     result_int64 start{span.start};
     end = span.end;
     return start;
+}
+
+namespace scpp::regex {
+bool_t jit_available() {
+    static const bool available = [] {
+        uint32_t configured = 0;
+        if (pcre2_config(PCRE2_CONFIG_JIT, &configured) != 0 || !configured) return false;
+        int error;
+        PCRE2_SIZE offset;
+        std::unique_ptr<pcre2_code, decltype(&pcre2_code_free)> code(
+            pcre2_compile(reinterpret_cast<PCRE2_SPTR>("a"), 1, 0, &error, &offset, nullptr), pcre2_code_free);
+        return code && pcre2_jit_compile(code.get(), PCRE2_JIT_COMPLETE) == 0;
+    }();
+    return available;
+}
+
+string quote(const string& text, const string& delimiter) {
+    constexpr std::string_view special = R"(.\+*?[^]$(){}=!<>|:-#)";
+    std::string escaped;
+    escaped.reserve(text.size());
+    for (char byte : std::string_view(text.data(), text.size())) {
+        if (special.find(byte) != special.npos || (delimiter.size() && delimiter.data()[0] == byte))
+            escaped.push_back('\\');
+        escaped.push_back(byte);
+    }
+    return string{escaped.data(), static_cast<int64>(escaped.size())};
+}
+
+string quote(const string& text) {
+    return quote(text, string{});
+}
 }

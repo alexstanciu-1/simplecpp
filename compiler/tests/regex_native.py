@@ -49,6 +49,11 @@ def fixture(flavor):
                 value = local(key + 'Value', scalar, owner)
                 want = str(expected) if scalar == 'int' else ('true' if expected else 'false')
                 statements.append(f'if ({value} !== {want}) {{ return 4; }}')
+    for prefix in (['regex', 'preg'] if flavor == 'php' else ['regex']):
+        local(prefix + 'Jit', 'bool', prefix + '_jit_available()')
+        for suffix, args, expected in [('Plain', '"a.b/"', r'a\\.b/'), ('Delimited', '"a.b/", "/"', r'a\\.b\\/')]:
+            value = local(prefix + suffix, 'string', f'{prefix}_quote({args})')
+            statements.append(f'if ({value} !== "{expected}") {{ return 8; }}')
     end = local('endByte', 'int', '99')
     for i, (pattern, subject, offset, start, after) in enumerate([
         ('/x/', 'x', 0, 0, 1), ('/x/', 'é!x', 2, 3, 4),
@@ -76,11 +81,11 @@ def prove(work, runtime, flavor):
     output = work / ('out-' + flavor)
     source = app / ('main.' + flavor)
     manifest = app / 'module.json'
-    enabled = json.dumps({'dependencies': {'runtime': {'modules': ['regex']}}})
+    enabled = json.dumps({'general_api': True, 'dependencies': {'runtime': {'modules': ['regex']}}})
     def compiler(out):
         return subprocess.Popen([php, '-r', driver, root/'compiler/boot.php', app, out, runtime],
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
-    source_edit(manifest, '{}')
+    source_edit(manifest, '{"general_api":true}')
     interpolation = {'php': '$n int = 8; echo "é{$n}";', 'cpp': 'int n = 8; echo f"é{n}";',
                      'js': 'let n: int = 8; echo `é${n}`;'}[flavor]
     source_edit(source, interpolation + ' return 0;')
@@ -97,6 +102,14 @@ def prove(work, runtime, flavor):
             assert 'requires module runtime-regex' in invoke(resident).get('error', '')
         source_edit(source, fixture(flavor))
         assert 'requires module runtime-regex' in invoke(resident).get('error', '')
+        if flavor != 'cpp':
+            source_edit(manifest, '{"dependencies":{"runtime":{"modules":["regex"]}}}')
+            source_edit(source, 'regex_test("/a/", "a"); return 0;')
+            assert 'regex_test' in invoke(resident).get('error', '')
+            if flavor == 'php':
+                source_edit(source, 'preg_quote("."); preg_match("/a/", "a"); return 0;')
+                ok()
+            source_edit(source, fixture(flavor))
         source_edit(manifest, enabled)
         ok()
         source_edit(source, 'regex_find_span("/a/", "a", 0, 1); return 0;')
@@ -120,7 +133,7 @@ def prove(work, runtime, flavor):
             assert 'preg_match' in error, error
             source_edit(source, fixture(flavor))
             ok()
-        source_edit(manifest, '{}')
+        source_edit(manifest, '{"general_api":true}')
         assert 'requires module runtime-regex' in invoke(resident).get('error', '')
         source_edit(manifest, enabled)
         ok()

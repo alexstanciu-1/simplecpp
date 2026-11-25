@@ -27,10 +27,9 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         $pattern = $family === 'filesystem' ? '/^fs_[a-z][a-z_0-9]*$/D' : '/^[a-z][a-z_0-9]*$/D';
         requireThat(preg_match($pattern, $name) === 1, 'Invalid module function name');
         $function = at(at($catalog, 'functions'), $name);
-        fields($function, ['native_name', 'parameters', 'result', 'flavor']);
+        fields($function, ['native_name', 'parameters', 'result', 'flavor', 'required_parameters']);
         $flavor = $function->flavor ?? null;
         requireThat($flavor === null || in_array($flavor, ['php', 'cpp', 'js'], true), 'Invalid function flavor');
-        requireThat($surface !== 'general' || $flavor === null, 'General function cannot be flavor-specific');
         $native_name = textValue(at($function, 'native_name'));
         requireThat(preg_match('/^[A-Za-z_][A-Za-z_0-9]*$/D', $native_name) === 1, 'Invalid module function native name');
         requireThat(!isset($nativeNames[$native_name]), 'Duplicate module function native name');
@@ -64,8 +63,11 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         $native_result = $export['symbol'];
         $requires = array_merge($requires, $signatureProviders);
         $functions[$name] = compact('native_name', 'flavor', 'parameters', 'result', 'native_result', 'reference_mask', 'const_reference_mask');
+        $required = $function->required_parameters ?? count($inputs);
+        requireThat(is_int($required) && $required >= 0 && $required <= count($inputs), 'Invalid required module parameter count');
+        $functions[$name]['required_parameters'] = $required;
         if ($surface === 'general') {
-            $functions[$name]['surface'] = 'general';
+            if ($flavor === null) $functions[$name]['surface'] = 'general';
             $functions[$name]['header'] = moduleOperationHeader($header, $name);
             $functions[$name]['includes'] = array_map(fn($id) => providerHeader($plan['submodules'], $id),
                 array_unique($signatureProviders));
@@ -135,8 +137,12 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
     $module = $plan[$family];
     $declarations = "namespace {$module['namespace']} {\n";
     foreach ($module['functions'] as $function) {
-        $parameters = implode(', ', array_column($function['parameters'], 'native'));
-        $declaration = "[[nodiscard]] {$function['native_result']} {$function['native_name']}($parameters);\n";
+        $types = array_column($function['parameters'], 'native');
+        $declaration = '';
+        for ($arity = $function['required_parameters']; $arity <= count($types); ++$arity) {
+            $parameters = implode(', ', array_slice($types, 0, $arity));
+            $declaration .= "[[nodiscard]] {$function['native_result']} {$function['native_name']}($parameters);\n";
+        }
         $declarations .= $declaration;
         if (isset($function['header'])) {
             $files['public/' . $function['header']] = moduleHeaderBody($function['includes'], $module['namespace'], $declaration);
