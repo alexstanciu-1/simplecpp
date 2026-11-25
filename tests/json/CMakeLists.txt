@@ -23,6 +23,11 @@ scpp_add_json(json_proof_module json_proof_runtime ${json_generated})
 add_executable(json_consumer_test consumer.cpp)
 target_link_libraries(json_consumer_test PRIVATE json_proof_module)
 add_test(NAME json_consumer COMMAND json_consumer_test)
+if(SCPP_ENABLE_JSON)
+  add_executable(json_unique_keys_test unique_keys.cpp)
+  target_link_libraries(json_unique_keys_test PRIVATE scpp_json)
+  add_test(NAME json_unique_keys COMMAND json_unique_keys_test "${CMAKE_CURRENT_SOURCE_DIR}/unique_keys.tsv")
+endif()
 add_test(NAME json_freshness COMMAND ${generator_launcher} ${runtime_metadata} ${json_publication} ${json_generated} --check)
 add_test(NAME json_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/publication.py --quick
   --generator ${api_tooling} --source ${PROJECT_SOURCE_DIR} --facts ${native_facts}
