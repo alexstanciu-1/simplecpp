@@ -12,6 +12,39 @@ The inventory pass is complete. Direct translation still has language gaps. The 
 2. **Expression results (G01).** The parser's child-collector assignments and the preparation resets now use separate writes. A local holding the RHS result preserves single evaluation, write order and identity for these ordinary destinations. The accepted discarded-expression migration uses a standalone call for effects and an explicit local assignment for a checked result. Omit an expression only when it is proven pure and total. Chained assignment and general expression statements would be language features if exact donor syntax is required.
 3. **Collections and references (G05/G07).** Choose concrete records or typed nested containers for each heterogeneous table, with explicit write-back on copied reads. For integer counts, test for a missing key before comparing the stored count with zero. Whole-variable PHP-flavor unset covers nullable values, optional shared owners and weak handles. Whole-variable clean writes the defined default through locals, aliases and reference parameters. Synchronous PHP-flavor free functions can explicitly borrow a vector or hash by read-only reference. None of these choices permits borrowing a relocatable element.
 
+### Collections and borrowing backlog
+
+Status at the direct read-only collection method slice. This tracks PHP collection traversal and
+borrowing. The rows group language decisions by the proof they need. They are
+different sizes and should not be used to calculate a percentage complete.
+
+| Delivered | Current boundary |
+| --- | --- |
+| Whole-collection references | Exact-type named vector and hash slots support writable calls and forwarding. Two reference parameters can denote the same caller slot. Synchronous PHP free functions and direct class and struct methods accept explicit read-only collection references. [Whole-slot contract](../native_reference_safety.md) · [Read-only tests](../../compiler/tests/readonly_parameters_native.py) |
+| Writable traversal of owned storage | Keyed and unkeyed PHP loops work for typed vector and hash locals, ordinary by-value parameters, and owned variadic packs in synchronous code. A write is visible before break, return or throw. A visible key assignment cannot redirect the write. Read-only packs reject. [Traversal contract](../collection_traversal.md#php-writable-vector-and-hash-foreach) · [Native and recovery tests](../../compiler/tests/writable_foreach_native.py) |
+| 1. Writable traversal through a mutable reference parameter | Vector and hash writes reach the caller. Preparation protects same-type reference parameters and borrowed captures that may alias the source, including through mutable calls. [Alias and recovery tests](../../compiler/tests/writable_foreach_native.py) |
+| Protection during traversal | Preparation guards structural mutation through the source, known lexical aliases and mutable calls. Vector writes to existing indexes are visible. Separate hash writes are rejected because assignment can insert. The loop binding ends at loop exit. [Preparation](../../compiler/04_analyze/prepare/prepare.php) |
+
+| Remaining work | Status | Decision or acceptance case |
+| --- | --- | --- |
+| 2. Explicit read-only collection parameters on methods and callables | Direct instance and static methods delivered | Next, verify virtual and interface dispatch with an override-mode mismatch and recovery. Constructors, closures, and typed or owned callable adaptation remain separate decisions. A read-only borrow may observe changes made through another writable alias. [Declaration checks](../../compiler/04_analyze/prepare/functions.php) |
+| 3. Scoped borrows of a selected element | Design decision | Today a loop binding writes through an index or key, and an inline record can be changed by copying, editing and assigning it back. Decide whether a selected element may be passed to a read-only or mutable reference helper, mutated in place, or captured for a strictly lexical use. Prove what happens when the helper re-enters, aliases the collection, or throws after a write. |
+| 4. Durable aliases and reference returns into elements | Deferred lifetime design | Covers `$item =& $v[$i]`, escaping captures, and returning an interior slot by reference. Specify what happens after vector relocation, hash removal and reinsertion of the same key, or whole-container replacement. A stable reference to the container variable alone does not identify a surviving element. [Reference safety](../native_reference_safety.md) |
+| 5. Automatic read-only borrow inference | Optimization debt | Start with by-value parameters. Consider local copies after the parameter proof. Preserve snapshots across argument evaluation, other aliases, forwarding and escapes. Measure eliminated copies and preparation cost, and invalidate the proof after a relevant caller or callee edit. [Inference debt](#compiler-debt-for-inferred-read-only-borrows) |
+
+**Further boundaries requiring a use case.** Writable loops on fields, static or
+global storage need owner-lifetime and alternate-access rules. A temporary also
+needs a decision about where its writes would be observable. Async and generator
+loops need a rule for mutation while suspended. Boxed traversal needs separate
+decisions for mixed copy-on-write and dynamic shared identity. Existing-value hash
+updates through a second name would need an operation or proof that excludes
+insertion. These are possible extensions, not prerequisites for rows 2–5.
+
+Fixed arrays are tracked separately. General nested indexed writes belong to
+expressions and access, typed-to-boxed conversion to structured conversion, and
+additional library helpers to the libraries backlog. Those areas may eventually
+consume an element-borrow contract.
+
 ### Compiler debt for inferred read-only borrows
 
 Doc Status: planning
@@ -112,7 +145,7 @@ Each original ID occurs once in this table. **Bounded evidence** includes suppor
 |  | `ARR-INIT-005`, `ARR-INIT-006` | Bounded evidence | Heterogeneous bracket-keyed input constructs mixed. A positional child inherits the enclosing family. The [native proof](../../compiler/tests/boxed_literals_native.py) reads back the nested data/id example and checks family separation. |
 |  | `ARR-VALUE-001` | Deferred | To store an existing integer vector in mixed or dynamic, build the child list by appending its elements. Track the proposed [structured conversion capability](#structured-conversion-design-debt) before adding automatic aggregate conversions. |
 | G06 | `CTRL-FOREACH-001`, `CTRL-FOREACH-002` | Bounded evidence | Native vector and hash fixtures assert values and key/value pairing. |
-|  | `CTRL-FOREACH-003`, `CTRL-FOREACH-004` | Deferred | Writable iteration is deferred. The production preparation index uses key-preserving updates and has a retirement proof. |
+|  | `CTRL-FOREACH-003`, `CTRL-FOREACH-004` | Bounded evidence | PHP supports scoped write-through iteration over owned vectors and hashes and through mutable reference parameters. The [collections and borrowing backlog](#collections-and-borrowing-backlog) tracks sources and lifetimes beyond this boundary. |
 | G07 | `FUNC-REF-003`, `CLASS-MEMBER-018C`, `TYPE-PARAM-003`, `TYPE-PARAM-003B`, `CLASS-MEMBER-018D` | Bounded evidence | Writable named slots and same-origin returns are bounded. Functions and final non-overriding methods use exact types; reference_parameters_native.py covers storage identity and recovery. |
 |  | `TYPE-VAR-008` | Migration | An explicit lexical alias to initialized local storage uses the reference binder. Unrelated targets and scope escape reject. |
 |  | `FUNC-REF-002`, `FUNC-REF-004`, `CLASS-MEMBER-018B`, `CLASS-MEMBER-018E` | Bounded evidence | A reference-return declaration alone supplies no origin. Require explicit types and a writable parameter of the return type; arbitrary local, temporary and field returns do not qualify. Interface forwarding remains deferred. |

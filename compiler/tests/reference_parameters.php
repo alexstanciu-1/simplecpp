@@ -109,6 +109,12 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	] as [$invalid, $message]) {
 		rejects(fn() => $prepare($invalid), $message);
 	}
+	if ($flavor === flavor::php) {
+		$size = 'public static function size(const vector<int> &$v):int {return count($v);}';
+		$call = '$v vector<int> = [1];return Reader::size($v);';
+		$prepare('struct Reader {' . $size . '}' . $call);
+		rejects(fn() => $prepare('struct Reader {' . str_replace('return count($v);', '$v[]=2;return 0;', $size) . '}' . $call), 'Cannot write through read-only reference');
+	}
 	// A changed local and two aliased reference parameters must not reuse old range proofs.
 	$set = $fn('large', [$p('v', 'int', true)], 'int', $var('v') . '=300; return 1;');
 	$failures = [

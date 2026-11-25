@@ -12,6 +12,13 @@ See [collection borrows](../compiler/docs/collection_references.md), [object and
 
 A readonly reference borrows exact-type stable storage without copying. A default on an admitted reference parameter supplies call-local storage when the argument is omitted. A writable default is fresh for each call. A return may not escape storage created for a default. Explicit arguments retain the ordinary binding rules.
 
+In PHP, synchronous direct instance and static methods of classes and structs can
+borrow a named vector or hash using `const T &$view`. The caller supplies an
+exact-type local or parameter. The method may read it, take a read-only lexical
+alias, and forward it to another read-only parameter. A write through a separate
+mutable parameter bound to the same slot is visible through the view.
+[Method and signature-edit tests](../compiler/tests/readonly_collection_methods_native.py).
+
 ## Same-origin returns
 
 Every returning path must identify the same surviving reference parameter. A local alias may name that storage. Returning the alias does not extend a local variable's lifetime. Follow the source and callable-specific preparation checks for admitted forms.

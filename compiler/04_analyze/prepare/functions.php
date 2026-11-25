@@ -296,10 +296,17 @@ final class Function_Preparation
 			if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}
-			if ($parameter->mode === passing_mode::readonly_reference && ($declaration->parent instanceof ast_method_owner
-				|| !($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition
-					|| $parameter_type instanceof text_builder_type))) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector, hash or text builder parameter of a free function');
+			if ($parameter->mode === passing_mode::readonly_reference) {
+				$collection = $parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition;
+				if ($declaration->parent instanceof ast_method_owner) {
+					if (!$collection || !($declaration->parent instanceof ast_record_declaration)
+						|| $declaration->parent->kind === record_kind::interface_type || $declaration->has_virtual_dispatch()
+						|| $declaration->is_constructor() || $declaration->is_destructor()) {
+						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const method references require a vector or hash on a direct class or struct method');
+					}
+				} elseif (!$collection && !($parameter_type instanceof text_builder_type)) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector, hash or text builder parameter');
+				}
 			}
 			if ($parameter->type_reference instanceof ast_variadic_type_reference) {
 				if (($declaration->parent instanceof ast_enum_declaration && !$declaration->is_static)

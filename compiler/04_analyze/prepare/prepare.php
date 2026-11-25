@@ -765,10 +765,11 @@ final class Preparation
 		$collection = null;
 		if ($statement->value instanceof ast_writable_element) {
 			$collection = $statement->source_value instanceof ast_name_expression ? $statement->source_value->local_binding() : null;
-			if (!($collection instanceof ast_local_declaration)
+			if (!($collection instanceof ast_local_declaration || $collection instanceof ast_parameter_declaration)
 				|| !($source_type instanceof vector_type_definition || $source_type instanceof hash_type_definition) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
-				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires an owned local vector or hash in a synchronous body');
+				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires a named local or parameter of vector or hash type in a synchronous body');
 			}
+			Readonly_Access::require_writable($statement->source_value, $collection);
 			$this->require_collection_available($statement, $collection);
 		}
 		$segment = $source_type instanceof segment_type && $source_type->key !== null;
@@ -833,12 +834,15 @@ final class Preparation
 			$this->local_frames[] = [];
 			$outer_loop = $this->loop;
 			$this->loop = $statement;
-			if ($collection !== null) $this->iterated_collections[$collection->storage_id()] = true;
+			if ($collection !== null) {
+				$outer_collections = $this->iterated_collections;
+				$this->guard_iteration_source($collection, $function);
+			}
 			try {
 				$completion = $this->sequence($statement->body->statements, $source, $target, $function);
 			}
 			finally {
-				if ($collection !== null) unset($this->iterated_collections[$collection->storage_id()]);
+				if ($collection !== null) $this->iterated_collections = $outer_collections;
 				$this->loop = $outer_loop;
 				array_pop($this->local_frames);
 			}
@@ -935,6 +939,19 @@ final class Preparation
 		$this->array_bytes += $bytes;
 	}
 
+	/** A caller can supply the same slot through multiple reference parameters or lexical captures. */
+	private function guard_iteration_source(ast_local_binding $source, statement_return_target $function): void
+	{
+		$this->iterated_collections[$source->storage_id()] = true;
+		if (!self::borrows_mutably($source)) return;
+		$inputs = $function instanceof ast_lambda_expression ? [...$function->parameters, ...$function->captures] : $function->parameters;
+		foreach ($inputs as $peer) {
+			if (self::borrows_mutably($peer) && $peer->type_def() === $source->type_def()) {
+				$this->iterated_collections[$peer->storage_id()] = true;
+			}
+		}
+	}
+
 	/** A separate hash write could insert a key while the loop holds a selection. */
 	private function require_index_write_available(ast_expression $receiver): void
 	{
@@ -975,7 +992,8 @@ final class Preparation
 		$this->require_collection_available($target, $origin);
 		if ($origin instanceof ast_writable_element) throw new diagnostic($source, $target->byte_start(), 'Cannot alias a writable foreach element');
 		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
-			&& ($this->enclosing_lambda !== null || !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
+			&& ($origin->mode === passing_mode::readonly_reference || $this->enclosing_lambda !== null
+				|| !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
 		if (!($origin instanceof ast_local_declaration) && !$reference_parameter && !($origin instanceof ast_parameter_declaration && $origin->is_readonly_pack())) {
 			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
 		}
@@ -2816,6 +2834,12 @@ final class Preparation
 	}
 
 	/** STATIC METHODS */
+	private static function borrows_mutably(ast_local_binding $binding): bool
+	{
+		return ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::reference)
+			|| ($binding instanceof ast_closure_capture && $binding->by_reference);
+	}
+
 	/**
 	 * Keep definite constructor states only where all paths agree.
 	 * @param array<string,int>|null $joined
