@@ -12,6 +12,9 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
     foreach ($runtime['vectors'] ?? [] as $vector) {
         if (isset($definitions[$vector['element']])) $payloads[$vector['name']] = ['class' => 'type_' . $vector['name']];
     }
+    if (isset($runtime['boxed_dispatch'])) {
+        foreach ($runtime['boxed']['families'] as $box) $payloads[$box['name']] = ['class' => 'type_' . $box['name']];
+    }
     $cases = [];
     $literals = [];
     $typeNames = [];

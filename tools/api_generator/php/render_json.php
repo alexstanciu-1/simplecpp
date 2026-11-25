@@ -13,6 +13,17 @@ function renderJson(array $plan, array &$files): void {
     foreach ($module['operations'] as $op) {
         ['name' => $name, 'family' => $family, 'result' => $result, 'argument' => $argument] = $op;
         $signature = "$result $name(const $argument& input)";
+        $header = moduleOperationHeader($module['header'], $op['id']);
+        $includes = [];
+        foreach ([$argument, $result] as $identity) {
+            if ($identity === $family && !isset($plan['boxed_dispatch'])) {
+                $includes[] = $plan['boxed']['header'];
+                continue;
+            }
+            $export = typeExport($plan['submodules'], $identity);
+            $includes[] = providerHeader($plan['submodules'], $export['provider']);
+        }
+        $files['public/' . $header] = moduleHeaderBody(array_unique($includes), 'scpp::json', "$signature;\n");
         $h .= "$signature;\n";
         $signatures[$name][] = ["const $argument&"];
         $decode = $name !== 'encode';

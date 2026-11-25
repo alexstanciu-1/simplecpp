@@ -562,6 +562,10 @@ if(BUILD_TESTING)
   add_test(NAME compiler_typed_functions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions_native.py)
   add_test(NAME compiler_integer_radix_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_radix_native.py --quick)
   add_test(NAME compiler_fixed_array_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/fixed_array_native.py --quick)
+  if(SCPP_ENABLE_JSON)
+    add_test(NAME compiler_json_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/json_native.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
   if(SCPP_ENABLE_DATETIME)
     add_test(NAME compiler_datetime_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/datetime_native.py

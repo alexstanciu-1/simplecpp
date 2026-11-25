@@ -254,7 +254,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     if (isset($runtime['boxed_dispatch'])) {
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
-    $runtimeCases = [];
+    $runtimeCases = compilerJsonCases($runtime, $runtimeTypes);
     foreach ($runtime['collection_transforms'] ?? [] as $name) {
         $runtimeCases[] = "\t\t\t'general:func:$name' => runtime_factory::$name,";
     }

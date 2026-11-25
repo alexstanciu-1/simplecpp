@@ -57,3 +57,28 @@ function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
             'generated_sources' => ['src/json.cpp'], 'private_sources' => ['runtime/src/json/json_native.cpp'],
             'private_includes' => ['runtime/src/json', 'runtime/src/boxed', 'runtime/src/hash', 'runtime/src/ownership', 'runtime/src/numeric']]];
 }
+
+/** Select source signatures only when the active compiler also publishes their types. */
+function compilerJsonCases(?array $runtime, array $types): array {
+    $cases = [];
+    $encoders = [];
+    foreach ($runtime['json']['operations'] ?? [] as $op) {
+        if (!isset($types[$op['argument']], $types[$op['result']])) continue;
+        $argument = 'type_' . $types[$op['argument']];
+        $result = 'type_' . $types[$op['result']];
+        $name = 'json_' . $op['name'];
+        $header = moduleOperationHeader($runtime['json']['header'], $op['id']);
+        $binding = "new runtime_function('$name', [$argument::instance()], $result::instance(), '::scpp::json::{$op['name']}', '$header', const_reference_mask: 1, required_module: 'runtime-json', exact_arguments: true)";
+        if ($name === 'json_encode') {
+            $encoders[] = "$argument::class => $binding";
+        } else {
+            $keys = $name === 'json_decode' ? "'php:func:$name', " : '';
+            $cases[] = "\t\t\t$keys'general:func:$name' => \$bindings[\$key] ??= $binding,";
+        }
+    }
+    if ($encoders !== []) {
+        $cases[] = "\t\t\t'php:func:json_encode', 'general:func:json_encode' => \$bindings[\$key] ??= new runtime_overloads([1 => ["
+            . implode(', ', $encoders) . "]], required_module: 'runtime-json'),";
+    }
+    return $cases;
+}

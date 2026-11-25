@@ -2200,13 +2200,13 @@ final class Preparation
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
 			$runtime = $file->type_availability->runtime_function($file->runtime_function_key($call->name, $key), $file->source()->flavor);
-			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
+			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_factory ? null : $runtime->required_module)) {
 				$this->ambiguous_construction($call);
 			}
 			if ($runtime !== null && $class === null) {
-				if ($runtime instanceof runtime_function && !$file->type_availability->allows($runtime->required_module)) {
+				if (!($runtime instanceof runtime_factory) && !$file->type_availability->allows($runtime->required_module)) {
 					throw new diagnostic($call->source(), $call->byte_start(),
-						'Function ' . $runtime->name() . ' requires module ' . $runtime->required_module);
+						'Function ' . $call->name . ' requires module ' . $runtime->required_module);
 				}
 				if ($runtime === runtime_factory::vector_filled) {
 					if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
