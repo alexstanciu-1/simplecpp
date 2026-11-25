@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-[Stage 1 reconciliation and approved caller migration](intake_inventory.md) · [Operation crosswalk](intake.tsv) · [Donor types, constants and members](donor_entities.tsv)
+[Stage 1 reconciliation and approved caller migration](intake_inventory.md) · [Family and receiver index](donor_surfaces.tsv) · [Native family methods](donor_native_methods.tsv) · [Operation crosswalk](intake.tsv) · [Donor types, constants and members](donor_entities.tsv)
 
 ## Inventory and scope
 

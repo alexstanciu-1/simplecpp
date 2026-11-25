@@ -1,0 +1,450 @@
+family	revision	evidence	receiver or surface	operation	detail	donor path
+async	624ab8a2d	installed call	language	async_sleep_ms	after lexical lookup	compiler/my-try/compiler/callables/language.php
+async	624ab8a2d	installed call	language	async_wait	after lexical lookup	compiler/my-try/compiler/callables/language.php
+async	624ab8a2d	syntax	language	await	parsed form	compiler/my-try/03_parse/parser.php
+async	d2f63e37e	analysis signature	PHP STAN	async_sleep_ms	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+async	d2f63e37e	analysis signature	PHP STAN	async_wait	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+async	d2f63e37e	generator special case	PHP	async_sleep_ms	dedicated lowering	generators/php/src/Generator/Generator.php
+async	d2f63e37e	generator special case	PHP	async_wait	dedicated lowering	generators/php/src/Generator/Generator.php
+carriers	624ab8a2d	syntax	language	take	parsed form	compiler/my-try/03_parse/parser.php
+carriers	d2f63e37e	generator special case	PHP	take	dedicated lowering	generators/php/src/Generator/Generator.php
+carriers	d2f63e37e	method lowering	result<T>	error	zero arguments	generators/php/src/Generator/Generator.php
+carriers	d2f63e37e	runtime contract public members	nullable<T>	has_value	has_value() -> bool_t	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	nullable<T>	require_value	require_value(context) -> T& / const T&	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	nullable<T>	reset	reset()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	nullable<T>	value	value() -> T& / const T&	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result<T>	error	error()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result<T>	has_error	has_error()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result<T>	has_value	has_value()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result<T>	require_error	require_error()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result<T>	require_value	require_value()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result<T>	value	value()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_bool<T>	has_value	has_value()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_bool<T>	is_false	is_false()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_bool<T>	is_true	is_true()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_bool<T>	require_value	require_value()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_bool<T>	reset	reset()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_bool<T>	value	value()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_false<T>	has_value	has_value()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_false<T>	is_false	is_false()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_false<T>	require_value	require_value()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_false<T>	reset	reset()	runtime/specs/catalog.md
+carriers	d2f63e37e	runtime contract public members	result_or_false<T>	value	value()	runtime/specs/catalog.md
+cli	d2f63e37e	documented runtime function	PHP runtime	cli_argc	cli_argc() -> int_t	runtime/specs/catalog.md
+cli	d2f63e37e	documented runtime function	PHP runtime	cli_args	cli_args() -> mixed_t	runtime/specs/catalog.md
+cli	d2f63e37e	documented runtime function	PHP runtime	cli_argv	cli_argv() -> mixed_t	runtime/specs/catalog.md
+cli	d2f63e37e	documented runtime function	PHP runtime	set_cli_args	set_cli_args(argc, argv) -> void	runtime/specs/catalog.md
+cli	d2f63e37e	root binding	executable root	$argc	root CLI variable	specs/php/catalog.md
+cli	d2f63e37e	root binding	executable root	$argv	root CLI variable	specs/php/catalog.md
+compiler	624ab8a2d	catalog instance method	Key_Storage_List	add	compiler.Key_Storage_List.add	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Key_Storage_List	is_empty	compiler.Key_Storage_List.is_empty	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Key_Storage_List	items	compiler.Key_Storage_List.items	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Key_Storage_List	named	compiler.Key_Storage_List.named	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Key_Storage_List	remove	compiler.Key_Storage_List.remove	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Keyed_Storage	add	compiler.Keyed_Storage.add	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Keyed_Storage	count	compiler.Keyed_Storage.count	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Keyed_Storage	is_empty	compiler.Keyed_Storage.is_empty	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Keyed_Storage	remove	compiler.Keyed_Storage.remove	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Keyed_Storage	replace	compiler.Keyed_Storage.replace	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Keyed_Storage	reserve	compiler.Keyed_Storage.reserve	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage	append	compiler.Storage.append	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage	count	compiler.Storage.count	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage	is_empty	compiler.Storage.is_empty	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage	remove	compiler.Storage.remove	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage	replace	compiler.Storage.replace	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage	reserve	compiler.Storage.reserve	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage_Cursor	current	compiler.Storage_Cursor.current	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage_Cursor	key	compiler.Storage_Cursor.key	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage_Cursor	next	compiler.Storage_Cursor.next	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage_Cursor	rewind	compiler.Storage_Cursor.rewind	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog instance method	Storage_Cursor	valid	compiler.Storage_Cursor.valid	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog static method	Key_Storage_List	make	compiler.Key_Storage_List.make	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog static method	Keyed_Storage	make	compiler.Keyed_Storage.make	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog static method	Storage	make	compiler.Storage.make	runtime/metadata/modules/compiler.json
+compiler	624ab8a2d	catalog static method	Storage_Cursor	make	compiler.Storage_Cursor.make	runtime/metadata/modules/compiler.json
+construction	624ab8a2d	syntax	language	Type::[...] / Type::{...}	data_construction	compiler/my-try/03_parse/parser.php
+construction and fields	d2f63e37e	generator syntax	PHP	->field	named read on a mixed receiver	generators/php/src/Generator/Generator.php
+construction and fields	d2f63e37e	generator syntax	PHP	?->field	guarded property read	generators/php/src/Generator/Generator.php
+construction and fields	d2f63e37e	generator syntax	PHP	new stdClass()	boxed dynamic object construction	generators/php/src/Generator/Generator.php
+container and type protocols	624ab8a2d	installed protocol	dynamic	indexing	boxed language registration	compiler/my-try/compiler/indexing/contracts.php
+container and type protocols	624ab8a2d	installed protocol	dynamic	iteration	boxed language registration	compiler/my-try/compiler/iteration/contracts.php
+container and type protocols	624ab8a2d	installed protocol	mixed	indexing	boxed language registration	compiler/my-try/compiler/indexing/contracts.php
+container and type protocols	624ab8a2d	installed protocol	mixed	iteration	boxed language registration	compiler/my-try/compiler/iteration/contracts.php
+container and type protocols	624ab8a2d	type protocol	compiler.Key_Storage_List	construction	"""make"""	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Key_Storage_List	empty_initialization	"""default"""	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Keyed_Storage	construction	"""make"""	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Keyed_Storage	empty_initialization	"""default"""	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Keyed_Storage	indexing	"{""key"":""string"",""value"":{""parameter"":""Record""},""nested"":{""parameter"":""Record""},""write"":true,""append"":""unsupported"",""probes"":true,""removal"":true}"	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Keyed_Storage	iteration	"{""key"":""string"",""value"":{""parameter"":""Record""}}"	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Storage	construction	"""make"""	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Storage	empty_initialization	"""default"""	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Storage	indexing	"{""key"":""int"",""value"":{""parameter"":""Record""},""nested"":{""parameter"":""Record""},""write"":true,""append"":""allowed"",""probes"":true,""removal"":true}"	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Storage	iteration	"{""key"":""int"",""value"":{""parameter"":""Record""}}"	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	compiler.Storage_Cursor	construction	"""make"""	runtime/metadata/modules/compiler.json
+container and type protocols	624ab8a2d	type protocol	core.hash	construction	"""make"""	runtime/metadata/modules/core.json
+container and type protocols	624ab8a2d	type protocol	core.hash	indexing	"{""key"":{""parameter"":""Key""},""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""},""path"":{""parameter"":""Value""},""write"":true,""append"":""integer_key"",""probes"":true,""removal"":true}"	runtime/metadata/modules/core.json
+container and type protocols	624ab8a2d	type protocol	core.hash	initialization	"[{""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""},""where"":{""Key"":""int""}},{""key"":{""parameter"":""Key""},""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""}}]"	runtime/metadata/modules/core.json
+container and type protocols	624ab8a2d	type protocol	core.hash	iteration	"{""key"":{""parameter"":""Key""},""value"":{""parameter"":""Value""}}"	runtime/metadata/modules/core.json
+container and type protocols	624ab8a2d	type protocol	core.vector	indexing	"{""key"":""int"",""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""},""path"":{""parameter"":""Value""},""write"":true,""append"":""allowed"",""probes"":true}"	runtime/metadata/modules/core.json
+container and type protocols	624ab8a2d	type protocol	core.vector	initialization	"[{""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""}}]"	runtime/metadata/modules/core.json
+container and type protocols	624ab8a2d	type protocol	core.vector	iteration	"{""key"":""int"",""value"":{""parameter"":""Value""}}"	runtime/metadata/modules/core.json
+containers and state	624ab8a2d	syntax	language	T[N]	array_type	compiler/my-try/03_parse/parser.php
+containers and state	624ab8a2d	syntax	language	clean	parsed form	compiler/my-try/03_parse/parser.php
+containers and state	624ab8a2d	syntax	language	empty	parsed form	compiler/my-try/03_parse/parser.php
+containers and state	624ab8a2d	syntax	language	foreach	parsed form	compiler/my-try/03_parse/parser.php
+containers and state	624ab8a2d	syntax	language	isset	parsed form	compiler/my-try/03_parse/parser.php
+containers and state	624ab8a2d	syntax	language	unset	parsed form	compiler/my-try/03_parse/parser.php
+containers and state	d2f63e37e	documented runtime function	PHP runtime	count	count(value) -> int_t	runtime/specs/catalog.md
+containers and state	d2f63e37e	documented runtime function	PHP runtime	defined	defined(name) -> bool_t	runtime/specs/catalog.md
+containers and state	d2f63e37e	documented runtime function	PHP runtime	empty	empty(container, key) -> bool_t	runtime/specs/catalog.md
+containers and state	d2f63e37e	documented runtime function	PHP runtime	empty	empty(value) -> bool_t	runtime/specs/catalog.md
+containers and state	d2f63e37e	documented runtime function	PHP runtime	identical	identical(left, right) -> bool_t	runtime/specs/catalog.md
+containers and state	d2f63e37e	documented runtime function	PHP runtime	isset	isset(args...) -> bool_t	runtime/specs/catalog.md
+containers and state	d2f63e37e	documented runtime function	PHP runtime	isset	isset(container, key) -> bool_t	runtime/specs/catalog.md
+containers and state	d2f63e37e	documented runtime function	PHP runtime	not_identical	not_identical(left, right) -> bool_t	runtime/specs/catalog.md
+containers and state	d2f63e37e	documented runtime function	PHP runtime	unset	unset(args...) -> void	runtime/specs/catalog.md
+containers and state	d2f63e37e	source contract	see admitted receivers	[] append	receiver-specific append	specs/array_semantics.md
+containers and state	d2f63e37e	source contract	see admitted receivers	[] read	value read, including missing keys	specs/array_semantics.md
+containers and state	d2f63e37e	source contract	see admitted receivers	[] write	keyed and nested write	specs/array_semantics.md
+containers and state	d2f63e37e	source contract	see admitted receivers	count	fixed array returns its extent	specs/array_semantics.md
+containers and state	d2f63e37e	source contract	see admitted receivers	empty	value-sensitive keyed probe	specs/array_semantics.md
+containers and state	d2f63e37e	source contract	see admitted receivers	isset	null-sensitive keyed probe	specs/array_semantics.md
+containers and state	d2f63e37e	source contract	see admitted receivers	unset	keyed removal	specs/array_semantics.md
+conversions	624ab8a2d	syntax	language	(Type) value	cast_expression	compiler/my-try/03_parse/parser.php
+conversions	d2f63e37e	generator syntax	PHP	(Type) value	source cast	generators/php/src/Generator/Generator.php
+core	624ab8a2d	catalog instance method	Exception	get_message	core.Exception.get_message	runtime/metadata/modules/core.json
+core	624ab8a2d	catalog instance method	error	get_file	core.error.get_file	runtime/metadata/modules/core.json
+core	624ab8a2d	catalog instance method	error	get_line	core.error.get_line	runtime/metadata/modules/core.json
+core	624ab8a2d	catalog instance method	error	get_message	core.error.get_message	runtime/metadata/modules/core.json
+core	624ab8a2d	catalog instance method	vector	append	core.vector.append	runtime/metadata/modules/core.json
+core	624ab8a2d	catalog static method	Exception	make	core.Exception.make	runtime/metadata/modules/core.json
+core	624ab8a2d	catalog static method	error	make	core.error.make	runtime/metadata/modules/core.json
+core	624ab8a2d	catalog static method	hash	make	core.hash.make	runtime/metadata/modules/core.json
+curl	624ab8a2d	catalog property	curl_response	body	curl.response.body	runtime/metadata/modules/curl.json
+curl	624ab8a2d	catalog property	curl_response	content_type	curl.response.content_type	runtime/metadata/modules/curl.json
+curl	624ab8a2d	catalog property	curl_response	effective_url	curl.response.effective_url	runtime/metadata/modules/curl.json
+curl	624ab8a2d	catalog property	curl_response	header_size	curl.response.header_size	runtime/metadata/modules/curl.json
+curl	624ab8a2d	catalog property	curl_response	headers	curl.response.headers	runtime/metadata/modules/curl.json
+curl	624ab8a2d	catalog property	curl_response	redirect_count	curl.response.redirect_count	runtime/metadata/modules/curl.json
+curl	624ab8a2d	catalog property	curl_response	request_size	curl.response.request_size	runtime/metadata/modules/curl.json
+curl	624ab8a2d	catalog property	curl_response	status_code	curl.response.status_code	runtime/metadata/modules/curl.json
+curl	624ab8a2d	catalog property	curl_response	total_time_ms	curl.response.total_time_ms	runtime/metadata/modules/curl.json
+curl	d2f63e37e	frontend constant	JSS	CURLINFO_CONTENT_TYPE	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLINFO_EFFECTIVE_URL	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLINFO_HEADER_SIZE	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLINFO_REDIRECT_COUNT	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLINFO_REQUEST_SIZE	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLINFO_RESPONSE_CODE	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLINFO_TOTAL_TIME_MS	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_CONNECTTIMEOUT	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_CUSTOMREQUEST	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_FOLLOWLOCATION	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_HTTPHEADER	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_POST	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_POSTFIELDS	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_RETURNTRANSFER	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_SSL_VERIFYHOST	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_SSL_VERIFYPEER	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_TIMEOUT	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_URL	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	frontend constant	JSS	CURLOPT_USERAGENT	recognized constant	generators/php/src/Jss/JssEmitter.php
+curl	d2f63e37e	strict response field	curl_response	body	strict curl_exec success	specs/builtins/curl/first_pass.md
+curl	d2f63e37e	strict response field	curl_response	content_type	strict curl_exec success	specs/builtins/curl/first_pass.md
+curl	d2f63e37e	strict response field	curl_response	effective_url	strict curl_exec success	specs/builtins/curl/first_pass.md
+curl	d2f63e37e	strict response field	curl_response	header_size	strict curl_exec success	specs/builtins/curl/first_pass.md
+curl	d2f63e37e	strict response field	curl_response	headers	strict curl_exec success	specs/builtins/curl/first_pass.md
+curl	d2f63e37e	strict response field	curl_response	redirect_count	strict curl_exec success	specs/builtins/curl/first_pass.md
+curl	d2f63e37e	strict response field	curl_response	request_size	strict curl_exec success	specs/builtins/curl/first_pass.md
+curl	d2f63e37e	strict response field	curl_response	status_code	strict curl_exec success	specs/builtins/curl/first_pass.md
+curl	d2f63e37e	strict response field	curl_response	total_time_ms	strict curl_exec success	specs/builtins/curl/first_pass.md
+datetime	d2f63e37e	frontend alias	JSS	dt.format	dt_format -> string	generators/php/src/Jss/JssCallSurface.php
+datetime	d2f63e37e	frontend alias	JSS	dt.format_iso_utc	dt_format_iso_utc -> string	generators/php/src/Jss/JssCallSurface.php
+datetime	d2f63e37e	frontend alias	JSS	dt.format_now	dt_format_now -> string	generators/php/src/Jss/JssCallSurface.php
+datetime	d2f63e37e	frontend alias	JSS	dt.parse	dt_parse -> result<int>	generators/php/src/Jss/JssCallSurface.php
+datetime	d2f63e37e	frontend alias	JSS	dt.parse_iso_utc	dt_parse_iso_utc -> result<int>	generators/php/src/Jss/JssCallSurface.php
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_CALLER	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_COMPACT	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_DEFAULT	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_DEPTH_0	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_DEPTH_1	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_DEPTH_2	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_DEPTH_3	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_DEPTH_4	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_DEPTH_5	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_FIELDS	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_JSON	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_KEYS	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_LEN	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_PTR	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_RAW	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_SHAPE	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_SOURCE	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_TYPE	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	PHP native alias	scpp::php	DBG_VALUE	provider export	runtime/include/lang/php/support/php_common.hpp
+debug	d2f63e37e	generator special case	PHP	__scpp_debug_break	dedicated lowering	generators/php/src/Generator/Generator.php
+debug	d2f63e37e	generator special case	PHP	__scpp_debug_dump	dedicated lowering	generators/php/src/Generator/Generator.php
+debug	d2f63e37e	generator special case	PHP	__scpp_debug_exit	dedicated lowering	generators/php/src/Generator/Generator.php
+debug	d2f63e37e	generator special case	PHP	dbg	dedicated lowering	generators/php/src/Generator/Generator.php
+debug	d2f63e37e	generator special case	PHP	dbg_if	dedicated lowering	generators/php/src/Generator/Generator.php
+enums	624ab8a2d	installed call	language	enum_from_value	after lexical lookup	compiler/my-try/compiler/callables/language.php
+enums	624ab8a2d	installed call	language	enum_name	after lexical lookup	compiler/my-try/compiler/callables/language.php
+enums	624ab8a2d	installed call	language	enum_value	after lexical lookup	compiler/my-try/compiler/callables/language.php
+enums	d2f63e37e	analysis signature	PHP STAN	enum_from_value	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+enums	d2f63e37e	analysis signature	PHP STAN	enum_name	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+enums	d2f63e37e	analysis signature	PHP STAN	enum_value	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+enums	d2f63e37e	generator special case	PHP	enum_from_value	dedicated lowering	generators/php/src/Generator/Generator.php
+enums	d2f63e37e	generator special case	PHP	enum_name	dedicated lowering	generators/php/src/Generator/Generator.php
+enums	d2f63e37e	generator special case	PHP	enum_value	dedicated lowering	generators/php/src/Generator/Generator.php
+filesystem	d2f63e37e	documented runtime function	PHP runtime	basename	basename(path) -> string_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	copy	copy(source, dest) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	dirname	dirname(path) -> string_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	file_exists	file_exists(path) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	file_get_contents	file_get_contents(path) -> result_or_false<string_t>	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	file_put_contents	file_put_contents(path, data) -> result_or_false<int_t>	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	filemtime	filemtime(path) -> result_or_false<int_t>	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	filesize	filesize(path) -> result_or_false<int_t>	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	is_dir	is_dir(path) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	is_file	is_file(path) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	is_link	is_link(path) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	mkdir	mkdir(path) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	realpath	realpath(path) -> result_or_false<string_t>	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	rename	rename(source, dest) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	rmdir	rmdir(path) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	scandir	scandir(path) -> result_or_false<hash_t<mixed_t>>	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	touch	touch(path) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	documented runtime function	PHP runtime	unlink	unlink(path) -> bool_t	runtime/specs/catalog.md
+filesystem	d2f63e37e	frontend alias	JSS	fs.basename	fs_basename -> string	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.copy	fs_copy -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.dirname	fs_dirname -> string	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.exists	fs_exists -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.get	fs_get -> result<string>	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.is_dir	fs_is_dir -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.is_file	fs_is_file -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.is_link	fs_is_link -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.mkdir	fs_mkdir -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.mtime	fs_mtime -> result<int>	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.put	fs_put -> result<int>	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.realpath	fs_realpath -> result<string>	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.remove	fs_remove -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.rename	fs_rename -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.rmdir	fs_rmdir -> bool	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.scan	fs_scan -> result<vector<string>>	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.size	fs_size -> result<int>	generators/php/src/Jss/JssCallSurface.php
+filesystem	d2f63e37e	frontend alias	JSS	fs.touch	fs_touch -> bool	generators/php/src/Jss/JssCallSurface.php
+hashing	d2f63e37e	analysis signature	PHP STAN	stable_hash_bytes_u64	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+hashing	d2f63e37e	analysis signature	PHP STAN	stable_hash_string_u64	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+io	d2f63e37e	documented runtime function	PHP runtime	fclose	fclose(resource) -> bool_t	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	feof	feof(resource) -> bool_t	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	fflush	fflush(resource) -> bool_t	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	fgets	fgets(resource[, length]) -> result_or_false<string_t>	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	fopen	fopen(path, mode) -> falseable_resource_handle_t	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	fputs	fputs(resource, data) -> result_or_false<int_t>	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	fread	fread(resource, length) -> result_or_false<string_t>	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	fseek	fseek(resource, offset[, whence]) -> nullable<int_t>	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	ftell	ftell(resource) -> result_or_false<int_t>	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	fwrite	fwrite(resource, data) -> result_or_false<int_t>	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	parse_fopen_mode	parse_fopen_mode(mode) -> fopen_mode_info	runtime/specs/catalog.md
+io	d2f63e37e	documented runtime function	PHP runtime	rewind	rewind(resource) -> bool_t	runtime/specs/catalog.md
+io	d2f63e37e	frontend alias	JSS	io.close	io_close -> bool	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.eof	io_eof -> bool	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.flush	io_flush -> bool	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.open	io_open -> result_or_false<resource_handle>	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.read	io_read -> result_or_false<string>	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.read_line	io_read_line -> result_or_false<string>	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.rewind	io_rewind -> bool	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.seek	io_seek -> nullable<int>	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.tell	io_tell -> result_or_false<int>	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	frontend alias	JSS	io.write	io_write -> result_or_false<int>	generators/php/src/Jss/JssCallSurface.php
+io	d2f63e37e	runtime contract public fields	file_resource_t	append	append	runtime/specs/catalog.md
+io	d2f63e37e	runtime contract public fields	file_resource_t	mode	mode	runtime/specs/catalog.md
+io	d2f63e37e	runtime contract public fields	file_resource_t	path	path	runtime/specs/catalog.md
+io	d2f63e37e	runtime contract public fields	file_resource_t	readable	readable	runtime/specs/catalog.md
+io	d2f63e37e	runtime contract public fields	file_resource_t	writable	writable	runtime/specs/catalog.md
+iteration	624ab8a2d	required user method	Iterator implementation	current	foreach protocol	compiler/my-try/04_analyze/prepare/semantics/iterator.php
+iteration	624ab8a2d	required user method	Iterator implementation	key	foreach protocol	compiler/my-try/04_analyze/prepare/semantics/iterator.php
+iteration	624ab8a2d	required user method	Iterator implementation	next	foreach protocol	compiler/my-try/04_analyze/prepare/semantics/iterator.php
+iteration	624ab8a2d	required user method	Iterator implementation	rewind	foreach protocol	compiler/my-try/04_analyze/prepare/semantics/iterator.php
+iteration	624ab8a2d	required user method	Iterator implementation	valid	foreach protocol	compiler/my-try/04_analyze/prepare/semantics/iterator.php
+iteration	d2f63e37e	generator syntax	PHP	foreach	dedicated source form	generators/php/src/Generator/Generator.php
+json	624ab8a2d	catalog instance method	json_pull_reader	begin_array	json.json_pull_reader.begin_array	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	begin_object	json.json_pull_reader.begin_object	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	finish_document	json.json_pull_reader.finish_document	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	kind	json.json_pull_reader.kind	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	next_element	json.json_pull_reader.next_element	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	next_property	json.json_pull_reader.next_property	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	property_name	json.json_pull_reader.property_name	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	read_boolean	json.json_pull_reader.read_boolean	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	read_integer	json.json_pull_reader.read_integer	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	read_null	json.json_pull_reader.read_null	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	read_number	json.json_pull_reader.read_number	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	read_string	json.json_pull_reader.read_string	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	reject	json.json_pull_reader.reject	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog instance method	json_pull_reader	start	json.json_pull_reader.start	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog property	json_parse_error	byte_offset	json.diagnostic.byte_offset	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog property	json_parse_error	category	json.diagnostic.category	runtime/metadata/modules/json.json
+json	624ab8a2d	catalog property	json_parse_error	message	json.diagnostic.message	runtime/metadata/modules/json.json
+json	d2f63e37e	documented runtime function	PHP runtime	json_decode	json_decode(string_t) -> result<mixed_t>	runtime/specs/catalog.md
+json	d2f63e37e	documented runtime function	PHP runtime	json_encode	json_encode(mixed_t) -> result<string_t>	runtime/specs/catalog.md
+json	d2f63e37e	frontend alias	JSS	json.decode	json_decode -> result<mixed>	generators/php/src/Jss/JssCallSurface.php
+json	d2f63e37e	frontend alias	JSS	json.encode	json_encode -> result<string>	generators/php/src/Jss/JssCallSurface.php
+language constants	624ab8a2d	installed constant	language	PHP_INT_MAX	typed constant	compiler/my-try/compiler/constants/language.php
+language constants	624ab8a2d	installed constant	language	error::$no_error	typed constant	compiler/my-try/compiler/constants/language.php
+language constants	624ab8a2d	installed constant	language	false_sentinel	typed constant	compiler/my-try/compiler/constants/language.php
+language constants	624ab8a2d	installed constant	language	nullopt	typed constant	compiler/my-try/compiler/constants/language.php
+language constants	624ab8a2d	installed constant	language	true_sentinel	typed constant	compiler/my-try/compiler/constants/language.php
+language constants and types	d2f63e37e	PHP native alias	scpp::php	PHP_INT_MAX	provider export	runtime/include/lang/php/support/php_common.hpp
+language constants and types	d2f63e37e	PHP native alias	scpp::php	TypeError	provider export	runtime/include/lang/php/support/php_common.hpp
+language constants and types	d2f63e37e	PHP native alias	scpp::php	ValueError	provider export	runtime/include/lang/php/support/php_common.hpp
+layout	624ab8a2d	installed call	language	layout_alignof	after lexical lookup	compiler/my-try/compiler/callables/language.php
+layout	624ab8a2d	installed call	language	layout_field_sizeof	after lexical lookup	compiler/my-try/compiler/callables/language.php
+layout	624ab8a2d	installed call	language	layout_offsetof	after lexical lookup	compiler/my-try/compiler/callables/language.php
+layout	624ab8a2d	installed call	language	layout_sizeof	after lexical lookup	compiler/my-try/compiler/callables/language.php
+layout	d2f63e37e	generator special case	PHP	layout_alignof	dedicated lowering	generators/php/src/Generator/Generator.php
+layout	d2f63e37e	generator special case	PHP	layout_field_sizeof	dedicated lowering	generators/php/src/Generator/Generator.php
+layout	d2f63e37e	generator special case	PHP	layout_offsetof	dedicated lowering	generators/php/src/Generator/Generator.php
+layout	d2f63e37e	generator special case	PHP	layout_sizeof	dedicated lowering	generators/php/src/Generator/Generator.php
+mysqli	d2f63e37e	runtime contract constructor	mysqli	mysqli	"mysqli(host, username, password, database = """", port = 3306, socket = """")"	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli	begin_transaction	begin_transaction() -> bool_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli	close	close() -> void	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli	commit	commit() -> bool_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli	prepare	prepare(sql) -> result_or_false<shared_p<mysqli_stmt>>	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli	query	query(sql) -> result_or_bool<shared_p<mysqli_result>>	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli	rollback	rollback() -> bool_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli	set_charset	set_charset(charset) -> bool_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli_result	fetch_assoc	fetch_assoc() -> dynamic_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli_result	fetch_row	fetch_row() -> dynamic_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli_stmt	bind_param	bind_param(types, args...) -> bool_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli_stmt	close	close() -> void	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli_stmt	execute	execute() -> bool_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract methods	mysqli_stmt	get_result	get_result() -> result_or_false<shared_p<mysqli_result>>	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli	affected_rows	affected_rows : int_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli	connect_errno	connect_errno : int_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli	connect_error	connect_error : string_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli	errno_code	errno_code : int_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli	error	error : string_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli	insert_id	insert_id : int_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli_result	num_rows	num_rows : int_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli_stmt	affected_rows	affected_rows : int_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli_stmt	errno_code	errno_code : int_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli_stmt	error	error : string_t	runtime/specs/catalog.md
+mysqli	d2f63e37e	runtime contract public fields	mysqli_stmt	insert_id	insert_id : int_t	runtime/specs/catalog.md
+object lifecycle	624ab8a2d	syntax	language	__construct	parsed form	compiler/my-try/03_parse/parser.php
+object lifecycle	624ab8a2d	syntax	language	__destruct	parsed form	compiler/my-try/03_parse/parser.php
+object lifecycle	624ab8a2d	syntax	language	new	object_construction	compiler/my-try/03_parse/parser.php
+object lifecycle	d2f63e37e	generator syntax	PHP	__construct	dedicated source form	generators/php/src/Generator/Generator.php
+object lifecycle	d2f63e37e	generator syntax	PHP	__destruct	dedicated source form	generators/php/src/Generator/Generator.php
+output	624ab8a2d	syntax	language	echo	parsed form	compiler/my-try/03_parse/parser.php
+output	d2f63e37e	documented runtime function	PHP runtime	echo	echo(args...) -> void	runtime/specs/catalog.md
+output	d2f63e37e	documented runtime function	PHP runtime	echo_eval	echo_eval(fns...) -> void	runtime/specs/catalog.md
+output	d2f63e37e	frontend output	JSS	console_log	output statement	generators/php/src/Jss/JssEmitter.php
+output	d2f63e37e	frontend output	JSS	print	output statement	generators/php/src/Jss/JssEmitter.php
+output	d2f63e37e	generator syntax	PHP	echo	dedicated source form	generators/php/src/Generator/Generator.php
+ownership	624ab8a2d	syntax	language	instanceof	parsed form	compiler/my-try/03_parse/parser.php
+ownership	624ab8a2d	syntax	language	lock	parsed form	compiler/my-try/03_parse/parser.php
+ownership	624ab8a2d	syntax	language	move	parsed form	compiler/my-try/03_parse/parser.php
+ownership	624ab8a2d	syntax	language	object_cast	parsed form	compiler/my-try/03_parse/parser.php
+ownership	624ab8a2d	syntax	language	weak	parsed form	compiler/my-try/03_parse/parser.php
+ownership	d2f63e37e	documented runtime function	PHP runtime	debug_use_count	debug_use_count(shared_p<T> | weak_p<T>) -> long	runtime/specs/catalog.md
+ownership	d2f63e37e	documented runtime function	PHP runtime	weakref	weakref(shared_p<T>) -> weak_p<T>	runtime/specs/catalog.md
+ownership	d2f63e37e	documented runtime function	PHP runtime	weakref_get	weakref_get(weak_p<T>) -> shared_p<T>	runtime/specs/catalog.md
+process	624ab8a2d	catalog property	process_output	exit_code	process.output.exit_code	runtime/metadata/modules/process.json
+process	624ab8a2d	catalog property	process_output	signal	process.output.signal	runtime/metadata/modules/process.json
+process	624ab8a2d	catalog property	process_output	stderr_text	process.output.stderr_text	runtime/metadata/modules/process.json
+process	624ab8a2d	catalog property	process_output	stdout_text	process.output.stdout_text	runtime/metadata/modules/process.json
+process	624ab8a2d	catalog property	process_output	stopped	process.output.stopped	runtime/metadata/modules/process.json
+process	624ab8a2d	catalog property	process_output	timed_out	process.output.timed_out	runtime/metadata/modules/process.json
+process and memory	d2f63e37e	documented runtime function	PHP runtime	memory_get_peak_usage	memory_get_peak_usage([bool_t real_usage]) -> int_t	runtime/specs/catalog.md
+process and memory	d2f63e37e	documented runtime function	PHP runtime	memory_get_usage	memory_get_usage([bool_t real_usage]) -> int_t	runtime/specs/catalog.md
+process and memory	d2f63e37e	documented runtime function	PHP runtime	shell_exec	shell_exec(command) -> result_or_false<string_t>	runtime/specs/catalog.md
+regex	d2f63e37e	supported flag	preg_split	PREG_SPLIT_DELIM_CAPTURE	split flag	specs/builtins/regex/preg_split.md
+regex	d2f63e37e	supported flag	preg_split	PREG_SPLIT_NO_EMPTY	split flag	specs/builtins/regex/preg_split.md
+source	d2f63e37e	analysis signature	PHP STAN	byte_span_at	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	byte_span_len	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	byte_span_to_string	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	hash_bytes	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_buffer_byte_at	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_buffer_byte_len	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_buffer_empty	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_buffer_release	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_buffer_slice	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_buffer_span	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_buffer_take	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_line_index_build	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_line_index_line_column_to_offset	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_line_index_line_count	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_line_index_offset_to_location	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_location_column	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_location_line	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_location_offset	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+source	d2f63e37e	analysis signature	PHP STAN	source_text_vector_move_append	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	PHP native alias	scpp::php	STR_PAD_BOTH	provider export	runtime/include/lang/php/support/php_common.hpp
+strings	d2f63e37e	PHP native alias	scpp::php	STR_PAD_LEFT	provider export	runtime/include/lang/php/support/php_common.hpp
+strings	d2f63e37e	PHP native alias	scpp::php	STR_PAD_RIGHT	provider export	runtime/include/lang/php/support/php_common.hpp
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_append_bool	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_append_int	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_append_string	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_byte_len	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_capacity	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_clear	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_count	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_create	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_reserve	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	string_parts_builder_to_string	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_append_bool	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_append_byte_span	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_append_int	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_append_string	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_byte_len	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_capacity_bytes	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_clear	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_create	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_reserve_bytes	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_take_string	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	analysis signature	PHP STAN	text_builder_to_string	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+strings	d2f63e37e	documented runtime function	PHP runtime	bin2hex	bin2hex(value) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	explode	explode(separator, string[, limit]) -> vector_t<string_t>	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	hex2bin	hex2bin(value) -> result_or_false<string_t>	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	implode	implode(separator, pieces) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	lcfirst	lcfirst(value) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	ltrim	ltrim(value[, mask]) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	microtime	microtime() -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	microtime	microtime(bool_t as_float) -> float_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	number_format	number_format(...) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	rtrim	rtrim(value[, mask]) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	str_ends_with	str_ends_with(haystack, needle) -> bool_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	str_pad	str_pad(input, pad_length[, pad_string[, pad_type]]) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	str_replace	str_replace(search, replace, subject) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	str_starts_with	str_starts_with(haystack, needle) -> bool_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	strlen	strlen(nullable<string_t>) -> int_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	strlen	strlen(string_t) -> int_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	strpos	strpos(haystack, needle[, offset]) -> result_or_false<int_t>	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	strrpos	strrpos(haystack, needle[, offset]) -> result_or_false<int_t>	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	strtolower	strtolower(value) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	strtoupper	strtoupper(value) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	substr	substr(value, offset[, length]) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	substr_compare	substr_compare(main, part, offset[, length[, case_insensitive]]) -> int_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	substr_replace	substr_replace(subject, replacement, offset[, length]) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	to_string	to_string(...) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	trim	trim(value[, mask]) -> string_t	runtime/specs/catalog.md
+strings	d2f63e37e	documented runtime function	PHP runtime	ucfirst	ucfirst(value) -> string_t	runtime/specs/catalog.md
+tasks	624ab8a2d	catalog instance method	task_progress_info	active	tasks.task_progress_info.active	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog instance method	task_progress_info	completed	tasks.task_progress_info.completed	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog instance method	task_progress_info	errors	tasks.task_progress_info.errors	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog instance method	task_progress_info	queued	tasks.task_progress_info.queued	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog instance method	task_progress_info	status	tasks.task_progress_info.status	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog instance method	task_progress_info	stop_requested	tasks.task_progress_info.stop_requested	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog instance method	task_progress_info	total	tasks.task_progress_info.total	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog property	task_error	key	tasks.error.key	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog property	task_error	kind	tasks.error.kind	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog property	task_error	message	tasks.error.message	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog property	task_error	source_file	tasks.error.source_file	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog property	task_error	source_line	tasks.error.source_line	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog property	task_error	timeout	tasks.error.timeout	runtime/metadata/modules/tasks.json
+tasks	624ab8a2d	catalog property	task_error	worker_id	tasks.error.worker_id	runtime/metadata/modules/tasks.json
+vectors	d2f63e37e	analysis signature	PHP STAN	vector_capacity	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+vectors	d2f63e37e	analysis signature	PHP STAN	vector_clear	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+vectors	d2f63e37e	analysis signature	PHP STAN	vector_clear_keep_capacity	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+vectors	d2f63e37e	analysis signature	PHP STAN	vector_compact	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+vectors	d2f63e37e	analysis signature	PHP STAN	vector_filled	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+vectors	d2f63e37e	analysis signature	PHP STAN	vector_reserve	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php
+vectors	d2f63e37e	analysis signature	PHP STAN	vector_resize	analyzer evidence only	generators/php/src/Stan/StanExpressionTypeResolver.php

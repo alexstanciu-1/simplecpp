@@ -1,0 +1,300 @@
+family	owner	kind	operation	parameters	returns	my-try donor path
+add	free	function set	add	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+bit_and	free	function set	bit_and	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+bit_or	free	function set	bit_or	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+bit_xor	free	function set	bit_xor	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+boxed_collection_filter	free	function family	boxed_collection_filter	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+boxed_collection_map	free	function family	boxed_collection_map	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+callable	self	method	has_value	[]	boolean	runtime/metadata/public_api/families.json
+callable	self	method	operator()	[]	void	runtime/metadata/public_api/families.json
+callable	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+callable_from	free	function family	callable_from	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+clean	free	function set	clean	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+cli_argc	scpp	function	cli_argc	[]	int64	runtime/metadata/public_api.json
+cli_args	scpp	function	cli_args	[]	mixed	runtime/metadata/public_api.json
+cli_argv	scpp	function	cli_argv	[]	mixed	runtime/metadata/public_api.json
+coalesce_require_value	scpp	function	coalesce_require_value	"[{""name"":""usable"",""type"":""boolean"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api.json
+complement	free	function set	complement	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+concat	free	function set	concat	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+concat_text	free	function set	concat_text	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+condition_truthy	free	function set	condition_truthy	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+count	free	function set	count	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+dbg_labelled	free	function set	dbg_labelled	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+dbg_value	free	function set	dbg_value	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+divide	free	function set	divide	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+dynamic	cursor	method	key	[]	mixed	runtime/metadata/public_api/families.json
+dynamic	cursor	method	next	[]	void	runtime/metadata/public_api/families.json
+dynamic	cursor	method	valid	[]	boolean	runtime/metadata/public_api/families.json
+dynamic	cursor	method	value	[]	self	runtime/metadata/public_api/families.json
+dynamic	free	function	clean	"[{""name"":""value"",""type"":""self"",""passing"":""ref""}]"	void	runtime/metadata/public_api/families.json
+dynamic	free	function	make_dynamic_container	[]	self	runtime/metadata/public_api/families.json
+dynamic	free	function	to_dynamic	"[{""name"":""value"",""type"":""mixed"",""passing"":""const_ref""}]"	self	runtime/metadata/public_api/families.json
+dynamic	free	function	to_mixed	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	mixed	runtime/metadata/public_api/families.json
+dynamic	self	constructor	dynamic	"[{""name"":""value"",""type"":""boolean"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+dynamic	self	constructor	dynamic	"[{""name"":""value"",""type"":""float64"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+dynamic	self	constructor	dynamic	"[{""name"":""value"",""type"":""int64"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+dynamic	self	constructor	dynamic	"[{""name"":""value"",""type"":""null"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+dynamic	self	constructor	dynamic	"[{""name"":""value"",""type"":""string"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+dynamic	self	method	append	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+dynamic	self	method	get	"[{""name"":""key"",""type"":""int64"",""passing"":""const_ref""}]"	self	runtime/metadata/public_api/families.json
+dynamic	self	method	get	"[{""name"":""key"",""type"":""mixed"",""passing"":""const_ref""}]"	self	runtime/metadata/public_api/families.json
+dynamic	self	method	get	"[{""name"":""key"",""type"":""string"",""passing"":""const_ref""}]"	self	runtime/metadata/public_api/families.json
+dynamic	self	method	get_bool	[]	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	get_float	[]	float64	runtime/metadata/public_api/families.json
+dynamic	self	method	get_int	[]	int64	runtime/metadata/public_api/families.json
+dynamic	self	method	get_string	[]	string	runtime/metadata/public_api/families.json
+dynamic	self	method	is_bool	[]	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	is_float	[]	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	is_hash	[]	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	is_int	[]	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	is_null	[]	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	is_string	[]	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	iterate	[]	cursor	runtime/metadata/public_api/families.json
+dynamic	self	method	operator=	"[{""name"":""value"",""type"":""boolean"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+dynamic	self	method	operator=	"[{""name"":""value"",""type"":""float64"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+dynamic	self	method	operator=	"[{""name"":""value"",""type"":""int64"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+dynamic	self	method	operator=	"[{""name"":""value"",""type"":""null"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+dynamic	self	method	operator=	"[{""name"":""value"",""type"":""string"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+dynamic	self	method	remove	"[{""name"":""key"",""type"":""int64"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	remove	"[{""name"":""key"",""type"":""mixed"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	remove	"[{""name"":""key"",""type"":""string"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+dynamic	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+dynamic	self	method	set	"[{""name"":""key"",""type"":""int64"",""passing"":""const_ref""},{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+dynamic	self	method	set	"[{""name"":""key"",""type"":""mixed"",""passing"":""const_ref""},{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+dynamic	self	method	set	"[{""name"":""key"",""type"":""string"",""passing"":""const_ref""},{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+dynamic_keyed_initializer	self	method	from_key_value	"[{""name"":""input"",""type"":""initializer_buffer<initializer_entry<dynamic,mixed>>"",""passing"":""const_ref""}]"	dynamic	runtime/metadata/public_api/families.json
+dynamic_list_initializer	self	method	from_list	"[{""name"":""input"",""type"":""initializer_buffer<dynamic>"",""passing"":""const_ref""}]"	dynamic	runtime/metadata/public_api/families.json
+empty	free	function set	empty	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+float64	self	constructor	float64	"[{""name"":""value"",""type"":""int64"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+float64	self	constructor	float64	"[{""name"":""value"",""type"":""native_double"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+float64	self	method	native_value	[]	native_double	runtime/metadata/public_api/families.json
+fs_scan	scpp::fs	function	scan	"[{""name"":""path"",""type"":""string"",""passing"":""const_ref""}]"	result<vector<string>>	runtime/metadata/public_api.json
+getenv	scpp	function	getenv	"[{""name"":""name"",""type"":""string"",""passing"":""const_ref""}]"	result_or_false<string>	runtime/metadata/public_api.json
+hash	cursor	method	key	[]	K	runtime/metadata/public_api/families.json
+hash	cursor	method	next	[]	void	runtime/metadata/public_api/families.json
+hash	cursor	method	valid	[]	boolean	runtime/metadata/public_api/families.json
+hash	cursor	method	value	[]	V	runtime/metadata/public_api/families.json
+hash	free	function	count	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	uint64	runtime/metadata/public_api/families.json
+hash	free	function	empty	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+hash	free	function	isset	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+hash	self	method	append	"[{""name"":""value"",""type"":""V"",""passing"":""const_ref""}]"	K	runtime/metadata/public_api/families.json
+hash	self	method	append	"[{""name"":""value"",""type"":""V"",""passing"":""move_ref""}]"	K	runtime/metadata/public_api/families.json
+hash	self	method	at	"[{""name"":""key"",""type"":""K"",""passing"":""const_ref""}]"	V	runtime/metadata/public_api/families.json
+hash	self	method	capacity	[]	uint64	runtime/metadata/public_api/families.json
+hash	self	method	clear	[]	void	runtime/metadata/public_api/families.json
+hash	self	method	empty	[]	boolean	runtime/metadata/public_api/families.json
+hash	self	method	estimated_storage_bytes	[]	uint64	runtime/metadata/public_api/families.json
+hash	self	method	find	"[{""name"":""key"",""type"":""K"",""passing"":""const_ref""}]"	nullable<${type:V}>	runtime/metadata/public_api/families.json
+hash	self	method	has	"[{""name"":""key"",""type"":""K"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+hash	self	method	index_capacity	[]	uint64	runtime/metadata/public_api/families.json
+hash	self	method	is_packed	[]	boolean	runtime/metadata/public_api/families.json
+hash	self	method	iterate	[]	cursor	runtime/metadata/public_api/families.json
+hash	self	method	key_capacity	[]	uint64	runtime/metadata/public_api/families.json
+hash	self	method	make	[]	self	runtime/metadata/public_api/families.json
+hash	self	method	operator[]	"[{""name"":""key"",""type"":""K"",""passing"":""const_ref""}]"	V	runtime/metadata/public_api/families.json
+hash	self	method	remove	"[{""name"":""key"",""type"":""K"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+hash	self	method	set	"[{""name"":""key"",""type"":""K"",""passing"":""const_ref""},{""name"":""value"",""type"":""V"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+hash	self	method	set	"[{""name"":""key"",""type"":""K"",""passing"":""const_ref""},{""name"":""value"",""type"":""V"",""passing"":""move_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+hash	self	method	size	[]	uint64	runtime/metadata/public_api/families.json
+hash_keyed_initializer	self	method	from_key_value	"[{""name"":""input"",""type"":""initializer_buffer<initializer_entry<${type:V},${type:K}>>"",""passing"":""const_ref""}]"	hash<${type:V},${type:K}>	runtime/metadata/public_api/families.json
+hash_list_initializer	self	method	from_list	"[{""name"":""input"",""type"":""initializer_buffer<${type:V}>"",""passing"":""const_ref""}]"	hash<${type:V},${type:K}>	runtime/metadata/public_api/families.json
+index_existing_read	free	function set	index_existing_read	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+index_existing_store	free	function set	index_existing_store	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+index_path_append	free	function set	index_path_append	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+index_path_store	free	function set	index_path_store	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+initializer_buffer	self	constructor	initializer_buffer	"[{""name"":""count"",""type"":""uint64"",""passing"":""value""}]"	constructed object	runtime/metadata/public_api/families.json
+initializer_buffer	self	method	append	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+initializer_buffer	self	method	at	"[{""name"":""index"",""type"":""int64"",""passing"":""value""}]"	T	runtime/metadata/public_api/families.json
+initializer_buffer	self	method	count	[]	int64	runtime/metadata/public_api/families.json
+initializer_entry	self	constructor	initializer_entry	"[{""name"":""key"",""type"":""K"",""passing"":""const_ref""},{""name"":""value"",""type"":""V"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+initializer_entry	self	method	key	[]	K	runtime/metadata/public_api/families.json
+initializer_entry	self	method	value	[]	V	runtime/metadata/public_api/families.json
+isset	free	function set	isset	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+keyed_path_erase	free	function set	keyed_path_erase	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+keyed_path_probe	free	function set	keyed_path_probe	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+keyed_prefix_ready	free	function set	keyed_prefix_ready	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+keyed_probe	free	function set	keyed_probe	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+keyed_ready	free	function set	keyed_ready	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+memory_get_peak_usage	scpp	function	process_peak_memory_usage	[]	int64	runtime/metadata/public_api.json
+memory_get_peak_usage_real	scpp	function	process_peak_memory_usage	"[{""name"":""real_usage"",""type"":""boolean"",""passing"":""value""}]"	int64	runtime/metadata/public_api.json
+memory_get_usage	scpp	function	process_memory_usage	[]	int64	runtime/metadata/public_api.json
+memory_get_usage_real	scpp	function	process_memory_usage	"[{""name"":""real_usage"",""type"":""boolean"",""passing"":""value""}]"	int64	runtime/metadata/public_api.json
+microtime_float	scpp	function	microtime	"[{""name"":""as_float"",""type"":""boolean"",""passing"":""value""}]"	float64	runtime/metadata/public_api.json
+microtime_string	scpp	function	microtime	[]	string	runtime/metadata/public_api.json
+mixed	cursor	method	key	[]	self	runtime/metadata/public_api/families.json
+mixed	cursor	method	next	[]	void	runtime/metadata/public_api/families.json
+mixed	cursor	method	valid	[]	boolean	runtime/metadata/public_api/families.json
+mixed	cursor	method	value	[]	self	runtime/metadata/public_api/families.json
+mixed	free	function	clean	"[{""name"":""value"",""type"":""self"",""passing"":""ref""}]"	void	runtime/metadata/public_api/families.json
+mixed	free	function	make_mixed_table	[]	self	runtime/metadata/public_api/families.json
+mixed	self	constructor	mixed	"[{""name"":""value"",""type"":""boolean"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+mixed	self	constructor	mixed	"[{""name"":""value"",""type"":""float64"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+mixed	self	constructor	mixed	"[{""name"":""value"",""type"":""int64"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+mixed	self	constructor	mixed	"[{""name"":""value"",""type"":""null"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+mixed	self	constructor	mixed	"[{""name"":""value"",""type"":""string"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+mixed	self	method	append	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+mixed	self	method	get	"[{""name"":""key"",""type"":""int64"",""passing"":""const_ref""}]"	self	runtime/metadata/public_api/families.json
+mixed	self	method	get	"[{""name"":""key"",""type"":""self"",""passing"":""const_ref""}]"	self	runtime/metadata/public_api/families.json
+mixed	self	method	get	"[{""name"":""key"",""type"":""string"",""passing"":""const_ref""}]"	self	runtime/metadata/public_api/families.json
+mixed	self	method	get_bool	[]	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	get_float	[]	float64	runtime/metadata/public_api/families.json
+mixed	self	method	get_int	[]	int64	runtime/metadata/public_api/families.json
+mixed	self	method	get_string	[]	string	runtime/metadata/public_api/families.json
+mixed	self	method	is_bool	[]	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	is_float	[]	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	is_hash	[]	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	is_int	[]	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	is_null	[]	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	is_string	[]	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	iterate	[]	cursor	runtime/metadata/public_api/families.json
+mixed	self	method	operator=	"[{""name"":""value"",""type"":""boolean"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+mixed	self	method	operator=	"[{""name"":""value"",""type"":""float64"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+mixed	self	method	operator=	"[{""name"":""value"",""type"":""int64"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+mixed	self	method	operator=	"[{""name"":""value"",""type"":""null"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+mixed	self	method	operator=	"[{""name"":""value"",""type"":""string"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+mixed	self	method	remove	"[{""name"":""key"",""type"":""int64"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	remove	"[{""name"":""key"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	remove	"[{""name"":""key"",""type"":""string"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+mixed	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+mixed	self	method	set	"[{""name"":""key"",""type"":""int64"",""passing"":""const_ref""},{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+mixed	self	method	set	"[{""name"":""key"",""type"":""self"",""passing"":""const_ref""},{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+mixed	self	method	set	"[{""name"":""key"",""type"":""string"",""passing"":""const_ref""},{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+mixed_keyed_initializer	self	method	from_key_value	"[{""name"":""input"",""type"":""initializer_buffer<initializer_entry<mixed,mixed>>"",""passing"":""const_ref""}]"	mixed	runtime/metadata/public_api/families.json
+mixed_list_initializer	self	method	from_list	"[{""name"":""input"",""type"":""initializer_buffer<mixed>"",""passing"":""const_ref""}]"	mixed	runtime/metadata/public_api/families.json
+mixed_predicate	free	function set	mixed_predicate	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+multiply	free	function set	multiply	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+negative	free	function set	negative	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+nullable	free	function	is_nullopt	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+nullable	free	function	take	"[{""name"":""value"",""type"":""T"",""passing"":""ref""},{""name"":""source"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+nullable	free	function	was_found	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+nullable	self	constructor	nullable	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+nullable	self	constructor	nullable	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+nullable	self	method	has_value	[]	boolean	runtime/metadata/public_api/families.json
+nullable	self	method	observe_payload_condition	[]	boolean	runtime/metadata/public_api/families.json
+nullable	self	method	operator=	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+nullable	self	method	operator=	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+nullable	self	method	require_value	"[{""name"":""context"",""type"":""c_string"",""passing"":""value""}]"	T	runtime/metadata/public_api/families.json
+nullable	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+nullable	self	method	value	[]	T	runtime/metadata/public_api/families.json
+nullable	self	method	value_or	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	T	runtime/metadata/public_api/families.json
+numeric_compound_replacement	free	function set	numeric_compound_replacement	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+positive	free	function set	positive	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+post_decrement	free	function set	post_decrement	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+post_increment	free	function set	post_increment	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+power	free	function set	power	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+pre_decrement	free	function set	pre_decrement	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+pre_increment	free	function set	pre_increment	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+reject_empty_operand	scpp	function	reject_empty_operand	[]	void	runtime/metadata/public_api.json
+remainder	free	function set	remainder	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+require_write_key_mixed	scpp	function	require_write_key	"[{""name"":""key"",""type"":""mixed"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api.json
+result	free	function	take	"[{""name"":""value"",""type"":""T"",""passing"":""ref""},{""name"":""error"",""type"":""error_value"",""passing"":""ref""},{""name"":""source"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+result	self	constructor	result	"[{""name"":""error"",""type"":""error_value"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+result	self	constructor	result	"[{""name"":""error"",""type"":""error_value"",""passing"":""move_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+result	self	constructor	result	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+result	self	constructor	result	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+result	self	method	error	[]	error_value	runtime/metadata/public_api/families.json
+result	self	method	has_error	[]	boolean	runtime/metadata/public_api/families.json
+result	self	method	has_value	[]	boolean	runtime/metadata/public_api/families.json
+result	self	method	observe_payload_condition	[]	boolean	runtime/metadata/public_api/families.json
+result	self	method	operator=	"[{""name"":""error"",""type"":""error_value"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+result	self	method	operator=	"[{""name"":""error"",""type"":""error_value"",""passing"":""move_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+result	self	method	operator=	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+result	self	method	operator=	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+result	self	method	require_error	"[{""name"":""context"",""type"":""c_string"",""passing"":""value""}]"	error_value	runtime/metadata/public_api/families.json
+result	self	method	require_value	"[{""name"":""context"",""type"":""c_string"",""passing"":""value""}]"	T	runtime/metadata/public_api/families.json
+result	self	method	value	[]	T	runtime/metadata/public_api/families.json
+result_or_bool	free	function	take	"[{""name"":""value"",""type"":""T"",""passing"":""ref""},{""name"":""alternative"",""type"":""boolean"",""passing"":""ref""},{""name"":""source"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+result_or_bool	self	constructor	result_or_bool	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+result_or_bool	self	constructor	result_or_bool	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+result_or_bool	self	method	from_false	[]	self	runtime/metadata/public_api/families.json
+result_or_bool	self	method	from_true	[]	self	runtime/metadata/public_api/families.json
+result_or_bool	self	method	has_value	[]	boolean	runtime/metadata/public_api/families.json
+result_or_bool	self	method	is_false	[]	boolean	runtime/metadata/public_api/families.json
+result_or_bool	self	method	is_true	[]	boolean	runtime/metadata/public_api/families.json
+result_or_bool	self	method	observe_payload_condition	[]	boolean	runtime/metadata/public_api/families.json
+result_or_bool	self	method	operator=	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+result_or_bool	self	method	operator=	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+result_or_bool	self	method	require_value	"[{""name"":""context"",""type"":""c_string"",""passing"":""value""}]"	T	runtime/metadata/public_api/families.json
+result_or_bool	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+result_or_bool	self	method	value	[]	T	runtime/metadata/public_api/families.json
+result_or_false	free	function	take	"[{""name"":""value"",""type"":""T"",""passing"":""ref""},{""name"":""source"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+result_or_false	self	constructor	result_or_false	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+result_or_false	self	constructor	result_or_false	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+result_or_false	self	method	from_false	[]	self	runtime/metadata/public_api/families.json
+result_or_false	self	method	has_value	[]	boolean	runtime/metadata/public_api/families.json
+result_or_false	self	method	is_false	[]	boolean	runtime/metadata/public_api/families.json
+result_or_false	self	method	observe_payload_condition	[]	boolean	runtime/metadata/public_api/families.json
+result_or_false	self	method	operator=	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+result_or_false	self	method	operator=	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	self_ref	runtime/metadata/public_api/families.json
+result_or_false	self	method	require_value	"[{""name"":""context"",""type"":""c_string"",""passing"":""value""}]"	T	runtime/metadata/public_api/families.json
+result_or_false	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+result_or_false	self	method	value	[]	T	runtime/metadata/public_api/families.json
+shared	self	method	has_value	[]	boolean	runtime/metadata/public_api/families.json
+shared	self	method	hash_key_equal	"[{""name"":""other"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+shared	self	method	hash_key_hash	[]	uint64	runtime/metadata/public_api/families.json
+shared	self	method	identical	"[{""name"":""other"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+shared	self	method	make	[]	self	runtime/metadata/public_api/families.json
+shared	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+shared	self	method	retain_present	[]	self	runtime/metadata/public_api/families.json
+shared_identical	free	function family	shared_identical	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+shared_object_cast	free	function family	shared_object_cast	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+shared_object_is	free	function family	shared_object_is	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+shared_upcast	free	function family	shared_upcast	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+shell_exec	scpp	function	shell_exec	"[{""name"":""command"",""type"":""string"",""passing"":""const_ref""}]"	result_or_false<string>	runtime/metadata/public_api.json
+shift_left	free	function set	shift_left	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+shift_right	free	function set	shift_right	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+strict_identical	free	function set	strict_identical	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+strict_identical_boxed	free	function set	strict_identical_boxed	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+strict_not_identical	free	function set	strict_not_identical	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+strict_not_identical_boxed	free	function set	strict_not_identical_boxed	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+subtract	free	function set	subtract	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+text_greater	free	function set	text_greater	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+text_greater_equal	free	function set	text_greater_equal	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+text_less	free	function set	text_less	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+text_less_equal	free	function set	text_less_equal	see parameterized definition	see definition	runtime/metadata/public_api/function_sets.json
+typed_collection_filter	free	function family	typed_collection_filter	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+typed_collection_map	free	function family	typed_collection_map	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+unique	self	method	has_value	[]	boolean	runtime/metadata/public_api/families.json
+unique	self	method	make	[]	self	runtime/metadata/public_api/families.json
+unique	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+unique_upcast	free	function family	unique_upcast	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
+vector	cursor	method	key	[]	int64	runtime/metadata/public_api/families.json
+vector	cursor	method	next	[]	void	runtime/metadata/public_api/families.json
+vector	cursor	method	valid	[]	boolean	runtime/metadata/public_api/families.json
+vector	cursor	method	value	[]	T	runtime/metadata/public_api/families.json
+vector	free	function	count	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	uint64	runtime/metadata/public_api/families.json
+vector	free	function	empty	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+vector	free	function	isset	"[{""name"":""value"",""type"":""self"",""passing"":""const_ref""}]"	boolean	runtime/metadata/public_api/families.json
+vector	free	function	vector_capacity	"[{""name"":""values"",""type"":""self"",""passing"":""const_ref""}]"	int64	runtime/metadata/public_api/families.json
+vector	free	function	vector_clear	"[{""name"":""values"",""type"":""self"",""passing"":""ref""}]"	void	runtime/metadata/public_api/families.json
+vector	free	function	vector_clear_keep_capacity	"[{""name"":""values"",""type"":""self"",""passing"":""ref""}]"	void	runtime/metadata/public_api/families.json
+vector	free	function	vector_compact	"[{""name"":""values"",""type"":""self"",""passing"":""ref""},{""name"":""capacity"",""type"":""int64"",""passing"":""value""}]"	void	runtime/metadata/public_api/families.json
+vector	free	function	vector_compact	"[{""name"":""values"",""type"":""self"",""passing"":""ref""}]"	void	runtime/metadata/public_api/families.json
+vector	free	function	vector_filled	"[{""name"":""count"",""type"":""int64"",""passing"":""value""},{""name"":""fill"",""type"":""T"",""passing"":""const_ref""}]"	self	runtime/metadata/public_api/families.json
+vector	free	function	vector_reserve	"[{""name"":""values"",""type"":""self"",""passing"":""ref""},{""name"":""capacity"",""type"":""int64"",""passing"":""value""}]"	void	runtime/metadata/public_api/families.json
+vector	free	function	vector_resize	"[{""name"":""values"",""type"":""self"",""passing"":""ref""},{""name"":""count"",""type"":""int64"",""passing"":""value""},{""name"":""fill"",""type"":""T"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	_unset_	[]	void	runtime/metadata/public_api/families.json
+vector	self	method	append	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	append	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	at	"[{""name"":""index"",""type"":""uint64"",""passing"":""value""}]"	T	runtime/metadata/public_api/families.json
+vector	self	method	capacity	[]	uint64	runtime/metadata/public_api/families.json
+vector	self	method	clear	[]	void	runtime/metadata/public_api/families.json
+vector	self	method	compact	[]	void	runtime/metadata/public_api/families.json
+vector	self	method	compact	"[{""name"":""capacity"",""type"":""uint64"",""passing"":""value""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	empty	[]	boolean	runtime/metadata/public_api/families.json
+vector	self	method	estimated_storage_bytes	[]	uint64	runtime/metadata/public_api/families.json
+vector	self	method	index	"[{""name"":""index"",""type"":""uint64"",""passing"":""value""}]"	T	runtime/metadata/public_api/families.json
+vector	self	method	iterate	[]	cursor	runtime/metadata/public_api/families.json
+vector	self	method	operator[]	"[{""name"":""index"",""type"":""uint64"",""passing"":""value""}]"	T	runtime/metadata/public_api/families.json
+vector	self	method	push_back	"[{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	push_back	"[{""name"":""value"",""type"":""T"",""passing"":""move_ref""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	remove	"[{""name"":""index"",""type"":""int64"",""passing"":""value""}]"	boolean	runtime/metadata/public_api/families.json
+vector	self	method	reserve	"[{""name"":""count"",""type"":""uint64"",""passing"":""value""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	resize	"[{""name"":""count"",""type"":""uint64"",""passing"":""value""},{""name"":""fill"",""type"":""T"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	set	"[{""name"":""index"",""type"":""uint64"",""passing"":""value""},{""name"":""value"",""type"":""T"",""passing"":""const_ref""}]"	void	runtime/metadata/public_api/families.json
+vector	self	method	size	[]	uint64	runtime/metadata/public_api/families.json
+vector_list_initializer	self	method	from_list	"[{""name"":""input"",""type"":""initializer_buffer<${type:T}>"",""passing"":""const_ref""}]"	vector<${type:T}>	runtime/metadata/public_api/families.json
+weak	self	constructor	weak	"[{""name"":""source"",""type"":""shared<${type:T}>"",""passing"":""const_ref""}]"	constructed object	runtime/metadata/public_api/families.json
+weak	self	method	lock	[]	shared<${type:T}>	runtime/metadata/public_api/families.json
+weak	self	method	reset	[]	void	runtime/metadata/public_api/families.json
+weak_upcast	free	function family	weak_upcast	see parameterized definition	see definition	runtime/metadata/public_api/function_families.json
