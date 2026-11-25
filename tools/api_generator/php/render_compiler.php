@@ -264,6 +264,12 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
     $runtimeCases = compilerJsonCases($runtime, $runtimeTypes);
+    foreach ($runtime['regex']['callbacks'] ?? [] as $name => $binding) {
+        $key = $binding['callbackSurface'] . ':func:' . $name;
+        $input = 'type_' . $runtimeTypes[$binding['input']] . '::instance()';
+        $table = $binding['table'] ? 'true' : 'false';
+        $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}'),";
+    }
     foreach ($runtime['collection_transforms'] ?? [] as $name) {
         $runtimeCases[] = "\t\t\t'general:func:$name' => runtime_factory::$name,";
     }

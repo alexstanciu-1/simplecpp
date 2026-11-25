@@ -795,6 +795,12 @@
   "regex": {
     "provider": "regex.functions",
     "namespace": "scpp::regex",
+    "callbacks": {
+      "regex_replace_callback": {"surface": "general", "input": "vector_string", "table": false},
+      "regex_replace_callback_array": {"surface": "general", "input": "vector_string", "table": true},
+      "preg_replace_callback": {"surface": "php", "input": "mixed", "table": false},
+      "preg_replace_callback_array": {"surface": "php", "input": "mixed", "table": true}
+    },
     "php_constants": {"PREG_PATTERN_ORDER": 1, "PREG_SET_ORDER": 2, "PREG_SPLIT_NO_EMPTY": 1, "PREG_SPLIT_DELIM_CAPTURE": 2},
     "surface": "general",
     "php_exposures": {

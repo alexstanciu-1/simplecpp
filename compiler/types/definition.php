@@ -179,6 +179,7 @@ interface shared_value_lookup_type
 /** An owning runtime text builder eligible for a readonly free-function parameter. */
 interface text_builder_type {}
 
+/** A runtime value with published typed fields, such as a JSON parse diagnostic. */
 interface runtime_field_type
 {
 	public function runtime_field(string $name): ?type_definition;

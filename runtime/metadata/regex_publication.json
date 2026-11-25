@@ -1,4 +1,5 @@
 {
+  "callbacks": ["regex_replace_callback", "regex_replace_callback_array", "preg_replace_callback", "preg_replace_callback_array"],
   "functions": ["regex_find_span", "regex_test", "preg_match", "preg_match_all", "preg_split", "preg_grep", "preg_filter", "regex_match", "regex_match_named", "regex_match_all", "regex_match_all_pattern_order", "regex_match_all_named", "regex_grep", "regex_split", "regex_replace", "regex_filter", "regex_quote", "regex_jit_available"],
   "php_exposures": ["preg_quote", "preg_replace", "preg_jit_available"]
 }

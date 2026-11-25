@@ -381,15 +381,25 @@ result_or_false_int64 php_matches(const string& pattern, const string& subject, 
     auto output = mixed::container();
     capture_pattern compiled(pattern);
     int64 hits = 0;
+    int widest = 0;
     auto text = bytes(subject);
     bool ok = compiled.data && compiled.each(text, capture_offset(offset, subject.size()), [&](int count, size_t, size_t) {
         ++hits;
         if (matches) {
             auto row = mixed::container();
+            if (all && flags != 2) {
+                for (int64 i = count; i < widest; ++i) {
+                    auto column = output.read(i);
+                    column.append(mixed::from_string(string{}));
+                    output.set(i, std::move(column));
+                }
+                widest = std::max(widest, count);
+            }
             capture_fields(compiled, text, count, [&](const auto& key, const string& capture) {
                 auto value = mixed::from_string(capture);
                 if (all && flags != 2) {
                     auto column = output.has(key) ? output.read(key) : mixed::container();
+                    while (column.container_size() < hits - 1) column.append(mixed::from_string(string{}));
                     column.append(std::move(value));
                     output.set(key, std::move(column));
                 } else row.set(key, std::move(value));
@@ -456,7 +466,7 @@ result_or_false_mixed select_rows(const string& pattern, const mixed& input, con
     mixed entry;
     const auto stop = input.iteration_limit();
     while (input.iteration_next(position, stop, numeric_key, text_key, entry)) {
-        auto subject = entry.get_string();
+        auto subject = boxed_mixed_explicit_cast_string(entry);
         if (replacement) {
             int64 changed = 0;
             std::string rewritten;
@@ -469,6 +479,7 @@ result_or_false_mixed select_rows(const string& pattern, const mixed& input, con
             int count = compiled.find(bytes(subject), 0, 0);
             if (count == PCRE2_ERROR_NOMATCH) continue;
             if (count < 0) return result_or_false_mixed::from_false();
+            entry = mixed::from_string(subject);
         }
         if (numeric_key < 0) output.set(text_key, entry);
         else output.set(numeric_key, entry);
@@ -547,8 +558,10 @@ result_or_false_vector_vector_string match_all_pattern_order(const string& patte
     std::vector<vector_string> columns;
     for (int64 i = 0; i < rows.size(); ++i) {
         auto row = rows.at(i);
-        while (columns.size() < static_cast<size_t>(row.size()))
-            columns.push_back(vector_string::filled(i, string{}));
+        while (columns.size() < static_cast<size_t>(row.size())) {
+            auto& column = columns.emplace_back();
+            for (int64 previous = 0; previous < i; ++previous) column.append(string{});
+        }
         for (size_t j = 0; j < columns.size(); ++j)
             columns[j].append(j < static_cast<size_t>(row.size()) ? row.at(static_cast<int64>(j)) : string{});
     }
@@ -567,5 +580,38 @@ result_or_false_vector_hash_string_string match_all_named(const string& pattern,
 }
 result_or_false_vector_vector_string match_all_pattern_order(const string& pattern, const string& subject) {
     return match_all_pattern_order(pattern, subject, 0);
+}
+}
+
+namespace scpp::regex {
+namespace {
+template<class Render>
+result_or_false_string replace_with_callback(const string& pattern, const string& subject, int64 limit, Render render) {
+    validate_limit(limit);
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return result_or_false_string::from_false();
+    std::string output;
+    int64 changed = 0;
+    const auto text = bytes(subject);
+    if (!rewrite(compiled, text, limit, output, changed, [&](std::string& out, int count) {
+        auto rendered = render(compiled, text, count);
+        out.append(bytes(rendered));
+    })) return result_or_false_string::from_false();
+    return result_or_false_string{owned(output)};
+}
+}
+result_or_false_string replace_callback(const string& pattern, const void* context, render_vector_string invoke,
+                                        const string& subject, int64 limit) {
+    return replace_with_callback(pattern, subject, limit, [&](const auto& compiled, auto text, int count) {
+        return invoke(context, numbered_row(compiled, text, count));
+    });
+}
+result_or_false_string replace_callback(const string& pattern, const void* context, render_mixed invoke,
+                                        const string& subject, int64 limit) {
+    return replace_with_callback(pattern, subject, limit, [&](const auto& compiled, auto text, int count) {
+        auto row = mixed::container();
+        for (int i = 0; i < count; ++i) row.append(mixed::from_string(owned(compiled.capture(text, i))));
+        return invoke(context, std::move(row));
+    });
 }
 }

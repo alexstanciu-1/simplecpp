@@ -155,3 +155,25 @@ incremental recovery. Check minimal header closure and absence of cross-module
 dependencies. Keep the three JSON surfaces separable in metadata. Verify native
 provenance independently from v0.2 source acceptance: the donor fixture results
 above establish behavior to reproduce, not completed v0.2 publication.
+
+## Stage 1 evidence
+
+The codec, document, reader, and regex checkpoints reached native executables
+from source projects. The PHP regex bindings use the agreed
+`result_or_false<mixed>` for grep, filter, and split. The fixture distinguishes
+a successful empty collection from false, writes through the matches output,
+and mutates an extracted collection to verify COW.
+
+The general capture APIs use concrete vectors, hashes and falseable carriers.
+The two nested vector shapes use the existing collection recipe. Their definitions
+live with core values so a project can use the same collection type independently
+of a regex call. The callback ABI borrows a callable synchronously and supplies
+owned captures. The compiler emits a concrete adapter for the application's
+ordered callback hash. PCRE2 stays inside the regex archive. Source proofs cover
+captured environments, ordered successive replacements, callback exceptions,
+UTF-8 empty-match progression and both match-all layouts.
+
+The header probe compiled 35 selected JSON and regex operation/type headers
+individually with Clang. Their dependency closures excluded PCRE2, runtime
+implementation headers and the other module. Stage 2 can measure the cost of
+building capture collections and transposing columns separately from matching.

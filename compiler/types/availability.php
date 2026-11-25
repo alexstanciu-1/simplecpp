@@ -6,9 +6,11 @@ namespace scpp\compiler;
 /** Immutable application-wide selected module names; e.g. runtime-numeric enables its generated type exports. */
 final readonly class type_availability
 {
+	/** PROPERTIES */
 	/** @var bool[] Native owning membership index; no module or session references. */
 	private array $modules /** array<string,bool> */;
 
+	/** CONSTRUCTOR */
 	/** @param string[] $modules */
 	public function __construct(array $modules /** list<string> */ = [], public bool $general_api = false)
 	{
@@ -17,6 +19,7 @@ final readonly class type_availability
 		$this->modules = $selected;
 	}
 
+	/** METHODS */
 	/** Null denotes an always-available export. */
 	public function allows(?string $module): bool
 	{

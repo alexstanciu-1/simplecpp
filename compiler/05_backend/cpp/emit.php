@@ -158,7 +158,7 @@ final class Cpp_Emitter
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
-		$files = $this->inline_adapters->files() + $this->concrete_collections->files();
+		$files = $this->concrete_collections->files() + $this->inline_adapters->files();
 		foreach ($this->async_results as $task => $type) {
 			$path = async_task_binding::header_path($task);
 			$files[$path] = $this->headers?->grouped_declaration($path) ?? \Scpp\Api\asyncTaskHeader(
@@ -692,6 +692,9 @@ CPP;
 			$lines = $this->statements($entry->body(), $declarations, $global_references, $required_headers);
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+		}
+		foreach ($this->inline_adapters->dependencies() as $type) {
+			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
 		}
 		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies(), ...$this->async_results] as $type) {
 			if ($type instanceof record_handle_definition || $type instanceof intersection_type_definition) $declarations[$type->name] = $type;
@@ -2803,7 +2806,9 @@ CPP;
 				if ($function->full_arity_argument !== null && count($arguments) === count($function->parameters)) {
 					$arguments[] = $function->full_arity_argument;
 				}
-				$call = $symbol . '(' . implode(', ', $arguments) . ')';
+				$call = $function instanceof regex_callback_function
+					? $this->inline_adapters->call($function->adapter(count($arguments)), $arguments)
+					: $symbol . '(' . implode(', ', $arguments) . ')';
 				return self::staged_call($call, $steps, '', $statement_setup);
 			}
 			$name = self::function_name($function);

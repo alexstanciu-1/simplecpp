@@ -19,8 +19,9 @@ function prepareRegexCaptureTypes(array $names, string $moduleHeader, array &$pl
     $header = moduleOperationHeader($moduleHeader, 'capture_types');
     checkHeader($plan, $header);
     $plan['submodules']['nodes'][$provider] = ['module' => 'core', 'header' => $header, 'requires' => []];
-    $shape = array_column($plan['vectors'], null, 'name')['vector_string'];
-    $prototype = array_column($plan['carriers'], null, 'name')['result_or_false_vector_string'];
+    $shape = array_column($plan['vectors'] ?? [], null, 'name')['vector_string'] ?? null;
+    $prototype = array_column($plan['carriers'] ?? [], null, 'name')['result_or_false_vector_string'] ?? null;
+    requireThat($shape !== null && $prototype !== null, 'Regex captures require the published string vector and its falseable carrier');
     $requires = [$plan['carrier_publication']['provider']];
     foreach (array_keys($payloads) as $payload) {
         $element = str_starts_with($payload, 'vector_') ? substr($payload, 7) : $payload;

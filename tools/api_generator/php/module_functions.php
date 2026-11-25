@@ -11,8 +11,8 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $catalog = familyMetadata($metadata, $publication, $family, $family, $family);
     if ($catalog === null || !property_exists($publication, $family)) return;
 
-    fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures', 'php_constants']);
-    fields($publication->{$family}, ['functions', 'php_exposures']);
+    fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures', 'php_constants', 'callbacks']);
+    fields($publication->{$family}, ['functions', 'php_exposures', 'callbacks']);
     $surface = $catalog->surface ?? null;
     requireThat($surface === null || $surface === 'general', 'Unknown module function surface');
     $provider = textValue(at($catalog, 'provider'));
@@ -72,14 +72,37 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         if ($surface === 'general') {
             if ($flavor === null) $functions[$name]['surface'] = 'general';
             $functions[$name]['header'] = moduleOperationHeader($header, $name);
+            $declarationProviders = $signatureProviders;
+            foreach ($parameters as $i => $parameter) {
+                if ($i < $required || $parameter['type'] !== 'mixed' || !($reference_mask & (1 << $i))) continue;
+                // The short status call only needs the incomplete type for its longer overload declarations.
+                unset($declarationProviders[$i]);
+                $functions[$name]['forward'] = 'namespace scpp { class mixed; }';
+            }
             $functions[$name]['includes'] = array_map(fn($id) => providerHeader($plan['submodules'], $id),
-                array_unique($signatureProviders));
+                array_unique($declarationProviders));
             checkHeader($plan, $functions[$name]['header']);
         }
     }
     requireThat($functions !== [], 'Empty module function publication');
     $requires = array_values(array_unique($requires));
     $plan[$family] = compact('provider', 'header', 'module', 'namespace', 'requires', 'functions');
+    foreach (names($publication->{$family}->callbacks ?? [], 'Duplicate regex callback') as $name) {
+        $item = at(at($catalog, 'callbacks'), $name);
+        fields($item, ['input', 'surface', 'table']);
+        $input = textValue(at($item, 'input'));
+        $callbackSurface = textValue(at($item, 'surface'));
+        requireThat($family === 'regex' && in_array($input, ['mixed', 'vector_string'], true)
+            && in_array($callbackSurface, ['general', 'php'], true), 'Unsupported regex callback signature');
+        $table = boolean(at($item, 'table'));
+        $callbackHeader = moduleOperationHeader($header, 'callback_' . $input);
+        $includes = [];
+        foreach ([$input, 'string', 'result_or_false_string', 'int64'] as $type) {
+            $export = moduleFunctionTypeExport($plan, $type);
+            $includes[] = providerHeader($plan['submodules'], $export['provider']);
+        }
+        $plan[$family]['callbacks'][$name] = compact('input', 'table', 'callbackSurface', 'callbackHeader', 'includes');
+    }
     foreach (object($catalog->php_constants ?? (object)[]) as $constant => $value) {
         requireThat(preg_match('/^[A-Z][A-Z_0-9]*$/D', $constant) === 1 && is_int($value), 'Invalid module integer constant');
         $plan[$family]['php_constants'][$constant] = $value;
@@ -135,9 +158,10 @@ function moduleOperationHeader(string $header, string $name): string {
     return substr($header, 0, -4) . '/' . $name . '.hpp';
 }
 
-function moduleHeaderBody(array $includes, string $namespace, string $declaration): string {
+function moduleHeaderBody(array $includes, string $namespace, string $declaration, string $forward = ''): string {
     $body = BANNER . "#pragma once\n";
     foreach (array_unique($includes) as $include) $body .= includeHeader($include);
+    if ($forward !== '') $body .= $forward . "\n";
     return $body . "namespace $namespace {\n$declaration}\n";
 }
 
@@ -155,7 +179,7 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         }
         $declarations .= $declaration;
         if (isset($function['header'])) {
-            $files['public/' . $function['header']] = moduleHeaderBody($function['includes'], $module['namespace'], $declaration);
+            $files['public/' . $function['header']] = moduleHeaderBody($function['includes'], $module['namespace'], $declaration, $function['forward'] ?? '');
         }
     }
     foreach ($module['php_exposures'] ?? [] as $name => $binding) {
@@ -182,6 +206,15 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         // The archive compiles all implementations even for a reduced source publication.
         $carrier = typeExport($plan['submodules'], 'result_vector_string');
         $bridge .= includeHeader(providerHeader($plan['submodules'], $carrier['provider']));
+    }
+    foreach ($module['callbacks'] ?? [] as $callback) {
+        $input = $callback['input'];
+        $header = $callback['callbackHeader'];
+        if (isset($files['public/' . $header])) continue;
+        $declaration = "using render_$input = string (*)(const void*, $input);\n"
+            . "result_or_false_string replace_callback(const string&, const void*, render_$input, const string&, int64);\n";
+        $files['public/' . $header] = moduleHeaderBody($callback['includes'], $module['namespace'], $declaration);
+        $bridge .= includeHeader($header);
     }
     $files["private/{$family}_provider.hpp"] = $bridge;
 }

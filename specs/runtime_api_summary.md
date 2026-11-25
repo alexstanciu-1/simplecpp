@@ -185,7 +185,7 @@ traversal remain deferred.
 `result_mixed` and `result_dynamic` are now supported when their corresponding
 boxed family is published. They retain the existing result state/extraction policy
 and each payload family’s ownership behavior; see [boxed results](boxed_results.md).
-Other boxed carrier families remain deferred.
+The regex module also selects `result_or_false_mixed` for PHP collection results. See the [regex contract](regex_module.md).
 
 ## Bounded JSON publication
 

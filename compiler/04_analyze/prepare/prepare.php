@@ -1818,6 +1818,9 @@ final class Preparation
 			elseif ($runtime->is_reference($slot)) {
 				$this->bind_reference($argument, $type, $writes);
 			}
+			elseif ($type instanceof owned_callable_type) {
+				$type->prepare_scalar_conversion($argument, conversion_context::typed_destination);
+			}
 			elseif ($argument->type_def() !== $type) {
 				throw new diagnostic($argument->source(), $argument->byte_start(), $call->name . ' requires ' . $type->name);
 			}
