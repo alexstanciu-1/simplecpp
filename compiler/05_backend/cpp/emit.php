@@ -2694,6 +2694,7 @@ CPP;
 			}
 			$function = $value->implementation();
 			if ($function instanceof runtime_function) {
+				if ($value_type instanceof application_collection_type) $this->concrete_collections->request($value_type);
 				$use = match ($function->name()) {
 					'enum_from_value' => dependency_use::enum_from_value,
 					'enum_try_from_value' => dependency_use::enum_try_from_value,
@@ -2767,6 +2768,7 @@ CPP;
 					$operand_records_before = $this->record_expressions;
 					$safe = false;
 					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					if ($function->exact_arguments) $operand = $function->parameters[$index]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand, $this->inline_adapters);
 					$arguments[] = $index === 0 && $function->overloaded_first
 						? 'static_cast<' . $function->parameters[0]->cpp_type() . '>(' . $operand . ')' : $operand;
 					// A prepared writable reference names stable storage; binding it does not read its value.

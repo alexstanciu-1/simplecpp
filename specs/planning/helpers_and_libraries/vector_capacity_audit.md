@@ -4,6 +4,8 @@ Doc Status: planning
 
 Reviewed active v0.2 at `9f69d75c3`, release v0.1 at `d2f63e37e` and my-try at `624ab8a2d`. Seven historical names represent eight call forms. The two clear names have identical semantics. Three forms are already covered by two v0.2 members. The remaining five forms need native operations and source publication.
 
+Stage 1 is implemented in the [vector contract](../../vector_slice.md#vector-construction-and-capacity). The table records the intake decisions.
+
 ## Contracts and proposed disposition
 
 In the table, `v` is a vector, `n` is a signed source integer passed by value and `x` is an exact copyable element. Member spellings below use PHP syntax. Native targets without an existing binding are proposals.

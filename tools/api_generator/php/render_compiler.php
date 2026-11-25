@@ -218,8 +218,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     }
     $runtimeTypes = [];
     foreach ($definitions as $identity => $definition) $runtimeTypes[$identity] = $definition['class'];
+    $vectorFactory = false;
     foreach ($runtime['vectors'] ?? [] as $vector) {
         if (isset($definitions[$vector['element']])) {
+            $vectorFactory = $vectorFactory || !empty($vector['capacity_helpers']);
             $runtimeTypes[$vector['name']] = $runtimeTypes[$vector['source_type']] = $vector['name'];
         }
     }
@@ -231,6 +233,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
     $runtimeCases = [];
+    if ($vectorFactory) {
+        $runtimeCases[] = "\t\t\t'general:func:vector_filled' => runtime_factory::vector_filled,";
+    }
     // Published aliases delegate to the same canonical type-owned signatures as application concrete types.
     foreach (array_merge($runtime['vectors'] ?? [], $runtime['hashes']['specializations'] ?? []) as $collection) {
         $elements = isset($collection['element']) ? [$collection['element']] : [$collection['value'], $collection['key']];

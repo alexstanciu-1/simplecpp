@@ -469,7 +469,9 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         return;
     }
     $p = $publication->vectors;
-    fields($p, ['header', 'specializations']);
+    fields($p, ['header', 'specializations', 'capacity_helpers']);
+    $capacity = property_exists($p, 'capacity_helpers') ? $p->capacity_helpers : false;
+    requireThat(is_bool($capacity) && (!$capacity || $reserve), 'Vector capacity helpers require checked reserve');
     $provider = $plan['submodules']['groups']['vectors']['provider'];
     $header = providerHeader($plan['submodules'], $provider);
     if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'Vector publication header conflicts with provider');
@@ -533,6 +535,11 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         $add('empty', 'bool_t', [], false, 'none');
         $add('clear', 'void', [], true, 'none');
         if ($reserve) $add('reserve', 'void', [$count], true, $m->reserve);
+        if ($capacity) {
+            $add('capacity', $count, [], false, 'observe_capacity');
+            $add('resize', 'void', [$count, scalarInput($element)], true, 'resize_copy_fill');
+            $add('compact', 'void', [$count], true, 'optional_capacity');
+        }
         $add('remove', 'bool_t', [$count], true, 'erase_shift_missing_false');
         $add('has', 'bool_t', [$count], false, 'index_presence');
         $indices = $nativeIndex ? [$count, 'int']:[$count];
@@ -554,7 +561,11 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         }
         $bulk = $initialization['bulk'] ?? null;
         if ($reserve && $bulk !== null) requireThat(!in_array('reserve', [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null], true), 'Vector initializer name conflicts with reserve');
-        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'transfer_assignment' => $transfer, 'enable_reserve' => $reserve ? '1' : '', 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
+        if ($capacity && $bulk !== null) {
+            requireThat(!array_intersect(['capacity', 'compact', 'filled', 'resize'], [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null]),
+                'Vector initializer name conflicts with capacity helper');
+        }
+        $vectors[$name] = ($capacity ? ['capacity_helpers' => true] : []) + ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'transfer_assignment' => $transfer, 'enable_reserve' => $reserve ? '1' : '', 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
     }
     requireThat($vectors !== [], 'Empty vector publication');
     ksort($vectors, SORT_STRING);

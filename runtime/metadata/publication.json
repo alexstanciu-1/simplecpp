@@ -726,6 +726,7 @@
     ]
   },
   "vectors": {
+    "capacity_helpers": true,
     "header": "scpp/vectors.hpp",
     "specializations": [
       {

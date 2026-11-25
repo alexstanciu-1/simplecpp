@@ -2208,6 +2208,16 @@ final class Preparation
 					throw new diagnostic($call->source(), $call->byte_start(),
 						'Function ' . $runtime->name() . ' requires module ' . $runtime->required_module);
 				}
+				if ($runtime === runtime_factory::vector_filled) {
+					if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+					if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), 'vector_filled requires a count and fill value');
+					$fill = $call->arguments[1];
+					$this->value($fill, $initializing);
+					$vector = Type_Resolution::collection('vector', $fill->type_def(), null);
+					if (!($vector instanceof vector_type_definition)) throw new diagnostic($fill->source(), $fill->byte_start(), 'Unsupported vector_filled element type');
+					$this->runtime_call($call, $vector->filled_function(), $fill);
+					return;
+				}
 				$this->runtime_call($call, $runtime);
 				return;
 			}

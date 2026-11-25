@@ -16,6 +16,7 @@ abstract class vector_type_definition extends type_definition implements appenda
 	/** PROPERTIES */
 	/** Native non-owning canonical element definition, shared by all occurrences. */
 	public readonly type_definition $element_type;
+	private ?runtime_function $filled_binding = null;
 
 	/** CONSTRUCTOR */
 	protected function __construct(string $name, type_definition $element)
@@ -25,6 +26,16 @@ abstract class vector_type_definition extends type_definition implements appenda
 	}
 
 	/** METHODS */
+	/** Bind the factory on the canonical vector, including application-owned element types. */
+	public function filled_function(): runtime_function
+	{
+		if ($this->filled_binding !== null) return $this->filled_binding;
+		$resize = $this->runtime_method('resize');
+		return $this->filled_binding = new runtime_function('vector_filled', [$resize->parameters[1], $this->element_type],
+			$this, $this->cpp_type() . '::filled', $this->cpp_headers()[0],
+			const_reference_mask: $resize->is_const_reference(2) ? 2 : 0, exact_arguments: true);
+	}
+
 	public function supports_inferred_local(): bool
 	{
 		return true;

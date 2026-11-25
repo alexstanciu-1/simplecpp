@@ -436,6 +436,9 @@ if(BUILD_TESTING)
   add_executable(collection_remove_storage_test tests/collection_remove_storage.cpp)
   target_link_libraries(collection_remove_storage_test PRIVATE scpp_runtime)
   add_test(NAME collection_remove_storage COMMAND collection_remove_storage_test)
+  add_test(NAME compiler_vector_capacity_family COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_capacity_family.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
   add_test(NAME compiler_collection_clear COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_clear.php)
   scpp_fixture_test(collection_clear php_vector_string_ php_hash_int_string_)
   set_tests_properties(compiler_collection_clear compiler_collection_clear_native PROPERTIES TIMEOUT 120)

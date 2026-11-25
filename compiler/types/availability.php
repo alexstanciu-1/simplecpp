@@ -24,7 +24,7 @@ final readonly class type_availability
 	}
 
 	/** Select a published free name under this project's source-surface policy. */
-	public function runtime_function(string $key, flavor $flavor): runtime_function|runtime_overloads|null
+	public function runtime_function(string $key, flavor $flavor): runtime_function|runtime_overloads|runtime_factory|null
 	{
 		return runtime_functions::free($key, $flavor)
 			?? (($this->general_api || $flavor === flavor::cpp) ? runtime_functions::resolve('general:' . $key) : null);
