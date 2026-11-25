@@ -50,6 +50,8 @@ To reproduce both supplemental indexes from the pinned Git objects, run `python3
 
 ## Family audit and implementation
 
+The [JSON and regex group audit](json_regex_group_audit.md) covers encode/decode, document and nodes, pull reader, then regex as four checkpoints of one proposed goal.
+
 Use a whole family as the implementation unit. First reconcile its donor specs, catalogs, compiler/type-owned forms, native providers and tests. A narrow probe can settle a contract question. Record the v0.2 disposition of every operation, overload and receiver, including deferred flavor surfaces. Then set up an implementation goal covering the full agreed family and its source-level proofs. Individual performance tuning follows in Stage 2.
 
 | Family | Evidence on v0.2 and proposed treatment |
