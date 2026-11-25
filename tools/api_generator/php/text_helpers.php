@@ -43,6 +43,7 @@ function compilerTextBinding(string $name, array $binding, array $types): string
 
 function renderTextHelpers(array $plan, array &$files): void {
     foreach ($plan['text_helpers'] ?? [] as $name => $binding) {
+        if (str_starts_with($name, 'string_utf8_')) $files['src/runtime.cpp'] .= includeHeader('utf8_codepoints.hpp');
         $signature = $binding['result'] . " $name(" . implode(', ', $binding['native_parameters']) . ')';
         $declaration = $name === 'string_byte_find' ? substr($signature, 0, -1) . ' = 0)' : $signature;
         $files['public/' . $binding['header']] = moduleHeaderBody($binding['includes'], 'scpp::str', "$declaration;\n");

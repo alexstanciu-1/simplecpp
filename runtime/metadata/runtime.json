@@ -1109,6 +1109,9 @@
     }
   },
   "text_helpers": {
+    "string_utf8_codepoint_count": ["int64", "string"],
+    "string_utf8_codepoint_at": ["int64", "string", "int64"],
+    "string_utf8_slice_codepoints": ["string", "string", "int64", "int64"],
     "string_byte_len": ["int64", "string"],
     "string_byte_at": ["int64", "string", "int64"],
     "string_byte_slice": ["string", "string", "int64", "int64"],

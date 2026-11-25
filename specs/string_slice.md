@@ -159,3 +159,13 @@ All positions and lengths here count bytes, including embedded NUL.
 PHP implode(separator, parts) also accepts a published hash with string values
 and either integer or string keys. It joins the values in iteration order and
 preserves empty values and embedded NUL bytes.
+
+## Explicit UTF-8 helpers
+
+string_utf8_codepoint_count(s) returns the number of Unicode scalar values.
+string_utf8_codepoint_at(s,i) returns a scalar as int, or −1 outside the input.
+string_utf8_slice_codepoints(s,start,length) returns an owning substring.
+Negative bounds give an empty slice and lengths past the end truncate.
+All three validate the complete input. A malformed sequence anywhere switches
+the whole operation to unsigned byte units. U+0000 counts as one scalar and
+decomposed combining marks count individually. No normalization is performed.
