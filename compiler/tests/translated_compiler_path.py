@@ -44,6 +44,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     for file in EXAMPLE.glob('*.php.scpp'):
         target = 'main.php' if file.name == 'proof.php.scpp' else file.stem
         shutil.copyfile(file, translator / target)
+    with (translator/'punctuation.php').open('wb') as generated:
+        subprocess.run([PHP, EXAMPLE.parent/'tokenizer/emit_punctuation.php'], stdout=generated, check=True)
     shutil.copyfile(EXAMPLE.parent/'tokenizer/utf8.php.scpp', translator/'utf8.php')
     (translator / 'module.json').write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem"]}}}')
     host_bundle, executable = work / 'translator-cpp', work / 'translated-compiler'

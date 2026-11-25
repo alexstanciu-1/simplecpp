@@ -168,10 +168,7 @@ final class Tokenizer
 			}
 			elseif (isset(self::$punctuation[$word]) && ($first !== '#' || $source->flavor === flavor::php)
 				&& ($first !== '@' || $source->flavor === flavor::python)) {
-				if ($source->flavor === flavor::python && !in_array($word, [
-					'(', ')', '[', ']', '{', '}', ':', ',', '->', '.', '@', '=', '+', '-', '*', '+=', '-=', '*=', '/', '//', '%', '==', '!=', '<', '<=', '>', '>=',
-					'~', '&', '^', '|', '&=', '^=', '|=',
-				], true)) {
+				if ($source->flavor === flavor::python && !self::python_accepts_punctuation($word)) {
 					throw new diagnostic($source, $start, 'Unsupported punctuation in Python flavor');
 				}
 				$kind = self::$punctuation[$word];
@@ -215,6 +212,29 @@ final class Tokenizer
 		return ($byte === '_') || (($byte >= 'a') && ($byte <= 'z')) || (($byte >= 'A') && ($byte <= 'Z'));
 	}
 
+	/** Longest-prefix order shared by the bootstrap lexer and translated scanner emitter.
+	 * @return token_kind[]
+	 */
+	public static function punctuation_kinds(flavor $flavor): array
+	{
+		$kinds = [];
+		foreach (self::PUNCTUATION as $kind) {
+			if ($flavor === flavor::python && ($kind === token_kind::increment || $kind === token_kind::decrement)) continue;
+			if (($kind === token_kind::at_sign || $kind === token_kind::double_slash) && $flavor !== flavor::python) continue;
+			if ($kind === token_kind::attribute && $flavor !== flavor::php) continue;
+			$kinds[] = $kind;
+		}
+		return $kinds;
+	}
+
+	public static function python_accepts_punctuation(string $word): bool
+	{
+		return in_array($word, [
+			'(', ')', '[', ']', '{', '}', ':', ',', '->', '.', '@', '=', '+', '-', '*', '+=', '-=', '*=', '/', '//', '%', '==', '!=', '<', '<=', '>', '>=',
+			'~', '&', '^', '|', '&=', '^=', '|=',
+		], true);
+	}
+
 	/** Match complete lexemes, trivia and error openers; the final alternative consumes unsupported code points. */
 	private static function pattern(flavor $flavor): string
 	{
@@ -222,14 +242,10 @@ final class Tokenizer
 			return self::$patterns[$flavor->value];
 		}
 		$parts = [];
-		foreach (self::PUNCTUATION as $kind) {
+		foreach (self::punctuation_kinds($flavor) as $kind) {
 			$spelling = $kind->label();
 			self::$punctuation[$spelling] = $kind;
-			if ($flavor === flavor::python && ($kind === token_kind::increment || $kind === token_kind::decrement)) continue;
-			if (($kind === token_kind::at_sign || $kind === token_kind::double_slash) && $flavor !== flavor::python) continue;
-			if (($kind !== token_kind::attribute) || ($flavor === flavor::php)) {
-				$parts[] = preg_quote($spelling, '~');
-			}
+			$parts[] = preg_quote($spelling, '~');
 		}
 		$trivia = '[ \t\r\n]++|//[^\r\n]*+|/\*[^*]*+(?:\*(?!/)[^*]*+)*+\*/|/\*[\s\S]*+\z';
 		if ($flavor === flavor::python) {

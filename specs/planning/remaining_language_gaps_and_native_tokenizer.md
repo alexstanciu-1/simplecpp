@@ -224,6 +224,25 @@ addresses its original spelling, and every new token's kind, offset and length
 agrees with a fresh compilation. Full flavor-specific token streams and Python
 layout remain open. [Translated scanner](../../compiler/examples/translated_path/frontend.php.scpp)
 
+**Freeze checkpoint for punctuation.** The build-time emitter reads production
+token IDs, spellings, flavor membership and Python admission rules. The native
+scanner selects the longest matching punctuation and keeps comment openers ahead
+of that selection. On dev002 the default test compared 70 inputs in each of the
+four flavors. All 280 comparisons matched, including the offset and message of
+47 rejections. Accepted inputs agreed on token kind, byte offset and byte length.
+The comparison excludes synthetic Python layout tokens and the native end
+marker. [Emitter](../../compiler/examples/tokenizer/emit_punctuation.php) ·
+[Differential test](../../compiler/tests/translated_punctuation.py)
+
+This slice required no new v0.2 language or runtime capability. Park further
+tokenizer expansion for the freeze review. The next proposed bootstrap check is
+the generated-types and lowering boundary: take one application-defined vector
+from prepared element identity through concrete header rendering and link inputs,
+and compare the native path with the existing PHP backend. The PHP backend still
+loads the API generator's renderer at compilation time.
+[Backend owner](../../compiler/05_backend/cpp/concrete.php) ·
+[Existing vector proof](../../compiler/tests/application_vectors_native.py)
+
 Acceptance checks:
 
 1. Compare offset, length, kind, and spelling with the oracle on real inputs, including longest punctuation, flavor keywords, comments, quotes, and token-length limits.
