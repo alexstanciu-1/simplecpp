@@ -273,9 +273,13 @@ On dev002 the application printed `77` and exited with status 8 through both
 the driver and the direct control. With a generated unit containing a deliberate
 `#error`, the driver returned Clang's failure status and reproduced its stderr
 byte for byte. The previous executable survived and no staging file remained.
-The focused test took 1.60 seconds. The proof consumes a settled bundle;
-production reader locking, incremental Ninja builds and retained service
-transport remain separate checks.
+The driver now holds the publisher's shared bundle lock from before the manifest
+read through Clang exit and executable publication. It releases the lock before
+running the application. On dev002 a real publisher queued for the exclusive
+lock while Clang was paused. The first build printed `1`, publication completed
+while its application was held open, and the next build printed `2` using the
+new translation unit. The combined focused check took 1.92 seconds. Incremental
+Ninja builds and retained service transport remain separate checks.
 [Driver](../../compiler/examples/native_driver/main.php.scpp) ·
 [Native comparison](../../compiler/tests/translated_native_driver.py)
 

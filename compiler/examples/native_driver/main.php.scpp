@@ -1,4 +1,4 @@
-// Linux command-line proof over a settled compiler bundle.
+// Linux command-line proof over a published compiler bundle.
 function write_diagnostic(string $bytes): void {
     if ($bytes === "") return;
     $stream file_stream = io_open("/dev/stderr", "ab");
@@ -54,25 +54,37 @@ if (count($cli) < 4) {
 $bundle = $cli[1];
 $exe = $cli[2];
 if (!str_starts_with($exe, "/")) throw Exception::make("Expected absolute executable output path");
-$text string = fs_get($bundle . "/manifest.json");
-$error ?json_parse_error = null;
-$doc json_document = json_document_parse($text, $error);
-$root json_node = json_document_root($doc);
-$args vector<string> = [];
-for ($i = 4; $i < count($cli); $i++) { $args[] = $cli[$i]; }
-append_inputs($root, "translation_units", $bundle . "/", $args);
-$has_native bool = json_node_has($root, "native_sources");
-if ($has_native) append_inputs($root, "native_sources", "", $args);
-append_inputs($root, "link_inputs", "", $args);
-
-$stage string = fs_stage(fs_dirname($exe));
+$lock_path = $bundle . "/.scpp-bundle.lock";
+if (fs_is_link($bundle) || fs_is_link($lock_path)) throw Exception::make("Invalid program bundle lock");
+$lock = fs_lock_empty();
+$held bool = fs_lock_try($lock, $lock_path, true);
+while (!$held) {
+    dt_sleep_ms(1);
+    $held = fs_lock_try($lock, $lock_path, true);
+}
 try {
-    $args[] = "-o";
-    $args[] = $stage;
-    $status = execute($cli[3], $args);
-    if ($status !== 0) return $status;
-    if (!fs_rename($stage, $exe)) throw Exception::make("Cannot publish executable");
+    $text string = fs_get($bundle . "/manifest.json");
+    $error ?json_parse_error = null;
+    $doc json_document = json_document_parse($text, $error);
+    $root json_node = json_document_root($doc);
+    $args vector<string> = [];
+    for ($i = 4; $i < count($cli); $i++) { $args[] = $cli[$i]; }
+    append_inputs($root, "translation_units", $bundle . "/", $args);
+    $has_native bool = json_node_has($root, "native_sources");
+    if ($has_native) append_inputs($root, "native_sources", "", $args);
+    append_inputs($root, "link_inputs", "", $args);
+
+    $stage string = fs_stage(fs_dirname($exe));
+    try {
+        $args[] = "-o";
+        $args[] = $stage;
+        $status = execute($cli[3], $args);
+        if ($status !== 0) return $status;
+        if (!fs_rename($stage, $exe)) throw Exception::make("Cannot publish executable");
+    } finally {
+        if (fs_exists($stage)) fs_remove($stage);
+    }
 } finally {
-    if (fs_exists($stage)) fs_remove($stage);
+    if (!fs_lock_release($lock)) throw Exception::make("Cannot release program bundle lock");
 }
 return execute($exe, []);
