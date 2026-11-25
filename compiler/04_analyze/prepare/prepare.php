@@ -2600,8 +2600,7 @@ final class Preparation
 		$slots = null;
 		if (isset($call->named)) {
 			if ($callback) throw new diagnostic($call->source(), $call->byte_start(), 'Typed callback calls require positional arguments');
-			if ($variadic !== null) throw new diagnostic($call->source(), $call->byte_start(), 'Variadic calls require positional arguments');
-			$call->named->bind_slots($call, $function);
+			$call->named->bind_slots($call, $function, $variadic);
 			$slots = $call->named->slots;
 		}
 		$accepted = $callback

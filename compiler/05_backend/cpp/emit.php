@@ -3415,6 +3415,12 @@ CPP;
 				}
 				$arguments[] = $this->conversion($type, $conversion, $value, $argument);
 			}
+			// Named slots describe only the fixed prefix. Supply the owned tail after its defaults.
+			if ($site->named !== null && ($tail = $constructor->variadic_slot()) !== null) {
+				$type = $constructor->parameters[$tail]->type_def();
+				$arguments[] = $type->lower_cpp_empty();
+				if ($reordered) $fields[] = $this->member_type($type) . ' slot_' . $tail . ';';
+			}
 			if ($reordered) {
 				// Aggregate fields are the actual value parameters, initialized once in written order.
 				// Their lifetime ends after base initialization, before the derived fields and body.

@@ -258,8 +258,14 @@ as one final unpacked vector, for example `score($base, ...$items)` or
 before the vector. The vector must match the pack storage type exactly.
 It is evaluated once, after the fixed arguments, and passed with ordinary
 vector value semantics. Mutating the pack leaves the caller’s vector storage
-independent. An empty vector supplies zero elements. Reference packs and named
-arguments to variadic calls remain deferred.
+independent. An empty vector supplies zero elements.
+
+When a call selects a source declaration, labels may bind its fixed parameters.
+For example, `score(bonus: first(), base: second())` evaluates `first()` before
+`second()`, applies defaults to omitted optional fixed parameters, and supplies
+an empty pack. A label naming the tail is an error. Unpacking requires positional
+arguments. Typed callbacks and owned callables retain positional invocation.
+Reference packs remain deferred.
 
 PHP class and struct constructors accept the same trailing by-value pack. Both
 shared construction (`new Scores(1, ...$items)`) and inline struct construction

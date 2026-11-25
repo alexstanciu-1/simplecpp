@@ -139,6 +139,15 @@ $unpack = (new Program_Frontend())->prepare_sources('main', [
 	'js' => new source_file('js', 'function via(op:callback<int,int...>,xs:vector<int>):int {return op(...xs);}', flavor::js),
 ], new entry_target(31));
 $fixtures['unpack'] = ['files' => Cpp_Program::emit($unpack)->files, 'stdout_hex' => bin2hex('62')];
+// Each caller uses its own label syntax against the same published PHP parameter names.
+$named_variadic = (new Program_Frontend())->prepare_sources('main', [
+	'main' => new source_file('main', 'function score(int $base,int $bonus=4,int ...$items):int {return $base*10+$bonus+count($items);}'
+		. 'echo from_cpp(),from_js(),from_py();return 8;', flavor::php),
+	'cpp' => new source_file('cpp', 'int from_cpp() {return score(bonus:2,base:1);}', flavor::cpp),
+	'js' => new source_file('js', 'function from_js():int {return score(base:3);}', flavor::js),
+	'py' => new source_file('py', "def from_py() -> int:\n    return score(bonus=6,base=5)\n", flavor::python),
+], new entry_target(31));
+$fixtures['named_variadic'] = ['files' => Cpp_Program::emit($named_variadic)->files, 'stdout_hex' => bin2hex('123456')];
 // PHP follows the normative type-before-name signature; shorthand and deferred features reject.
 $php = static fn(string $code) => (new Source_Frontend())->prepare(new source_file('php', $code, flavor::php), new entry_target(31));
 foreach (['function f($x int): void {}', 'function f(int &...$x): void {}',
@@ -161,7 +170,13 @@ rejects(fn() => $php(str_replace('public static function', 'public function', $s
 	. '$s=new S();$op function<int(int...)> = $s->n(...);return 8;'), 'Callback reference requires a named free function');
 rejects(fn() => $php('function f(int ...$xs,int $y):int {return 0;}return 8;'), 'Variadic parameter must be last');
 rejects(fn() => $php('function f(int ...$xs=1):int {return 0;}return 8;'), 'Variadic parameter must be last');
-rejects(fn() => $php($variadic . 'return gather(base: 1);'), 'Variadic calls require positional arguments');
+$php($variadic . 'return gather(base: 1);');
+rejects(fn() => $php($variadic . 'return gather(xs: 1);'), 'only bind fixed parameters');
+rejects(fn() => $php($variadic . 'return gather(1,base:2);'), 'Parameter supplied twice');
+rejects(fn() => $php('function call_it(callback<int,int,int...> $op):int {return $op(base:1);}return 8;'),
+	'Typed callback calls require positional arguments');
+rejects(fn() => $php('function call_it(function<int(int,int...)> $op):int {return $op(base:1);}return 8;'),
+	'Typed callback calls require positional arguments');
 
 $prefix = $variadic . '$xs vector<int> = [];';
 foreach (['gather(...$xs)', 'gather(1,2,...$xs)'] as $call) {

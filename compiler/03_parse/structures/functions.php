@@ -511,7 +511,8 @@ final class Named_Arguments
 
 	/** METHODS */
 	/** Resolve against the current published signature. Only explicit operands can consume a slot. */
-	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function|ast_lambda_expression $function): void
+	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function|ast_lambda_expression $function,
+		?int $variadic = null): void
 	{
 		$names = [];
 		if ($function instanceof runtime_function) $names = array_flip($function->parameter_names);
@@ -527,13 +528,14 @@ final class Named_Arguments
 				$target = $function instanceof ast_lambda_expression ? $site->name : $function->name();
 				throw new diagnostic($site->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . ' on ' . $target);
 			}
+			if ($slot === $variadic) throw new diagnostic($site->source(), $argument->byte_start(), 'Named arguments may only bind fixed parameters');
 			if (!isset($function->parameters[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Too many positional arguments');
 			if (isset($used[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $label);
 			$used[$slot] = true;
 			$slots[] = $slot;
 		}
 		foreach ($names as $name => $slot) {
-			if (isset($used[$slot])) continue;
+			if ($slot === $variadic || isset($used[$slot])) continue;
 			if ($function instanceof runtime_function || $function->parameters[$slot]->default_value === null) {
 				throw new diagnostic($site->source(), $site->byte_start(), 'Missing required argument: ' . $name);
 			}
