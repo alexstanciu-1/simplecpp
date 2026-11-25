@@ -2237,6 +2237,7 @@ CPP;
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $required_headers
 	 * @param ast_global_declaration[] $global_references
+	 * @param list<string>|null $statement_setup
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
@@ -3031,6 +3032,7 @@ CPP;
 	 * @param ast_global_declaration[] $global_references
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $required_headers
+	 * @param list<string>|null $statement_setup
 	 */
 	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|ast_lambda_expression|callback_type_definition|runtime_function $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
@@ -3196,17 +3198,12 @@ CPP;
 		return self::staged_call($call, $steps, ' -> ' . ($native_result ?? $result->cpp_type() . $return_reference), $statement_setup);
 	}
 
-	/** @param list<string> $steps @param ?list<string> $statement_setup */
-	private static function staged_call(string $call, array $steps, string $return_clause, ?array &$statement_setup): string
-	{
-		if ($statement_setup !== null) {
-			$statement_setup = $steps;
-			return $call;
-		}
-		return $steps === [] ? $call : '([&]()' . $return_clause . ' { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
-	}
-
-	/** Consume the selected typed traversal; its operand temporaries live through the entire loop. */
+	/**
+	 * Consume the selected typed traversal; its operand temporaries live through the entire loop.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
 	private function collection_transform(ast_call_expression $call, collection_transform_function $function,
 		array &$globals, array &$declarations, array &$headers): string
 	{
@@ -3237,7 +3234,13 @@ CPP;
 		return '[](const auto& source, auto callback) { ' . implode(' ', $lines) . ' }(' . $receiver . ', ' . $callable . ')';
 	}
 
-	/** Fill one owned pack in source order, sharing append and conversion lowering with base construction. */
+	/**
+	 * Fill one owned pack in source order, sharing append and conversion lowering with base construction.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 * @param list<string> $steps
+	 */
 	private function variadic_pack(ast_call_expression|ast_construction_expression $site, int $start, vector_type_definition $pack,
 		array &$globals, array &$declarations, array &$headers, array &$steps): string
 	{
@@ -3673,6 +3676,16 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** @param list<string> $steps @param ?list<string> $statement_setup */
+	private static function staged_call(string $call, array $steps, string $return_clause, ?array &$statement_setup): string
+	{
+		if ($statement_setup !== null) {
+			$statement_setup = $steps;
+			return $call;
+		}
+		return $steps === [] ? $call : '([&]()' . $return_clause . ' { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+	}
+
 	private static function integer_spelling(int $integer /** int64 */): string
 	{
 		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';

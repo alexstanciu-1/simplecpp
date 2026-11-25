@@ -464,7 +464,9 @@ class ast_call_expression extends ast_expression
 /** The final positional operand supplies the whole variadic vector. */
 final class ast_unpacked_call extends ast_call_expression
 {
-	public bool $unpacked { get => true; }
+	public bool $unpacked {
+		get => true;
+	}
 }
 
 /** Caller-side repetition settings share ordinary operand traversal and reset. */
