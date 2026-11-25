@@ -766,7 +766,7 @@ final class Preparation
 		if ($statement->value instanceof ast_writable_element) {
 			$collection = $statement->source_value instanceof ast_name_expression ? $statement->source_value->local_binding() : null;
 			if (!($collection instanceof ast_local_declaration || $collection instanceof ast_parameter_declaration)
-				|| !($source_type instanceof writable_iteration_type) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
+				|| ast_writable_element::origin($collection) !== null || !($source_type instanceof writable_iteration_type) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
 				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires a named local or parameter of vector or hash type in a synchronous body');
 			}
 			Readonly_Access::require_writable($statement->source_value, $collection);
@@ -805,7 +805,7 @@ final class Preparation
 		$destination = $this->find_local($statement->value->short_name);
 		if ($destination !== null) {
 			$this->require_collection_available($statement, $destination);
-			if ($collection !== null || $destination instanceof ast_writable_element) {
+			if ($collection !== null || ast_writable_element::origin($destination) !== null) {
 				throw new diagnostic($source, $statement->value->byte_start(), 'Writable foreach requires a fresh element binding');
 			}
 		}
@@ -990,7 +990,10 @@ final class Preparation
 			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
 		}
 		$this->require_collection_available($target, $origin);
-		if ($origin instanceof ast_writable_element) throw new diagnostic($source, $target->byte_start(), 'Cannot alias a writable foreach element');
+		if ($origin instanceof ast_local_declaration && $origin->initializer instanceof ast_lambda_expression && $origin->initializer->borrows_selected_element()) {
+			throw new diagnostic($source, $target->byte_start(), 'A closure borrowing a foreach element requires direct local invocation');
+		}
+		if (ast_writable_element::origin($origin) !== null) throw new diagnostic($source, $target->byte_start(), 'Cannot alias a writable foreach element');
 		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
 			&& ($origin->mode === passing_mode::readonly_reference || $this->enclosing_lambda !== null
 				|| !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
@@ -1186,7 +1189,7 @@ final class Preparation
 	{
 		unset($this->guards[$local->storage_id()]);
 		// A separately indexed write can change the slot before the next binding read.
-		$this->latest_writes[$local->storage_id()] = $local instanceof ast_writable_element ? null : $write;
+		$this->latest_writes[$local->storage_id()] = ast_writable_element::origin($local) !== null ? null : $write;
 	}
 
 	/** Resolve established storage once; generated admission precedes publication and latest-value invalidation. */
@@ -1757,6 +1760,9 @@ final class Preparation
 		$binding = $syntax->constant_only ? null : $this->find_local($name);
 		if ($binding !== null) {
 			$type = $binding->type_def();
+			if ($type instanceof lambda_type_definition && $type->has_borrow && $binding->initializer->borrows_selected_element()) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'A closure borrowing a foreach element requires direct local invocation');
+			}
 			if (!$allow_callback && ($type instanceof callback_type_definition || $type instanceof lambda_type_definition)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable value can only be invoked or forwarded');
 			}
@@ -1836,7 +1842,7 @@ final class Preparation
 			throw new diagnostic($argument->source(), $argument->byte_start(),
 				'Reference argument requires stable variable storage: a named local or parameter');
 		}
-		if ($storage instanceof ast_writable_element && (!($target instanceof ast_function_declaration)
+		if (ast_writable_element::origin($storage) !== null && (!($target instanceof ast_function_declaration)
 			|| $target->parent instanceof ast_method_owner || $target->is_async || $target->returns_reference)) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Writable foreach element cannot bind a reference parameter');
 		}
@@ -2088,14 +2094,20 @@ final class Preparation
 				throw new diagnostic($capture->source(), $capture->byte_start(), $reason . $name);
 			}
 			$this->value($capture->initializer);
+			$origin = $capture->initializer->local_def();
+			if ($origin instanceof ast_closure_capture && ast_writable_element::origin($origin) !== null) {
+				throw new diagnostic($capture->source(), $capture->byte_start(), 'Nested capture of a borrowed foreach element is deferred');
+			}
 			$capture_type = $capture->initializer->type_def();
 			$conversion = $capture->by_reference ? value_conversion::identity : $this->prepare_local_initialization($capture, $capture_type);
 			$capture->settle_type($capture_type, constant_evaluation::unavailable, true, $conversion);
 			if ($capture->by_reference) {
 				// Different capture names can borrow the same slot through local aliases.
-				$origin = $capture->initializer->local_def();
 				$this->require_collection_available($capture, $origin);
-				if ($origin instanceof ast_writable_element) throw new diagnostic($capture->source(), $capture->byte_start(), 'Cannot capture a writable foreach element by reference');
+				if ($origin instanceof ast_writable_element && (!($lambda->parent instanceof ast_local_declaration)
+					|| $lambda->parent->type_reference !== null || $lambda->parent->initializer !== $lambda)) {
+					throw new diagnostic($capture->source(), $capture->byte_start(), 'A borrowed foreach element requires an inferred local closure');
+				}
 				$id = $origin->storage_id();
 				if (!isset($borrowed[$id])) {
 					$borrowed[$id] = $capture;

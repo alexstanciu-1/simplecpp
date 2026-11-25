@@ -224,6 +224,15 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 		return $this->type_def()->signature->result;
 	}
 
+	/** Only direct calls of the inferred local may consume this lexical borrow. */
+	public function borrows_selected_element(): bool
+	{
+		foreach ($this->captures as $capture) {
+			if ($capture->by_reference && ast_writable_element::origin($capture->initializer->local_def()) !== null) return true;
+		}
+		return false;
+	}
+
 	/** Publish the signature, result conversion and effects together. @param int[] $borrowed_writes */
 	public function settle_lambda(lambda_type_definition $type, int $conversion /** uint16 */, array $borrowed_writes /** list<uint32> */): void
 	{

@@ -46,7 +46,7 @@ with TemporaryDirectory(prefix='scpp-writable-foreach-') as directory:
         ('$clear();', 'during writable foreach'),
         ('$aliasRef =& selected($n);', 'cannot bind a reference'),
         ('$a =& $n;', 'Cannot alias'),
-        ('$f=function() use (&$n):void {};', 'Cannot capture'),
+        ('$f function<void()> = function() use (&$n):void {};', 'requires an inferred local closure'),
     ]:
         edits.append(('main', main.replace('$n+=10;', write), message))
     edits += [

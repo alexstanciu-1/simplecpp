@@ -167,6 +167,14 @@ class ast_produced_binding extends ast_expression implements ast_local_binding
 /** A fresh PHP foreach name denoting the current vector slot by index. */
 final class ast_writable_element extends ast_produced_binding
 {
+	/** A reference capture retains the selected slot's access restrictions. */
+	public static function origin(?ast_local_binding $binding): ?self
+	{
+		while ($binding instanceof ast_closure_capture && $binding->by_reference) {
+			$binding = $binding->initializer->local_def();
+		}
+		return $binding instanceof self ? $binding : null;
+	}
 }
 
 /** A throw operation exits without a value; only a statement or a fallback owns it. */

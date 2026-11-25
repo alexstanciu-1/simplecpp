@@ -64,7 +64,7 @@ final class Readonly_Access
 		$storage = $site instanceof ast_index_expression ? $site->receiver : $site;
 		if ($storage->type_def() instanceof segment_type && $storage->type_def()->read_only)
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write through a read-only segment');
-		if ($storage instanceof ast_name_expression && $storage->local_binding() instanceof ast_writable_element) {
+		if ($storage instanceof ast_name_expression && ast_writable_element::origin($storage->local_binding()) !== null) {
 			$assignment = $target->parent;
 			if ($assignment instanceof ast_field_assignment && $assignment->target === $target && $assignment->selected_record_element() === $storage->local_binding()) return;
 			throw new diagnostic($site->source(), $site->byte_start(), 'Assign a whole writable foreach element to update its slot');

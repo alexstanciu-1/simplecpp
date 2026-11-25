@@ -410,7 +410,7 @@ final class ast_unset_statement extends ast_reset_statement
 	public function prepare_reset(ast_local_binding $local): void
 	{
 		// Aliases always introduce a new name and resolve to their original slot.
-		if (($local instanceof ast_closure_capture && $local->by_reference) || $this->name !== $local->declaration_key()
+		if (($local instanceof ast_closure_capture && $local->by_reference && ast_writable_element::origin($local) === null) || $this->name !== $local->declaration_key()
 			|| ($local instanceof ast_parameter_declaration && $local->mode === passing_mode::reference)) {
 			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot unset a native alias or reference parameter');
 		}
