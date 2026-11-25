@@ -1,0 +1,1 @@
+{"sources":["main.php"],"general_api":true,"dependencies":{"runtime":{"modules":["filesystem","io"]}}}

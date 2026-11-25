@@ -1,0 +1,1 @@
+{"sources":["main.php","component.php"],"general_api":true,"dependencies":{"runtime":{"modules":["regex","json"]}}}
