@@ -121,9 +121,9 @@ Native traversal follows the [common protocol](collection_traversal.md); the [co
 
 All three flavors support `count(box)`, `empty(box)`, and receiver methods `has(key)`
 and `remove(key)` for mixed/dynamic. PHP/C++ spell receiver access `->`; JS uses `.`.
-Count returns int64; empty is the same checked container count compared with zero,
-not general scalar truthiness. Both throw `boxed_expected_container` for null or scalar
-receivers. Has/remove return bool; null and missing keys return false, while other
+Count returns int64 and requires a container, throwing `boxed_expected_container` otherwise.
+Empty tests byte length for a string or entry count for a container. Other kinds throw
+`invalid_empty_operand`. Has/remove return bool; null and missing keys return false, while other
 scalar receivers throw `boxed_expected_container`. A stored null value is present.
 
 Key arguments must have exact static int64 or string type. They use the same source
@@ -132,7 +132,7 @@ Invalid keys fail before removal. Removal preserves mixed copy independence and 
 all aliases of a dynamic container; a missing removal does not create a container.
 Expression receivers are supported without new ownership rules.
 
-Metadata `boxed.source_collection` declares the count binding, source key domains and
+Metadata `boxed.source_collection` declares the count and empty bindings, source key domains and
 normalized method bindings. Generated source_has/source_remove adapt keys before invoking
 the existing classified-key API; the native has/remove contracts remain unchanged. The
 compiler consumes generated signatures and existing cardinality/argument protocols.

@@ -18,8 +18,8 @@ final class type_@name@ extends boxed_type_definition implements iterable_type, 
 
 	public function lower_cpp_cardinality(collection_cardinality $operation, string $receiver): string
 	{
-		$count = '(' . $receiver . ').@count_method@()';
-		return $operation === collection_cardinality::count ? $count : '(' . $count . ' == 0)';
+		$method = $operation === collection_cardinality::count ? '@count_method@' : '@empty_method@';
+		return '(' . $receiver . ').' . $method . '()';
 	}
 
 	/** STATIC PROPERTIES */

@@ -202,6 +202,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 '@method@' => $write['name'],
             ]);
         }
+        if ($identity === 'string' && isset($runtime['string'])) {
+            $indexInterface .= $indexInterface === '' ? ' implements counted_collection_type' : ', counted_collection_type';
+            $methods .= "\n" . readFile(__DIR__ . '/../templates/strings/string_cardinality.php.tpl');
+        }
         if ($identity === 'string' && ($runtime['string']['transfer_assignment'] ?? false)) {
             $indexInterface .= $indexInterface === '' ? ' implements private_value_transfer_type' : ', private_value_transfer_type';
         }

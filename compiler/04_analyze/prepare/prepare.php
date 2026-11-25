@@ -2464,15 +2464,18 @@ final class Preparation
 			}
 			if ($class !== null) $this->ambiguous_construction($call);
 			if (count($call->arguments) !== 1) {
-				throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires one collection argument');
+				throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires one argument');
 			}
 			$receiver = $call->arguments[0];
 			$this->value($receiver, $initializing);
 			$type = $receiver->type_def();
-			if (!($type instanceof counted_collection_type)) {
-				throw new diagnostic($receiver->source(), $receiver->byte_start(), $operation->name . ' requires a published vector or hash');
+			$result = $type instanceof counted_collection_type ? $type->cardinality_result($operation) : null;
+			if ($result === null) {
+				$message = $operation === collection_cardinality::empty
+					? 'empty requires a string or collection' : 'count requires a published vector or hash';
+				throw new diagnostic($receiver->source(), $receiver->byte_start(), $message);
 			}
-			$call->settle_cardinality($operation, $type);
+			$call->settle_cardinality($operation, $result);
 			return;
 		}
 		$this->source_call($call, $symbol, $function, $initializing, async_use: $async_use);

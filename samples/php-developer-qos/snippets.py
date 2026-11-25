@@ -32,10 +32,20 @@ $enabled bool=$value; if (!$enabled) { echo "present false"; } return 0;''',
           reject='Argument count mismatch', modules=('json',)),
     Probe('json-disabled', '$r=json_decode("1"); return 0;', reject='requires module runtime-json'),
     Probe('query-global', '$page=$_GET["page"] ?? "1"; echo $page; return 0;', reject='_GET'),
-    Probe('empty-string', 'if (empty("0")) { return 1; } return 0;',
-          reject='empty requires a published vector or hash'),
+    Probe('empty-string', '''function observed(string $s, int &$calls): string { $calls += 1; return $s; }
+$calls=0;
+$words vector<string> = ["", "0", " ", "a\\0b"];
+foreach ($words as $s) {
+    $m mixed=$s; $d dynamic=$s;
+    echo (int)empty(observed($s,$calls)), (int)empty($m), (int)empty($d);
+}
+echo "|", $calls; return 0;''', '111000000000|4'),
+    Probe('empty-boxed-number', '$n mixed=0; echo (int)empty($n); return 0;', runtime_error='invalid_empty_operand'),
+    Probe('empty-boxed-null', '$n dynamic=null; echo (int)empty($n); return 0;', runtime_error='invalid_empty_operand'),
+    Probe('empty-boxed-table', '$v mixed=[]; echo (int)empty($v); $v[]=null; echo (int)empty($v); return 0;', '10'),
+    Probe('count-string', 'echo count("abc"); return 0;', reject='count requires a published vector or hash'),
     Probe('empty-number', '$n=0; if (empty($n)) { return 1; } return 0;',
-          reject='empty requires a published vector or hash'),
+          reject='empty requires a string or collection'),
     Probe('echo-boxed', '$h=[]; $h["jobs"]=1; echo $h["jobs"]; return 0;',
           reject='Echo currently supports only int64 and string'),
     Probe('extract-boxed', '$h=[]; $h["jobs"]=1; $n int=$h["jobs"]; echo $n; return 0;', '1'),

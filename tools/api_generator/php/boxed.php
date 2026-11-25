@@ -14,12 +14,12 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         'string_keys' => 'classified_bytes', 'read' => 'same_family_null_on_miss', 'conversion' => 'explicit_scalar_only']);
     requireThat(names(at($m, 'families'), 'Duplicate boxed policy') === ['dynamic', 'mixed'], 'Unsupported boxed families');
     $source = at($m, 'source_collection');
-    fields($source, ['count_method', 'append_method', 'instance_field_default', 'key_types', 'methods']);
-    literals($source, ['count_method' => 'container_size', 'append_method' => 'append', 'instance_field_default' => 'null']);
+    fields($source, ['count_method', 'empty_method', 'append_method', 'instance_field_default', 'key_types', 'methods']);
+    literals($source, ['count_method' => 'container_size', 'empty_method' => 'empty', 'append_method' => 'append', 'instance_field_default' => 'null']);
     requireThat(names(at($source, 'key_types')) === ['int64', 'string'], 'Unsupported boxed source keys');
     fields($source->methods, ['has', 'remove', 'clear']);
     literals($source->methods, ['has' => 'source_has', 'remove' => 'source_remove', 'clear' => 'clear']);
-    $sourceCollection = ['count_method' => $source->count_method, 'append_method' => $source->append_method, 'instance_field_default' => $source->instance_field_default, 'key_types' => names($source->key_types),
+    $sourceCollection = ['count_method' => $source->count_method, 'empty_method' => $source->empty_method, 'append_method' => $source->append_method, 'instance_field_default' => $source->instance_field_default, 'key_types' => names($source->key_types),
         'methods' => (array) $source->methods];
     if (!property_exists($publication, 'boxed')) return;
     $p = $publication->boxed;
@@ -59,6 +59,6 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         'scalar_conversions' => $convert, 'integer_keys' => [0, 2147483647],
         'string_keys' => 'classified_bytes', 'read' => 'same_family_null_on_miss',
         'operations' => ['from_boolean', 'from_integer', 'from_floating', 'from_string', 'container', 'kind',
-            'get_boolean', 'get_integer', 'get_floating', 'get_string', 'read', 'has', 'set', 'remove', 'append', 'container_size', 'is_packed_container', 'clean', 'clear', 'iteration_limit', 'iteration_next'],
+            'get_boolean', 'get_integer', 'get_floating', 'get_string', 'read', 'has', 'set', 'remove', 'append', 'container_size', 'empty', 'is_packed_container', 'clean', 'clear', 'iteration_limit', 'iteration_next'],
         'build' => ['generated_sources' => ['src/boxed.cpp'], 'requires' => 'scpp_boxed_storage']];
 }
