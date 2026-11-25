@@ -1,0 +1,2 @@
+uname_result(system='Linux', node='randdesk', release='6.6.87.2-microsoft-standard-WSL2', version='#1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025', machine='x86_64') allowed core groups [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]]
+model name	: AMD Ryzen 5 PRO 4650G with Radeon Graphics
