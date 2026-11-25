@@ -115,9 +115,9 @@ including a write initially targeting a read snapshot; the final write dispatch
 uses its distinct operation instead. Compiler-native portability was not rebuilt.
 
 All 5,344 current source inputs match dev002. The
-[source delta](curl_evidence/source_delta.json) overlays the frozen S11/S13
+[source delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/curl_evidence/source_delta.json) overlays the frozen S11/S13
 manifest; the audit is included in the
-[transport evidence archive](curl_evidence/curl-transport-evidence.tar.gz).
+[transport evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/curl_evidence/curl-transport-evidence.tar.gz).
 Archive SHA256:
 `02c3794dae7c61a0b237e9925a83f2162de900b8c11d55b6441beb59f035c986`.
 The archive includes intermediate failures and generated publications, not just
@@ -162,8 +162,8 @@ boundaries, runtime inventory and take checks. The earlier independent runtime
 ASan/UBSan proof remains valid: this goal changes no runtime implementation.
 
 All **5,346 source inputs** match the tested dev002 tree, with zero mismatches.
-[Final source delta](curl_evidence/source_final_delta.json) overlays the frozen
-S11/S13 manifest. [Acceptance evidence](curl_evidence/curl-acceptance-evidence.tar.gz)
+[Final source delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/curl_evidence/source_final_delta.json) overlays the frozen
+S11/S13 manifest. [Acceptance evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/curl_evidence/curl-acceptance-evidence.tar.gz)
 contains source audit, publications, commands, cold/warm results, exact outputs and
 configuration/recovery logs, excluding caches and binaries. SHA256:
 `97a0be6b2f05503f310e3d0f546f9e78e3ad6600f73ca773c4f284d45f60feca`.
@@ -190,7 +190,7 @@ The shared local HTTP router and payload match the baseline bytes. Baseline
 runtime composition was rebuilt with curl enabled; no old object was reused.
 The shared runner used CLI fallback because available PHP CLI/FPM versions differ.
 
-[Baseline evidence](curl_evidence/curl-baseline-evidence.tar.gz) includes generated
+[Baseline evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/curl_evidence/curl-baseline-evidence.tar.gz) includes generated
 C++, commands, exact outputs, per-fixture results and the source audit, excluding
 executables/objects. Archive SHA256:
 `35526a226f719832906c7ee845b3185c5f89a584cd47fc36659919f14f21662c`.
@@ -199,7 +199,7 @@ The tested `curl_baseline.py` SHA256 is
 
 ## Evidence
 
-[Probe archive](curl_evidence/curl-probe-evidence.tar.gz) retains logs and generated
+[Probe archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/curl_evidence/curl-probe-evidence.tar.gz) retains logs and generated
 probe source, excluding native caches and executables. Companion scripts are
 investigation checkpoints, not acceptance runners: their aggregate invocation
 intentionally fails on the recorded blockers. `curl-publish.php` is the corrected
@@ -220,7 +220,7 @@ JSON body, all info selector kinds, alias-visible errors/reset/close, invalid an
 closed handles, and response ownership surviving reset/close. These are runtime
 proofs, not source snapshot/write-back or v0.1/v0.2 compatibility proofs.
 
-[Runtime evidence](curl_evidence/curl-runtime-evidence.tar.gz), excluding binaries:
+[Runtime evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/curl_evidence/curl-runtime-evidence.tar.gz), excluding binaries:
 SHA256 `d08b4d5b95287bb347447d56cfd2daf980d4a507f87802ace9afd7da128656d2`.
 Test source SHA256:
 `c96a8992d923a886fa6477b90ad9e6535ecb62155d327db4a54eeb340f66a488`

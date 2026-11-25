@@ -84,11 +84,11 @@ attempts. Generated-program execution does not prove a native compiler rebuild.
 
 ## Evidence and remaining scope
 
-[Results](guarded_bool_results.json) and [evidence](guarded_bool_evidence.json.gz)
+[Results](guarded_bool_results.json) and [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_bool_evidence.json.gz)
 record command exits, observed counts, toolchain and checksums. The archive contains
 1,870 records and verifies 6,201 source files. The
-[baseline](guarded_bool_baseline.json), [initial source](guarded_bool_source.json),
-[final tested source](guarded_bool_source_final.json), and
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_bool_baseline.json), [initial source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_bool_source.json),
+[final tested source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_bool_source_final.json), and
 [completion audit](guarded_bool_completion_audit.json) separate inherited work,
 tested implementation and local documentation closeout. Among existing executable
 sources only `04_analyze/operators/guarded.php` changed; the bool fixture/runner are

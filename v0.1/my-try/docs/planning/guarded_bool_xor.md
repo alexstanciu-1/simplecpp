@@ -76,9 +76,9 @@ Each companion suite ran with its own fresh `verification/<suite>` directory;
 24 task slots. The focused proof passed on its first attempt in 9.07 seconds.
 Remote integrity verified 6,206 source files; 226 evidence records were archived.
 
-See [results](guarded_bool_xor_results.json), [evidence](guarded_bool_xor_evidence.json.gz),
-[baseline](guarded_bool_xor_baseline.json), [source](guarded_bool_xor_source.json),
-[final source](guarded_bool_xor_source_final.json), and
+See [results](guarded_bool_xor_results.json), [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_bool_xor_evidence.json.gz),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_bool_xor_baseline.json), [source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_bool_xor_source.json),
+[final source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_bool_xor_source_final.json), and
 [completion audit](guarded_bool_xor_completion_audit.json). Documentation closeout
 is separate from the tested executable snapshot.
 

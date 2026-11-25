@@ -79,10 +79,10 @@ All executable verification used the shared runner on dev002; none ran on WSL.
 There was no native compiler rebuild or broad matrix rerun.
 
 [Results](simple_repairs_03_results.json) contain observations, toolchain versions,
-evidence hash and documentation transfer hash. [Evidence](simple_repairs_03_evidence.json.gz)
+evidence hash and documentation transfer hash. [Evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/simple_repairs_03_evidence.json.gz)
 contains command logs, expected failure, outputs, manifests, cache observations and
-the documentation checker. [Tested sources](simple_repairs_03_source.json) records
-6,184 verified file hashes; [baseline](simple_repairs_03_baseline.json) records the
+the documentation checker. [Tested sources](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/simple_repairs_03_source.json) records
+6,184 verified file hashes; [baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/simple_repairs_03_baseline.json) records the
 starting worktree. All 423 protected compiler/runtime implementation files were
 unchanged. Documentation review files are separate from that source snapshot.
 

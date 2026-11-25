@@ -68,9 +68,9 @@ full matrix rerun or native compiler rebuild. No blocker remains within O1 scope
 
 ## Evidence and accounting
 
-[Results/signatures](mixed_ordering_results.json), [runner archive](mixed_ordering_evidence.json.gz),
-[final source manifest](mixed_ordering_source_final.json), [initial manifest](mixed_ordering_source.json),
-[baseline](mixed_ordering_baseline.json), [completion audit](mixed_ordering_completion_audit.json).
+[Results/signatures](mixed_ordering_results.json), [runner archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_ordering_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_ordering_source_final.json), [initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_ordering_source.json),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_ordering_baseline.json), [completion audit](mixed_ordering_completion_audit.json).
 Remote integrity covers 6,236 source files; historical evidence is unchanged.
 
 Reproduce: `python3 compiler/my-try/tests/mixed_ordering.py --results FRESH` on dev002.

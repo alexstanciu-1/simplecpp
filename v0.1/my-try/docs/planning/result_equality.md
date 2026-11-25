@@ -94,9 +94,9 @@ Only newly admitted negative expectations were retired in guarded/string fixture
 other gaps remain negative. Historical reports and old proof artifacts are unchanged.
 The renamed owner/fixture and operation names are recorded in the completion audit.
 
-[Results](result_equality_results.json), [evidence](result_equality_evidence.json.gz),
-[initial source manifest](result_equality_source.json),
-[final source manifest](result_equality_source_final.json) and
+[Results](result_equality_results.json), [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/result_equality_evidence.json.gz),
+[initial source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/result_equality_source.json),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/result_equality_source_final.json) and
 [completion audit](result_equality_completion_audit.json) retain provenance.
 All 6,218 final snapshot files matched dev002; 451 commands in successful runs had
 expected exit codes. Initial failed commands remain separate. Local executable

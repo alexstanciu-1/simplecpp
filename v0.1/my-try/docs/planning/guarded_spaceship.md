@@ -89,9 +89,9 @@ below 32 concurrent verification tasks. Both focused tasks passed on the first
 attempt: int in 5.77 seconds, string in 7.12 seconds.
 
 Remote integrity verified 6,207 files; the archive contains 283 evidence records.
-See [results](guarded_spaceship_results.json), [evidence](guarded_spaceship_evidence.json.gz),
-[baseline](guarded_spaceship_baseline.json), [source](guarded_spaceship_source.json),
-[final source](guarded_spaceship_source_final.json), and
+See [results](guarded_spaceship_results.json), [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_spaceship_evidence.json.gz),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_spaceship_baseline.json), [source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_spaceship_source.json),
+[final source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_spaceship_source_final.json), and
 [completion audit](guarded_spaceship_completion_audit.json). Documentation closeout
 is separate from the tested executable snapshot.
 

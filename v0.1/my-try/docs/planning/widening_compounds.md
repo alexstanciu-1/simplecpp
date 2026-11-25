@@ -58,10 +58,10 @@ rerun or native compiler rebuild. No blocker remains within this approved slice.
 ## Evidence and accounting
 
 [Results/signatures](widening_compounds_results.json),
-[runner archive](widening_compounds_evidence.json.gz),
-[final source manifest](widening_compounds_source_final.json),
-[initial manifest](widening_compounds_source.json),
-[baseline](widening_compounds_baseline.json),
+[runner archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/widening_compounds_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/widening_compounds_source_final.json),
+[initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/widening_compounds_source.json),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/widening_compounds_baseline.json),
 [completion audit](widening_compounds_completion_audit.json).
 Remote integrity verifies 6,238 source files. Historical evidence is preserved.
 

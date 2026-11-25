@@ -1,6 +1,8 @@
 # Full generated matrix on v0.2 — 2026-10-17
 Doc Status: planning
 
+The [matrix input catalog](v0_1_compatibility_operator_matrix_inputs.json.gz) preserves both source variants and their expected behavior for comparison with the active compiler.
+
 Later [scalar admission follow-up](v0_1_compatibility_scalar_admission.md): all 48
 ordinary strict operator fixtures now compile, resolving S03; 60 affected matrix
 rows pass their existing oracles. Counts below retain their dated audit meaning.
@@ -173,7 +175,7 @@ contract review, not newly established unchanged-source v0.1 regressions.
 
 The [machine-readable summary](v0_1_compatibility_operator_matrix_results.json)
 contains family counts, exact first-blocker groups, representative seed IDs,
-phase counts, toolchain and origin hashes. The [compressed case ledger](v0_1_compatibility_operator_matrix_evidence.json.gz)
+phase counts, toolchain and origin hashes. The [compressed case ledger](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/v0_1_compatibility_operator_matrix_evidence.json.gz)
 retains all 22,816 original/adapted sources and hashes, expectations, results,
 previous attempts, source snapshots' hashes and the manifest. Source hashes and
 unique-case counts were checked when consolidating the evidence.

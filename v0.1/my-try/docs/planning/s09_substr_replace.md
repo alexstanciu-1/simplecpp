@@ -76,9 +76,9 @@ implementation changed.
 
 ## Evidence and remaining work
 
-[Results](s09_replace_results.json), [all run logs](s09_replace_evidence.json.gz),
-[initial manifest](s09_replace_source_initial.json),
-[final manifest](s09_replace_source_final.json) and
+[Results](s09_replace_results.json), [all run logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s09_replace_evidence.json.gz),
+[initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s09_replace_source_initial.json),
+[final manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s09_replace_source_final.json) and
 [static audit](s09_replace_audit.json) retain provenance, exact fixture bytes and
 runtime change bounds. Documentation closeout follows the tested snapshot. The old
 string-suite unresolved-substr_replace assertion is replaced with a positive

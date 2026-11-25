@@ -88,9 +88,9 @@ this carrier's fixture branch; other carrier regression branches are unchanged.
 CLI fallback was used due PHP CLI/FPM version mismatch; PHP 8.5.11, Clang 18.1.3,
 Python 3.12.3.
 
-[Results](false_bool_equality_results.json), [evidence](false_bool_equality_evidence.json.gz),
-[initial source manifest](false_bool_equality_source.json),
-[final source manifest](false_bool_equality_source_final.json) and
+[Results](false_bool_equality_results.json), [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/false_bool_equality_evidence.json.gz),
+[initial source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/false_bool_equality_source.json),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/false_bool_equality_source_final.json) and
 [completion audit](false_bool_equality_completion_audit.json) retain provenance.
 All 6,220 final snapshot files matched dev002; 387 commands in successful runs had
 expected exits. Initial failed commands remain separate. Local executable files

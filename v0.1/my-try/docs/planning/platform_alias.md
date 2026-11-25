@@ -39,8 +39,8 @@ Runtime edits are confined to this validation and the restored filesystem query.
 The snapshot is `/home/alex-ai/platform-alias/20261020-01` on
 `alex-ai@dev002.travelfuse.ro`, based on `d1d1750e`. See
 [results](platform_alias_results.json), [audit](platform_alias_audit.json),
-[raw evidence](platform_alias_evidence.json.gz), and the
-[initial](platform_alias_source_initial.json) / [final](platform_alias_source_final.json)
+[raw evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/platform_alias_evidence.json.gz), and the
+[initial](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/platform_alias_source_initial.json) / [final](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/platform_alias_source_final.json)
 source manifests. All 6,311 snapshot files passed both remote and local hash audits.
 The accepted suites contain 132 commands and 37 native executions, including
 baseline capture. Local implementation/test bytes match the final remote snapshot.

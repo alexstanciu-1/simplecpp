@@ -106,11 +106,11 @@ negative expectations for the newly admitted numeric carrier updates. Those rows
 were retired; affected mixed/cross/XOR suites passed again. Other boundaries remain
 negative. Both failed attempts and successful reruns are retained.
 
-[Results](carrier_updates_results.json), [final evidence](carrier_updates_evidence.json.gz),
-[final source manifest](carrier_updates_source_final.json),
+[Results](carrier_updates_results.json), [final evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/carrier_updates_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/carrier_updates_source_final.json),
 [completion audit](carrier_updates_completion_audit.json),
-[first fixture evidence](carrier_updates_first_attempt_evidence.json.gz) and
-[first source manifest](carrier_updates_source_first_attempt.json) record provenance.
+[first fixture evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/carrier_updates_first_attempt_evidence.json.gz) and
+[first source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/carrier_updates_source_first_attempt.json) record provenance.
 The final archive keeps the initial regression failures and final reruns separately.
 Only the mixed fixture's negative list changed after the successful focused proof;
 its dependent suites were reverified. No executable implementation changed afterward.

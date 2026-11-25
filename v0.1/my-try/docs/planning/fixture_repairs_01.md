@@ -52,9 +52,9 @@ attempt summary intentionally remains failed; it was not overwritten or relabell
   hashes match the completed verification baseline; pre-existing unrelated edits
   remain intact.
 - [Pre-repair worktree record](fixture_repairs_01_baseline.json).
-- [First snapshot](fixture_repairs_01_source.json) and [follow-up snapshot](fixture_repairs_01_source_retry.json).
+- [First snapshot](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/fixture_repairs_01_source.json) and [follow-up snapshot](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/fixture_repairs_01_source_retry.json).
 - [Per-issue results and exact commands](fixture_repairs_01_results.json).
-- [Archived logs, source integrity and toolchain records](fixture_repairs_01_evidence.json.gz).
+- [Archived logs, source integrity and toolchain records](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/fixture_repairs_01_evidence.json.gz).
 
 No blockers remain for these seven repairs. H04/operator fixture migration,
 production JSON metadata V-R01, matrix seeds and catalog prose remain separate work.

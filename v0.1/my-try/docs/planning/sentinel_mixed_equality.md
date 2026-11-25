@@ -81,11 +81,11 @@ closeout follows that tested snapshot without changing the tested implementation
 ## Evidence and progress
 
 [Results and exact signatures](sentinel_mixed_equality_results.json),
-[baseline and acceptance evidence](sentinel_mixed_equality_evidence.json.gz),
+[baseline and acceptance evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/sentinel_mixed_equality_evidence.json.gz),
 [baseline revision](sentinel_mixed_equality_baseline.json),
-[baseline source](sentinel_mixed_equality_source.json),
-[repaired runtime source](sentinel_mixed_equality_source_runtime.json),
-[final tested source](sentinel_mixed_equality_source_final.json),
+[baseline source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/sentinel_mixed_equality_source.json),
+[repaired runtime source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/sentinel_mixed_equality_source_runtime.json),
+[final tested source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/sentinel_mixed_equality_source_final.json),
 [completion audit](sentinel_mixed_equality_completion_audit.json).
 
 V-L07 reaches **31 completed slices: 2,592 binary, 64 unary and 432 compound

@@ -78,7 +78,7 @@ parity. `20261022-vd06-tasks-01` executes both previously blocked repeated-error
 source join cases (pool sizes 0/2) and the two module selection controls. Both joins
 print the original worker error, then report completion.
 
-[Evidence](vd06-exception-evidence.tar.gz), SHA-256:
+[Evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/vd06-exception-evidence.tar.gz), SHA-256:
 `b4df5396cadfd890f2aa6aff76fd8b9036b021b6a60b535650e241a70d414796`. Sources, logs and summaries are retained; build caches are excluded.
 The unsupported-boundary suite retires only its throw/catch rejection rows; finally
 and unrelated rejections remain. Full identity/lifetime and finally acceptance
@@ -115,7 +115,7 @@ cleanup, rather than treating synchronous proof as async coverage.
 
 Final directories on dev002: `20261022-vd06-finally-final`,
 `20261022-vd06-ordinary-finally-01` and `20261022-vd06-tasks-final`.
-[Final and historical evidence](vd06-finally-evidence.tar.gz), SHA-256:
+[Final and historical evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/vd06-finally-evidence.tar.gz), SHA-256:
 `9959286b7a6de3be8f0fe664b0d5c20a5cb61d1b9c147f9c1bda73dc1c92b365`.
 The final source hash manifest matches the committed candidate. The closeout audit
 also read all 52 application manifests and representative cleanup/identity/retained

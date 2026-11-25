@@ -61,10 +61,10 @@ No blocker remains within the approved 48-signature scope.
 
 ## Evidence and remaining work
 
-[Results](int_carrier_compounds_results.json), [archived logs](int_carrier_compounds_evidence.json.gz),
-[final source manifest](int_carrier_compounds_source_final.json),
-[initial manifest](int_carrier_compounds_source.json),
-[baseline](int_carrier_compounds_baseline.json), and
+[Results](int_carrier_compounds_results.json), [archived logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_carrier_compounds_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_carrier_compounds_source_final.json),
+[initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_carrier_compounds_source.json),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_carrier_compounds_baseline.json), and
 [completion audit](int_carrier_compounds_completion_audit.json).
 Run `python3 compiler/my-try/tests/int_carrier_compounds.py --results FRESH` on dev002.
 

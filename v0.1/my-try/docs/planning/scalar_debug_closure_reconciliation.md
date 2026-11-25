@@ -58,7 +58,7 @@ two borrowed erased boundaries reject, and the separate owned erased backend gap
 is explicitly asserted. All warm builds compile/link zero units. The last check
 is a known-gap assertion, not a positive callable execution pass.
 
-[Initial evidence](s08-s05-probes.tar.gz) retains these results, original probe
+[Initial evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s08-s05-probes.tar.gz) retains these results, original probe
 diagnostics and corrected runtime output, excluding native caches/binaries.
 
 Existing C++ free-function metadata has only identity, symbol and header. Calling
@@ -113,8 +113,8 @@ The shared runner uses CLI fallback because installed CLI/FPM versions differ.
 No full matrix, runtime implementation change or native compiler rebuild ran.
 
 All **5,352 source inputs** match dev002 with zero mismatches. The
-[source delta](scalar_debug_source_delta.json) overlays the frozen tokenizer/IO
-manifest. [Final evidence](scalar-debug-acceptance.tar.gz) includes final cases,
+[source delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/scalar_debug_source_delta.json) overlays the frozen tokenizer/IO
+manifest. [Final evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/scalar-debug-acceptance.tar.gz) includes final cases,
 commands, exact outputs, generated publications, audit and historical attempts,
 excluding native caches/binaries. SHA256:
 `57c02976f96353cd53c98624fdc18b13c7c5aba53cf3bfe05d47d4ed5294535e`.

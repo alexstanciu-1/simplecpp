@@ -42,18 +42,18 @@ No full operator matrix or native compiler rebuild ran.
 
 - [Results and exact signatures](vl07_completion_results.json): 174 new-operation
   source rows, comprising 168 carriers, four scalar prerequisites and two controls.
-- [Evidence archive](vl07_completion_evidence.json.gz): 13,162 records, including
+- [Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/vl07_completion_evidence.json.gz): 13,162 records, including
   command logs, summaries, launchers, diagnostics and failed attempts.
 - 44 accepted suites account for 4,115 expected command exits and 10,305,306 recorded
   observations, including preservation regressions. Observation totals are not
   distinct signatures and include runtime/source/control proof dimensions.
 - [Completion audit](vl07_completion_audit.json) checks exact inventory/evidence
   agreement and all 6,151 non-documentation source hashes locally.
-- [Final tested source manifest](vl07_completion_source_final.json): 6,260 files,
+- [Final tested source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/vl07_completion_source_final.json): 6,260 files,
   verified remotely with zero mismatches. Documentation closeout follows that
   snapshot; source code is checked against the same hashes before commit.
-- [Initial source manifest](vl07_completion_source_initial.json) and
-  [intermediate manifests](vl07_completion_source_phases.json.gz) preserve attempt
+- [Initial source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/vl07_completion_source_initial.json) and
+  [intermediate manifests](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/vl07_completion_source_phases.json.gz) preserve attempt
   provenance as reconstructible deltas against the initial manifest. The unused `runtime_prerequisites` draft is marked as not executed.
 - Runtime generation ran twice and matched after normalizing only the existing
   timestamp line. The checked-in generated header matches the tested final hash.

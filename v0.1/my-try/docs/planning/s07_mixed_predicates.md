@@ -58,8 +58,8 @@ unchanged count. Its diff contains exactly three signatures and three bindings.
 
 ## Evidence and closure
 
-[Results](s07_results.json), [all attempt logs](s07_evidence.json.gz),
-[initial manifest](s07_source_initial.json), [final manifest](s07_source_final.json)
+[Results](s07_results.json), [all attempt logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s07_evidence.json.gz),
+[initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s07_source_initial.json), [final manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s07_source_final.json)
 and [static audit](s07_audit.json) retain provenance. The first source run passed
 preparation and the original native program but the behavior observer misspelled
 the emitted name of `saved_result`. Correcting that test-only name fixed the build;

@@ -129,9 +129,9 @@ No failed attempt was rewritten as an initial pass.
 ## Evidence and remaining work
 
 - [Results](guarded_wrappers_01_results.json): commands, summaries, policy checks and checksum.
-- [Evidence archive](guarded_wrappers_01_evidence.json.gz): all attempts and toolchain/source integrity.
-- [Initial source](guarded_wrappers_01_source.json) and [final source](guarded_wrappers_01_source_final.json): hashes and fixture revision explanation.
-- [Baseline](guarded_wrappers_01_baseline.json) and [completion audit](guarded_wrappers_01_completion_audit.json): pre-existing work preserved, tested code agreement and allowed configuration-only runtime-tree changes.
+- [Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_wrappers_01_evidence.json.gz): all attempts and toolchain/source integrity.
+- [Initial source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_wrappers_01_source.json) and [final source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_wrappers_01_source_final.json): hashes and fixture revision explanation.
+- [Baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_wrappers_01_baseline.json) and [completion audit](guarded_wrappers_01_completion_audit.json): pre-existing work preserved, tested code agreement and allowed configuration-only runtime-tree changes.
 
 No runtime implementation changes, full matrix rerun or native compiler rebuild.
 Future V-L07 work must discuss writable carrier updates and the remaining domains

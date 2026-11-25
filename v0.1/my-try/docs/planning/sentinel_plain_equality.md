@@ -100,11 +100,11 @@ Clang 18.1.3, Python 3.12.3; CLI fallback due PHP CLI/FPM version mismatch.
 ## Provenance and progress
 
 [Results](sentinel_plain_equality_results.json),
-[final evidence](sentinel_plain_equality_evidence.json.gz),
-[final source manifest](sentinel_plain_equality_source_final.json),
+[final evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/sentinel_plain_equality_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/sentinel_plain_equality_source_final.json),
 [completion audit](sentinel_plain_equality_completion_audit.json),
-[initial candidate evidence](sentinel_plain_equality_first_attempt_evidence.json.gz)
-and [initial candidate manifest](sentinel_plain_equality_source_first_attempt.json)
+[initial candidate evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/sentinel_plain_equality_first_attempt_evidence.json.gz)
+and [initial candidate manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/sentinel_plain_equality_source_first_attempt.json)
 retain the development and verification history.
 All **6,226** final source hashes matched dev002, and all **492 runner commands**
 had expected exits. The 24 observation subprocesses separately report code zero.

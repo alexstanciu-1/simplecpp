@@ -79,12 +79,12 @@ was observed in these bounded checks; failures outside them are not ruled out.
 
 ## Evidence and limits
 
-[Acceptance archive](verification-environment-acceptance.tar.gz), SHA-256:
+[Acceptance archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/verification-environment-acceptance.tar.gz), SHA-256:
 `6a38a1580eaa278f7ddab0afa5414753034fab1c5559fa1cb5d3bf244c15da7d`.
 It contains command journals/stdout/stderr, host versions, the prelowering manifest,
 CMake configuration/link evidence, both lifecycle records and the intentional
 failure diagnostic. Source audit: **5,378 paths matched, zero mismatches** in
-`/home/alex-ai/curl/20261020-work`. The [source delta](verification_environment_source_delta.json)
+`/home/alex-ai/curl/20261020-work`. The [source delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/verification_environment_source_delta.json)
 extends the span/hash snapshot; the archive includes the complete manifest.
 
 This does not add strict-PHS MySQL metadata/source exposure. Native MySQL provider

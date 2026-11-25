@@ -45,7 +45,7 @@ proof, not a broad compiler regression or new incremental/MT validation.
 
 Evidence: [validation](native_lowering_report_20261016/validation.json),
 [correlation](native_lowering_report_20261016/correlation.json), and
-[native reports/build logs/source snapshots](native_lowering_report_20261016/evidence.tar.gz).
+[native reports/build logs/source snapshots](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/native_lowering_report_20261016/evidence.tar.gz).
 The adjacent harness scripts preserve the required prior workspace layout. Historical
 timing/profile inputs are copied alongside them for audit; they are not fresh timings.
 

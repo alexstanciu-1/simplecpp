@@ -95,11 +95,11 @@ negatives. Equality, identity, spaceship and other invalid combinations remain.
 The new positive fixture covers these forms plus boolean-sentinel Result strings.
 Historical counts/manifests/evidence are unchanged.
 
-[Results](guarded_string_results.json) and [evidence](guarded_string_evidence.json.gz)
+[Results](guarded_string_results.json) and [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_string_evidence.json.gz)
 record commands, observed counts, source integrity and toolchain. The archive contains
 1,897 records and verifies 6,203 source files. The
-[baseline](guarded_string_baseline.json), [initial source](guarded_string_source.json),
-[final tested source](guarded_string_source_final.json) and
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_string_baseline.json), [initial source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_string_source.json),
+[final tested source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_string_source_final.json) and
 [completion audit](guarded_string_completion_audit.json) separate inherited work,
 tested code and documentation closeout. Existing executable changes are limited to
 the guarded owner and ordinary string fixture; the guarded-string fixture/runner

@@ -51,7 +51,7 @@ for final default-prelowering acceptance.
 
 All native work ran in `/home/alex-ai/tokenizer-io/20261020-final` on dev002 from a
 clean archive. All **5,337 source-input hashes** match the frozen
-[source manifest](tokenizer_io_source_final.json). No full operator matrix or native
+[source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/tokenizer_io_source_final.json). No full operator matrix or native
 compiler rebuild was run.
 
 | Gate | Evidence |
@@ -72,7 +72,7 @@ Tokenizer proofs cover byte locations, all accessor errors, owned input lifetime
 extended lengths, mixed adapter schema and handle snapshots.
 
 The [machine-readable results](tokenizer_io_results.json) and
-[hash-indexed archive](tokenizer_io_evidence/acceptance.tar.gz) retain **1,066 evidence
+[hash-indexed archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/tokenizer_io_evidence/acceptance.tar.gz) retain **1,066 evidence
 files**, including the baseline and intermediate failures. Every archived file was
 hash-verified after retrieval. The archive README records its checksum.
 

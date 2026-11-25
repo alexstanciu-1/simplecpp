@@ -111,8 +111,8 @@ bodies are unchanged.
 
 Evidence: [comparison tables](initialization_headers_20261016/comparison.json),
 [validated identities and trace assertions](initialization_headers_20261016/validation.json),
-[raw dev002 archive](initialization_headers_20261016/evidence.tar.gz), and
-[local checks, including the corrected initial failure](initialization_headers_20261016/local-checks.tar.gz).
+[raw dev002 archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/initialization_headers_20261016/evidence.tar.gz), and
+[local checks, including the corrected initial failure](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/initialization_headers_20261016/local-checks.tar.gz).
 The adjacent scripts preserve the experiment harness; they expect the documented
 workspace layout and prior allocation checkpoint, rather than being a standalone
 benchmark installer.

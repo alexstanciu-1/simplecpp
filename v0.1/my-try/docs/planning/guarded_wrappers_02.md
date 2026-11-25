@@ -84,11 +84,11 @@ flag values. All attempts are retained in the archive.
 ## Evidence and remaining work
 
 [Results](guarded_wrappers_02_results.json) record summaries, counts and checksums.
-[Evidence](guarded_wrappers_02_evidence.json.gz) contains 2,582 log/integrity records;
+[Evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_wrappers_02_evidence.json.gz) contains 2,582 log/integrity records;
 6,195 source files match the tested snapshot. The
-[baseline](guarded_wrappers_02_baseline.json),
-[initial source](guarded_wrappers_02_source.json),
-[final tested source](guarded_wrappers_02_source_final.json), and
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_wrappers_02_baseline.json),
+[initial source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_wrappers_02_source.json),
+[final tested source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_wrappers_02_source_final.json), and
 [completion audit](guarded_wrappers_02_completion_audit.json) separate inherited
 work, this implementation and local documentation closeout. Only the guarded
 admission file and two focused test files changed among executable source files.

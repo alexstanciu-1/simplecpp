@@ -73,9 +73,9 @@ unchanged. The 183 native programs are distinct from PHP preparation assertions.
 
 ## Evidence and corrections
 
-[Results](s06_results.json), [all attempt logs](s06_evidence.json.gz),
-[initial manifest](s06_source_initial.json), [first candidate manifest](s06_source_candidate.json)
-and [final manifest](s06_source_final.json) preserve provenance. The
+[Results](s06_results.json), [all attempt logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s06_evidence.json.gz),
+[initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s06_source_initial.json), [first candidate manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s06_source_candidate.json)
+and [final manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s06_source_final.json) preserve provenance. The
 [static closeout audit](s06_audit.json) checks exact source hashes, command exits,
 unchanged runtime files, original fixture bytes and issue status. Documentation
 closeout follows the tested snapshot.

@@ -64,9 +64,9 @@ mixed/fixed-width and power compounds remain separate.
 ## Evidence and remaining work
 
 [Results and observation counts](int_bitwise_compounds_results.json),
-[archived runner logs](int_bitwise_compounds_evidence.json.gz),
-[tested source manifest](int_bitwise_compounds_source_final.json),
-[pre-change baseline](int_bitwise_compounds_baseline.json), and
+[archived runner logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_bitwise_compounds_evidence.json.gz),
+[tested source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_bitwise_compounds_source_final.json),
+[pre-change baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_bitwise_compounds_baseline.json), and
 [completion audit](int_bitwise_compounds_completion_audit.json).
 The manifest covers 6,231 source files. Earlier arithmetic evidence is unchanged.
 

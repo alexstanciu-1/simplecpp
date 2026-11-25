@@ -81,9 +81,9 @@ No full matrix rerun or native compiler rebuild. No blocker remains in this slic
 
 ## Evidence and progress
 
-[Results/signatures](cross_identity_results.json), [runner archive](cross_identity_evidence.json.gz),
-[final source manifest](cross_identity_source_final.json), [initial runtime-gate manifest](cross_identity_runtime_source.json),
-[baseline](cross_identity_baseline.json), [completion audit](cross_identity_completion_audit.json).
+[Results/signatures](cross_identity_results.json), [runner archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/cross_identity_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/cross_identity_source_final.json), [initial runtime-gate manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/cross_identity_runtime_source.json),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/cross_identity_baseline.json), [completion audit](cross_identity_completion_audit.json).
 Remote integrity checks all 6,241 manifest files. Historical prerequisite evidence
 and earlier slices remain separate.
 

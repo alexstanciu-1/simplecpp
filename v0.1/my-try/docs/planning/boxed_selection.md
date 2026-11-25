@@ -55,8 +55,8 @@ The original verification JSON and snapshot evidence retain their earlier findin
 All execution is on `alex-ai@dev002.travelfuse.ro`, snapshot
 `/home/alex-ai/boxed-selection/20261020-01`, base `842276aa`. See
 [results](boxed_selection_results.json), [audit](boxed_selection_audit.json),
-[raw evidence](boxed_selection_evidence.json.gz), and
-[initial](boxed_selection_source_initial.json) / [final](boxed_selection_source_final.json)
+[raw evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/boxed_selection_evidence.json.gz), and
+[initial](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/boxed_selection_source_initial.json) / [final](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/boxed_selection_source_final.json)
 source manifests. All 6,319 snapshot files passed remote and local hash audits.
 The final suites record 376 expected command outcomes and 107 native executions:
 101 successful executions plus six expected UBSan boundary failures. The 58

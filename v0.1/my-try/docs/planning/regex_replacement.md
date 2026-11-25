@@ -39,10 +39,10 @@ its existing PCRE2 build dependency.
 ## Verification and provenance
 
 [Results](regex_replacement_results.json), [audit](regex_replacement_audit.json),
-and [raw evidence](regex_replacement_evidence.json.gz) record the snapshot at
+and [raw evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/regex_replacement_evidence.json.gz) record the snapshot at
 `/home/alex-ai/regex-batch/20261020-01` on `alex-ai@dev002.travelfuse.ro`.
-The base revision is `6c25e526`; [initial](regex_replacement_source_initial.json)
-and [final](regex_replacement_source_final.json) manifests identify the overlay.
+The base revision is `6c25e526`; [initial](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/regex_replacement_source_initial.json)
+and [final](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/regex_replacement_source_final.json) manifests identify the overlay.
 All 6,302 final snapshot files passed the remote hash audit; local implementation
 and tests match the tested bytes. Documentation closeout follows the snapshot.
 

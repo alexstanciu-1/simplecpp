@@ -63,8 +63,8 @@ fixed-width integers and Result/sentinel comparisons remain negative. Historical
 reports and evidence retain their original counts and results.
 
 [Results](nullable_bool_string_equality_results.json),
-[evidence archive](nullable_bool_string_equality_evidence.json.gz),
-[final source manifest](nullable_bool_string_equality_source_final.json) and
+[evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nullable_bool_string_equality_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nullable_bool_string_equality_source_final.json) and
 [completion audit](nullable_bool_string_equality_completion_audit.json) record the
 proof. All 6,214 snapshot files matched on dev002; local executable files match the
 final tested hashes. Documentation closeout is separate from that source snapshot.

@@ -85,9 +85,9 @@ files are unchanged. Only runtime contract metadata changed.
 ## Evidence and corrections
 
 [Exact results and signatures](carrier_text_results.json),
-[all attempt logs](carrier_text_evidence.json.gz),
-[initial source manifest](carrier_text_source_initial.json),
-[final tested source manifest](carrier_text_source_final.json) and the
+[all attempt logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/carrier_text_evidence.json.gz),
+[initial source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/carrier_text_source_initial.json),
+[final tested source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/carrier_text_source_final.json) and the
 [closeout audit](carrier_text_audit.json) preserve provenance. The archive includes
 candidate manifests and launchers. Documentation closeout follows the tested snapshot.
 

@@ -79,11 +79,11 @@ H11's two-compiler harness is archived as
 operations and both valid controls are in `verification/h11-02/*/logs`.
 
 [Results](fixture_repairs_02_results.json) contain per-row outcomes, suite summaries,
-toolchain versions and evidence hash. [Evidence](fixture_repairs_02_evidence.json.gz)
+toolchain versions and evidence hash. [Evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/fixture_repairs_02_evidence.json.gz)
 contains command logs, exact outputs, generated metadata and source-integrity reports.
-Source manifests: [initial suites](fixture_repairs_02_source_01.json),
-[initial H09 transfer](fixture_repairs_02_source_02.json),
-[final H09 sources](fixture_repairs_02_source_final.json).
+Source manifests: [initial suites](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/fixture_repairs_02_source_01.json),
+[initial H09 transfer](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/fixture_repairs_02_source_02.json),
+[final H09 sources](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/fixture_repairs_02_source_final.json).
 
 Two harness retries are preserved: H11 initially collided on a shared command-log
 name; each compiler now has its own runner/log directory. H09 initially passed an

@@ -87,9 +87,9 @@ attempts are preserved as test-authoring failures, not compiler defects:
 ## Evidence and limits
 
 - [Results](string_comparisons_l03_results.json): final suite outcomes and toolchain.
-- [Evidence archive](string_comparisons_l03_evidence.json.gz): exact commands, stdout/stderr and all attempts.
-- [Initial manifest](string_comparisons_l03_source.json) and [final manifest](string_comparisons_l03_source_final.json): tested source hashes and fixture revisions.
-- [Starting baseline](string_comparisons_l03_baseline.json): preserves pre-existing changes.
+- [Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/string_comparisons_l03_evidence.json.gz): exact commands, stdout/stderr and all attempts.
+- [Initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/string_comparisons_l03_source.json) and [final manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/string_comparisons_l03_source_final.json): tested source hashes and fixture revisions.
+- [Starting baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/string_comparisons_l03_baseline.json): preserves pre-existing changes.
 - [Completion audit](string_comparisons_l03_completion_audit.json): local/tested code agreement and runtime unchanged from baseline.
 
 No runtime implementation changes, full operator matrix rerun or native compiler

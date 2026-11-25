@@ -57,12 +57,12 @@ python3 compiler/my-try/tests/scalar_error_codes.py --scalar-results FRESH_SCALA
 ```
 
 [Results](float_operators_l04_results.json) summarize acceptance and exact command
-outcomes. [Evidence](float_operators_l04_evidence.json.gz) retains command logs and
-outputs. [Final tested sources](float_operators_l04_source_final.json) verify 6,187
-file hashes. The [initial transfer](float_operators_l04_source.json) precedes added
+outcomes. [Evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_operators_l04_evidence.json.gz) retains command logs and
+outputs. [Final tested sources](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_operators_l04_source_final.json) verify 6,187
+file hashes. The [initial transfer](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_operators_l04_source.json) precedes added
 float recovery assertions and transfer of the existing zero-error observer. Its
 first invocation found the observer absent; no compiler failure was involved.
-[Baseline](float_operators_l04_baseline.json) preserves pre-existing changes.
+[Baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_operators_l04_baseline.json) preserves pre-existing changes.
 
 The original language-verification findings and counts remain historical. V-L04
 repair status is updated separately. No remaining blocker was exposed within this

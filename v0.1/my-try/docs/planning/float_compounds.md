@@ -77,10 +77,10 @@ indexed, fixed-width and non-arithmetic float compounds remain separate.
 ## Evidence and remaining work
 
 [Results and exact signatures](float_compounds_results.json),
-[archived runner evidence](float_compounds_evidence.json.gz),
-[final source manifest](float_compounds_source_final.json),
-[initial manifest](float_compounds_source.json),
-[pre-change baseline](float_compounds_baseline.json), and
+[archived runner evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_compounds_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_compounds_source_final.json),
+[initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_compounds_source.json),
+[pre-change baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_compounds_baseline.json), and
 [completion audit](float_compounds_completion_audit.json).
 Remote source integrity covers 6,234 files; earlier dated proofs are unchanged.
 

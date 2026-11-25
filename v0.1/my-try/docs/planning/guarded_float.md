@@ -95,11 +95,11 @@ compiler file was unchanged across all attempts.
 
 ## Evidence and remaining scope
 
-[Results](guarded_float_results.json) and the [evidence archive](guarded_float_evidence.json.gz)
+[Results](guarded_float_results.json) and the [evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_float_evidence.json.gz)
 record successful and failed attempts, command exits, toolchain and integrity.
 The archive contains 1,947 records and verifies 6,197 source files. The
-[baseline](guarded_float_baseline.json), [initial source](guarded_float_source.json),
-[final tested source](guarded_float_source_final.json), and
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_float_baseline.json), [initial source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_float_source.json),
+[final tested source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_float_source_final.json), and
 [completion audit](guarded_float_completion_audit.json) distinguish inherited work,
 the tested implementation and local documentation closeout. Among existing
 executable sources only `04_analyze/operators/guarded.php` changed; the two

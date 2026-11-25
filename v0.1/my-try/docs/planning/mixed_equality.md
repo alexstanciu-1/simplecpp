@@ -93,10 +93,10 @@ subsequent report closeout is documentation only.
 ## Evidence and progress
 
 [Results and signatures](mixed_equality_results.json),
-[initial and final evidence](mixed_equality_evidence.json.gz),
-[runtime-gate source](mixed_equality_source.json),
-[first source attempt](mixed_equality_source_first_attempt.json),
-[final tested source](mixed_equality_source_final.json),
+[initial and final evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_equality_evidence.json.gz),
+[runtime-gate source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_equality_source.json),
+[first source attempt](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_equality_source_first_attempt.json),
+[final tested source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_equality_source_final.json),
 [baseline](mixed_equality_baseline.json),
 [completion audit](mixed_equality_completion_audit.json).
 

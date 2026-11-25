@@ -69,9 +69,9 @@ Float, indexed, mixed/fixed-width and power compounds remain separate.
 ## Evidence and remaining work
 
 [Results and observation counts](int_cross_compounds_results.json),
-[archived runner logs](int_cross_compounds_evidence.json.gz),
-[tested source manifest](int_cross_compounds_source_final.json),
-[pre-change baseline](int_cross_compounds_baseline.json), and
+[archived runner logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_cross_compounds_evidence.json.gz),
+[tested source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_cross_compounds_source_final.json),
+[pre-change baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/int_cross_compounds_baseline.json), and
 [completion audit](int_cross_compounds_completion_audit.json).
 The remote source-integrity check covers 6,231 files. Earlier proofs are retained.
 

@@ -76,8 +76,8 @@ rerun or native compiler rebuild. No blocker remains within this slice.
 
 ## Evidence and progress
 
-[Results/signatures](mixed_identity_results.json), [runner archive](mixed_identity_evidence.json.gz),
-[final source manifest](mixed_identity_source_final.json), [baseline](mixed_identity_baseline.json),
+[Results/signatures](mixed_identity_results.json), [runner archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_identity_evidence.json.gz),
+[final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_identity_source_final.json), [baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/mixed_identity_baseline.json),
 [completion audit](mixed_identity_completion_audit.json).
 Remote integrity verifies 6,243 source files. Historical evidence is preserved.
 

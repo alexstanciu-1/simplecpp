@@ -79,11 +79,11 @@ Supplementary proofs passed:
 
 ## Evidence and limits
 
-[Acceptance archive](project-startup-acceptance.tar.gz), SHA-256:
+[Acceptance archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/project-startup-acceptance.tar.gz), SHA-256:
 `ec757703e89099e88a7b442103d91dfba4e46fb10f198c8d629c96a6ed1a571e`.
 It contains command journals/stdout/stderr, final task summary, source audit,
 original-policy regressions and the historical source-overload rejection.
-[Source delta](project_startup_source_delta.json) extends the previous scalar-debug
+[Source delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/project_startup_source_delta.json) extends the previous scalar-debug
 snapshot; the archive contains the complete manifest. **5,367 inputs matched** the
 local candidate with no mismatches. The remote archive checkout was
 `/home/alex-ai/curl/20261020-work`; test outputs were outside that source tree.

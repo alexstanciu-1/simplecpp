@@ -71,9 +71,9 @@ rechecks the final compiler and strengthened truth-snapshot assertions.
 ## Provenance and remaining work
 
 - [Results](numeric_logical_l05_results.json): suite outcomes, toolchain, scope and evidence checksum.
-- [Evidence archive](numeric_logical_l05_evidence.json.gz): exact commands, outputs, summaries and supplemental harness.
-- [Final source manifest](numeric_logical_l05_source_final.json): tested source hashes and snapshot revision notes.
-- [Starting baseline](numeric_logical_l05_baseline.json): pre-existing dirty work distinguished from this goal.
+- [Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/numeric_logical_l05_evidence.json.gz): exact commands, outputs, summaries and supplemental harness.
+- [Final source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/numeric_logical_l05_source_final.json): tested source hashes and snapshot revision notes.
+- [Starting baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/numeric_logical_l05_baseline.json): pre-existing dirty work distinguished from this goal.
 - [Completion audit](numeric_logical_l05_completion_audit.json): local code matches tested source and runtime matches the starting baseline.
 
 Remote integrity verification checked 6,189 source files with no mismatches.

@@ -78,7 +78,7 @@ dev002 evidence:
 - `20261021-task-callbacks-collection-regression`: all 25 existing focused tasks
   passed. No full matrix or native compiler build was run.
 
-[Evidence archive](async-tasks-prerequisite-evidence.tar.gz), SHA-256:
+[Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/async-tasks-prerequisite-evidence.tar.gz), SHA-256:
 `391611a8d0afef4c2821f7ef894435f00b630e588c3d6b309297865eb88fb886`.
 It preserves command logs, source fixtures, publication manifests and upload hashes,
 including the first four-case callback run before recovery coverage was added.
@@ -123,7 +123,7 @@ dev002 evidence:
 - `20261021-async-runtime-final`: both runtime probes pass.
 - `20261021-async-collection-regression`: all 25 focused tasks pass.
 
-[Evidence archive](async-backend-evidence.tar.gz), SHA-256:
+[Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/async-backend-evidence.tar.gz), SHA-256:
 `4be8ac2f1677739852dc0139844aa040273e75743c186329f531e68119d9bf19`.
 It includes earlier failed attempts, final logs, fixture sources, manifests and
 the uploaded source hash manifest. No full matrix or native compiler rebuild ran.
@@ -168,7 +168,7 @@ method/layout edits and warm reuse. Its first attempt exposed the obsolete
 owned-callable rejection expectation from before the callback prerequisite;
 the fixture now checks supported storage and invalid-return rejection/recovery.
 
-[Evidence archive](tasks-metadata-evidence.tar.gz), SHA-256:
+[Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/tasks-metadata-evidence.tar.gz), SHA-256:
 `5e516203b95c6f95530bf4669d97027ffe04c5f02562382ee52f8aaeee407d40`.
 Historical attempts and upload hashes are included. Overall closure remains 55/64.
 
@@ -192,7 +192,7 @@ ASan/UBSan probes, including existing async/task controls and a latch-controlled
 lost-handle lifetime test, nested cleanup, repeated shutdown and draining remaining
 work after failure. This supersedes the pending shutdown prerequisite above.
 
-[Evidence archive](tasks-shutdown-evidence.tar.gz), SHA-256:
+[Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/tasks-shutdown-evidence.tar.gz), SHA-256:
 `d3dab89e4eec3681bac03469d38fd4b44bca6e76602ef34360643953ff137437`.
 Source hashes and earlier attempts are preserved. Source batch admission remains
 open; neither original issue is closed here.
@@ -230,7 +230,7 @@ Removing async deletes its compiled implementation unit. Payload changes and
 restoration agree byte-for-byte with fresh disk publication, with manifest hashes
 checked against every published file. The paired preparation suite also passes.
 
-[Publication evidence](async-publication-evidence.tar.gz), SHA-256:
+[Publication evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/async-publication-evidence.tar.gz), SHA-256:
 `31c1709472f81a87193c0791874d041961a393c8b906560f70fa19ffdd99349a`.
 Reproduce both checks with `python3 compiler/my-try/tests/async_preparation.py
 --results FRESH_DIRECTORY` on dev002.
@@ -271,7 +271,7 @@ Dev002 results:
   including default/denied/allowed callables, copying, moves, parameter/return
   preservation, worker execution, void and string signatures.
 
-[Evidence archive](task-transfer-evidence.tar.gz), SHA-256:
+[Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-transfer-evidence.tar.gz), SHA-256:
 `1a119e6b0a73a2257b8500b7c34cf52bdf4bf9f280f19aa18450bdd8df6b17d2`.
 The task API submission contracts still need to consume this capability; the
 probe is not a claim that the five remaining batch/callback APIs are admitted.
@@ -296,7 +296,7 @@ in `20261021-task-admission-catalog` also pass. The initial startup-validation
 failure is retained: the corrected registration uses its private catalog instead
 of reading the global model before initialization.
 
-[Admission evidence](task-admission-evidence.tar.gz), SHA-256:
+[Admission evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-admission-evidence.tar.gz), SHA-256:
 `8644ed83b4d5bf207bc322671ddabb06fe849b6c362228d7436829f7685bd23a`.
 Reproduce with `tests/task_transfer.py --results FRESH_DIRECTORY` and
 `tests/runtime_catalog.py --results FRESH_DIRECTORY` from this compiler directory.
@@ -318,7 +318,7 @@ rejection and recursive-context rejection. The positive test establishes the run
 worker context through an explicitly test-only provider; real unordered task source
 integration remains required. Earlier sanitizer probes cover runtime context restore.
 
-[Evidence](task-synchronize-evidence.tar.gz), SHA-256:
+[Evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-synchronize-evidence.tar.gz), SHA-256:
 `aca37026e6cdf7cd3f0ceb08c24b3b527be8b53dff62eb740138a7934f0b4162`.
 Reproduce with `tests/task_submission.py --results FRESH_DIRECTORY`.
 
@@ -383,7 +383,7 @@ Final typed checkpoint evidence:
   nullable payload transport, and unordered worker synchronization.
 - `task-native-catalog`: all four startup/callable/execution regressions pass.
 
-[Typed batch evidence](task-typed-batches-evidence.tar.gz), SHA-256:
+[Typed batch evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-typed-batches-evidence.tar.gz), SHA-256:
 `aea40e6f1a71291e9b4382920b5f27f37f9344456ea4b3e96b4f64b594843af3`.
 The archive includes failed attempts, publication manifests, source fixtures and
 final uploaded source hashes. Reproduce using `tests/task_submission.py --results
@@ -405,7 +405,7 @@ mismatches; a successful probe run does not mean semantic conformance. The obser
 values are `vector_error_on_coordinator=false`, `hash_error_on_coordinator=false`,
 `publish_void_handler_calls=0` (expected true, true, one respectively).
 
-[Runtime prerequisite evidence](task-error-context-evidence.tar.gz), SHA-256:
+[Runtime prerequisite evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-error-context-evidence.tar.gz), SHA-256:
 `e7f40ae9250e8101185db232ae2f89700a3eb920bd838766776ceae6a77cf2a8`.
 
 Approved repair: extend the existing batch
@@ -454,7 +454,7 @@ Verified on dev002:
 - `20261021-task-coordinator-context`: the historical observation probe now reports
   no contract mismatches. Original failing evidence above remains unchanged.
 
-[Coordinator repair evidence](task-coordinator-evidence.tar.gz), SHA-256:
+[Coordinator repair evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-coordinator-evidence.tar.gz), SHA-256:
 `b35557e4d57b45fe149994a4e0bc08fa4eab4cae49278fb5def1bfdbc0b82216`. Uploaded implementation/test hashes were verified on dev002.
 No full matrix or native compiler rebuild was run. V-R02 remains partial; overall
 closure remains 56/64 pending its remaining source acceptance inventory.
@@ -475,7 +475,7 @@ metadata rejection and retained reject/repair/replay/fresh parity. The initial
 explicit-null conversion failure remains in the evidence; it is resolved by the
 exact argument conversion, not by relaxing source declaration rules.
 
-[Optional placeholder evidence](task-null-evidence.tar.gz), SHA-256:
+[Optional placeholder evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-null-evidence.tar.gz), SHA-256:
 `63c9be3e18c28a67227efb35a22fe277b3e142f4596347b29c94620195424ace`. Final uploaded source hashes were verified on dev002.
 Custom index/result/error callbacks remain outstanding; accepting null placeholders
 does not close those forms or V-R02. Overall remains 56/64 closed.
@@ -507,7 +507,7 @@ a missing void-slot specialization in this refactor. Corrected optional-null slo
 pass both affected cold/warm programs plus contracts in `task-placement-source-02`.
 The original omission observation and intermediate failures are preserved.
 
-[Placement evidence](task-placement-evidence.tar.gz), SHA-256:
+[Placement evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-placement-evidence.tar.gz), SHA-256:
 `e1466feb6d2d86be1ff132f93c762b0ba6671acdedcac77c1ee3b2e0a5ab3a6c`. Final uploaded source hashes were verified. No full matrix or
 native compiler rebuild was run; original issue closure remains 56/64.
 
@@ -538,7 +538,7 @@ in `task-target-void` (seven checks). All five runtime sanitizer suites pass in
 programs and target-based retained reject/repair/replay/fresh checks. Across these
 runs all 16 target contracts have default-prelowered cold/warm evidence.
 
-[Target evidence](task-target-evidence.tar.gz), SHA-256:
+[Target evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-target-evidence.tar.gz), SHA-256:
 `39b4d49d40bfb1b2def56ebd02f4e6967a9e315a60ca6a71c907fc568bd103cc`. Final source hashes were verified on dev002. Historical failures
 remain archived. No full matrix or native compiler rebuild; V-R02 remains partial
 and original issue closure remains 56/64.
@@ -567,7 +567,7 @@ and previous task source regressions, using default-prelowered cold/warm builds.
 capture and background nullable index) plus retained reject/repair/replay and
 indexed edit-versus-fresh parity. Final uploaded source hashes were verified.
 
-[Indexed-target evidence](task-index-evidence.tar.gz), SHA-256:
+[Indexed-target evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-index-evidence.tar.gz), SHA-256:
 `43ab680af5c679ef100d4af02886c3afb88384612559103d5eae3dc5e865d5e0`. This slice changes metadata/tests only, adds no runtime behavior,
 and runs no full matrix or native compiler rebuild. V-R02 remains partial; overall
 original issue closure remains 56/64.
@@ -603,7 +603,7 @@ disabled runtime sanitizer probes; the adapters reuse disabled-target diagnostic
 The initial missing-overload failure and duplicate test-harness runtime-build
 attempt remain archived. Final uploaded source hashes were verified.
 
-[Inferred-target evidence](task-default-index-evidence.tar.gz), SHA-256:
+[Inferred-target evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-default-index-evidence.tar.gz), SHA-256:
 `663c1f7d735de3182ecf0821ec8def392d8578b9588a5135951e73dbd0669030`. No full matrix or native compiler rebuild was run. V-R02 remains
 partial and overall original issue closure remains 56/64.
 
@@ -635,7 +635,7 @@ on dev002. Existing coordinator dispatch, omission identity and shutdown repairs
 remain the execution owners; this proposal adds no scheduler or transfer redesign.
 The approval is resolved; production admission is recorded below.
 
-[Error contract probe evidence](task-error-contract-evidence.tar.gz), SHA-256:
+[Error contract probe evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-error-contract-evidence.tar.gz), SHA-256:
 `685eea384580b362aec5e68d93c9ab79c93d34ead706b77459ef29b3d0f83b72`. The passing probe records a semantic mismatch; it is not
 conformance evidence or an issue closure.
 
@@ -651,7 +651,7 @@ batches and input-order output. Publisher captures retain transfer restrictions;
 context callbacks use existing runtime transport and status operations. No runtime
 implementation changed.
 
-[Publication option evidence](task-publish-options-evidence.tar.gz), SHA-256:
+[Publication option evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-publish-options-evidence.tar.gz), SHA-256:
 `4db101afe18b44b817c78997230350937fa184a3e10e40c3dc702e22d5d23dc2`. Uploaded source hashes were verified. Error-handler admission is
 still outstanding. Its bounded result relation was explicitly authorized after
 the proposal above; that approval is resolved and implementation follows next.
@@ -673,7 +673,7 @@ The original ambiguity probe remains runnable without `--relation` and its
 historical evidence is preserved. Production task overload wiring remains next;
 this prerequisite alone does not complete error-handler API admission or V-R02.
 
-[Error-result relation evidence](task-error-relation-evidence.tar.gz), SHA-256:
+[Error-result relation evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-error-relation-evidence.tar.gz), SHA-256:
 `445d56055694d56b3517db7330ff44096eeebb70b6764ddda73f6eb1a4ce5774`. Final uploaded source hashes were verified; no full matrix or
 native compiler rebuild. Overall remains 56/64 closed, V-R02 partial.
 
@@ -711,7 +711,7 @@ suite now contains 153 cases; the 147-case pass and six subsequent cases togethe
 cover that set. Warm builds compile/link zero units. Source hashes were verified
 against the remote checkout. Source cases are not claimed as sanitizer runs.
 
-[Production handler evidence](task-error-submission-evidence.tar.gz), SHA-256:
+[Production handler evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-error-submission-evidence.tar.gz), SHA-256:
 `7cb657c321ea117f7d10a1c102fd7a5189cbca7adbd96f994fb1ef563c13afac`.
 
 V-R02 remains partial: cross-carrier result targets, nullable inferred-key policy,
@@ -731,7 +731,7 @@ This is runtime evidence only: production source admission and default-prelowere
 cold/warm proofs remain next. String-key targets and other combinations are not
 inferred from this probe. V-R02 remains partial.
 
-[Cross-target runtime evidence](task-cross-target-evidence.tar.gz), SHA-256:
+[Cross-target runtime evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-cross-target-evidence.tar.gz), SHA-256:
 `938627348669b97f5e4284e0cffb8b504025c15d89c3bcc6b3d4b5886b2f7c58`. Uploaded probe hashes were verified.
 
 
@@ -755,7 +755,7 @@ retained invalid-key/type rejection, repair/replay and cross-carrier edit/fresh
 parity. The first source run exposed invalid numeric object-literal fixtures and
 an incorrect void-error omission expectation; these fixture failures are retained.
 
-[Cross-target source evidence](task-cross-source-evidence.tar.gz), SHA-256:
+[Cross-target source evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-cross-source-evidence.tar.gz), SHA-256:
 `c766cfbd125fcacee3db4561fc9e2fb0e566712d8912b87767623f3a9f492006`. Final uploaded hashes were verified. No full matrix or native compiler rebuild.
 
 
@@ -781,7 +781,7 @@ execution must be checked against batch cancellation/progress state. These are
 unverified concerns, not conclusions from this typed-target checkpoint. V-R02
 remains partial; no full matrix or native compiler rebuild was requested.
 
-[Keyed-target evidence](task-keyed-evidence.tar.gz), SHA-256:
+[Keyed-target evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-keyed-evidence.tar.gz), SHA-256:
 `d04b0bc88e36b6b3eaa6b56d0b08d48ef63a1eb5bc10a4783442e9fb95956175`. Final uploaded source hashes were verified.
 
 
@@ -808,7 +808,7 @@ source cases using default prelowering and cold/warm builds; warm builds compile
 and link zero units. Original evidence is kept.
 V-R02 remains partial.
 
-[Nullable-target evidence](task-nullable-target-evidence.tar.gz), SHA-256:
+[Nullable-target evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-nullable-target-evidence.tar.gz), SHA-256:
 `356bae7cfc20836255bf4b84e422a4e7214c4af34ab2e3bc5453c857ab9dcecb`. Final uploaded hashes were verified; no full matrix or native compiler rebuild.
 
 
@@ -836,7 +836,7 @@ passed 120 and exposed eight invalid post-failure fixture lookups; the corrected
 zero units. Original runtime compile failure and fixture failures remain preserved.
 V-R02 is not closed by this checkpoint.
 
-[Inferred nullable-key evidence](task-nullable-index-evidence.tar.gz), SHA-256:
+[Inferred nullable-key evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-nullable-index-evidence.tar.gz), SHA-256:
 `d03313d36a8be5537c48bb58197183c0b99a6a2d2c92b01dc4885032d0d48225`. Final source hashes verified; no full matrix or native compiler rebuild.
 
 
@@ -855,7 +855,7 @@ cases; warm builds compiled/linked zero units. `task-nullable-string-controls` p
 existing reject/repair checks and a neighboring hash-target program. Runtime
 boundary proofs are retained in the nullable-target and nullable-index archives.
 
-[Explicit nullable-string evidence](task-nullable-string-evidence.tar.gz), SHA-256:
+[Explicit nullable-string evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-nullable-string-evidence.tar.gz), SHA-256:
 `ab0c1df9ba734aed4b0a288cb976211890de76232abb476c6728fecde77383d2`. Final source hashes verified; no full matrix or native compiler rebuild.
 
 
@@ -892,7 +892,7 @@ before implementation. Existing typed/mixed batch signatures would remain stable
 The alternative is to defer dynamic background support explicitly rather than
 silently convert families. Independent source lifecycle verification can continue.
 
-[Boxed-state evidence](task-boxed-state-evidence.tar.gz), SHA-256:
+[Boxed-state evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-boxed-state-evidence.tar.gz), SHA-256:
 `c3ac7766e60e416ba004fad09cadfedd84af53abc6bf4ffbd5c3f1e52b72c13e`. Final source hashes verified; no full matrix or native compiler rebuild.
 
 
@@ -906,7 +906,7 @@ supply replacement 42; unhandled timeouts propagate on run/join. Warm builds com
 and link zero units. No implementation changed. These tests establish timeout
 integration, not a hard scheduling deadline or arbitrary-code interruption.
 
-[Source timeout evidence](task-lifecycle-timeout-evidence.tar.gz), SHA-256:
+[Source timeout evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-lifecycle-timeout-evidence.tar.gz), SHA-256:
 `8dea8751643d78cecc6b0000bf1b6a373cf7598a3fad93c5b2daa9e5d05a3836`. Fixture hashes were verified. The boxed-family prerequisite is now authorized;
 independent lifecycle verification remains available. V-R02 is partial.
 
@@ -933,7 +933,7 @@ async core, shutdown, ownership and coordinator dispatch). The four production
 builds. `task-family-disabled` verifies ordinary inferred-key controls and disabled
 dynamic join diagnostics. V-R02 remains partial.
 
-[Shared lifecycle evidence](task-family-lifecycle-evidence.tar.gz), SHA-256:
+[Shared lifecycle evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-family-lifecycle-evidence.tar.gz), SHA-256:
 `71dbfe1cb9db9aea13a79f5d505d37dd36d37409e5569a128f44794fc497a746`. Final source hashes verified; no full matrix or native compiler rebuild.
 
 
@@ -968,7 +968,7 @@ The shared-root test in `task-boxed-adapters-02` exposed that `table_if()` also
 returns shared storage. The family input owner now requires the owned mixed table
 kind explicitly; the failing assertion remains archived.
 
-[Boxed adapter evidence](task-boxed-adapters-evidence.tar.gz), SHA-256:
+[Boxed adapter evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-boxed-adapters-evidence.tar.gz), SHA-256:
 `61226d6f94f0b7c63b3e1314b271d5f703b32cbcefeb37d4252c8e76195d19b4`. Final source hashes verified; no full matrix or native compiler rebuild.
 
 ## Boxed task source admission checkpoint — 2026-10-21
@@ -1020,7 +1020,7 @@ transport owners and must not be hidden in task-specific adapters. Source boxed
 construction/index usability and the final lifecycle/module/API audit remain open.
 V-R02 remains partial and overall progress remains 56/64 (87.5%).
 
-[Evidence archive](task-boxed-source-evidence.tar.gz), SHA-256:
+[Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-boxed-source-evidence.tar.gz), SHA-256:
 `f5258050e0c5135cd3ea3998533beea553001aa843def5b9c64b4a29190da939`.
 The archive preserves the failed probes, corrected fixtures, logs, publication
 manifests and final verified source hashes, including the initial contracts-only
@@ -1059,7 +1059,7 @@ remain independently verified in the earlier runtime checkpoint. This is the
 previously deferred general exception-transport prerequisite, not a task scheduler
 failure, and has not been silently folded into task implementation.
 
-[Evidence archive](task-lifecycle-acceptance-evidence.tar.gz), SHA-256:
+[Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-lifecycle-acceptance-evidence.tar.gz), SHA-256:
 `6640f8eeaaeba8a2241425115eaba22d42142f2d3ee394b8e4c584c95c368784`.
 Includes `20261021-task-lifecycle-acceptance-01` through `-05`, source fixtures,
 publication manifests, success/failure logs and final source hashes.
@@ -1098,7 +1098,7 @@ repairs that ownership error; no runtime algorithm or source semantics changed.
 Indexed updates/compounds, broader keyed probes and additional extraction domains
 are not claimed by this store/append/read slice.
 
-[Evidence archive](boxed-prelower-evidence.tar.gz), SHA-256:
+[Evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/boxed-prelower-evidence.tar.gz), SHA-256:
 `f9c18ead4f096e2544d3ee5792b27d12396ba5efc7a6b7cde9a72a01eed746d1`.
 Includes original failures, final fixture-free sources/module descriptors, logs,
 publication manifests and verified source hashes. The earlier fixture-backed
@@ -1121,7 +1121,7 @@ low-level lifecycle test remains). Dev002 ASan/UBSan and leak checking pass.
 The initial native probe used the source helper name rather than the provider's
 `configure_default_worker_pool`; that authoring failure is preserved.
 
-[Final runtime audit evidence](task-final-audit-evidence.tar.gz), SHA-256:
+[Final runtime audit evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/task-final-audit-evidence.tar.gz), SHA-256:
 `35fbd114ea73d5d59f25c755da31c98b565a663a25a4a02120f546462b3ffab3`.
 
 Source throw/catch/finally prelowering remains explicitly separate, as agreed;

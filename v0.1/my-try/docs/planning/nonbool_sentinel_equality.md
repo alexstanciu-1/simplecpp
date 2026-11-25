@@ -112,8 +112,8 @@ confirmed prerequisite, not silently reclassified intentional incompatibilities.
 ## Evidence and progress
 
 [Results](nonbool_sentinel_equality_results.json),
-[evidence archive](nonbool_sentinel_equality_evidence.json.gz),
-[tested source manifest](nonbool_sentinel_equality_source.json) and
+[evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nonbool_sentinel_equality_evidence.json.gz),
+[tested source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nonbool_sentinel_equality_source.json) and
 [completion audit](nonbool_sentinel_equality_completion_audit.json) retain provenance.
 All **6,225** remote source hashes matched. All **467 runner commands** had expected
 exits; the 24 nested native failures are separately recorded observation results.

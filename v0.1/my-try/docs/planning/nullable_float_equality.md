@@ -70,8 +70,8 @@ bool and string fixtures now execute 100 exclusions each; their historical 112-c
 reports remain unchanged. E1 adds two ordinary float identity exclusions for 102.
 
 [Results](nullable_float_equality_results.json),
-[evidence](nullable_float_equality_evidence.json.gz),
-[final source hashes](nullable_float_equality_source_final.json) and
+[evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nullable_float_equality_evidence.json.gz),
+[final source hashes](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nullable_float_equality_source_final.json) and
 [completion audit](nullable_float_equality_completion_audit.json) retain the proof.
 All 6,216 transferred source files matched; all 399 command records have expected
 exit codes. Local executable sources match the tested snapshot. Documentation and

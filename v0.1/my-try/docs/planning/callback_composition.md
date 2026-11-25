@@ -73,14 +73,14 @@ capture contents, literal output, empty successful payloads, zero/positive/unlim
 limits, invalid-pattern/limit precedence, callback exceptions and absent invocation.
 
 The [results](callback_composition_results.json), [audit](callback_composition_audit.json)
-and [raw evidence](callback_composition_evidence.json.gz) retain **133 accepted
+and [raw evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/callback_composition_evidence.json.gz) retain **133 accepted
 command outcomes and 70 native executions**. Baselines are counted separately.
 All **6,336 snapshot file hashes** matched on dev002; local executable inputs match
 that snapshot except removal of one trailing blank line in `runtime_core.cpp`.
 The audit proves that exact whitespace difference and records subsequent
 documentation-only changes.
-The [initial](callback_composition_source_initial.json) and
-[final](callback_composition_source_final.json) manifests preserve provenance.
+The [initial](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/callback_composition_source_initial.json) and
+[final](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/callback_composition_source_final.json) manifests preserve provenance.
 The initial archive predates the source-admission harness; that later harness ran
 against unchanged pre-repair metadata and compiler files. The first four-config
 CMake pass remains in the archive as an intermediate checkpoint.

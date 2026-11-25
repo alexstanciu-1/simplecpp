@@ -64,11 +64,11 @@ order/defaults and hidden private lifecycle visibility. Ownership cases cover em
 and present Elvis/coalesce, lazy call counts, nested owned selections, consuming
 upcasts and weak interface/expired/temporary-owner behavior.
 
-[Acceptance archive](trait-ownership-acceptance.tar.gz), SHA-256:
+[Acceptance archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/trait-ownership-acceptance.tar.gz), SHA-256:
 `93042f0b77cf30fc8add71b8f96e98f4db0707a7e429a0d84fe930a8a75c9ac5`.
 It includes the baseline/intermediate failures, final command logs, source fixtures,
 prelowering manifests and full source audit: **5,383 inputs, zero mismatches**.
-The [25-file delta](trait_ownership_source_delta.json) extends the previous environment
+The [25-file delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/trait_ownership_source_delta.json) extends the previous environment
 snapshot. A stale remote metadata README was synchronized to the already committed
 span/hash documentation; no runtime code changed.
 

@@ -90,9 +90,9 @@ at setup. Moving the shared build before scheduling corrected the harness.
 All five domains then passed; the slowest task took 22.28 seconds. No additional
 compiler changes were needed. Both attempts' command logs are preserved.
 
-Evidence: [results](guarded_cross_results.json), [compressed logs](guarded_cross_evidence.json.gz),
-[baseline](guarded_cross_baseline.json), [initial snapshot](guarded_cross_source.json),
-[final tested snapshot](guarded_cross_source_final.json), and
+Evidence: [results](guarded_cross_results.json), [compressed logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_cross_evidence.json.gz),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_cross_baseline.json), [initial snapshot](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_cross_source.json),
+[final tested snapshot](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_cross_source_final.json), and
 [completion audit](guarded_cross_completion_audit.json). Remote integrity verified
 6,205 source files; the archive contains 2,063 evidence records. Documentation
 closeout is separate from the tested snapshot.

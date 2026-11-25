@@ -91,11 +91,11 @@ report and inventory closeout; historical evidence remains unchanged.
 ## Evidence and progress
 
 [Results and exact signatures](cross_equality_results.json),
-[baseline and acceptance logs](cross_equality_evidence.json.gz),
+[baseline and acceptance logs](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/cross_equality_evidence.json.gz),
 [baseline revision](cross_equality_baseline.json),
-[baseline source](cross_equality_source.json),
-[repaired runtime source](cross_equality_source_runtime.json),
-[final tested source](cross_equality_source_final.json),
+[baseline source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/cross_equality_source.json),
+[repaired runtime source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/cross_equality_source_runtime.json),
+[final tested source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/cross_equality_source_final.json),
 [completion audit](cross_equality_completion_audit.json).
 
 V-L07 reaches **32 completed slices: 2,664 binary, 64 unary and 432 compound

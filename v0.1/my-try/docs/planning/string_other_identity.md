@@ -83,9 +83,9 @@ Historical evidence remains unchanged.
 ## Evidence and progress
 
 [Results and signatures](string_other_identity_results.json),
-[proof archive](string_other_identity_evidence.json.gz),
-[runtime-gate source manifest](string_other_identity_source.json),
-[final tested source manifest](string_other_identity_source_final.json),
+[proof archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/string_other_identity_evidence.json.gz),
+[runtime-gate source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/string_other_identity_source.json),
+[final tested source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/string_other_identity_source_final.json),
 [baseline](string_other_identity_baseline.json),
 [completion audit](string_other_identity_completion_audit.json).
 The tested manifest identifies the executable snapshot; subsequent report closeout

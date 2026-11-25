@@ -73,13 +73,13 @@ project probe remains provenance; these checks verify its restricted storage and
 layout behavior through the v0.2 API, not project-CLI parity (V-P01).
 
 The [results](compact_layout_results.json), [audit](compact_layout_audit.json) and
-[compressed raw evidence](compact_layout_evidence.json.gz) record **751 expected
+[compressed raw evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/compact_layout_evidence.json.gz) record **751 expected
 command outcomes and 193 native executions**: 192 acceptance executions plus one
 baseline comparison. All **6,329 candidate file hashes** matched locally and on
 dev002. The initial snapshot's **228 non-test compiler PHP files** were also
 verified against Git `95e48aeb` for the baseline comparison. The
-[initial](compact_layout_source_initial.json) and
-[tested final](compact_layout_source_final.json) manifests preserve the tested
+[initial](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/compact_layout_source_initial.json) and
+[tested final](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/compact_layout_source_final.json) manifests preserve the tested
 inputs; all manifest hashes still match the closed implementation.
 
 Intermediate failures remain in the archive: a test observer initially used

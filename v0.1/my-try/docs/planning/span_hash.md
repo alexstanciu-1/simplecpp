@@ -71,12 +71,12 @@ PCH run or full matrix was performed.
 
 ## Evidence and remaining boundaries
 
-[Acceptance archive](span-hash-acceptance.tar.gz), SHA-256:
+[Acceptance archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/span-hash-acceptance.tar.gz), SHA-256:
 `f6cda7a15d3e78191d30ea1d6ef9247018cb118f749c84faa71d87deae5c0513`.
 It retains command journals, stdout/stderr, final summaries, consumer audit and
 historical failed attempts. The complete source manifest matched **5,372 paths**
 on `/home/alex-ai/curl/20261020-work`, with zero mismatches.
-[Source delta](span_hash_source_delta.json) extends the project/startup snapshot.
+[Source delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/span_hash_source_delta.json) extends the project/startup snapshot.
 
 The first run exposed missing provider concrete-boundary flags; those are repaired.
 The first three runs also preserve diagnostic-expectation mistakes corrected by

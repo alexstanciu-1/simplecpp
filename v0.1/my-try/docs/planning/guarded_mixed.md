@@ -90,11 +90,11 @@ fixture retires 128 arithmetic/logical negatives while retaining all mixed order
 and cross-family rejection checks. New positive coverage includes those operand
 shapes. Previous manifests, counts and evidence remain unchanged.
 
-[Results](guarded_mixed_results.json) and [evidence](guarded_mixed_evidence.json.gz)
+[Results](guarded_mixed_results.json) and [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_mixed_evidence.json.gz)
 record command exits, observed counts, toolchain and checksums. The archive contains
 1,935 records and verifies 6,199 source files. The
-[baseline](guarded_mixed_baseline.json), [initial source](guarded_mixed_source.json),
-[final tested source](guarded_mixed_source_final.json), and
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_mixed_baseline.json), [initial source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_mixed_source.json),
+[final tested source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/guarded_mixed_source_final.json), and
 [completion audit](guarded_mixed_completion_audit.json) separate inherited changes,
 tested source and local documentation closeout. Existing executable changes are
 limited to the guarded owner and the two earlier fixtures; the mixed fixture and

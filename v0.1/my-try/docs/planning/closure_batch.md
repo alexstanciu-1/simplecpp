@@ -43,10 +43,10 @@ source, hash and masked diagnostic remain in baseline evidence.
 ## Verification
 
 [Results](closure_batch_results.json), [audit](closure_batch_audit.json), and
-[compressed raw evidence](closure_batch_evidence.json.gz) identify the tested snapshot
+[compressed raw evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/closure_batch_evidence.json.gz) identify the tested snapshot
 at `/home/alex-ai/closure-batch/20261020-01` on `alex-ai@dev002.travelfuse.ro`.
-The base revision is `4416616e`; [initial](closure_batch_source_initial.json) and
-[final](closure_batch_source_final.json) manifests identify the exact overlay.
+The base revision is `4416616e`; [initial](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/closure_batch_source_initial.json) and
+[final](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/closure_batch_source_final.json) manifests identify the exact overlay.
 The audit checks the real compiler ownership directories and all 6,297 snapshot
 files, rather than assuming compiler implementation lives under a `src/` prefix.
 

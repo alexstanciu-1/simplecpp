@@ -93,9 +93,9 @@ The focused retry passed in 16.88 seconds. Final companion runs use fresh
 Two bounded regression runners use at most 24 tasks. Failed-attempt evidence is kept.
 
 Remote integrity verified 6,208 source files; 400 evidence records were archived.
-See [results](numeric_xor_results.json), [evidence](numeric_xor_evidence.json.gz),
-[baseline](numeric_xor_baseline.json), [initial source](numeric_xor_source.json),
-[final source](numeric_xor_source_final.json), and
+See [results](numeric_xor_results.json), [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/numeric_xor_evidence.json.gz),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/numeric_xor_baseline.json), [initial source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/numeric_xor_source.json),
+[final source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/numeric_xor_source_final.json), and
 [completion audit](numeric_xor_completion_audit.json). Documentation and the approved
 semantic amendment were finalized separately from the tested executable snapshot.
 

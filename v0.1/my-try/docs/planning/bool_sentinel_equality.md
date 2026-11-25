@@ -78,8 +78,8 @@ remote manifest. Local executable files match tested hashes; documentation and
 inventory closeout are separate from that snapshot.
 
 [Results](bool_sentinel_equality_results.json),
-[evidence](bool_sentinel_equality_evidence.json.gz),
-[source manifest](bool_sentinel_equality_source_final.json) and
+[evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/bool_sentinel_equality_evidence.json.gz),
+[source manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/bool_sentinel_equality_source_final.json) and
 [completion audit](bool_sentinel_equality_completion_audit.json) retain provenance.
 
 ## Progress and remaining scope

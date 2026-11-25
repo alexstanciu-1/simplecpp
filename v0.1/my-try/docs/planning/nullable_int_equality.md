@@ -90,9 +90,9 @@ Companion suites used fresh `verification/<suite>` directories; `scalar_admissio
 received `--jobs 12`. The focused proof passed on its first attempt in 7.43 seconds.
 Remote integrity verified 6,211 source files; 836 evidence records were archived.
 
-See [results](nullable_int_equality_results.json), [evidence](nullable_int_equality_evidence.json.gz),
-[baseline](nullable_int_equality_baseline.json), [source](nullable_int_equality_source.json),
-[final source](nullable_int_equality_source_final.json), and
+See [results](nullable_int_equality_results.json), [evidence](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nullable_int_equality_evidence.json.gz),
+[baseline](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nullable_int_equality_baseline.json), [source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nullable_int_equality_source.json),
+[final source](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/nullable_int_equality_source_final.json), and
 [completion audit](nullable_int_equality_completion_audit.json). Documentation
 closeout is separate from the tested executable snapshot. Historical evidence and
 inherited work are preserved.

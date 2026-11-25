@@ -81,11 +81,11 @@ All failed attempts remain archived; `logs-10` first built the compiler, `logs-1
 first completed parity; `logs-13` repeats it after remote integration. The final nested-guard correction is covered by that native
 proof and the subsequent integrated acceptance run.
 
-[Acceptance archive](collection-advisories-acceptance.tar.gz), SHA-256:
+[Acceptance archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/collection-advisories-acceptance.tar.gz), SHA-256:
 `ff7ca07a9cb2bc6f27aafa10d776e9a3c0e277e83211eb5c68b20e7bb159ddc8`.
 It retains 2,137 evidence files, including failed and passing runs, command journals,
 source fixtures, manifests and the final audit of **3,343 executable inputs with
-zero mismatches**. The [30-file source delta](collection_advisories_source_delta.json)
+zero mismatches**. The [30-file source delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/collection_advisories_source_delta.json)
 records this goal’s changes after integrating remote `9f11c14bd`. Planning documents
 and unrelated IDE notes are outside this executable-source audit. The earlier
 checkpoint used `a7e8881ec`; final verification includes concurrent string work and

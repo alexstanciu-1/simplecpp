@@ -60,9 +60,9 @@ plain scalar operations.
 
 ## Evidence and attempts
 
-[Exact results](float_identity_results.json), [evidence archive](float_identity_evidence.json.gz),
-[initial manifest](float_identity_source_initial.json), [candidate delta](float_identity_source_candidate.json.gz)
-and [final tested manifest](float_identity_source_final.json) preserve source and
+[Exact results](float_identity_results.json), [evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_identity_evidence.json.gz),
+[initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_identity_source_initial.json), [candidate delta](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_identity_source_candidate.json.gz)
+and [final tested manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/float_identity_source_final.json) preserve source and
 attempt provenance. The [closeout audit](float_identity_audit.json) independently
 checks source hashes, exact signatures, accepted command exits and pinned S04 bytes.
 All 6,264 remote source hashes match; all 218 included runtime

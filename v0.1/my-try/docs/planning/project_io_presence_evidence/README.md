@@ -1,7 +1,7 @@
 # Project IO and concrete presence evidence
 Doc Status: supporting
 
-[acceptance.tar.gz](acceptance.tar.gz) contains 739 files from eight dev002 runs,
+[acceptance.tar.gz](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/project_io_presence_evidence/acceptance.tar.gz) contains 739 files from eight dev002 runs,
 including initial fixture failures, final acceptance, retained publication evidence,
 contract regressions and the nine-input SHA-256 manifest. No build binaries are
 included. See [the report](../project_io_handle_presence.md) for interpretation.

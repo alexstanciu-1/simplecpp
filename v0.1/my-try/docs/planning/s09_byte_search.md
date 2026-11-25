@@ -89,10 +89,10 @@ Two old string rejection cases became positive byte-search controls. The first
 conditional regression run failed solely because its original-fixture assertion
 still expected unresolved `strpos`. Updating it to the newly exposed S09-B1 boundary
 made the focused suite pass; no conditional compiler logic changed. The failed run
-and all earlier probes remain in [the evidence archive](s09_search_evidence.json.gz).
+and all earlier probes remain in [the evidence archive](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s09_search_evidence.json.gz).
 
-[Results](s09_search_results.json), [initial manifest](s09_search_source_initial.json),
-[final manifest](s09_search_source_final.json) and [static audit](s09_search_audit.json)
+[Results](s09_search_results.json), [initial manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s09_search_source_initial.json),
+[final manifest](https://github.com/alexstanciu-1/simplecpp/blob/5bd4ea43644bfb77e4938333f2119b795e559bbc/v0.1/my-try/docs/planning/s09_search_source_final.json) and [static audit](s09_search_audit.json)
 retain source provenance and pinned-fixture checks. Documentation closeout follows
 the tested snapshot. Earlier S06/S07 reports retain their dated observations and
 must not be read as current first-blocker descriptions.
