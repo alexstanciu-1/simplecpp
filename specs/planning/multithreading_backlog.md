@@ -50,6 +50,8 @@ The native runtime now keeps one process-wide pool for joined segment batches. A
 
 Set `SCPP_MT_WAIT=sleep` (default) or `SCPP_MT_WAIT=active` before starting the program. The first admitted multi-job join reads the setting. Sleeping workers block between batches. Active workers continue polling while idle, including between parallel phases. This mode is intended for processes with dedicated CPU capacity. Each job has its own result and exception slot. The caller waits for its batch and releases the workers before propagating the first failure in submission order.
 
+[Short performance report and dev002 measurements](multithreading_performance.md)
+
 ## Checkpoint — 2026-11-24
 
 All five planned capabilities are implemented on `codex/multithreading` through
