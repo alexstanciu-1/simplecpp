@@ -110,3 +110,32 @@ with TemporaryDirectory(prefix='scpp-writable-hash-') as directory:
               ('provider', hash_provider.replace('const hash', 'hash'), 'during writable foreach'),
               ('provider', hash_provider, hash_trace)]
     revisions(Path(directory), 'php', dict(main=hash_main, provider=hash_provider), edits)
+
+parameter_provider = '''
+function doubled(vector<int> $items):vector<int> {
+    foreach ($items as &$n) {$n*=2;}
+    return $items;
+}
+function bumped(hash<int,string> $map):hash<int,string> {
+    foreach ($map as $key => &$n) {$n+=10;echo $map[$key],";";}
+    return $map;
+}
+'''
+parameter_main = '''
+$v vector<int> = [2,3];$h hash<int,string> = [];$h["x"]=4;$h["y"]=5;
+$out=doubled($v);$updated=bumped($h);
+echo $out[0],$out[1],":",$v[0],$v[1],":",$updated["x"],$updated["y"],":",$h["x"],$h["y"];
+return 8;
+'''
+parameter_trace = b'14;15;46:23:1415:45'
+with TemporaryDirectory(prefix='scpp-writable-foreach-parameters-') as directory:
+    edits = [(None, None, parameter_trace)]
+    for written, changed, error in [
+        ('vector<int> $items', 'vector<int> &$items', 'ordinary by-value parameter'),
+        ('hash<int,string> $map', 'const hash<int,string> &$map', 'ordinary by-value parameter'),
+        ('$n*=2;', '$items[]=9;', 'during writable foreach'),
+        ('$n+=10;', '$map[$key]=1;', 'during writable foreach'),
+    ]:
+        edits.extend([('provider', parameter_provider.replace(written, changed), error),
+                      ('provider', parameter_provider, parameter_trace)])
+    revisions(Path(directory), 'php', dict(main=parameter_main, provider=parameter_provider), edits)

@@ -68,12 +68,14 @@ references. These methods do not make arbitrary dangling native references safe.
 ## PHP writable vector and hash foreach
 
 In a synchronous body, `foreach ($items as &$item)` and
-`foreach ($items as $key => &$item)` require a named, writable local that owns
-a typed vector or hash. The element name is fresh and scoped to the loop. Each iteration
+`foreach ($items as $key => &$item)` accept a named local or an ordinary by-value
+parameter that owns a typed vector or hash. Writes to a parameter update the
+callee’s collection copy. Reference parameters and variadic packs are ineligible.
+The element name is fresh and scoped to the loop. Each iteration
 selects one vector index or live hash entry. Changing the optional key variable leaves the selection intact.
 
 Reading the element reads the current slot. Assignments and supported compound
-updates replace it immediately. Reads through another name for the vector see
+updates replace it immediately. Reads through another name for the collection see
 the completed write, including before a break, return or exception. A by-value
 capture takes the current element value. Shared handles retain object identity.
 For inline records, edit a value copy and assign the whole element back.

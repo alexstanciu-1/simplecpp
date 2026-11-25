@@ -765,9 +765,11 @@ final class Preparation
 		$collection = null;
 		if ($statement->value instanceof ast_writable_element) {
 			$collection = $statement->source_value instanceof ast_name_expression ? $statement->source_value->local_binding() : null;
-			if (!($collection instanceof ast_local_declaration)
+			$owned = $collection instanceof ast_local_declaration || ($collection instanceof ast_parameter_declaration
+				&& $collection->mode === passing_mode::value && !($collection->type_reference instanceof ast_variadic_type_reference));
+			if (!$owned
 				|| !($source_type instanceof vector_type_definition || $source_type instanceof hash_type_definition) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
-				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires an owned local vector or hash in a synchronous body');
+				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires a local or ordinary by-value parameter owning a vector or hash in a synchronous body');
 			}
 			$this->require_collection_available($statement, $collection);
 		}
