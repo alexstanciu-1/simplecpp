@@ -30,7 +30,7 @@ different sizes and should not be used to calculate a percentage complete.
 | --- | --- | --- |
 | 3. Scoped borrows of a selected element | Direct mutable and read-only helpers implemented | A synchronous source free function with a value or void result can borrow the selected vector or hash slot in either admitted parameter mode. Plain assignment to an immediate field of a selected inline record also writes through. An inferred local closure may also borrow the selection for direct calls during its iteration. Nested recapture and callback consumers remain deferred. [Scoped borrow tests](../../compiler/tests/scoped_element_borrows_native.py) |
 | 4. Durable aliases and reference returns into elements | Deferred lifetime design | Covers `$item =& $v[$i]`, escaping captures, and returning an interior slot by reference. Specify what happens after vector relocation, hash removal and reinsertion of the same key, or whole-container replacement. A stable reference to the container variable alone does not identify a surviving element. [Reference safety](../native_reference_safety.md) |
-| 5. Automatic read-only borrow inference | Optimization debt | Start with by-value parameters. Consider local copies after the parameter proof. Preserve snapshots across argument evaluation, other aliases, forwarding and escapes. Measure eliminated copies and preparation cost, and invalidate the proof after a relevant caller or callee edit. [Inference debt](#compiler-debt-for-inferred-read-only-borrows) |
+| 5. Automatic read-only borrow inference | Count-reader slice implemented | Direct calls on named locals may borrow a vector of trivial integers or a hash with trivial integer keys and values for a single count return. Broader by-value parameters remain open. Consider local copies after the parameter proof. Preserve snapshots across argument evaluation, other aliases, forwarding and escapes. Measure eliminated copies and preparation cost, and invalidate the proof after a relevant caller or callee edit. [Inference debt](#compiler-debt-for-inferred-read-only-borrows) |
 
 **Further boundaries requiring a use case.** Writable loops on fields, static or
 global storage need owner-lifetime and alternate-access rules. A temporary also
@@ -52,6 +52,8 @@ Doc Status: planning
 Typed vectors and hashes can incur a collection copy when passed by value. Have the compiler identify read-only uses and infer when a borrow can safely replace a copy without requiring an explicit source annotation. Start with by-value collection parameters and consider local copies whose uses fit the same lifetime proof.
 
 A read-only callee body alone is insufficient. In `snapshot($items, $items)`, if a second parameter clears the caller’s collection before the first parameter is read, the by-value first parameter must retain its original contents. Prove that the source remains alive and that argument evaluation, other aliases, forwarded calls and escapes cannot make the replacement observable. Keep the copy when the proof is unavailable. Track inferred facts across body and caller edits. Verify the optimization with a copy-count or allocation probe on an eligible call and the aliasing counterexample in the [reference tests](../../compiler/tests/readonly_parameters_native.py).
+
+The [count-reader feasibility study](benchmarks/inferred_collection_borrows/report.md) measures both collection families and records the allocation-failure experiment and the observable destructor counterexample.
 
 ### Structured conversion design debt
 

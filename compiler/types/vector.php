@@ -26,6 +26,11 @@ abstract class vector_type_definition extends type_definition implements writabl
 	}
 
 	/** METHODS */
+	public function private_copy_allocation_only(): bool
+	{
+		return $this->element_type->copy_has_no_observable_effects();
+	}
+
 	public function lower_cpp_iteration_reference(string $receiver, int $loop_start): string
 	{
 		return "$receiver.iteration_reference(iteration_index_{$loop_start})";
