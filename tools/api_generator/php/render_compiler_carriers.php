@@ -30,7 +30,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             . "\tpublic static function instance(): self { return self::\$instance ??= new self(); }\n}\n";
         $literals[] = "\t\t\t$name => $class::instance(),";
     }
-    foreach ([...($runtime['carriers'] ?? []), ...($runtime['json_carriers'] ?? []), ...($runtime['regex_carriers'] ?? [])] as $carrier) {
+    foreach ([...($runtime['carriers'] ?? []), ...($runtime['json_carriers'] ?? []), ...($runtime['regex_carriers'] ?? []), ...($runtime['resource_carriers'] ?? [])] as $carrier) {
         $payload = $payloads[$carrier['payload']] ?? null;
         if ($payload === null) continue;
         $export = isset($carrier['header']) ? ['symbol' => 'scpp::' . $carrier['name']] : typeExport($runtime['submodules'], $carrier['name']);

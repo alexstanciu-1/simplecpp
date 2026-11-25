@@ -169,6 +169,7 @@ function render(array $plan): array {
     renderTextHelpers($plan, $files);
     renderDatetime($plan, $files);
     renderJson($plan, $files);
+    renderResourceModules($plan, $files);
     renderRegexCaptureTypes($plan, $files, $groups);
     foreach (FUNCTION_MODULES as $family) renderModuleFunctions($family, $plan, $files, $groups);
     renderBoxed($plan, $files, $groups);

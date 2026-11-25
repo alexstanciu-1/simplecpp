@@ -93,7 +93,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             'required_module' => $module];
         $optionalRequires .= "require_once __DIR__ . '/$identity.php';\n";
     }
-    foreach (($runtime['text_builders'] ?? []) + ($runtime['json_handles'] ?? []) as $identity => $builder) {
+    $moduleTypes = ($runtime['json_handles'] ?? []) + ($runtime['resource_types'] ?? []);
+    foreach (($runtime['text_builders'] ?? []) + $moduleTypes as $identity => $builder) {
         $definitions[$identity] = ['class' => $identity, 'cpp' => "::scpp::$identity",
             'cpp_header' => $builder['header'], 'aliases' => [$identity], 'strategy' => $builder['strategy'] ?? 'builder',
             'literal_family' => null, 'literals' => [], 'copy_semantics' => 'owning', 'required_module' => $builder['module'] ?? null,
@@ -164,10 +165,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             ]) : compilerLiteralMethods($definition);
         if ($definition['literal_family'] === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/strings/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
         $indexInterface = $definition['strategy'] === 'builder' ? ' implements text_builder_type' : '';
-        if (isset($runtime['json_handles'][$identity]['fields'])) {
+        if (isset($moduleTypes[$identity]['fields'])) {
             $indexInterface = ' implements runtime_field_type';
             $fields = [];
-            foreach ($runtime['json_handles'][$identity]['fields'] as $field => $type) {
+            foreach ($moduleTypes[$identity]['fields'] as $field => $type) {
                 $fields[] = "'$field' => type_{$definitions[$type]['class']}::instance()";
             }
             $methods .= "\n\tpublic function runtime_field(string \$name): ?type_definition { return match (\$name) { "
@@ -263,7 +264,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     if (isset($runtime['boxed_dispatch'])) {
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
-    $runtimeCases = compilerJsonCases($runtime, $runtimeTypes);
+    $runtimeCases = array_merge(compilerJsonCases($runtime, $runtimeTypes), compilerResourceCases($runtime, $runtimeTypes));
     foreach ($runtime['regex']['callbacks'] ?? [] as $name => $binding) {
         $key = $binding['callbackSurface'] . ':func:' . $name;
         $input = 'type_' . $runtimeTypes[$binding['input']] . '::instance()';
@@ -436,6 +437,12 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $exportedNames = array_merge($exportedNames, array_keys((array) ($runtime['aliases'] ?? [])));
     $shortTypes = implode(', ', array_map(static fn($name) => var_export($name, true), $exportedNames));
     $constantCases = [];
+    foreach ($runtime['resource_modules'] ?? [] as $module => $catalog) {
+        foreach ($catalog['constants'] as $name => $value) {
+            $constantCases[] = "\t\t\t'general:const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value, 'runtime-$module'),";
+            $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value, 'runtime-$module'),";
+        }
+    }
     foreach (FUNCTION_MODULES as $family) {
         foreach ($runtime[$family]['php_constants'] ?? [] as $name => $value) {
             $module = $runtime[$family]['module'];

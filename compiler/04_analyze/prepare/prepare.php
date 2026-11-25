@@ -1722,12 +1722,10 @@ final class Preparation
 			if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
 				if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return true;
 			}
-			if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
-				$constant = $syntax->lexical_root()->type_availability->runtime_constant($syntax->lexical_root()->runtime_constant_key($name));
-				if ($constant !== null) {
-					$syntax->settle_runtime_constant($constant);
-					return true;
-				}
+			$constant = $syntax->lexical_root()->type_availability->runtime_constant($syntax->lexical_root()->runtime_constant_key($name), $syntax->source()->flavor);
+			if ($constant !== null) {
+				$syntax->settle_runtime_constant($constant);
+				return true;
 			}
 		}
 		return false;

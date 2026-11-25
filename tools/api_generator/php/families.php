@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Scpp\Api;
 require_once __DIR__ . '/boxed.php';
 require_once __DIR__ . '/json.php';
+require_once __DIR__ . '/resource_modules.php';
 require_once __DIR__ . '/module_functions.php';
 require_once __DIR__ . '/text_helpers.php';
 require_once __DIR__ . '/text_builders.php';
@@ -43,7 +44,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'text_helpers', 'text_builders']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'text_helpers', 'text_builders', 'resource_modules']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -86,6 +87,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareDatetime($metadata, $publication, $plan);
     prepareJson($metadata, $publication, $plan);
     foreach (FUNCTION_MODULES as $family) prepareModuleFunctions($family, $metadata, $publication, $plan);
+    prepareResourceModules($publication, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     finalizePublicationProviders($plan);

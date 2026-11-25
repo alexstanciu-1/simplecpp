@@ -33,9 +33,10 @@ final readonly class type_availability
 			?? (($this->general_api || $flavor === flavor::cpp) ? runtime_functions::resolve('general:' . $key) : null);
 	}
 
-	public function runtime_constant(string $key): ?runtime_integer_constant
+	public function runtime_constant(string $key, flavor $flavor): ?runtime_integer_constant
 	{
-		$constant = runtime_constants::integer($key);
+		$constant = $flavor === flavor::php ? runtime_constants::integer($key) : null;
+		if ($constant === null && ($this->general_api || $flavor === flavor::cpp)) $constant = runtime_constants::integer('general:' . $key);
 		return $constant !== null && $this->allows($constant->required_module) ? $constant : null;
 	}
 
