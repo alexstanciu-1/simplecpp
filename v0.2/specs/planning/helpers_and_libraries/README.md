@@ -2,6 +2,8 @@
 
 Doc Status: planning
 
+[Stage 1 reconciliation and approved caller migration](intake_inventory.md) · [Operation crosswalk](intake.tsv) · [Donor types, constants and members](donor_entities.tsv)
+
 ## Inventory and scope
 
 The [symbol inventory](symbols.tsv) joins the legacy and strict PHP runtime symbol maps at release/0.1.78 (d2f63e37e) with the fifteen runtime-owned module catalogs consumed by my-try at 624ab8a2d. Look up a spelling to see both historical targets and every matching catalog ID. An empty cell means absent from that input. Some map entries such as echo_eval and condition_truthy implement lowering. A name match is a discovery aid and says nothing about signature or behavior equivalence.

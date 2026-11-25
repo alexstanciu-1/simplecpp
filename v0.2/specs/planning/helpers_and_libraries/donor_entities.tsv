@@ -1,0 +1,176 @@
+source	module or namespace	kind	owner or name	donor declaration
+legacy	—	class	error	class error
+legacy	—	member	error	public function get_file(): string
+legacy	—	member	error	public function get_line(): int
+legacy	—	member	error	public function get_message(): string
+legacy	scpp	class	mysqli	class mysqli
+legacy	scpp	class	mysqli_result	class mysqli_result
+legacy	scpp	member	mysqli	public function close(): void
+legacy	scpp	member	mysqli	public function query(string $sql) /** result_or_bool<scpp\mysqli_result> */
+legacy	scpp	member	mysqli	public function set_charset(string $charset): bool
+legacy	scpp	member	mysqli	public int $connect_errno;
+legacy	scpp	member	mysqli	public int $errno_code;
+legacy	scpp	member	mysqli	public string $connect_error;
+legacy	scpp	member	mysqli	public string $error;
+legacy	scpp	member	mysqli_result	public function fetch_assoc(): dynamic
+my-try	compiler	types	Key_Storage_List	"{""id"":""compiler.Key_Storage_List"",""name"":""Key_Storage_List"",""kind"":""class"",""storage"":""inline"",""construction"":""make"",""default_constructible"":true,""empty_initialization"":""default"",""parameters"":[{""name"":""Record"",""requires"":[""shared_record""]}],""capabilities"":[""copyable_value"",""value_storable""]}"
+my-try	compiler	types	Keyed_Storage	"{""id"":""compiler.Keyed_Storage"",""name"":""Keyed_Storage"",""kind"":""class"",""storage"":""inline"",""construction"":""make"",""default_constructible"":true,""empty_initialization"":""default"",""parameters"":[{""name"":""Record"",""requires"":[""shared_record""]}],""capabilities"":[""copyable_value"",""value_storable""],""indexing"":{""key"":""string"",""value"":{""parameter"":""Record""},""nested"":{""parameter"":""Record""},""write"":true,""append"":""unsupported"",""probes"":true,""removal"":true},""iteration"":{""key"":""string"",""value"":{""parameter"":""Record""}}}"
+my-try	compiler	types	Storage	"{""id"":""compiler.Storage"",""name"":""Storage"",""kind"":""class"",""storage"":""inline"",""construction"":""make"",""default_constructible"":true,""empty_initialization"":""default"",""parameters"":[{""name"":""Record"",""requires"":[""shared_record""]}],""capabilities"":[""copyable_value"",""value_storable""],""indexing"":{""key"":""int"",""value"":{""parameter"":""Record""},""nested"":{""parameter"":""Record""},""write"":true,""append"":""allowed"",""probes"":true,""removal"":true},""iteration"":{""key"":""int"",""value"":{""parameter"":""Record""}}}"
+my-try	compiler	types	Storage_Cursor	"{""id"":""compiler.Storage_Cursor"",""name"":""Storage_Cursor"",""kind"":""class"",""storage"":""inline"",""construction"":""make"",""default_constructible"":true,""parameters"":[{""name"":""Record"",""requires"":[""shared_record""]}],""capabilities"":[""copyable_value"",""value_storable""]}"
+my-try	core	constants	DBG_CALLER	"{""name"":""DBG_CALLER"",""type"":""int"",""value"":128}"
+my-try	core	constants	DBG_COMPACT	"{""name"":""DBG_COMPACT"",""type"":""int"",""value"":2048}"
+my-try	core	constants	DBG_DEFAULT	"{""name"":""DBG_DEFAULT"",""type"":""int"",""value"":262343}"
+my-try	core	constants	DBG_DEPTH_0	"{""name"":""DBG_DEPTH_0"",""type"":""int"",""value"":65536}"
+my-try	core	constants	DBG_DEPTH_1	"{""name"":""DBG_DEPTH_1"",""type"":""int"",""value"":131072}"
+my-try	core	constants	DBG_DEPTH_2	"{""name"":""DBG_DEPTH_2"",""type"":""int"",""value"":262144}"
+my-try	core	constants	DBG_DEPTH_3	"{""name"":""DBG_DEPTH_3"",""type"":""int"",""value"":524288}"
+my-try	core	constants	DBG_DEPTH_4	"{""name"":""DBG_DEPTH_4"",""type"":""int"",""value"":1048576}"
+my-try	core	constants	DBG_DEPTH_5	"{""name"":""DBG_DEPTH_5"",""type"":""int"",""value"":2097152}"
+my-try	core	constants	DBG_FIELDS	"{""name"":""DBG_FIELDS"",""type"":""int"",""value"":8}"
+my-try	core	constants	DBG_JSON	"{""name"":""DBG_JSON"",""type"":""int"",""value"":256}"
+my-try	core	constants	DBG_KEYS	"{""name"":""DBG_KEYS"",""type"":""int"",""value"":16}"
+my-try	core	constants	DBG_LEN	"{""name"":""DBG_LEN"",""type"":""int"",""value"":32}"
+my-try	core	constants	DBG_PTR	"{""name"":""DBG_PTR"",""type"":""int"",""value"":1024}"
+my-try	core	constants	DBG_RAW	"{""name"":""DBG_RAW"",""type"":""int"",""value"":512}"
+my-try	core	constants	DBG_SHAPE	"{""name"":""DBG_SHAPE"",""type"":""int"",""value"":4}"
+my-try	core	constants	DBG_SOURCE	"{""name"":""DBG_SOURCE"",""type"":""int"",""value"":64}"
+my-try	core	constants	DBG_TYPE	"{""name"":""DBG_TYPE"",""type"":""int"",""value"":1}"
+my-try	core	constants	DBG_VALUE	"{""name"":""DBG_VALUE"",""type"":""int"",""value"":2}"
+my-try	core	types	Exception	"{""id"":""core.Exception"",""name"":""Exception"",""kind"":""class"",""storage"":""shared"",""capabilities"":[]}"
+my-try	core	types	hash	"{""id"":""core.hash"",""name"":""hash"",""kind"":""class"",""construction"":""make"",""default_constructible"":true,""initialization"":[{""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""},""where"":{""Key"":""int""}},{""key"":{""parameter"":""Key""},""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""}}],""indexing"":{""key"":{""parameter"":""Key""},""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""},""path"":{""parameter"":""Value""},""write"":true,""append"":""integer_key"",""probes"":true,""removal"":true},""iteration"":{""key"":{""parameter"":""Key""},""value"":{""parameter"":""Value""}},""capabilities"":[""copyable_value"",""value_storable"",""result_payload""],""parameters"":[{""name"":""Value"",""requires"":[""value_storable""],""capability_dependencies"":[""copyable_value""]},{""name"":""Key"",""requires"":[""hashable"",""comparable""],""default"":""string"",""capability_dependencies"":[""copyable_value""]}]}"
+my-try	core	types	vector	"{""id"":""core.vector"",""name"":""vector"",""kind"":""class"",""default_constructible"":true,""initialization"":[{""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""}}],""indexing"":{""key"":""int"",""value"":{""parameter"":""Value""},""nested"":{""parameter"":""Value""},""path"":{""parameter"":""Value""},""write"":true,""append"":""allowed"",""probes"":true},""iteration"":{""key"":""int"",""value"":{""parameter"":""Value""}},""capabilities"":[""copyable_value"",""value_storable"",""result_payload""],""parameters"":[{""name"":""Value"",""requires"":[""value_storable""],""capability_dependencies"":[""copyable_value""]}]}"
+my-try	curl	constants	CURLINFO_CONTENT_TYPE	"{""name"":""CURLINFO_CONTENT_TYPE"",""type"":""int"",""value"":103}"
+my-try	curl	constants	CURLINFO_EFFECTIVE_URL	"{""name"":""CURLINFO_EFFECTIVE_URL"",""type"":""int"",""value"":102}"
+my-try	curl	constants	CURLINFO_HEADER_SIZE	"{""name"":""CURLINFO_HEADER_SIZE"",""type"":""int"",""value"":105}"
+my-try	curl	constants	CURLINFO_REDIRECT_COUNT	"{""name"":""CURLINFO_REDIRECT_COUNT"",""type"":""int"",""value"":107}"
+my-try	curl	constants	CURLINFO_REQUEST_SIZE	"{""name"":""CURLINFO_REQUEST_SIZE"",""type"":""int"",""value"":106}"
+my-try	curl	constants	CURLINFO_RESPONSE_CODE	"{""name"":""CURLINFO_RESPONSE_CODE"",""type"":""int"",""value"":101}"
+my-try	curl	constants	CURLINFO_TOTAL_TIME_MS	"{""name"":""CURLINFO_TOTAL_TIME_MS"",""type"":""int"",""value"":104}"
+my-try	curl	constants	CURLOPT_CONNECTTIMEOUT	"{""name"":""CURLOPT_CONNECTTIMEOUT"",""type"":""int"",""value"":8}"
+my-try	curl	constants	CURLOPT_CUSTOMREQUEST	"{""name"":""CURLOPT_CUSTOMREQUEST"",""type"":""int"",""value"":6}"
+my-try	curl	constants	CURLOPT_FOLLOWLOCATION	"{""name"":""CURLOPT_FOLLOWLOCATION"",""type"":""int"",""value"":9}"
+my-try	curl	constants	CURLOPT_HTTPHEADER	"{""name"":""CURLOPT_HTTPHEADER"",""type"":""int"",""value"":3}"
+my-try	curl	constants	CURLOPT_POST	"{""name"":""CURLOPT_POST"",""type"":""int"",""value"":4}"
+my-try	curl	constants	CURLOPT_POSTFIELDS	"{""name"":""CURLOPT_POSTFIELDS"",""type"":""int"",""value"":5}"
+my-try	curl	constants	CURLOPT_RETURNTRANSFER	"{""name"":""CURLOPT_RETURNTRANSFER"",""type"":""int"",""value"":2}"
+my-try	curl	constants	CURLOPT_SSL_VERIFYHOST	"{""name"":""CURLOPT_SSL_VERIFYHOST"",""type"":""int"",""value"":12}"
+my-try	curl	constants	CURLOPT_SSL_VERIFYPEER	"{""name"":""CURLOPT_SSL_VERIFYPEER"",""type"":""int"",""value"":11}"
+my-try	curl	constants	CURLOPT_TIMEOUT	"{""name"":""CURLOPT_TIMEOUT"",""type"":""int"",""value"":7}"
+my-try	curl	constants	CURLOPT_URL	"{""name"":""CURLOPT_URL"",""type"":""int"",""value"":1}"
+my-try	curl	constants	CURLOPT_USERAGENT	"{""name"":""CURLOPT_USERAGENT"",""type"":""int"",""value"":10}"
+my-try	curl	properties	body	"{""id"":""curl.response.body"",""owner"":""curl_response"",""name"":""body"",""type"":""string""}"
+my-try	curl	properties	content_type	"{""id"":""curl.response.content_type"",""owner"":""curl_response"",""name"":""content_type"",""type"":""string""}"
+my-try	curl	properties	effective_url	"{""id"":""curl.response.effective_url"",""owner"":""curl_response"",""name"":""effective_url"",""type"":""string""}"
+my-try	curl	properties	header_size	"{""id"":""curl.response.header_size"",""owner"":""curl_response"",""name"":""header_size"",""type"":""int""}"
+my-try	curl	properties	headers	"{""id"":""curl.response.headers"",""owner"":""curl_response"",""name"":""headers"",""type"":{""name"":""vector"",""arguments"":[""string""]}}"
+my-try	curl	properties	redirect_count	"{""id"":""curl.response.redirect_count"",""owner"":""curl_response"",""name"":""redirect_count"",""type"":""int""}"
+my-try	curl	properties	request_size	"{""id"":""curl.response.request_size"",""owner"":""curl_response"",""name"":""request_size"",""type"":""int""}"
+my-try	curl	properties	status_code	"{""id"":""curl.response.status_code"",""owner"":""curl_response"",""name"":""status_code"",""type"":""int""}"
+my-try	curl	properties	total_time_ms	"{""id"":""curl.response.total_time_ms"",""owner"":""curl_response"",""name"":""total_time_ms"",""type"":""int""}"
+my-try	curl	types	curl_handle	"{""id"":""curl.curl_handle"",""name"":""curl_handle"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	curl	types	curl_response	"{""id"":""curl.curl_response"",""name"":""curl_response"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	filesystem	types	file_lock_handle	"{""id"":""filesystem.file_lock_handle"",""name"":""file_lock_handle"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	io	types	resource_handle	"{""id"":""io.resource_handle"",""name"":""resource_handle"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	json	properties	byte_offset	"{""id"":""json.diagnostic.byte_offset"",""owner"":""json_parse_error"",""name"":""byte_offset"",""type"":""int""}"
+my-try	json	properties	category	"{""id"":""json.diagnostic.category"",""owner"":""json_parse_error"",""name"":""category"",""type"":""string""}"
+my-try	json	properties	message	"{""id"":""json.diagnostic.message"",""owner"":""json_parse_error"",""name"":""message"",""type"":""string""}"
+my-try	json	types	json_document	"{""id"":""json.json_document"",""name"":""json_document"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	json	types	json_node	"{""id"":""json.json_node"",""name"":""json_node"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	json	types	json_parse_error	"{""id"":""json.json_parse_error"",""name"":""json_parse_error"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	json	types	json_pull_reader	"{""id"":""json.json_pull_reader"",""name"":""json_pull_reader"",""kind"":""class"",""storage"":""shared"",""capabilities"":[]}"
+my-try	process	properties	exit_code	"{""id"":""process.output.exit_code"",""owner"":""process_output"",""name"":""exit_code"",""type"":""int""}"
+my-try	process	properties	signal	"{""id"":""process.output.signal"",""owner"":""process_output"",""name"":""signal"",""type"":""int""}"
+my-try	process	properties	stderr_text	"{""id"":""process.output.stderr_text"",""owner"":""process_output"",""name"":""stderr_text"",""type"":""string""}"
+my-try	process	properties	stdout_text	"{""id"":""process.output.stdout_text"",""owner"":""process_output"",""name"":""stdout_text"",""type"":""string""}"
+my-try	process	properties	stopped	"{""id"":""process.output.stopped"",""owner"":""process_output"",""name"":""stopped"",""type"":""bool""}"
+my-try	process	properties	timed_out	"{""id"":""process.output.timed_out"",""owner"":""process_output"",""name"":""timed_out"",""type"":""bool""}"
+my-try	process	types	process_handle	"{""id"":""process.process_handle"",""name"":""process_handle"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	process	types	process_output	"{""id"":""process.process_output"",""name"":""process_output"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	regex	constants	PREG_SPLIT_DELIM_CAPTURE	"{""name"":""PREG_SPLIT_DELIM_CAPTURE"",""type"":""int"",""value"":2}"
+my-try	regex	constants	PREG_SPLIT_NO_EMPTY	"{""name"":""PREG_SPLIT_NO_EMPTY"",""type"":""int"",""value"":1}"
+my-try	source	types	byte_span	"{""id"":""source.byte_span"",""name"":""byte_span"",""kind"":""struct"",""capabilities"":[""value_storable"",""copyable_value""]}"
+my-try	source	types	source_buffer	"{""id"":""source.source_buffer"",""name"":""source_buffer"",""kind"":""struct"",""capabilities"":[""value_storable"",""copyable_value""]}"
+my-try	source	types	source_line_index	"{""id"":""source.source_line_index"",""name"":""source_line_index"",""kind"":""struct"",""capabilities"":[""value_storable"",""copyable_value""]}"
+my-try	source	types	source_location	"{""id"":""source.source_location"",""name"":""source_location"",""kind"":""struct"",""capabilities"":[""value_storable"",""copyable_value""]}"
+my-try	strings	constants	STR_PAD_BOTH	"{""name"":""STR_PAD_BOTH"",""type"":""int"",""value"":2}"
+my-try	strings	constants	STR_PAD_LEFT	"{""name"":""STR_PAD_LEFT"",""type"":""int"",""value"":0}"
+my-try	strings	constants	STR_PAD_RIGHT	"{""name"":""STR_PAD_RIGHT"",""type"":""int"",""value"":1}"
+my-try	strings	types	string_parts_builder	"{""id"":""strings.string_parts_builder"",""name"":""string_parts_builder"",""kind"":""struct"",""capabilities"":[""value_storable"",""copyable_value""]}"
+my-try	strings	types	text_builder	"{""id"":""strings.text_builder"",""name"":""text_builder"",""kind"":""struct"",""capabilities"":[""value_storable"",""copyable_value""]}"
+my-try	tasks	properties	key	"{""id"":""tasks.error.key"",""owner"":""task_error"",""name"":""key"",""type"":""mixed"",""access"":""read_only""}"
+my-try	tasks	properties	kind	"{""id"":""tasks.error.kind"",""owner"":""task_error"",""name"":""kind"",""type"":""string"",""access"":""read_only""}"
+my-try	tasks	properties	message	"{""id"":""tasks.error.message"",""owner"":""task_error"",""name"":""message"",""type"":""string"",""access"":""read_only""}"
+my-try	tasks	properties	source_file	"{""id"":""tasks.error.source_file"",""owner"":""task_error"",""name"":""source_file"",""type"":""string"",""access"":""read_only""}"
+my-try	tasks	properties	source_line	"{""id"":""tasks.error.source_line"",""owner"":""task_error"",""name"":""source_line"",""type"":""int"",""access"":""read_only""}"
+my-try	tasks	properties	timeout	"{""id"":""tasks.error.timeout"",""owner"":""task_error"",""name"":""timeout"",""type"":""bool"",""access"":""read_only""}"
+my-try	tasks	properties	worker_id	"{""id"":""tasks.error.worker_id"",""owner"":""task_error"",""name"":""worker_id"",""type"":""int"",""access"":""read_only""}"
+my-try	tasks	types	task_batch	"{""id"":""tasks.batch"",""name"":""task_batch"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	tasks	types	task_context	"{""id"":""tasks.context"",""name"":""task_context"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	tasks	types	task_dynamic_batch	"{""id"":""tasks.dynamic_batch"",""name"":""task_dynamic_batch"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	tasks	types	task_error	"{""id"":""tasks.error"",""name"":""task_error"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	tasks	types	task_progress_info	"{""id"":""tasks.progress_info"",""name"":""task_progress_info"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	tokenizer	types	token_buffer	"{""id"":""tokenizer.token_buffer"",""name"":""token_buffer"",""kind"":""class"",""storage"":""shared"",""capabilities"":[]}"
+my-try	ui	types	ui_app	"{""id"":""ui.ui_app"",""name"":""ui_app"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	ui	types	ui_event	"{""id"":""ui.ui_event"",""name"":""ui_event"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	ui	types	ui_window	"{""id"":""ui.ui_window"",""name"":""ui_window"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+my-try	webview	types	webview	"{""id"":""webview.webview"",""name"":""webview"",""kind"":""class"",""storage"":""shared"",""capabilities"":[""result_payload""]}"
+strict	—	class	error	class error
+strict	—	member	error	public function get_file(): string
+strict	—	member	error	public function get_line(): int
+strict	—	member	error	public function get_message(): string
+strict	scpp	class	file_lock_handle	class file_lock_handle
+strict	scpp	class	mysqli	class mysqli
+strict	scpp	class	mysqli_result	class mysqli_result
+strict	scpp	class	process_handle	class process_handle
+strict	scpp	class	process_output	class process_output
+strict	scpp	class	source_line_index	class source_line_index
+strict	scpp	class	source_location	class source_location
+strict	scpp	class	string_parts_builder	class string_parts_builder
+strict	scpp	class	task_batch	class task_batch
+strict	scpp	class	task_context	class task_context
+strict	scpp	class	task_error	class task_error
+strict	scpp	class	task_progress_info	class task_progress_info
+strict	scpp	class	text_builder	class text_builder
+strict	scpp	class	token_buffer	class token_buffer
+strict	scpp	class	ui_app	class ui_app
+strict	scpp	class	ui_event	class ui_event
+strict	scpp	class	ui_window	class ui_window
+strict	scpp	class	webview	class webview
+strict	scpp	member	mysqli	public function close(): void
+strict	scpp	member	mysqli	public function query(string $sql): result_or_bool<scpp\mysqli_result>
+strict	scpp	member	mysqli	public function set_charset(string $charset): bool
+strict	scpp	member	mysqli	public int $connect_errno;
+strict	scpp	member	mysqli	public int $errno_code;
+strict	scpp	member	mysqli	public string $connect_error;
+strict	scpp	member	mysqli	public string $error;
+strict	scpp	member	mysqli_result	public function fetch_assoc(): dynamic
+strict	scpp	member	process_output	public bool $stopped;
+strict	scpp	member	process_output	public bool $timed_out;
+strict	scpp	member	process_output	public int $exit_code;
+strict	scpp	member	process_output	public int $signal;
+strict	scpp	member	process_output	public string $stderr_text;
+strict	scpp	member	process_output	public string $stdout_text;
+strict	scpp	member	task_error	public bool $timeout;
+strict	scpp	member	task_error	public int $source_line;
+strict	scpp	member	task_error	public int $worker_id;
+strict	scpp	member	task_error	public mixed $key;
+strict	scpp	member	task_error	public string $kind;
+strict	scpp	member	task_error	public string $message;
+strict	scpp	member	task_error	public string $source_file;
+strict	scpp	member	task_progress_info	public function active(): int
+strict	scpp	member	task_progress_info	public function completed(): int
+strict	scpp	member	task_progress_info	public function errors(): int
+strict	scpp	member	task_progress_info	public function queued(): int
+strict	scpp	member	task_progress_info	public function status(): string
+strict	scpp	member	task_progress_info	public function stop_requested(): bool
+strict	scpp	member	task_progress_info	public function total(): int
+strict	scpp	member	ui_event	public string $message;
+strict	scpp	member	ui_event	public string $type;
+strict	scpp	member	ui_event	public string $url;
+strict	scpp	member	ui_event	public ui_window $window_handle;
+strict	scpp	member	ui_event	public webview $webview_handle;
+strict	scpp	member	ui_window	public bool $closed;
+strict	scpp	member	ui_window	public bool $visible;
+strict	scpp	member	ui_window	public int $height;
+strict	scpp	member	ui_window	public int $width;
+strict	scpp	member	ui_window	public string $title;
