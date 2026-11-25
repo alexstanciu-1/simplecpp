@@ -1,2 +1,0 @@
-$result string = "a" . "b";
-echo $result, "\n";

@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "Parent instance call requires an initialized $this\n"
-}

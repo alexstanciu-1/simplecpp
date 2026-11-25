@@ -1,3 +1,0 @@
-$value mixed = "Ada";
-$suffix string = " Lovelace";
-echo js_plus($value, $suffix), "\n";

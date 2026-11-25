@@ -1,3 +1,0 @@
-function first(const vector<int> &$values): int { return $values[0]; }
-$values vector<int> = [1, 2];
-return first($values);

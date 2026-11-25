@@ -1,1 +1,0 @@
-interface I { function f(): int; } class B { private function f(): int { return 1; } } class C extends B implements I {} return 0;

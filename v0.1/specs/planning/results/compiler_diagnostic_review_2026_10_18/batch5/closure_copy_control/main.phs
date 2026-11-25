@@ -1,1 +1,0 @@
-$n = 1; $f = fn(): int => $n; $g = $f; return $g();

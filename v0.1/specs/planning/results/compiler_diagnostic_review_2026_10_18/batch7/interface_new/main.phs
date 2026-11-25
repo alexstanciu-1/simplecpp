@@ -1,1 +1,0 @@
-interface I {} $i = new I(); return 0;

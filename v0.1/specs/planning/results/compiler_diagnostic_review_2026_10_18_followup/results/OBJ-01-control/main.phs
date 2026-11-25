@@ -1,1 +1,0 @@
-struct A {} class C { function __construct(A $a) {} } $a = new A(); $c = new C($a); return 0;

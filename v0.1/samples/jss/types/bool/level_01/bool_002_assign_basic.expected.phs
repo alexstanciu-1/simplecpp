@@ -1,7 +1,0 @@
-$flag bool = false;
-$flag = true;
-if ($flag === true) {
-	echo "1\n";
-} else {
-	echo "0\n";
-}

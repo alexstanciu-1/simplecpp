@@ -1,2 +1,0 @@
-$result int = 10 + 5;
-echo $result, "\n";

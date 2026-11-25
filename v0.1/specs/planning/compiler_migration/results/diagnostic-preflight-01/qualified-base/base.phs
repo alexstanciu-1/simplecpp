@@ -1,3 +1,0 @@
-class Root_Base {
-    public int $value = 7;
-}

@@ -1,1 +1,0 @@
-function g(): void {} function f(): void { return g(); } f(); return 0;

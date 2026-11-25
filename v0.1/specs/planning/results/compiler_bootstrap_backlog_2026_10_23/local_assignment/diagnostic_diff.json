@@ -1,6 +1,0 @@
-{
-  "added": [
-    "Required local may be read before assignment: out"
-  ],
-  "removed": []
-}

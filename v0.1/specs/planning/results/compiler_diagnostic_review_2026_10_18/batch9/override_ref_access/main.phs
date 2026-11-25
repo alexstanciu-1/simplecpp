@@ -1,1 +1,0 @@
-interface I { function f(int &$n): void; } class C implements I { function f(const int &$n): void {} } return 0;

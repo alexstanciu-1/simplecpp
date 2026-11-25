@@ -1,1 +1,0 @@
-inline int value(){return 7;}

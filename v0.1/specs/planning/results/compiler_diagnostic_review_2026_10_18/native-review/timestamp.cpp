@@ -1,3 +1,0 @@
-__TIMESTAMP__
-__DATE__
-__TIME__

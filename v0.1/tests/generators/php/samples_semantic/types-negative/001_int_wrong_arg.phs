@@ -1,5 +1,0 @@
-function f(int $a): int {
-	return $a;
-}
-
-echo f("string"), "\n";

@@ -1,5 +1,0 @@
-
-function alex_001()
-{
-    echo "alex_001\n";
-}

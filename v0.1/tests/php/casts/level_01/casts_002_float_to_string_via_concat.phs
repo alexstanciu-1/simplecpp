@@ -1,5 +1,0 @@
-// Float to string conversion through concatenation path.
-$value = 1.25;
-
-echo "value=" . $value, "
-";

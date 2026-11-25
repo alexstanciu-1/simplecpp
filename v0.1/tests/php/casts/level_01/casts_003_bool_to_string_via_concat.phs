@@ -1,5 +1,0 @@
-// Bool to string conversion through concatenation path.
-$value = true;
-
-echo "value=" . $value, "
-";

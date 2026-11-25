@@ -1,4 +1,0 @@
-// Basic int initialization and output.
-$n = 42;
-
-echo $n, "\n";

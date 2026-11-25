@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "Member call requires one ordinary method: __destruct\n"
-}

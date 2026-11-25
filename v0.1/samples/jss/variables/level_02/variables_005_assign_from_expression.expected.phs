@@ -1,3 +1,0 @@
-$a int = 2;
-$b int = $a + 5;
-echo $b, "\n";

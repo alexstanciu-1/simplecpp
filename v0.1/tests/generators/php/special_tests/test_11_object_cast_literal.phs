@@ -1,2 +1,0 @@
-$x = (object)["id" => 1, "address" => (object)["street" => "Ssss"]];
-var_dump($x);

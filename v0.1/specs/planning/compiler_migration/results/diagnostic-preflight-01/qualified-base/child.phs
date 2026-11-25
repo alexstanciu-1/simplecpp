@@ -1,3 +1,0 @@
-namespace diagnostics;
-class Child extends \Root_Base {
-}

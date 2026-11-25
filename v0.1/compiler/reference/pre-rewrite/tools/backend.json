@@ -1,6 +1,0 @@
-{
-  "clang": "clang",
-  "target": null,
-  "compile_jobs": 20,
-  "linker": "mold"
-}

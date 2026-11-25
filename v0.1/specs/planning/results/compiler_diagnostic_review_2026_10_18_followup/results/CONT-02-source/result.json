@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "S2S coalesce does not permit result_or_bool on either side\n"
-}

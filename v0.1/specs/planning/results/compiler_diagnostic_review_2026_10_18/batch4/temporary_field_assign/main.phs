@@ -1,1 +1,0 @@
-struct S { int $n = 0; } (new S())->n = 1; return 0;

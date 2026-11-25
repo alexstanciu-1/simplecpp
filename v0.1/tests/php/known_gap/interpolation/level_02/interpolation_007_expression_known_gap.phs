@@ -1,4 +1,0 @@
-// Planned target form: "Value {$a + 1}".
-$a = 2;
-echo "Value " . ($a + 1), "
-";

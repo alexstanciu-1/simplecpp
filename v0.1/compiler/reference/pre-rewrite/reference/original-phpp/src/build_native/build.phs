@@ -1,3 +1,0 @@
-namespace build_native;
-
-// Own native object production, output caching, and linking.

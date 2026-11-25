@@ -1,9 +1,0 @@
-{
-  "passed": true,
-  "optimization_levels": [
-    0,
-    1,
-    2
-  ],
-  "native_compiler_tested": false
-}

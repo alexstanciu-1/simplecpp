@@ -1,6 +1,0 @@
-// Assignment from another variable.
-$a = 11;
-$b = $a;
-
-echo $b, "
-";

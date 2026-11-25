@@ -1,5 +1,0 @@
-{
-  "legacy_leaves": "11 passed",
-  "v02_leaves": "11 passed",
-  "expected": "absent:empty:unchanged:failure:digest:promote:unchanged:discard0"
-}

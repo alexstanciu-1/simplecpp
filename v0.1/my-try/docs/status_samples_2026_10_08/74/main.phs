@@ -1,3 +1,0 @@
-$failure error;
-$message string = $failure->get_message();
-return 0;

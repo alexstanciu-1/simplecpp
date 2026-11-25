@@ -1,1 +1,0 @@
-function f(void $x): void {} return 0;

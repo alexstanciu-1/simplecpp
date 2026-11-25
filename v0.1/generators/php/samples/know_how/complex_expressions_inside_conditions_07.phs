@@ -1,7 +1,0 @@
-$i = 0;
-$limit = 5;
-$sum = 0;
-while (($i < $limit) && (($sum + $i) < 100)) {
-	$sum += $i;
-	$i++;
-}

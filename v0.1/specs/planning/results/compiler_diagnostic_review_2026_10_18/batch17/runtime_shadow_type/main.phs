@@ -1,1 +1,0 @@
-use vector as V; $v V<int>; return 0;

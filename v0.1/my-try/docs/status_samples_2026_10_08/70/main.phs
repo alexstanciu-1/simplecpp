@@ -1,3 +1,0 @@
-$callback = function(int $value): int { return $value; };
-$table mixed = ["callback" => $callback];
-return 0;

@@ -1,1 +1,0 @@
-$x uint64 = 1; $z = $x ** $x; return 0;

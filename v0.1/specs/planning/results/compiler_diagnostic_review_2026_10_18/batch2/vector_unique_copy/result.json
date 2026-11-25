@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "S2S value copy requires copyable_value\n"
-}

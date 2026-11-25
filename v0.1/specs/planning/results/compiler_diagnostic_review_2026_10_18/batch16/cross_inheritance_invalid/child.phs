@@ -1,1 +1,0 @@
-namespace D; use B\Base; class Child extends Base {}

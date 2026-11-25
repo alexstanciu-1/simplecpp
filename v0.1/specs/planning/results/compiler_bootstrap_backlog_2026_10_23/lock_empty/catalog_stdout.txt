@@ -1,1 +1,0 @@
-PASS: scpp strict runtime catalog

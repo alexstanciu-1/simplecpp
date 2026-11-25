@@ -1,1 +1,0 @@
-$x = true; $z = -$x; return 0;

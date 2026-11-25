@@ -1,6 +1,0 @@
-$a = 1;
-$f = function () use ($a) {
-	return $a;
-};
-
-echo "unreachable\n";

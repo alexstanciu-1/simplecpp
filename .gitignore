@@ -32,3 +32,8 @@ CMakeUserPresets.json
 
 __pycache__/
 *.pyc
+
+# Local extractions of the frozen v0.1 source archive.
+/v0.1/*
+!/v0.1/source.tar.gz
+!/v0.1/README.md

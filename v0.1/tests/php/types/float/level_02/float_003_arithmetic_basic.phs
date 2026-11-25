@@ -1,7 +1,0 @@
-// Basic float arithmetic.
-$a = 1.5;
-$b = 2.0;
-$c = $a + $b;
-
-echo $c, "
-";

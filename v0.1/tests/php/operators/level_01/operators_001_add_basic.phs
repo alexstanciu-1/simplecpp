@@ -1,4 +1,0 @@
-// Basic addition operator.
-$result = 10 + 5;
-
-echo $result, "\n";

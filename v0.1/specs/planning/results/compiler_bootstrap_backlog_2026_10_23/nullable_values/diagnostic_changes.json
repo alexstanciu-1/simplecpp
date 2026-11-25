@@ -1,6 +1,0 @@
-{
-  "removed": [
-    "S2S nullable value boundary requires a scalar or inline record payload"
-  ],
-  "added": []
-}

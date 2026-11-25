@@ -1,3 +1,0 @@
-function value(): int {
-    return 42;
-}

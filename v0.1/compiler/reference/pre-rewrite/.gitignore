@@ -1,9 +1,0 @@
-/generated-runtime/*
-!/generated-runtime/.gitignore
-/build/
-__pycache__/
-*.scpp-compile.lock
-/nbproject/private/
-!/reference/prototype/nbproject/
-!/reference/prototype/nbproject/project.properties
-!/reference/prototype/nbproject/project.xml

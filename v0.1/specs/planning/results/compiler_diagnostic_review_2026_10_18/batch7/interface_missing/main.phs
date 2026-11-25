@@ -1,1 +1,0 @@
-interface I { function f(): int; } class C implements I {} $c = new C(); return 0;

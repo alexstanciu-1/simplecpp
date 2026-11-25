@@ -1,5 +1,0 @@
-// Float to string cast path via concatenation.
-$n = 2.5;
-
-echo "f=" . $n, "
-";

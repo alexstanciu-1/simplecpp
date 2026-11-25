@@ -1,4 +1,0 @@
-// Basic string initialization and output.
-$s = "hello";
-
-echo $s, "\n";

@@ -1,6 +1,0 @@
-// Basic nullable int initialization.
-$value /** ?int */ = null;
-
-echo $value === null ? "null
-" : "value
-";

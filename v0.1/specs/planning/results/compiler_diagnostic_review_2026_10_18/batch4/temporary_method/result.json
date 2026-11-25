@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "Inline method receiver requires stable whole storage\n"
-}
