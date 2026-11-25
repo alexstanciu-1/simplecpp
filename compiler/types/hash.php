@@ -25,6 +25,12 @@ abstract class hash_type_definition extends type_definition implements writable_
 	}
 
 	/** METHODS */
+	/** A keyed probe of a nullable shared value inspects the stored owner after lookup. */
+	public function probes_stored_owner(): bool
+	{
+		return $this->value_type instanceof shared_record_type_definition && !$this->value_type->required;
+	}
+
 	public function private_copy_allocation_only(): bool
 	{
 		return $this->key_type->copy_has_no_observable_effects() && $this->value_type->copy_has_no_observable_effects();

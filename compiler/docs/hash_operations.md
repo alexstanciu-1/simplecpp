@@ -23,6 +23,13 @@ Source `count(h)` and `empty(h)` observe the number of live keys through the
 published `size()` and `empty()` members. Replacing an existing key preserves its
 count. Presence of a zero or empty-string value still makes the hash nonempty.
 
+In the PHP flavor, `isset($h[$key])` supports one key on a named local hash with
+integer, string or shared record values. The key runs once before lookup. A missing
+key returns false and leaves the hash unchanged. Zero and empty text are present.
+For nullable shared values, the probe checks the stored owner in place, so a key
+holding null returns false. The generated caller uses a concrete `scpp::php::isset`
+overload. [Keyed evaluation contract](../../specs/count_empty_isset_contract.md#v02-keyed-evaluation-order)
+
 Generated `clear()` methods, including expression receivers, are described in
 [collection methods](collection_methods.md).
 

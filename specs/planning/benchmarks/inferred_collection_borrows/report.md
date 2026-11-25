@@ -52,3 +52,25 @@ These percentages describe re-preparation of one body. They exclude parsing, emi
 ## Production check
 
 The implementation queries the callee's already-prepared return expression during emission. It adds no per-body preparation flag or traversal. The published integer strategy with trivial copy semantics supplies the element capability. Vector values and both hash keys and values must satisfy it. On dev002 the instrumented production-generated entries again made one copy per ordinary by-value call and zero for explicit and inferred borrowing on 4,096-entry integer collections. Only the ordinary by-value entry failed when its copy allocation was forced to fail. The inline-record destructor test retained the original trace. [Regression fixture](../../../../compiler/tests/count_reader_native.py)
+
+## Single literal-index readers
+
+On dev002 the same copy-constructor probe exercised generated readers returning
+the element at integer key or index zero from a 4,096-entry collection. Across
+100 calls per form, both ordinary by-value entries made one copy per call.
+Explicit and inferred borrows made zero. Forced failure of the next allocation
+raised `std::bad_alloc` only for the by-value entries. The regression fixture
+separately checks an empty vector and a missing hash key against their native
+exception type and message. A cross-file edit that writes the selected element
+changes the return value while preserving the caller's original element.
+
+The indexed-reader proof runs during lowering. With the preparation method above,
+16 alternating pairs on CPU 23 gave the following per-body timings. The paired
+percentage uses each pair's ratio before taking the median.
+
+| Prepared body | Baseline µs | Candidate µs | Paired median change |
+| --- | ---: | ---: | ---: |
+| Single vector indexed read | 14.492 | 15.045 | +2.16% |
+| Single hash indexed read | 14.794 | 14.730 | −3.69% |
+| Unrelated scalar return | 14.310 | 14.198 | −0.66% |
+| Unrelated 100-assignment body | 387.721 | 387.544 | +0.06% |

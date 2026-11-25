@@ -1574,6 +1574,14 @@ final class Preparation
 		if ($syntax instanceof ast_isset_expression) {
 			$this->value($syntax->operand, $initializing);
 			$type = $syntax->operand->type_def();
+			$entry = $syntax->operand;
+			if ($syntax->source()->flavor === flavor::php && $entry instanceof ast_index_expression
+				&& $entry->receiver instanceof ast_name_expression && $entry->receiver->local_binding() !== null
+				&& $entry->receiver->type_def() instanceof hash_type_definition
+				&& ($type === type_registry::integer() || $type === type_registry::string() || $type instanceof shared_record_type_definition)) {
+				$syntax->settle_presence($entry);
+				return;
+			}
 			if (!($type instanceof presence_test_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'This isset slice requires a carrier or owned callable');
 			}

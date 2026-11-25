@@ -58,8 +58,17 @@ $c dynamic=["n"=>1]; $d=$c; $d["n"]=2; $y int=$c["n"]; echo $y; return 0;''', '1
           modules=('filesystem',), output='missing'),
     Probe('guard-search', '''$words vector<string> = ["a","x"]; foreach ($words as $word) { $p=strpos("abc",$word);
 if (isset($p)) { $n int=$p; echo $n; } else { echo "miss"; } } return 0;''', '0miss'),
-    Probe('hash-presence', '$h hash<int,string> =["x"=>0]; if (isset($h["x"])) { echo "present"; } return 0;',
-          reject='isset slice requires'),
+    Probe('hash-presence', '''function insert_key(hash<int,string> &$h,int &$calls):string {
+    $calls+=1; $h["paid"]=0; return "paid";
+}
+$h hash<int,string> = []; $calls=0;
+echo (int)isset($h["missing"]), count($h), (int)isset($h[insert_key($h,$calls)]), $calls, count($h);
+$labels hash<string,int> = [7=>""]; echo (int)isset($labels[7]), (int)isset($labels[8]);
+return 0;''', '0011110'),
+    Probe('hash-nullable-presence', '''class User {public int $id=1;}
+$users hash<?User,string> = []; $users["absent"]=null; $users["live"]=new User();
+echo (int)isset($users["missing"]), (int)isset($users["absent"]), (int)isset($users["live"]), count($users);
+return 0;''', '0012'),
     Probe('hash-helper', '$h hash<int,string> =["x"=>0]; echo (int)hash_contains($h,"x"); return 0;', '1'),
     Probe('boxed-foreach-key', '''$a=cli_args(); foreach ($a as $i=>$arg) {
 if ($i === 0) { echo "first"; } } return 0;''', reject='Unsupported boxed binary'),
