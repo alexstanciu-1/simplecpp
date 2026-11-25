@@ -541,6 +541,18 @@ pairs admitted by both operators, strict identity implies ordinary equality.
 strict normalization. Literal null/sentinel routes must preserve the same invariant
 under their separately admitted comparison rules.
 
+In PHP flavor, strict comparison of a published `result_or_false<T>` with the
+literal `false` tests the false sentinel in either operand order. Evaluate the
+carrier expression once. `===` succeeds only for the sentinel; `!==` succeeds
+for every payload, including integer zero, an empty string and a boolean false.
+This literal rule does not extend to a variable holding false or to loose equality.
+
+For PHP `===` and `!==` between two operands of the same published
+`result_or_false<T>` type, `T` must admit the corresponding same-type strict
+comparison. Capture the left value before evaluating the right. Two false
+sentinels are identical, a sentinel and a payload are distinct, and two
+payloads follow the strict identity rule for `T`.
+
 Ordering uses checked one-layer extraction instead of state sorting, followed by
 the payload ordering contract. A non-value state throws. Left extraction/conversion
 precedes right evaluation, as for arithmetic; equality snapshots both operands

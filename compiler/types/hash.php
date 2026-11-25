@@ -25,6 +25,11 @@ abstract class hash_type_definition extends type_definition implements writable_
 	}
 
 	/** METHODS */
+	public function private_copy_allocation_only(): bool
+	{
+		return $this->key_type->copy_has_no_observable_effects() && $this->value_type->copy_has_no_observable_effects();
+	}
+
 	public function lower_cpp_iteration_reference(string $receiver, int $loop_start): string
 	{
 		return "$receiver.iteration_reference(loop_{$loop_start}_iteration_position)";

@@ -71,6 +71,48 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	verify(str_contains($cpp, '.value()'), 'Missing checked extraction');
 	verify(!str_contains($cpp, 'std::optional') && !str_contains($cpp, 'std::variant'), 'Application templates leaked');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("17|-12|24|1|12|4|12|1|a\0b|0|8|13|24")];
+	if ($flavor === flavor::php) {
+		$guard = <<<'SCPP'
+function missing():result_or_false<bool> { echo "once"; return false_sentinel; }
+$flag result_or_false<bool> = false;
+$zero result_or_false<int> = 0;
+$miss result_or_false<int> = false_sentinel;
+echo (int)($flag === false), (int)(false !== $flag), (int)($zero !== false),
+    (int)(false === $miss), (int)(missing() === false);
+return 8;
+SCPP;
+		$cpp = (new Cpp_Emitter())->emit($prepare($guard));
+		verify(substr_count($cpp, '.is_false()') === 5 && !str_contains($cpp, '.value()'),
+			'Strict PHP false guards must inspect the sentinel directly');
+		$fixtures['php-false-guards'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('0111once1')];
+		$pairs = <<<'SCPP'
+function lookup(string $tag, string $needle): result_or_false<int> {
+    echo $tag; return strpos("abc", $needle);
+}
+function replace_hit(result_or_false<int> &$slot): result_or_false<int> {
+    $slot = false_sentinel; return $slot;
+}
+$miss = strpos("abc", "x");
+$zero = strpos("abc", "a");
+$two = strpos("abc", "c");
+echo (int)($miss === $miss), (int)($zero === $miss), (int)($miss !== $zero),
+     (int)($zero === $zero), (int)($two !== $zero), "|";
+$flag result_or_false<bool> = false;
+$absent result_or_false<bool> = false_sentinel;
+echo (int)($flag === $absent), (int)($absent !== $flag), (int)($flag === $flag), "|";
+$a result_or_false<string> = "";
+$b result_or_false<string> = "0";
+echo (int)($a === $a), (int)($a === $b), "|";
+echo (int)(lookup("L","x") === lookup("R","z")), "|";
+echo (int)($zero === replace_hit($zero)), (int)($zero === $miss);
+return 8;
+SCPP;
+		$fixtures['php-false-pairs'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($pairs)),
+			'stdout_hex' => bin2hex('10111|011|10|LR1|01')];
+		rejects(fn() => $prepare('$a result_or_false<vector<string>> = false_sentinel; return (int)($a === $a);'),
+			'Unsupported binary operands');
+
+	}
 	$presence = $decl('nullable<int>', 'none', 'null')
 		. $decl('result_or_false<bool>', 'successful', 'false')
 		. $decl('result_or_false<bool>', 'absent', 'false_sentinel')
@@ -155,7 +197,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
 		$library = $directory . '/library.' . $flavor->name;
-		file_put_contents($main, 'echo (int)isset(provide()), provide() + 5; return 8;');
+		$pair_check = $flavor === flavor::php ? 'echo (int)(provide() === provide());' : '';
+		file_put_contents($main, $pair_check . 'echo (int)isset(provide()), provide() + 5; return 8;');
 		$compiler = new Project_Compiler();
 		$session = null;
 		$root = null;
@@ -193,7 +236,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 			}
 			$fresh = Cpp_Program::emit((new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target))->files;
 			verify($incremental === $fresh, 'Incremental differs from fresh');
-			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex('1' . (string)((int)(float)$value + 5))];
+			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex(($pair_check === '' ? '1' : '11') . (string)((int)(float)$value + 5))];
 		}
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op failed to reuse bodies');

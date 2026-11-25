@@ -27,16 +27,28 @@ abstract class carrier_type_definition extends type_definition implements presen
 	abstract public function lower_cpp_extract(string $value): string;
 	abstract public function lower_cpp_presence(string $value): string;
 
+	/** A false-only alternate state is published by result_or_false specializations. */
+	final public function false_only_sentinel(): bool
+	{
+		return $this->sentinel_factory('false') !== null && $this->sentinel_factory('true') === null;
+	}
+
 	/** Instance-field publication does not grant static carrier storage. */
 	final public function supports_static_property(): bool
 	{
 		return false;
 	}
 
-	/** A strict null comparison operates on the carrier itself and reads only presence. */
+	/** Compare prepared carrier states before reading any payload. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{
+		if ($expr->left->type_def() === $this && $expr->right->type_def() === $this) {
+			$payloads_equal = $this->payload_type->lower_cpp_binary(binary_operator::identical,
+				$this->lower_cpp_extract($left), $this->lower_cpp_extract($right), $this->payload_type);
+			$equal = "(($left).is_false() ? ($right).is_false() : (!($right).is_false() && $payloads_equal))";
+			return $expr->operator === binary_operator::not_identical ? '!' . $equal : $equal;
+		}
 		$carrier_first = $expr->left->type_def() === $this;
 		$literal = $carrier_first ? $expr->right : $expr->left;
 		if ($literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)) {
@@ -47,10 +59,11 @@ abstract class carrier_type_definition extends type_definition implements presen
 			$carrier_first ? $right : $left);
 	}
 
-	/** The presence lowering sequences both original operands without copying the carrier. */
+	/** Two local reads need no snapshots. Stage effectful pairs before inspecting either state. */
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
 	{
-		return true;
+		return $expr->left->type_def() !== $this || $expr->right->type_def() !== $this
+			|| (self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right));
 	}
 
 	/** Enforce the metadata extraction policy before selecting a payload operation. */

@@ -10,7 +10,7 @@ set(proofs
   fixed_array ternary
   switch required_fields integer_radix
   bootstrap_runtime_lookup finally exceptions
-  collection_references readonly_collection_methods readonly_constructors collection_append named_construction struct_constants shared_lookup
+  collection_references readonly_collection_methods readonly_constructors count_reader collection_append named_construction struct_constants shared_lookup
   coalesce coalesce_assignment
   hash_find match match_conditions
   inline_adapters named_arguments app_namespace

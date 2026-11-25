@@ -1657,11 +1657,24 @@ final class Preparation
 				return;
 			}
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
+				if ($syntax->source()->flavor === flavor::php && $left === $right
+					&& $left instanceof carrier_type_definition && $left->false_only_sentinel()) {
+					$payload = $left->payload_type;
+					if ($payload->binary_result($syntax->operator, $payload) !== type_bool::instance()
+						|| !$payload->binary_syntax_allowed($syntax->operator, $syntax)) {
+						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands or operator');
+					}
+					$syntax->settle_binary(type_bool::instance(), $left);
+					return;
+				}
 				$carrier = $left instanceof carrier_type_definition ? $left : $right;
 				$literal = $carrier === $left ? $syntax->right : $syntax->left;
-				if ($carrier instanceof carrier_type_definition && $carrier->payload_type instanceof runtime_handle_type
+				if ($carrier instanceof carrier_type_definition
 					&& $literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)
-					&& $carrier->sentinel_factory($literal->word) !== null) {
+					&& $carrier->sentinel_factory($literal->word) !== null
+					&& ($carrier->payload_type instanceof runtime_handle_type
+						|| ($syntax->source()->flavor === flavor::php && $literal->word === 'false'
+							&& $carrier->false_only_sentinel()))) {
 					$syntax->settle_binary(type_bool::instance(), $carrier);
 					return;
 				}
