@@ -1,2 +1,0 @@
-$first int = 17;
-return pair($first, identity(identity(42)));

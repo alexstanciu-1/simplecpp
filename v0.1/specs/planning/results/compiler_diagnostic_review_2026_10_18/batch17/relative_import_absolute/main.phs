@@ -1,1 +1,0 @@
-namespace App; use Lib\C; $c = new C(); return 0;

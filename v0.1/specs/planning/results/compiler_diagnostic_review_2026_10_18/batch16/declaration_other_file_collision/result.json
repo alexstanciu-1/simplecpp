@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "Import conflicts with namespace declaration: C"
-}

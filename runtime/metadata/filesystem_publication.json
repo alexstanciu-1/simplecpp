@@ -1,3 +1,54 @@
 {
-  "functions": ["fs_get", "fs_put", "fs_rename", "fs_remove", "fs_stage"]
+  "resources": {
+    "types": {"file_lock_handle": {"carriers": ["result"]}},
+    "operations": [
+      {"native":"lock_empty","general":["fs_lock_empty"],"parameters":[],"result":"file_lock_handle"},
+      {"native":"lock_try","general":["fs_lock_try"],"parameters":["file_lock_handle","string","bool_t"],"required":2,"mutable_parameters":[0],"result":"result_bool_t"},
+      {"native":"lock_release","general":["fs_lock_release"],"parameters":["file_lock_handle"],"result":"result_bool_t"},
+      {"native":"lock_transfer","general":["fs_lock_transfer"],"parameters":["file_lock_handle"],"result":"result_file_lock_handle"}
+    ]
+  },
+  "functions": [
+    "fs_get",
+    "fs_put",
+    "fs_rename",
+    "fs_remove",
+    "fs_stage",
+    "fs_exists",
+    "fs_is_file",
+    "fs_is_dir",
+    "fs_is_link",
+    "fs_mkdir",
+    "fs_touch",
+    "fs_rmdir",
+    "fs_copy",
+    "fs_size",
+    "fs_mtime",
+    "fs_scan",
+    "fs_realpath",
+    "fs_basename",
+    "fs_dirname",
+    "fs_is_windows",
+    "fs_read_snapshot"
+  ],
+  "php_exposures": [
+    "file_get_contents",
+    "file_put_contents",
+    "rename",
+    "unlink",
+    "file_exists",
+    "is_file",
+    "is_dir",
+    "is_link",
+    "mkdir",
+    "touch",
+    "rmdir",
+    "copy",
+    "scandir",
+    "filesize",
+    "filemtime",
+    "realpath",
+    "basename",
+    "dirname"
+  ]
 }

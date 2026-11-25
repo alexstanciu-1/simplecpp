@@ -3,8 +3,5 @@
     "type": "c++",
     "dependencies": {
         "runtime": {}
-    },
-    "artifacts": [
-        "../build/clang/libscpp_runtime.a"
-    ]
+    }
 }

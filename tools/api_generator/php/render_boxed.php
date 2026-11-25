@@ -62,17 +62,25 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             $d .= template('boxed/literal_factories', $vars);
         }
         $decl = template('boxed/boxed_declaration', $vars + ['fences' => $sourceMembers . $fences]);
+        $predicates = '';
+        if ($n === 'mixed') {
+            foreach ($plan['mixed_predicates'] ?? [] as $name => $kind) {
+                $signature = "bool_t $name(const mixed& value) noexcept";
+                $predicates .= "$signature;\n";
+                $d .= "$signature { return value.kind() == boxed_kind::$kind; }\n";
+            }
+        }
         if ($split) {
             $provider = typeExport($plan['submodules'], $n)['provider'];
             $h .= includeHeader(providerHeader($plan['submodules'], $provider));
             [$api, $impl] = renderBoxedDispatch($plan['boxed_dispatch'], $n);
             $forward = $box['scalar_conversions'] ? "class $peer; " : '';
             $groups[] = ['provider' => $provider, 'system' => [], 'declarations' =>
-                includeHeader('scpp/boxed_key.hpp') . includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $literalEntry . $api . "}\n"];
+                includeHeader('scpp/boxed_key.hpp') . includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $literalEntry . $api . $predicates . "}\n"];
             $d .= $impl . "$n $n::source_read(const boxed_text_key& key) const { return key.index < 0 ? read(key.text) : read(key.index); }\n"
                 . "void $n::source_set(const boxed_text_key& key, const $n& value) { if (key.index < 0) set(key.text, value); else set(key.index, value); }\n";
         } else {
-            $h .= $decl;
+            $h .= $decl . $predicates;
         }
         $d .= template('boxed/boxed_definition', $vars) . template('boxed/boxed_iteration', $vars);
         foreach (['int64' => 'key', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {

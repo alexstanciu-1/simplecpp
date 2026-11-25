@@ -1,1 +1,0 @@
-class C { function f(): int { return 1; } function f(): int { return 2; } } return 0;

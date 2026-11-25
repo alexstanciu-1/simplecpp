@@ -1,5 +1,0 @@
-function f(bool $a): bool {
-	return $a;
-}
-
-echo f(123), "\n";

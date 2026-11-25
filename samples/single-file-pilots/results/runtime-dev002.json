@@ -1,0 +1,371 @@
+{
+  "host": "tf-dev002",
+  "cpu": 8,
+  "rows_per_pass": {
+    "access-log": 1024,
+    "stock-ledger": 1024,
+    "route-table": 450
+  },
+  "samples": [
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 0,
+      "passes": 20,
+      "cpu_ns": 59334427,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 0,
+      "passes": 20,
+      "cpu_ns": 22411315,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 0,
+      "passes": 20,
+      "cpu_ns": 24984361,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 1,
+      "passes": 20,
+      "cpu_ns": 24312730,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 1,
+      "passes": 20,
+      "cpu_ns": 22143943,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 1,
+      "passes": 20,
+      "cpu_ns": 59028022,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 2,
+      "passes": 20,
+      "cpu_ns": 24938044,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 2,
+      "passes": 20,
+      "cpu_ns": 22456991,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 2,
+      "passes": 20,
+      "cpu_ns": 62565166,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 3,
+      "passes": 20,
+      "cpu_ns": 24975033,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 3,
+      "passes": 20,
+      "cpu_ns": 62135961,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 3,
+      "passes": 20,
+      "cpu_ns": 22118555,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 4,
+      "passes": 20,
+      "cpu_ns": 24858895,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 4,
+      "passes": 20,
+      "cpu_ns": 22115480,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 4,
+      "passes": 20,
+      "cpu_ns": 61996531,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 5,
+      "passes": 20,
+      "cpu_ns": 59548768,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 5,
+      "passes": 20,
+      "cpu_ns": 21833150,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 5,
+      "passes": 20,
+      "cpu_ns": 24635897,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 6,
+      "passes": 20,
+      "cpu_ns": 24496315,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 6,
+      "passes": 20,
+      "cpu_ns": 58881738,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 6,
+      "passes": 20,
+      "cpu_ns": 22274718,
+      "peak_rss_kib": 2560,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 7,
+      "passes": 20,
+      "cpu_ns": 24305447,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 7,
+      "passes": 20,
+      "cpu_ns": 58908478,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 7,
+      "passes": 20,
+      "cpu_ns": 21907669,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "timing",
+      "round": 8,
+      "passes": 20,
+      "cpu_ns": 22387088,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "access-log",
+      "mode": "timing",
+      "round": 8,
+      "passes": 20,
+      "cpu_ns": 24830312,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "timing",
+      "round": 8,
+      "passes": 20,
+      "cpu_ns": 59668363,
+      "peak_rss_kib": 2816,
+      "new_calls": 0,
+      "new_bytes": 0
+    },
+    {
+      "name": "route-table",
+      "mode": "memory",
+      "round": 0,
+      "passes": 1,
+      "cpu_ns": 3111776,
+      "peak_rss_kib": 2560,
+      "new_calls": 5269,
+      "new_bytes": 349952
+    },
+    {
+      "name": "access-log",
+      "mode": "memory",
+      "round": 0,
+      "passes": 1,
+      "cpu_ns": 1294027,
+      "peak_rss_kib": 2560,
+      "new_calls": 12697,
+      "new_bytes": 871108
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "memory",
+      "round": 0,
+      "passes": 1,
+      "cpu_ns": 1105283,
+      "peak_rss_kib": 2816,
+      "new_calls": 5099,
+      "new_bytes": 635616
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "memory",
+      "round": 1,
+      "passes": 1,
+      "cpu_ns": 1113037,
+      "peak_rss_kib": 2816,
+      "new_calls": 5099,
+      "new_bytes": 635616
+    },
+    {
+      "name": "access-log",
+      "mode": "memory",
+      "round": 1,
+      "passes": 1,
+      "cpu_ns": 1270021,
+      "peak_rss_kib": 2560,
+      "new_calls": 12697,
+      "new_bytes": 871108
+    },
+    {
+      "name": "route-table",
+      "mode": "memory",
+      "round": 1,
+      "passes": 1,
+      "cpu_ns": 3067173,
+      "peak_rss_kib": 2816,
+      "new_calls": 5269,
+      "new_bytes": 349952
+    },
+    {
+      "name": "access-log",
+      "mode": "memory",
+      "round": 2,
+      "passes": 1,
+      "cpu_ns": 1256506,
+      "peak_rss_kib": 2816,
+      "new_calls": 12697,
+      "new_bytes": 871108
+    },
+    {
+      "name": "stock-ledger",
+      "mode": "memory",
+      "round": 2,
+      "passes": 1,
+      "cpu_ns": 1131221,
+      "peak_rss_kib": 2816,
+      "new_calls": 5099,
+      "new_bytes": 635616
+    },
+    {
+      "name": "route-table",
+      "mode": "memory",
+      "round": 2,
+      "passes": 1,
+      "cpu_ns": 3004436,
+      "peak_rss_kib": 2816,
+      "new_calls": 5269,
+      "new_bytes": 349952
+    }
+  ]
+}

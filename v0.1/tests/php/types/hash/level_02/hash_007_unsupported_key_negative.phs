@@ -1,4 +1,0 @@
-$bad /** hash<int,bool> */ = [];
-$bad[true] = 1;
-
-echo "bad\n";

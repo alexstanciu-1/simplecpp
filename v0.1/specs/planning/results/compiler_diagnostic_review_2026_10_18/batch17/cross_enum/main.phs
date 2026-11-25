@@ -1,1 +1,0 @@
-$e = Lib\get(); return $e === Lib\E::A ? 1 : 0;

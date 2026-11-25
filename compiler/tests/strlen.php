@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/../host/compilation.php';
 
@@ -121,7 +122,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		flavor::php => '$ints vector<int> = [];', flavor::cpp => 'vector<int> ints = [];', flavor::js => 'let ints: vector<int> = [];',
 	};
 	$bad_join = $join($flavor === flavor::php ? '$ints' : 'ints', '","');
-	rejects(fn() => $prepare($integers . "echo $bad_join; return 8;"), $flavor === flavor::js ? 'unknown method' : 'requires vector<string>');
+	rejects(fn() => $prepare($integers . "echo $bad_join; return 8;"), match ($flavor) {
+		flavor::php => 'Unsupported argument type for implode', flavor::js => 'unknown method', flavor::cpp => 'requires vector<string>',
+	});
 	if ($flavor === flavor::php) {
 		$code = 'function subject(int &$calls, string &$sep): string { $calls++; $sep = ":"; return "a,b"; }'
 			. '$sep = ","; $calls = 0; $parts vector<string> = explode($sep, subject($calls, $sep));'
@@ -221,7 +224,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		verify(preg_match('/return str_replace\(argument_\d+_0, argument_\d+_1, subject_\(\), var_n_0\);/', $cpp) === 1,
 			'Expected direct forwarding of the writable count parameter');
 		// Observe caller storage after unwinding out of the generated wrapper.
-		$cpp = str_replace('int main()', 'int unused_entry()', $cpp) . <<<'CPP'
+		$cpp = rename_fixture_main('unused_entry', $cpp) . <<<'CPP'
 
 #include <stdexcept>
 #include <string_view>
@@ -576,8 +579,8 @@ SCPP;
 	}
 	$search_cpp = (new Cpp_Emitter())->emit($search);
 	verify(str_contains($search_cpp, '#include <scpp/' . $flavor->name . '/string.hpp>')
-		&& str_contains($search_cpp, $first . '(') && str_contains($search_cpp, $last . '(')
-		&& !str_contains($search_cpp, 'scpp::str::'), 'Byte search did not lower through the flavor adapter');
+		&& str_contains($search_cpp, $flavor === flavor::php ? '::scpp::php::strpos(' : '::scpp::str::find(')
+		&& str_contains($search_cpp, $last . '('), 'Byte search selected the wrong binding');
 	$fixtures[$flavor->name . '-search'] = ['cpp' => $search_cpp, 'stdout_hex' => bin2hex($expected)];
 	if ($flavor === flavor::php) {
 		$source = 'function show_position(result_or_false<int> $p): void { if (isset($p)) { echo $p + 0; } else { echo "F"; } echo ","; }';

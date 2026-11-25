@@ -47,7 +47,7 @@ if ((new RuntimeConcreteType($plan, 'string'))->headers() !== ['relocated/text.h
 $plan['submodules']['published'] = [];
 rejected(fn() => new RuntimeConcreteType($plan, 'string'));
 rejected(fn() => new RuntimeConcreteType($plan, 'missing'));
-$parts = concreteTemplate('collections/vector', ['e' => new FixtureConcreteType('Probe')], ['mt_segments' => '', 'enable_reserve' => '1', 'n' => 'ProbeVector', 'count' => 'int64', 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::vector_access',
+$parts = concreteTemplate('collections/vector', ['e' => new FixtureConcreteType('Probe')], ['mt_segments' => '', 'capacity_helpers' => '1', 'qual' => 'const ', 'ref' => '&', 'enable_reserve' => '1', 'n' => 'ProbeVector', 'count' => 'int64', 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::vector_access',
     'limit_method' => 'iteration_limit', 'next_method' => 'iteration_next']);
 $text = implode('', $parts);
 if (preg_match('/\btemplate\s*</', $text) || preg_match('/std::(?:vector|move|swap|exchange|equal|is_)/', $text)) {

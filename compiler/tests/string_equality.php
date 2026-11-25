@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
@@ -173,7 +174,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	foreach (['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal', 'compare'] as $name) {
 		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
-	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
+	$fixtures[$flavor->name . '_boundary'] = ['cpp' => rename_fixture_main('tested_entry',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 
 	$float_params = match ($flavor) {
@@ -189,7 +190,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	foreach (['same_float', 'different_float', 'identity_fail_right', 'identity_fail_left', 'compare_float'] as $name) {
 		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
-	$fixtures[$flavor->name . '_identity_float'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
+	$fixtures[$flavor->name . '_identity_float'] = ['cpp' => rename_fixture_main('tested_entry',
 		(new Cpp_Emitter())->emit($prepare($float_code))) . $observer, 'stdout_hex' => ''];
 
 	$directory = sys_get_temp_dir() . '/scpp-string-equality-' . bin2hex(random_bytes(8));

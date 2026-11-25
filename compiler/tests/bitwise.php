@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
@@ -104,7 +105,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$names[] = 'failed_write';
 	$observer = file_get_contents(__DIR__ . '/bitwise_observer.cpp');
 	foreach ($names as $name) $observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
-	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
+	$fixtures[$flavor->name . '_boundary'] = ['cpp' => rename_fixture_main('tested_entry', (new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 	$code = $decl('byte', '128') . $x . '<<=1; if (!' . $x . ') { echo "A"; }'
 		. $x . '|=3;' . $x . '^=1;' . $x . '&=6;' . $x . '>>=1; if (' . $x . '==1) { echo "B"; }'
 		. 'if ((~(byte)0)+1==256 && (byte)~(-256)==255 && (1<<2+1)==8 && (5|2^3&6)==5) { echo "C"; }'

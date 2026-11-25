@@ -356,7 +356,8 @@ final class Reference_Call_Cycles
 		foreach ($sites as $body_sites) {
 			foreach ($body_sites as $site) {
 				if ($site instanceof ast_call_expression) {
-					$type = ($site->qualifier === call_qualifier::stored_value ? $site->receiver : $site->callable_binding())->type_def();
+					$type = $site->runtime_binding() instanceof collection_transform_function ? $site->arguments[1]->type_def()
+						: ($site->qualifier === call_qualifier::stored_value ? $site->receiver : $site->callable_binding())->type_def();
 					$owned = $type instanceof owned_callable_type;
 					$group = callable_signature_index::element($owned ? $type->signature : $type);
 					$caller = $site->parent;

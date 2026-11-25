@@ -1,0 +1,38 @@
+{
+  "old,cpp": {
+    "bytes": 12456,
+    "median_compile_ms": 51.12,
+    "Total Frontend": 7.02,
+    "Total Backend": 5.97
+  },
+  "old,js": {
+    "bytes": 12440,
+    "median_compile_ms": 50.8,
+    "Total Frontend": 7.82,
+    "Total Backend": 6.07
+  },
+  "old,php": {
+    "bytes": 56909,
+    "median_compile_ms": 66.93,
+    "Total Frontend": 22.05,
+    "Total Backend": 8.72
+  },
+  "new,cpp": {
+    "bytes": 4048,
+    "median_compile_ms": 48.33,
+    "Total Backend": 6.06,
+    "Total Frontend": 3.9
+  },
+  "new,js": {
+    "bytes": 4042,
+    "median_compile_ms": 46.89,
+    "Total Backend": 5.07,
+    "Total Frontend": 3.66
+  },
+  "new,php": {
+    "bytes": 6643,
+    "median_compile_ms": 50.8,
+    "Total Backend": 7.9,
+    "Total Frontend": 6.52
+  }
+}

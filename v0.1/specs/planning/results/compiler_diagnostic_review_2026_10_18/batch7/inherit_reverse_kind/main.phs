@@ -1,1 +1,0 @@
-class B {} struct C extends B {} return 0;

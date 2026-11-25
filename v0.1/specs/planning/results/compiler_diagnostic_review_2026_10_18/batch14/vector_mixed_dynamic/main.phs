@@ -1,1 +1,0 @@
-$v vector<mixed> = []; $d dynamic = 1; $v[] = $d; return 0;

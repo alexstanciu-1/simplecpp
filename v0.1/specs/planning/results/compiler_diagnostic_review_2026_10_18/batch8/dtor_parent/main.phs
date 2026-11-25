@@ -1,1 +1,0 @@
-class B { function __destruct() {} } class C extends B { function __destruct() { parent::__destruct(); } } return 0;

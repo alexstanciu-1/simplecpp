@@ -1,6 +1,0 @@
-function total(int ...$values): int {
-	return count($values);
-}
-
-echo total(1, 2, 3), "
-";

@@ -1,0 +1,276 @@
+{
+  "host": "tf-dev002",
+  "cpu": 8,
+  "samples": [
+    {
+      "name": "access-log",
+      "level": "O0",
+      "round": 0,
+      "cpu_ns_20_passes": 22466198
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O1",
+      "round": 0,
+      "cpu_ns_20_passes": 11747443
+    },
+    {
+      "name": "route-table",
+      "level": "O0",
+      "round": 0,
+      "cpu_ns_20_passes": 82206486
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O0",
+      "round": 0,
+      "cpu_ns_20_passes": 19537916
+    },
+    {
+      "name": "route-table",
+      "level": "O1",
+      "round": 0,
+      "cpu_ns_20_passes": 32034033
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O2",
+      "round": 0,
+      "cpu_ns_20_passes": 11962106
+    },
+    {
+      "name": "route-table",
+      "level": "O2",
+      "round": 0,
+      "cpu_ns_20_passes": 33181375
+    },
+    {
+      "name": "access-log",
+      "level": "O2",
+      "round": 0,
+      "cpu_ns_20_passes": 13787329
+    },
+    {
+      "name": "access-log",
+      "level": "O1",
+      "round": 0,
+      "cpu_ns_20_passes": 13664700
+    },
+    {
+      "name": "route-table",
+      "level": "O0",
+      "round": 1,
+      "cpu_ns_20_passes": 82416118
+    },
+    {
+      "name": "access-log",
+      "level": "O2",
+      "round": 1,
+      "cpu_ns_20_passes": 13529296
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O0",
+      "round": 1,
+      "cpu_ns_20_passes": 19978631
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O2",
+      "round": 1,
+      "cpu_ns_20_passes": 11974770
+    },
+    {
+      "name": "route-table",
+      "level": "O2",
+      "round": 1,
+      "cpu_ns_20_passes": 33145066
+    },
+    {
+      "name": "route-table",
+      "level": "O1",
+      "round": 1,
+      "cpu_ns_20_passes": 32925635
+    },
+    {
+      "name": "access-log",
+      "level": "O1",
+      "round": 1,
+      "cpu_ns_20_passes": 13789854
+    },
+    {
+      "name": "access-log",
+      "level": "O0",
+      "round": 1,
+      "cpu_ns_20_passes": 21906327
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O1",
+      "round": 1,
+      "cpu_ns_20_passes": 11676210
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O1",
+      "round": 2,
+      "cpu_ns_20_passes": 11806243
+    },
+    {
+      "name": "route-table",
+      "level": "O0",
+      "round": 2,
+      "cpu_ns_20_passes": 82068336
+    },
+    {
+      "name": "access-log",
+      "level": "O0",
+      "round": 2,
+      "cpu_ns_20_passes": 22428677
+    },
+    {
+      "name": "access-log",
+      "level": "O2",
+      "round": 2,
+      "cpu_ns_20_passes": 13574090
+    },
+    {
+      "name": "route-table",
+      "level": "O2",
+      "round": 2,
+      "cpu_ns_20_passes": 33573410
+    },
+    {
+      "name": "route-table",
+      "level": "O1",
+      "round": 2,
+      "cpu_ns_20_passes": 32831950
+    },
+    {
+      "name": "access-log",
+      "level": "O1",
+      "round": 2,
+      "cpu_ns_20_passes": 13850399
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O2",
+      "round": 2,
+      "cpu_ns_20_passes": 12040072
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O0",
+      "round": 2,
+      "cpu_ns_20_passes": 19693546
+    },
+    {
+      "name": "access-log",
+      "level": "O1",
+      "round": 3,
+      "cpu_ns_20_passes": 13915480
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O0",
+      "round": 3,
+      "cpu_ns_20_passes": 19431875
+    },
+    {
+      "name": "access-log",
+      "level": "O2",
+      "round": 3,
+      "cpu_ns_20_passes": 13521331
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O2",
+      "round": 3,
+      "cpu_ns_20_passes": 12265785
+    },
+    {
+      "name": "route-table",
+      "level": "O0",
+      "round": 3,
+      "cpu_ns_20_passes": 83216890
+    },
+    {
+      "name": "access-log",
+      "level": "O0",
+      "round": 3,
+      "cpu_ns_20_passes": 21793375
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O1",
+      "round": 3,
+      "cpu_ns_20_passes": 11734209
+    },
+    {
+      "name": "route-table",
+      "level": "O1",
+      "round": 3,
+      "cpu_ns_20_passes": 32703748
+    },
+    {
+      "name": "route-table",
+      "level": "O2",
+      "round": 3,
+      "cpu_ns_20_passes": 32515385
+    },
+    {
+      "name": "access-log",
+      "level": "O1",
+      "round": 4,
+      "cpu_ns_20_passes": 13702832
+    },
+    {
+      "name": "route-table",
+      "level": "O0",
+      "round": 4,
+      "cpu_ns_20_passes": 80540781
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O2",
+      "round": 4,
+      "cpu_ns_20_passes": 12086860
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O0",
+      "round": 4,
+      "cpu_ns_20_passes": 19724505
+    },
+    {
+      "name": "route-table",
+      "level": "O1",
+      "round": 4,
+      "cpu_ns_20_passes": 32458649
+    },
+    {
+      "name": "access-log",
+      "level": "O0",
+      "round": 4,
+      "cpu_ns_20_passes": 21759612
+    },
+    {
+      "name": "access-log",
+      "level": "O2",
+      "round": 4,
+      "cpu_ns_20_passes": 13609165
+    },
+    {
+      "name": "route-table",
+      "level": "O2",
+      "round": 4,
+      "cpu_ns_20_passes": 33262556
+    },
+    {
+      "name": "stock-ledger",
+      "level": "O1",
+      "round": 4,
+      "cpu_ns_20_passes": 11805822
+    }
+  ]
+}

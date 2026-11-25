@@ -1,4 +1,0 @@
-function print_example_header(string $exampleId): void
-{
-	echo "== ", $exampleId, " ==\n";
-}

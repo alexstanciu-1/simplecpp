@@ -1,3 +1,0 @@
-namespace emit_llvm;
-
-// Emit and verify LLVM representations from completed lowering plans.

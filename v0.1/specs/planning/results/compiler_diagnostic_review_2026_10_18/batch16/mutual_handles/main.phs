@@ -1,1 +1,0 @@
-$a = new A\Item(); $b = new B\Item(); $a->other = $b; $b->other = $a; return 0;

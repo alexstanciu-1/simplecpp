@@ -35,7 +35,7 @@ def snapshot(output):
 def build(output, expected):
     manifest = json.loads((output/'manifest.json').read_text())
     units = [output/path for path in manifest['translation_units']]
-    assert sum('int main()' in p.read_text() for p in units) == 1
+    assert sum('int main(int argc, char** argv)' in p.read_text() for p in units) == 1
     binary = output/'program'
     success(run('clang++', '-std=c++23', '-stdlib=libc++', '-Wall', '-Wextra', '-Werror',
                 '-I', include, *units, library, '-o', binary))

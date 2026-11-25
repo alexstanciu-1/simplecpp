@@ -9,21 +9,19 @@ evaluation order and contextual conversions remain compiler-owned.
 
 ## Representation and publication
 
-The vector metadata record binds the source family to private std::vector storage,
+The vector metadata record binds the source family to private concrete buffer storage,
 a published signed count type (currently int64), value-copy reads and explicit set
 mutation. It admits registered integer, floating, boolean, null and string element
 families. Publication requests concrete specializations; the default emits
 vector_int64, vector_string, vector_float64 and vector_bool_t in scpp/vectors.hpp. There is no public vector<T>
 template or standard container alias. The compiler now resolves source vector<T> and
 element aliases to a requested concrete identity through the shared export plan;
-[typed empty construction, append and indexed reads](../compiler/docs/vector_operations.md)
-are supported; other source vector operations remain deferred.
-The API generator does not resolve source symbols. Nested vectors, arbitrary user classes and carriers are not admitted.
+[typed empty construction, append and indexed reads](../compiler/docs/vector_operations.md),
+[collection methods](../compiler/docs/collection_methods.md) and the construction and capacity operations below are supported.
+The API generator does not resolve source symbols. Application-owned element types use the separate [application vector specialization rules](../compiler/docs/application_vectors.md).
 
-Each class owns a private incomplete pointer to a generated std::vector<element>
-storage record. Default and moved-from values are empty without allocation.
-Materializing storage adds an allocation and indirection beyond std::vector's own
-buffer. No inline-layout or equivalent performance claim is made. String and vector
+Each class holds a pointer to a private generated storage record owning the element buffer. Default and moved-from values are empty without allocation.
+Materializing storage adds an allocation and indirection for the record in addition to its element buffer. No inline-layout or equivalent performance claim is made. String and vector
 generation share lifecycle emission. Public headers and their closure are template-free.
 
 Preparation validates count/boolean publication, element families, native construction,
@@ -190,3 +188,33 @@ and trace files are retained in `/tmp/scpp-vector-provider-proof/`.
 Concrete vectors expose the [common traversal protocol](collection_traversal.md).
 It borrows the live wrapper and copies one element at a time; no cursor allocation,
 collection snapshot or per-wrapper state is added. The [compiler foreach slice](../compiler/docs/foreach.md) consumes these bindings.
+
+## Vector construction and capacity
+
+The default runtime publication selects `vectors.capacity_helpers`. A reduced
+publication can omit the group. It depends on checked reserve. Published concrete
+vectors and compiler-generated application vectors use the same element-lifetime
+recipe. Source access uses the normal member separator for the flavor.
+
+| Operation | Contract |
+| --- | --- |
+| `v.capacity() → int` | Borrow the receiver and return its capacity in elements. Empty default and moved-from vectors report zero. |
+| `v.reserve(n) → void` | Preserve size and contents and ensure capacity at least n. Smaller requests retain capacity. |
+| `v.clear() → void` | Destroy the live elements and retain capacity. This covers both historical clear helper names. |
+| `v.resize(n, fill) → void` | Preserve the retained prefix and destroy removed elements. When growing, copy the evaluated fill into each new slot. A throwing copy destroys the partially constructed suffix and preserves the original contents and size. A successful buffer expansion may remain observable. |
+| `v.compact() → void` | Request compact storage for the current size, preserving contents and order. Exact final capacity is unspecified. |
+| `v.compact(n) → void` | Preserve all elements, with capacity at least the larger of n and size. A request above current capacity can grow storage. |
+| `vector_filled(n, fill) → vector<T>` | Infer T from the fill's source type and return n copies in an owning vector. Use the same published or application specialization as an explicit vector type. |
+
+Counts are signed source integers. A negative count or explicit capacity raises
+`ValueError` before provider mutation. Unrepresentable allocations use the
+checked reserve length error. Fill arguments are evaluated once, including on
+zero counts and shrinking resize. Element copying follows the type's usual
+semantics. Struct values copy independently and copied class handles share the
+same object. A vector indexed read produces a value, so an indexed fill from
+the receiver stays valid during growth.
+
+The free factory belongs to the general surface. C++ admits it by default.
+PHP, JS and Python require `"general_api": true` in the root manifest.
+Receiver methods follow the collection surface independently of the flag.
+PHP and C++ source use the arrow separator and JS and Python use the dot.

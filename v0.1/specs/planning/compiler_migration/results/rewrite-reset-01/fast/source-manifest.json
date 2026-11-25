@@ -1,6 +1,0 @@
-{
-  "schema_version": 1,
-  "source_root": ".",
-  "files": [],
-  "implementation_target": "tools/portability_target.json"
-}

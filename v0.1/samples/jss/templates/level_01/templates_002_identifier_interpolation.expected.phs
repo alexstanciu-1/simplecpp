@@ -1,2 +1,0 @@
-$name string = "Ada";
-echo "hello " . $name . "\n";

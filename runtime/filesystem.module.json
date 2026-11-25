@@ -1,7 +1,7 @@
 {
     "name": "runtime-filesystem",
     "type": "c++",
-    "sources": ["src/filesystem/filesystem.cpp"],
+    "sources": ["src/filesystem/filesystem.cpp", "src/filesystem/file_lock.cpp"],
     "dependencies": {"runtime": {}},
     "artifacts": ["../build/clang/libscpp_filesystem.a"]
 }

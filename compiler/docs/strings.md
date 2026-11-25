@@ -36,7 +36,7 @@ activated even though the native runtime already implements some of them.
   `scpp::string{literal, length}`. `Cpp_String_Literals` supplies shared byte spelling
   for construction and direct echo, with readable ASCII and byte-exact escapes. A NUL before an octal digit uses `\000` so the digit stays separate.
 - `type_definition::cpp_headers()` supplies storage requirements, separately from
-  conversion headers. Only actual string locals require `scpp/string.hpp`.
+  conversion headers. String locals request the string type provider, currently `scpp/string/type.hpp`.
 - No new prepared-value hierarchy, dependency graph or duplicated bytes are added.
   The existing declaration link and identity conversion represent local copying.
   Generator inventory version is 6; CMake tracks the new generated definition.

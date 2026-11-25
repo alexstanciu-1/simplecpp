@@ -1,1 +1,0 @@
-namespace X; class A { function f(): int { return 1; } }

@@ -1,0 +1,1626 @@
+{
+  "host": "tf-dev002",
+  "ninja": "1.11.1",
+  "cpu": 8,
+  "source_sha256": "92965be8dc86dd1170c996eaf4f10b7855a8aaa613b4bf89850e3e26cad507af",
+  "builds": [
+    {
+      "round": 0,
+      "config": "one-j4",
+      "kind": "fresh",
+      "total_ms": 3107.5923144817352,
+      "php_wall_ms": 167.79334098100662,
+      "compiler_ms": 105.209753,
+      "publish_ms": 1.1492148041725159,
+      "ninja_ms": 2938.649758696556,
+      "native_cpu_ms": 2954.579999999998,
+      "build_cpu_ms": 3121.8419999999974,
+      "edges_ms": {
+        "entry.o": [
+          0,
+          25
+        ],
+        "app0.o": [
+          0,
+          2907
+        ],
+        "program": [
+          2908,
+          2937
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 0,
+      "config": "one-j4",
+      "kind": "edit",
+      "total_ms": 3091.3063436746597,
+      "php_wall_ms": 164.82101380825043,
+      "compiler_ms": 103.547595,
+      "publish_ms": 1.3335943222045898,
+      "ninja_ms": 2925.1517355442047,
+      "native_cpu_ms": 2914.9340000000025,
+      "build_cpu_ms": 3079.5020000000013,
+      "edges_ms": {
+        "app0.o": [
+          0,
+          2892
+        ],
+        "program": [
+          2892,
+          2923
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 0,
+      "config": "four-j1",
+      "kind": "fresh",
+      "total_ms": 3340.2264416217804,
+      "php_wall_ms": 166.59462451934814,
+      "compiler_ms": 103.970569,
+      "publish_ms": 5.129091441631317,
+      "ninja_ms": 3168.502725660801,
+      "native_cpu_ms": 3160.463,
+      "build_cpu_ms": 3326.5369999999984,
+      "edges_ms": {
+        "app0.o": [
+          1,
+          836
+        ],
+        "app1.o": [
+          836,
+          1581
+        ],
+        "app2.o": [
+          1581,
+          2325
+        ],
+        "app3.o": [
+          2325,
+          3105
+        ],
+        "entry.o": [
+          3105,
+          3137
+        ],
+        "program": [
+          3137,
+          3167
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 0,
+      "config": "four-j1",
+      "kind": "edit",
+      "total_ms": 944.0922662615776,
+      "php_wall_ms": 167.86348074674606,
+      "compiler_ms": 101.647371,
+      "publish_ms": 5.390472710132599,
+      "ninja_ms": 770.838312804699,
+      "native_cpu_ms": 763.853000000001,
+      "build_cpu_ms": 931.2180000000012,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          737
+        ],
+        "program": [
+          737,
+          769
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 0,
+      "config": "four-j4",
+      "kind": "fresh",
+      "total_ms": 1016.6587457060814,
+      "php_wall_ms": 168.76520961523056,
+      "compiler_ms": 101.01793,
+      "publish_ms": 5.794152617454529,
+      "ninja_ms": 842.0993834733963,
+      "native_cpu_ms": 3119.451999999999,
+      "build_cpu_ms": 3287.6740000000027,
+      "edges_ms": {
+        "app2.o": [
+          1,
+          746
+        ],
+        "app1.o": [
+          1,
+          754
+        ],
+        "app3.o": [
+          1,
+          760
+        ],
+        "entry.o": [
+          746,
+          774
+        ],
+        "app0.o": [
+          0,
+          804
+        ],
+        "program": [
+          804,
+          840
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 0,
+      "config": "four-j4",
+      "kind": "edit",
+      "total_ms": 1016.2887796759605,
+      "php_wall_ms": 163.41882944107056,
+      "compiler_ms": 101.2952,
+      "publish_ms": 4.221491515636444,
+      "ninja_ms": 848.6484587192535,
+      "native_cpu_ms": 841.1249999999945,
+      "build_cpu_ms": 1004.1829999999941,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          813
+        ],
+        "program": [
+          813,
+          847
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 1,
+      "config": "four-j1",
+      "kind": "fresh",
+      "total_ms": 3249.0189895033836,
+      "php_wall_ms": 167.1547144651413,
+      "compiler_ms": 101.919902,
+      "publish_ms": 6.665565073490143,
+      "ninja_ms": 3075.198709964752,
+      "native_cpu_ms": 3067.0860000000034,
+      "build_cpu_ms": 3233.755000000002,
+      "edges_ms": {
+        "app0.o": [
+          1,
+          776
+        ],
+        "app1.o": [
+          776,
+          1524
+        ],
+        "app2.o": [
+          1524,
+          2265
+        ],
+        "app3.o": [
+          2265,
+          3015
+        ],
+        "entry.o": [
+          3015,
+          3042
+        ],
+        "program": [
+          3042,
+          3073
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 1,
+      "config": "four-j1",
+      "kind": "edit",
+      "total_ms": 949.6137574315071,
+      "php_wall_ms": 164.62841629981995,
+      "compiler_ms": 102.740482,
+      "publish_ms": 4.938460886478424,
+      "ninja_ms": 780.0468802452087,
+      "native_cpu_ms": 772.4540000000034,
+      "build_cpu_ms": 936.6309999999985,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          746
+        ],
+        "program": [
+          746,
+          778
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 1,
+      "config": "four-j4",
+      "kind": "fresh",
+      "total_ms": 987.3662292957306,
+      "php_wall_ms": 169.35957223176956,
+      "compiler_ms": 103.518762,
+      "publish_ms": 5.014598369598389,
+      "ninja_ms": 812.9920586943626,
+      "native_cpu_ms": 3091.286999999994,
+      "build_cpu_ms": 3260.1589999999946,
+      "edges_ms": {
+        "app2.o": [
+          1,
+          748
+        ],
+        "app1.o": [
+          1,
+          757
+        ],
+        "app3.o": [
+          1,
+          760
+        ],
+        "entry.o": [
+          749,
+          775
+        ],
+        "app0.o": [
+          1,
+          782
+        ],
+        "program": [
+          782,
+          812
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 1,
+      "config": "four-j4",
+      "kind": "edit",
+      "total_ms": 937.7364665269852,
+      "php_wall_ms": 164.54827040433884,
+      "compiler_ms": 100.811643,
+      "publish_ms": 5.0924718379974365,
+      "ninja_ms": 768.0957242846489,
+      "native_cpu_ms": 761.1389999999928,
+      "build_cpu_ms": 925.2370000000028,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          737
+        ],
+        "program": [
+          737,
+          766
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 1,
+      "config": "one-j4",
+      "kind": "fresh",
+      "total_ms": 3082.809694111347,
+      "php_wall_ms": 171.66265100240707,
+      "compiler_ms": 102.294886,
+      "publish_ms": 0.9958967566490173,
+      "ninja_ms": 2910.151146352291,
+      "native_cpu_ms": 2924.9289999999987,
+      "build_cpu_ms": 3096.102999999999,
+      "edges_ms": {
+        "entry.o": [
+          0,
+          24
+        ],
+        "app0.o": [
+          0,
+          2879
+        ],
+        "program": [
+          2879,
+          2908
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 1,
+      "config": "one-j4",
+      "kind": "edit",
+      "total_ms": 3046.527624130249,
+      "php_wall_ms": 168.023981153965,
+      "compiler_ms": 105.170571,
+      "publish_ms": 1.3584122061729431,
+      "ninja_ms": 2877.145230770111,
+      "native_cpu_ms": 2869.296999999996,
+      "build_cpu_ms": 3036.8660000000036,
+      "edges_ms": {
+        "app0.o": [
+          1,
+          2843
+        ],
+        "program": [
+          2843,
+          2876
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 2,
+      "config": "one-j4",
+      "kind": "fresh",
+      "total_ms": 3061.8910267949104,
+      "php_wall_ms": 161.58705204725266,
+      "compiler_ms": 101.838029,
+      "publish_ms": 1.119077205657959,
+      "ninja_ms": 2899.184897542,
+      "native_cpu_ms": 2914.5019999999986,
+      "build_cpu_ms": 3075.8690000000042,
+      "edges_ms": {
+        "entry.o": [
+          0,
+          25
+        ],
+        "app0.o": [
+          0,
+          2862
+        ],
+        "program": [
+          2862,
+          2897
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 2,
+      "config": "one-j4",
+      "kind": "edit",
+      "total_ms": 3038.0884930491447,
+      "php_wall_ms": 167.12654381990433,
+      "compiler_ms": 102.044025,
+      "publish_ms": 1.32761150598526,
+      "ninja_ms": 2869.634337723255,
+      "native_cpu_ms": 2862.4790000000003,
+      "build_cpu_ms": 3029.166000000004,
+      "edges_ms": {
+        "app0.o": [
+          0,
+          2835
+        ],
+        "program": [
+          2835,
+          2868
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 2,
+      "config": "four-j1",
+      "kind": "fresh",
+      "total_ms": 3222.205452620983,
+      "php_wall_ms": 170.61790823936462,
+      "compiler_ms": 101.634958,
+      "publish_ms": 5.834735929965973,
+      "ninja_ms": 3045.7528084516525,
+      "native_cpu_ms": 3036.9320000000002,
+      "build_cpu_ms": 3206.9880000000026,
+      "edges_ms": {
+        "app0.o": [
+          1,
+          771
+        ],
+        "app1.o": [
+          771,
+          1500
+        ],
+        "app2.o": [
+          1500,
+          2226
+        ],
+        "app3.o": [
+          2226,
+          2978
+        ],
+        "entry.o": [
+          2978,
+          3010
+        ],
+        "program": [
+          3010,
+          3044
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 2,
+      "config": "four-j1",
+      "kind": "edit",
+      "total_ms": 930.6632429361343,
+      "php_wall_ms": 167.52540320158005,
+      "compiler_ms": 99.863896,
+      "publish_ms": 5.5608972907066345,
+      "ninja_ms": 757.5769424438477,
+      "native_cpu_ms": 749.6280000000013,
+      "build_cpu_ms": 916.6680000000014,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          721
+        ],
+        "program": [
+          721,
+          756
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 2,
+      "config": "four-j4",
+      "kind": "fresh",
+      "total_ms": 993.8814043998718,
+      "php_wall_ms": 168.05937141180038,
+      "compiler_ms": 100.357061,
+      "publish_ms": 5.833126604557037,
+      "ninja_ms": 819.9889063835144,
+      "native_cpu_ms": 3118.0359999999964,
+      "build_cpu_ms": 3285.591999999994,
+      "edges_ms": {
+        "app2.o": [
+          1,
+          749
+        ],
+        "app1.o": [
+          0,
+          755
+        ],
+        "entry.o": [
+          749,
+          775
+        ],
+        "app3.o": [
+          1,
+          783
+        ],
+        "app0.o": [
+          0,
+          789
+        ],
+        "program": [
+          789,
+          818
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 2,
+      "config": "four-j4",
+      "kind": "edit",
+      "total_ms": 964.9050384759903,
+      "php_wall_ms": 168.54306310415268,
+      "compiler_ms": 103.721813,
+      "publish_ms": 5.4976120591163635,
+      "ninja_ms": 790.8643633127213,
+      "native_cpu_ms": 784.0220000000073,
+      "build_cpu_ms": 952.179000000001,
+      "edges_ms": {
+        "app2.o": [
+          1,
+          757
+        ],
+        "program": [
+          758,
+          790
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 3,
+      "config": "four-j4",
+      "kind": "fresh",
+      "total_ms": 989.5712062716484,
+      "php_wall_ms": 162.99115121364594,
+      "compiler_ms": 102.09434,
+      "publish_ms": 5.827054381370544,
+      "ninja_ms": 820.7530006766319,
+      "native_cpu_ms": 3090.2379999999994,
+      "build_cpu_ms": 3252.7120000000023,
+      "edges_ms": {
+        "app2.o": [
+          1,
+          744
+        ],
+        "app1.o": [
+          1,
+          753
+        ],
+        "app3.o": [
+          1,
+          761
+        ],
+        "entry.o": [
+          744,
+          767
+        ],
+        "app0.o": [
+          1,
+          785
+        ],
+        "program": [
+          785,
+          819
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 3,
+      "config": "four-j4",
+      "kind": "edit",
+      "total_ms": 943.1874454021454,
+      "php_wall_ms": 164.36263918876648,
+      "compiler_ms": 102.881988,
+      "publish_ms": 5.471684038639069,
+      "ninja_ms": 773.3531221747398,
+      "native_cpu_ms": 765.8249999999924,
+      "build_cpu_ms": 929.9170000000032,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          737
+        ],
+        "program": [
+          737,
+          771
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 3,
+      "config": "four-j1",
+      "kind": "fresh",
+      "total_ms": 3253.834880888462,
+      "php_wall_ms": 162.5966653227806,
+      "compiler_ms": 101.890017,
+      "publish_ms": 5.856730043888092,
+      "ninja_ms": 3085.3814855217934,
+      "native_cpu_ms": 3076.995000000011,
+      "build_cpu_ms": 3239.1620000000075,
+      "edges_ms": {
+        "app0.o": [
+          0,
+          771
+        ],
+        "app1.o": [
+          771,
+          1500
+        ],
+        "app2.o": [
+          1500,
+          2252
+        ],
+        "app3.o": [
+          2252,
+          3025
+        ],
+        "entry.o": [
+          3025,
+          3049
+        ],
+        "program": [
+          3049,
+          3084
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 3,
+      "config": "four-j1",
+      "kind": "edit",
+      "total_ms": 948.0622857809067,
+      "php_wall_ms": 161.48466616868973,
+      "compiler_ms": 101.1351,
+      "publish_ms": 5.849003791809082,
+      "ninja_ms": 780.7286158204079,
+      "native_cpu_ms": 772.6900000000114,
+      "build_cpu_ms": 933.7400000000144,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          744
+        ],
+        "program": [
+          744,
+          779
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 3,
+      "config": "one-j4",
+      "kind": "fresh",
+      "total_ms": 3021.201305091381,
+      "php_wall_ms": 163.65892440080643,
+      "compiler_ms": 101.256499,
+      "publish_ms": 1.003466546535492,
+      "ninja_ms": 2856.538914144039,
+      "native_cpu_ms": 2872.424999999993,
+      "build_cpu_ms": 3035.8210000000126,
+      "edges_ms": {
+        "entry.o": [
+          0,
+          24
+        ],
+        "app0.o": [
+          0,
+          2821
+        ],
+        "program": [
+          2821,
+          2854
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 3,
+      "config": "one-j4",
+      "kind": "edit",
+      "total_ms": 3030.9567898511887,
+      "php_wall_ms": 160.4440063238144,
+      "compiler_ms": 100.300375,
+      "publish_ms": 1.3215914368629456,
+      "ninja_ms": 2869.1911920905113,
+      "native_cpu_ms": 2861.7320000000036,
+      "build_cpu_ms": 3021.7250000000035,
+      "edges_ms": {
+        "app0.o": [
+          0,
+          2834
+        ],
+        "program": [
+          2834,
+          2867
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 4,
+      "config": "four-j1",
+      "kind": "fresh",
+      "total_ms": 3222.0527678728104,
+      "php_wall_ms": 162.42245584726334,
+      "compiler_ms": 101.454209,
+      "publish_ms": 5.737476050853729,
+      "ninja_ms": 3053.8928359746933,
+      "native_cpu_ms": 3044.2019999999984,
+      "build_cpu_ms": 3206.1690000000026,
+      "edges_ms": {
+        "app0.o": [
+          1,
+          775
+        ],
+        "app1.o": [
+          776,
+          1512
+        ],
+        "app2.o": [
+          1512,
+          2248
+        ],
+        "app3.o": [
+          2248,
+          2990
+        ],
+        "entry.o": [
+          2990,
+          3020
+        ],
+        "program": [
+          3020,
+          3052
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 4,
+      "config": "four-j1",
+      "kind": "edit",
+      "total_ms": 929.9894794821739,
+      "php_wall_ms": 160.23728996515274,
+      "compiler_ms": 100.5007,
+      "publish_ms": 5.497746169567108,
+      "ninja_ms": 764.2544433474541,
+      "native_cpu_ms": 756.3900000000103,
+      "build_cpu_ms": 916.1550000000034,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          733
+        ],
+        "program": [
+          733,
+          762
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 4,
+      "config": "four-j4",
+      "kind": "fresh",
+      "total_ms": 975.5139052867889,
+      "php_wall_ms": 163.06723654270172,
+      "compiler_ms": 102.399652,
+      "publish_ms": 4.8071518540382385,
+      "ninja_ms": 807.639516890049,
+      "native_cpu_ms": 3060.4569999999994,
+      "build_cpu_ms": 3223.0500000000006,
+      "edges_ms": {
+        "app2.o": [
+          1,
+          740
+        ],
+        "app1.o": [
+          0,
+          749
+        ],
+        "app3.o": [
+          1,
+          751
+        ],
+        "entry.o": [
+          741,
+          764
+        ],
+        "app0.o": [
+          0,
+          773
+        ],
+        "program": [
+          773,
+          806
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 4,
+      "config": "four-j4",
+      "kind": "edit",
+      "total_ms": 947.093553841114,
+      "php_wall_ms": 162.66150772571564,
+      "compiler_ms": 101.846184,
+      "publish_ms": 5.5265650153160095,
+      "ninja_ms": 778.9054811000824,
+      "native_cpu_ms": 771.7670000000112,
+      "build_cpu_ms": 933.9740000000063,
+      "edges_ms": {
+        "app2.o": [
+          0,
+          742
+        ],
+        "program": [
+          742,
+          777
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        84735,
+        84581,
+        84307,
+        84675
+      ],
+      "shared_header_bytes": 26876,
+      "object_list": [
+        "app0.o",
+        "app1.o",
+        "app2.o",
+        "app3.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 4,
+      "config": "one-j4",
+      "kind": "fresh",
+      "total_ms": 3066.215179860592,
+      "php_wall_ms": 161.65881603956223,
+      "compiler_ms": 101.221402,
+      "publish_ms": 1.1257827281951904,
+      "ninja_ms": 2903.4305810928345,
+      "native_cpu_ms": 2918.372999999988,
+      "build_cpu_ms": 3079.576999999986,
+      "edges_ms": {
+        "entry.o": [
+          1,
+          24
+        ],
+        "app0.o": [
+          1,
+          2867
+        ],
+        "program": [
+          2867,
+          2902
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    },
+    {
+      "round": 4,
+      "config": "one-j4",
+      "kind": "edit",
+      "total_ms": 3106.1719954013824,
+      "php_wall_ms": 172.6994290947914,
+      "compiler_ms": 112.16422,
+      "publish_ms": 1.2982189655303955,
+      "ninja_ms": 2932.1743473410606,
+      "native_cpu_ms": 2923.6029999999855,
+      "build_cpu_ms": 3095.876999999987,
+      "edges_ms": {
+        "app0.o": [
+          1,
+          2897
+        ],
+        "program": [
+          2897,
+          2931
+        ]
+      },
+      "peak_pss_kib": 0,
+      "partition_bytes": [
+        364986
+      ],
+      "shared_header_bytes": 0,
+      "object_list": [
+        "app0.o",
+        "entry.o"
+      ],
+      "archives": [
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_filesystem.a",
+        "/tmp/scpp-o1.6hOBV0/v02/runtime/../build/clang/libscpp_runtime.a"
+      ]
+    }
+  ],
+  "runtime": [
+    {
+      "round": 0,
+      "config": "one-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.652102625
+    },
+    {
+      "round": 0,
+      "config": "one-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 4.047966875
+    },
+    {
+      "round": 0,
+      "config": "four-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.675633875
+    },
+    {
+      "round": 0,
+      "config": "four-j1",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6692481666666666
+    },
+    {
+      "round": 0,
+      "config": "four-j1",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9978574583333333
+    },
+    {
+      "round": 0,
+      "config": "four-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9979648333333335
+    },
+    {
+      "round": 1,
+      "config": "four-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9848351666666666
+    },
+    {
+      "round": 1,
+      "config": "four-j1",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9638249583333334
+    },
+    {
+      "round": 1,
+      "config": "one-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.670844875
+    },
+    {
+      "round": 1,
+      "config": "four-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6965309583333333
+    },
+    {
+      "round": 1,
+      "config": "four-j1",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.690166125
+    },
+    {
+      "round": 1,
+      "config": "one-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 4.010650208333334
+    },
+    {
+      "round": 2,
+      "config": "four-j1",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6871007916666667
+    },
+    {
+      "round": 2,
+      "config": "four-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6726110833333333
+    },
+    {
+      "round": 2,
+      "config": "one-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 3.970654375
+    },
+    {
+      "round": 2,
+      "config": "four-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9553356666666666
+    },
+    {
+      "round": 2,
+      "config": "four-j1",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9603851666666667
+    },
+    {
+      "round": 2,
+      "config": "one-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.677362125
+    },
+    {
+      "round": 3,
+      "config": "four-j1",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6701269166666667
+    },
+    {
+      "round": 3,
+      "config": "one-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.706201625
+    },
+    {
+      "round": 3,
+      "config": "four-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6894201666666666
+    },
+    {
+      "round": 3,
+      "config": "one-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9589637083333336
+    },
+    {
+      "round": 3,
+      "config": "four-j1",
+      "case": "full",
+      "cpu_ms_per_pass": 3.952666916666667
+    },
+    {
+      "round": 3,
+      "config": "four-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9649837083333335
+    },
+    {
+      "round": 4,
+      "config": "one-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6883619583333334
+    },
+    {
+      "round": 4,
+      "config": "four-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6731529583333333
+    },
+    {
+      "round": 4,
+      "config": "one-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 4.076277083333333
+    },
+    {
+      "round": 4,
+      "config": "four-j1",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.670215375
+    },
+    {
+      "round": 4,
+      "config": "four-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 4.006644791666667
+    },
+    {
+      "round": 4,
+      "config": "four-j1",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9378562083333333
+    },
+    {
+      "round": 5,
+      "config": "one-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9522115
+    },
+    {
+      "round": 5,
+      "config": "one-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6838918333333334
+    },
+    {
+      "round": 5,
+      "config": "four-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6719565833333333
+    },
+    {
+      "round": 5,
+      "config": "four-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 4.036099666666667
+    },
+    {
+      "round": 5,
+      "config": "four-j1",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.68688875
+    },
+    {
+      "round": 5,
+      "config": "four-j1",
+      "case": "full",
+      "cpu_ms_per_pass": 3.945888375
+    },
+    {
+      "round": 6,
+      "config": "one-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 3.9642694583333333
+    },
+    {
+      "round": 6,
+      "config": "four-j4",
+      "case": "full",
+      "cpu_ms_per_pass": 4.051856666666667
+    },
+    {
+      "round": 6,
+      "config": "four-j1",
+      "case": "full",
+      "cpu_ms_per_pass": 4.01937325
+    },
+    {
+      "round": 6,
+      "config": "one-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.6884395833333333
+    },
+    {
+      "round": 6,
+      "config": "four-j4",
+      "case": "shared",
+      "cpu_ms_per_pass": 0.910452625
+    },
+    {
+      "round": 6,
+      "config": "four-j1",
+      "case": "shared",
+      "cpu_ms_per_pass": 1.1030755833333334
+    }
+  ],
+  "memory": [
+    {
+      "config": "four-j1",
+      "peak_pss_kib": 109768
+    },
+    {
+      "config": "four-j4",
+      "peak_pss_kib": 179921
+    },
+    {
+      "config": "one-j4",
+      "peak_pss_kib": 138392
+    }
+  ]
+}

@@ -1,1 +1,0 @@
-$h hash<int,int> = []; $h[] = 1; return 0;

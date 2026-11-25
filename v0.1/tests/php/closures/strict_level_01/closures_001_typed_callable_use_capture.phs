@@ -1,7 +1,0 @@
-$a = 1;
-$f function<int()> = function () use ($a): int {
-	return $a;
-};
-
-$a = 9;
-echo $f(), "\n";

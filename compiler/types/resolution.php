@@ -277,16 +277,18 @@ final class Type_Resolution
 			? callable_signature_index::element(self::callback_signature($child, $symbols, $namespace, $watcher, $dependencies))
 			: self::argument($child, $symbols, $namespace, $watcher, $dependencies);
 		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
-		$published = type_registry::specialize($syntax->name, $element, $key);
+		return self::collection($syntax->name, $element, $key)
+			?? throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unavailable runtime specialization: ' . $syntax->spelling());
+	}
+
+	/** Resolve a canonical vector or keyed collection from already prepared element types. */
+	public static function collection(string $family, type_definition $element, ?type_definition $key): ?type_definition
+	{
+		$published = type_registry::specialize($family, $element, $key);
 		if ($published !== null) return $published;
-		if ($key !== null) {
-			$type = $key->keyed_collection_type($syntax->name, $element);
-		} else {
-			$owner = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
-			$type = $owner->collection_type($syntax->name, $key);
-		}
-		if ($type !== null) return $type;
-		return self::specialize($syntax, $element, $key);
+		if ($key !== null) return $key->keyed_collection_type($family, $element);
+		$owner = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
+		return $owner->collection_type($family, null);
 	}
 
 	/** Select a published specialization from already resolved arguments. */

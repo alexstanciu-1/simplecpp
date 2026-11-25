@@ -1,3 +1,0 @@
-namespace analyze_lifetimes;
-
-// Analyze dataflow, storage, ownership, and cleanup obligations.

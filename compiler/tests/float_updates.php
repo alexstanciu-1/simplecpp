@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
@@ -112,7 +113,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	foreach (array_keys($forms) as $name) {
 		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
-	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
+	$fixtures[$flavor->name . '_boundary'] = ['cpp' => rename_fixture_main('tested_entry',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 	$inferred = match ($flavor) {
 		flavor::php => '$x=value();',

@@ -1,0 +1,41 @@
+name: Active source ZIP
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package tracked active sources
+        run: |
+          git archive --format=zip --prefix=simplecpp/ -o simplecpp-active.zip HEAD -- . ':!v0.1'
+          unzip -tq simplecpp-active.zip
+          unzip -Z1 simplecpp-active.zip > entries.txt
+          grep -Fxq 'simplecpp/CMakePresets.json' entries.txt
+          if grep -q '^simplecpp/v0\.1/' entries.txt; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simplecpp-active-source
+          path: simplecpp-active.zip
+
+  attach-release:
+    if: github.event_name == 'release'
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: simplecpp-active-source
+      - name: Attach active source ZIP to the published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" simplecpp-active.zip --repo "$GITHUB_REPOSITORY" --clobber

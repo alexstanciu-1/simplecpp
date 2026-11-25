@@ -1,1 +1,0 @@
-$v hash<string> = {x: 'a'}; $v['x'] .= 'b'; return 0;

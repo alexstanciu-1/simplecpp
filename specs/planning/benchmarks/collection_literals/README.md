@@ -3,8 +3,8 @@
 Doc Status: planning
 
 Isolated experiments only. These concrete prototypes do not implement source-language
-collection literals or change the production runtime. Start with [the report](report.md)
-or [the interactive measurements](report.html).
+collection literals or change the production runtime. Start with [the report](report.md). For the interactive view,
+run `python3 -B report.py` in this directory and open `report.html`.
 
 Eight forms: append, presized append, brace-list constructor, brace-list static
 factory, array constructor, array static factory, consuming-array constructor and

@@ -1,4 +1,0 @@
-function answer(): int {
-	return 21;
-}
-echo answer(), "\n";

@@ -1,3 +1,0 @@
-$value int = 2;
-task_synchronize(function() use ($value): void { $copy int = $value; });
-return 0;

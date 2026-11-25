@@ -1,5 +1,0 @@
-// Untyped null stays unsupported.
-$a = null;
-
-echo ($a === null ? "null" : "value"), "
-";

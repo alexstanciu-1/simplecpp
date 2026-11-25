@@ -1,5 +1,0 @@
-// Constant used in an expression.
-const BASE = 20;
-
-echo BASE + 2, "
-";

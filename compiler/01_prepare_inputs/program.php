@@ -58,7 +58,7 @@ final class Program_Loader
 	 */
 	public static function modules(array $definitions /** array<string,array{root:string,sources:array<string,flavor>,dependencies:list<string>,entry?:string,type?:string,manifest?:string,artifacts?:list<string>}> */,
 		string $entry, bool $disk = true,
-		array $selected /** list<string> */ = [], string $cpp_namespace = 'App', bool $group_async_methods = false): compilation_session
+		array $selected /** list<string> */ = [], string $cpp_namespace = 'App', bool $group_async_methods = false, bool $general_api = false): compilation_session
 	{
 		/** @var module[] $modules */
 		$modules = [];
@@ -74,7 +74,7 @@ final class Program_Loader
 		if ($main->entry === null) {
 			throw new \RuntimeException('Entry module requires an entry source: ' . $entry);
 		}
-		return new compilation_session($modules, $main, $cpp_namespace, $group_async_methods);
+		return new compilation_session($modules, $main, $cpp_namespace, $group_async_methods, $general_api);
 	}
 
 	/**

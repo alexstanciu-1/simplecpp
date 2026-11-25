@@ -1,1 +1,0 @@
-class B { private function f(): void {} } class C extends B { function __destruct() { $this->f(); } } return 0;

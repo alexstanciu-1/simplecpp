@@ -38,6 +38,11 @@ abstract class carrier_type_definition extends type_definition implements presen
 		bool $bare_comparison = false): string
 	{
 		$carrier_first = $expr->left->type_def() === $this;
+		$literal = $carrier_first ? $expr->right : $expr->left;
+		if ($literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)) {
+			$test = '(' . ($carrier_first ? $left : $right) . ').is_' . $literal->word . '()';
+			return $expr->operator === binary_operator::not_identical ? '!' . $test : $test;
+		}
 		return $this->lower_null_presence_comparison($expr, $this->lower_cpp_presence($carrier_first ? $left : $right),
 			$carrier_first ? $right : $left);
 	}

@@ -1,4 +1,0 @@
-// Basic division operator.
-$result = 8 / 2;
-
-echo $result, "\n";

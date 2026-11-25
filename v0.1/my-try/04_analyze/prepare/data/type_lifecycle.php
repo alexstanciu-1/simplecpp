@@ -1,9 +1,0 @@
-<?php
-
-namespace scpp\compiler;
-
-/** Declaration-level cleanup contract; contains no executable body or layout facts. */
-final class prepared_type_lifecycle
-{
-	public member_visibility $destructor_visibility = member_visibility::public_access;
-}

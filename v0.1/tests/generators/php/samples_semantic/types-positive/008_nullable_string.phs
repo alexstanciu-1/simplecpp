@@ -1,6 +1,0 @@
-function f(?string $a): string {
-	return $a ?? "default";
-}
-
-echo f(null), "\n";
-echo f("ok"), "\n";

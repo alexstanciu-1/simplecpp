@@ -1,2 +1,0 @@
-$values hash<int> = ["one" => 1, "two" => 2];
-echo $values["two"], "\n";

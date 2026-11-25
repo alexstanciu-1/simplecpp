@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "S2S boxed remainder requires boxed or ordinary int operands\n"
-}

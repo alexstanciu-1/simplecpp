@@ -1,1 +1,0 @@
-use function Lib\{f, missing}; return 0;

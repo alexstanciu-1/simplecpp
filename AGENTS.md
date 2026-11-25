@@ -8,7 +8,7 @@ Preserve single evaluation, lifetime, short-circuiting and ordered effects. Use 
 
 For a slot with at most one valid element, use one nullable reference. The declaring owner maintains a typed duplicate chain for invalid extras. Secondary indexes reference it. Keep collections for legitimate multiplicity and define publication and incremental relinking before mutating shared links. See [singular relationships](compiler/docs/singular_duplicates.md).
 
-Keep the active compiler, tooling, tests and documentation usable when the historical archive is absent. Review historical designs with the user before adopting them.
+Keep the active compiler, tooling, tests and documentation usable when the historical archive is absent. Review historical designs with the user before adopting them. For feature mining in a full checkout, follow `v0.1/README.md` to verify and extract the frozen sources into the ignored `v0.1/unpacked/` directory.
 
 ## Validation
 

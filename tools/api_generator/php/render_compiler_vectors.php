@@ -11,20 +11,29 @@ function compilerIndexRead(string $receiver, string $count, string $element, str
 
 /** Source-visible members from the validated collection plan. */
 function sourceCollectionMember(string $name): bool {
-    return in_array($name, ['clear', 'remove', 'has', 'reserve'], true);
+    return in_array($name, ['clear', 'remove', 'has', 'reserve', 'capacity', 'resize', 'compact'], true);
 }
 
 /** Generate one method contract for both prepublished and application concrete collection identities. */
-function compilerCollectionMethods(array $collection, array $definitions, ?string $keyExpression = null): string {
+function compilerCollectionMethods(array $collection, array $definitions, ?string $keyExpression = null, bool $applicationVector = false): string {
     $bindings = [];
     foreach ($collection['methods'] as $method) {
         $name = $method['name'];
         if (!sourceCollectionMember($name)) continue;
-        $argumentTypes = $name === 'clear' ? [] : [$collection['count_type'] ?? $collection['key']];
+        $key = $collection['count_type'] ?? $collection['key'];
+        $argumentTypes = match ($name) {
+            'clear', 'capacity' => [],
+            'resize' => [$key, $collection['element']],
+            default => [$key],
+        };
         $writtenTypes = array_map(static fn($type) => str_replace(['const ', '&'], '', $type), $method['arguments']);
-        $result = in_array($name, ['clear','reserve'], true) ? 'void' : 'bool_t';
+        $result = match ($name) {
+            'capacity' => $key,
+            'has', 'remove' => 'bool_t',
+            default => 'void',
+        };
         $mutates = ($method['receiver'] ?? null) === 'mutable_reference' || ($method['mutates'] ?? false);
-        requireThat($writtenTypes === $argumentTypes && $method['result'] === $result && $mutates === ($name !== 'has'),
+        requireThat($writtenTypes === $argumentTypes && $method['result'] === $result && $mutates === !in_array($name, ['has', 'capacity'], true),
             "Compiler $name requires its canonical method signature");
         if ($name === 'remove' && isset($collection['element'])) {
             requireThat($method['adaptation'] === 'erase_shift_missing_false', 'Vector removal must shift and return false on absence');
@@ -35,13 +44,19 @@ function compilerCollectionMethods(array $collection, array $definitions, ?strin
             if (str_starts_with($argument, 'const ') && str_ends_with($argument, '&')) $constMask |= 1 << ($index + 1);
         }
         $parameters = ['$this'];
-        foreach ($argumentTypes as $type) {
+        foreach ($argumentTypes as $index => $type) {
             requireThat(isset($definitions[$type]), 'Collection method argument type is unavailable');
-            $parameters[] = $keyExpression ?? 'type_' . $definitions[$type]['class'] . '::instance()';
+            if ($name === 'resize' && $index === 1) {
+                $parameters[] = '$this->element_type';
+                if ($applicationVector) $constMask |= 1 << ($index + 1);
+            } else {
+                $parameters[] = $keyExpression ?? 'type_' . $definitions[$type]['class'] . '::instance()';
+            }
         }
+        $arity = ($method['adaptation'] ?? '') === 'optional_capacity' ? ', required_parameters: 1' : '';
         $class = $result === 'void' ? 'void' : $definitions[$result]['class'];
         $bindings[] = "\t\t\t'$name' => \$this->runtime_methods[\$name] ??= new runtime_function('$name', [" . implode(', ', $parameters)
-            . "], type_$class::instance(), '$name', \$this->cpp_headers()[0], reference_mask: $referenceMask, const_reference_mask: $constMask, receiver_method: true, retains_receiver: false),";
+            . "], type_$class::instance(), '$name', \$this->cpp_headers()[0], reference_mask: $referenceMask, const_reference_mask: $constMask$arity, receiver_method: true, retains_receiver: false),";
     }
     return strtr(readFile(__DIR__ . '/../templates/collections/compiler_methods.php.tpl'), ['@bindings@' => implode("\n", $bindings)]);
 }
@@ -52,8 +67,10 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
     $cases = [];
     $application = false;
     $family = isset($metadata->vector) ? textValue(at($metadata->vector, 'source_type')) : null;
-    foreach ($runtime['vectors'] ?? [] as $vector) {
+    foreach ([...($runtime['vectors'] ?? []), ...($runtime['regex_vectors'] ?? [])] as $vector) {
         $element = $vector['element'];
+        if (!isset($definitions[$element]) && isset($runtime['regex_capture_publication'])
+            && in_array($element, ['vector_string', 'hash_string_string'], true)) $definitions[$element] = ['class' => $element];
         if (!isset($definitions[$element])) continue;
         $export = typeExport($runtime['submodules'], $vector['name']);
         $header = providerHeader($runtime['submodules'], $export['provider']);
@@ -115,8 +132,10 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
                 $destinationMethod = "\n\tpublic function destination_append_definition(array \$values): string\n\t{\n"
                     . "\t\treturn strtr(" . var_export($body, true) . ", \$values);\n\t}\n";
             }
-            $recipe = ['mt_segments' => !empty($runtime['mt_segments']) ? '1' : '', 'enable_reserve' => $vector['enable_reserve'], 'count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
+            $recipe = ['mt_segments' => !empty($runtime['mt_segments']) ? '1' : '', 'capacity_helpers' => !empty($vector['capacity_helpers']) ? '1' : '', 'qual' => 'const ', 'ref' => '&', 'enable_reserve' => $vector['enable_reserve'], 'count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
+            $applicationMethods = compilerCollectionMethods($vector, $definitions, applicationVector: true);
             $code .= strtr($template, array_replace($bindings, [
+                '@methods@' => $applicationMethods,
                 '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type, iterable_type' . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
                 '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true)
@@ -140,6 +159,15 @@ function compilerTraversalMethods(array $plan, string $value, string $key, bool 
     $keys = isset($plan['next_key_method']) ? strtr(readFile(__DIR__ . '/../templates/collections/compiler_key_iteration.php.tpl'), [
         '@next_key@' => $plan['next_key_method'], '@current_value@' => $plan['current_value_method'],
     ]) : '';
+    // A transform forwards the classified native key to the result without boxing it for a source variable.
+    if ($boxed) $output .= str_replace('@next@', $plan['next_method'], <<<'PHP'
+
+	public function lower_cpp_iteration_next_classified(string $receiver, string $value, string $key): string
+	{
+		return '(' . $receiver . ').@next@(iteration_position, iteration_limit, ' . $key . '.index, ' . $key . '.text, ' . $value . ')';
+	}
+
+PHP);
     return $output . $keys . strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
         '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
         '@limit@' => $plan['limit_method'], '@next@' => $plan['next_method'],

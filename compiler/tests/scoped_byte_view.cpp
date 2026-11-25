@@ -1,5 +1,6 @@
 // Compiled beside the emitted scanner. Exercise both representations and both scan exits.
 #include SCPP_SCANNER_HEADER
+#include <scpp/str/checked_byte_view.hpp>
 #include <string>
 #include <cassert>
 #include <stdexcept>

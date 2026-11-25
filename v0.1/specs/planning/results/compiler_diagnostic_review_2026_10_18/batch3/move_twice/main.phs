@@ -1,1 +1,0 @@
-$s unique<int>; $t = move($s); $u = move($s); return 0;

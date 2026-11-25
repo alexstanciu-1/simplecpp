@@ -1,5 +1,0 @@
-function run(): int {
-	$left int = 20;
-	$right int = 22;
-	return $left + $right;
-}

@@ -10,7 +10,7 @@ function scalarNativeIdentity(array $plan, string $type): string {
 }
 
 /** Reject unintended builtin inputs at concrete API boundaries without public templates. */
-function scalarInputFences(array $plan, string $name, array $signatures, bool $constructor = false, string $qualifier = ''): string {
+function scalarInputFences(array $plan, string $name, array $signatures, bool $constructor = false, string $qualifier = '', bool $static = false): string {
     $allowed = [];
     foreach ($signatures as $arguments) {
         $allowed[] = array_map(static fn(string $type): string => scalarNativeIdentity($plan, $type), $arguments);
@@ -34,7 +34,7 @@ function scalarInputFences(array $plan, string $name, array $signatures, bool $c
                 $candidate[$position] = $other;
                 $key = array_map(static fn(string $type): string => scalarNativeIdentity($plan, $type), $candidate);
                 if (in_array($key, $allowed, true)) continue;
-                $deleted[implode(',', $key)] = ($constructor ? 'explicit ' : 'void ') . $name . '(' . implode(', ', $candidate) . ')' . $qualifier . ' = delete;';
+                $deleted[implode(',', $key)] = ($constructor ? 'explicit ' : ($static ? 'static void ' : 'void ')) . $name . '(' . implode(', ', $candidate) . ')' . $qualifier . ' = delete;';
             }
         }
     }

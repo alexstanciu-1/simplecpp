@@ -1,6 +1,0 @@
-// Basic string comparison.
-$a = "aa";
-$b = "ab";
-
-echo (($a < $b) ? "T" : "F"), "
-";

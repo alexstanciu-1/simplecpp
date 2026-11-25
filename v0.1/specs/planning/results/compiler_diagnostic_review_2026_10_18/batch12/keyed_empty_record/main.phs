@@ -1,1 +1,0 @@
-struct S {} $v vector<S> = [new S()]; return empty($v[0]) ? 1 : 0;

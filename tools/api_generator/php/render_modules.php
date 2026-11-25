@@ -53,22 +53,7 @@ function renderDatetime(array $plan, array &$files): void {
         return;
     }
     $module = $plan['datetime'];
-    $includes = scalarProviderHeaders($plan);
-    foreach($module['operations'] as $op) {
-        if($op['result'] === 'string' || in_array('const string&', $op['arguments'], true)) {
-            $includes[] = $plan['string']['header'];
-        }
-        if($op['result'] === 'result_int64') {
-            $includes[] = $plan['carriers_header'];
-        }
-    }
-    $includes = array_unique($includes);
-    sort($includes, SORT_STRING);
     $h = BANNER . "#pragma once\n";
-    foreach($includes as $include) {
-        $h .= includeHeader($include);
-    }
-    $h .= "namespace scpp::dt {\n";
     $d = BANNER . includeHeader($module['header']) . includeHeader('datetime_native.hpp') . includeHeader('scalar_semantics.hpp') . "namespace scpp::dt {\n";
     foreach($module['operations'] as $op) {
         $args = [];
@@ -78,7 +63,9 @@ function renderDatetime(array $plan, array &$files): void {
         $name = $op['name'];
         $result = $op['result'];
         $signature = "$result $name(" . implode(', ', $args) . ')';
-        $h .= "$signature;\n" . scalarInputFences($plan, $name, [$op['arguments']]);
+        $declaration = "$signature;\n" . scalarInputFences($plan, $name, [$op['arguments']]);
+        $files['public/' . $op['header']] = moduleHeaderBody($op['includes'], $module['namespace'], $declaration);
+        $h .= includeHeader($op['header']);
         if($op['arguments'] === []) {
             $native = $result === 'uint64' ? 'unsigned long long':'long long';
             $body = "return $result{static_cast<$native>(detail::datetime::$name())};";
@@ -98,7 +85,7 @@ function renderDatetime(array $plan, array &$files): void {
         }
         $d .= "$signature { $body }\n";
     }
-    $files['public/' . $module['header']] = $h . "}\n";
+    $files['public/' . $module['header']] = $h;
     $files['src/datetime.cpp'] = $d . "}\n";
 }
 

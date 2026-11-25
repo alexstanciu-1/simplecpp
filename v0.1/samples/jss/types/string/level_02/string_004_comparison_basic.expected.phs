@@ -1,8 +1,0 @@
-$a string = "aa";
-$b string = "ab";
-if ($a < $b) {
-	echo "T";
-} else {
-	echo "F";
-}
-echo "\n";

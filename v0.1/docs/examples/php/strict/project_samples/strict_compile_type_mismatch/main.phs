@@ -1,2 +1,0 @@
-$value int = "abc";
-echo $value, "\n";

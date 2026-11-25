@@ -742,5 +742,6 @@ namespace App {
 int scpp_entry_body();
 }
 
-int main() { return ::App::scpp_entry_body(); }
+#include <scpp/entry.hpp>
+int main(int argc, char** argv) { return ::scpp::run_entry_with_exceptions(::App::scpp_entry_body, argc, argv); }
 ```

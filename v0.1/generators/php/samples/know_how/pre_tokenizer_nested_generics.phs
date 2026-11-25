@@ -1,6 +1,0 @@
-class NestedGenericDemo {
-	public function build_map(): hash<vector<string>> {
-		$child_types hash<vector<string>> = [];
-		return $child_types;
-	}
-}

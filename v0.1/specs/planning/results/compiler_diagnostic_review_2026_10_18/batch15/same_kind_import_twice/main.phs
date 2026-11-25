@@ -1,1 +1,0 @@
-use function Lib\f; use function Lib\f; return f();

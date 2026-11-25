@@ -56,7 +56,8 @@ function remove_tree(string $path): void
 $fixtures = [];
 $widths = ['int8' => [-128, 127], 'int16' => [-32768, 32767], 'int32' => [-2147483648, 2147483647],
 	'uint16' => [0, 65535], 'uint32' => [0, 4294967295]];
-verify(type_registry::resolve('uint64') === null, 'uint64 must remain unavailable');
+verify(type_registry::resolve('uint64') === null || type_registry::required_module('uint64') === 'runtime-numeric',
+	'Published uint64 transport requires the numeric module');
 foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$var = static fn(string $name): string => ($flavor === flavor::php ? '$' : '') . $name;
 	$decl = static fn(string $type, string $name, string $value): string => match ($flavor) {

@@ -1,1 +1,0 @@
-class S { function __construct(S $other) {} } $s S; $t = new S($s); return 0;

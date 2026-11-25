@@ -1,5 +1,0 @@
-// Basic string assignment and reassignment.
-$s = "alpha";
-$s = "beta";
-
-echo $s, "\n";

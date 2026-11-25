@@ -1,2 +1,0 @@
-function number(): int { return "wrong type"; }
-return number();

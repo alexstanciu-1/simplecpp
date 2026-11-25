@@ -1,0 +1,12 @@
+error 9 duplicate-route
+error 10 invalid-route
+warning 7 disabled-backend
+error 8 unknown-backend
+match GET /api/status status
+match POST /api/status default
+unmatched GET /apiculture
+unmatched GET /legacy
+backend default edge.example:8080 routes 1
+backend status status.example:443 routes 1
+backend offline old.example:80 routes 0
+matched 2 unmatched 2 errors 3 warnings 1

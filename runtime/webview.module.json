@@ -1,0 +1,19 @@
+{
+    "name": "runtime-webview",
+    "type": "c++",
+    "sources": [
+        "src/webview/webview.cpp"
+    ],
+    "dependencies": {
+        "runtime-ui": {
+            "path": "ui.module.json"
+        }
+    },
+    "artifacts": [
+        "../build/clang/libscpp_webview.a",
+        "../build/clang/webview-deps/libwebkit2gtk-4.1.so",
+        "../build/clang/webview-deps/libjavascriptcoregtk-4.1.so",
+        "../build/clang/webview-deps/libjson-glib-1.0.so",
+        "../build/clang/webview-deps/libgio-2.0.so"
+    ]
+}

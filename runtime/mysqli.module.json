@@ -1,0 +1,14 @@
+{
+    "name": "runtime-mysqli",
+    "type": "c++",
+    "sources": [
+        "src/mysqli/mysqli.cpp"
+    ],
+    "dependencies": {
+        "runtime": {}
+    },
+    "artifacts": [
+        "../build/clang/libscpp_mysqli.a",
+        "../build/clang/mysqli-deps/libmariadb.so"
+    ]
+}

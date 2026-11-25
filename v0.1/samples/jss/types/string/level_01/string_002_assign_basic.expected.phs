@@ -1,3 +1,0 @@
-$s string = "alpha";
-$s = "beta";
-echo $s, "\n";

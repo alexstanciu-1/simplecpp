@@ -1,0 +1,13 @@
+# document|sku|movement|units|unit-price-cents
+A1|pen|receive|10|100
+A2|pen|receive|5|130
+A3|pen|hold|8|0
+A4|pen|release|2|0
+A5|pen|ship|4|200
+A6|pen|count|9|0
+A7|pen|hold|20|0
+A5|pen|ship|4|200
+B1|pad|receive|2|300
+B2|pad|ship|2|450
+B3|pad|count|2|0
+BAD|pad|ship|-1|20

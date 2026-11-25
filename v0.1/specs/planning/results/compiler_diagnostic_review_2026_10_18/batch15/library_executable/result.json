@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "Top-level executable statements are only allowed in the selected entry: lib.phs"
-}

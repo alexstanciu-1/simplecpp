@@ -1,4 +1,0 @@
-$value ?int = null;
-if ($value === null) {
-	echo "null\n";
-}

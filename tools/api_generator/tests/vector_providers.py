@@ -29,6 +29,7 @@ def proof(work, quick=False):
     facts = ROOT / 'build/clang/native-layout/facts.json'
     context = facts.with_name('context.json')
     publication.pop('mt_segments', None)  # This proof also publishes without vectors.
+    publication.pop('cli_helpers', None)  # CLI argument helpers require vector<string> and mixed.
     if quick:
         for family in ('hashes', 'boxed', 'async_frames'):
             publication.pop(family, None)
@@ -88,11 +89,16 @@ def proof(work, quick=False):
 
         reduced = copy.deepcopy(metadata)
         del reduced['vector']['reserve']
-        without = emit(reduced, publication)
+        emit(reduced, publication, expected=1)
+        without_helpers = copy.deepcopy(publication)
+        del without_helpers['vectors']['capacity_helpers']
+        without = emit(reduced, without_helpers)
         assert all('reserve' not in [m['name'] for m in v['methods']] for v in without['vectors'])
         assert 'void reserve(' not in (output / 'public/scpp/vectors.hpp').read_text()
         run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
         assert "'reserve' =>" not in (compiler/'types/vectors.php').read_text()
+        assert "'resize' =>" not in (compiler/'types/vectors.php').read_text()
+        assert 'general:func:vector_filled' not in (compiler/'types/registry.php').read_text()
         emit(metadata, publication)
         run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
         assert snapshot() == original and "'reserve' =>" in (compiler/'types/vectors.php').read_text()
@@ -137,6 +143,8 @@ def proof(work, quick=False):
         minimal.pop('hashes')
         minimal.pop('carriers')
         minimal.pop('string')
+        minimal.pop('text_helpers')
+        minimal.pop('text_builders')
         minimal.pop('boxed')
         minimal['vectors'] = {'specializations': [publication['vectors']['specializations'][0]]}
         narrow = emit(metadata, minimal)

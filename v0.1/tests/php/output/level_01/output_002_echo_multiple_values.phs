@@ -1,3 +1,0 @@
-// Basic echo with multiple values.
-echo "a", "-", "b", "
-";

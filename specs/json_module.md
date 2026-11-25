@@ -124,8 +124,41 @@ paths record provenance only: builds use v0.2 sources exclusively. The private
 `boxed_inspection` adapter exposes no public cursor, mutable reference or subscription.
 Public traversal/liveness remains RT-DEBT-01.
 
-Typed `from_json`, typed vector/hash encoding, source compiler registration,
+Typed `from_json`, typed vector/hash encoding,
 PHP compatibility wrappers and persistent `{}`/`[]` identity remain separate work.
 The donor's recursive parser/writer has no explicit nesting-depth budget; this slice
 does not establish a hostile-input resource-limit contract or a throughput claim.
 See [validation](json_validation.md).
+
+## Source bindings
+
+With the JSON module selected, PHP exposes json_decode(string) → result<dynamic>
+and json_encode(value) → result<string>. The general surface adds
+json_decode_mixed(string) → result<mixed> and publishes the same decode and
+encode contracts. Exact argument type selects each of the ten encode overloads,
+including nullable scalars. General names follow project visibility.
+
+## Document and node publication
+
+The document selection publishes immutable document and node values. A copied
+node retains the document arena, including after replacement of the originating
+document. Parsing validates complete UTF-8, unique decoded object member names,
+and a caller-supplied container depth from 1 to 256 (default 128). A nullable
+diagnostic receives category, byte offset and message on failure and resets on
+success. The returned result carries either a complete document or an error.
+Node accessors preserve shape, source member order and exact number tokens.
+Integer extraction accepts lexical signed int64 integers. All access failures
+are checked results.
+
+## Pull reader publication
+
+The pull_reader selection publishes json_pull_reader_create and fourteen checked
+methods. Copies share one cursor. start(text,file,limit) owns the input, uses
+file for diagnostics and accepts depths 1–256. Use kind, begin_object,
+begin_array, next_property, next_element and property_name to navigate. Read
+the current scalar with read_number (original spelling), read_integer (int64),
+read_string, read_boolean or read_null. A successful false from advancement
+closes that container. Finish with finish_document after consuming the root,
+or fail the cursor explicitly through reject(message). A failed read is
+terminal; restart requires a fresh handle. Documents use the same private
+structural reader, with independent public feature selection.

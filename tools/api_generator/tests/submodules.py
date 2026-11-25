@@ -312,9 +312,9 @@ def proof(work, quick=False, cache_only=False):
     generated = work / 'transitive-runtime'
     run(['php', generator, 'emit-runtime', path, publication, facts, context, generated])
     isolated = work / 'transitive.cpp'
-    isolated.write_text('#include <scpp/string.hpp>\n')
+    isolated.write_text('#include <scpp/string/type.hpp>\n')
     run(['clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I', generated / 'public', isolated])
-    text = (generated / 'public/scpp/string.hpp').read_text()
+    text = (generated / 'public/scpp/string/type.hpp').read_text()
     assert '#include "scpp/output.hpp"' in text and '#include "scpp/core/scalars.hpp"' not in text
 
     # Invalid metadata must leave a previously published directory intact.
@@ -403,7 +403,7 @@ def check_native_relocation(directory, destination, renamed, publication, facts,
          '-P', ROOT / 'cmake/PublishCompiler.cmake'])
     run(['ninja', '-f', graph.name], cwd=directory)
     assert obj.stat().st_mtime_ns != stamp, 'Provider relocation did not rebuild native consumer'
-    assert not (destination / 'public/scpp/string.hpp').exists()
+    assert not (destination / 'public/scpp/string/type.hpp').exists()
     assert not (destination / 'public/scpp/output.hpp').exists()
 
 
@@ -578,10 +578,10 @@ def review_contract_proof(work, original, publication_path, facts, context):
     # String conversion dependencies follow published casts, including optional widths.
     reduced.update(types=['int64', 'int16'], values=['bool_t'], string={'operations': [], 'casts': []})
     emit(original, reduced)
-    assert 'numeric/scalars.hpp' not in (legacy / 'string.hpp').read_text()
+    assert 'numeric/scalars.hpp' not in (legacy / 'string/type.hpp').read_text()
     reduced['string']['casts'] = ['int16']
     emit(original, reduced)
-    assert 'numeric/scalars.hpp' in (legacy / 'string.hpp').read_text()
+    assert 'numeric/scalars.hpp' in (legacy / 'string/type.hpp').read_text()
     graph = json.loads((runtime / 'prepared.json').read_text())['submodules']
     for provider in ('core.string', 'core.conversions'):
         assert 'numeric.scalars' in graph['nodes'][provider]['requires']
@@ -606,6 +606,7 @@ def review_contract_proof(work, original, publication_path, facts, context):
 def cached_application_proof(work, original, facts, context, publication, quick=False):
     """Restart the actual project compiler after regeneration and reuse application/native outputs."""
     work.mkdir(exist_ok=True)
+    (work / 'tools').symlink_to(ROOT / 'tools', target_is_directory=True)
     compiler = work / 'compiler'
     (work / 'tools').symlink_to(ROOT / 'tools', target_is_directory=True)
     # Copy the implementation so Project_Changes scans the test publication, not production PHP.
@@ -720,7 +721,7 @@ def cached_application_proof(work, original, facts, context, publication, quick=
             else:
                 assert '<scpp/core/scalars.hpp>' not in joined and '<scpp/conversions.hpp>' not in joined
                 assert '<scpp/cache/scalars.hpp>' in joined and '<scpp/cache/checked.hpp>' in joined
-                assert '<scpp/string.hpp>' not in joined and '<scpp/output.hpp>' not in joined
+                assert '<scpp/string/type.hpp>' not in joined and '<scpp/output.hpp>' not in joined
                 assert ('<scpp/cache/text.hpp>' in joined) == (label != 'type_relocated')
                 assert ('<scpp/cache/write.hpp>' in joined) == (label != 'relocated')
             run(['ninja', '-j', '4'], cwd=native)

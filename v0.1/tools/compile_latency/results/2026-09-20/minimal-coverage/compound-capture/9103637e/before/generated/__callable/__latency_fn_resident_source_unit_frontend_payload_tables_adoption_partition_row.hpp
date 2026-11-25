@@ -1,7 +1,0 @@
-#include <scpp/lang/php.hpp>
-#pragma once
-namespace scpp {
-struct PartitionReadinessRow;
-struct ResidentSourceUnitFrontendPayloadAdoptionRow;
-PartitionReadinessRow __latency_fn_resident_source_unit_frontend_payload_tables_adoption_partition_row(ResidentSourceUnitFrontendPayloadAdoptionRow adoptionRow);
-}

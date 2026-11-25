@@ -1,5 +1,0 @@
-// Minimal strict bool literal return authority.
-function run(): bool
-{
-	return true;
-}

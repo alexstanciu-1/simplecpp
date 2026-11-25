@@ -1,1 +1,0 @@
-namespace App; use function Lib\b as pick; function right(): int { return pick(); }

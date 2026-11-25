@@ -1,1 +1,0 @@
-struct S { function __construct(S $other, int $n) {} } return 0;

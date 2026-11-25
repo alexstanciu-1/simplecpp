@@ -49,6 +49,103 @@ def fixture(flavor):
                 value = local(key + 'Value', scalar, owner)
                 want = str(expected) if scalar == 'int' else ('true' if expected else 'false')
                 statements.append(f'if ({value} !== {want}) {{ return 4; }}')
+    for prefix in (['regex', 'preg'] if flavor == 'php' else ['regex']):
+        local(prefix + 'Jit', 'bool', prefix + '_jit_available()')
+        for suffix, args, expected in [('Plain', '"a.b/"', r'a\\.b/'), ('Delimited', '"a.b/", "/"', r'a\\.b\\/')]:
+            value = local(prefix + suffix, 'string', f'{prefix}_quote({args})')
+            statements.append(f'if ({value} !== "{expected}") {{ return 8; }}')
+    if flavor == 'php':
+        statements.append(r'''
+$literal string = preg_replace("/(a)/", "$1!", "aa", 1);
+if ($literal !== "a!a") { return 44; }
+$mark string = "!";
+$format function<string(vector<string>)> = fn($row) => $row[0] . $mark;
+$rewritten string = regex_replace_callback("/a/", $format, "aa", 1);
+if ($rewritten !== "a!a") { return 36; }
+$rules hash<function<string(vector<string>)>,string> = ["/a/" => $format, "/!/" => fn($row) => "b"];
+$rewritten = regex_replace_callback_array($rules, "aa", 1);
+if ($rewritten !== "aba") { return 37; }
+$render function<string(mixed)> = fn($row) => (string)$row[1];
+$rewritten = preg_replace_callback("/(a)b/", $render, "ab");
+if ($rewritten !== "a") { return 38; }
+$phpRules hash<function<string(mixed)>,string> = ["/(a)b/" => $render];
+$rewritten = preg_replace_callback_array($phpRules, "abab");
+if ($rewritten !== "aa") { return 39; }
+$rewritten = regex_replace_callback("/(?:|a)/", fn($row) => "$1", "a");
+if ($rewritten !== "$1$1$1") { return 40; }
+$throwing function<string(vector<string>)> = function(vector<string> $row):string { throw new Exception("callback"); };
+$caught bool = false;
+try { regex_replace_callback("/a/", $throwing, "a"); } catch (Exception $failure) {
+    $caught = $failure->get_message() === "callback";
+}
+if (!$caught) { return 41; }
+$named hash<string,string> = regex_match_named("/(?<tag>a)/", "a");
+if ($named["0"] !== "a" || $named["tag"] !== "a") { return 31; }
+$rows vector<vector<string>> = regex_match_all("/(a)?b/", "bab");
+$second vector<string> = $rows[1];
+if (count($rows) !== 2 || $second[1] !== "a") { return 32; }
+$rows = regex_match_all_pattern_order("/(a)?b/", "bab");
+$second = $rows[1];
+if ($second[0] !== "" || $second[1] !== "a") { return 33; }
+$namedRows vector<hash<string,string>> = regex_match_all_named("/(?<tag>a)/", "aa", -1);
+$named = $namedRows[0];
+if (count($namedRows) !== 1 || $named["tag"] !== "a") { return 34; }
+$nestedFail result_or_false<vector<vector<string>>> = regex_match_all("/[/", "");
+if (isset($nestedFail)) { return 35; }
+$boxes mixed = ["p"=>"ax", "q"=>"xz", "r"=>"!"];
+$kept result_or_false<mixed> = preg_grep("/x/", $boxes);
+$values mixed = $kept;
+if (count($values) !== 2 || (string)$values["q"] !== "xz") { return 21; }
+$values["q"] = "updated";
+$original mixed = $kept;
+if ((string)$original["q"] !== "xz") { return 30; }
+$numeric mixed = ["year"=>2026];
+$values = preg_grep("/26$/", $numeric);
+if ((string)$values["year"] !== "2026") { return 43; }
+$values = preg_filter("/x/", "x", $boxes, 1);
+if (count($values) !== 2 || (string)$values["p"] !== "ax") { return 22; }
+$kept = preg_split("/,/", "", -1, PREG_SPLIT_NO_EMPTY);
+if (!isset($kept)) { return 23; }
+$values = $kept;
+if (count($values) !== 0) { return 24; }
+$kept = preg_split("/[/", "");
+if (isset($kept)) { return 25; }
+$n int = preg_match_all("/(?<letter>a)/", "aa", $values);
+$column mixed = $values["letter"];
+if ($n !== 2 || (string)$column[1] !== "a") { return 26; }
+$n = preg_match_all("/(?<letter>a)/", "aa", $values, PREG_SET_ORDER, -1);
+$column = $values[0];
+if ($n !== 1 || (string)$column["letter"] !== "a") { return 27; }
+$n = preg_match_all("/(a)?b/", "babb", $values, PREG_PATTERN_ORDER);
+$column = $values[1];
+if (count($column) !== 3 || (string)$column[0] !== "" || (string)$column[1] !== "a" || (string)$column[2] !== "") { return 42; }
+$n = preg_match("/(?<letter>a)/", "a", $values);
+if ($n !== 1 || (string)$values[0] !== "a" || (string)$values["letter"] !== "a") { return 28; }
+$status result_or_false<int> = preg_match("/[/", "", $values);
+if (isset($status) || count($values) !== 0) { return 29; }
+$row result_or_false<vector<string>> = regex_match("/(a)?(b)(z)?/", "xxb", -1);
+$v vector<string> = $row;
+if (count($v) !== 3 || $v[0] !== "b" || $v[1] !== "" || $v[2] !== "b") { return 11; }
+$v = regex_match("/x/", "x", 2);
+if (count($v) !== 0) { return 12; }
+$row = regex_match("/[/", "x");
+if (isset($row)) { return 13; }
+$input vector<string> = ["aa", "!", "ba"];
+$v = regex_grep("/a/", $input);
+if (count($v) !== 2 || $v[1] !== "ba") { return 14; }
+$v = regex_filter("/a/", "*", $input, 1);
+if (count($v) !== 2 || $v[0] !== "*a" || $v[1] !== "b*") { return 15; }
+$v = regex_split("/(,)/", ",a,b,", -1, 3);
+if (count($v) !== 5 || $v[0] !== "," || $v[3] !== "b") { return 16; }
+$t string = regex_replace("/(?:|a)/", "-", "a");
+if ($t !== "---") { return 17; }
+$t = regex_replace("/()/u", "-", "é");
+if ($t !== "-é-") { return 18; }
+$t = regex_replace("/(a)(b)/", "\\2\\1", "abab", 1);
+if ($t !== "baab") { return 19; }
+$bad result_or_false<string> = regex_replace("/[/", "", "", 0);
+if (isset($bad)) { return 20; }
+''')
     end = local('endByte', 'int', '99')
     for i, (pattern, subject, offset, start, after) in enumerate([
         ('/x/', 'x', 0, 0, 1), ('/x/', 'é!x', 2, 3, 4),
@@ -76,11 +173,11 @@ def prove(work, runtime, flavor):
     output = work / ('out-' + flavor)
     source = app / ('main.' + flavor)
     manifest = app / 'module.json'
-    enabled = json.dumps({'dependencies': {'runtime': {'modules': ['regex']}}})
+    enabled = json.dumps({'general_api': True, 'dependencies': {'runtime': {'modules': ['regex']}}})
     def compiler(out):
         return subprocess.Popen([php, '-r', driver, root/'compiler/boot.php', app, out, runtime],
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
-    source_edit(manifest, '{}')
+    source_edit(manifest, '{"general_api":true}')
     interpolation = {'php': '$n int = 8; echo "é{$n}";', 'cpp': 'int n = 8; echo f"é{n}";',
                      'js': 'let n: int = 8; echo `é${n}`;'}[flavor]
     source_edit(source, interpolation + ' return 0;')
@@ -93,10 +190,20 @@ def prove(work, runtime, flavor):
         ok()
         assert [Path(path).name for path in links()] == ['libscpp_runtime.a'], links()
         if flavor == 'php':
+            source_edit(source, '$f int = PREG_SET_ORDER; return 0;')
+            assert 'PREG_SET_ORDER' in invoke(resident).get('error', '')
             source_edit(source, 'preg_match("/a/", "a"); return 0;')
             assert 'requires module runtime-regex' in invoke(resident).get('error', '')
         source_edit(source, fixture(flavor))
         assert 'requires module runtime-regex' in invoke(resident).get('error', '')
+        if flavor != 'cpp':
+            source_edit(manifest, '{"dependencies":{"runtime":{"modules":["regex"]}}}')
+            source_edit(source, 'regex_test("/a/", "a"); return 0;')
+            assert 'regex_test' in invoke(resident).get('error', '')
+            if flavor == 'php':
+                source_edit(source, 'preg_quote("."); preg_match("/a/", "a"); return 0;')
+                ok()
+            source_edit(source, fixture(flavor))
         source_edit(manifest, enabled)
         ok()
         source_edit(source, 'regex_find_span("/a/", "a", 0, 1); return 0;')
@@ -120,7 +227,7 @@ def prove(work, runtime, flavor):
             assert 'preg_match' in error, error
             source_edit(source, fixture(flavor))
             ok()
-        source_edit(manifest, '{}')
+        source_edit(manifest, '{"general_api":true}')
         assert 'requires module runtime-regex' in invoke(resident).get('error', '')
         source_edit(manifest, enabled)
         ok()

@@ -1,6 +1,0 @@
-// Minimal strict bool local return authority.
-function run(): bool
-{
-	$value bool = true;
-	return $value;
-}

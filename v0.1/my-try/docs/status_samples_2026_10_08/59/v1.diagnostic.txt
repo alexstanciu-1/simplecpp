@@ -1,1 +1,0 @@
-ParseError: syntax error, unexpected token "class"
