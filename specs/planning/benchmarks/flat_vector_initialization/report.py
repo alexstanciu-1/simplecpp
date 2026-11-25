@@ -47,7 +47,7 @@ lines += ['', 'Phase totals cannot be subtracted from the separate clean wall sa
 'python3 -B compiler/tests/list_initialization_native.py --out /tmp/list-native-gcc --fixtures /tmp/list-fixtures.json --cxx g++',
 'ASAN_OPTIONS=detect_stack_use_after_return=1:detect_leaks=1 python3 -B compiler/tests/list_initialization_ownership.py --out /tmp/list-ownership --fixtures /tmp/list-fixtures.json --sanitize',
 'python3 -B specs/planning/benchmarks/flat_vector_initialization/run.py --out /tmp/list-measurements --php php8.5 --repeats 3', '```', '',
-'[Raw measurements](results.dev002.json) · [Interactive comparison](report.html) · [Verification log](verification.dev002.txt)', '',
+'For the interactive comparison, run `python3 -B report.py` in this directory and open `report.html`. [Raw measurements](results.dev002.json) · [Verification log](verification.dev002.txt)', '',
 'No nested/keyed literals, user factory execution, application element initialization or hot-reload implementation is claimed. The older isolated comparison is background research, not these production measurements.']
 (root/'report.md').write_text('\n'.join(lines)+'\n')
 html='''<!doctype html><meta charset="utf-8"><title>Flat vector initialization — dev002</title>
