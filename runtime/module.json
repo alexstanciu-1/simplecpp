@@ -14,7 +14,13 @@
         "datetime": "datetime.module.json",
         "numeric": "numeric.module.json",
         "regex": "regex.module.json",
-        "filesystem": "filesystem.module.json"
+        "filesystem": "filesystem.module.json",
+        "io": "io.module.json",
+        "process": "process.module.json",
+        "curl": "curl.module.json",
+        "ui": "ui.module.json",
+        "webview": "webview.module.json",
+        "mysqli": "mysqli.module.json"
     },
     "artifacts": [
         "../build/clang/libscpp_runtime.a"

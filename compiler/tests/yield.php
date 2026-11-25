@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/../host/compilation.php';
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group, Incremental_Project};
@@ -119,7 +120,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 
 	$checked = $signature('checked', 'Iterator<byte>') . '{yield ' . $v('x') . ';}return 8;';
 	$entry = $prepare($checked);
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 
 int main() {
@@ -143,7 +144,7 @@ CPP;
 		. 'yield weak(' . $v('p') . ');' . $local('later', 'new Point()')
 		. 'yield weak(' . $v('later') . ');}return 8;';
 	$entry = $prepare($record . $local_owner);
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     App::weak_Point first, second;
@@ -175,7 +176,7 @@ CPP;
 	};
 	$failed = str_replace($local('later', 'new Point()'), $bad_local . $local('later', 'new Point()'), $local_owner);
 	$entry = $prepare($record . $failed);
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     App::weak_Point first;
@@ -217,7 +218,7 @@ CPP;
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');return;}else {'
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');}yield weak(new Point());}return 8;';
 	$entry = $prepare($record . $conditional_owner);
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     App::weak_Point first, nested, again, after;
@@ -248,7 +249,7 @@ CPP;
 	$fixtures[$flavor->name . '_branch_owner'] = ['cpp' => $cpp, 'stdout_hex' => ''];
 	$failed = str_replace($v('x') . '=-1;', $bad_local, $conditional_owner);
 	$entry = $prepare($record . $failed);
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     App::weak_Point first;
@@ -295,7 +296,7 @@ CPP;
 		. $local('p', 'new Point()') . 'yield weak(' . $v('p') . ');'
 		. 'if (' . $v('i') . '==0){continue;}if (' . $v('i') . '==1){break;}}yield weak(new Point());}return 8;';
 	$entry = $prepare($record . $owned_loop);
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     App::weak_Point first, second, end;
@@ -316,7 +317,7 @@ int main() {
 CPP;
 	$fixtures[$flavor->name . '_loop_owner'] = ['cpp' => $cpp, 'stdout_hex' => ''];
 	$entry = $prepare($record . str_replace('if (' . $v('i') . '==0){continue;}', $bad_local, $owned_loop));
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     App::weak_Point first;
@@ -334,7 +335,7 @@ CPP;
 		. ';' . $v('x') . '>0;' . $v('x') . '--){yield weak(' . $v('p') . ');'
 		. 'if (' . $v('x') . '==2){continue;}break;}yield weak(new Point());}return 8;';
 	$entry = $prepare($record . $header_owner);
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     App::weak_Point first, second, end;

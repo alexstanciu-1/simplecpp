@@ -1,9 +1,33 @@
 # Bounded datetime module
 
 Doc Status: normative
-Scope: concrete native v0.2 runtime and PHP API publication. Source compiler
-integration and PHP compatibility wrappers are deferred.
-Top-level `specs/builtins/datetime/` contracts remain the semantic authority.
+Scope: optional datetime publication, general source bindings and the native runtime.
+
+## General source API
+
+C++ flavor exposes selected general names by default. PHP, JS and Python
+require `general_api` in the project manifest. The project selects the datetime
+module through `dependencies.runtime.modules`. It also activates numeric types.
+Each selected source name binds directly to its native operation and narrow
+declaration header. The native umbrella includes the selected operation headers.
+
+| General call | Native operation | Source result |
+| --- | --- | --- |
+| dt_now(), dt_now_ms() | now_unix_seconds, now_unix_millis | int |
+| dt_monotonic_ms() | monotonic_millis | int |
+| dt_monotonic_us(), dt_monotonic_ns() | monotonic_micros, monotonic_nanos | uint64 |
+| dt_sleep_ms(int millis) | sleep_millis | void |
+| dt_format_iso_utc(int timestamp) | format_iso_utc | string |
+| dt_parse_iso_utc(string value) | parse_iso_utc | result<int> |
+| dt_format(string format, int timestamp) | format_local | string |
+| dt_format_now(string format) | format_local_now | string |
+| dt_parse(string value) | parse_common_local | result<int> |
+
+When published, uint64 supports exact typed storage, parameters and returns.
+Its native representation preserves all 64 unsigned bits. This transport
+contract introduces no arithmetic, conversions or unsigned source literals.
+Integer arguments to datetime operations use the exact native int64 type.
+The ordinary result presence check distinguishes epoch zero from a parse error.
 
 ## Publication and ownership
 
@@ -141,7 +165,7 @@ must build without the legacy runtime tree, including with tests disabled.
 ## Deferred scope
 
 The legacy source callable catalog remains unchanged. This slice does not claim
-compiler support merely because native functions exist. Custom DST resolution, PHP time/date/strtotime/microtime adapters, named zones, locale-aware
+additional flavor-specific bindings. Custom DST resolution, PHP time/date/strtotime/microtime adapters, named zones, locale-aware
 formatters, calendar arithmetic and general module/plugin discovery are separate work.
 
 Donor provenance and initial validation are recorded in `datetime_validation.md`;

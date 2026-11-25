@@ -582,10 +582,11 @@
   ],
   "string": {
     "transfer_assignment": "private_value_nothrow",
+    "search_policy_provider": "str.search_policy",
     "search_offsets": {"php": "signed_offset", "js": "clamp", "cpp": "nonnegative"},
     "trim_defaults": {"php": "php_space", "js": "ascii_space", "cpp": "ascii_space"},
     "index_write": {"method": "set_byte", "key": "int64", "value": "uint8", "policy": "checked_byte_offset"},
-    "index_read": {"method": "byte_at", "key": "int64", "result": "uint8", "policy": "checked_byte_offset"},
+    "index_read": {"method": "byte_at", "view_provider": "str.checked_view", "key": "int64", "result": "uint8", "policy": "checked_byte_offset"},
     "explicit_formatters": {
       "bool_t": {"policy": "boolean_words", "symbol": "format_bool"},
       "uint8": {"policy": "decimal_integer", "symbol": "format_uint8"},
@@ -595,10 +596,10 @@
     "functions": {
       "strlen": {"result": "int64", "symbol": "scpp::str::byte_length", "implementation": "byte_length", "parameters": ["string"]},
       "string_byte_from_int": {"result": "string", "symbol": "scpp::str::byte_from_int", "implementation": "checked_single_byte", "parameters": ["int64"]},
-      "str_starts_with": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::starts_with", "implementation": "starts_with", "flavor_adapters": true, "members": {"cpp": "starts_with", "js": "startsWith"}},
+      "str_starts_with": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::starts_with", "implementation": "starts_with", "direct_provider": "str.prefix", "flavor_adapters": true, "members": {"cpp": "starts_with", "js": "startsWith"}},
       "str_ends_with": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::ends_with", "implementation": "ends_with", "flavor_adapters": true, "members": {"cpp": "ends_with", "js": "endsWith"}},
       "str_contains": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::contains", "implementation": "contains", "flavor_adapters": true, "members": {"cpp": "contains", "js": "includes"}},
-      "strpos": {"parameters": ["string", "string", "int64"], "required_parameters": 2, "result": "int64", "symbol": "scpp::str::find", "implementation": "find", "flavor_adapters": true, "signatures": {"php": {"result": "result_or_false<int64>", "body": "search_offset_or_false"}}, "members": {"cpp": "find", "js": "indexOf"}},
+      "strpos": {"parameters": ["string", "string", "int64"], "required_parameters": 2, "result": "int64", "symbol": "scpp::str::find", "implementation": "find", "direct_provider": "str.find", "flavor_adapters": true, "signatures": {"php": {"result": "result_or_false<int64>", "body": "search_offset_or_false", "header": "scpp/php/strpos.hpp"}}, "members": {"cpp": "find", "js": "indexOf"}},
       "stripos": {"parameters": ["string", "string", "int64"], "required_parameters": 2, "result": "int64", "symbol": "scpp::str::ascii_find", "implementation": "find", "flavor_adapters": true, "signatures": {"php": {"result": "result_or_false<int64>", "body": "search_offset_or_false"}}, "ascii_fold": true},
       "explode": {"parameters": ["string", "string", "int64"], "required_parameters": 2, "limit_policy": {"php": "remainder", "js": "uint32_cap", "cpp": "cap"}, "result": "vector<string>", "symbol": "scpp::str::split", "implementation": "split_bytes", "flavor_adapters": true, "members": {"cpp": "split", "js": "split"}},
       "implode": {"parameters": ["vector<string>", "string"], "result": "string", "symbol": "scpp::str::join", "implementation": "join_bytes", "flavor_adapters": true, "members": {"js": "join"}, "free_names": {"cpp": "join"}},
@@ -629,7 +630,7 @@
       "substr": {"parameters": ["string", "int64", "int64"], "required_parameters": 2, "result": "string", "symbol": "scpp::str::slice_bytes", "implementation": "slice_bytes", "bound": {"php": "length", "cpp": "length", "js": "exclusive_end"}, "flavor_adapters": true, "members": {"cpp": "substr", "js": "slice"}},
       "str_repeat": {"parameters": ["string", "int64"], "signatures": {"php": {"parameter_names": ["string", "times"]}}, "result": "string", "symbol": "scpp::str::repeat", "implementation": "repeat", "flavor_adapters": true, "members": {"cpp": "repeat", "js": "repeat"}}
     },
-    "provider": "core.string",
+    "provider": "core.string", "library_provider": "str.library",
     "type": "string",
     "source_type": "string",
     "storage": "inline_22_private_std_string",
@@ -703,6 +704,7 @@
   },
   "carriers": {
     "provider": "core.carriers",
+    "specialization_providers": {"result_or_false_int64": "carrier.false_int64"},
     "construction": "explicit",
     "extraction": "implicit_checked_one_layer_value_copy",
     "payload_access": "value",
@@ -793,7 +795,73 @@
   "regex": {
     "provider": "regex.functions",
     "namespace": "scpp::regex",
+    "callbacks": {
+      "regex_replace_callback": {"surface": "general", "input": "vector_string", "table": false},
+      "regex_replace_callback_array": {"surface": "general", "input": "vector_string", "table": true},
+      "preg_replace_callback": {"surface": "php", "input": "mixed", "table": false},
+      "preg_replace_callback_array": {"surface": "php", "input": "mixed", "table": true}
+    },
+    "php_constants": {"PREG_PATTERN_ORDER": 1, "PREG_SET_ORDER": 2, "PREG_SPLIT_NO_EMPTY": 1, "PREG_SPLIT_DELIM_CAPTURE": 2},
+    "surface": "general",
+    "php_exposures": {
+      "preg_quote": {"target": "regex_quote"},
+      "preg_replace": {"target": "regex_replace"},
+      "preg_jit_available": {"target": "regex_jit_available"}
+    },
     "functions": {
+      "regex_jit_available": {
+        "native_name": "jit_available", "parameters": [], "result": "bool_t"
+      },
+      "regex_match_named": {
+        "native_name": "match_named", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_hash_string_string"
+      },
+      "regex_match_all": {
+        "native_name": "match_all", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_vector_vector_string"
+      },
+      "regex_match_all_pattern_order": {
+        "native_name": "match_all_pattern_order", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_vector_vector_string"
+      },
+      "regex_match_all_named": {
+        "native_name": "match_all_named", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_vector_hash_string_string"
+      },
+      "regex_match": {
+        "native_name": "match", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_vector_string"
+      },
+      "regex_grep": {
+        "native_name": "grep", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "vector_string", "native_passing": "const_reference"}],
+        "result": "result_or_false_vector_string"
+      },
+      "regex_split": {
+        "native_name": "split", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_vector_string"
+      },
+      "regex_replace": {
+        "native_name": "replace", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_string"
+      },
+      "regex_filter": {
+        "native_name": "filter", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "vector_string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_vector_string"
+      },
+      "regex_quote": {
+        "native_name": "quote", "required_parameters": 1,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
+        "result": "string"
+      },
       "regex_find_span": {
         "native_name": "find_span",
         "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "reference"}],
@@ -805,8 +873,28 @@
         "result": "result<bool_t>"
       },
       "preg_match": {
-        "native_name": "preg_match", "flavor": "php",
-        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
+        "native_name": "preg_match", "flavor": "php", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false<int64>"
+      },
+      "preg_split": {
+        "native_name": "preg_split", "flavor": "php", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_mixed"
+      },
+      "preg_grep": {
+        "native_name": "preg_grep", "flavor": "php", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "const_reference"}],
+        "result": "result_or_false_mixed"
+      },
+      "preg_filter": {
+        "native_name": "preg_filter", "flavor": "php", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_mixed"
+      },
+      "preg_match_all": {
+        "native_name": "preg_match_all", "flavor": "php", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
         "result": "result_or_false<int64>"
       }
     }
@@ -817,39 +905,348 @@
     "functions": {
       "fs_get": {
         "native_name": "get",
-        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
         "result": "result<string>"
       },
       "fs_put": {
         "native_name": "put",
         "parameters": [
-          {"type": "string", "native_passing": "const_reference"},
-          {"type": "string", "native_passing": "const_reference"}
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          },
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
         ],
         "result": "result<int64>"
       },
       "fs_rename": {
         "native_name": "rename",
         "parameters": [
-          {"type": "string", "native_passing": "const_reference"},
-          {"type": "string", "native_passing": "const_reference"}
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          },
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
         ],
         "result": "bool_t"
       },
       "fs_remove": {
         "native_name": "remove",
-        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
         "result": "bool_t"
       },
       "fs_stage": {
         "native_name": "stage",
-        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
         "result": "result<string>"
+      },
+      "fs_exists": {
+        "native_name": "exists",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_is_file": {
+        "native_name": "is_file",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_is_dir": {
+        "native_name": "is_dir",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_is_link": {
+        "native_name": "is_link",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_mkdir": {
+        "native_name": "mkdir",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_touch": {
+        "native_name": "touch",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_rmdir": {
+        "native_name": "rmdir",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_copy": {
+        "native_name": "copy",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          },
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_size": {
+        "native_name": "size",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "result<int64>"
+      },
+      "fs_mtime": {
+        "native_name": "mtime",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "result<int64>"
+      },
+      "fs_scan": {
+        "native_name": "scan",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "result_vector_string"
+      },
+      "fs_realpath": {
+        "native_name": "realpath",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "result<string>"
+      },
+      "fs_basename": {
+        "native_name": "basename",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "string"
+      },
+      "fs_dirname": {
+        "native_name": "dirname",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "string"
+      },
+      "fs_is_windows": {
+        "native_name": "is_windows",
+        "parameters": [],
+        "result": "bool_t"
+      },
+      "fs_read_snapshot": {
+        "native_name": "read_snapshot",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          },
+          {
+            "type": "int64",
+            "native_passing": "value"
+          },
+          {
+            "type": "int64",
+            "native_passing": "value"
+          }
+        ],
+        "result": "result<string>"
+      }
+    },
+    "surface": "general",
+    "php_exposures": {
+      "file_get_contents": {
+        "target": "fs_get",
+        "false_result": "result_or_false_string"
+      },
+      "file_put_contents": {
+        "target": "fs_put",
+        "false_result": "result_or_false_int64"
+      },
+      "rename": {
+        "target": "fs_rename"
+      },
+      "unlink": {
+        "target": "fs_remove",
+        "native_name": "unlink"
+      },
+      "file_exists": {
+        "target": "fs_exists"
+      },
+      "is_file": {
+        "target": "fs_is_file"
+      },
+      "is_dir": {
+        "target": "fs_is_dir"
+      },
+      "is_link": {
+        "target": "fs_is_link"
+      },
+      "mkdir": {
+        "target": "fs_mkdir"
+      },
+      "touch": {
+        "target": "fs_touch"
+      },
+      "rmdir": {
+        "target": "fs_rmdir"
+      },
+      "copy": {
+        "target": "fs_copy"
+      },
+      "scandir": {
+        "target": "fs_scan",
+        "false_result": "result_or_false_vector_string"
+      },
+      "filesize": {
+        "target": "fs_size",
+        "false_result": "result_or_false_int64"
+      },
+      "filemtime": {
+        "target": "fs_mtime",
+        "false_result": "result_or_false_int64"
+      },
+      "realpath": {
+        "target": "fs_realpath",
+        "false_result": "result_or_false_string"
+      },
+      "basename": {
+        "target": "fs_basename"
+      },
+      "dirname": {
+        "target": "fs_dirname"
       }
     }
   },
+  "text_builders": {
+    "string_parts_builder": {
+      "create": ["create", "string_parts_builder"],
+      "reserve": ["write", "void", "int64"],
+      "capacity": ["read", "int64"],
+      "count": ["read", "int64"],
+      "byte_len": ["read", "int64"],
+      "append_string": ["write", "void", "string"],
+      "append_int": ["write", "void", "int64"],
+      "append_bool": ["write", "void", "bool_t"],
+      "to_string": ["read", "string"],
+      "clear": ["write", "void"]
+    },
+    "text_builder": {
+      "create": ["create", "text_builder"],
+      "reserve_bytes": ["write", "void", "int64"],
+      "capacity_bytes": ["read", "int64"],
+      "byte_len": ["read", "int64"],
+      "append_string": ["write", "void", "string"],
+      "append_int": ["write", "void", "int64"],
+      "append_bool": ["write", "void", "bool_t"],
+      "to_string": ["read", "string"],
+      "take_string": ["write", "string"],
+      "clear": ["write", "void"]
+    }
+  },
+  "text_helpers": {
+    "hash_string": ["string", "string"],
+    "stable_hash_string_u64": ["uint64", "string"],
+    "string_utf8_codepoint_count": ["int64", "string"],
+    "string_utf8_codepoint_at": ["int64", "string", "int64"],
+    "string_utf8_slice_codepoints": ["string", "string", "int64", "int64"],
+    "string_byte_len": ["int64", "string"],
+    "string_byte_at": ["int64", "string", "int64"],
+    "string_byte_slice": ["string", "string", "int64", "int64"],
+    "string_byte_slice_equals": ["bool_t", "string", "int64", "int64", "string"],
+    "string_byte_find": ["result_or_false_int64", "string", "string", "int64"]
+  },
   "datetime": {
     "binding": "native_datetime",
+    "general_names": {
+      "now_unix_seconds": "dt_now",
+      "now_unix_millis": "dt_now_ms",
+      "monotonic_millis": "dt_monotonic_ms",
+      "monotonic_micros": "dt_monotonic_us",
+      "monotonic_nanos": "dt_monotonic_ns",
+      "sleep_millis": "dt_sleep_ms",
+      "format_iso_utc": "dt_format_iso_utc",
+      "parse_iso_utc": "dt_parse_iso_utc",
+      "format_local": "dt_format",
+      "format_local_now": "dt_format_now",
+      "parse_common_local": "dt_parse"
+    },
     "utc_years": "0000_9999",
     "parse_failure": "result_error",
     "format_failure": "throw_runtime_error",
@@ -909,6 +1306,7 @@
     ]
   },
   "compiler": {
+    "published_transport_types": {"uint64": "runtime-numeric"},
     "generic_syntax": { "fixed_array": ["type", "integer_extent"] },
     "exception": {
       "name": "Exception",
@@ -1775,9 +2173,15 @@
       "header": "scpp/vectors.hpp",
       "requires": []
     },
+    "str.checked_view": {"module": "core", "header": "scpp/str/checked_byte_view.hpp", "requires": [], "requires_exports": ["string"]},
+    "str.search_policy": {"module": "core", "header": "scpp/str/search_policy.hpp", "requires": []},
+    "str.find": {"module": "core", "header": "scpp/str/find.hpp", "requires": ["str.search_policy"], "requires_exports": ["int64"]},
+    "carrier.false_int64": {"module": "core", "header": "scpp/carriers/result_or_false_int64.hpp", "requires": [], "requires_exports": ["bool_t", "int64"]},
+    "str.prefix": {"module": "core", "header": "scpp/str/starts_with.hpp", "requires": [], "requires_exports": ["bool_t"]},
+    "str.library": {"module": "core", "header": "scpp/string.hpp", "requires": [], "requires_exports": ["string"]},
     "core.string": {
       "module": "core",
-      "header": "scpp/string.hpp",
+      "header": "scpp/string/type.hpp",
       "requires": [],
       "requires_exports": [
         "int64",

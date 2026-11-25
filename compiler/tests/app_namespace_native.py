@@ -236,12 +236,32 @@ def prove(work, quick=False):
                     assert all(f'<scpp/{f}/string.hpp>' not in text for f in ('cpp','js','php'))
                     continue
                 flavor = key.split('.')[-1]
-                assert f'#include <scpp/{flavor}/string.hpp>' in text and f'using namespace ::scpp::{flavor};' in text
-                assert 'using namespace ::scpp::types;' in text
+                direct = '::scpp::str::starts_with(' in text
+                search = '::scpp::str::find(' in text or '::scpp::php::strpos(' in text
+                adapter = any(f'#include <scpp/{flavor}/{family}.hpp>' in text for family in ('string', 'string_vectors'))
+                assert direct or search or adapter, (label, text)
+                assert ('#include <scpp/str/starts_with.hpp>' in text) == direct
+                assert (f'using namespace ::scpp::{flavor};' in text) == adapter, (label, text)
+                if label in ('default', f'recovery-first-{flavor}', f'recovery-offset-first-{flavor}'):
+                    assert not adapter
+                    expected = {'scpp/core/scalars.hpp', 'scpp/string/type.hpp'}
+                    if label == 'default':
+                        assert direct
+                        expected.add('scpp/str/starts_with.hpp')
+                    else:
+                        assert search
+                        expected.update(['scpp/str/find.hpp', 'scpp/str/search_policy.hpp'])
+                        if flavor == 'php':
+                            expected.update(['scpp/php/strpos.hpp', 'scpp/carriers/result_or_false_int64.hpp'])
+                    public = ROOT / 'runtime/generated/public'
+                    deps = subprocess.check_output(['clang++', '-std=c++23', '-MM', '-I', public, output / unit], text=True)
+                    runtime_headers = {dep.removeprefix(str(public) + '/') for dep in deps.split()
+                                       if dep.startswith(str(public) + '/')}
+                    assert runtime_headers == expected, runtime_headers
                 if box:
-                    assert 'namespace ' + box + ' {' in text and f'bool_t {flavor[0]}_(' in text
+                    assert 'namespace ' + box + ' {' in text and f'{flavor[0]}_(' in text
                 if label == 'shadow' and flavor == 'cpp':
-                    assert '::scpp::cpp::starts_with(' in text
+                    assert direct
             for header in data['headers']:
                 text = (output / header).read_text()
                 assert 'using namespace' not in text and '::scpp::string' in text

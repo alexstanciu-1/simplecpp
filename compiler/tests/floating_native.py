@@ -39,11 +39,11 @@ def prove(work):
                          for i, bits in enumerate(fixture['bits']))
         # Instrument only the proof artifact; the compiler output remains unchanged.
         literals.write_text('#include <bit>\n#include <cstdint>\n' + fixture['literal_cpp'].replace(
-            'int main()', 'int check_literals()').replace('scpp_entry_body', 'literal_entry_body').replace('\treturn ', checks + '\treturn '))
+            'int main(int argc, char** argv)', 'int check_literals(int argc, char** argv)').replace('scpp_entry_body', 'literal_entry_body').replace('\treturn ', checks + '\treturn '))
         cpp = directory / 'program.cpp'
         checks = ('\tif (check_literals() != 8) return 92;\n'
                   '\tif (var_from_int_0 != 9007199254740992.0 || var_from_bool_1 != 1.0 || var_from_zero_2 || !var_from_nonzero_3) return 93;\n')
-        cpp.write_text('int check_literals();\n' + fixture['cpp'].replace('\treturn ', checks + '\treturn '))
+        cpp.write_text('int check_literals(int = 0, char** = nullptr);\n' + fixture['cpp'].replace('\treturn ', checks + '\treturn '))
         command = write_build(directory, [cpp, literals])
         command[2] = '8'
         graph = directory / 'build.ninja'

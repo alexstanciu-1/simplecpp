@@ -27,7 +27,7 @@ conversion requires both. Duplicate/unknown/empty requests, missing policy, head
 or name collisions, and missing dependencies reject before any output is written.
 The complete bounded API requires published int64, bool_t, float64 and string,
 including explicit native long-long/double transport. The default publication selects both families independently. Boxed values are not admitted as typed vector/hash payloads. The subsequent
-[boxed-result extension](boxed_results.md) admits result_mixed/result_dynamic only;
+[boxed-result extension](boxed_results.md) admits result_mixed, result_dynamic and result_or_false_mixed;
 other boxed carrier families remain deferred.
 
 The probe measures the actual private mixed/dynamic layouts. Target facts carry an

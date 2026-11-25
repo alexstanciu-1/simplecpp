@@ -87,18 +87,16 @@ Runtime metadata owns the published filesystem signatures. The API generator use
 the prepared signatures for both the public C++ declarations and the compiler
 bindings. Implementations are compiled privately into the filesystem archive.
 
-| Function | Behavior |
-| --- | --- |
-| `fs_get(string) -> result<string>` | Reads exact bytes, including empty files. |
-| `fs_put(string, string) -> result<int>` | Creates or truncates a file under an existing parent. Returns the byte count after a successful write and close. |
-| `fs_rename(string, string) -> bool` | Renames an entry using the host filesystem's rename semantics. |
-| `fs_remove(string) -> bool` | Removes an entry. A missing entry returns false. |
-| `fs_stage(string) -> result<string>` | Exclusively reserves an empty file in an existing POSIX directory. |
+C++ source resolves general names such as `fs_get` by default. PHP source resolves
+natural names such as `file_get_contents`. A root manifest with `"general_api": true`
+also registers the general names for PHP, JS and Python. Changing this flag
+invalidates prepared name resolution even when the module selection stays the same.
+An identical PHP contract binds directly to the native operation. A changed
+result contract uses a generated PHP adapter. Lowered callers include the
+declaration header for their selected operation.
 
-The result-returning operations report structured errors on invalid paths and
-operational failure. Rename and remove return false on those failures. A publisher
-can reserve a stage with `fs_stage` and owns cleanup after reservation. It can
-write to the stage and use rename to promote it after a successful write.
+See the [filesystem contract](../../specs/filesystem_module.md) for the full signatures,
+failure channels, typed directory listing and Linux checked read.
 
 ## Application discovery and inventory
 

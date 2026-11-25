@@ -65,6 +65,43 @@ sequence is preserved. Independent loops have independent integer positions.
 Concurrent mutation, escaping element references and by-reference foreach are not
 supported. These methods do not make arbitrary dangling native references safe.
 
+## Typed map and filter
+
+The general API exposes six synchronous helpers. C++ can use the general API by
+default. Other flavors select it with the project setting `"general_api": true`.
+
+| Operation | Vector input | Typed hash input |
+| --- | --- | --- |
+| `collection_map(source, op)` | Dense `vector<U>` | `hash<U,K>` with original keys |
+| `collection_filter(source, predicate)` | Dense `vector<T>` | `hash<T,K>` with original keys |
+| `sequence_map`, `sequence_filter` | Same vector operations | Unsupported |
+| `keyed_map`, `keyed_filter` | Unsupported | Same hash operations |
+
+T is the input value type, K the hash key type and U the map callback's result.
+The result must be an available runtime or application collection specialization.
+For table-valued `mixed` and `dynamic`, the two `collection_*` helpers preserve
+the input family and the actual keys in encounter order. Map requires a same-family
+callback result. Filter requires bool. Empty input yields a fresh empty table of
+the same family. A scalar or null input raises the existing boxed traversal error
+before any callback invocation. Copies of nested values follow ordinary mixed
+copy-on-write and dynamic shared identity. Fixed-array transforms remain deferred.
+
+Both arguments are evaluated once under ordinary call rules. The helper borrows
+the live input and keeps its selected owner alive through traversal. The foreach
+bounds and mutation rules above apply. The callback receives one visited value
+by value, runs once for each visited entry, and may have ordinary synchronous
+side effects. A map stores its returned value. A filter requires a boolean and
+keeps the original visited value on success. Hash output retains insertion order
+and exact keys. Each result has fresh outer storage.
+
+Named functions, static method references, compatible closures and typed callable
+values can supply the callback. The signature requires one exact, required value
+parameter and a non-void value result. Inline lambdas can obtain their input type
+from the collection and their filter result type from context. An inline map lambda
+needs a declared result. Traversal of an empty input returns a typed empty output
+without invoking the callable. An absent owned callable fails on invocation under
+the ordinary callable rules. An exception propagates and discards the partial result.
+
 ## Verification
 
 `tests/collection_iteration.cpp` exercises all concrete vector/hash specializations,

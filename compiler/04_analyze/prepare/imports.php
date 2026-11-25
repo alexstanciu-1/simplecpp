@@ -44,13 +44,13 @@ final class Import_Preparation
 		foreach ($kinds as $kind) {
 			$key = $kind . ':' . $import->target;
 			if (!isset($traits[$key]) && $symbols->resolve($key) === null) {
-				$function = $kind === 'func' ? runtime_functions::free($key, $file->source()->flavor) : null;
+				$function = $kind === 'func' ? $file->type_availability->runtime_function($key, $file->source()->flavor) : null;
 				if ($function instanceof runtime_function && !$file->type_availability->allows($function->required_module)) {
 					return 'Function ' . $function->name() . ' requires module ' . $function->required_module;
 				}
 				$runtime = match ($kind) {
 					'func' => $function !== null,
-					'const' => $file->source()->flavor === flavor::php && runtime_constants::integer($key) !== null,
+					'const' => $file->type_availability->runtime_constant($key, $file->source()->flavor) !== null,
 					'class' => $import->target === type_registry::exception()?->name,
 				};
 				if (!$runtime) continue;

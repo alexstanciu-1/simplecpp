@@ -176,7 +176,22 @@ interface shared_value_lookup_type
 	public function shared_lookup_function(): ?runtime_function;
 }
 
+/** An owning runtime text builder eligible for a readonly free-function parameter. */
+interface text_builder_type {}
+
+/** Opaque resource payload. Boolean sentinels on its carriers are distinct from every payload. */
+interface runtime_handle_type
+{
+}
+
+/** A runtime value with published typed fields, such as a JSON parse diagnostic. */
+interface runtime_field_type
+{
+	public function runtime_field(string $name): ?type_definition;
+}
+
 /** A receiver with a non-addressable indexed value, e.g. text[0]. */
+
 interface index_read_type
 {
 	public function prepare_index(ast_index_expression $value): void;
@@ -186,6 +201,7 @@ interface index_read_type
 /** An immutable descriptor can reuse this provider's checked read while the owner is stable. */
 interface scoped_byte_read_type extends index_read_type
 {
+	public function byte_view_header(): string;
 	public function is_byte_length(runtime_function $function): bool;
 }
 

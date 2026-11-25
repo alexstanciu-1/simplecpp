@@ -75,6 +75,27 @@ int main() {
     }
     assert(Probe::live == 0);
     {
+        Probe seed{3};
+        auto values = ProbeVector::filled(2, seed);
+        auto moved = static_cast<ProbeVector&&>(values);
+        assert(values.capacity() == 0 && moved.size() == 2);
+        const auto capacity = moved.capacity();
+        try { moved.resize(-1, seed); assert(false); } catch (const scpp::ValueError&) {}
+        try { moved.compact(-1); assert(false); } catch (const scpp::ValueError&) {}
+        try { (void)ProbeVector::filled(-1, seed); assert(false); } catch (const scpp::ValueError&) {}
+        assert(moved.capacity() == capacity && moved.size() == 2);
+        Probe::copy_budget = 1;
+        try { moved.resize(100, seed); assert(false); } catch (int code) { assert(code == 42); }
+        assert(moved.size() == 2 && Probe::live == 3);
+        Probe::copy_budget = 1;
+        try { (void)ProbeVector::filled(100, seed); assert(false); } catch (int code) { assert(code == 42); }
+        assert(Probe::live == 3);
+        Probe::copy_budget = -1;
+        moved.compact(0);
+        assert(moved.at(1).value == 3);
+    }
+    assert(Probe::live == 0);
+    {
         scpp::ProbeHash::storage values;
         const auto authored = Probe::authored;
         for (int i = 0; i < 300; ++i) values.set(i, Probe{i});

@@ -1,0 +1,13 @@
+{
+    "name": "runtime-io",
+    "type": "c++",
+    "sources": [
+        "src/io/io.cpp"
+    ],
+    "dependencies": {
+        "runtime": {}
+    },
+    "artifacts": [
+        "../build/clang/libscpp_io.a"
+    ]
+}

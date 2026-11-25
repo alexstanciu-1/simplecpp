@@ -169,8 +169,8 @@ strictly typed. Hashes own independent copies and expose no public traversal yet
 [Datetime](datetime_module.md) publishes selected `scpp::dt` clock/sleep/UTC/local functions
 through the PHP generator. The production CMake option `SCPP_ENABLE_DATETIME` adds
 `scpp_datetime`, depending on core. Types are existing int64/uint64/string/result_int64;
-no new container or dynamic runtime capability is required. Source callable integration
-and PHP compatibility functions remain deferred. Host-local DST resolution is delegated
+no new container or dynamic runtime capability is required. The general source API binds all 11 selected operations directly.
+PHP compatibility functions remain deferred. Host-local DST resolution is delegated
 to the host, and valid Unix timestamp -1 is distinguished from conversion failure.
 
 ## Bounded mixed/dynamic publication
@@ -185,7 +185,7 @@ traversal remain deferred.
 `result_mixed` and `result_dynamic` are now supported when their corresponding
 boxed family is published. They retain the existing result state/extraction policy
 and each payload family’s ownership behavior; see [boxed results](boxed_results.md).
-Other boxed carrier families remain deferred.
+The regex module also selects `result_or_false_mixed` for PHP collection results. See the [regex contract](regex_module.md).
 
 ## Bounded JSON publication
 
@@ -211,3 +211,41 @@ String byte counts now use the metadata-selected native signed representation
 (default `__INT64_TYPE__`) for construction and `size()`. Wrapped count overloads
 are retired; vector/hash counts and other scalar wrappers remain unchanged. See
 [string boundaries](string_slice.md).
+
+## Optional filesystem module
+
+The [filesystem contract](filesystem_module.md) defines the general and PHP names, project visibility, operation signatures and failure channels.
+
+## Optional Stream I/O, Process and curl modules
+
+The [module contracts](stream_process_curl_modules.md) define handle lifetime, flavor visibility, checked results and external dependencies.
+
+The optional [mysqli, UI and Webview modules](database_desktop_modules.md) publish opaque handles and their operations through the runtime catalog.
+
+## Executable arguments and environment
+
+The default core publication exposes these operations independently of managed Process. C++ uses the general names by default. Other flavors can add general names through the root project's general_api option. PHP also exposes the natural or compatibility spellings below.
+
+| General source API | PHP source API | Contract |
+| --- | --- | --- |
+| `cli_argument_count(): int` | `cli_argc(): int` | Number of slots supplied to the executable, including slot zero when present. Reading the count allocates no list. |
+| `cli_arguments(): vector<string>` | `cli_argv(): mixed`, `cli_args(): mixed` | Each call produces an independent owned snapshot in invocation order. PHP snapshots are packed mixed lists of strings. The two aliases select the same native operation. |
+| `env_get(name: string): result_or_false<string>` | `getenv(name: string): result_or_false<string>` | Returns a copy of the current value, including a present empty string. An absent name returns false. Embedded NUL in the name raises ValueError before lookup. Host name matching applies. |
+
+Executable startup retains the supplied count and argument slots before entering the authored body. Slot zero preserves the invocation spelling. Empty arguments, spaces and non-UTF-8 bytes are preserved. An argument list obtained by a function in another translation unit observes the same invocation. The runtime reads the process environment at each lookup; callers sharing the process with native code that changes its environment must coordinate those changes.
+
+[Publication](../runtime/metadata/publication.json) · [Executable source proof](../compiler/tests/cli_environment_native.py)
+
+## Stable string fingerprints
+
+The general API publishes `hash_string(string): string` and
+`stable_hash_string_u64(string): uint64`. Both borrow the input and compute
+FNV-1a 64-bit over its exact bytes, including NUL and invalid UTF-8. Start
+at 14695981039346656037. For each byte in order, XOR the byte into the
+accumulator and multiply by 1099511628211 modulo 2⁶⁴.
+
+The string result contains exactly 16 lowercase hexadecimal digits, most
+significant first, including leading zeros. The numeric result preserves all
+64 bits and requires the project's numeric module. The hex form is available
+with core alone. These fingerprints are suitable for deterministic comparisons
+where collisions are acceptable.

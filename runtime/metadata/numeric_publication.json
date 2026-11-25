@@ -1,7 +1,5 @@
 {
-  "types": [
-    "int32"
-  ],
+  "types": [],
   "operators": [
     {
       "operation": "add",

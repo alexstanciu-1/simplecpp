@@ -73,6 +73,12 @@ string(JSON mt_segments ERROR_VARIABLE mt_error GET "${runtime_profile}" mt_segm
 if(mt_segments)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/mt_segment.hpp ${runtime_generated}/public/scpp/mt_segments.hpp)
 endif()
+foreach(helper argument_count arguments mixed_arguments)
+  if("${runtime_generated}/public/scpp/cli/${helper}.hpp" IN_LIST runtime_outputs)
+    list(APPEND runtime_outputs ${runtime_generated}/private/cli_context.hpp)
+    break()
+  endif()
+endforeach()
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/owner_access.hpp
@@ -109,7 +115,17 @@ if(SCPP_ENABLE_REGEX)
 endif()
 if(SCPP_ENABLE_FILESYSTEM)
   list(APPEND runtime_outputs ${runtime_generated}/private/filesystem_provider.hpp)
+  string(JSON filesystem_locks ERROR_VARIABLE locks_error TYPE "${runtime_profile}" filesystem resources)
+  if(filesystem_locks STREQUAL "OBJECT")
+    list(APPEND runtime_outputs ${runtime_generated}/private/filesystem_locks_provider.hpp ${runtime_generated}/private/filesystem_locks_values.hpp)
+  endif()
 endif()
+foreach(family IN ITEMS io process curl mysqli ui webview)
+  string(TOUPPER "${family}" upper)
+  if(SCPP_ENABLE_${upper})
+    list(APPEND runtime_outputs "${runtime_generated}/private/${family}_provider.hpp" "${runtime_generated}/private/${family}_values.hpp")
+  endif()
+endforeach()
 # This source-local publication may have been written by another build profile.
 # Check its contents on every build; unchanged output keeps its timestamps.
 add_custom_target(scpp_runtime_publication
@@ -134,13 +150,21 @@ add_dependencies(scpp_runtime scpp_runtime_publication)
 # Runtime-only source exports intentionally omit the compiler tree.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
   set(compiler_generated ${CMAKE_CURRENT_SOURCE_DIR}/compiler/generated)
+  if(SCPP_ENABLE_DATETIME)
+    set(compiler_optional_types ${compiler_generated}/types/uint64.php)
+  endif()
+  foreach(builder IN ITEMS string_parts_builder text_builder)
+    if("${runtime_generated}/public/scpp/str/${builder}.hpp" IN_LIST runtime_outputs)
+      list(APPEND compiler_optional_types ${compiler_generated}/types/${builder}.php)
+    endif()
+  endforeach()
   add_custom_target(scpp_compiler_publication ALL
     COMMAND ${CMAKE_COMMAND}
       -DPHP=${PHP_EXECUTABLE} -DGENERATOR=${php_generator_source}
       -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int8.php ${compiler_generated}/types/int16.php ${compiler_generated}/types/int32.php ${compiler_generated}/types/uint16.php ${compiler_generated}/types/uint32.php ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_optional_types} ${compiler_generated}/types/int8.php ${compiler_generated}/types/int16.php ${compiler_generated}/types/int32.php ${compiler_generated}/types/uint16.php ${compiler_generated}/types/uint32.php ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata} ${runtime_publication}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
@@ -197,8 +221,55 @@ endif()
 
 if(SCPP_ENABLE_FILESYSTEM)
   add_library(scpp_filesystem STATIC runtime/src/filesystem/filesystem.cpp)
+  if(filesystem_locks STREQUAL "OBJECT")
+    target_sources(scpp_filesystem PRIVATE runtime/src/filesystem/file_lock.cpp)
+  endif()
   target_link_libraries(scpp_filesystem PUBLIC scpp_runtime)
-  target_include_directories(scpp_filesystem PRIVATE ${runtime_generated}/private)
+  target_include_directories(scpp_filesystem PRIVATE ${runtime_generated}/private runtime/src/sequence)
+endif()
+
+foreach(family IN ITEMS io process curl mysqli ui webview)
+  string(TOUPPER "${family}" upper)
+  if(SCPP_ENABLE_${upper})
+    add_library(scpp_${family} STATIC runtime/src/${family}/${family}.cpp)
+    target_link_libraries(scpp_${family} PUBLIC scpp_runtime)
+    target_include_directories(scpp_${family} PRIVATE "${runtime_generated}/private" runtime/src/sequence)
+  endif()
+endforeach()
+
+# The native application linker consumes these same selected shared objects.
+function(scpp_attach_sdk family)
+  find_package(PkgConfig REQUIRED)
+  cmake_parse_arguments(SDK "" "" "PACKAGES;LIBRARIES" ${ARGN})
+  pkg_check_modules(SDK_${family} REQUIRED IMPORTED_TARGET ${SDK_PACKAGES})
+  target_link_libraries(scpp_${family} PRIVATE PkgConfig::SDK_${family})
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${family}-deps")
+  foreach(lib IN LISTS SDK_LIBRARIES)
+    find_library(SCPP_LIB_${lib} NAMES lib${lib}.so REQUIRED)
+    file(CREATE_LINK "${SCPP_LIB_${lib}}" "${CMAKE_CURRENT_BINARY_DIR}/${family}-deps/lib${lib}.so" SYMBOLIC)
+  endforeach()
+endfunction()
+if(SCPP_ENABLE_UI)
+  scpp_attach_sdk(ui PACKAGES gtk+-3.0 LIBRARIES gtk-3 gobject-2.0 glib-2.0)
+endif()
+if(SCPP_ENABLE_WEBVIEW)
+  scpp_attach_sdk(webview PACKAGES "webkit2gtk-4.1>=2.40" json-glib-1.0 LIBRARIES webkit2gtk-4.1 javascriptcoregtk-4.1 json-glib-1.0 gio-2.0)
+  target_link_libraries(scpp_webview PUBLIC scpp_ui)
+endif()
+if(SCPP_ENABLE_MYSQLI)
+  scpp_attach_sdk(mysqli PACKAGES libmariadb LIBRARIES mariadb)
+endif()
+if(SCPP_ENABLE_CURL)
+  find_path(SCPP_CURL_INCLUDE curl/curl.h REQUIRED)
+  find_library(SCPP_CURL_LIBRARY NAMES libcurl.so REQUIRED)
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/curl-deps")
+  file(CREATE_LINK "${SCPP_CURL_LIBRARY}" "${CMAKE_CURRENT_BINARY_DIR}/curl-deps/libcurl.so" SYMBOLIC)
+  target_include_directories(scpp_curl PRIVATE "${SCPP_CURL_INCLUDE}")
+  target_link_libraries(scpp_curl PRIVATE "${SCPP_CURL_LIBRARY}")
+endif()
+if(SCPP_ENABLE_PROCESS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  find_package(Threads REQUIRED)
+  target_link_libraries(scpp_process PRIVATE Threads::Threads)
 endif()
 
 add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
@@ -257,6 +328,8 @@ if(BUILD_TESTING)
   add_test(NAME output_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/output_runtime.py)
   add_test(NAME compiler_entry_binding COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/entry_binding.php)
   scpp_fixture_test(entry_binding php_proven php_checked)
+  add_test(NAME compiler_cli_environment_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/cli_environment_native.py ${CMAKE_CXX_COMPILER})
   add_test(NAME compiler_launcher_native COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/launcher_native.py
     ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
@@ -436,6 +509,18 @@ if(BUILD_TESTING)
   add_executable(collection_remove_storage_test tests/collection_remove_storage.cpp)
   target_link_libraries(collection_remove_storage_test PRIVATE scpp_runtime)
   add_test(NAME collection_remove_storage COMMAND collection_remove_storage_test)
+  add_test(NAME compiler_stable_hash_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/stable_hash_native.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  add_test(NAME compiler_text_helpers_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/text_helpers_native.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  add_test(NAME compiler_collection_transforms COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_transforms.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  add_test(NAME compiler_vector_capacity_family COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_capacity_family.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
   add_test(NAME compiler_collection_clear COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_clear.php)
   scpp_fixture_test(collection_clear php_vector_string_ php_hash_int_string_)
   set_tests_properties(compiler_collection_clear compiler_collection_clear_native PROPERTIES TIMEOUT 120)
@@ -545,6 +630,41 @@ if(BUILD_TESTING)
   add_test(NAME compiler_typed_functions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions_native.py)
   add_test(NAME compiler_integer_radix_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_radix_native.py --quick)
   add_test(NAME compiler_fixed_array_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/fixed_array_native.py --quick)
+  foreach(family IN ITEMS io process curl)
+    string(TOUPPER "${family}" upper)
+    if(SCPP_ENABLE_${upper})
+      add_test(NAME compiler_${family}_headers COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} headers ${family})
+      add_test(NAME compiler_${family}_native COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} ${family})
+    endif()
+  endforeach()
+  foreach(family IN ITEMS mysqli ui webview)
+    string(TOUPPER "${family}" upper)
+    if(SCPP_ENABLE_${upper})
+      add_test(NAME compiler_${family}_native COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/database_desktop_native.py ${family} ${CMAKE_CXX_COMPILER})
+      add_test(NAME compiler_${family}_headers COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} headers ${family})
+    endif()
+  endforeach()
+  if(SCPP_ENABLE_CURL)
+    add_test(NAME compiler_curl_http COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} http)
+  endif()
+  if(SCPP_ENABLE_CURL AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_IO AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_test(NAME compiler_resource_modules_combined COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} all)
+  endif()
+  if(SCPP_ENABLE_JSON)
+    add_test(NAME compiler_json_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/json_native.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
+  if(SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_datetime_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/datetime_native.py
+      ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${CMAKE_BINARY_DIR})
+  endif()
   if(SCPP_ENABLE_REGEX)
     add_test(NAME compiler_regex_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/regex_native.py
@@ -552,10 +672,25 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_BINARY_DIR})
   endif()
   if(SCPP_ENABLE_FILESYSTEM)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND filesystem_locks STREQUAL "OBJECT")
+      add_test(NAME compiler_filesystem_locks_native COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_locks_native.py ${CMAKE_CXX_COMPILER})
+      set_tests_properties(compiler_filesystem_locks_native PROPERTIES TIMEOUT 45)
+    endif()
     add_test(NAME compiler_filesystem_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    add_test(NAME compiler_filesystem_publication COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+      $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime> --publication)
+    if(UNIX)
+      add_test(NAME compiler_filesystem_family COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_family.py
+        ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+        $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    endif()
     add_test(NAME compiler_translated_path COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_compiler_path.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}

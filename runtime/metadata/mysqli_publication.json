@@ -1,0 +1,33 @@
+{
+  "types": {"mysqli": {"carriers": ["result"]}, "mysqli_stmt": {"carriers": ["result_or_false"]}, "mysqli_result": {"carriers": ["result_or_bool", "result_or_false"]}},
+  "operations": [
+    {"native": "connect", "general": ["db_connect"], "parameters": ["string", "string", "string", "string", "int64", "string"], "result": "result_mysqli", "required": 0},
+    {"native": "php_connect", "parameters": ["string", "string", "string", "string", "int64", "string"], "result": "mysqli", "required": 0, "constructor": "mysqli"},
+    {"native": "query", "general": ["db_query"], "parameters": ["mysqli", "string"], "result": "result_or_bool_mysqli_result", "method": "query"},
+    {"native": "prepare", "general": ["db_prepare"], "parameters": ["mysqli", "string"], "result": "result_or_false_mysqli_stmt", "method": "prepare"},
+    {"native": "close", "general": ["db_close"], "parameters": ["mysqli"], "result": "void", "method": "close"},
+    {"native": "set_charset", "general": ["db_set_charset"], "parameters": ["mysqli", "string"], "result": "bool_t", "method": "set_charset"},
+    {"native": "begin_transaction", "general": ["db_begin_transaction"], "parameters": ["mysqli"], "result": "bool_t", "method": "begin_transaction"},
+    {"native": "commit", "general": ["db_commit"], "parameters": ["mysqli"], "result": "bool_t", "method": "commit"},
+    {"native": "rollback", "general": ["db_rollback"], "parameters": ["mysqli"], "result": "bool_t", "method": "rollback"},
+    {"native": "fetch_assoc", "general": ["db_fetch_assoc"], "parameters": ["mysqli_result"], "result": "dynamic", "method": "fetch_assoc"},
+    {"native": "fetch_row", "general": ["db_fetch_row"], "parameters": ["mysqli_result"], "result": "dynamic", "method": "fetch_row"},
+    {"native": "bind_param", "method": "bind_param", "parameters": ["mysqli_stmt", "string"], "result": "bool_t", "slot_pack": true},
+    {"native": "stmt_execute", "general": ["db_statement_execute"], "parameters": ["mysqli_stmt"], "result": "bool_t", "method": "execute"},
+    {"native": "stmt_get_result", "general": ["db_statement_get_result"], "parameters": ["mysqli_stmt"], "result": "result_or_false_mysqli_result", "method": "get_result"},
+    {"native": "stmt_close", "general": ["db_statement_close"], "parameters": ["mysqli_stmt"], "result": "void", "method": "close"},
+    {"native": "execute_values", "general": ["db_execute"], "parameters": ["mysqli_stmt", "string", "dynamic"], "result": "bool_t"},
+    {"native": "connect_errno", "general": ["db_connect_errno"], "parameters": ["mysqli"], "result": "int64", "property": "connect_errno"},
+    {"native": "connect_error", "general": ["db_connect_error"], "parameters": ["mysqli"], "result": "string", "property": "connect_error"},
+    {"native": "error", "general": ["db_error"], "parameters": ["mysqli"], "result": "string", "property": "error"},
+    {"native": "errno_code", "general": ["db_errno_code"], "parameters": ["mysqli"], "result": "int64", "property": ["errno_code", "errno"]},
+    {"native": "insert_id", "general": ["db_insert_id"], "parameters": ["mysqli"], "result": "int64", "property": "insert_id"},
+    {"native": "affected_rows", "general": ["db_affected_rows"], "parameters": ["mysqli"], "result": "int64", "property": "affected_rows"},
+    {"native": "stmt_error", "general": ["db_stmt_error"], "parameters": ["mysqli_stmt"], "result": "string", "property": "error"},
+    {"native": "stmt_errno_code", "general": ["db_stmt_errno_code"], "parameters": ["mysqli_stmt"], "result": "int64", "property": ["errno_code", "errno"]},
+    {"native": "stmt_insert_id", "general": ["db_stmt_insert_id"], "parameters": ["mysqli_stmt"], "result": "int64", "property": "insert_id"},
+    {"native": "stmt_affected_rows", "general": ["db_stmt_affected_rows"], "parameters": ["mysqli_stmt"], "result": "int64", "property": "affected_rows"},
+    {"native": "result_num_rows", "general": ["db_result_num_rows"], "parameters": ["mysqli_result"], "result": "int64", "property": "num_rows"}
+  ],
+  "constants": {}
+}

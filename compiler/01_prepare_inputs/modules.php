@@ -45,12 +45,12 @@ final class compilation_session
 
 	/** CONSTRUCTOR */
 	/** @param module[] $modules */
-	public function __construct(array $modules /** array<string,module> */, module $entry, string $cpp_namespace = 'App', bool $group_async_methods = false)
+	public function __construct(array $modules /** array<string,module> */, module $entry, string $cpp_namespace = 'App', bool $group_async_methods = false, bool $general_api = false)
 	{
 		$this->dependency_watches = new Dependency_Watches();
 		$this->preparation_work = new preparation_work();
 		$this->modules = $modules;
-		$this->type_availability = new type_availability(array_values(array_map(static fn(module $module): string => $module->name, $modules)));
+		$this->type_availability = new type_availability(array_values(array_map(static fn(module $module): string => $module->name, $modules)), $general_api);
 		$this->entry = $entry;
 		$this->cpp_namespace = $cpp_namespace;
 		$this->group_async_methods = $group_async_methods;

@@ -1,0 +1,13 @@
+{
+    "name": "runtime-process",
+    "type": "c++",
+    "sources": [
+        "src/process/process.cpp"
+    ],
+    "dependencies": {
+        "runtime": {}
+    },
+    "artifacts": [
+        "../build/clang/libscpp_process.a"
+    ]
+}

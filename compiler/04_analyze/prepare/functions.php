@@ -297,8 +297,9 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}
 			if ($parameter->mode === passing_mode::readonly_reference && ($declaration->parent instanceof ast_method_owner
-				|| !($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition))) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
+				|| !($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition
+					|| $parameter_type instanceof text_builder_type))) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector, hash or text builder parameter of a free function');
 			}
 			$parameter->settle_type($parameter_type);
 			if ($optional || $parameter->default_value !== null) {

@@ -96,6 +96,7 @@ require_once __DIR__ . '/04_analyze/prepare/literals.php';
 require_once __DIR__ . '/04_analyze/prepare/readonly.php';
 require_once __DIR__ . '/04_analyze/prepare/mt_provisioning.php';
 require_once __DIR__ . '/04_analyze/prepare/mt_traversal.php';
+require_once __DIR__ . '/04_analyze/prepare/bound_slots.php';
 require_once __DIR__ . '/04_analyze/prepare/mt_safety.php';
 require_once __DIR__ . '/04_analyze/prepare/transfer.php';
 require_once __DIR__ . '/04_analyze/prepare/destination.php';

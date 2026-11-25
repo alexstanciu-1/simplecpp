@@ -6,7 +6,7 @@
         "src/datetime/datetime.cpp"
     ],
     "dependencies": {
-        "runtime": {}
+        "runtime": {"modules": ["numeric"]}
     },
     "artifacts": [
         "../build/clang/libscpp_datetime.a"

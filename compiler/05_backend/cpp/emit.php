@@ -158,7 +158,7 @@ final class Cpp_Emitter
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
-		$files = $this->inline_adapters->files() + $this->concrete_collections->files();
+		$files = $this->concrete_collections->files() + $this->inline_adapters->files();
 		foreach ($this->async_results as $task => $type) {
 			$path = async_task_binding::header_path($task);
 			$files[$path] = $this->headers?->grouped_declaration($path) ?? \Scpp\Api\asyncTaskHeader(
@@ -692,6 +692,9 @@ CPP;
 			$lines = $this->statements($entry->body(), $declarations, $global_references, $required_headers);
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+		}
+		foreach ($this->inline_adapters->dependencies() as $type) {
+			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
 		}
 		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies(), ...$this->async_results] as $type) {
 			if ($type instanceof record_handle_definition || $type instanceof intersection_type_definition) $declarations[$type->name] = $type;
@@ -1327,6 +1330,9 @@ CPP;
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				if ($body instanceof ast_function_body && $statement === $body->byte_view_length) {
 					$this->byte_view = $statement->initializer->arguments[0];
+					/** @var scoped_byte_read_type $type */
+					$type = $this->byte_view->type_def();
+					$required_headers[$type->byte_view_header()] = true;
 					$field = $this->value($this->byte_view, $global_references, $declarations, $required_headers);
 					$lines[] = "\tconst auto scpp_byte_view = " . $field . '.checked_bytes();';
 				}
@@ -1383,7 +1389,11 @@ CPP;
 				$lines[] = $this->async_statement('co_await ::scpp::async::delay_ms(' . $this->value($statement->value, $global_references, $declarations, $required_headers) . ');');
 			}
 			elseif ($statement instanceof ast_call_statement || $statement instanceof ast_await_statement) {
-				$lines[] = $this->async_statement($this->value($statement->value, $global_references, $declarations, $required_headers) . ';');
+				// A discarded owning result can outlive the staged operands in expression form.
+				$type = $statement->value->type_def();
+				$setup = $statement instanceof ast_call_statement && ($type === type_void::instance() || $type->cpp_trivial_value()) ? [] : null;
+				$call = $this->value($statement->value, $global_references, $declarations, $required_headers, statement_setup: $setup) . ';';
+				$lines[] = $this->async_statement($setup ? '{ ' . implode(' ', $setup) . ' ' . $call . ' }' : $call);
 			}
 			else {
 				throw new \LogicException('Unhandled prepared statement');
@@ -2228,7 +2238,7 @@ CPP;
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $borrow_result = false, bool $inside_scope = false, ?Cpp_Staged_Result $destination = null): string
+		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $borrow_result = false, bool $inside_scope = false, ?Cpp_Staged_Result $destination = null, ?array &$statement_setup = null): string
 	{
 		if ($this->async_body && !$inside_scope && ($value->parent instanceof ast_expression || $value->parent instanceof ast_foreach_statement)
 			&& ($value instanceof ast_call_expression || $value instanceof ast_binary_expression || $value instanceof ast_await_expression || $value instanceof ast_construction_expression)) {
@@ -2259,7 +2269,7 @@ CPP;
 			$declarations[$name] = $callee;
 			$call = $this->invocation($producer, $callee, $suspends ? $name : $name . 'wait',
 				$callee->return_type_def(), $global_references, $declarations, $required_headers,
-				$task_name);
+				$task_name, $statement_setup);
 			return $suspends ? '(co_await ' . $call . ')' : $call;
 		}
 		if ($value instanceof ast_update_expression) {
@@ -2324,6 +2334,13 @@ CPP;
 		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $value->constructed_record() !== null)) {
 			$type = $value->type_def();
 			$shared = $value instanceof ast_new_expression || $value instanceof ast_call_expression;
+			if ($value instanceof ast_new_expression && $type instanceof runtime_handle_type) {
+				$factory = runtime_functions::resolve($value->source()->flavor->name . ':new:' . $type->name);
+				if ($factory instanceof runtime_function) {
+					$required_headers[$factory->header] = true;
+					return $this->invocation($value, $factory, $factory->symbol, $type, $global_references, $declarations, $required_headers);
+				}
+			}
 			if ($shared && $type instanceof type_exception) {
 				$message = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
 				return $type->factory->symbol . '(' . $message . ')';
@@ -2348,6 +2365,13 @@ CPP;
 				if ($pointer !== null) return $pointer . '->' . Cpp_Identifier::source($value->field);
 			}
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			if ($value->receiver->type_def() instanceof runtime_handle_type) {
+				$property = runtime_functions::resolve($value->source()->flavor->name . ':property:' . $value->receiver->type_def()->name . ':' . $value->field);
+				if ($property instanceof runtime_function) {
+					$required_headers[$property->header] = true;
+					return $property->symbol . '(' . $receiver . ')';
+				}
+			}
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
@@ -2672,7 +2696,7 @@ CPP;
 			if ($callback !== null) {
 				$type = $callback->type_def();
 				$target = $type instanceof lambda_type_definition ? $callback->initializer : ($type instanceof owned_callable_type ? $type->signature : $type);
-				$call = $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers);
+				$call = $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 				$reference = $target instanceof ast_lambda_expression ? $target->returns_reference : $target->reference_origin !== null;
 				return $reference && !$borrow_result
 					? 'static_cast<' . $value->type_def()->cpp_type() . '>(' . $call . ')' : $call;
@@ -2687,6 +2711,10 @@ CPP;
 			}
 			$function = $value->implementation();
 			if ($function instanceof runtime_function) {
+				if ($value_type instanceof application_collection_type) $this->concrete_collections->request($value_type);
+				if ($function instanceof collection_transform_function) {
+					return $this->collection_transform($value, $function, $global_references, $declarations, $required_headers);
+				}
 				$use = match ($function->name()) {
 					'enum_from_value' => dependency_use::enum_from_value,
 					'enum_try_from_value' => dependency_use::enum_try_from_value,
@@ -2714,7 +2742,7 @@ CPP;
 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				if ($value->suspending_operands || $value instanceof ast_named_call) {
-					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers);
+					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 				}
 				$operands = $value->runtime_operands();
 				if ($function->receiver_method) {
@@ -2739,7 +2767,7 @@ CPP;
 					$access = $function->parameters[0] instanceof type_exception
 						&& $operands[0]->type_def() instanceof shared_record_type_definition ? '->' : '.';
 					$call = '(' . $receiver . ')' . $access . $symbol . '(' . implode(', ', $arguments) . ')';
-					return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+					return self::staged_call($call, $steps, '', $statement_setup);
 				}
 				if (count($operands) === 1 && !$function->overloaded_first) {
 					$operand = $this->value($operands[0], $global_references, $declarations, $required_headers);
@@ -2748,6 +2776,8 @@ CPP;
 						$type = $function->parameters[0];
 						foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
 						$operand = $this->conversion($type, $conversion, $operand, $operands[0]);
+					} elseif ($function->exact_arguments) {
+						$operand = $function->parameters[0]->lower_cpp_exact_argument($operands[0], $conversion, $operand, $this->inline_adapters);
 					}
 					return $symbol . '(' . $operand . ')';
 				}
@@ -2760,6 +2790,7 @@ CPP;
 					$operand_records_before = $this->record_expressions;
 					$safe = false;
 					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					if ($function->exact_arguments) $operand = $function->parameters[$index]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand, $this->inline_adapters);
 					$arguments[] = $index === 0 && $function->overloaded_first
 						? 'static_cast<' . $function->parameters[0]->cpp_type() . '>(' . $operand . ')' : $operand;
 					// A prepared writable reference names stable storage; binding it does not read its value.
@@ -2786,13 +2817,20 @@ CPP;
 						$steps[] = 'const auto ' . $arguments[$index] . ' = ' . $operand . ';';
 					}
 				}
-				$call = $symbol . '(' . implode(', ', $arguments) . ')';
-				return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+				if ($function->full_arity_argument !== null && count($arguments) === count($function->parameters)) {
+					$arguments[] = $function->full_arity_argument;
+				}
+				$call = $function instanceof regex_callback_function
+					? $this->inline_adapters->call($function->adapter(count($arguments)), $arguments)
+					: $symbol . '(' . implode(', ', $arguments) . ')';
+				return self::staged_call($call, $steps, '', $statement_setup);
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
 			$result = $function->return_type_def();
-			$call = $this->invocation($value, $function, $name, $result, $global_references, $declarations, $required_headers);
+			// The value read through a returned reference follows argument cleanup.
+			if ($function->returns_reference) $statement_setup = null;
+			$call = $this->invocation($value, $function, $name, $result, $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 			return $function->returns_reference && !$borrow_result ? 'static_cast<' . $result->cpp_type() . '>(' . $call . ')' : $call;
 		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
@@ -2960,7 +2998,8 @@ CPP;
 		}
 		$fields = [];
 		$base = $receiver;
-		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)) {
+		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)
+			&& !($base->receiver->type_def() instanceof runtime_handle_type)) {
 			$fields[] = Cpp_Identifier::source($base->field);
 			$base = $base->receiver;
 		}
@@ -2993,13 +3032,13 @@ CPP;
 	 */
 	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|ast_lambda_expression|callback_type_definition|runtime_function $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null, ?array &$statement_setup = null): string
 	{
 		$steps = [];
 		$arguments = [];
 		$callback = $function instanceof callback_type_definition;
 		$runtime = $function instanceof runtime_function;
-		$operands = $runtime ? $value->runtime_operands() : $value->arguments;
+		$operands = $runtime && $value instanceof ast_call_expression ? $value->runtime_operands() : $value->arguments;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
 		if (isset($value->named)) {
 			$parameters = $value->named->evaluation_parameters($parameters);
@@ -3139,8 +3178,49 @@ CPP;
 			return $call;
 		}
 		$return_reference = $callback ? $function->result_suffix() : ($function instanceof statement_return_target && $function->returns_reference ? '&' : '');
-		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type() . $return_reference) . ' { ' . implode(' ', $steps)
-			. ' return ' . $call . '; }())';
+		if ($steps === []) return $call;
+		return self::staged_call($call, $steps, ' -> ' . ($native_result ?? $result->cpp_type() . $return_reference), $statement_setup);
+	}
+
+	/** @param list<string> $steps @param ?list<string> $statement_setup */
+	private static function staged_call(string $call, array $steps, string $return_clause, ?array &$statement_setup): string
+	{
+		if ($statement_setup !== null) {
+			$statement_setup = $steps;
+			return $call;
+		}
+		return $steps === [] ? $call : '([&]()' . $return_clause . ' { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+	}
+
+	/** Consume the selected typed traversal; its operand temporaries live through the entire loop. */
+	private function collection_transform(ast_call_expression $call, collection_transform_function $function,
+		array &$globals, array &$declarations, array &$headers): string
+	{
+		[$input, $callback] = $call->arguments;
+		$type = $input->type_def();
+		$out = $function->return_type_def();
+		$result = $out->cpp_type();
+		$owner_steps = [];
+		$receiver = $this->retained_place($input, $globals, $declarations, $headers, $owner_steps, full_expression: true);
+		$callable = $this->value($callback, $globals, $declarations, $headers);
+		$boxed = $type instanceof boxed_type_definition;
+		$keyed = $boxed || $type instanceof hash_type_definition;
+		$key = $keyed ? 'key' : null;
+		$output = $type->iteration_output_type();
+		$element = $type->iteration_value_type()->cpp_type();
+		$item = $output === null ? 'item' : 'item.value';
+		$initial = $boxed ? ' = ' . $type->lower_cpp_empty() : '';
+		$lines = ["$result result$initial;", ($output ?? $element) . ' item{};'];
+		if ($keyed) $lines[] = ($boxed ? 'scpp::boxed_text_key' : $type->key_type->cpp_type()) . ' key{};';
+		$lines[] = $type->lower_cpp_iteration_storage($keyed && !$boxed) . $type->lower_cpp_iteration_initialize('source');
+		$next = $boxed ? $type->lower_cpp_iteration_next_classified('source', 'item', 'key') : $type->lower_cpp_iteration_next('source', 'item', $key);
+		$lines[] = "while ($next) {";
+		$value = $function->filter ? "static_cast<$element&&>($item)" : "callback(static_cast<$element&&>($item))";
+		$insert = ($keyed ? $out->lower_cpp_write('result', 'key', $value) : $out->lower_cpp_append_value('result', $value)) . ';';
+		$lines[] = $function->filter ? "if (callback($item)) $insert" : $insert;
+		$lines[] = '} return result;';
+		// A selected owned callable survives reassignment of its source slot by the callback.
+		return '[](const auto& source, auto callback) { ' . implode(' ', $lines) . ' }(' . $receiver . ', ' . $callable . ')';
 	}
 
 	/** Collect declarations for a callable's result and inputs even when the local starts absent. @param (ast_declaration_interface|type_definition)[] $declarations */

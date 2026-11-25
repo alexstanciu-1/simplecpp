@@ -1,0 +1,14 @@
+{
+    "name": "runtime-curl",
+    "type": "c++",
+    "sources": [
+        "src/curl/curl.cpp"
+    ],
+    "dependencies": {
+        "runtime": {}
+    },
+    "artifacts": [
+        "../build/clang/libscpp_curl.a",
+        "../build/clang/curl-deps/libcurl.so"
+    ]
+}

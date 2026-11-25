@@ -1382,6 +1382,19 @@ final class Preparation
 			} else {
 				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
 			}
+			$factory = $payload instanceof runtime_handle_type ? runtime_functions::resolve($syntax->source()->flavor->name . ':new:' . $payload->name) : null;
+			if ($factory instanceof runtime_function) {
+				if ($syntax->named !== null || count($syntax->arguments) < $factory->required_parameters || count($syntax->arguments) > count($factory->parameters)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Invalid runtime constructor arguments');
+				}
+				foreach ($syntax->arguments as $index => $argument) {
+					$type = $factory->parameters[$index];
+					$this->value($argument, destination: $type);
+					if ($argument->type_def() !== $type) throw new diagnostic($argument->source(), $argument->byte_start(), 'Constructor requires ' . $type->name);
+				}
+				$syntax->settle_construction($payload, array_fill(0, count($syntax->arguments), value_conversion::identity));
+				return;
+			}
 			if ($payload instanceof type_exception) {
 				if ($syntax->named !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 				$factory = $payload->factory;
@@ -1407,6 +1420,12 @@ final class Preparation
 			$this->value($syntax->receiver, $initializing);
 			$type = $syntax->receiver->type_def();
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
+			if ($type instanceof runtime_field_type) {
+				$field = $type->runtime_field($syntax->field);
+				if ($field === null || ($type instanceof runtime_handle_type && $syntax->source()->flavor !== flavor::php)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown field ' . $type->name . '.' . $syntax->field);
+				$syntax->settle_field($field);
+				return;
+			}
 			if ($type instanceof type_segment_range) {
 				if ($syntax->field !== 'offset' && $syntax->field !== 'length') throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown segment_range field: ' . $syntax->field);
 				$syntax->settle_field(type_int64::instance());
@@ -1573,6 +1592,14 @@ final class Preparation
 				return;
 			}
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
+				$carrier = $left instanceof carrier_type_definition ? $left : $right;
+				$literal = $carrier === $left ? $syntax->right : $syntax->left;
+				if ($carrier instanceof carrier_type_definition && $carrier->payload_type instanceof runtime_handle_type
+					&& $literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)
+					&& $carrier->sentinel_factory($literal->word) !== null) {
+					$syntax->settle_binary(type_bool::instance(), $carrier);
+					return;
+				}
 				$carrier = $left === type_null::instance() ? $right : ($right === type_null::instance() ? $left : null);
 				if ($carrier instanceof carrier_type_definition && $carrier->accepts_empty()) {
 					$syntax->settle_binary(type_bool::instance(), $carrier);
@@ -1716,12 +1743,10 @@ final class Preparation
 			if ($separator !== false && $syntax->source()->flavor !== flavor::php && ($last = strrpos($name, '\\')) > 0) {
 				if ($this->bind_static_data($syntax, substr($name, 0, $last), substr($name, $last + 1))) return true;
 			}
-			if ($syntax->constant_only && $syntax->source()->flavor === flavor::php) {
-				$constant = runtime_constants::integer($syntax->lexical_root()->runtime_constant_key($name));
-				if ($constant !== null) {
-					$syntax->settle_runtime_constant($constant);
-					return true;
-				}
+			$constant = $syntax->lexical_root()->type_availability->runtime_constant($syntax->lexical_root()->runtime_constant_key($name), $syntax->source()->flavor);
+			if ($constant !== null) {
+				$syntax->settle_runtime_constant($constant);
+				return true;
 			}
 		}
 		return false;
@@ -1766,6 +1791,19 @@ final class Preparation
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
+		if ($runtime instanceof runtime_function && $runtime->borrows_slots) {
+			if ($this->enclosing_lambda !== null || $this->owner->parent->is_async || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Bound parameter frame lifetime is unproven');
+			}
+			if (count($call->arguments) < 2) throw new diagnostic($call->source(), $call->byte_start(), 'bind_param requires a type string and at least one named slot');
+			$params = $runtime->parameters;
+			foreach (array_slice($call->arguments, 1) as $slot) {
+				$this->value($slot);
+				Bound_Slots::prove($call, $slot);
+				$params[] = $slot->type_def();
+			}
+			$runtime = new borrowed_slot_function($runtime->name(), $params, $runtime->return_type_def(), $runtime->symbol, $runtime->header, const_reference_mask: 3, free_receiver: true);
+		}
 		$slots = null;
 		if ($call instanceof ast_named_call) {
 			if (!($runtime instanceof runtime_function) || $runtime->parameter_names === null || $call->receiver !== null) {
@@ -1784,7 +1822,7 @@ final class Preparation
 			$selection_index = $runtime->argument_index;
 			$selected = $operands[$selection_index];
 			if ($selected !== $prepared) {
-				$this->value($selected);
+				$this->value($selected, destination: $selected instanceof ast_collection_expression ? $runtime->list_context : null);
 				$prepared = $selected;
 			}
 			$runtime = $variants[$selected->type_def()::class] ?? null;
@@ -1799,10 +1837,10 @@ final class Preparation
 		foreach ($operands as $index => $argument) {
 			$slot = $slots[$index] ?? $index;
 			$type = $runtime->parameters[$slot];
-			if ($argument !== $prepared && $argument !== $call->receiver) {
+			if ($argument !== $prepared && $argument !== $call->receiver && !($runtime instanceof borrowed_slot_function && $index >= 2)) {
 				$this->value($argument, destination: $type);
 			}
-			if ($index === 0 && $runtime->receiver_method) {
+			if ($index === 0 && $runtime->receiver_method && $call->receiver !== null) {
 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
 				if ($runtime->is_reference(0)) Readonly_Access::write($argument, true);
 				if ($runtime->is_reference(0) && $argument instanceof ast_name_expression) {
@@ -1811,6 +1849,9 @@ final class Preparation
 			}
 			elseif ($runtime->is_reference($slot)) {
 				$this->bind_reference($argument, $type, $writes);
+			}
+			elseif ($type instanceof owned_callable_type) {
+				$type->prepare_scalar_conversion($argument, conversion_context::typed_destination);
 			}
 			elseif ($argument->type_def() !== $type) {
 				throw new diagnostic($argument->source(), $argument->byte_start(), $call->name . ' requires ' . $type->name);
@@ -1919,7 +1960,7 @@ final class Preparation
 	}
 
 	/** A lambda body uses the enclosing work owner, with a fresh lexical and value environment. */
-	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected): void
+	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected, ?type_definition $transform_element = null): void
 	{
 		$function = $this->owner->parent;
 		if ($expected !== null && count($lambda->parameters) !== count($expected->inputs)) {
@@ -1928,7 +1969,7 @@ final class Preparation
 		$result = $lambda->result === null
 			? ($expected?->result ?? throw new diagnostic($lambda->source(), $lambda->byte_start(), 'Lambda requires an explicit result type without a callback context'))
 			: Type_Resolution::signature($lambda->result, $this->symbols, $function, $this->dependencies, true, $this->owner);
-		if (!Type_Resolution::callback_component($result)) {
+		if (!Type_Resolution::callback_component($result) && !($transform_element !== null && $result instanceof record_type_definition)) {
 			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Lambda requires a supported result type');
 		}
 		$locals = [];
@@ -1942,9 +1983,9 @@ final class Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), $reason . $name);
 			}
 			$type = $parameter->type_reference === null
-				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
+				? ($expected?->inputs[$index] ?? $transform_element ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
 				: Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
-			if (!Type_Resolution::callback_component($type) || $parameter->mode === passing_mode::readonly_reference) {
+			if ((!Type_Resolution::callback_component($type) && !($transform_element !== null && $type instanceof record_type_definition)) || $parameter->mode === passing_mode::readonly_reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
 			}
 			$parameter->settle_type($type);
@@ -2163,7 +2204,7 @@ final class Preparation
 				if ($runtime === null) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
 				}
-				if ($runtime->receiver_method) {
+				if ($runtime->receiver_method || ($runtime instanceof runtime_function && $runtime->free_receiver)) {
 					$expected = in_array($call->source()->flavor, [flavor::js, flavor::python], true) ? token_kind::dot : token_kind::member;
 					if ($call->member_separator !== $expected) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Native receiver methods use -> in PHP/C++ and . in JS/Python');
@@ -2199,14 +2240,28 @@ final class Preparation
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
-			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
-			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
+			$runtime = $file->type_availability->runtime_function($file->runtime_function_key($call->name, $key), $file->source()->flavor);
+			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_factory ? null : $runtime->required_module)) {
 				$this->ambiguous_construction($call);
 			}
 			if ($runtime !== null && $class === null) {
-				if ($runtime instanceof runtime_function && !$file->type_availability->allows($runtime->required_module)) {
+				if (!($runtime instanceof runtime_factory) && !$file->type_availability->allows($runtime->required_module)) {
 					throw new diagnostic($call->source(), $call->byte_start(),
-						'Function ' . $runtime->name() . ' requires module ' . $runtime->required_module);
+						'Function ' . $call->name . ' requires module ' . $runtime->required_module);
+				}
+				if ($runtime === runtime_factory::vector_filled) {
+					if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+					if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), 'vector_filled requires a count and fill value');
+					$fill = $call->arguments[1];
+					$this->value($fill, $initializing);
+					$vector = Type_Resolution::collection('vector', $fill->type_def(), null);
+					if (!($vector instanceof vector_type_definition)) throw new diagnostic($fill->source(), $fill->byte_start(), 'Unsupported vector_filled element type');
+					$this->runtime_call($call, $vector->filled_function(), $fill);
+					return;
+				}
+				if ($runtime instanceof runtime_factory) {
+					$this->collection_transform($call, $runtime, $initializing);
+					return;
 				}
 				$this->runtime_call($call, $runtime);
 				return;
@@ -2527,8 +2582,59 @@ final class Preparation
 		}
 	}
 
+	/** Select a concrete traversal and result using the settled input and callback types. */
+	private function collection_transform(ast_call_expression $call, runtime_factory $operation, ?string $initializing): void
+	{
+		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+		if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires a collection and a callback');
+		[$source, $callback] = $call->arguments;
+		$this->value($source, $initializing);
+		$input = $source->type_def();
+		if ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
+			$element = $input->element_type;
+			$key = null;
+		} elseif ($input instanceof hash_type_definition && !in_array($operation, [runtime_factory::sequence_map, runtime_factory::sequence_filter], true)) {
+			$element = $input->value_type;
+			$key = $input->key_type;
+		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter], true)) {
+			$element = $input;
+			$key = null;
+		} else {
+			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
+		}
+		$filter = in_array($operation, [runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
+		if ($callback instanceof ast_callable_reference) {
+			$this->callback_reference($callback, null, $element);
+		} elseif ($callback instanceof ast_lambda_expression && !($this->owner->parent->return_type_def() instanceof generator_type_definition)) {
+			$this->lambda($callback, $filter ? new callback_type_definition(type_bool::instance(), [$element]) : null, $element);
+		} else {
+			$this->value($callback, $initializing, allow_callback: true);
+		}
+		$type = $callback->type_def();
+		$signature = $type instanceof lambda_type_definition || $type instanceof owned_callable_type ? $type->signature : $type;
+		if (!($signature instanceof callback_type_definition) || $signature->inputs !== [$element]
+			|| $signature->input_mode(0) !== passing_mode::value || $signature->reference_origin !== null
+			|| ($type instanceof lambda_type_definition && $type->has_defaults)
+			|| (!$filter && $input instanceof boxed_type_definition && $signature->result !== $input)
+			|| $signature->result === type_void::instance() || ($filter && $signature->result !== type_bool::instance())) {
+			throw new diagnostic($callback->source(), $callback->byte_start(), 'Invalid callback signature for ' . $operation->name);
+		}
+		if ($type instanceof lambda_type_definition) {
+			$lambda = $callback instanceof ast_name_expression ? $callback->local_binding()?->initializer : $callback;
+			if ($lambda instanceof ast_lambda_expression) {
+				$this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $lambda);
+				if ($lambda->borrowed_writes !== []) $this->invalidate_references($call, $lambda->borrowed_writes);
+			}
+		} else {
+			$this->dependencies?->callable_site($this->owner, $call);
+		}
+		$output = ($filter || $input instanceof boxed_type_definition) ? $input : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+		if ($output === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable collection result for ' . $operation->name);
+		$call->settle_runtime(new collection_transform_function($operation, $input, $type, $output, $filter));
+	}
+
 	/** Watch both missing and existing targets without inspecting their bodies. */
-	private function callback_reference(ast_callable_reference $site, callback_type_definition $signature): void
+	private function callback_reference(ast_callable_reference $site, ?callback_type_definition $signature, ?type_definition $element = null): void
 	{
 		$this->name_lookups++;
 		$file = $site->lexical_root();
@@ -2566,6 +2672,7 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(), 'Callback requires a source free function or static method: ' . $site->name);
 		}
 		$target->require_access($this->owner->parent->parent, $site, null, $this->access_watcher());
+		$signature ??= new callback_type_definition($target->return_type_def(), [$element]);
 		$signature->require_target($site, $target);
 		if ($record instanceof ast_record_declaration && $this->dependencies !== null) {
 			$symbol = $this->dependencies->static_call($this->owner, $symbol, $type);
