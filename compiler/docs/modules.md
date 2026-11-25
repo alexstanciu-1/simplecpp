@@ -130,7 +130,7 @@ nested dependency directories are excluded from application scans. Application
 build directories, output, VCS state and generated inspection inventories are also
 excluded. Explicit app sources remain tracked even under excluded build directories.
 
-The saved input layout is version 4: module selection metadata, one source record
+The saved input layout is version 5: module selection metadata, one source record
 under its owning module, and `other_inputs`. Dependency source inventories are empty;
 artifact paths are recorded as configuration, without filesystem metadata. Older
 saved layouts cause one full rebuild. The previous output manifest is read once and
@@ -145,7 +145,15 @@ preparation/emission; unchanged inputs reuse intact output by mtime/size checks.
 A fresh final check rejects detected edits during compilation. There is no partial
 AST reuse or concurrency synchronization.
 
-Same-size edits preserving second-resolution mtime may go unnoticed. `--force`
+For selected application sources, an mtime in the read second, the preceding second,
+or the future requires a content check. Before publication the compiler compares
+the parsed bytes with the file on disk for these sources. If the timestamp is
+still ambiguous, it saves a SHA-256 digest in the source record. A subsequent
+stat match requires verifying that digest. Once verification starts at least two
+seconds after the recorded mtime, a match retires the digest under the bundle
+lock without regenerating C++. Settled sources use the stat fast path. A tool
+that restores an already settled timestamp and size can still conceal an edit.
+Other tracked inputs and generated artifacts retain their mtime/size checks. `--force`
 requests a full application rebuild. Manually rebuilt dependencies require the
 caller to relink; automatic invalidation for them is deferred.
 

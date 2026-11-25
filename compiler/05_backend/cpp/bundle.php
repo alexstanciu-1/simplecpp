@@ -207,6 +207,18 @@ final class Cpp_Bundle
 		return $data;
 	}
 
+	/** Retire confirmed source digests without touching generated C++ or acknowledging another writer's build. */
+	public static function confirm_inputs(string $directory, cpp_bundle_snapshot $previous, array $state): void
+	{
+		self::with_lock($directory, true, static function () use ($directory, $previous, $state): void {
+			$path = $directory . '/manifest.json';
+			if (!$previous->matches($path)) throw new \RuntimeException('Program bundle changed during confirmation: retry the build');
+			$data = $previous->manifest;
+			$data['build']['inputs'] = $state;
+			Cpp_Publication::write($path, json_encode($data, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT) . "\n", false);
+		});
+	}
+
 	/**
 	 * Publish a complete candidate and retire only previously inventoried units; manifest is written
 	 * last.

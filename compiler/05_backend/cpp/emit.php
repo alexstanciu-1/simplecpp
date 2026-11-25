@@ -2920,7 +2920,7 @@ CPP;
 		bool &$reorderable = false): string
 	{
 		$declaration = $value->declaration();
-		$reorderable = !($declaration instanceof ast_writable_element) && $value->type_def()->cpp_trivial_value();
+		$reorderable = $value->type_def()->cpp_trivial_value() && ast_writable_element::origin($value->local_binding()) === null;
 		if ($declaration instanceof ast_enum_case) {
 			return $declaration->parent->definition->cpp_case($declaration);
 		}
@@ -3459,7 +3459,7 @@ CPP;
 		$capture_uses = $type->borrows_receiver ? ["\t(void)scpp_self;"] : [];
 		foreach ($lambda->captures as $capture) {
 			$name = $this->name($capture);
-			$source = $this->name($capture->initializer->local_def());
+			$source = $this->name($capture->initializer->local_def(), reference: $capture->by_reference);
 			$environment[] = $capture->by_reference ? '&' . $name . ' = ' . $source
 				: $name . ' = ' . $this->conversion($capture->type_def(), $capture->initialization(), $source, $capture->initializer);
 			// An explicit capture may be unused in the source body.
