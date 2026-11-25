@@ -34,7 +34,7 @@ The [runnable walkthroughs](../../samples/php-developer-qos/) use the public bui
 
 The [larger input controls](../../samples/php-developer-qos/input_corpus.py) checked all 276 settings requests against the stock PHP application, including both field orders when two errors compete. An independent URL encoder round-tripped 80 bodies, including NUL, escaped delimiters, decomposed Unicode and the exact length limit. A 10,000-line invoice file retained seven distinct account keys, including `01`, `1`, `0` and `000`. The first pass counted 535 blank CRLF lines as invalid because the sample split on LF. Handling a remaining CR on an otherwise empty line fixed the application. The corrected report counted exactly 910 malformed rows and matched all seven independently computed totals.
 
-**Follow-up after the audit.** PHP strict comparisons of a falseable result with literal `false` now inspect the sentinel in either operand order. The observations below retain the behavior at the audited revision. [Current comparison contract](../expression_evaluation.md#state-preserving-carrier-comparisons--2026-10-27)
+**Follow-up after the audit.** PHP strict comparisons of a falseable result with literal `false` now inspect the sentinel in either operand order. Same-typed falseable results with comparable payloads also preserve their states under strict comparison. The observations below retain the behavior at the audited revision. [Current comparison contract](../expression_evaluation.md#state-preserving-carrier-comparisons--2026-10-27)
 
 ## What presence actually tested
 
