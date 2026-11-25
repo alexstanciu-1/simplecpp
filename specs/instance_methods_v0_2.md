@@ -253,9 +253,13 @@ preserve these semantics. No caller aliasing, pack-of-references representation 
 copy-back is implied by the compatibility marker. Ordinary `T ...$values` remains
 a mutable owned value pack in v0.2.
 
+A free function or static method with a read-only pack can supply an ordinary
+variadic typed callback or owned callable of the same signature. The caller
+supplies an owned vector and the target enforces read-only access in its body.
+
 This scope does not introduce explicit `const T &...$values` spelling, general
 read-only value parameters, wider element types, constructor/anonymous-callable/
-provider/callback variadic bridges or asynchronous retention.
+provider variadic bridges or asynchronous retention.
 Those contracts remain separate. Pinned v0.1 evidence executes tested free/static
 scalar read-only packs and rejects direct element writes. Its instance-method
 packing probes fail native compilation; current method support follows the v0.2

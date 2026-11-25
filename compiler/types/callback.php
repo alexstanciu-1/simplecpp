@@ -97,7 +97,7 @@ final class callback_type_definition extends type_definition
 		$matches = $target->variadic_slot() === $this->variadic_slot && $target->reference_return_origin === $this->reference_origin && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
 		if ($matches) {
 			foreach ($target->parameters as $index => $parameter) {
-				if ($parameter->is_readonly_pack() || $parameter->mode !== $this->input_mode($index) || $parameter->default_value !== null || $parameter->type_def() !== $this->inputs[$index]) {
+				if ($parameter->mode !== $this->input_mode($index) || $parameter->default_value !== null || $parameter->type_def() !== $this->inputs[$index]) {
 					$matches = false;
 					break;
 				}

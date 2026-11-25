@@ -161,7 +161,7 @@ foreach (['$xs[]=1;', '$xs[0]=1;', '$xs=$xs;', 'mutate($xs);', 'clean($xs);', 'u
 	rejects(fn() => $php($readonly . $write . '}return 8;'), 'read-only variadic pack');
 }
 $php('function f(int &...$xs):void {} $xs vector<int> = [];f(...$xs);return 8;');
-rejects(fn() => $php('function f(int &...$xs):int {return 0;} $op function<int(int...)> = f(...);return 8;'), 'Callback target signature mismatch');
+$php('function f(int &...$xs):int {return 0;} $op function<int(int...)> = f(...);return 8;');
 
 rejects(fn() => $php('function &f(int &...$xs):vector<int> {return $xs;}return 8;'), 'exactly one writable parameter');
 rejects(fn() => $php('struct Item {public int $n=0;} function f(Item &...$xs):void {}return 8;'), 'canonical int, float, bool or string');

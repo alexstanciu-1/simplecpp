@@ -25,10 +25,15 @@ $n=3;$copy=collect($n,$n,bump($n));echo ":",$n,":",$copy[0],$copy[1],$copy[2];
 $p=new Probe();echo ":",$p->flags(),$p->flags(false,true),Probe::text("X");
 if (decimals(1.5) === 1.5) {return 8;}return 1;
 '''
-adapter = 'function adapt(callback<int,bool...> $cb):int {return $cb(true);}'
+adapter = 'function adapt(callback<int,bool...> $cb):int {$xs vector<bool> = [false,true];return $cb(true)+$cb(...$xs);}'
 mutable = 'function flags(bool ...$xs):int {return count($xs);}'
 readonly = mutable.replace('bool ...', 'bool &...')
-use = adapter + 'echo adapt(flags(...));return 8;'
+static_target = 'class Flags {public static function size(bool &...$xs):int {return count($xs);}}'
+use = adapter + '''
+$op function<int(bool...)> = Flags::size(...);$xs vector<bool> = [true,false];
+echo adapt(flags(...)),adapt(Flags::size(...)),$op(true),$op(...$xs);return 8;
+'''
+adapt_trace = b'3312'
 
 unpack_provider = '''
 function inspect(vector<int> &$source,int &...$snapshot):int {
@@ -58,11 +63,12 @@ with TemporaryDirectory(prefix='scpp-readonly-unpack-') as directory:
 with TemporaryDirectory(prefix='scpp-readonly-variadic-') as directory:
     revisions(Path(directory), 'php', dict(main=entry, provider=provider), [
         (None, None, b'B32:9:347:01X'),
-        ('provider', provider + mutable, b'B32:9:347:01X'),
-        ('main', use, b'1'),
-        ('provider', provider + readonly, 'Callback target signature mismatch'),
-        ('provider', provider + mutable, b'1'),
-        ('child', 'class More extends Probe {public static function text(string &...$xs):string {return $xs[0];}}', b'1'),
-        ('provider', provider.replace('string &...', 'string ...') + mutable, 'Static redeclaration signature must match exactly'),
-        ('provider', provider + mutable, b'1'),
+        ('provider', provider + mutable + static_target, b'B32:9:347:01X'),
+        ('main', use, adapt_trace),
+        ('provider', provider + readonly + static_target, adapt_trace),
+        ('provider', provider + readonly.replace('bool &...', 'int &...') + static_target, 'Callback target signature mismatch'),
+        ('provider', provider + mutable + static_target, adapt_trace),
+        ('child', 'class More extends Probe {public static function text(string &...$xs):string {return $xs[0];}}', adapt_trace),
+        ('provider', provider.replace('string &...', 'string ...') + mutable + static_target, 'Static redeclaration signature must match exactly'),
+        ('provider', provider + mutable + static_target, adapt_trace),
     ])
