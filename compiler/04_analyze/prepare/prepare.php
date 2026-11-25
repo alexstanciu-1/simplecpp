@@ -1833,7 +1833,7 @@ final class Preparation
 			throw new diagnostic($argument->source(), $argument->byte_start(),
 				'Reference argument requires stable variable storage: a named local or parameter');
 		}
-		if ($storage instanceof ast_writable_element && ($readonly || !($target instanceof ast_function_declaration)
+		if ($storage instanceof ast_writable_element && (!($target instanceof ast_function_declaration)
 			|| $target->parent instanceof ast_method_owner || $target->is_async || $target->returns_reference)) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Writable foreach element cannot bind a reference parameter');
 		}

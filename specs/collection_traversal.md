@@ -87,10 +87,11 @@ rejects append, removal, resize, reserve, reset, replacement and mutable referen
 calls on the collection or a lexical alias. A closure with a mutable capture of that
 storage cannot be invoked during the loop. By-value and read-only helper calls
 remain eligible. A direct synchronous source free function with a value or void result
-may take the selected element by exact-type mutable reference. The borrow lasts
-through that invocation. Two parameters bound to the same element share one slot,
-and writes remain visible if the helper throws. The same collection protections
-apply during argument evaluation and callback re-entry. Read-only or indirect
+may take the selected element by exact-type mutable or read-only reference when
+its declared parameter supports that mode. The borrow lasts through that invocation.
+A read-only parameter observes replacement or mutation through a second parameter
+bound to the same slot. Writes remain visible if the helper throws. The same collection protections
+apply during argument evaluation and callback re-entry. Indirect
 calls, methods, local aliases, reference captures and segment grants cannot borrow
 the selected element. Ordinary indexed writes to existing
 vector slots remain visible through the loop binding.

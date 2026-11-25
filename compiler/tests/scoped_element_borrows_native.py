@@ -1,4 +1,4 @@
-"""Scoped mutable helper arguments preserve selected collection storage through calls."""
+"""Scoped helper reference arguments preserve selected collection storage through calls."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -52,3 +52,26 @@ with TemporaryDirectory(prefix='scpp-scoped-element-borrows-') as work:
         ('provider', provider, trace),
     ])
     revisions(Path(work), 'php', dict(main=main, provider=provider), edits)
+
+row_helpers = """
+function width(const vector<int> &$row):int {return count($row);}
+function grow(const vector<int> &$view,vector<int> &$slot):int {
+    $slot[]=8;return width($view);
+}
+"""
+rows = """
+$rows vector<vector<int>> = [[1,2],[3]];
+foreach ($rows as &$row) {echo width($row),grow($row,$row),";";}
+$map hash<vector<int>,int> = [];$map[2]=[1];$map[7]=[3,4];$map->remove(2);
+foreach ($map as $key => &$row) {echo $key,":",grow($row,$row);}
+return 8;
+"""
+with TemporaryDirectory(prefix='scpp-readonly-element-borrows-') as work:
+    shared = b'23;12;7:3'
+    revisions(Path(work), 'php', dict(main=rows, provider=row_helpers), [
+        (None, None, shared),
+        ('provider', row_helpers.replace('const vector<int> &$view', 'vector<int> $view'), b'22;11;7:2'),
+        ('provider', row_helpers.replace('$slot[]=8;', '$view[]=8;'), 'read-only reference'),
+        ('provider', None, None),
+        ('provider', row_helpers, shared),
+    ])
