@@ -137,6 +137,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
   if(SCPP_ENABLE_DATETIME)
     set(compiler_optional_types ${compiler_generated}/types/uint64.php)
   endif()
+  foreach(builder IN ITEMS string_parts_builder text_builder)
+    if("${runtime_generated}/public/scpp/str/${builder}.hpp" IN_LIST runtime_outputs)
+      list(APPEND compiler_optional_types ${compiler_generated}/types/${builder}.php)
+    endif()
+  endforeach()
   add_custom_target(scpp_compiler_publication ALL
     COMMAND ${CMAKE_COMMAND}
       -DPHP=${PHP_EXECUTABLE} -DGENERATOR=${php_generator_source}

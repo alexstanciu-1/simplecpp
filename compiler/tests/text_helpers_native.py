@@ -29,7 +29,27 @@ if(string_utf8_slice_codepoints($text,2,9223372036854775807)!=="中😀\0"){retu
 $invalid="é".string_byte_from_int(255);
 if(string_utf8_codepoint_count($invalid)!==3 || string_utf8_codepoint_at($invalid,0)!==195 ||
    bin2hex(string_utf8_slice_codepoints($invalid,1,2))!=="a9ff"){return 10;}
-return 0;
+$p=string_parts_builder_create();
+string_parts_builder_reserve($p,8);
+string_parts_builder_append_bool($p,false);
+if(string_parts_builder_capacity($p)<8 || string_parts_builder_count($p)!==1 || string_parts_builder_byte_len($p)!==0){return 11;}
+string_parts_builder_append_string($p,"a\0b");
+string_parts_builder_append_int($p,-9223372036854775807-1);
+string_parts_builder_append_bool($p,true);
+$copy=$p; $snapshot=string_parts_builder_to_string($p); string_parts_builder_clear($p);
+if($snapshot!=="a\0b-92233720368547758081" || string_parts_builder_count($copy)!==4 ||
+    string_parts_builder_count($p)!==0 || string_parts_builder_byte_len($copy)!==24){return 12;}
+$b=text_builder_create(); text_builder_reserve_bytes($b,80);
+if(text_builder_capacity_bytes($b)<80 || text_builder_byte_len(text_builder_create())!==0){return 13;}
+text_builder_append_string($b,$snapshot); $alias=&$b;
+append_one($alias);
+if(observe($b)!==25 || observe($alias)!==25){return 14;}
+$other=changed_copy($b); $saved=text_builder_to_string($b);
+if(text_builder_take_string($b)!==$saved || observe($b)!==0 || $saved!==$snapshot."1"){return 15;}
+text_builder_append_int($b,-42); text_builder_append_bool($b,false);
+if(text_builder_to_string($b)!=="-42" || observe($other)!==26){return 16;}
+text_builder_clear($b);
+return observe($b);
 '''
 
 with tempfile.TemporaryDirectory(prefix='text-helpers-') as tmp:
@@ -38,6 +58,13 @@ with tempfile.TemporaryDirectory(prefix='text-helpers-') as tmp:
     app.mkdir()
     main = app/'main.php'
     main.write_text(source)
+    declarations = """
+function append_one(text_builder &$writer): void { text_builder_append_bool($writer,true); }
+function observe(const text_builder &$view): int { return text_builder_byte_len($view); }
+function changed_copy(text_builder $copy): text_builder { append_one($copy); return $copy; }
+"""
+    helpers = app/'builder_functions.php'
+    helpers.write_text(declarations)
     manifest = app/'module.json'
     manifest.write_text('{"general_api":true}')
     proc = service(app, out)
@@ -50,8 +77,22 @@ with tempfile.TemporaryDirectory(prefix='text-helpers-') as tmp:
                         '-I', root/'runtime/generated/public', *(out/p for p in bundle['translation_units']),
                         archive, '-o', work/'run'], check=True)
         subprocess.run([work/'run'], check=True)
+        for bad, expected in [
+            ('text_builder_clear($view);', 'read-only'),
+            ('text_builder_clear(text_builder_create());', 'reference'),
+        ]:
+            helpers.write_text(declarations.replace('return text_builder_byte_len($view);',
+                                                    bad + 'return 0;'))
+            failed = invoke(proc)
+            assert expected in failed.get('error', '').lower(), failed
+        helpers.write_text(declarations.replace('text_builder_append_bool($writer,true);',
+                                                'string_parts_builder_clear($writer);'))
+        failed = invoke(proc)
+        assert 'exact' in failed.get('error', '').lower(), failed
+        helpers.write_text(declarations)
+        assert 'error' not in invoke(proc)
         manifest.write_text('{}')
-        assert 'Unknown function: string_byte_len' in invoke(proc).get('error', '')
+        assert 'Unknown function:' in invoke(proc).get('error', '')
         manifest.write_text('{"general_api":true}')
         assert 'error' not in invoke(proc)
         assert artifacts(out) == original

@@ -80,7 +80,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $promotions = compilerPromotionPlan($compiler, $conversions, $definitions, $binary);
     // Transport types participate in declarations and identity passing only. In particular
     // the PHP host never needs to represent UINT64_MAX or fold a uint64 operation.
-    $transportRequires = '';
+    $optionalRequires = '';
     foreach (object($compiler->published_transport_types ?? new \stdClass()) as $identity => $module) {
         requireThat(is_string($module) && isset($types[$identity], $compiler->modules->$module) && !isset($definitions[$identity]),
             'Invalid published transport type: ' . $identity);
@@ -91,7 +91,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             'strategy' => 'transport', 'literal_family' => null, 'literals' => [], 'copy_semantics' => 'trivial',
             'declarations' => ['inferred_local' => true, 'global_storage' => true, 'instance_field' => true],
             'required_module' => $module];
-        $transportRequires .= "require_once __DIR__ . '/$identity.php';\n";
+        $optionalRequires .= "require_once __DIR__ . '/$identity.php';\n";
+    }
+    foreach ($runtime['text_builders'] ?? [] as $identity => $builder) {
+        $definitions[$identity] = ['class' => $identity, 'cpp' => "::scpp::$identity",
+            'cpp_header' => $builder['header'], 'aliases' => [$identity], 'strategy' => 'builder',
+            'literal_family' => null, 'literals' => [], 'copy_semantics' => 'owning', 'required_module' => null,
+            'declarations' => ['inferred_local' => true, 'global_storage' => true, 'instance_field' => true]];
+        $optionalRequires .= "require_once __DIR__ . '/$identity.php';\n";
     }
     foreach ($definitions as $identity => $definition) {
         $keyContract = $runtime['hashes']['key_contracts'][$identity] ?? null;
@@ -156,7 +163,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 '@exponent_bias@' => (string)($facts['double']['max_exponent'] - 1),
             ]) : compilerLiteralMethods($definition);
         if ($definition['literal_family'] === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/strings/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
-        $indexInterface = '';
+        $indexInterface = $definition['strategy'] === 'builder' ? ' implements text_builder_type' : '';
         if ($identity === 'string' && isset($runtime['string_index_read'])) {
             $read = $runtime['string_index_read'];
             requireThat(isset($definitions[$read['key']], $definitions[$read['result']]), 'Compiler string index requires key and result types');
@@ -366,6 +373,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $runtimeCases[] = "\t\t\t$labels => \$bindings['$name'] ??= new runtime_function('$name', ["
             . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
     }
+    foreach (compilerBuilderCases($runtime['text_builders'] ?? [], $runtimeTypes) as $case) $runtimeCases[] = $case;
     foreach ($runtime['text_helpers'] ?? [] as $name => $binding) {
         $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings[\$key] ??= " . compilerTextBinding($name, $binding, $runtimeTypes) . ',';
     }
@@ -439,7 +447,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@module_cases@' => implode("\n", $moduleCases),
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
-        '@optional_requires@' => $transportRequires . (isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : ''),
+        '@optional_requires@' => $optionalRequires . (isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : ''),
         '@extent_families@' => implode(', ', $extentFamilies),
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations, '@application_specializations@' => $applicationVectors . $applicationHashes,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),

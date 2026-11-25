@@ -88,7 +88,7 @@ function render(array $plan): array {
     }
     if (isset($plan['checked_conversions'])) $d .= includeHeader($plan['checked_conversions']['header']);
     $files = [];
-    if (isset($plan['text_helpers']['string_byte_find']) || $valueErrors || in_array('1', array_column($plan['vectors'] ?? [], 'enable_reserve'), true)) {
+    if (isset($plan['text_builders']) || isset($plan['text_helpers']['string_byte_find']) || $valueErrors || in_array('1', array_column($plan['vectors'] ?? [], 'enable_reserve'), true)) {
         $files['public/scpp/value_error.hpp'] = BANNER . "#pragma once\n#include <stdexcept>\nnamespace scpp { class ValueError : public std::invalid_argument { public: using std::invalid_argument::invalid_argument; }; }\n";
         $d .= includeHeader('scpp/value_error.hpp');
     }
@@ -165,6 +165,7 @@ function render(array $plan): array {
     renderOwnership($plan, $files);
     renderHashes($plan, $files, $groups);
     renderHashJoin($plan, $files);
+    renderTextBuilders($plan, $files);
     renderTextHelpers($plan, $files);
     renderDatetime($plan, $files);
     renderJson($plan, $files);

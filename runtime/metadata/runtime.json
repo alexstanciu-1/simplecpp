@@ -1108,6 +1108,32 @@
       }
     }
   },
+  "text_builders": {
+    "string_parts_builder": {
+      "create": ["create", "string_parts_builder"],
+      "reserve": ["write", "void", "int64"],
+      "capacity": ["read", "int64"],
+      "count": ["read", "int64"],
+      "byte_len": ["read", "int64"],
+      "append_string": ["write", "void", "string"],
+      "append_int": ["write", "void", "int64"],
+      "append_bool": ["write", "void", "bool_t"],
+      "to_string": ["read", "string"],
+      "clear": ["write", "void"]
+    },
+    "text_builder": {
+      "create": ["create", "text_builder"],
+      "reserve_bytes": ["write", "void", "int64"],
+      "capacity_bytes": ["read", "int64"],
+      "byte_len": ["read", "int64"],
+      "append_string": ["write", "void", "string"],
+      "append_int": ["write", "void", "int64"],
+      "append_bool": ["write", "void", "bool_t"],
+      "to_string": ["read", "string"],
+      "take_string": ["write", "string"],
+      "clear": ["write", "void"]
+    }
+  },
   "text_helpers": {
     "string_utf8_codepoint_count": ["int64", "string"],
     "string_utf8_codepoint_at": ["int64", "string", "int64"],

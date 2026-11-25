@@ -142,6 +142,8 @@ def proof(work, quick=False):
         minimal.pop('hashes')
         minimal.pop('carriers')
         minimal.pop('string')
+        minimal.pop('text_helpers')
+        minimal.pop('text_builders')
         minimal.pop('boxed')
         minimal['vectors'] = {'specializations': [publication['vectors']['specializations'][0]]}
         narrow = emit(metadata, minimal)

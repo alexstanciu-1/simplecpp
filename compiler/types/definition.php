@@ -176,7 +176,11 @@ interface shared_value_lookup_type
 	public function shared_lookup_function(): ?runtime_function;
 }
 
+/** An owning runtime text builder eligible for a readonly free-function parameter. */
+interface text_builder_type {}
+
 /** A receiver with a non-addressable indexed value, e.g. text[0]. */
+
 interface index_read_type
 {
 	public function prepare_index(ast_index_expression $value): void;

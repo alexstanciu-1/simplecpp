@@ -169,3 +169,27 @@ Negative bounds give an empty slice and lengths past the end truncate.
 All three validate the complete input. A malformed sequence anywhere switches
 the whole operation to unsigned byte units. U+0000 counts as one scalar and
 decomposed combining marks count individually. No normalization is performed.
+
+## Text builders
+
+The general API publishes two owning value types. Prefix each operation below
+with its type name and an underscore, for example `text_builder_take_string`.
+
+| Type | Operations |
+| --- | --- |
+| `string_parts_builder` | create, reserve, capacity, count, byte_len, append_string, append_int, append_bool, to_string, clear |
+| `text_builder` | create, reserve_bytes, capacity_bytes, byte_len, append_string, append_int, append_bool, to_string, take_string, clear |
+
+Construction produces an empty builder. Assignment and by-value parameters copy
+the contents independently. Mutating helpers take a writable reference to an
+exact-type variable. Queries borrow their operand for the call. A PHP-flavor
+synchronous free function may declare a readonly builder parameter with
+`const text_builder &$value` or `const string_parts_builder &$value`.
+
+String append preserves the exact bytes. Integer append writes the signed
+decimal representation. Boolean append writes ASCII 1 for true and an empty
+part for false. The parts builder counts every append, including empty parts.
+Reserve requests a minimum capacity in parts or bytes according to the type.
+A negative request raises ValueError. Clear empties the builder. A snapshot
+owns its bytes independently, and take additionally empties the text builder
+for reuse. Capacity after take is unspecified.

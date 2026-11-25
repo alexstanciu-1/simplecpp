@@ -143,3 +143,13 @@ hash_bytes and stable_hash_bytes_u64 forms take a source byte span. A future
 hash goal must choose the persisted algorithm/version and prove cross-form
 agreement. Existing uint64 transport solves the return ABI only.
 [Versioned hash contract](../../../v0.1/specs/compiler_support_runtime_contract.md#stable-hash)
+
+## Stage 1 outcome
+
+The three checkpoints publish the five general byte helpers, the PHP hash join,
+the three explicit UTF-8 helpers and both ten-operation builders. The compiled
+source fixture covers whole-input fallback, reference passing, independent
+builder copies, snapshots, take and reuse. Builder queries and mutations lower
+to native members on a private-storage value. The initial text take copies the
+bytes before clearing, preserving the input if constructing the result fails.
+The [source contract](../../string_slice.md) records the implemented boundaries.
