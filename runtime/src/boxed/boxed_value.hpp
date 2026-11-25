@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <variant>
+#include <vector>
 
 namespace scpp::detail {
 template<class Value> class packed_table;
@@ -15,16 +16,17 @@ enum class boxed_family { mixed, dynamic };
 
 template<boxed_family Family> class boxed_value final {
 public:
-    enum class kind { null, boolean, integer, floating, string, container };
+    enum class kind { null, boolean, integer, floating, string, container, tuple };
 private:
     friend struct boxed_inspection;
     using table = packed_table<boxed_value>;
     struct list_storage { std::shared_ptr<table> entries; };
+    using tuple_storage = std::shared_ptr<const std::vector<boxed_value>>;
     using payload = std::variant<std::monostate, bool, std::int64_t, double,
-        std::shared_ptr<const std::string>, std::shared_ptr<table>, list_storage>;
+        std::shared_ptr<const std::string>, std::shared_ptr<table>, tuple_storage, list_storage>;
     payload value_;
     std::shared_ptr<table>& writable_table_handle();
-    bool python_equal(const boxed_value& other, unsigned depth) const;
+    std::int64_t python_position(std::int64_t index) const;
     const table* read_table() const;
     template<class Operation> auto mutate(Operation operation);
 public:
@@ -41,6 +43,13 @@ public:
     static boxed_value string(std::string_view value);
     static boxed_value container();
     static boxed_value python_list();
+    static boxed_value tuple(std::vector<boxed_value> slots);
+    bool python_equal(const boxed_value& other, unsigned depth = 0) const;
+    boxed_value python_read(std::int64_t index) const;
+    boxed_value python_read(std::string_view key) const;
+    void python_set(std::int64_t index, boxed_value value);
+    void python_set(std::string_view key, boxed_value value);
+    bool python_next(std::int64_t& position, std::int64_t limit, boxed_value& value) const;
     bool python_contains(const boxed_value& needle) const;
     kind type() const noexcept;
     bool get_boolean() const;

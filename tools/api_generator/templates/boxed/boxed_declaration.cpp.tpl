@@ -12,6 +12,13 @@ public:
     static @n@ from_string(const string& value);
     static @n@ container();
     static @n@ python_list();
+    static @n@ from_tuple(@n@* values, int64 count);
+    @n@ python_read(int64 key) const;
+    @n@ python_read(const string& key) const;
+    void python_set(int64 key, @n@ value);
+    void python_set(const string& key, @n@ value);
+    bool_t python_equal(const @n@& other) const;
+    bool_t python_next(int64& position, int64 limit, @n@& value) const;
     bool_t python_contains(const @n@& needle) const;
     boxed_kind kind() const noexcept;
     bool_t get_boolean() const;

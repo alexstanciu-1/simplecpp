@@ -1439,11 +1439,11 @@ final class Parser
 		$this->cursor->take(token_kind::lbracket, '[');
 		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 		$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-		if ($terminator === token_kind::newline && ($index === null || (!$this->cursor->is(token_kind::assign) && !$this->cursor->is(token_kind::dot)))) {
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python indexed write requires one key and =');
-		}
 		if ($index !== null && $this->cursor->is(token_kind::lbracket)) {
 			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end), $terminator);
+		}
+		if ($terminator === token_kind::newline && ($index === null || (!$this->cursor->is(token_kind::assign) && !$this->cursor->is(token_kind::dot)))) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python indexed write requires one key and =');
 		}
 		if ($index !== null && (($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lparen)) || $this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
@@ -2021,7 +2021,18 @@ final class Parser
 				$rhs = $this->assignment_value();
 				return new ast_condition_assignment($start, $c->take(token_kind::rparen, ') after assignment') + 1, $target, $rhs);
 			}
+			$python = $c->tokens->source->flavor === flavor::python;
+			if ($python && $c->is(token_kind::rparen)) return new ast_tuple_expression($start, $c->take(token_kind::rparen, ')') + 1);
 			$value = $this->value(argument_operand: $argument_operand);
+			if ($python && $c->is(token_kind::comma)) {
+				$elements = [$value];
+				while ($c->is(token_kind::comma)) {
+					$c->take(token_kind::comma, ',');
+					if ($c->is(token_kind::rparen)) break;
+					$elements[] = $this->value();
+				}
+				return new ast_tuple_expression($start, $c->take(token_kind::rparen, ')') + 1, $elements);
+			}
 			$c->take(token_kind::rparen, ')');
 			if ($c->tokens->source->flavor === flavor::php && $c->is(token_kind::lparen)) {
 				if ($value instanceof ast_field_expression) return $this->call_arguments($start, $value->field, null, $value, call_qualifier::stored_value);

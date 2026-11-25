@@ -10,6 +10,7 @@ template<class To, class From> To scalar_copy(const From& value) {
         case kind::integer: return To::integer(value.get_integer());
         case kind::floating: return To::floating(value.get_floating());
         case kind::string: return To::string(value.get_string());
+        case kind::tuple:
         case kind::container: throw std::runtime_error("boxed_container_family_conversion");
     }
     throw std::logic_error("boxed_invalid_kind");

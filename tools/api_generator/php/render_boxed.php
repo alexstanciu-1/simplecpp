@@ -5,11 +5,11 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
     if (!isset($plan['boxed'])) return;
     $box = $plan['boxed'];
     $h = BANNER . "#pragma once\n" . scalarProviderIncludes($plan) . includeHeader($plan['string']['header']);
-    $h .= "namespace scpp {\nnamespace detail { struct ownership_access; }\nenum class boxed_kind { null, boolean, integer, floating, string, container };\n";
+    $h .= "namespace scpp {\nnamespace detail { struct ownership_access; }\nenum class boxed_kind { null, boolean, integer, floating, string, container, tuple };\n";
     foreach ($box['families'] as $family) $h .= "class {$family['name']};\n";
     $split = isset($plan['boxed_dispatch']);
     if ($split) {
-        $files['public/scpp/boxed_kind.hpp'] = BANNER . "#pragma once\nnamespace scpp { enum class boxed_kind { null, boolean, integer, floating, string, container }; }\n";
+        $files['public/scpp/boxed_kind.hpp'] = BANNER . "#pragma once\nnamespace scpp { enum class boxed_kind { null, boolean, integer, floating, string, container, tuple }; }\n";
         $files['public/scpp/boxed_key.hpp'] = BANNER . "#pragma once\n" . includeHeader($plan['string']['header'])
             . scalarProviderIncludes($plan) . "namespace scpp {\nstruct boxed_text_key { int64 index; string text; };\n"
             . "int64 boxed_key(int64 key);\nboxed_text_key boxed_key(string key);\n}\n";
@@ -78,13 +78,15 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         foreach (['int64' => 'key', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {
             $self = $get('*this'); $result = $get('result'); $value = $get('value');
             $d .= "$n $n::read(const $key& key) const { $n result; $result = $self.read($expression); return result; }\n";
+            $param = $key === 'int64' ? 'int64' : 'const string&';
+            $d .= "$n $n::python_read($param key) const { $n result; $result = $self.python_read($expression); return result; }\n";
+            $d .= "void $n::python_set($param key, $n value) { $self.python_set($expression, std::move($value)); }\n";
             if ($split && $key === 'int64') {
                 $d .= "$n $n::source_require(int64 key) const { $n result; $result = $self.require(key); return result; }\n";
                 $d .= "$n $n::source_require(const boxed_text_key& key) const { $n result; $result = key.index < 0 ? $self.require(std::string_view{key.text.data(), static_cast<std::size_t>(key.text.size())}) : $self.require(key.index); return result; }\n";
             }
             $d .= "bool_t $n::has(const $key& key) const { return bool_t{{$self}.contains($expression)}; }\n";
-            $parameter = $key === 'int64' ? 'int64' : 'const string&';
-            $d .= "void $n::set($parameter key, $n value) { $self.set($expression, std::move($value)); }\n";
+            $d .= "void $n::set($param key, $n value) { $self.set($expression, std::move($value)); }\n";
             $d .= "bool_t $n::remove(const $key& key) { return bool_t{{$self}.remove($expression)}; }\n";
         }
         if ($box['scalar_conversions']) {

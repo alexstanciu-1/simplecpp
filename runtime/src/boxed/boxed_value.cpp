@@ -39,6 +39,12 @@ boxed_value<Family> boxed_value<Family>::python_list() {
     return r;
 }
 template<boxed_family Family>
+boxed_value<Family> boxed_value<Family>::tuple(std::vector<boxed_value> slots) {
+    boxed_value result;
+    result.value_ = std::make_shared<const std::vector<boxed_value>>(std::move(slots));
+    return result;
+}
+template<boxed_family Family>
 std::shared_ptr<typename boxed_value<Family>::table>& boxed_value<Family>::writable_table_handle() {
     if (auto* list = std::get_if<list_storage>(&value_)) return list->entries;
     return std::get<std::shared_ptr<table>>(value_);
@@ -69,6 +75,7 @@ template<boxed_family Family>
 void boxed_value<Family>::clean() noexcept { value_ = std::monostate{}; }
 template<boxed_family Family>
 void boxed_value<Family>::clear() {
+    if (type() == kind::tuple) throw std::runtime_error("TypeError");
     if (type() != kind::container) throw std::runtime_error("boxed_expected_container");
     auto& storage = writable_table_handle();
     if constexpr (Family == boxed_family::mixed) {
@@ -79,6 +86,7 @@ void boxed_value<Family>::clear() {
 }
 template<boxed_family Family>
 const typename boxed_value<Family>::table* boxed_value<Family>::read_table() const {
+    if (type() == kind::tuple) throw std::runtime_error("TypeError");
     if (type() == kind::null) return nullptr;
     if (type() != kind::container) throw std::runtime_error("boxed_expected_container");
     if (const auto* list = std::get_if<list_storage>(&value_)) return list->entries.get();
@@ -115,6 +123,9 @@ template<class Operation> auto boxed_value<Family>::mutate(Operation operation) 
 }
 template<boxed_family Family>
 boxed_value<Family> boxed_value<Family>::require(std::int64_t key) const {
+    if (const auto* slots = std::get_if<tuple_storage>(&value_)) {
+        return (**slots)[static_cast<std::size_t>(python_position(key))];
+    }
     (void)packed_key::integer(key);
     auto* t = read_table();
     auto* value = t ? t->find(key) : nullptr;
@@ -130,6 +141,7 @@ boxed_value<Family> boxed_value<Family>::require(std::string_view key) const {
 }
 template<boxed_family Family>
 boxed_value<Family> boxed_value<Family>::read(std::int64_t key) const {
+    if (type() == kind::tuple) return require(key);
     (void)packed_key::integer(key);
     auto* t = read_table();
     auto* value = t ? t->find(key) : nullptr;
@@ -175,6 +187,7 @@ bool boxed_value<Family>::remove(std::string_view key) {
 }
 template<boxed_family Family>
 std::size_t boxed_value<Family>::container_size() const {
+    if (const auto* slots = std::get_if<tuple_storage>(&value_)) return (*slots)->size();
     const auto* t = read_table();
     if (!t) throw std::runtime_error("boxed_expected_container");
     return t->size();
@@ -187,15 +200,64 @@ bool boxed_value<Family>::is_packed_container() const {
 }
 template<boxed_family Family>
 std::int64_t boxed_value<Family>::iteration_limit() const {
+    if (const auto* slots = std::get_if<tuple_storage>(&value_)) return (*slots)->size();
     const auto* t = read_table();
     if (!t) throw std::runtime_error("boxed_expected_container");
     return static_cast<std::int64_t>(t->physical_size());
 }
 template<boxed_family Family>
 bool boxed_value<Family>::iteration_next(std::int64_t& position, std::int64_t limit, boxed_value& value, std::uint32_t* key) const {
+    if (const auto* slots = std::get_if<tuple_storage>(&value_)) {
+        if (position < 0 || position >= limit || static_cast<std::size_t>(position) >= (*slots)->size()) return false;
+        if (key) *key = packed_key::integer(position);
+        value = (**slots)[static_cast<std::size_t>(position++)];
+        return true;
+    }
     const auto* t = read_table();
     if (!t) throw std::runtime_error("boxed_expected_container");
     return t->iteration_next(position, limit, value, key);
+}
+template<boxed_family Family>
+std::int64_t boxed_value<Family>::python_position(std::int64_t index) const {
+    const auto size = static_cast<std::int64_t>(container_size());
+    if (index < 0) index += size;
+    if (index < 0 || index >= size) throw std::out_of_range("IndexError");
+    return index;
+}
+template<boxed_family Family>
+boxed_value<Family> boxed_value<Family>::python_read(std::int64_t index) const {
+    if (type() == kind::tuple) return require(index);
+    if (std::holds_alternative<list_storage>(value_)) return require(python_position(index));
+    if (type() != kind::container) throw std::runtime_error("TypeError");
+    const auto* entry = index >= 0 && index <= packed_key::max_integer ? read_table()->find(index) : nullptr;
+    if (!entry) throw std::out_of_range("KeyError");
+    return *entry;
+}
+template<boxed_family Family>
+boxed_value<Family> boxed_value<Family>::python_read(std::string_view key) const {
+    if (!std::holds_alternative<std::shared_ptr<table>>(value_)) throw std::runtime_error("TypeError");
+    const auto* entry = read_table()->find(key);
+    if (!entry) throw std::out_of_range("KeyError");
+    return *entry;
+}
+template<boxed_family Family>
+void boxed_value<Family>::python_set(std::int64_t key, boxed_value value) {
+    if (type() != kind::container) throw std::runtime_error("TypeError");
+    if (std::holds_alternative<list_storage>(value_)) key = python_position(key);
+    set(key, std::move(value));
+}
+template<boxed_family Family>
+void boxed_value<Family>::python_set(std::string_view key, boxed_value value) {
+    if (!std::holds_alternative<std::shared_ptr<table>>(value_)) throw std::runtime_error("TypeError");
+    set(key, std::move(value));
+}
+template<boxed_family Family>
+bool boxed_value<Family>::python_next(std::int64_t& position, std::int64_t limit, boxed_value& value) const {
+    if (!std::holds_alternative<std::shared_ptr<table>>(value_)) return iteration_next(position, limit, value);
+    std::uint32_t key;
+    if (!iteration_next(position, limit, value, &key)) return false;
+    value = packed_key::is_string(key) ? string(packed_string_pool::instance().resolve(key)) : integer(key);
+    return true;
 }
 namespace {
 bool python_integer_equal(std::int64_t integer, double number) {
@@ -221,6 +283,16 @@ bool boxed_value<Family>::python_equal(const boxed_value& other, unsigned depth)
     if (a == kind::null) return true;
     if (a == kind::string) return *std::get<std::shared_ptr<const std::string>>(value_)
                                == *std::get<std::shared_ptr<const std::string>>(other.value_);
+    if (a == kind::tuple) {
+        const auto& lhs = std::get<tuple_storage>(value_);
+        const auto& rhs = std::get<tuple_storage>(other.value_);
+        if (lhs == rhs) return true;
+        if (lhs->size() != rhs->size()) return false;
+        if (depth >= 256) throw std::runtime_error("Python recursive container comparison");
+        for (std::size_t i = 0; i < lhs->size(); ++i)
+            if (!(*lhs)[i].python_equal((*rhs)[i], depth + 1)) return false;
+        return true;
+    }
     const auto* lhs = read_table();
     const auto* rhs = other.read_table();
     const bool list = std::holds_alternative<list_storage>(value_);
@@ -248,6 +320,10 @@ bool boxed_value<Family>::python_contains(const boxed_value& needle) const {
         const auto& text = *std::get<std::shared_ptr<const std::string>>(value_);
         return text.find(*std::get<std::shared_ptr<const std::string>>(needle.value_)) != std::string::npos;
     }
+    if (const auto* slots = std::get_if<tuple_storage>(&value_)) {
+        for (const auto& slot : **slots) if (needle.python_equal(slot)) return true;
+        return false;
+    }
     if (type() != kind::container) throw std::runtime_error("TypeError");
     if (std::holds_alternative<list_storage>(value_)) {
         boxed_value item;
@@ -270,6 +346,7 @@ bool boxed_value<Family>::python_contains(const boxed_value& needle) const {
             return static_cast<double>(key) == number && contains(key);
         }
         case kind::null: return false;
+        case kind::tuple:
         case kind::container: throw std::runtime_error("TypeError");
     }
     throw std::logic_error("invalid boxed kind");

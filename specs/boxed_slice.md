@@ -53,16 +53,19 @@ Both classes expose the same bounded operations, preserving their family:
 | `from_boolean(bool_t)`, `from_integer(int64)`, `from_floating(float64)` | Explicit inline scalar factories, nonthrowing |
 | `from_string(const string&)` | Owned byte-preserving string factory |
 | `container()` | Explicit empty container |
-| `kind()` | `boxed_kind::{null,boolean,integer,floating,string,container}` |
+| `from_tuple(values, count)` | Consume an ordered input buffer of same-family values and publish immutable tuple storage |
+| `kind()` | `boxed_kind::{null,boolean,integer,floating,string,container,tuple}` |
 | `get_boolean/get_integer/get_floating/get_string` | Exact checked extraction; string is an independent copy |
 | `read(const int64&)`, `read(const string&)` | Copied same-family value; null on miss or null receiver |
 | `has(key)` | bool_t membership, including present null payloads; not source `isset` |
 | `set(key, same-family value)` | void insertion/replacement |
 | `remove(key)` | bool_t indicating removal |
 | `append(same-family value)` | Assigned int64 key, bounded by INT32_MAX |
-| `container_size()` | int64 count; requires container kind |
+| `container_size()` | int64 count for a table or tuple |
 | `is_packed_container()` | bool_t physical dense shape; requires container kind |
 | `clean()` | Nonthrowing reset of this binding to null |
+
+A tuple owns a contiguous, fixed-length sequence of same-family slots. Copying the tuple shares its immutable backing. Reading a slot copies the boxed element, so a dynamic child keeps shared identity and a mixed child keeps copy-on-write behavior. Rebinding a child variable cannot replace the captured slot. Integer reads accept negative positions and check bounds. Appending, clearing, assigning or removing slots fails. Whole-binding replacement and clean still apply. Cross-family scalar conversion and the JSON encoder reject tuples.
 
 Key signatures take int64 by value for set, string by const reference; read/has/remove
 use const references. Only declared runtime arguments are admitted. Native integers,

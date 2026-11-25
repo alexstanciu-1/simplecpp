@@ -21,6 +21,9 @@ async def divide(n: int) -> int:
 
 async def parent() -> int:
     await child(0)
+    slots: dynamic = (await child(1), await child(3))
+    if slots[await child(0) - await child(1)] != await child(3) or slots[0] != await child(1):
+        return 94
     items: mixed = [await child(5)]
     table: dynamic = {"key": await child(5)}
     if await child(5) not in items or "key" not in table:

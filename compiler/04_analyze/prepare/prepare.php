@@ -293,7 +293,11 @@ final class Preparation
 					$this->value($receiver);
 					$root = $receiver;
 					while ($root instanceof ast_index_expression) {
-						if (!($root->receiver->type_def() instanceof fixed_array_type)) throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage');
+						$owner = $root->receiver->type_def();
+						if (!($owner instanceof fixed_array_type) && !($source->flavor === flavor::python
+							&& $owner instanceof boxed_type_definition && $owner->mutates_referenced_value())) {
+							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage or a shared Python container');
+						}
 						$root = $root->receiver;
 					}
 					if (!($root instanceof ast_name_expression && $root->local_binding() !== null) && !($root instanceof ast_field_expression)) {
@@ -316,8 +320,8 @@ final class Preparation
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
 				}
-				if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type) && $source->flavor === flavor::python) {
-					throw new diagnostic($source, $statement->byte_start(), 'Python indexed write requires a typed vector or hash');
+				if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type || $type instanceof boxed_type_definition) && $source->flavor === flavor::python) {
+					throw new diagnostic($source, $statement->byte_start(), 'Python indexed write requires a typed vector or hash, or a boxed collection');
 				}
 				$this->value($statement->index);
 				$type->prepare_key($statement->index);
@@ -767,8 +771,8 @@ final class Preparation
 			throw new diagnostic($source, $statement->source_value->byte_start(),
 				$paired ? 'Python items traversal requires a typed hash' : 'JS for-in requires a typed hash');
 		}
-		if ($python && !$hash && !($source_type instanceof vector_type_definition)) {
-			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector or hash');
+		if ($python && !$hash && !($source_type instanceof vector_type_definition || $source_type instanceof boxed_type_definition)) {
+			throw new diagnostic($source, $statement->source_value->byte_start(), 'Python for requires a typed vector or hash, or a boxed collection');
 		}
 		if ($type === null && !$segment) throw new diagnostic($source, $statement->source_value->byte_start(), 'Foreach requires an iterable collection');
 		if ($function->is_async || $function->return_type_def() instanceof generator_type_definition) {
@@ -1232,6 +1236,9 @@ final class Preparation
 			$type = type_registry::resolve($dynamic ? 'dynamic' : 'mixed');
 		}
 		if ($syntax instanceof ast_collection_expression) {
+			if ($syntax instanceof ast_tuple_expression && !($type instanceof boxed_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Tuple requires a mixed or dynamic destination');
+			}
 			if (!($type instanceof indexed_collection_type)) {
 				if ($type instanceof callback_type_definition && $flavor === flavor::php) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'A collection literal cannot supply a typed callback');
 				$message = $type === null ? 'Collection requires an explicitly typed local initializer' : 'Destination has no published collection initialization capability';
@@ -1447,9 +1454,9 @@ final class Preparation
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
-			if (!($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type) && $syntax->source()->flavor === flavor::python
-				&& !($type instanceof boxed_type_definition && $syntax->parent instanceof ast_key_comparison)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash');
+			if ($syntax->source()->flavor === flavor::python
+				&& !($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type || $type instanceof boxed_type_definition)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash, or a boxed collection');
 			}
 			$this->value($syntax->index, $initializing);
 			$type->prepare_index($syntax);

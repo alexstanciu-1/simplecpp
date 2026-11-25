@@ -1011,6 +1011,7 @@ CPP;
 			elseif ($statement instanceof ast_foreach_statement) {
 				$source_type = $statement->source_value->type_def();
 				$type = $source_type->iteration();
+				$python_box = $type instanceof boxed_type_definition && $statement->source()->flavor === flavor::python;
 				if ($source_type instanceof generator_type_definition) $declarations[self::function_name($source_type->function)] = $source_type->function;
 				foreach ([$source_type, $statement->value->type_def(), $statement->destination->type_def(), $statement->key?->type_def()] as $used) {
 					if ($used !== null) foreach ($used->cpp_headers() as $header) $required_headers[$header] = true;
@@ -1032,7 +1033,7 @@ CPP;
 					foreach ($this->async_steps as $step) $lines[] = "\t" . $step;
 					$this->async_steps = [];
 					foreach ($steps as $step) $lines[] = "\t" . $step;
-					$lines[] = "\tauto&& iteration_source = " . $receiver . ';';
+					$lines[] = ($python_box ? "\tconst auto iteration_source = " : "\tauto&& iteration_source = ") . $receiver . ';';
 				}
 				$destination = $statement->destination;
 				$method = $type->iteration_method();
@@ -1062,6 +1063,8 @@ CPP;
 					$next = $name . '(' . $iteration_source . ', ' . $output . ($key === null ? '' : ', ' . $key) . ')';
 				} elseif ($statement->keys_only) {
 					$next = $type->lower_cpp_iteration_next_key($iteration_source, $output, $prefix);
+				} elseif ($python_box) {
+					$next = '(' . $iteration_source . ').python_next(' . $prefix . 'iteration_position, ' . $prefix . 'iteration_limit, ' . $output . ')';
 				} else $next = $type->lower_cpp_iteration_next($iteration_source, $output, $key, $prefix);
 				$lines[] = "\twhile (" . $next . ') {';
 				if ($output_type !== null) {
@@ -1284,6 +1287,27 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
+				if ($type instanceof boxed_type_definition && $statement->source()->flavor === flavor::python) {
+					// Python evaluates the RHS before the subscript target. Keep the selected dynamic owner through key effects.
+					[$value, $steps] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
+					$conversion = $statement->conversion();
+					foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+					$value = $type->lower_cpp_exact_argument($statement->value, $conversion, $value, $this->inline_adapters);
+					$steps[] = 'const auto slot_value = ' . $value . ';';
+					if ($type->mutates_referenced_value()) {
+						[$receiver, $before_target] = $this->staged_operand($statement->receiver, $global_references, $declarations, $required_headers);
+						array_push($steps, ...$before_target);
+						$steps[] = 'auto target = ' . $receiver . ';';
+					} else {
+						$receiver = $this->write_receiver($statement->receiver, $global_references, $declarations, $required_headers, $steps);
+						$steps[] = 'auto& target = ' . $receiver . ';';
+					}
+					[$key, $before_key] = $this->staged_operand($statement->index, $global_references, $declarations, $required_headers);
+					array_push($steps, ...$before_key);
+					$steps[] = 'target.python_set(' . $key . ', slot_value);';
+					$lines[] = $this->async_statement('{ ' . implode(' ', $steps) . ' }');
+					continue;
+				}
 				$steps = [];
 				$before = $this->suspensions;
 				$receiver = $this->write_receiver($statement->receiver, $global_references, $declarations, $required_headers, $steps);
@@ -2157,6 +2181,7 @@ CPP;
 		$keyed = $literal instanceof ast_keyed_collection_expression;
 		$entries = $keyed ? $literal->entries : $literal->elements;
 		$binding = $keyed ? $type->keyed_initialization() : $type->list_initialization();
+		if ($literal instanceof ast_tuple_expression) $binding = $type->tuple_initialization();
 		$name = 'input_' . $literal->start . '_' . $literal->end;
 		$count = count($entries);
 		if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
@@ -2352,7 +2377,7 @@ CPP;
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
 		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression)
-			&& $value_type instanceof boxed_type_definition && $value->source()->flavor === flavor::python) {
+			&& !($value instanceof ast_tuple_expression) && $value_type instanceof boxed_type_definition && $value->source()->flavor === flavor::python) {
 			$list = $value instanceof ast_collection_expression;
 			$factory = $value_type->cpp_type() . ($list ? '::python_list()' : '::container()');
 			$items = $list ? $value->elements : $value->entries;
@@ -2405,7 +2430,7 @@ CPP;
 		if ($value instanceof ast_collection_expression) {
 			/** @var indexed_collection_type $type */
 			$type = $value->type_def();
-			if ($value->elements === []) return $type->lower_cpp_empty();
+			if ($value->elements === []) return $value instanceof ast_tuple_expression ? $type->cpp_type() . '::from_tuple(nullptr, 0)' : $type->lower_cpp_empty();
 			if ($type instanceof fixed_array_type) {
 				$items = [];
 				foreach ($value->elements as $i => $element) {
@@ -2419,7 +2444,7 @@ CPP;
 			}
 			if (!($type instanceof sequence_initializer_type)) throw new \LogicException('Unprepared sequence initializer');
 			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
-			$binding = $type->list_initialization();
+			$binding = $value instanceof ast_tuple_expression ? $type->tuple_initialization() : $type->list_initialization();
 			$elements = [];
 			$code = $binding === null ? '[&]() { ' . $type->cpp_type() . ' sequence = ' . $type->lower_cpp_empty() . '; ' : '';
 			foreach ($value->elements as $position => $element) {
@@ -2447,7 +2472,8 @@ CPP;
 				$steps = [];
 				$receiver = 'indexed_receiver_' . $value->start . '_' . $value->end;
 				$place = $this->retained_place($field, $global_references, $declarations, $required_headers, $steps, owner_name: $receiver . '_owner');
-				$steps[] = 'auto&& ' . $receiver . ' = ' . $place . ';';
+				$python_box = $type instanceof boxed_type_definition && $value->source()->flavor === flavor::python;
+				$steps[] = ($python_box ? 'const auto ' : 'auto&& ') . $receiver . ' = ' . $place . ';';
 				array_push($this->async_steps, ...$steps, ...$key_steps);
 			} else $receiver = $this->value($field, $global_references, $declarations, $required_headers);
 			return $type->lower_cpp_index($value->index, $receiver, $index);
