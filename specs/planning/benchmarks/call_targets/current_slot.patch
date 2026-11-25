@@ -1,0 +1,152 @@
+--- a/03_parse/structures/functions.php
++++ b/03_parse/structures/functions.php
+@@ -267,7 +267,13 @@
+ 	public private(set) ?string $mt_operation = null;
+ 
+ 	/** Prepared fact: native non-owning target binding or direct producer operand; null before preparation or after reset. */
+-	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|ast_call_expression|null $function_symbol = null;
++	private ?\WeakReference $function_symbol = null;
++
++	private function prepared_target(): symbol_entry|runtime_function|called_method_instance|ast_local_binding|ast_call_expression|null
++	{
++		if ($this->function_symbol === null) return null;
++		return $this->function_symbol->get() ?? throw new \LogicException('Prepared call target expired');
++	}
+ 	/** @var int[] Prepared fact: approved positional conversions; empty before preparation or after reset. */
+ 	private array $conversions /** list<uint16> */ = [];
+ 
+@@ -318,13 +324,14 @@
+ 	/** The explicit bridge reuses its existing operand and its checked argument conversions. */
+ 	public function settle_blocking_wait(ast_call_expression $producer): void
+ 	{
+-		$this->function_symbol = $producer;
++		$this->function_symbol = \WeakReference::create($producer);
+ 		$this->settle_value($producer->type_def(), null);
+ 	}
+ 
+ 	public function blocking_producer(): ?ast_call_expression
+ 	{
+-		return $this->function_symbol instanceof ast_call_expression ? $this->function_symbol : null;
++		$selected = $this->prepared_target();
++		return $selected instanceof ast_call_expression ? $selected : null;
+ 	}
+ 
+ 	public function has_direct_signature(): bool
+@@ -343,21 +350,23 @@
+ 	/** A call-shaped construction watches the same stable class entry as type resolution. */
+ 	public function constructed_record(): ?ast_record_declaration
+ 	{
+-		$target = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
++		$selected = $this->prepared_target();
++		$target = $selected instanceof symbol_entry ? $selected->declaration() : null;
+ 		return $target instanceof ast_record_declaration ? $target : null;
+ 	}
+ 
+ 	/** @param int[] $conversions */
+ 	public function settle_construction(symbol_entry $target, shared_record_type_definition $type, array $conversions /** list<uint16> */): void
+ 	{
+-		$this->function_symbol = $target;
++		$this->function_symbol = \WeakReference::create($target);
+ 		$this->conversions = $conversions;
+ 		$this->settle_value($type, null);
+ 	}
+ 
+ 	public function runtime_binding(): ?runtime_function
+ 	{
+-		return $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
++		$selected = $this->prepared_target();
++		return $selected instanceof runtime_function ? $selected : null;
+ 	}
+ 
+ 	/** @param int[] $conversions */
+@@ -369,7 +378,7 @@
+ 		}
+ 		$result = $function->return_type_def();
+ 		$this->settle_value($result instanceof class_union_type_definition ? ($result->receiver_view($this) ?? $result) : $result, null);
+-		$this->function_symbol = $instance ?? $symbol;
++		$this->function_symbol = \WeakReference::create($instance ?? $symbol);
+ 		$this->ancestor_dispatch = $ancestor_dispatch;
+ 		$this->conversions = $conversions;
+ 	}
+@@ -377,7 +386,8 @@
+ 	/** @return ast_expression[] Runtime operands in evaluation order; a type qualifier does not evaluate. */
+ 	public function runtime_operands(?runtime_function $binding = null): array /** list<ast_expression> */
+ 	{
+-		$binding ??= $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
++		$selected = $this->prepared_target();
++		$binding ??= $selected instanceof runtime_function ? $selected : null;
+ 		if (($this->arguments[0] ?? null) instanceof ast_type_marker
+ 			&& ($binding?->name() === 'enum_from_value' || $binding?->name() === 'enum_try_from_value')) {
+ 			return array_slice($this->arguments, 1);
+@@ -389,7 +399,7 @@
+ 	public function settle_runtime(runtime_function $function, array $conversions /** list<uint16> */ = []): void
+ 	{
+ 		$this->settle_value($function->return_type_def(), null);
+-		$this->function_symbol = $function;
++		$this->function_symbol = \WeakReference::create($function);
+ 		$this->conversions = $conversions;
+ 	}
+ 
+@@ -397,31 +407,34 @@
+ 	public function settle_callable_call(?ast_local_binding $parameter, callback_type_definition $signature, array $conversions /** list<uint16> */): void
+ 	{
+ 		$this->settle_value($signature->result, null);
+-		$this->function_symbol = $parameter;
++		$this->function_symbol = ($parameter === null ? null : \WeakReference::create($parameter));
+ 		$this->conversions = $conversions;
+ 	}
+ 
+ 	public function callable_binding(): ?ast_local_binding
+ 	{
+-		return $this->function_symbol instanceof ast_local_binding ? $this->function_symbol : null;
++		$selected = $this->prepared_target();
++		return $selected instanceof ast_local_binding ? $selected : null;
+ 	}
+ 
+ 	public function function_def(): ast_function_declaration|runtime_function
+ 	{
+-		if ($this->function_symbol instanceof runtime_function) {
+-			return $this->function_symbol;
+-		}
+-		if ($this->function_symbol instanceof called_method_instance) return $this->function_symbol->method->declaration();
+-		return ($this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null) ?? throw new \LogicException('Call target is not settled or was removed');
++		$selected = $this->prepared_target();
++		if ($selected instanceof runtime_function) {
++			return $selected;
++		}
++		if ($selected instanceof called_method_instance) return $selected->method->declaration();
++		return ($selected instanceof symbol_entry ? $selected->declaration() : null) ?? throw new \LogicException('Call target is not settled or was removed');
+ 	}
+ 
+ 	/** Return the caller's bound slot when this call yields a reference to one argument. */
+ 	public function reference_origin(): ?ast_local_binding
+ 	{
+-		$function = $this->function_symbol instanceof symbol_entry ? $this->function_symbol->declaration() : null;
++		$selected = $this->prepared_target();
++		$function = $selected instanceof symbol_entry ? $selected->declaration() : null;
+ 		$slot = $function instanceof ast_function_declaration ? $function->reference_return_origin : null;
+-		if ($this->function_symbol instanceof ast_local_binding) {
+-			$type = $this->function_symbol->type_def();
++		if ($selected instanceof ast_local_binding) {
++			$type = $selected->type_def();
+ 			$signature = $type instanceof callback_type_definition ? $type : $type->signature;
+ 			$slot = $signature->reference_origin;
+ 		}
+@@ -435,13 +448,15 @@
+ 	/** Lower only after the coordinator has settled all reachable implementations. */
+ 	public function implementation(): ast_function_declaration|runtime_function
+ 	{
+-		return $this->function_symbol instanceof called_method_instance ? $this->function_symbol->implementation : $this->function_def();
++		$selected = $this->prepared_target();
++		return $selected instanceof called_method_instance ? $selected->implementation : $this->function_def();
+ 	}
+ 
+ 	/** $index: argument ordinal. */
+ 	public function conversion(int $index /** uint32 */): int /** uint16 */
+ 	{
+-		if ($this->function_symbol instanceof runtime_function && isset($this->function_symbol->parameters[$index])) {
++		$selected = $this->prepared_target();
++		if ($selected instanceof runtime_function && isset($selected->parameters[$index])) {
+ 			return $this->conversions[$index] ?? value_conversion::identity;
+ 		}
+ 		return $this->conversions[$index] ?? throw new \LogicException('Argument conversion is not settled');

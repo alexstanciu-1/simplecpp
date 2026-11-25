@@ -91,88 +91,177 @@ def host_oracle(work, flavor):
         assert process.wait() == 0
 
 
-def driver(inputs):
-    declaration_names = ('original_changed', 'original_broken', 'quiet', 'changed', 'broken', 'missing')
-    declarations = []
-    for label, fields in zip(declaration_names, inputs, strict=True):
-        args = ', '.join(json.dumps(field) for field in fields)
-        declarations.append(f'${label} = new Return_Syntax({args});')
-    return '\n'.join(declarations) + r'''
+def specialized_oracle(work):
+    app, out = work / 'method-input', work / 'method-output'
+    app.mkdir()
+    (app / 'module.json').write_text('{}')
+    (app / 'main.php').write_text('return left_call() + right_call();')
+    (app / 'methods.php').write_text('class Base { public static function read(): int {return 3;} } '
+                                    'class Left extends Base {} class Right extends Base {}')
+    for role in ('Left', 'Right'):
+        name = role.lower() + '_call'
+        (app / (name + '.php')).write_text(f'function {name}(): int {{return {role}::read();}}')
+    result = fresh_build(app, out)
+    assert 'error' not in result, result
+    return b''.join(function_text(out, name) for name in ('left_call', 'right_call'))
+
+
+def driver(input_sets):
+    calls = []
+    for inputs in input_sets:
+        arguments = ['new Return_Syntax(' + ', '.join(json.dumps(field) for field in fields) + ')'
+                     for fields in inputs]
+        calls.append('check_recovery(' + ', '.join(arguments) + ');')
+    return r'''
 function require_state(bool $valid, string $message): void {
     if (!$valid) { throw Exception::make($message); }
 }
 
-$compiler = new Incremental_Preparation();
-$compiler->publish_declaration($original_changed);
-$compiler->publish_declaration($original_broken);
-$quiet_body = $compiler->publish_declaration($quiet);
-$compiler->run();
-require_state($compiler->prepared === 3 && $compiler->preparation->owner === null, "initial preparation");
-$old_output = $compiler->output;
-$worker = $compiler->preparation;
-// Exercise restoration of a live outer context as well as the empty initial context.
-$worker->owner = $quiet_body;
-$changed_body = $compiler->publish_declaration($changed);
-$broken_body = $compiler->publish_declaration($broken);
+function check_recovery(Return_Syntax $original_changed, Return_Syntax $original_broken, Return_Syntax $quiet,
+                        Return_Syntax $changed, Return_Syntax $broken, Return_Syntax $missing): void {
+    $compiler = new Incremental_Preparation();
+    $compiler->publish_declaration($original_changed);
+    $compiler->publish_declaration($original_broken);
+    $quiet_body = $compiler->publish_declaration($quiet);
+    $compiler->run();
+    require_state($compiler->prepared === 3 && $compiler->preparation->owner === null, "initial preparation");
+    $old_output = $compiler->output;
+    $worker = $compiler->preparation;
+    // Exercise restoration of a live outer context as well as the empty initial context.
+    $worker->owner = $quiet_body;
+    $changed_body = $compiler->publish_declaration($changed);
+    $broken_body = $compiler->publish_declaration($broken);
 
-for ($attempt int = 0; $attempt < 2; $attempt++) {
-    $caught = false;
-    try {
-        $compiler->run();
-    } catch (Preparation_Diagnostic $error) {
-        $caught = true;
-        require_state($error->source === $broken->source && $error->offset === $broken->offset, "diagnostic location");
-        require_state($error->detail === "Unknown function: missing", "diagnostic text");
-        require_state($compiler->prepared_before_failure === 1 - $attempt, "completed work before failure");
+    for ($attempt int = 0; $attempt < 2; $attempt++) {
+        $caught = false;
+        try {
+            $compiler->run();
+        } catch (Preparation_Diagnostic $error) {
+            $caught = true;
+            require_state($error->source === $broken->source && $error->offset === $broken->offset, "diagnostic location");
+            require_state($error->detail === "Unknown function: missing", "diagnostic text");
+            require_state($compiler->prepared_before_failure === 1 - $attempt, "completed work before failure");
+        }
+        require_state($caught, "body failure was expected");
+        require_state($worker->owner === $quiet_body, "active preparation owner was not restored");
+        require_state($changed_body->prepared() && !$broken_body->prepared(), "body completion state");
+        require_state(count($compiler->work->pending) === 1 && $compiler->work->pending["broken"] === $broken_body, "pending work");
+        require_state(count($compiler->work->emission_sources) === 2, "unfinished output work");
+        require_state($compiler->output["changed"] === $old_output["changed"], "changed output escaped a failed preparation");
+        require_state($compiler->output["broken"] === $old_output["broken"], "last good output was lost");
     }
-    require_state($caught, "body failure was expected");
-    require_state($worker->owner === $quiet_body, "active preparation owner was not restored");
-    require_state($changed_body->prepared() && !$broken_body->prepared(), "body completion state");
-    require_state(count($compiler->work->pending) === 1 && $compiler->work->pending["broken"] === $broken_body, "pending work");
-    require_state(count($compiler->work->emission_sources) === 2, "unfinished output work");
-    require_state($compiler->output["changed"] === $old_output["changed"], "changed output escaped a failed preparation");
-    require_state($compiler->output["broken"] === $old_output["broken"], "last good output was lost");
+
+    $compiler->publish_declaration($missing);
+    $compiler->run();
+    require_state($worker === $compiler->preparation && $worker->owner === $quiet_body, "retry changed the worker or active owner");
+    require_state($compiler->prepared === 2 && $compiler->reused === 2, "retry did not reuse completed work");
+    require_state($compiler->symbols->functions["quiet"]->head === $quiet_body && $compiler->symbols->functions["broken"]->head === $broken_body,
+        "retry replaced an unaffected or pending body");
+    require_state(count($compiler->work->pending) === 0 && count($compiler->work->emission_sources) === 0, "retry did not acknowledge completed work");
+
+    $fresh = new Incremental_Preparation();
+    $fresh->publish_declaration($changed);
+    $fresh->publish_declaration($broken);
+    $fresh->publish_declaration($quiet);
+    $fresh->publish_declaration($missing);
+    $fresh->run();
+    require_state($fresh->prepared === 4, "fresh preparation");
+    $compiler->run();
+    require_state($compiler->prepared === 0 && $compiler->reused === 4, "no-op preparation");
+
+    $names vector<string> = ["changed", "broken", "quiet", "missing"];
+    foreach ($names as $name) {
+        require_state($compiler->output[$name] === $fresh->output[$name], "recovered artifact differs from fresh");
+        echo $compiler->output[$name];
+    }
+    $entry = $compiler->symbols->functions["missing"];
+    $original_head = $entry->head;
+    require_state($broken_body->selected_body() === $original_head, "wrong prepared source target");
+    $replacement = $compiler->publish_declaration($missing);
+    require_state($replacement !== $original_head && $broken_body->selected_body() === $replacement,
+        "already-prepared caller did not follow declaration replacement");
+    $entry->head = null;
+    require_state($broken_body->selected_body() === null, "deleted declaration still visible");
+    $restored = $compiler->publish_declaration($missing);
+    require_state($broken_body->selected_body() === $restored, "caller lost stable symbol during repair");
 }
 
-$compiler->publish_declaration($missing);
-$compiler->run();
-require_state($worker === $compiler->preparation && $worker->owner === $quiet_body, "retry changed the worker or active owner");
-require_state($compiler->prepared === 2 && $compiler->reused === 2, "retry did not reuse completed work");
-require_state($compiler->symbols->functions["quiet"] === $quiet_body && $compiler->symbols->functions["broken"] === $broken_body,
-    "retry replaced an unaffected or pending body");
-require_state(count($compiler->work->pending) === 0 && count($compiler->work->emission_sources) === 0, "retry did not acknowledge completed work");
-
-$fresh = new Incremental_Preparation();
-$fresh->publish_declaration($changed);
-$fresh->publish_declaration($broken);
-$fresh->publish_declaration($quiet);
-$fresh->publish_declaration($missing);
-$fresh->run();
-require_state($fresh->prepared === 4, "fresh preparation");
-$compiler->run();
-require_state($compiler->prepared === 0 && $compiler->reused === 4, "no-op preparation");
-
-$names vector<string> = ["changed", "broken", "quiet", "missing"];
-foreach ($names as $name) {
-    require_state($compiler->output[$name] === $fresh->output[$name], "recovered artifact differs from fresh");
-    echo $compiler->output[$name];
+// Test the production split between function_def() and implementation() with two
+// called types. The demand table is the only owner of each pair outside setup.
+function demand(Function_Entry $authored, string $symbol): Called_Method_Instance {
+    $head = $authored->head;
+    if ($head === null) throw Exception::make("Method declaration was removed");
+    return new Called_Method_Instance($authored, new Function_Body($head->syntax, $symbol));
 }
-return 8;
-'''
+function replace_private(Called_Method_Instance $left_pair, Function_Body $authored): weak<Function_Body> {
+    $old = $left_pair->implementation();
+    if ($old === null) throw Exception::make("Missing private body");
+    $observer = weak($old);
+    $left_pair->private_body = new Function_Body($authored->syntax, "called_4_Left_4_Base_read");
+    return $observer;
+}
+function check_specialization(): void {
+    $method = new Function_Entry();
+    $authored_body = new Function_Body(new Return_Syntax("method", "read", "3", "", 0));
+    $method->head = $authored_body;
+    $demands hash<Called_Method_Instance,string> = [];
+    $demands["Left"] = demand($method, "called_4_Left_4_Base_read");
+    $demands["Right"] = demand($method, "called_5_Right_4_Base_read");
+    $left_call = new Function_Body(new Return_Syntax("left_call", "left_call", "", "read", 0));
+    $right_call = new Function_Body(new Return_Syntax("right_call", "right_call", "", "read", 0));
+    $left_call->settle_preparation($demands["Left"]);
+    $right_call->settle_preparation($demands["Right"]);
+    require_state($left_call->selected_body() !== $right_call->selected_body(), "sibling bodies share identity");
+    echo $left_call->lower(), $right_call->lower();
+    $required = new Return_Syntax("method", "read", "3", "", 0);
+    $required->required_parameters = 1;
+    $method->head = new Function_Body($required);
+    $retry = new Function_Body($left_call->syntax);
+    $rejected = false;
+    try {
+        $retry->settle_preparation($demands["Left"]);
+    } catch (Preparation_Diagnostic $error) {
+        $rejected = $error->detail === "Argument count mismatch";
+    }
+    require_state($rejected && !$retry->prepared(), "specialized call ignored changed authored signature");
+    $method->head = $authored_body;
+    $retry->settle_preparation($demands["Left"]);
+    require_state($retry->selected_body() === $left_call->selected_body(), "signature repair lost demand");
+    $old_private = replace_private($demands["Left"], $authored_body);
+    require_state(lock($old_private) === null && $retry->selected_body() === $demands["Left"]->private_body,
+        "prepared caller kept a replaced private implementation");
+    $demands->remove("Left");
+    require_state($left_call->selected_body() === null && $retry->selected_body() === null, "retired pair kept alive");
+    require_state($right_call->selected_body() !== null, "retirement invalidated sibling");
+    $demands["Left"] = demand($method, "called_4_Left_4_Base_read");
+    require_state($left_call->selected_body() === null, "retired slot rebound by name");
+    $new_call = new Function_Body($left_call->syntax);
+    $new_call->settle_preparation($demands["Left"]);
+    require_state($new_call->selected_body() === $demands["Left"]->implementation(), "new demand chose sibling");
+}
+''' + '\n'.join(calls) + '\ncheck_specialization();\nreturn 8;\n'
 
 
-def prove(work, flavor):
-    work.mkdir()
-    inputs, expected = host_oracle(work, flavor)
+def prove(work):
+    # Three frontend input sets and the specialization proof share one compiled driver.
+    input_sets = []
+    expected = bytearray()
+    for flavor in ('php', 'cpp', 'js'):
+        directory = work / flavor
+        directory.mkdir()
+        inputs, output = host_oracle(directory, flavor)
+        input_sets.append(inputs)
+        expected.extend(output)
+    expected.extend(specialized_oracle(work))
     app, output = work / 'translated-input', work / 'translated-output'
     app.mkdir()
     (app / 'module.json').write_text('{}')
     shutil.copyfile(TRANSLATION, app / 'preparation.php')
-    (app / 'main.php').write_text(driver(inputs))
+    (app / 'main.php').write_text(driver(input_sets))
     result = fresh_build(app, output)
     assert 'error' not in result, result
-    timing = measure(output, work / 'native', expected)
-    print(f'{flavor}: same-instance recovery and fresh output passed (Clang frontend {timing["frontend_ms"]:.1f} ms)', flush=True)
+    timing = measure(output, work / 'native', bytes(expected))
+    print(f'Recovery in three flavors and specialized call targets passed (Clang frontend {timing["frontend_ms"]:.1f} ms)', flush=True)
 
 
 def main():
@@ -182,8 +271,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='scpp-translated-preparation-recovery-') as temporary:
         work = (args.output or Path(temporary)).resolve()
         work.mkdir(exist_ok=True)
-        for flavor in ('php', 'cpp', 'js'):
-            prove(work / flavor, flavor)
+        prove(work)
 
 
 if __name__ == '__main__':

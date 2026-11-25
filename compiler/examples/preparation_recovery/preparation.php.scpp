@@ -9,6 +9,7 @@ final class Return_Syntax {
 	public string $integer_spelling;
 	public string $callee;
 	public int $offset;
+	public int $required_parameters = 0;
 
 	public function __construct(string $source, string $function_name, string $integer, string $callee, int $offset) {
 		$this->source = $source;
@@ -31,20 +32,55 @@ final class Preparation_Diagnostic extends Exception {
 	}
 }
 
-final class Function_Body {
-	public Return_Syntax $syntax;
-	private string $prepared_expression;
-	private bool $ready = false;
+// Preparation validates the authored declaration. Lowering consumes the selected implementation.
+interface Prepared_Call_Target {
+	public function signature(): ?Function_Body;
+	public function implementation(): ?Function_Body;
+}
 
-	public function __construct(Return_Syntax $syntax) {
-		$this->syntax = $syntax;
+final class Function_Entry implements Prepared_Call_Target {
+	public ?Function_Body $head = null;
+
+	public override function signature(): ?Function_Body { return $this->head; }
+	public override function implementation(): ?Function_Body { return $this->head; }
+}
+
+// One instance per demanded (authored method, called type) pair.
+final class Called_Method_Instance implements Prepared_Call_Target {
+	public Function_Entry $method;
+	public ?Function_Body $private_body = null;
+
+	public function __construct(Function_Entry $method, Function_Body $body) {
+		$this->method = $method;
+		$this->private_body = $body;
 	}
 
-	public function settle_preparation(string $expression): void {
+	public override function signature(): ?Function_Body { return $this->method->head; }
+	public override function implementation(): ?Function_Body { return $this->private_body; }
+}
+
+final class Function_Body {
+	public Return_Syntax $syntax;
+	public string $native_name;
+	private weak<Prepared_Call_Target> $function_symbol;
+	private bool $ready = false;
+
+	public function __construct(Return_Syntax $syntax, string $native_name = "") {
+		$this->syntax = $syntax;
+		$this->native_name = $native_name === "" ? $syntax->function_name . "_" : $native_name;
+	}
+
+	public function settle_preparation(?Prepared_Call_Target $target): void {
 		if ($this->ready) {
 			throw Exception::make("Function body is already prepared");
 		}
-		$this->prepared_expression = $expression;
+		if ($target !== null) {
+			$signature = $target->signature();
+			if ($signature === null || $signature->syntax->required_parameters !== 0) {
+				throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset, "Argument count mismatch");
+			}
+			$this->function_symbol = weak($target);
+		}
 		$this->ready = true;
 	}
 
@@ -52,12 +88,23 @@ final class Function_Body {
 		return $this->ready;
 	}
 
+	public function selected_body(): ?Function_Body {
+		$entry = lock($this->function_symbol);
+		if ($entry === null) return null;
+		return $entry->implementation();
+	}
+
 	public function lower(): string {
 		if (!$this->ready) {
 			throw Exception::make("Function preparation is not complete");
 		}
-		$expression = $this->prepared_expression;
-		return "::scpp::int64 " . $this->syntax->function_name . "_()\n{\n\treturn " . $expression . ";\n}\n";
+		$expression = $this->syntax->integer_spelling . "LL";
+		if ($this->syntax->callee !== "") {
+			$callee = $this->selected_body();
+			if ($callee === null) throw Exception::make("Prepared call has no live declaration");
+			$expression = $callee->native_name . "()";
+		}
+		return "::scpp::int64 " . $this->native_name . "()\n{\n\treturn " . $expression . ";\n}\n";
 	}
 }
 
@@ -77,7 +124,7 @@ final class Preparation_Work {
 }
 
 final class Published_Symbols {
-	public hash<Function_Body,string> $functions;
+	public hash<Function_Entry,string> $functions;
 }
 
 final class Preparation {
@@ -87,27 +134,26 @@ final class Preparation {
 		$previous = $this->owner;
 		$this->owner = $body;
 		try {
-			$expression = $this->prepare_return($symbols);
-			$body->settle_preparation($expression);
+			$body->settle_preparation($this->prepare_return($symbols));
 		} finally {
 			$this->owner = $previous;
 		}
 	}
 
-	private function prepare_return(Published_Symbols $symbols): string {
+	private function prepare_return(Published_Symbols $symbols): ?Prepared_Call_Target {
 		$body = $this->owner;
 		if ($body === null) {
 			throw Exception::make("Preparation requires an active body");
 		}
 		$syntax = $body->syntax;
 		if ($syntax->callee === "") {
-			return $syntax->integer_spelling . "LL";
+			return null;
 		}
-		if (!hash_contains($symbols->functions, $syntax->callee)) {
+		if (!hash_contains($symbols->functions, $syntax->callee) || $symbols->functions[$syntax->callee]->head === null) {
 			throw new Preparation_Diagnostic($syntax->source, $syntax->offset,
 				"Unknown function: " . $syntax->callee);
 		}
-		return $symbols->functions[$syntax->callee]->syntax->function_name . "_()";
+		return $symbols->functions[$syntax->callee];
 	}
 }
 
@@ -128,7 +174,11 @@ final class Incremental_Preparation {
 
 	public function publish_declaration(Return_Syntax $syntax): Function_Body {
 		$body = new Function_Body($syntax);
-		$this->symbols->functions[$syntax->function_name] = $body;
+		if (!hash_contains($this->symbols->functions, $syntax->function_name)) {
+			$this->symbols->functions[$syntax->function_name] = new Function_Entry();
+		}
+		$entry = $this->symbols->functions[$syntax->function_name];
+		$entry->head = $body;
 		$this->work->enqueue($body);
 		return $body;
 	}

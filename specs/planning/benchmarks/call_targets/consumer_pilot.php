@@ -75,8 +75,10 @@ if ($mode === 'timing' || $mode === 'counts') {
 
 save("$app/work0.php", worker(0, 1));
 $project = $make();
-foreach (['fresh','caller','body','shadow','restore','bad','repair','bad_local','bad_method','bad_runtime','bad_ctor','retire','rebind'] as $phase) {
+foreach (['fresh','caller','body','shadow','restore','bad','repair','bad_local','bad_method','bad_runtime','bad_ctor','retire','rebind','bad_deleted','restore_deleted'] as $phase) {
     match ($phase) {
+        'bad_deleted' => unlink("$app/answer.php"),
+        'restore_deleted' => save("$app/answer.php", targets(1)),
         'caller' => save("$app/work0.php", worker(0, 2)),
         'body' => save("$app/answer.php", targets(2)),
         'shadow' => save("$app/shadow.php", 'function strlen(string $text):int {return 6;}'),
@@ -101,10 +103,15 @@ foreach (['fresh','caller','body','shadow','restore','bad','repair','bad_local',
         $result = $project->run();
         if (str_starts_with($phase, 'bad')) throw new RuntimeException('Required argument accepted');
     } catch (diagnostic|diagnostic_group $error) {
-        $expected = $phase === 'bad_runtime' ? 'strlen requires string' : 'Argument count mismatch';
+        $expected = match ($phase) {
+            'bad_deleted' => 'Unknown function: answer', 'bad_runtime' => 'strlen requires string',
+            default => 'Argument count mismatch',
+        };
         if (!str_starts_with($phase, 'bad') || !str_contains($error->getMessage(), $expected)) throw $error;
         $rows[$phase] = ['error'=>$error->getMessage(), 'bundle'=>stamp($out)];
-        if ($rows[$phase]['bundle'] !== $rows[$phase === 'bad' ? 'restore' : 'repair']['bundle']) throw new RuntimeException('Failed edit altered output');
+        if ($rows[$phase]['bundle'] !== $last_bundle) throw new RuntimeException('Failed edit altered output');
+        // Exception traces can own retired source generations until the client releases the diagnostic.
+        unset($error);
         continue;
     }
     if ($phase === 'fresh') {
@@ -120,6 +127,7 @@ foreach (['fresh','caller','body','shadow','restore','bad','repair','bad_local',
         if ($observer->get() !== null) throw new RuntimeException("Stale target retained after $phase");
     }
     $rows[$phase] = ['work'=>$result['preparation'], 'emitted'=>array_map('basename', $result['emitted_sources']), 'bundle'=>stamp($out)];
+    $last_bundle = $rows[$phase]['bundle'];
     sort($rows[$phase]['emitted']);
     $clean = new Incremental_Project($app, $out.'-fresh', new entry_target(31));
     $clean->run();

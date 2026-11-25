@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
+require_once __DIR__ . '/preparation_snapshot.php';
 require_once __DIR__ . '/../host/syntax.php';
 require_once __DIR__ . '/../host/compilation.php';
 
@@ -100,9 +101,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	verify(array_key_first($file->declarations) === 'func:main', 'Main must stay first');
 	verify(Syntax_Inspection::file($file)['globals'][0]['qualified_name'] === 'App\value', 'Global inspection');
 	verify(Compilation_Inspection::program($program->entry)['statements'][3]['values'][0]['binding'] === 'var:Lib\value', 'Prepared inspection');
-	$before = serialize($program);
+	$snapshot = new Preparation_Snapshot();
+	$before = $snapshot->capture($program);
 	$output = Cpp_Program::emit($program);
-	verify(serialize($program) === $before, 'Lowering mutated facts');
+	verify($snapshot->capture($program) === $before, 'Lowering mutated facts');
 	verify(str_contains(implode('', $output->files), 'constinit scpp::int64'), 'Static initialization missing');
 	$outputs[] = $output->files;
 	if (isset($argv[1])) {
