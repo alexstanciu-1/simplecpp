@@ -41,6 +41,20 @@ $err json_parse_error=$diag;
 if($err->byte_offset!==7 || $err->category!=="duplicate_key"){return 13;}
 $failed=json_document_parse("[[]]",$diag,1); if(isset($failed)){return 14;}
 $doc=json_document_parse("{}",$diag); if(isset($diag)){return 15;}
+$reader=json_pull_reader_create(); $alias=$reader; $input="{\"a\":[1e9999,false,null,\"x\"],\"b\":42}";
+$ok bool=$reader->start($input,"test.json",128); $input="changed";
+$type string=$alias->kind(); $ok=$reader->begin_object();
+$ok=$alias->next_property(); $key string=$reader->property_name();
+$ok=$reader->begin_array(); $ok=$alias->next_element();
+$raw string=$reader->read_number(); $ok=$reader->next_element(); $readerFlag bool=$alias->read_boolean();
+$ok=$reader->next_element(); $ok=$reader->read_null(); $ok=$reader->next_element(); $token string=$reader->read_string();
+$done bool=$reader->next_element(); $ok=$reader->next_property(); $integer int=$reader->read_integer(); $end bool=$reader->next_property();
+if(!$ok || $type!=="object" || $key!=="a" || $raw!=="1e9999" || $readerFlag || $done || $end || $integer!==42 || $token!=="x"){return 16;}
+$ok=$reader->finish_document(); if(!$ok || !isset($alias->finish_document())){return 17;}
+$badReader=json_pull_reader_create(); $ok=$badReader->start("null","bad.json",1);
+if(isset($badReader->read_string()) || isset($badReader->read_null()) || isset($badReader->start("true","",1))){return 18;}
+$reject=json_pull_reader_create(); $ok=$reject->start("[]","",1);
+if(isset($reject->reject("schema failure")) || isset($reject->kind())){return 19;}
 return 0;
 '''
 with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:

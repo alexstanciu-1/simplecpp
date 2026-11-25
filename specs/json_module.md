@@ -149,3 +149,16 @@ success. The returned result carries either a complete document or an error.
 Node accessors preserve shape, source member order and exact number tokens.
 Integer extraction accepts lexical signed int64 integers. All access failures
 are checked results.
+
+## Pull reader publication
+
+The pull_reader selection publishes json_pull_reader_create and fourteen checked
+methods. Copies share one cursor. start(text,file,limit) owns the input, uses
+file for diagnostics and accepts depths 1–256. Use kind, begin_object,
+begin_array, next_property, next_element and property_name to navigate. Read
+the current scalar with read_number (original spelling), read_integer (int64),
+read_string, read_boolean or read_null. A successful false from advancement
+closes that container. Finish with finish_document after consuming the root,
+or fail the cursor explicitly through reject(message). A failed read is
+terminal; restart requires a fresh handle. Documents use the same private
+structural reader, with independent public feature selection.

@@ -83,5 +83,5 @@ function compilerJsonCases(?array $runtime, array $types): array {
         $cases[] = "\t\t\t'php:func:json_encode', 'general:func:json_encode' => \$bindings[\$key] ??= new runtime_overloads([1 => ["
             . implode(', ', $encoders) . "]], required_module: 'runtime-json'),";
     }
-    return array_merge($cases, compilerJsonDocumentCases($runtime, $types));
+    return array_merge($cases, compilerJsonDocumentCases($runtime, $types), compilerJsonReaderCases($runtime, $types));
 }

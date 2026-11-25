@@ -47,6 +47,7 @@ function renderJson(array $plan, array &$files): void {
     $files['public/' . $module['header']] = $h . "}\n";
     $files['src/json.cpp'] = $d . "}\n";
     renderJsonHandles($plan, $files);
+    renderJsonReader($plan, $files);
 }
 
 function jsonNativeArgument(array $operation, string $source): string {
