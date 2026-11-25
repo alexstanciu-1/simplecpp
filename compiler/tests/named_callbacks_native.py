@@ -7,6 +7,7 @@ import tempfile
 
 from app_namespace_native import artifacts, invoke, service
 from classes_native import fixture
+from collection_goal_native import revisions
 from extends_native import source_edit
 from incremental_executable_native import run, snapshots, write_build
 
@@ -155,7 +156,7 @@ def prove(work, flavor):
         source_edit(source('arithmetic'), static_method.replace(' * 2', ' * 3'))
         source_edit(source('compute'), compute.replace(f'{v}b)', f'{v}b=3)') if flavor != 'js'
                     else compute.replace('b:int)', 'b:int=3)'))
-        rejection('Callback target signature mismatch', 'defaulted-target')
+        step('LR23:12:14!')
         source_edit(source('compute'), compute)
         source_edit(source('main'), main.replace('notify(mark(...))', 'notify(compute(...))'))
         rejection('Callback target signature mismatch', 'wrong-arity')
@@ -174,6 +175,36 @@ def prove(work, flavor):
         resident.wait()
 
 
+def defaulted_targets(work):
+    work.mkdir()
+    provider = """
+        function add(int $x,int $step=1):int {return $x+$step;}
+        class Math {public static function add(int $x,int $step=1):int {return $x+$step;}}
+    """
+    indirect = """
+        function apply(callback<int,int,int> $op):int {return $op(4,3);}
+        $free function<int(int,int)> = add(...);
+        $method function<int(int,int)> = Math::add(...);
+        echo apply(add(...)),apply(Math::add(...)),$free(4,3),$method(4,3);
+        return 8;
+    """
+    direct = 'echo add(4),Math::add(4),":";'
+    changed_type = provider.replace('int $step=1', 'string $step="x"').replace('$x+$step', '$x')
+    revisions(work, 'php', dict(main=direct + indirect, provider=provider), [
+        (None, None, b'55:7777'),
+        ('provider', provider.replace('=1', '=2'), b'66:7777'),
+        ('main', indirect, b'7777'),
+        ('provider', provider.replace('=1', ''), b'7777'),
+        ('provider', changed_type, 'Callback target signature mismatch'),
+        ('provider', provider, b'7777'),
+        ('main', '$op function<int(int)> = Math::add(...);return 8;', 'Callback target signature mismatch'),
+        ('main', 'function unary(callback<int,int> $op):int {return $op(4);}return unary(add(...));', 'Callback target signature mismatch'),
+        ('main', indirect.replace('$op(4,3)', '$op(4)'), 'Argument count mismatch'),
+        ('main', indirect.replace('$method(4,3)', '$method(4)'), 'Argument count mismatch'),
+        ('main', direct + indirect, b'55:7777'),
+    ])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
@@ -184,6 +215,7 @@ def main():
         work.mkdir(parents=True, exist_ok=True)
         for flavor in (('php',) if args.quick else ('php', 'cpp', 'js')):
             prove(work / flavor, flavor)
+        defaulted_targets(work / 'defaults')
 
 
 if __name__ == '__main__':

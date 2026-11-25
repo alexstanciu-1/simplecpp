@@ -297,7 +297,11 @@ Pass a source function as `name(...)`. A type-qualified reference such as
 `Math::twice(...)` (PHP and C++) or `Math.twice(...)` (JS) can select a
 static method using normal name lookup and access checks. The ellipsis forms
 a reference without invoking its target. The expected types and arity must
-match the target's required signature exactly, including each input's passing mode. Inside the accepting
+match the full declared signature, including each input's passing mode and the
+variadic marker. A named free function or static method with trailing defaults
+can supply either a typed callback or an owned callable. Direct calls may omit
+defaulted arguments. Calls through either callable supply every fixed argument.
+Inside the accepting
 function, invoke the parameter with ordinary call syntax (`$op(value)` in PHP,
 `op(value)` in C++ and JS), or forward it to another matching callback
 parameter. A trailing `&` marks a mutable reference input, as in
