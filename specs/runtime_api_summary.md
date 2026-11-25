@@ -219,3 +219,5 @@ The [filesystem contract](filesystem_module.md) defines the general and PHP name
 ## Optional Stream I/O, Process and curl modules
 
 The [module contracts](stream_process_curl_modules.md) define handle lifetime, flavor visibility, checked results and external dependencies.
+
+The optional [mysqli, UI and Webview modules](database_desktop_modules.md) publish opaque handles and their operations through the runtime catalog.

@@ -1382,6 +1382,19 @@ final class Preparation
 			} else {
 				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
 			}
+			$factory = $payload instanceof runtime_handle_type ? runtime_functions::resolve($syntax->source()->flavor->name . ':new:' . $payload->name) : null;
+			if ($factory instanceof runtime_function) {
+				if ($syntax->named !== null || count($syntax->arguments) < $factory->required_parameters || count($syntax->arguments) > count($factory->parameters)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Invalid runtime constructor arguments');
+				}
+				foreach ($syntax->arguments as $index => $argument) {
+					$type = $factory->parameters[$index];
+					$this->value($argument, destination: $type);
+					if ($argument->type_def() !== $type) throw new diagnostic($argument->source(), $argument->byte_start(), 'Constructor requires ' . $type->name);
+				}
+				$syntax->settle_construction($payload, array_fill(0, count($syntax->arguments), value_conversion::identity));
+				return;
+			}
 			if ($payload instanceof type_exception) {
 				if ($syntax->named !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 				$factory = $payload->factory;
@@ -1409,7 +1422,7 @@ final class Preparation
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
 			if ($type instanceof runtime_field_type) {
 				$field = $type->runtime_field($syntax->field);
-				if ($field === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown field ' . $type->name . '.' . $syntax->field);
+				if ($field === null || ($type instanceof runtime_handle_type && $syntax->source()->flavor !== flavor::php)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown field ' . $type->name . '.' . $syntax->field);
 				$syntax->settle_field($field);
 				return;
 			}
@@ -1579,6 +1592,14 @@ final class Preparation
 				return;
 			}
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
+				$carrier = $left instanceof carrier_type_definition ? $left : $right;
+				$literal = $carrier === $left ? $syntax->right : $syntax->left;
+				if ($carrier instanceof carrier_type_definition && $carrier->payload_type instanceof runtime_handle_type
+					&& $literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)
+					&& $carrier->sentinel_factory($literal->word) !== null) {
+					$syntax->settle_binary(type_bool::instance(), $carrier);
+					return;
+				}
 				$carrier = $left === type_null::instance() ? $right : ($right === type_null::instance() ? $left : null);
 				if ($carrier instanceof carrier_type_definition && $carrier->accepts_empty()) {
 					$syntax->settle_binary(type_bool::instance(), $carrier);
@@ -1770,6 +1791,19 @@ final class Preparation
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
+		if ($runtime instanceof runtime_function && $runtime->borrows_slots) {
+			if ($this->enclosing_lambda !== null || $this->owner->parent->is_async || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Bound parameter frame lifetime is unproven');
+			}
+			if (count($call->arguments) < 2) throw new diagnostic($call->source(), $call->byte_start(), 'bind_param requires a type string and at least one named slot');
+			$params = $runtime->parameters;
+			foreach (array_slice($call->arguments, 1) as $slot) {
+				$this->value($slot);
+				Bound_Slots::prove($call, $slot);
+				$params[] = $slot->type_def();
+			}
+			$runtime = new borrowed_slot_function($runtime->name(), $params, $runtime->return_type_def(), $runtime->symbol, $runtime->header, const_reference_mask: 3, free_receiver: true);
+		}
 		$slots = null;
 		if ($call instanceof ast_named_call) {
 			if (!($runtime instanceof runtime_function) || $runtime->parameter_names === null || $call->receiver !== null) {
@@ -1803,7 +1837,7 @@ final class Preparation
 		foreach ($operands as $index => $argument) {
 			$slot = $slots[$index] ?? $index;
 			$type = $runtime->parameters[$slot];
-			if ($argument !== $prepared && $argument !== $call->receiver) {
+			if ($argument !== $prepared && $argument !== $call->receiver && !($runtime instanceof borrowed_slot_function && $index >= 2)) {
 				$this->value($argument, destination: $type);
 			}
 			if ($index === 0 && $runtime->receiver_method && $call->receiver !== null) {
@@ -2170,7 +2204,7 @@ final class Preparation
 				if ($runtime === null) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
 				}
-				if ($runtime->receiver_method) {
+				if ($runtime->receiver_method || ($runtime instanceof runtime_function && $runtime->free_receiver)) {
 					$expected = in_array($call->source()->flavor, [flavor::js, flavor::python], true) ? token_kind::dot : token_kind::member;
 					if ($call->member_separator !== $expected) {
 						throw new diagnostic($call->source(), $call->byte_start(), 'Native receiver methods use -> in PHP/C++ and . in JS/Python');

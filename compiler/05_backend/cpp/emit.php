@@ -2334,6 +2334,13 @@ CPP;
 		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $value->constructed_record() !== null)) {
 			$type = $value->type_def();
 			$shared = $value instanceof ast_new_expression || $value instanceof ast_call_expression;
+			if ($value instanceof ast_new_expression && $type instanceof runtime_handle_type) {
+				$factory = runtime_functions::resolve($value->source()->flavor->name . ':new:' . $type->name);
+				if ($factory instanceof runtime_function) {
+					$required_headers[$factory->header] = true;
+					return $this->invocation($value, $factory, $factory->symbol, $type, $global_references, $declarations, $required_headers);
+				}
+			}
 			if ($shared && $type instanceof type_exception) {
 				$message = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
 				return $type->factory->symbol . '(' . $message . ')';
@@ -2358,6 +2365,13 @@ CPP;
 				if ($pointer !== null) return $pointer . '->' . Cpp_Identifier::source($value->field);
 			}
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			if ($value->receiver->type_def() instanceof runtime_handle_type) {
+				$property = runtime_functions::resolve($value->source()->flavor->name . ':property:' . $value->receiver->type_def()->name . ':' . $value->field);
+				if ($property instanceof runtime_function) {
+					$required_headers[$property->header] = true;
+					return $property->symbol . '(' . $receiver . ')';
+				}
+			}
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
@@ -2984,7 +2998,8 @@ CPP;
 		}
 		$fields = [];
 		$base = $receiver;
-		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)) {
+		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)
+			&& !($base->receiver->type_def() instanceof runtime_handle_type)) {
 			$fields[] = Cpp_Identifier::source($base->field);
 			$base = $base->receiver;
 		}
@@ -3023,7 +3038,7 @@ CPP;
 		$arguments = [];
 		$callback = $function instanceof callback_type_definition;
 		$runtime = $function instanceof runtime_function;
-		$operands = $runtime ? $value->runtime_operands() : $value->arguments;
+		$operands = $runtime && $value instanceof ast_call_expression ? $value->runtime_operands() : $value->arguments;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
 		if (isset($value->named)) {
 			$parameters = $value->named->evaluation_parameters($parameters);

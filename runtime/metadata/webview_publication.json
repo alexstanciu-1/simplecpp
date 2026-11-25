@@ -1,0 +1,18 @@
+{
+  "types": {"webview": {"carriers": ["result", "nullable"]}},
+  "operations": [
+    {"native": "webview_create", "general": ["webview_create"], "parameters": ["ui_window"], "result": "result_webview"},
+    {"native": "webview_load_url", "general": ["webview_load_url"], "parameters": ["webview", "string"], "result": "result_bool_t"},
+    {"native": "webview_load_html", "general": ["webview_load_html"], "parameters": ["webview", "string"], "result": "result_bool_t"},
+    {"native": "webview_load_app", "general": ["webview_load_app"], "parameters": ["webview", "string"], "result": "result_bool_t"},
+    {"native": "webview_eval", "general": ["webview_eval"], "parameters": ["webview", "string"], "result": "result_bool_t"},
+    {"native": "webview_close", "general": ["webview_close"], "parameters": ["webview"], "result": "void"},
+    {"native": "ui_event_webview", "general": ["ui_event_webview"], "parameters": ["ui_event"], "result": "nullable_webview"},
+    {"native": "webview_reply_ok", "general": ["webview_reply_ok"], "parameters": ["webview", "int64", "string"], "result": "result_bool_t"},
+    {"native": "webview_reply_error", "general": ["webview_reply_error"], "parameters": ["webview", "int64", "string", "string"], "result": "result_bool_t"},
+    {"native": "webview_message_id", "general": ["webview_message_id"], "parameters": ["ui_event"], "result": "int64"},
+    {"native": "webview_message_command", "general": ["webview_message_command"], "parameters": ["ui_event"], "result": "string"},
+    {"native": "webview_message_payload_json", "general": ["webview_message_payload_json"], "parameters": ["ui_event"], "result": "string"}
+  ],
+  "constants": {}
+}

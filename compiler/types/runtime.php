@@ -29,7 +29,7 @@ readonly class runtime_function implements callable_signature
 
 	/** CONSTRUCTOR */
 	/** @param type_definition[] $parameters @param string[]|null $parameter_names Published source labels in declaration order. */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false, bool $retains_receiver = true, bool $type_qualified = false, public ?string $required_module = null, public ?string $full_arity_argument = null, public ?array $parameter_names /** list<string>|null */ = null, public bool $exact_arguments = false)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false, bool $retains_receiver = true, bool $type_qualified = false, public ?string $required_module = null, public ?string $full_arity_argument = null, public ?array $parameter_names /** list<string>|null */ = null, public bool $exact_arguments = false, public bool $free_receiver = false, public bool $borrows_slots = false)
 	{
 		$this->retains_receiver = $retains_receiver;
 		$this->type_qualified = $type_qualified;
@@ -156,5 +156,15 @@ final readonly class regex_callback_function extends runtime_function
 		}
 		return new cpp_inline_adapter($this->name(), $params, $this->return_type_def(), $body, false,
 			headers: $headers, body_types: [$this->callback]);
+	}
+}
+
+
+/** The variadic tail consists of exact caller slots whose lifetime preparation has proven. */
+final readonly class borrowed_slot_function extends runtime_function
+{
+	public function is_reference(int $index /** uint32 */): bool
+	{
+		return $index >= 2;
 	}
 }

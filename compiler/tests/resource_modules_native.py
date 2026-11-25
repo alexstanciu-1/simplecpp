@@ -201,5 +201,5 @@ if sys.argv[2] == 'headers':
             source = '#include "' + header.relative_to(public).as_posix() + '"\n'
             subprocess.run([*command, '-fsyntax-only', '-'], input=source, text=True, check=True)
             includes = subprocess.check_output([*command, '-M', '-'], input=source, text=True)
-            for forbidden in ('/curl/curl.h','/sys/wait.h','/stdio.h','/private/', '/scpp/php/', '/scpp/js/'):
+            for forbidden in ('/curl/curl.h','/sys/wait.h','/stdio.h','/private/', '/scpp/php/', '/scpp/js/', '/gtk/', '/webkit2/', '/webkit/', '/mysql.h'):
                 assert forbidden not in includes, (header, forbidden)

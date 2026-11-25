@@ -179,6 +179,11 @@ interface shared_value_lookup_type
 /** An owning runtime text builder eligible for a readonly free-function parameter. */
 interface text_builder_type {}
 
+/** Opaque resource payload. Boolean sentinels on its carriers are distinct from every payload. */
+interface runtime_handle_type
+{
+}
+
 /** A runtime value with published typed fields, such as a JSON parse diagnostic. */
 interface runtime_field_type
 {

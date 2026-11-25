@@ -1,0 +1,16 @@
+{
+    "name": "runtime-ui",
+    "type": "c++",
+    "sources": [
+        "src/ui/ui.cpp"
+    ],
+    "dependencies": {
+        "runtime": {}
+    },
+    "artifacts": [
+        "../build/clang/libscpp_ui.a",
+        "../build/clang/ui-deps/libgtk-3.so",
+        "../build/clang/ui-deps/libgobject-2.0.so",
+        "../build/clang/ui-deps/libglib-2.0.so"
+    ]
+}

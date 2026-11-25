@@ -165,10 +165,12 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             ]) : compilerLiteralMethods($definition);
         if ($definition['literal_family'] === 'string') $literalMethods = strtr(readFile(__DIR__ . '/../templates/strings/string_literal_methods.php.tpl'), ['@storage_header@' => var_export($definition['storage']['header'], true)]);
         $indexInterface = $definition['strategy'] === 'builder' ? ' implements text_builder_type' : '';
-        if (isset($moduleTypes[$identity]['fields'])) {
-            $indexInterface = ' implements runtime_field_type';
+        $handle = isset($runtime['resource_types'][$identity]) && !isset($moduleTypes[$identity]['fields']);
+        if ($handle) $indexInterface = ' implements runtime_handle_type';
+        if (isset($moduleTypes[$identity]['fields']) || isset($moduleTypes[$identity]['properties'])) {
+            $indexInterface = $handle ? ' implements runtime_handle_type, runtime_field_type' : ' implements runtime_field_type';
             $fields = [];
-            foreach ($moduleTypes[$identity]['fields'] as $field => $type) {
+            foreach (($moduleTypes[$identity]['fields'] ?? $moduleTypes[$identity]['properties']) as $field => $type) {
                 $class = $definitions[$type]['class'] ?? $type;
                 $fields[] = "'$field' => type_{$class}::instance()";
             }

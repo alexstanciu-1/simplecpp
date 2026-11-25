@@ -109,15 +109,28 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 	{
 		$box_left = $value->left->type_def() === $this;
 		$peer = $box_left ? $value->right->type_def() : $value->left->type_def();
+		if ($peer === type_null::instance() && ($value->operator === binary_operator::identical || $value->operator === binary_operator::not_identical)
+			&& ($box_left ? $value->right : $value->left) instanceof ast_keyword_expression) {
+			$value->settle_binary(type_bool::instance(), $this);
+			return;
+		}
 		if (!$this->admits_pair($value->operator, $peer, $box_left)) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported boxed binary operands or operator');
 		}
 		$value->settle_binary($this->boxed_result($value->operator) ?? throw new \LogicException('Missing boxed result'), $this);
 	}
 
+	/** Emit an exact null-tag test or the published boxed operator. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{
+		if ($expr->operator === binary_operator::identical || $expr->operator === binary_operator::not_identical) {
+			$other = $expr->left->type_def() === $this ? $expr->right : $expr->left;
+			if ($other->type_def() === type_null::instance() && $other instanceof ast_keyword_expression) {
+				$operand = $expr->left->type_def() === $this ? $left : $right;
+				return '((' . $operand . ').kind() ' . ($expr->operator === binary_operator::identical ? '==' : '!=') . ' scpp::boxed_kind::null)';
+			}
+		}
 		return 'scpp::boxed_' . $expr->operator->name . '_' . $expr->left->type_def()->name . '_'
 			. $expr->right->type_def()->name . '(' . $left . ', ' . $right . ', ' . $this->flavor_mask($expr) . ')';
 	}

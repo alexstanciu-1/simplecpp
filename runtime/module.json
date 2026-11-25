@@ -17,7 +17,10 @@
         "filesystem": "filesystem.module.json",
         "io": "io.module.json",
         "process": "process.module.json",
-        "curl": "curl.module.json"
+        "curl": "curl.module.json",
+        "ui": "ui.module.json",
+        "webview": "webview.module.json",
+        "mysqli": "mysqli.module.json"
     },
     "artifacts": [
         "../build/clang/libscpp_runtime.a"
