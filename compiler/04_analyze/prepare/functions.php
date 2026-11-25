@@ -297,12 +297,11 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}
 			if ($parameter->mode === passing_mode::readonly_reference) {
-				$collection = $parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition;
+				$collection = Type_Resolution::readonly_collection_input($parameter_type);
 				if ($declaration->parent instanceof ast_method_owner) {
 					if (!$collection || !($declaration->parent instanceof ast_record_declaration)
-						|| $declaration->parent->kind === record_kind::interface_type || $declaration->has_virtual_dispatch()
-						|| $declaration->is_constructor() || $declaration->is_destructor()) {
-						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const method references require a vector or hash on a direct class or struct method');
+						|| $declaration->is_destructor()) {
+						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const method references require a vector or hash on an ordinary class, struct or interface method');
 					}
 				} elseif (!$collection && !($parameter_type instanceof text_builder_type)) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector, hash or text builder parameter');

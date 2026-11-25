@@ -1,0 +1,103 @@
+// A component stands for an already-resolved type object. Spelling is not an interning key.
+final class Component {
+    public string $name;
+    public function __construct(string $name) { $this->name = $name; }
+}
+
+struct Input {
+    public Component $type;
+    public bool $reference;
+}
+
+final class Signature {
+    public Component $result;
+    public vector<Input> $inputs;
+    public bool $reference_result;
+    public bool $variadic;
+
+    public function __construct(Component $result, bool $reference_result, bool $variadic) {
+        $this->result = $result;
+        $this->reference_result = $reference_result;
+        $this->variadic = $variadic;
+    }
+
+    public function input(Component $type, bool $reference): void {
+        $input Input;
+        $input->type = $type;
+        $input->reference = $reference;
+        $this->inputs[] = $input;
+    }
+}
+
+final class Owned_Callable {
+    public Signature $signature;
+    public function __construct(Signature $signature) { $this->signature = $signature; }
+}
+
+// Child nodes observe their component keys. A terminal may also have children.
+final class Index_Node {
+    private weak<Component> $key;
+    private int $mode = 0;
+    private ?Index_Node $first = null;
+    private ?Index_Node $next = null;
+    private weak<Owned_Callable> $element;
+
+    public function child(Component $key, int $mode): Index_Node {
+        $vacant ?Index_Node = null;
+        $child = $this->first;
+        while ($child !== null) {
+            $live = lock($child->key);
+            if ($live === $key && $child->mode === $mode) return $child;
+            if ($live === null) $vacant = $child;
+            $child = $child->next;
+        }
+        if ($vacant !== null) {
+            $vacant->first = null;
+            $vacant->key = weak($key);
+            $vacant->mode = $mode;
+            return $vacant;
+        }
+        $new = new Index_Node();
+        $new->key = weak($key);
+        $new->mode = $mode;
+        $new->next = $this->first;
+        $this->first = $new;
+        return $new;
+    }
+
+    // Count retained metadata outside the measured lookup loop.
+    public function count_nodes(): int {
+        $total = 1;
+        $child = $this->first;
+        while ($child !== null) {
+            $total += $child->count_nodes();
+            $child = $child->next;
+        }
+        return $total;
+    }
+
+    public function canonical(Signature $signature): Owned_Callable {
+        $live = lock($this->element);
+        if ($live !== null) return $live;
+        $owned = new Owned_Callable($signature);
+        $this->element = weak($owned);
+        return $owned;
+    }
+}
+
+final class Signature_Index {
+    private Index_Node $root;
+    public function __construct() { $this->root = new Index_Node(); }
+
+    public function count_nodes(): int { return $this->root->count_nodes(); }
+
+    public function element(Signature $signature): Owned_Callable {
+        // The frontend admits one writable origin for a reference result and only a trailing pack.
+        $mode = ($signature->reference_result ? 1 : 0) + ($signature->variadic ? 2 : 0);
+        $node = $this->root->child($signature->result, $mode);
+        foreach ($signature->inputs as $input) {
+            $node = $node->child($input->type, $input->reference ? 1 : 0);
+        }
+        return $node->canonical($signature);
+    }
+}

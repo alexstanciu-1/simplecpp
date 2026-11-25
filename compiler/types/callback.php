@@ -8,7 +8,7 @@ final class callback_type_definition extends type_definition
 {
 	/**
 	 * @param type_definition[] $inputs
-	 * @param passing_mode[] $modes Mutable reference positions in ascending input order.
+	 * @param passing_mode[] $modes Reference positions in ascending input order.
 	 */
 	public function __construct(public readonly type_definition $result, public readonly array $inputs /** list<type_definition> */,
 		private readonly array $modes /** array<uint32,passing_mode> */ = [], public readonly ?int $reference_origin /** uint32|null */ = null,
@@ -22,7 +22,7 @@ final class callback_type_definition extends type_definition
 	public function input_spelling(int $index): string
 	{
 		$type = $this->inputs[$index];
-		return $index === $this->variadic_slot ? $type->element_type->name . '...' : $type->name . $this->input_suffix($index);
+		return $index === $this->variadic_slot ? $type->element_type->name . '...' : $this->input_mode($index)->qualify($type->name);
 	}
 
 	public function result_suffix(): string
@@ -35,11 +35,6 @@ final class callback_type_definition extends type_definition
 		return $this->modes[$index] ?? passing_mode::value;
 	}
 
-	public function input_suffix(int $index /** uint32 */): string
-	{
-		return isset($this->modes[$index]) ? '&' : '';
-	}
-
 	/** Spell the concrete native function pointer and its parameter types. */
 	public function cpp_declarator(string $name = ''): string
 	{
@@ -48,7 +43,7 @@ final class callback_type_definition extends type_definition
 			return str_starts_with($native, 'scpp::') ? '::' . $native : $native;
 		};
 		$inputs = [];
-		foreach ($this->inputs as $i => $input) $inputs[] = $result($input) . $this->input_suffix($i);
+		foreach ($this->inputs as $i => $input) $inputs[] = $this->input_mode($i)->qualify($result($input));
 		return $result($this->result) . $this->result_suffix() . ' (*' . $name . ')(' . implode(', ', $inputs) . ')';
 	}
 
@@ -115,6 +110,7 @@ final class callable_signature_index
 	/** @var \WeakMap<type_definition,callable_signature_index>|null */
 	private ?\WeakMap $children = null;
 	private ?self $reference_inputs = null;
+	private ?self $readonly_inputs = null;
 	private ?self $variadic = null;
 	/** @var \WeakReference<owned_callable_type>|null */
 	private ?\WeakReference $element = null;
@@ -126,7 +122,13 @@ final class callable_signature_index
 		$node = $signature->reference_origin === null ? $root : ($root->reference_inputs ??= new self());
 		if ($signature->variadic_slot !== null) $node = $node->variadic ??= new self();
 		foreach ([$signature->result, ...$signature->inputs] as $i => $component) {
-			if ($i > 0 && $signature->input_mode($i - 1) === passing_mode::reference) $node = $node->reference_inputs ??= new self();
+			if ($i > 0) {
+				$node = match ($signature->input_mode($i - 1)) {
+					passing_mode::value => $node,
+					passing_mode::reference => $node->reference_inputs ??= new self(),
+					passing_mode::readonly_reference => $node->readonly_inputs ??= new self(),
+				};
+			}
 			$node->children ??= new \WeakMap();
 			$node = $node->children[$component] ??= new self();
 		}
@@ -159,7 +161,7 @@ final class owned_callable_type extends type_definition implements presence_test
 	public function cpp_type(): string
 	{
 		$inputs = [];
-		foreach ($this->signature->inputs as $i => $input) $inputs[] = $input->cpp_type() . $this->signature->input_suffix($i);
+		foreach ($this->signature->inputs as $i => $input) $inputs[] = $this->signature->input_mode($i)->qualify($input->cpp_type());
 		return 'std::function<' . $this->signature->result->cpp_type() . $this->signature->result_suffix() . '(' . implode(', ', $inputs) . ')>';
 	}
 

@@ -154,8 +154,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		};
 		file_put_contents($paths['token'], $reference);
 		touch($paths['token'], ++$stamp);
-		rejects(fn() => $project->run(), 'Constructors require by-value parameters');
-		rejects(fn() => $project->run(), 'Constructors require by-value parameters');
+		rejects(fn() => $project->run(), 'Constructors cannot take writable reference parameters');
+		rejects(fn() => $project->run(), 'Constructors cannot take writable reference parameters');
 		file_put_contents($paths['token'], $record('Kind' . $case . 'First'));
 		touch($paths['token'], ++$stamp);
 		$project->run();

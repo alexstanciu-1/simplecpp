@@ -1,0 +1,57 @@
+final class Vector_Demand {
+    public string $name;
+    public string $element;
+    public string $key;
+    public string $headers;
+
+    public function __construct(string $name, string $element, string $key, string $headers) {
+        $this->name = $name;
+        $this->element = $element;
+        $this->key = $key;
+        $this->headers = $headers;
+    }
+
+    public function render(string $root): string {
+        $guard = "SCPP_CONCRETE_" . strtoupper($this->key);
+        $text = "// Concrete application collection; include after complete element declarations.\n#ifndef " .
+            $guard . "\n#define " . $guard . "\n";
+        foreach (explode("\n", $this->headers) as $header) {
+            if ($header !== "") $text .= "#include <" . $header . ">\n";
+        }
+        $text .= vector_support();
+        if ($root !== "") $text .= "namespace " . $root . " {\n";
+        $text .= vector_body($this->name, $this->element);
+        if ($root !== "") $text .= "}\n";
+        return $text . "\n#endif\n";
+    }
+}
+
+// Each source in this slice requests at most one vector. Render the union of
+// current requests at each publication boundary; sources can release independently.
+$args = cli_arguments();
+$root = $args[1];
+$requests hash<Vector_Demand,string> = [];
+for ($i = 2; $i < count($args); $i++) {
+    $action = $args[$i];
+    if ($action === "publish") {
+        $files hash<string,string> = [];
+        foreach ($requests as $demand) {
+            $path = "units/" . $demand->key . ".hpp";
+            if (!hash_contains($files, $path)) $files[$path] = $demand->render($root);
+        }
+        echo count($files), "\n";
+        foreach ($files as $path => $bytes) {
+            echo $path, "\n", strlen($bytes), "\n", $bytes;
+        }
+    } else if ($action === "release") {
+        $i++;
+        $requests->remove($args[$i]);
+    } else if ($action === "request") {
+        $owner = $args[$i + 1];
+        $requests[$owner] = new Vector_Demand($args[$i + 2], $args[$i + 3], $args[$i + 4], $args[$i + 5]);
+        $i += 5;
+    } else {
+        throw Exception::make("Unknown vector publication action");
+    }
+}
+return 0;

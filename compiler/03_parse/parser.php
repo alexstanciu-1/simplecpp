@@ -881,6 +881,13 @@ final class Parser
 					$type = $this->type_reference(allow_void: true, parameter: true);
 				}
 			}
+			elseif ($lambda && $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->keyword('const') && $this->cursor->next_is(token_kind::ampersand)) {
+				$this->cursor->take_keyword('const');
+				$this->cursor->take(token_kind::ampersand, '&');
+				$type = null;
+				$mode = passing_mode::readonly_reference;
+				$name = $this->cursor->binding_name(token_kind::variable);
+			}
 			elseif ($lambda && ($this->cursor->is(token_kind::ampersand) || $this->cursor->is(token_kind::variable)
 				|| ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ellipsis))
 				|| ($this->cursor->tokens->source->flavor === flavor::cpp && $this->cursor->is(token_kind::identifier)
@@ -1098,13 +1105,15 @@ final class Parser
 	private function type_reference(string $argument_of = '', bool $allow_void = false, bool $parameter = false, bool $allow_union = false): ast_type_reference
 	{
 		$start = $this->cursor->position();
+		$readonly = $argument_of === 'callback' && $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->keyword('const');
+		if ($readonly) $this->cursor->take_keyword('const');
 		$child = null;
 		if ($this->cursor->is(token_kind::question)) {
 			$this->cursor->take(token_kind::question, '?');
 			$word = 'nullable';
 			$child = $this->type_reference();
 		} else {
-			$word = $this->cursor->tokens->text_at($start);
+			$word = $this->cursor->tokens->text_at($this->cursor->position());
 			if ($this->cursor->is(token_kind::keyword)
 				&& (($word === 'weak') || ($word === 'function' && $this->cursor->tokens->source->flavor === flavor::php) || (type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
 				$this->cursor->take_keyword($word);
@@ -1127,11 +1136,11 @@ final class Parser
 			$first = new ast_type_reference($start, $end, $word, $child, $next);
 			return new ast_compound_type_reference($start, $next->end, $separator, $first);
 		}
-		if ($argument_of === 'callback' && $this->cursor->is(token_kind::ellipsis)) {
+		if (!$readonly && $argument_of === 'callback' && $this->cursor->is(token_kind::ellipsis)) {
 			$element = new ast_type_reference($start, $end, $word, $child);
 			return new ast_variadic_type_reference($element, $this->cursor->take(token_kind::ellipsis, '...') + 1);
 		}
-		$reference = ($argument_of === 'callback' || $argument_of === 'function') && $this->cursor->is(token_kind::ampersand);
+		$reference = $readonly || (($argument_of === 'callback' || $argument_of === 'function') && $this->cursor->is(token_kind::ampersand));
 		if ($reference) $end = $this->cursor->take(token_kind::ampersand, '&') + 1;
 		$next = null;
 		if ($argument_of === 'function') {
@@ -1153,7 +1162,11 @@ final class Parser
 			$this->cursor->take(token_kind::comma, ',');
 			$next = $this->type_reference($argument_of, true);
 		}
-		return $reference ? new ast_callable_reference_component($start, $end, $word, $child, $next) : new ast_type_reference($start, $end, $word, $child, $next);
+		if ($reference) {
+			$mode = $readonly ? passing_mode::readonly_reference : passing_mode::reference;
+			return new ast_callable_reference_component($start, $end, $word, $child, $next, $mode);
+		}
+		return new ast_type_reference($start, $end, $word, $child, $next);
 	}
 
 	/** Parse ordered comma-separated echo operands. */

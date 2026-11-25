@@ -8,7 +8,7 @@ must name a local or parameter and have the exact canonical type. Aliases such a
 vector<int>/vector<int64> identify the same type; element conversions never authorize
 binding a different specialization. Temporary results, properties, indexed elements and
 global storage cannot bind. Reference defaults and reference returns remain deferred.
-Constructors retain their existing by-value-only rule.
+PHP class and struct constructors admit by-value inputs and [read-only collection borrows](../../specs/native_reference_safety.md#constructor-collection-borrows).
 
 ```php
 function update(vector<int> &$values, hash<int,string> &$counts): void {
@@ -72,7 +72,7 @@ change; no new AST structures, type flags, generated code or preparation passes 
 Element conversion still does not authorize a reference conversion. A reference borrows
 the caller's container slot, not its buffer, so replacing the container is safe and visible
 to all aliases of that slot. Inline element copies remain independent; shared fields keep
-identity. Constructors remain by-value only.
+identity. Constructor collection borrows are read-only.
 
 `application_collection_references_native.py` covers vector and both hash key types in
 all flavors with Clang and GCC. It checks functions/methods, forwarding, aliased arguments,

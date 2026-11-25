@@ -208,6 +208,58 @@ The selected native design is a direct byte scanner. Use the existing PHP bootst
 
 Proposed ownership is the immutable source snapshot and its token list. Validate the full snapshot for UTF-8, recognize token spans using a byte cursor, and publish the finished token buffer after a successful scan. Tokens carry byte offset, length, and kind. Spelling comes from the retained source. Keep Python indentation and layout behavior in view. The earlier comparison covered only PHP, C++, and JS. Review the Python layout stage and add its own parity coverage before claiming native support for that flavor.
 
+The default test `compiler_translated_source_utf8` verifies the native snapshot
+validator on 33 byte strings against the production tokenizer in all four flavors.
+It covers boundary code points, truncated and overlong sequences, surrogates,
+and an invalid continuation after an earlier lexical error. The runtime helper
+accepts valid input directly. On invalid input the native fixture locates the
+first malformed sequence. [Native fixture](../../compiler/examples/tokenizer/utf8.php.scpp)
+
+The bounded PHP-flavor compiler now validates each changed source before
+recognizing its first token. The filesystem-enabled `compiler_translated_path`
+test edits the entry and declaration separately, checks diagnostic precedence
+against the production frontend, and verifies that failures preserve the last
+published binding, declaration and output. After repair, the old token still
+addresses its original spelling, and every new token's kind, offset and length
+agrees with a fresh compilation. Full flavor-specific token streams and Python
+layout remain open. [Translated scanner](../../compiler/examples/translated_path/frontend.php.scpp)
+
+**Freeze checkpoint for punctuation.** The build-time emitter reads production
+token IDs, spellings, flavor membership and Python admission rules. The native
+scanner selects the longest matching punctuation and keeps comment openers ahead
+of that selection. On dev002 the default test compared 70 inputs in each of the
+four flavors. All 280 comparisons matched, including the offset and message of
+47 rejections. Accepted inputs agreed on token kind, byte offset and byte length.
+The comparison excludes synthetic Python layout tokens and the native end
+marker. [Emitter](../../compiler/examples/tokenizer/emit_punctuation.php) ·
+[Differential test](../../compiler/tests/translated_punctuation.py)
+
+This slice required no new v0.2 language or runtime capability. Further
+tokenizer expansion is parked for the freeze review.
+
+**Generated types and lowering, application-vector checkpoint.** On dev002 at
+`173165972` the existing full application-vector regression passed in 54 seconds.
+The focused `compiler_translated_vector_recipe` check passed in 1.44 seconds.
+PHP publishes the configured production recipe and buffer support into Simple C++
+before loading the application. Its native executable then renders the header
+from prepared element and specialization facts. The executable replays source
+requests and releases; each publication reports the complete set of live files.
+
+Two independent source files resolved the same canonical vector of an inline
+record. The native output matched the PHP header path and bytes with two users
+and with one. Releasing the last user produced an empty file set. Fresh and
+incremental outputs agreed at each step. Compiling PHP-emitted callers with the
+native header and the vector-free application's link inputs produced `77`,
+`07`, and `00` respectively. No additional runtime archive was needed.
+
+The bridge still supplies prepared names, the SHA-256 artifact key and include
+dependencies. File installation, caller lowering and base link planning remain
+host responsibilities. This qualifies native rendering for the selected vector
+recipe; the production backend continues to use PHP for rendering.
+[Native renderer](../../compiler/examples/concrete_vector/render.php.scpp) ·
+[Build-time publisher](../../compiler/examples/concrete_vector/publish.php) ·
+[Differential test](../../compiler/tests/translated_vector_recipe.py)
+
 Acceptance checks:
 
 1. Compare offset, length, kind, and spelling with the oracle on real inputs, including longest punctuation, flavor keywords, comments, quotes, and token-length limits.

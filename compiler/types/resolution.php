@@ -157,18 +157,29 @@ final class Type_Resolution
 			if (!self::callback_component($type)) {
 				throw new diagnostic($part->source(), $part->byte_start(), 'Unsupported callback signature component: ' . $part->spelling());
 			}
-			if ($types !== [] && $part instanceof ast_callable_reference_component) $modes[count($types) - 1] = passing_mode::reference;
+			if ($part instanceof ast_callable_reference_component) {
+				if ($part->mode === passing_mode::readonly_reference && ($types === [] || !self::readonly_collection_input($type))) {
+					throw new diagnostic($part->source(), $part->byte_start(), 'Read-only callable references require a vector or hash input');
+				}
+				if ($types !== []) $modes[count($types) - 1] = $part->mode;
+			}
 			$types[] = $type;
 		}
 		$result = array_shift($types);
 		$origin = null;
 		if ($syntax->first_child instanceof ast_callable_reference_component) {
-			$origin = array_key_first($modes);
-			if (count($modes) !== 1 || $types[$origin] !== $result) {
+			$writable = array_keys($modes, passing_mode::reference, true);
+			$origin = $writable[0] ?? null;
+			if (count($writable) !== 1 || $types[$origin] !== $result) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Reference return requires exactly one writable parameter of the return type');
 			}
 		}
 		return new callback_type_definition($result, $types, $modes, $origin, $variadic);
+	}
+
+	public static function readonly_collection_input(?type_definition $type): bool
+	{
+		return $type instanceof vector_type_definition || $type instanceof hash_type_definition;
 	}
 
 	/** Inline values and intersection projection are outside the fixed by-value callback ABI. */

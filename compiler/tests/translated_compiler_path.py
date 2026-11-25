@@ -44,6 +44,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     for file in EXAMPLE.glob('*.php.scpp'):
         target = 'main.php' if file.name == 'proof.php.scpp' else file.stem
         shutil.copyfile(file, translator / target)
+    with (translator/'punctuation.php').open('wb') as generated:
+        subprocess.run([PHP, EXAMPLE.parent/'tokenizer/emit_punctuation.php'], stdout=generated, check=True)
+    shutil.copyfile(EXAMPLE.parent/'tokenizer/utf8.php.scpp', translator/'utf8.php')
     (translator / 'module.json').write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem"]}}}')
     host_bundle, executable = work / 'translator-cpp', work / 'translated-compiler'
     project(translator, host_bundle)
@@ -57,7 +60,12 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     fixed = b'\n  return answer_2();\n'
     incomplete = b'\n  return answer_2()'
     unclosed = updated[:updated.index(b'}')]
-    samples = {'definition.php': definition, 'initial.source': initial, 'bad.source': bad,
+    # Invalid UTF-8 after an earlier illegal byte must win; repairing it exposes that byte.
+    lexical_error = b'return answer_2();\r\n\x01'
+    invalid_entry = lexical_error + b'abc\x80'
+    invalid_definition = updated + b'\xf0\x90'
+    samples = {'invalid-entry.source': invalid_entry, 'invalid-definition.source': invalid_definition,
+               'lexical-error.source': lexical_error, 'definition.php': definition, 'initial.source': initial, 'bad.source': bad,
                'fixed.source': fixed, 'updated.source': updated, 'incomplete.source': incomplete,
                'overflow.source': overflow, 'unclosed.source': unclosed}
     for name, data in samples.items():
@@ -65,7 +73,6 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
 
     translated = run(executable, cwd=work)
     parsed, *diagnostics = translated.stdout.decode().splitlines()
-    assert len(diagnostics) == 15, translated.stdout
     oracle = work / 'oracle'
     oracle.mkdir()
     (oracle / 'module.json').write_text('{}')
@@ -87,12 +94,16 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
     assert parsed == production_ast.stdout.decode(), (parsed, production_ast.stdout)
 
     errors = [
+        ('invalid-entry', definition, invalid_entry, 'main.php', invalid_entry.index(b'\x80')),
+        ('invalid-definition', invalid_definition, initial, 'definition.php', len(updated)),
+        ('lexical-error', definition, lexical_error, 'main.php', lexical_error.index(b'\x01')),
         ('incomplete', definition, incomplete, 'main.php', len(incomplete)),
         ('bad', updated, bad, 'main.php', bad.index(b'missing_2')),
         ('overflow', overflow, initial, 'definition.php', overflow.index(b'9223372036854775808')),
         ('unclosed', unclosed, fixed, 'definition.php', len(unclosed)),
         ('removed', None, fixed, 'main.php', fixed.index(b'answer_2')),
     ]
+    assert len(diagnostics) == 3 * len(errors), translated.stdout
     for index, (name, current_definition, entry, expected_path, expected_offset) in enumerate(errors):
         path, offset, message = diagnostics[index * 3:index * 3 + 3]
         assert (path, int(offset)) == (expected_path, expected_offset), (path, offset, message)

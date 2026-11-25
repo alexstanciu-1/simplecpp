@@ -1,0 +1,59 @@
+function wait_check(bool $ok, string $detail): void {
+    if (!$ok) throw Exception::make($detail);
+}
+
+function producer(Function_Entry $entry, string $argument): Function_Body {
+    $syntax = new Return_Syntax("main.php", "nested", "", "job", 40);
+    $syntax->argument_type = "int64";
+    $syntax->argument_cpp = $argument;
+    $call = new Function_Body($syntax);
+    $call->settle_preparation($entry);
+    return $call;
+}
+
+function check_wait(): void {
+    $source = new Return_Syntax("job.php", "job", "", "", 0);
+    $source->is_async = true;
+    $source->required_parameters = 1;
+    $source->parameter_type = "int64";
+    $entry = new Function_Entry();
+    $entry->head = new Function_Body($source);
+    $syntax = new Return_Syntax("main.php", "probe", "", "async_wait", 29);
+    $wait = new Function_Body($syntax);
+    $first = producer($entry, "7LL");
+    $other = producer($entry, "9LL");
+    $wait->settle_blocking_wait($first);
+    wait_check($wait->blocking_producer() === $first && $first !== $other, "bridge selected another call to the same function");
+    echo $wait->lower();
+    $wait->invalidate();
+    wait_check($wait->blocking_producer() === null, "reset retained producer");
+    $source->is_async = false;
+    $rejected = false;
+    try {
+        $wait->settle_blocking_wait($other);
+    } catch (Preparation_Diagnostic $error) {
+        $rejected = $error->detail === "async_wait requires an async function" && $error->offset === 29;
+    }
+    wait_check($rejected && !$wait->prepared(), "non-async producer accepted");
+    $rejected = false;
+    try {
+        $wait->settle_blocking_wait(null);
+    } catch (Preparation_Diagnostic $error) {
+        $rejected = $error->detail === "async_wait requires one direct async call";
+    }
+    wait_check($rejected && !$wait->prepared(), "non-call argument accepted");
+    $source->is_async = true;
+    $wait->settle_blocking_wait($other);
+    wait_check($wait->blocking_producer() === $other, "repaired bridge kept the first operand");
+    echo $wait->lower();
+    $detached = detached_wait($entry);
+    wait_check($detached->blocking_producer() === null, "bridge kept retired syntax alive");
+}
+
+// Keep the bridge for observation after the syntax owner releases the nested call.
+function detached_wait(Function_Entry $entry): Function_Body {
+    $inner = producer($entry, "7LL");
+    $wait = new Function_Body(new Return_Syntax("main.php", "probe", "", "async_wait", 29));
+    $wait->settle_blocking_wait($inner);
+    return $wait;
+}

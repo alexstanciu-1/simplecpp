@@ -1,19 +1,6 @@
 // Token spans refer to one immutable source string.
-enum Token_Kind: int {
-	case Word = 1;
-	case Decimal = 2;
-	case Open_Paren = 3;
-	case Close_Paren = 4;
-	case Colon = 5;
-	case Open_Brace = 6;
-	case Close_Brace = 7;
-	case Semicolon = 8;
-	case End = 9;
-	case Invalid = 10;
-}
-
 struct Token_Span {
-	public Token_Kind $kind = Token_Kind::Invalid;
+	public Token_Kind $kind = Token_Kind::End;
 	public int $offset;
 	public int $length;
 }
@@ -39,7 +26,9 @@ function identifier_byte(byte $value): bool {
 	return ($value >= 65 && $value <= 90) || ($value >= 97 && $value <= 122) || $value === (byte)95;
 }
 
-function tokenize_source(string $path, string $text): vector<Token_Span> {
+function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<Token_Span> {
+	$invalid = source_utf8_error($text);
+	if ($invalid >= 0) throw new Translation_Diagnostic($path, $invalid, "Invalid UTF-8 source");
 	$tokens vector<Token_Span> = [];
 	$length = strlen($text);
 	$offset = 0;
@@ -51,9 +40,26 @@ function tokenize_source(string $path, string $text): vector<Token_Span> {
 			continue;
 		}
 
-		$kind = Token_Kind::Invalid;
+		// Comment openers take precedence over punctuation in the bootstrap lexer.
+		$python = $mode === Scan_Flavor::python;
+		$line_comment = ($value == 35 && ($python || ($mode === Scan_Flavor::php &&
+			!string_byte_slice_equals($text, $start, 2, "#[")))) ||
+			(!$python && $value == 47 && string_byte_slice_equals($text, $start, 2, "//"));
+		if ($line_comment) {
+			while ($offset < $length && $text[$offset] != 10 && $text[$offset] != 13) { $offset++; }
+			continue;
+		}
+		if (!$python && $value == 47 && string_byte_slice_equals($text, $start, 2, "/*")) {
+			$offset++;
+			while ($offset < $length && !string_byte_slice_equals($text, $offset, 2, "*/")) { $offset++; }
+			if ($offset === $length) throw new Translation_Diagnostic($path, $start, "Unterminated block comment");
+			$offset += 2;
+			continue;
+		}
+
+		$kind = Token_Kind::End;
 		if (identifier_byte($value)) {
-			$kind = Token_Kind::Word;
+			$kind = Token_Kind::T_identifier;
 			while ($offset < $length) {
 				$next = $text[$offset];
 				if (!identifier_byte($next) && !decimal_byte($next)) {
@@ -62,23 +68,18 @@ function tokenize_source(string $path, string $text): vector<Token_Span> {
 				$offset++;
 			}
 		} else if (decimal_byte($value)) {
-			$kind = Token_Kind::Decimal;
+			$kind = Token_Kind::T_integer;
 			while ($offset < $length && decimal_byte($text[$offset])) {
 				$offset++;
 			}
 		} else {
-			$kind = match ((int)$value) {
-				40 => Token_Kind::Open_Paren,
-				41 => Token_Kind::Close_Paren,
-				58 => Token_Kind::Colon,
-				123 => Token_Kind::Open_Brace,
-				125 => Token_Kind::Close_Brace,
-				59 => Token_Kind::Semicolon,
-				default => Token_Kind::Invalid,
-			};
-			if ($kind === Token_Kind::Invalid) {
-				throw new Translation_Diagnostic($path, $start, "Unsupported token");
+			$width = 0;
+			$kind = punctuation_at($text, $start, $value, $mode, $width);
+			if ($kind === Token_Kind::Unrecognized) throw new Translation_Diagnostic($path, $start, "Unsupported token");
+			if ($kind === Token_Kind::Rejected) {
+				throw new Translation_Diagnostic($path, $start, "Unsupported punctuation in Python flavor");
 			}
+			$offset = $start + $width;
 		}
 		$token Token_Span;
 		$token->kind = $kind;
@@ -104,7 +105,7 @@ final class Translation_Source {
 	public function __construct(string $path, string $text) {
 		$this->path = $path;
 		$this->text = $text;
-		$this->tokens = tokenize_source($path, $text);
+		$this->tokens = tokenize_source($path, $text, Scan_Flavor::php);
 	}
 }
 
@@ -147,14 +148,14 @@ final class Translation_Parser {
 
 	private function keyword(string $name): void {
 		$message = "Expected " . $name;
-		$token = $this->expect(Token_Kind::Word, $message);
+		$token = $this->expect(Token_Kind::T_identifier, $message);
 		if ($this->spelling($token) !== $name) {
 			throw new Translation_Diagnostic($this->source->path, $token->offset, $message);
 		}
 	}
 
 	private function name_token(): Token_Span {
-		$token = $this->expect(Token_Kind::Word, "Expected function name");
+		$token = $this->expect(Token_Kind::T_identifier, "Expected function name");
 		$name = $this->spelling($token);
 		if ($name === "function" || $name === "int" || $name === "return") {
 			throw new Translation_Diagnostic($this->source->path, $token->offset, "Expected function name");
@@ -163,8 +164,8 @@ final class Translation_Parser {
 	}
 
 	private function nullary(): void {
-		$this->expect(Token_Kind::Open_Paren, "Expected (");
-		$this->expect(Token_Kind::Close_Paren, "Expected )");
+		$this->expect(Token_Kind::T_lparen, "Expected (");
+		$this->expect(Token_Kind::T_rparen, "Expected )");
 	}
 
 	private function function_header(): Function_Declaration {
@@ -172,21 +173,21 @@ final class Translation_Parser {
 		$this->keyword("function");
 		$name = $this->spelling($this->name_token());
 		$this->nullary();
-		$this->expect(Token_Kind::Colon, "Expected :");
+		$this->expect(Token_Kind::T_colon, "Expected :");
 		$this->keyword("int");
 		return new Function_Declaration($name, $start, $this->index);
 	}
 
 	private function read_body(): Function_Body {
 		$body_start = $this->index;
-		$this->expect(Token_Kind::Open_Brace, "Expected {");
+		$this->expect(Token_Kind::T_lbrace, "Expected {");
 		$return_start = $this->index;
 		$this->keyword("return");
 		$literal = $this->index;
-		$this->expect(Token_Kind::Decimal, "Expected decimal integer");
-		$this->expect(Token_Kind::Semicolon, "Expected ;");
+		$this->expect(Token_Kind::T_integer, "Expected decimal integer");
+		$this->expect(Token_Kind::T_semicolon, "Expected ;");
 		$statement = new Function_Return($return_start, $this->index, $literal);
-		$this->expect(Token_Kind::Close_Brace, "Expected }");
+		$this->expect(Token_Kind::T_rbrace, "Expected }");
 		return new Function_Body($body_start, $this->index, $statement);
 	}
 
@@ -201,7 +202,7 @@ final class Translation_Parser {
 		$this->keyword("return");
 		$name = $this->name_token();
 		$this->nullary();
-		$this->expect(Token_Kind::Semicolon, "Expected ;");
+		$this->expect(Token_Kind::T_semicolon, "Expected ;");
 		$this->expect(Token_Kind::End, "Expected end of source");
 		return new Call_Syntax($this->source, $this->spelling($name), $name->offset);
 	}

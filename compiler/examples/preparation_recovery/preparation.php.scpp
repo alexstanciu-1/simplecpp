@@ -9,6 +9,13 @@ final class Return_Syntax {
 	public string $integer_spelling;
 	public string $callee;
 	public int $offset;
+	public int $required_parameters = 0;
+	public bool $is_async = false;
+	public string $parameter_type = "";
+	public string $parameter_cpp = "";
+	// Optional single operand supplied by the operand lowering stage.
+	public string $argument_type = "";
+	public string $argument_cpp = "";
 
 	public function __construct(string $source, string $function_name, string $integer, string $callee, int $offset) {
 		$this->source = $source;
@@ -31,33 +38,228 @@ final class Preparation_Diagnostic extends Exception {
 	}
 }
 
-final class Function_Body {
-	public Return_Syntax $syntax;
-	private string $prepared_expression;
-	private bool $ready = false;
+// Preparation validates the authored declaration. Lowering consumes the selected implementation.
+interface Call_Operand {
+	public function operand_name(): string;
+}
 
-	public function __construct(Return_Syntax $syntax) {
-		$this->syntax = $syntax;
+interface Prepared_Target {}
+
+interface Prepared_Call_Target extends Prepared_Target {
+	public function signature(): ?Return_Syntax;
+}
+
+interface Body_Call_Target extends Prepared_Call_Target {
+	public function implementation(): ?Function_Body;
+}
+
+// Published descriptors outlive application declarations that shadow their source name.
+final class Runtime_Descriptor implements Prepared_Call_Target, Call_Operand {
+	private Return_Syntax $contract;
+	private string $symbol;
+
+	public function __construct(Return_Syntax $contract, string $symbol) {
+		$this->contract = $contract;
+		$this->symbol = $symbol;
+	}
+	public override function signature(): ?Return_Syntax { return $this->contract; }
+	public override function operand_name(): string { return $this->symbol; }
+}
+
+// The stable class entry survives replacement and deletion of its declaration.
+final class Class_Entry implements Prepared_Call_Target {
+	public ?Constructed_Record $head = null;
+
+	public override function signature(): ?Return_Syntax {
+		$record = $this->head;
+		if ($record === null) return null;
+		return $record->constructor_signature;
+	}
+}
+
+final class Constructed_Record implements Call_Operand {
+	public ?Return_Syntax $constructor_signature;
+	private string $factory;
+
+	public function __construct(string $owner_type, ?Return_Syntax $constructor_signature) {
+		$this->factory = $owner_type . "::make";
+		$this->constructor_signature = $constructor_signature;
 	}
 
-	public function settle_preparation(string $expression): void {
+	public override function operand_name(): string { return $this->factory; }
+}
+
+final class Function_Entry implements Body_Call_Target {
+	public ?Function_Body $head = null;
+
+	public override function signature(): ?Return_Syntax {
+		$head = $this->head;
+		if ($head === null) return null;
+		return $head->syntax;
+	}
+	public override function implementation(): ?Function_Body { return $this->head; }
+}
+
+// One instance per demanded (authored method, called type) pair.
+final class Called_Method_Instance implements Body_Call_Target {
+	public Function_Entry $method;
+	public ?Function_Body $private_body = null;
+
+	public function __construct(Function_Entry $method, Function_Body $body) {
+		$this->method = $method;
+		$this->private_body = $body;
+	}
+
+	public override function signature(): ?Return_Syntax { return $this->method->signature(); }
+	public override function implementation(): ?Function_Body { return $this->private_body; }
+}
+
+// Lexical calls validate the callable signature but invoke storage owned by the enclosing body.
+final class Lexical_Callable implements Prepared_Call_Target, Call_Operand {
+	private Return_Syntax $callable_signature;
+	private string $storage;
+
+	public function __construct(Return_Syntax $signature, string $name, int $slot) {
+		$this->callable_signature = $signature;
+		$this->storage = "var_" . $name . "_" . (string)$slot;
+	}
+	public override function signature(): ?Return_Syntax { return $this->callable_signature; }
+	public override function operand_name(): string { return $this->storage; }
+}
+
+final class Function_Body implements Call_Operand, Prepared_Target {
+	public Return_Syntax $syntax;
+	public string $native_name;
+	private weak<Prepared_Target> $function_symbol;
+	private bool $ready = false;
+	private hash<Lexical_Callable,string> $callables;
+
+	public override function operand_name(): string { return $this->native_name; }
+
+	public function declare_callable(string $name, int $slot, Return_Syntax $signature): void {
+		$this->callables[$name] = new Lexical_Callable($signature, $name, $slot);
+	}
+
+	public function prepare_lexical_call(Function_Body $call): void {
+		$name = $call->syntax->callee;
+		if (!hash_contains($this->callables, $name)) {
+			throw new Preparation_Diagnostic($call->syntax->source, $call->syntax->offset, "Unknown local callable");
+		}
+		$call->settle_preparation($this->callables[$name]);
+	}
+
+	public function __construct(Return_Syntax $syntax, string $native_name = "") {
+		$this->syntax = $syntax;
+		$this->native_name = $native_name === "" ? $syntax->function_name . "_" : $native_name;
+	}
+
+	private function remember(Prepared_Target $target): void {
+		$this->function_symbol = weak($target);
+	}
+
+	public function settle_preparation(?Prepared_Call_Target $target): void {
 		if ($this->ready) {
 			throw Exception::make("Function body is already prepared");
 		}
-		$this->prepared_expression = $expression;
+		if ($target !== null) {
+			$signature = $target->signature();
+			if ($target instanceof Class_Entry && $signature === null) {
+				$class = object_cast($target, Class_Entry::class);
+				if ($class->head === null) {
+					throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset, "Unknown function: " . $this->syntax->callee);
+				}
+				if ($this->syntax->argument_type !== "") {
+					throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset,
+						"Only zero-argument initialization is available for " . $this->syntax->callee);
+				}
+			} else {
+				if ($signature === null || $signature->required_parameters !== ($this->syntax->argument_type === "" ? 0 : 1)) {
+					throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset, "Argument count mismatch");
+				}
+				if ($signature->parameter_type !== $this->syntax->argument_type) {
+					throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset, "Argument type mismatch");
+				}
+			}
+			$this->remember($target);
+		}
 		$this->ready = true;
+	}
+
+	// The enclosing syntax owns the argument. The prepared slot only observes it.
+	public function settle_blocking_wait(?Function_Body $producer): void {
+		if ($this->ready) throw Exception::make("Function body is already prepared");
+		if ($producer === null) {
+			throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset, "async_wait requires one direct async call");
+		}
+		$operand = $producer->selected_operand();
+		if (!($operand instanceof Function_Body)) {
+			throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset, "async_wait requires an async function");
+		}
+		$function = object_cast($operand, Function_Body::class);
+		if (!$function->syntax->is_async) {
+			throw new Preparation_Diagnostic($this->syntax->source, $this->syntax->offset, "async_wait requires an async function");
+		}
+		$this->remember($producer);
+		$this->ready = true;
+	}
+
+	public function blocking_producer(): ?Function_Body {
+		$selected = lock($this->function_symbol);
+		if ($selected instanceof Function_Body) return object_cast($selected, Function_Body::class);
+		return null;
+	}
+
+	public function invalidate(): void {
+		$empty weak<Prepared_Target>;
+		$this->function_symbol = $empty;
+		$this->ready = false;
 	}
 
 	public function prepared(): bool {
 		return $this->ready;
 	}
 
-	public function lower(): string {
+	public function selected_operand(): ?Call_Operand {
+		return $this->operand_for(lock($this->function_symbol));
+	}
+
+	private function operand_for(?Prepared_Target $entry): ?Call_Operand {
+		if ($entry === null) return null;
+		if ($entry instanceof Class_Entry) {
+			$class = object_cast($entry, Class_Entry::class);
+			return $class->head;
+		}
+		if ($entry instanceof Call_Operand) return object_cast($entry, Call_Operand::class);
+		$target = object_cast($entry, Body_Call_Target::class);
+		return $target->implementation();
+	}
+
+	public function lower_expression(): string {
 		if (!$this->ready) {
 			throw Exception::make("Function preparation is not complete");
 		}
-		$expression = $this->prepared_expression;
-		return "::scpp::int64 " . $this->syntax->function_name . "_()\n{\n\treturn " . $expression . ";\n}\n";
+		$selected = lock($this->function_symbol);
+		if ($selected instanceof Function_Body) {
+			$producer = object_cast($selected, Function_Body::class);
+			$operand = $producer->selected_operand();
+			$function = object_cast($operand, Function_Body::class);
+			return $function->syntax->function_name . "_wait(" . $producer->syntax->argument_cpp . ")";
+		}
+		$expression = $this->syntax->integer_spelling . "LL";
+		if ($this->syntax->callee !== "") {
+			$callee = $this->operand_for($selected);
+			if ($callee === null) throw Exception::make("Prepared call has no live declaration");
+			$expression = $callee->operand_name() . "(" . $this->syntax->argument_cpp . ")";
+		}
+		return $expression;
+	}
+
+	public function lower_return(): string {
+		return "\treturn " . $this->lower_expression() . ";\n";
+	}
+
+	public function lower(): string {
+		return "::scpp::int64 " . $this->native_name . "(" . $this->syntax->parameter_cpp . ")\n{\n" . $this->lower_return() . "}\n";
 	}
 }
 
@@ -77,7 +279,8 @@ final class Preparation_Work {
 }
 
 final class Published_Symbols {
-	public hash<Function_Body,string> $functions;
+	public hash<Function_Entry,string> $functions;
+	public hash<Runtime_Descriptor,string> $runtime;
 }
 
 final class Preparation {
@@ -87,27 +290,27 @@ final class Preparation {
 		$previous = $this->owner;
 		$this->owner = $body;
 		try {
-			$expression = $this->prepare_return($symbols);
-			$body->settle_preparation($expression);
+			$body->settle_preparation($this->prepare_return($symbols));
 		} finally {
 			$this->owner = $previous;
 		}
 	}
 
-	private function prepare_return(Published_Symbols $symbols): string {
+	private function prepare_return(Published_Symbols $symbols): ?Prepared_Call_Target {
 		$body = $this->owner;
 		if ($body === null) {
 			throw Exception::make("Preparation requires an active body");
 		}
 		$syntax = $body->syntax;
 		if ($syntax->callee === "") {
-			return $syntax->integer_spelling . "LL";
+			return null;
 		}
-		if (!hash_contains($symbols->functions, $syntax->callee)) {
+		if (!hash_contains($symbols->functions, $syntax->callee) || $symbols->functions[$syntax->callee]->head === null) {
+			if (hash_contains($symbols->runtime, $syntax->callee)) return $symbols->runtime[$syntax->callee];
 			throw new Preparation_Diagnostic($syntax->source, $syntax->offset,
 				"Unknown function: " . $syntax->callee);
 		}
-		return $symbols->functions[$syntax->callee]->syntax->function_name . "_()";
+		return $symbols->functions[$syntax->callee];
 	}
 }
 
@@ -119,6 +322,7 @@ final class Incremental_Preparation {
 	public int $prepared = 0;
 	public int $reused = 0;
 	public int $prepared_before_failure = 0;
+	private hash<int,string> $deleted;
 
 	public function __construct() {
 		$this->work = new Preparation_Work();
@@ -126,9 +330,35 @@ final class Incremental_Preparation {
 		$this->symbols = new Published_Symbols();
 	}
 
+	// This bounded fixture finds affected callers by name; production delivers dependency watches.
+	private function invalidate_shadowed_calls(string $name): void {
+		if (!hash_contains($this->symbols->runtime, $name)) return;
+		foreach ($this->symbols->functions as $entry) {
+			$caller = $entry->head;
+			if ($caller !== null && $caller->syntax->callee === $name) {
+				$caller->invalidate();
+				$this->work->enqueue($caller);
+			}
+		}
+	}
+
+	public function delete_declaration(string $name): void {
+		$this->deleted[$name] = 1;
+		$this->symbols->functions->remove($name);
+		$this->work->pending->remove($name);
+		$this->work->emission_sources->remove($name);
+		$this->invalidate_shadowed_calls($name);
+	}
+
 	public function publish_declaration(Return_Syntax $syntax): Function_Body {
+		$this->deleted->remove($syntax->function_name);
 		$body = new Function_Body($syntax);
-		$this->symbols->functions[$syntax->function_name] = $body;
+		if (!hash_contains($this->symbols->functions, $syntax->function_name)) {
+			$this->symbols->functions[$syntax->function_name] = new Function_Entry();
+		}
+		$entry = $this->symbols->functions[$syntax->function_name];
+		$entry->head = $body;
+		$this->invalidate_shadowed_calls($syntax->function_name);
 		$this->work->enqueue($body);
 		return $body;
 	}
@@ -154,6 +384,10 @@ final class Incremental_Preparation {
 		if ($first !== null) {
 			throw $first;
 		}
+		foreach ($this->deleted as $key => $unused) {
+			$this->output->remove($key);
+		}
+		$this->deleted->clear();
 		foreach ($this->work->emission_sources as $key => $body) {
 			$this->output[$key] = $body->lower();
 		}

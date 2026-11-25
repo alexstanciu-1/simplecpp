@@ -7,7 +7,7 @@ from collection_goal_native import revisions
 
 provider = '''
 function observe(const vector<int> &$v,int $k):int {return $v[$k];}
-function touch(int &$n):void {$n=0;}
+function &selected(int &$n):int {return $n;}
 function copy_size(vector<int> $v):int {clean($v);return count($v);}
 '''
 main = '''
@@ -44,7 +44,7 @@ with TemporaryDirectory(prefix='scpp-writable-foreach-') as directory:
         ('$alias->remove(0);', 'during writable foreach'),
         ('$v->reserve(100);', 'during writable foreach'),
         ('$clear();', 'during writable foreach'),
-        ('touch($n);', 'cannot bind a reference'),
+        ('$aliasRef =& selected($n);', 'cannot bind a reference'),
         ('$a =& $n;', 'Cannot alias'),
         ('$f=function() use (&$n):void {};', 'Cannot capture'),
     ]:

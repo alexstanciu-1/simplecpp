@@ -575,6 +575,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
             $initialization = ['bulk' => listInitializationPlan($m->initialization->bulk ?? null, $family, $element, $name, $count)];
         }
         $bulk = $initialization['bulk'] ?? null;
+        if ($bulk !== null) requireThat(!in_array('iteration_reference', [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null], true), 'Vector initializer name conflicts with iteration reference');
         if ($reserve && $bulk !== null) requireThat(!in_array('reserve', [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null], true), 'Vector initializer name conflicts with reserve');
         if ($capacity && $bulk !== null) {
             requireThat(!array_intersect(['capacity', 'compact', 'filled', 'resize'], [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null]),
@@ -815,7 +816,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
         $traversal = collectionTraversalPlan() + ['next_key_method' => 'iteration_next_key', 'current_value_method' => 'iteration_current_value'];
-        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method'], $traversal['next_key_method'], $traversal['current_value_method']]);
+        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'iteration_reference', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method'], $traversal['next_key_method'], $traversal['current_value_method']]);
         requireThat(array_intersect($callables, $occupied) === [], 'Keyed initialization name conflicts with a published member');
         $hashes[$name] = compact('name', 'key', 'value', 'methods', 'initialization') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_concrete_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => $traversal];
     }

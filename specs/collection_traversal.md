@@ -80,14 +80,23 @@ Reading the element reads the current slot. Assignments and supported compound
 updates replace it immediately. Reads through another name for the collection see
 the completed write, including before a break, return or exception. A by-value
 capture takes the current element value. Shared handles retain object identity.
-For inline records, edit a value copy and assign the whole element back.
+For an inline record, plain assignment to an immediate writable field (for example,
+`$point->x = 12;`) updates that field in the selected slot. Earlier value copies retain
+their contents. Field visibility, read-only rules and assignment conversions apply.
+For deeper inline writes or compound field updates, edit a copy and assign it back.
 
 The collection must keep its size, order and storage throughout the loop. Preparation
 rejects append, removal, resize, reserve, reset, replacement and mutable reference
 calls on the collection or a lexical alias. A closure with a mutable capture of that
 storage cannot be invoked during the loop. By-value and read-only helper calls
-remain eligible. The element cannot serve as reference storage for a call, local
-alias, reference capture or segment grant. Ordinary indexed writes to existing
+remain eligible. A direct synchronous source free function with a value or void result
+may take the selected element by exact-type mutable or read-only reference when
+its declared parameter supports that mode. The borrow lasts through that invocation.
+A read-only parameter observes replacement or mutation through a second parameter
+bound to the same slot. Writes remain visible if the helper throws. The same collection protections
+apply during argument evaluation and callback re-entry. Indirect
+calls, methods, local aliases, reference captures and segment grants cannot borrow
+the selected element. Ordinary indexed writes to existing
 vector slots remain visible through the loop binding.
 
 For a borrowed source, the loop also protects other mutable reference parameters

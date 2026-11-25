@@ -1,0 +1,45 @@
+function check(bool $ok, string $message): void {
+    if (!$ok) throw Exception::make($message);
+}
+
+function record(Signature_Index $cache, Signature $signature, vector<Owned_Callable> &$live): void {
+    $owned = $cache->element($signature);
+    foreach ($live as $i => $existing) {
+        if ($existing === $owned) { echo $i, "\n"; return; }
+    }
+    check($owned->signature === $signature, "fresh leaf lost its prepared signature");
+    echo count($live), "\n";
+    $live[] = $owned;
+}
+
+function bind_temporary(Signature_Index $cache, Component $key): weak<Owned_Callable> {
+    $signature = new Signature($key, false, false);
+    $first = $cache->element($signature);
+    $equal = new Signature($key, false, false);
+    check($cache->element($equal) === $first, "independent equal signature missed live leaf");
+    return weak($first);
+}
+
+function transient_key(Signature_Index $cache, Component $result): weak<Component> {
+    $key = new Component("Local");
+    $signature = new Signature($result, false, false);
+    $signature->input($key, false);
+    $cache->element($signature);
+    return weak($key);
+}
+
+function check_lifetime(Signature_Index $cache): void {
+    $key = new Component("Result");
+    $retired = bind_temporary($cache, $key);
+    check(lock($retired) === null, "cache retained canonical callable");
+    $signature = new Signature($key, false, false);
+    $replacement = $cache->element($signature);
+    check(lock($retired) === null && $replacement === $cache->element($signature), "expired leaf resurrected");
+    $old_key = transient_key($cache, $key);
+    check(lock($old_key) === null, "expired leaf kept its component alive");
+    $new_key = new Component("Local");
+    $longer = new Signature($key, false, false);
+    $longer->input($new_key, false);
+    $long_leaf = $cache->element($longer);
+    check($long_leaf !== $replacement && $replacement === $cache->element($signature), "reused edge corrupted live prefix");
+}

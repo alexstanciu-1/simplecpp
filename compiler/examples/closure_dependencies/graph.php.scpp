@@ -1,0 +1,181 @@
+// Bounded translation of closure_call, changed/dispatch and the closure part of callees().
+interface Graph_Node {}
+
+final class Body implements Graph_Node {
+    public int $deliveries = 0;
+}
+
+final class Symbol implements Graph_Node {
+    public ?Body $head = null;
+}
+
+// Iterate live identities in registration order. A bucket never owns a body or symbol.
+struct Weak_Edge { public weak<Graph_Node> $target; }
+
+final class Edge_Bucket {
+    public weak<Graph_Node> $key;
+    public vector<Weak_Edge> $targets;
+
+    public function __construct(Graph_Node $key) {
+        $this->key = weak($key);
+    }
+
+    public function add(Graph_Node $target): void {
+        $expired = false;
+        foreach ($this->targets as $ref) {
+            $live = lock($ref->target);
+            if ($live === $target) return;
+            if ($live === null) $expired = true;
+        }
+        if ($expired) $this->forget($target);
+        $edge Weak_Edge;
+        $edge->target = weak($target);
+        $this->targets[] = $edge;
+    }
+
+    public function forget(Graph_Node $target): void {
+        $keep vector<Weak_Edge> = [];
+        foreach ($this->targets as $ref) {
+            $live = lock($ref->target);
+            if ($live !== null && $live !== $target) $keep[] = $ref;
+        }
+        $this->targets = $keep;
+    }
+}
+
+final class Weak_Relation {
+    private vector<Edge_Bucket> $rows;
+
+    public function find(Graph_Node $key): ?Edge_Bucket {
+        foreach ($this->rows as $row) {
+            if (lock($row->key) === $key) return $row;
+        }
+        return null;
+    }
+
+    public function add(Graph_Node $key, Graph_Node $target): void {
+        $row = $this->find($key);
+        if ($row === null) {
+            $row = new Edge_Bucket($key);
+            // Reuse a dead key's table position; target order lives inside each bucket.
+            foreach ($this->rows as $index => $old) {
+                if (lock($old->key) === null) {
+                    $this->rows[$index] = $row;
+                    $row->add($target);
+                    return;
+                }
+            }
+            $this->rows[] = $row;
+        }
+        $row->add($target);
+    }
+
+    public function forget(Graph_Node $key): void {
+        $keep vector<Edge_Bucket> = [];
+        foreach ($this->rows as $row) {
+            $live = lock($row->key);
+            if ($live !== null && $live !== $key) {
+                $row->forget($key);
+                if (count($row->targets) !== 0) $keep[] = $row;
+            }
+        }
+        $this->rows = $keep;
+    }
+}
+
+interface Body_Visitor { public function visit(Body $body): void; }
+
+final class Dependencies {
+    public Weak_Relation $calls;
+    public Weak_Relation $observers;
+    private vector<Body> $pending;
+
+    public function __construct() {
+        $this->calls = new Weak_Relation();
+        $this->observers = new Weak_Relation();
+    }
+
+    public function watch_closure_call(Body $owner, Body $closure, Symbol $symbol): void {
+        $this->calls->add($owner, $closure);
+        $this->calls->add($closure, $symbol);
+        $this->observers->add($symbol, $owner);
+    }
+
+    public function callees(Body $caller, Body_Visitor $visitor): void {
+        $row = $this->calls->find($caller);
+        if ($row === null) return;
+        foreach ($row->targets as $ref) {
+            $target = lock($ref->target);
+            if ($target instanceof Body) {
+                $visitor->visit(object_cast($target, Body::class));
+            } else if ($target instanceof Symbol) {
+                $symbol = object_cast($target, Symbol::class);
+                $callee = $symbol->head;
+                if ($callee !== null) $visitor->visit($callee);
+            }
+        }
+    }
+
+    private function queue(Body $body): void {
+        foreach ($this->pending as $pending) {
+            if ($pending === $body) return;
+        }
+        $this->pending[] = $body;
+    }
+
+    public function changed(Symbol $symbol): void {
+        $row = $this->observers->find($symbol);
+        if ($row === null) return;
+        foreach ($row->targets as $ref) {
+            $watcher = lock($ref->target);
+            if ($watcher !== null) $this->queue(object_cast($watcher, Body::class));
+        }
+    }
+
+    public function dispatch(): void {
+        foreach ($this->pending as $body) { $body->deliveries += 1; }
+        $this->pending->clear();
+    }
+
+    public function retire(Body $owner): void {
+        $this->calls->forget($owner);
+        $this->observers->forget($owner);
+        $this->queue($owner);
+    }
+}
+
+// The proof has one reference-returning root. Traverse the entire reachable graph,
+// diagnosing a cycle only if it contains that root.
+final class Closure_Cycle extends Exception {
+    public string $detail = "Recursive reference return is unsupported: closure";
+}
+
+final class Reference_Check implements Body_Visitor {
+    private Body $root;
+    public vector<Body> $seen;
+    public bool $recursive = false;
+
+    public function __construct(Body $root) {
+        $this->root = $root;
+    }
+
+    public override function visit(Body $body): void {
+        if ($body === $this->root) {
+            $this->recursive = true;
+            return;
+        }
+        foreach ($this->seen as $seen) {
+            if ($seen === $body) return;
+        }
+        $this->seen[] = $body;
+    }
+}
+
+function validate(Dependencies $graph, Body $root): void {
+    $visitor = new Reference_Check($root);
+    $graph->callees($root, $visitor);
+    for ($i = 0; $i < count($visitor->seen); $i++) {
+        $graph->callees($visitor->seen[$i], $visitor);
+    }
+    if ($visitor->recursive) throw new Closure_Cycle();
+}

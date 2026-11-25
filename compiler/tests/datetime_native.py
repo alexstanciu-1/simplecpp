@@ -112,7 +112,7 @@ return 0;
             proc.wait()
 
     # A build can publish a subset independently of project-level module activation.
-    profile = json.loads((build / 'runtime-publication.json').read_text())
+    profile = json.loads((root / 'tests/datetime/publication.json').read_text())
     request = work / 'profile.json'
     generator = ['php', root/'tools/api_generator/generate.php']
     def publish():
@@ -124,6 +124,8 @@ return 0;
         return (work/'compiler/types/registry.php').read_text()
 
     profile['datetime'] = {'header': 'scpp/custom/time.hpp', 'operations': ['parse_iso_utc']}
+    # A signed-only datetime subset requires only the core integer type.
+    profile['modules'] = []
     profile['types'].remove('uint64')
     bindings = publish()
     narrow = 'scpp/custom/time/parse_iso_utc.hpp'

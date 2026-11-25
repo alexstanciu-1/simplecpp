@@ -114,6 +114,18 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$call = '$v vector<int> = [1];return Reader::size($v);';
 		$prepare('struct Reader {' . $size . '}' . $call);
 		rejects(fn() => $prepare('struct Reader {' . str_replace('return count($v);', '$v[]=2;return 0;', $size) . '}' . $call), 'Cannot write through read-only reference');
+		$contract = 'interface Sized {public function size(const vector<int> &$v):int;}';
+		$implementation = 'class Reader implements Sized {' . str_replace('public static', 'public override', $size) . '}';
+		$prepare($contract . $implementation . 'return 8;');
+		rejects(fn() => $prepare($contract . str_replace('const ', '', $implementation) . 'return 8;'), 'signature must match exactly');
+		$apply = 'function apply(callback<int,const vector<int>&> $read,vector<int> &$v):int {return $read($v);}';
+		$call = '$v vector<int> = [1];return apply(fn(const &$view)=>count($view),$v);';
+		$prepare($apply . $call);
+		rejects(fn() => $prepare($apply . str_replace('const &$view', '&$view', $call)), 'Expected exact callback signature');
+		$ctor = 'class Reader {public function __construct(const vector<int> &$v) {echo count($v);}}';
+		$construct = '$v vector<int> = [1];$r=new Reader($v);return 8;';
+		$prepare($ctor . $construct);
+		rejects(fn() => $prepare(str_replace('echo count($v);', 'clean($v);', $ctor) . $construct), 'Cannot write through read-only reference');
 	}
 	// A changed local and two aliased reference parameters must not reuse old range proofs.
 	$set = $fn('large', [$p('v', 'int', true)], 'int', $var('v') . '=300; return 1;');

@@ -766,7 +766,7 @@ final class Preparation
 		if ($statement->value instanceof ast_writable_element) {
 			$collection = $statement->source_value instanceof ast_name_expression ? $statement->source_value->local_binding() : null;
 			if (!($collection instanceof ast_local_declaration || $collection instanceof ast_parameter_declaration)
-				|| !($source_type instanceof vector_type_definition || $source_type instanceof hash_type_definition) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
+				|| !($source_type instanceof writable_iteration_type) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
 				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires a named local or parameter of vector or hash type in a synchronous body');
 			}
 			Readonly_Access::require_writable($statement->source_value, $collection);
@@ -1822,7 +1822,8 @@ final class Preparation
 	 * Bind exact stable storage. Only a writable reference can invalidate the caller’s value facts.
 	 * @param int[] $writes Local storage IDs invalidated by the call.
 	 */
-	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */, bool $readonly = false): void
+	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */, bool $readonly = false,
+		ast_function_declaration|ast_lambda_expression|callback_type_definition|null $target = null): void
 	{
 		$storage = $argument instanceof ast_name_expression ? $argument->declaration() : null;
 		if (!$readonly && ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant)) {
@@ -1832,7 +1833,8 @@ final class Preparation
 			throw new diagnostic($argument->source(), $argument->byte_start(),
 				'Reference argument requires stable variable storage: a named local or parameter');
 		}
-		if ($storage instanceof ast_writable_element) {
+		if ($storage instanceof ast_writable_element && (!($target instanceof ast_function_declaration)
+			|| $target->parent instanceof ast_method_owner || $target->is_async || $target->returns_reference)) {
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Writable foreach element cannot bind a reference parameter');
 		}
 		if ($storage->type_def() !== $type) {
@@ -2059,7 +2061,10 @@ final class Preparation
 				? ($expected?->inputs[$index] ?? $transform_element ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
 				: Type_Resolution::signature($syntax, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
 			if ($index === $variadic) Function_Preparation::require_pack_type($parameter, $type);
-			if ((!Type_Resolution::callback_component($type) && !($transform_element !== null && $type instanceof record_type_definition)) || $parameter->mode === passing_mode::readonly_reference) {
+			if ($parameter->mode === passing_mode::readonly_reference && !Type_Resolution::readonly_collection_input($type)) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only callable references require a vector or hash input');
+			}
+			if (!Type_Resolution::callback_component($type) && !($transform_element !== null && $type instanceof record_type_definition)) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
 			}
 			$parameter->settle_type($type);
@@ -2069,7 +2074,7 @@ final class Preparation
 			}
 			$locals[$name] = $parameter;
 			$inputs[] = $type;
-			if ($parameter->mode === passing_mode::reference) $modes[$index] = $parameter->mode;
+			if ($parameter->mode !== passing_mode::value) $modes[$index] = $parameter->mode;
 		}
 		$borrowed /** array<uint32,ast_closure_capture> */ = [];
 		$writes /** list<uint32> */ = [];
@@ -2796,7 +2801,7 @@ final class Preparation
 			}
 			$mode = $parameter?->mode ?? $function->input_mode($slot);
 			if ($mode !== passing_mode::value) {
-				$this->bind_reference($argument, $type, $writes, $mode === passing_mode::readonly_reference);
+				$this->bind_reference($argument, $type, $writes, $mode === passing_mode::readonly_reference, $function);
 				$conversions[] = value_conversion::identity;
 			}
 			else {
