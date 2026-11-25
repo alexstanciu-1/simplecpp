@@ -1656,9 +1656,12 @@ final class Preparation
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
 				$carrier = $left instanceof carrier_type_definition ? $left : $right;
 				$literal = $carrier === $left ? $syntax->right : $syntax->left;
-				if ($carrier instanceof carrier_type_definition && $carrier->payload_type instanceof runtime_handle_type
+				if ($carrier instanceof carrier_type_definition
 					&& $literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)
-					&& $carrier->sentinel_factory($literal->word) !== null) {
+					&& $carrier->sentinel_factory($literal->word) !== null
+					&& ($carrier->payload_type instanceof runtime_handle_type
+						|| ($syntax->source()->flavor === flavor::php && $literal->word === 'false'
+							&& $carrier->sentinel_factory('true') === null))) {
 					$syntax->settle_binary(type_bool::instance(), $carrier);
 					return;
 				}

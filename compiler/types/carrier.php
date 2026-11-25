@@ -33,7 +33,7 @@ abstract class carrier_type_definition extends type_definition implements presen
 		return false;
 	}
 
-	/** A strict null comparison operates on the carrier itself and reads only presence. */
+	/** Prepared literal comparisons inspect carrier presence or sentinel state directly. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{

@@ -71,6 +71,21 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	verify(str_contains($cpp, '.value()'), 'Missing checked extraction');
 	verify(!str_contains($cpp, 'std::optional') && !str_contains($cpp, 'std::variant'), 'Application templates leaked');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("17|-12|24|1|12|4|12|1|a\0b|0|8|13|24")];
+	if ($flavor === flavor::php) {
+		$guard = <<<'SCPP'
+function missing():result_or_false<bool> { echo "once"; return false_sentinel; }
+$flag result_or_false<bool> = false;
+$zero result_or_false<int> = 0;
+$miss result_or_false<int> = false_sentinel;
+echo (int)($flag === false), (int)(false !== $flag), (int)($zero !== false),
+    (int)(false === $miss), (int)(missing() === false);
+return 8;
+SCPP;
+		$cpp = (new Cpp_Emitter())->emit($prepare($guard));
+		verify(substr_count($cpp, '.is_false()') === 5 && !str_contains($cpp, '.value()'),
+			'Strict PHP false guards must inspect the sentinel directly');
+		$fixtures['php-false-guards'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('0111once1')];
+	}
 	$presence = $decl('nullable<int>', 'none', 'null')
 		. $decl('result_or_false<bool>', 'successful', 'false')
 		. $decl('result_or_false<bool>', 'absent', 'false_sentinel')
