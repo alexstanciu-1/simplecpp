@@ -112,12 +112,14 @@ final class Syntax_Inspection
 			$row = ['kind' => 'base_initialization', 'explicit' => $expression->explicit, 'target' => $expression->target?->spelling(),
 				'arguments' => array_map(self::expression(...), $expression->arguments)];
 			if ($expression->named !== null) $row['labels'] = $expression->named->labels;
+			if ($expression->unpacked) $row['arguments'][array_key_last($expression->arguments)]['unpacked'] = true;
 			return $row;
 		}
 		if ($expression instanceof ast_construction_expression) {
 			$row = $expression instanceof ast_new_expression ? ['kind' => 'new', 'target' => $expression->target->name] : ['kind' => 'struct_default'];
 			if ($expression->named !== null) $row['labels'] = $expression->named->labels;
 			if ($expression->arguments !== []) $row['arguments'] = array_map(self::expression(...), $expression->arguments);
+			if ($expression->unpacked) $row['arguments'][array_key_last($expression->arguments)]['unpacked'] = true;
 			return $row;
 		}
 		if ($expression instanceof ast_called_type_name) {

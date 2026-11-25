@@ -632,8 +632,10 @@ CPP;
 				if ($function->parameters !== [] && $function->accepts_argument_count(0)) {
 					$defaults = [];
 					foreach ($function->parameters as $parameter) {
-						$defaults[] = $this->declaration_initialization($parameter->type_def(), $parameter->default_value,
-							$parameter->default_conversion(), $required_headers);
+						$defaults[] = $parameter->type_reference instanceof ast_variadic_type_reference
+							? $parameter->type_def()->lower_cpp_empty()
+							: $this->declaration_initialization($parameter->type_def(), $parameter->default_value,
+								$parameter->default_conversion(), $required_headers);
 					}
 					$name = Cpp_Identifier::source($function->parent->short_name);
 					$definitions[] = $owner->payload->cpp_type() . '::' . $name . '() : ' . $name . '(' . implode(', ', $defaults) . ") {}\n";
@@ -3003,7 +3005,7 @@ CPP;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
 		$variadic = $callback ? $function->variadic_slot : ($runtime ? null : $function->variadic_slot());
 		// An unpacked operand already supplies the native by-value vector parameter.
-		if ($value instanceof ast_unpacked_call) $variadic = null;
+		if ($value instanceof ast_unpacked_call || ($value instanceof ast_construction_expression && $value->unpacked)) $variadic = null;
 		if ($variadic !== null) {
 			$last = array_pop($parameters);
 			$pack = $callback ? $last : $last->type_def();
@@ -3141,17 +3143,7 @@ CPP;
 		if (isset($value->named)) $direct_arguments = $value->named->parameter_order($direct_arguments);
 		array_push($arguments, ...$direct_arguments);
 		if ($variadic !== null) {
-			$name_pack = 'pack_' . $value->start . '_' . $value->end;
-			$steps[] = $pack->cpp_type() . " $name_pack{};";
-			if ($pack instanceof application_collection_type) $this->concrete_collections->request($pack);
-			for ($i = $variadic; $i < count($operands); ++$i) {
-				$element = $operands[$i];
-				[$operand, $prerequisites] = $this->staged_operand($element, $global_references, $declarations, $required_headers);
-				array_push($steps, ...$prerequisites);
-				$conversion = $value->conversion($i);
-				foreach ($pack->element_type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
-				$steps[] = $pack->lower_cpp_sequence_append($element, $conversion, $name_pack, $operand, $this->inline_adapters) . ';';
-			}
+			$name_pack = $this->variadic_pack($value, $variadic, $pack, $global_references, $declarations, $required_headers, $steps);
 			$arguments[] = 'static_cast<' . $pack->cpp_type() . "&&>($name_pack)";
 			if ($before !== $this->suspensions) ++$this->async_owned_steps;
 		}
@@ -3163,6 +3155,24 @@ CPP;
 		$return_reference = $callback ? $function->result_suffix() : ($function instanceof statement_return_target && $function->returns_reference ? '&' : '');
 		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type() . $return_reference) . ' { ' . implode(' ', $steps)
 			. ' return ' . $call . '; }())';
+	}
+
+	/** Fill one owned pack in source order, sharing append and conversion lowering with base construction. */
+	private function variadic_pack(ast_call_expression|ast_construction_expression $site, int $start, vector_type_definition $pack,
+		array &$globals, array &$declarations, array &$headers, array &$steps): string
+	{
+		$name = 'pack_' . $site->start . '_' . $site->end;
+		$steps[] = $pack->cpp_type() . " $name{};";
+		if ($pack instanceof application_collection_type) $this->concrete_collections->request($pack);
+		for ($i = $start; $i < count($site->arguments); ++$i) {
+			$element = $site->arguments[$i];
+			[$operand, $prerequisites] = $this->staged_operand($element, $globals, $declarations, $headers);
+			array_push($steps, ...$prerequisites);
+			$conversion = $site->conversion($i);
+			foreach ($pack->element_type->conversion_headers($conversion) as $header) $headers[$header] = true;
+			$steps[] = $pack->lower_cpp_sequence_append($element, $conversion, $name, $operand, $this->inline_adapters) . ';';
+		}
+		return $name;
 	}
 
 	/** Collect declarations for a callable's result and inputs even when the local starts absent. @param (ast_declaration_interface|type_definition)[] $declarations */
@@ -3384,6 +3394,16 @@ CPP;
 			$fields = [];
 			$reordered = $site->named?->reordered();
 			foreach ($parameters as $index => $parameter) {
+				if (!$site->unpacked && $parameter->type_reference instanceof ast_variadic_type_reference) {
+					$pack = $parameter->type_def();
+					if (!isset($site->arguments[$index])) $arguments[] = $pack->lower_cpp_empty();
+					else {
+						$steps = [];
+						$name = $this->variadic_pack($site, $index, $pack, $globals, $declarations, $headers, $steps);
+						$arguments[] = '[&]() { ' . implode(' ', $steps) . ' return ' . $name . '; }()';
+					}
+					continue;
+				}
 				$argument = $site->arguments[$index] ?? $parameter->default_value;
 				$conversion = isset($site->arguments[$index]) ? $site->conversion($index) : $parameter->default_conversion();
 				$type = $parameter->type_def();

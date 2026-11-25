@@ -1383,6 +1383,7 @@ final class Preparation
 				$payload = Type_Resolution::local($syntax->target, $this->symbols, $this->owner, $this->dependencies);
 			}
 			if ($payload instanceof type_exception) {
+				if ($syntax->unpacked) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unpacking requires a variadic constructor');
 				if ($syntax->named !== null) throw new diagnostic($syntax->source(), $syntax->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 				$factory = $payload->factory;
 				if (count($syntax->arguments) !== count($factory->parameters)) {
@@ -2592,7 +2593,7 @@ final class Preparation
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
 		$variadic = $callback ? $function->variadic_slot : $function->variadic_slot();
-		$unpacked = $call instanceof ast_unpacked_call;
+		$unpacked = $call instanceof ast_construction_expression ? $call->unpacked : $call instanceof ast_unpacked_call;
 		if ($unpacked && ($variadic === null || $supplied !== $variadic + 1)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires one vector after all fixed arguments of a variadic target');
 		}

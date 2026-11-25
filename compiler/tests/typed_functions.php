@@ -156,7 +156,7 @@ $php($static . '$v vector<int> = [1,2];$op function<int(int...)> = S::n(...);ech
 rejects(fn() => $php($static . 'class D extends S {public static function n(vector<int> $xs):int {return 1;}}return 8;'),
 	'Static redeclaration signature must match exactly');
 $php(str_replace('public static function', 'public function', $static) . '$s=new S();return $s->n(1,2);');
-rejects(fn() => $php('class C {public function __construct(int ...$xs) {}} return 8;'), 'Variadic parameters require');
+$php('class C {public function __construct(int ...$xs) {}} $c=new C();$xs vector<int> = [1];$c=new C(...$xs);return 8;');
 rejects(fn() => $php(str_replace('public static function', 'public function', $static)
 	. '$s=new S();$op function<int(int...)> = $s->n(...);return 8;'), 'Callback reference requires a named free function');
 rejects(fn() => $php('function f(int ...$xs,int $y):int {return 0;}return 8;'), 'Variadic parameter must be last');

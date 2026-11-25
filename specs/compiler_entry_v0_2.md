@@ -260,6 +260,15 @@ It is evaluated once, after the fixed arguments, and passed with ordinary
 vector value semantics. Mutating the pack leaves the caller’s vector storage
 independent. An empty vector supplies zero elements. Reference packs and named
 arguments to variadic calls remain deferred.
+
+PHP class and struct constructors accept the same trailing by-value pack. Both
+shared construction (`new Scores(1, ...$items)`) and inline struct construction
+(`$cell Cell(1, ...$items);`) evaluate explicit inputs once in source order.
+When all fixed inputs can be omitted, default construction, including that of an
+embedded struct field, applies their defaults and passes an empty vector.
+A derived constructor can forward a matching vector to `parent::__construct`
+or pass individual elements. Its base subobject is initialized before the
+derived fields and constructor body.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
 ### Named callbacks
