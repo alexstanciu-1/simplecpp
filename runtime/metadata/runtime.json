@@ -1223,6 +1223,7 @@
   "text_helpers": {
     "hash_string": ["string", "string"],
     "stable_hash_string_u64": ["uint64", "string"],
+    "string_utf8_is_valid": ["bool_t", "string"],
     "string_utf8_codepoint_count": ["int64", "string"],
     "string_utf8_codepoint_at": ["int64", "string", "int64"],
     "string_utf8_slice_codepoints": ["string", "string", "int64", "int64"],

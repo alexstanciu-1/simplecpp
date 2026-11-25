@@ -162,6 +162,11 @@ preserves empty values and embedded NUL bytes.
 
 ## Explicit UTF-8 helpers
 
+The general helper `string_utf8_is_valid(string): bool` tests whether the entire
+byte string encodes Unicode scalar values in UTF-8. Empty input and embedded NUL
+are valid. Truncated and overlong sequences, stray continuation bytes, surrogate
+encodings and code points above U+10FFFF return false.
+
 string_utf8_codepoint_count(s) returns the number of Unicode scalar values.
 string_utf8_codepoint_at(s,i) returns a scalar as int, or −1 outside the input.
 string_utf8_slice_codepoints(s,start,length) returns an owning substring.
