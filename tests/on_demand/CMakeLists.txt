@@ -2,7 +2,7 @@
 set(proofs
   static_callable_properties erased_reference_returns owned_callable_fields
   static_owned_callables instance_owned_callables
-  boxed_scalars callable_collections callable_reference_inputs variadic_callables variadic_closures variadic_unpack variadic_static_methods variadic_instance_methods variadic_constructors named_variadic readonly_variadic writable_foreach
+  boxed_scalars callable_collections callable_reference_inputs readonly_callable_inputs variadic_callables variadic_closures variadic_unpack variadic_static_methods variadic_instance_methods variadic_constructors named_variadic readonly_variadic writable_foreach scoped_element_borrows
   staged_ownership source_loader_callbacks
   runtime_operand_projection undefined_key collection_bootstrap
   input_records incremental_executable weak shared_references reference_parameters
@@ -10,7 +10,7 @@ set(proofs
   fixed_array ternary
   switch required_fields integer_radix
   bootstrap_runtime_lookup finally exceptions
-  collection_references readonly_collection_methods collection_append named_construction struct_constants shared_lookup
+  collection_references readonly_collection_methods readonly_constructors collection_append named_construction struct_constants shared_lookup
   coalesce coalesce_assignment
   hash_find match match_conditions
   inline_adapters named_arguments app_namespace

@@ -68,12 +68,18 @@ final class ast_variadic_type_reference extends ast_type_reference
 	}
 }
 
-/** A writable reference component in a callable signature, e.g. callback<int&,int&>. */
+/** A reference component in a callable signature, e.g. callback<int&,int&>. */
 final class ast_callable_reference_component extends ast_type_reference
 {
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name,
+		?ast_type_reference $child, ?ast_type_reference $next, public readonly passing_mode $mode)
+	{
+		parent::__construct($start, $end, $name, $child, $next);
+	}
+
 	public function spelling(): string
 	{
-		return parent::spelling() . '&';
+		return $this->mode->qualify(parent::spelling());
 	}
 }
 

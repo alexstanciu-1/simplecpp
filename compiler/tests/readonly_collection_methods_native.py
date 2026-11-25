@@ -39,6 +39,32 @@ def prove(work):
     revisions(work, 'php', dict(main=main, helper=helper, reader=reader), edits)
 
 
+def dispatch(work, contract_kind, collection, setup, update, observe, expected):
+    signature = f'function inspect(const {collection} &$view,{collection} &$writer):int'
+    if contract_kind == 'interface':
+        contract = f'interface Contract {{public {signature};}}'
+        inheritance = 'implements Contract'
+    else:
+        contract = f'class Contract {{public virtual {signature} {{return 99;}}}}'
+        inheritance = 'extends Contract'
+    implementation = f'class Inspector {inheritance} {{public override {signature} {{{update}}}}}'
+    consumer = f'function visit(Contract $r,{collection} &$items):int {{return $r->inspect($items,$items);}}'
+    main = f'$items {collection} = {setup};$r=new Inspector();echo visit($r,$items),{observe};return 8;'
+    sources = dict(main=main, contract=contract, implementation=implementation, consumer=consumer)
+    edits = [(None, None, expected)]
+    for parameter in (f'{collection} &$view', f'{collection} $view'):
+        changed = implementation.replace(f'const {collection} &$view', parameter)
+        edits.extend([('implementation', changed, 'signature must match exactly'),
+                      (None, None, 'signature must match exactly'),
+                      ('implementation', implementation, expected)])
+    revisions(work, 'php', sources, edits)
+
+
 if __name__ == '__main__':
     with TemporaryDirectory(prefix='scpp-readonly-methods-') as directory:
         prove(Path(directory))
+    for contract_kind in ('virtual', 'interface'):
+        for case in [('vector<int>', '[1,2]', 'clean($writer);return count($view);', 'count($items)', b'00'),
+                     ('hash<int,string>', '["k"=>3]', '$writer["k"]=8;return $view["k"];', '$items["k"]', b'88')]:
+            with TemporaryDirectory(prefix='scpp-readonly-dispatch-') as directory:
+                dispatch(Path(directory), contract_kind, *case)

@@ -126,6 +126,12 @@ struct @n@::storage {
     std::size_t size() const noexcept { return live_size; }
     std::size_t physical_size() const noexcept { return used; }
     unsigned index_bytes() const noexcept { return index.index_bytes(); }
+    static value_type& iteration_reference(storage* table, std::int64_t position) {
+        if (!table || position <= 0) throw std::out_of_range("iteration_bounds");
+        const auto slot = static_cast<std::uint64_t>(position - 1);
+        if (slot >= table->used || !table->live[slot]) throw std::out_of_range("iteration_bounds");
+        return table->at_slot(slot).value;
+    }
     const entry* iteration_select(std::int64_t& position, std::int64_t limit) const noexcept {
         auto next = static_cast<std::uint64_t>(position);
         const auto end = static_cast<std::uint64_t>(limit) < used ? static_cast<std::uint64_t>(limit) : used;

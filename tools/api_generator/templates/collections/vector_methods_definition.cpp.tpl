@@ -9,7 +9,11 @@
     storage_ = fresh;
 }
 @inline@@e@ @n@::at(@count@ index) const { const auto& values = @access@::read(*this); return values[@buffer@::vector_index(index, values.size())]; }
-@inline@void @n@::set(@count@ index, @e@ value) { const auto offset = @buffer@::vector_index(index, @access@::read(*this).size()); (*storage_)[offset] = static_cast<@e@&&>(value); }
+@inline@@e@& @n@::iteration_reference(@count@ index) {
+    const auto offset = @buffer@::vector_index(index, @access@::read(*this).size());
+    return (*storage_)[offset];
+}
+@inline@void @n@::set(@count@ index, @e@ value) { iteration_reference(index) = static_cast<@e@&&>(value); }
 @inline@bool_t @n@::remove(@count@ index) {
     if (!has(index)) return false;
     storage_->remove(static_cast<std::size_t>(index));

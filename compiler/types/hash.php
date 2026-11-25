@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements indexed_mutation_type, counted_collection_type, membership_type
+abstract class hash_type_definition extends type_definition implements writable_iteration_type, indexed_mutation_type, counted_collection_type, membership_type
 {
 	use checked_indexed_mutation;
 	use collection_specializations;
@@ -25,6 +25,11 @@ abstract class hash_type_definition extends type_definition implements indexed_m
 	}
 
 	/** METHODS */
+	public function lower_cpp_iteration_reference(string $receiver, int $loop_start): string
+	{
+		return "$receiver.iteration_reference(loop_{$loop_start}_iteration_position)";
+	}
+
 	public function supports_inferred_local(): bool
 	{
 		return true;

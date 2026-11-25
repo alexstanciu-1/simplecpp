@@ -129,6 +129,12 @@ interface iterable_type
 	public function lower_cpp_iteration_next(string $receiver, string $value, ?string $key, string $prefix = ''): string;
 }
 
+/** A protected selection can lend its live slot for a synchronous call. */
+interface writable_iteration_type
+{
+	public function lower_cpp_iteration_reference(string $receiver, int $loop_start): string;
+}
+
 /** Published traversal that can advance without materializing a value. */
 interface key_iterable_type extends iterable_type
 {

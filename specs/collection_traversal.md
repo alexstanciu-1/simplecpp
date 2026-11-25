@@ -86,8 +86,13 @@ The collection must keep its size, order and storage throughout the loop. Prepar
 rejects append, removal, resize, reserve, reset, replacement and mutable reference
 calls on the collection or a lexical alias. A closure with a mutable capture of that
 storage cannot be invoked during the loop. By-value and read-only helper calls
-remain eligible. The element cannot serve as reference storage for a call, local
-alias, reference capture or segment grant. Ordinary indexed writes to existing
+remain eligible. A direct synchronous source free function with a value or void result
+may take the selected element by exact-type mutable reference. The borrow lasts
+through that invocation. Two parameters bound to the same element share one slot,
+and writes remain visible if the helper throws. The same collection protections
+apply during argument evaluation and callback re-entry. Read-only or indirect
+calls, methods, local aliases, reference captures and segment grants cannot borrow
+the selected element. Ordinary indexed writes to existing
 vector slots remain visible through the loop binding.
 
 For a borrowed source, the loop also protects other mutable reference parameters

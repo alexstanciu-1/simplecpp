@@ -524,12 +524,7 @@ CPP;
 		$owner = $type->cpp_type();
 		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $headers);
-		$args = [];
-		foreach ($constructor?->parameters ?? [] as $parameter) {
-			$name = $this->name($parameter);
-			$args[] = $parameter->type_def()->cpp_trivial_value() ? $name : 'static_cast<' . $parameter->type_def()->cpp_type() . '&&>(' . $name . ')';
-		}
-		$forward = implode(', ', $args);
+		$forward = implode(', ', array_map($this->forward_argument(...), $constructor?->parameters ?? []));
 		$payload_args = $constructor !== null && self::self_value_constructor($constructor) ? '0, ' . $forward : $forward;
 		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : ::scpp::application_control(destroy_value, dispose_allocation), value($payload_args) {}\n";
 		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tauto* storage = new allocation($forward);\n\tresult.ptr = storage;\n\tresult.view = &storage->value;\n\treturn result;\n}\n";
@@ -1720,13 +1715,14 @@ CPP;
 	}
 
 	/** Read a selected element or identify the native local storage. */
-	private function name(ast_local_binding $binding): string
+	private function name(ast_local_binding $binding, bool $reference = false): string
 	{
 		if ($binding instanceof ast_writable_element) {
 			$loop = $binding->parent;
 			$source = $loop->source_value;
 			$owner = $this->name($source->local_def());
 			$type = $source->type_def();
+			if ($reference) return $type->lower_cpp_iteration_reference($owner, $loop->start);
 			if ($type instanceof key_iterable_type) return $type->lower_cpp_iteration_current_value($owner, 'loop_' . $loop->start . '_iteration_position');
 			return $type->lower_cpp_element_read($owner, 'iteration_index_' . $loop->start);
 		}
@@ -3175,7 +3171,7 @@ CPP;
 				&& !$type->cpp_trivial_value() && $conversion === value_conversion::identity && $argument->type_def() === $type
 				? new Cpp_Staged_Result($type, 'argument_' . $value->start . '_' . $index) : null;
 			$operand = $by_value ? $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
-				logical_root: $conversion === value_conversion::identity, destination: $destination) : $this->name($argument->local_def());
+				logical_root: $conversion === value_conversion::identity, destination: $destination) : $this->name($argument->local_def(), reference: true);
 			if (($variadic !== null || count($parameters) > 1 || $method || $steps !== []) && count($this->async_steps) !== $step_start) {
 				$argument_steps[$index] = array_splice($this->async_steps, $step_start);
 				if ($operand === '' && $destination !== null) {
@@ -3455,7 +3451,7 @@ CPP;
 		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
 		$parameters = [];
 		foreach ($lambda->parameters as $parameter) {
-			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
+			$parameters[] = '[[maybe_unused]] ' . $parameter->mode->qualify($this->signature_type($parameter->type_def(), false)) . ' ' . $this->name($parameter);
 		}
 		$environment = $type->borrows_receiver ? ['&scpp_self'] : [];
 		$capture_uses = $type->borrows_receiver ? ["\t(void)scpp_self;"] : [];
@@ -3545,12 +3541,14 @@ CPP;
 				$conversion = isset($site->arguments[$index]) ? $site->conversion($index) : $parameter->default_conversion();
 				$type = $parameter->type_def();
 				foreach ($type->conversion_headers($conversion) as $header) $headers[$header] = true;
-				$value = $this->value($argument, $globals, $declarations, $headers);
+				$value = $parameter->mode === passing_mode::value
+					? $this->conversion($type, $conversion, $this->value($argument, $globals, $declarations, $headers), $argument)
+					: $this->name($argument->local_def());
 				if ($reordered) {
 					$field = 'slot_' . $site->named->slots[$index];
-					$fields[] = ($type instanceof callback_type_definition ? $type->cpp_declarator($field) : $this->member_type($type) . ' ' . $field) . ';';
+					$fields[] = ($type instanceof callback_type_definition ? $type->cpp_declarator($field) : $parameter->mode->qualify($this->member_type($type)) . ' ' . $field) . ';';
 				}
-				$arguments[] = $this->conversion($type, $conversion, $value, $argument);
+				$arguments[] = $value;
 			}
 			// With labels alone the binder selects the fixed prefix and the tail defaults to empty.
 			if ($site->named !== null && !$site->unpacked && ($tail = $constructor->variadic_slot()) !== null) {
@@ -3559,7 +3557,7 @@ CPP;
 				if ($reordered) $fields[] = $this->member_type($type) . ' slot_' . $tail . ';';
 			}
 			if ($reordered) {
-				// Aggregate fields are the actual value parameters, initialized once in written order.
+				// Aggregate fields preserve each parameter’s passing mode and written evaluation order.
 				// Their lifetime ends after base initialization, before the derived fields and body.
 				$values = '[&]() { struct scpp_escape_inputs { ' . implode(' ', $fields) . ' }; return scpp_escape_inputs{' . implode(', ', $arguments) . '}; }()';
 				$arguments = [$constructor->parent->definition->cpp_type() . '::scpp_escape_named_base{}', $values];
