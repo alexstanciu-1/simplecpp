@@ -114,6 +114,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$call = '$v vector<int> = [1];return Reader::size($v);';
 		$prepare('struct Reader {' . $size . '}' . $call);
 		rejects(fn() => $prepare('struct Reader {' . str_replace('return count($v);', '$v[]=2;return 0;', $size) . '}' . $call), 'Cannot write through read-only reference');
+		$contract = 'interface Sized {public function size(const vector<int> &$v):int;}';
+		$implementation = 'class Reader implements Sized {' . str_replace('public static', 'public override', $size) . '}';
+		$prepare($contract . $implementation . 'return 8;');
+		rejects(fn() => $prepare($contract . str_replace('const ', '', $implementation) . 'return 8;'), 'signature must match exactly');
 	}
 	// A changed local and two aliased reference parameters must not reuse old range proofs.
 	$set = $fn('large', [$p('v', 'int', true)], 'int', $var('v') . '=300; return 1;');

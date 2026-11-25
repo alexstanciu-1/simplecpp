@@ -54,7 +54,7 @@ def prove(work):
                   ('size', 'function size(const vector<int> &$v): Iterator<int> { yield count($v); }', 'Yield producers require by-value'),
                   ('size', size.replace('&$v', '$v'), '& after const parameter type'),
                   ('size', size.replace('&$v', '&$v = null'), 'Reference parameter defaults'),
-                  ('size', 'class Reader { public virtual ' + size + ' }', 'direct class or struct method'),
+                  ('size', 'class Reader { public virtual ' + size.replace('vector<int>', 'int') + ' }', 'Const method references require a vector or hash'),
                   ('size', size, 'exact storage type'), ('main', body, b'')])
     revisions(work, 'php', {'main': body, 'size': size}, edits)
 
