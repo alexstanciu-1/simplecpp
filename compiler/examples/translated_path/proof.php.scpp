@@ -84,6 +84,9 @@ save_generated("initial.cpp", $first);
 print_function_ast($declaration->scope->declaration);
 check_reused_body($declaration->scope->declaration);
 
+check_failed_edit($compiler, $definition, read_source("invalid-entry.source"));
+check_failed_edit($compiler, read_source("invalid-definition.source"), $main);
+check_failed_edit($compiler, $definition, read_source("lexical-error.source"));
 check_failed_edit($compiler, $definition, $incomplete);
 check_failed_edit($compiler, $updated, $bad);
 check_failed_edit($compiler, $overflow, $main);
@@ -95,6 +98,22 @@ assert_translation($recovered === $fresh->compile($definition, $fixed), "Recover
 save_generated("recovered.cpp", $recovered);
 $recovered_entry = $compiler->entry_binding();
 if ($recovered_entry === null) { throw Exception::make("Recovery did not publish the entry"); }
+$old_source = $initial_entry->syntax->source;
+$old_name = $old_source->tokens[1];
+assert_translation($old_source->text === $main &&
+	substr($old_source->text, $old_name->offset, $old_name->length) === "answer_2",
+	"Old token lost its spelling after repair");
+$fresh_entry = $fresh->entry_binding();
+if ($fresh_entry === null) { throw Exception::make("Fresh compiler did not publish the entry"); }
+$repaired_source = $recovered_entry->syntax->source;
+$fresh_source = $fresh_entry->syntax->source;
+assert_translation($repaired_source !== $old_source && $repaired_source->text === $fresh_source->text &&
+	count($repaired_source->tokens) === count($fresh_source->tokens), "Wrong source snapshot after repair");
+foreach ($fresh_source->tokens as $i => $expected) {
+	$actual = $repaired_source->tokens[$i];
+	assert_translation($actual->kind === $expected->kind && $actual->offset === $expected->offset &&
+		$actual->length === $expected->length, "Repaired token differs from a fresh scan");
+}
 $symbol = $recovered_entry->symbol;
 assert_translation($symbol === $initial_entry->symbol, "Entry edit replaced the symbol for the same key");
 assert_translation($recovered_entry->target() === $declaration, "Initial symbol target is wrong");

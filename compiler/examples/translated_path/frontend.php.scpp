@@ -40,6 +40,8 @@ function identifier_byte(byte $value): bool {
 }
 
 function tokenize_source(string $path, string $text): vector<Token_Span> {
+	$invalid = source_utf8_error($text);
+	if ($invalid >= 0) throw new Translation_Diagnostic($path, $invalid, "Invalid UTF-8 source");
 	$tokens vector<Token_Span> = [];
 	$length = strlen($text);
 	$offset = 0;

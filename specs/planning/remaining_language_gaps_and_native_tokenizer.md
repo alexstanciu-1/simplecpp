@@ -213,8 +213,16 @@ validator on 33 byte strings against the production tokenizer in all four flavor
 It covers boundary code points, truncated and overlong sequences, surrogates,
 and an invalid continuation after an earlier lexical error. The runtime helper
 accepts valid input directly. On invalid input the native fixture locates the
-first malformed sequence. Wiring that result into scanner diagnostics and
-token-list publication remains open. [Native fixture](../../compiler/examples/tokenizer/utf8.php.scpp)
+first malformed sequence. [Native fixture](../../compiler/examples/tokenizer/utf8.php.scpp)
+
+The bounded PHP-flavor compiler now validates each changed source before
+recognizing its first token. The filesystem-enabled `compiler_translated_path`
+test edits the entry and declaration separately, checks diagnostic precedence
+against the production frontend, and verifies that failures preserve the last
+published binding, declaration and output. After repair, the old token still
+addresses its original spelling, and every new token's kind, offset and length
+agrees with a fresh compilation. Full flavor-specific token streams and Python
+layout remain open. [Translated scanner](../../compiler/examples/translated_path/frontend.php.scpp)
 
 Acceptance checks:
 
