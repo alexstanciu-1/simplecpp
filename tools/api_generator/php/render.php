@@ -88,7 +88,7 @@ function render(array $plan): array {
     }
     if (isset($plan['checked_conversions'])) $d .= includeHeader($plan['checked_conversions']['header']);
     $files = [];
-    if (isset($plan['text_builders']) || isset($plan['text_helpers']['string_byte_find']) || $valueErrors || in_array('1', array_column($plan['vectors'] ?? [], 'enable_reserve'), true)) {
+    if (isset($plan['cli_helpers']['environment']) || isset($plan['text_builders']) || isset($plan['text_helpers']['string_byte_find']) || $valueErrors || in_array('1', array_column($plan['vectors'] ?? [], 'enable_reserve'), true)) {
         $files['public/scpp/value_error.hpp'] = BANNER . "#pragma once\n#include <stdexcept>\nnamespace scpp { class ValueError : public std::invalid_argument { public: using std::invalid_argument::invalid_argument; }; }\n";
         $d .= includeHeader('scpp/value_error.hpp');
     }
@@ -173,6 +173,7 @@ function render(array $plan): array {
     renderRegexCaptureTypes($plan, $files, $groups);
     foreach (FUNCTION_MODULES as $family) renderModuleFunctions($family, $plan, $files, $groups);
     renderBoxed($plan, $files, $groups);
+    renderCliHelpers($plan, $files);
     $groups[] = ['provider' => $plan['submodules']['groups']['output']['provider'], 'declarations' => template('core/output_declaration', [
         'string_output' => isset($plan['string']) ? "class string;\nvoid echo_string(const string& value);\n" : '',
     ]), 'system' => ['stddef.h', 'stdint.h']];
@@ -196,7 +197,9 @@ function render(array $plan): array {
             ['string_header' => $plan['string']['header']]);
     }
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
-    $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration');
+    $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration', [
+        'arguments_overload' => cliStartup($plan) ? "\nint run_entry_with_exceptions(int (*entry)(), int argc, char** argv);" : '',
+    ]);
     requireThat(!isset($files['public/scpp/arithmetic.hpp']), 'The core arithmetic header path is reserved');
     $files['public/scpp/arithmetic.hpp'] = BANNER . template('scalars/arithmetic_declaration', ['optional_helpers' => $integerHelpers]);
     if ($plan['async_frames'] ?? false) {

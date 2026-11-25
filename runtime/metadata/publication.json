@@ -726,6 +726,12 @@
     ]
   },
   "text_builders": ["string_parts_builder", "text_builder"],
+  "cli_helpers": {
+    "argument_count": {"general": ["cli_argument_count"], "php": ["cli_argc"], "result": "int64"},
+    "arguments": {"general": ["cli_arguments"], "result": "vector_string"},
+    "mixed_arguments": {"php": ["cli_args", "cli_argv"], "result": "mixed"},
+    "environment": {"general": ["env_get"], "php": ["getenv"], "parameters": ["string"], "result": "result_or_false_string"}
+  },
   "text_helpers": ["string_byte_len", "string_byte_at", "string_byte_slice", "string_byte_slice_equals", "string_byte_find", "string_utf8_codepoint_count", "string_utf8_codepoint_at", "string_utf8_slice_codepoints"],
   "collection_transforms": ["collection_map", "collection_filter", "sequence_map", "sequence_filter", "keyed_map", "keyed_filter"],
   "vectors": {

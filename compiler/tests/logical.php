@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/../host/syntax.php';
 require_once __DIR__ . '/../host/compilation.php';
@@ -211,7 +212,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$failure_code = $fn('xor_fail_right', '', 'bool', 'return false xor (1 / 0);')
 		. $fn('xor_fail_left', '', 'bool', 'return (1 / 0) xor right_xor();')
 		. $fn('right_xor', '', 'bool', 'echo "R"; return true;') . 'return 8;';
-	$failure_cpp = str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($failure_code)));
+	$failure_cpp = rename_fixture_main('tested_entry', (new Cpp_Emitter())->emit($prepare($failure_code)));
 	$failure_cpp .= "\n#include <stdexcept>\nint main() {\n";
 	foreach (['xor_fail_right', 'xor_fail_left'] as $name) {
 		$failure_cpp .= 'try { (void)::App::' . $name . '_(); return 90; } catch (const std::domain_error&) {}' . "\n";

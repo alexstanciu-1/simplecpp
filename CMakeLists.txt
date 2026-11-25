@@ -73,6 +73,12 @@ string(JSON mt_segments ERROR_VARIABLE mt_error GET "${runtime_profile}" mt_segm
 if(mt_segments)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/mt_segment.hpp ${runtime_generated}/public/scpp/mt_segments.hpp)
 endif()
+foreach(helper argument_count arguments mixed_arguments)
+  if("${runtime_generated}/public/scpp/cli/${helper}.hpp" IN_LIST runtime_outputs)
+    list(APPEND runtime_outputs ${runtime_generated}/private/cli_context.hpp)
+    break()
+  endif()
+endforeach()
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/owner_access.hpp
@@ -315,6 +321,8 @@ if(BUILD_TESTING)
   add_test(NAME output_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/output_runtime.py)
   add_test(NAME compiler_entry_binding COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/entry_binding.php)
   scpp_fixture_test(entry_binding php_proven php_checked)
+  add_test(NAME compiler_cli_environment_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/cli_environment_native.py ${CMAKE_CXX_COMPILER})
   add_test(NAME compiler_launcher_native COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/launcher_native.py
     ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)

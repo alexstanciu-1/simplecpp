@@ -59,7 +59,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$emit('existing_' . $family, $factory . $existing . $main, '1010');
 		// Move a suspended cursor: borrowed receiver access must use the destination frame.
 		$entry = $prepare($factory . $producer . 'return 8;');
-		$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+		$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 		$cpp .= <<<'CPP'
 int main() {
     auto original = App::stream_(App::make_());
@@ -107,7 +107,7 @@ CPP;
 	$setup = $local('owner', 'new Box()') . $v('owner') . $member . 'items[]=5;' . $v('owner') . $member . 'items[]=6;';
 	$emit('shared_field', $box . $owner_stream . $setup . $loop('owners(' . $v('owner') . ')', 'echo ' . $v('value') . ';') . 'return 8;', '56');
 	$entry = $prepare($box . $owner_stream . 'return 8;');
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     auto owner = App::owner_Box::make();
@@ -137,7 +137,7 @@ CPP;
 
 	$checked = str_replace('Iterator<int>', 'Iterator<byte>', $vector_producer);
 	$entry = $prepare(str_replace('=20;', '=300;', $vector_factory) . $checked . 'return 8;');
-	$cpp = str_replace('int main()', 'int source_main()', (new Cpp_Emitter())->emit($entry));
+	$cpp = rename_fixture_main('source_main', (new Cpp_Emitter())->emit($entry));
 	$cpp .= <<<'CPP'
 int main() {
     auto cursor = App::stream_(App::make_());

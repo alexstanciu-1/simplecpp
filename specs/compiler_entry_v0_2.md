@@ -3,6 +3,10 @@
 Doc Status: normative
 Scope: the bounded PHP compiler rebuild under `compiler/`.
 
+## Executable arguments
+
+When the runtime publication selects an argument reader, generated main accepts native argc and argv and passes them through the entry exception boundary. The authored entry body keeps its parameterless signature. A publication without argument readers uses the original parameterless adapter. The [runtime API summary](runtime_api_summary.md#executable-arguments-and-environment) defines the visible readers and snapshot types.
+
 ## Source contract
 
 The first executable slice admits a single file containing explicitly typed integer

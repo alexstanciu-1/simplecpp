@@ -221,3 +221,17 @@ The [filesystem contract](filesystem_module.md) defines the general and PHP name
 The [module contracts](stream_process_curl_modules.md) define handle lifetime, flavor visibility, checked results and external dependencies.
 
 The optional [mysqli, UI and Webview modules](database_desktop_modules.md) publish opaque handles and their operations through the runtime catalog.
+
+## Executable arguments and environment
+
+The default core publication exposes these operations independently of managed Process. C++ uses the general names by default. Other flavors can add general names through the root project's general_api option. PHP also exposes the natural or compatibility spellings below.
+
+| General source API | PHP source API | Contract |
+| --- | --- | --- |
+| `cli_argument_count(): int` | `cli_argc(): int` | Number of slots supplied to the executable, including slot zero when present. Reading the count allocates no list. |
+| `cli_arguments(): vector<string>` | `cli_argv(): mixed`, `cli_args(): mixed` | Each call produces an independent owned snapshot in invocation order. PHP snapshots are packed mixed lists of strings. The two aliases select the same native operation. |
+| `env_get(name: string): result_or_false<string>` | `getenv(name: string): result_or_false<string>` | Returns a copy of the current value, including a present empty string. An absent name returns false. Embedded NUL in the name raises ValueError before lookup. Host name matching applies. |
+
+Executable startup retains the supplied count and argument slots before entering the authored body. Slot zero preserves the invocation spelling. Empty arguments, spaces and non-UTF-8 bytes are preserved. An argument list obtained by a function in another translation unit observes the same invocation. The runtime reads the process environment at each lookup; callers sharing the process with native code that changes its environment must coordinate those changes.
+
+[Publication](../runtime/metadata/publication.json) · [Executable source proof](../compiler/tests/cli_environment_native.py)

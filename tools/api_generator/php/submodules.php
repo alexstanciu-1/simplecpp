@@ -271,6 +271,10 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         && in_array('string', array_column($publication->hashes->specializations ?? [], 'value'), true)) {
         $headers[] = 'scpp/php/implode_hash.hpp';
     }
+    foreach (array_keys(object($publication->cli_helpers ?? (object)[])) as $name) {
+        $headers[] = cliHelperHeader($name);
+        if ($name === 'environment') $headers[] = 'scpp/value_error.hpp';
+    }
     foreach (names($publication->text_builders ?? []) as $name) {
         $headers[] = textHelperHeader($name);
         $headers[] = 'scpp/value_error.hpp';

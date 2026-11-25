@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
@@ -109,7 +110,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	foreach (['power_value', 'power_write', 'power_effect'] as $name) {
 		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
-	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
+	$fixtures[$flavor->name . '_boundary'] = ['cpp' => rename_fixture_main('tested_entry',
 		(new Cpp_Emitter())->emit($prepare($source))) . $observer, 'stdout_hex' => ''];
 	$directory = sys_get_temp_dir() . '/scpp-power-' . bin2hex(random_bytes(8));
 	mkdir($directory);

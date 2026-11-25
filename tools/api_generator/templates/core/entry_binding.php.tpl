@@ -7,6 +7,8 @@ namespace scpp\compiler;
 /** Public ABI binding only; entry range reasoning belongs to handwritten target-aware preparation. */
 final class Cpp_Entry_Binding
 {
+	public const ARGUMENTS = @arguments@;
+
 	/** Header also provides the target assertion used for proven entry returns. */
 	public static function header(): string
 	{

@@ -393,6 +393,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
     }
     foreach (compilerBuilderCases($runtime['text_builders'] ?? [], $runtimeTypes) as $case) $runtimeCases[] = $case;
+    foreach (compilerCliCases($runtime ?? [], $runtimeTypes) as $case) $runtimeCases[] = $case;
     foreach ($runtime['text_helpers'] ?? [] as $name => $binding) {
         $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings[\$key] ??= " . compilerTextBinding($name, $binding, $runtimeTypes) . ',';
     }
@@ -484,14 +485,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations, '@application_specializations@' => $applicationVectors . $applicationHashes,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);
-    $files['bindings/entry.php'] = compilerEntryBinding($compiler);
+    $files['bindings/entry.php'] = compilerEntryBinding($compiler, cliStartup($runtime ?? []));
     $files['inventory.json'] = encode(['generator' => 'scpp-compiler-lowering', 'version' => 58,
         'files' => array_keys($files)]) . "\n";
     return $files;
 }
 
 /** Resolve the native entry ABI without treating native int as a source-language type. */
-function compilerEntryBinding(mixed $compiler): string {
+function compilerEntryBinding(mixed $compiler, bool $arguments): string {
     $entry = at($compiler, 'entry');
     fields($entry, ['checked_binding']);
     $binding = at(at($compiler, 'runtime_bindings'), textValue(at($entry, 'checked_binding')));
@@ -502,7 +503,7 @@ function compilerEntryBinding(mixed $compiler): string {
     requireThat(preg_match('/^scpp::[A-Za-z_][A-Za-z0-9_]*$/D', $symbol) === 1, 'Invalid entry binding symbol');
     requireThat(preg_match('~^scpp/[a-zA-Z0-9_]+(?:/[a-zA-Z0-9_]+)*\.hpp$~D', $header) === 1, 'Invalid entry binding header');
     return strtr(readFile(__DIR__ . '/../templates/core/entry_binding.php.tpl'), [
-        '@symbol@' => var_export($symbol, true), '@header@' => var_export($header, true),
+        '@arguments@' => $arguments ? 'true' : 'false', '@symbol@' => var_export($symbol, true), '@header@' => var_export($header, true),
     ]);
 }
 

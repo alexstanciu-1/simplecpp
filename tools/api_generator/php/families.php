@@ -6,6 +6,7 @@ require_once __DIR__ . '/json.php';
 require_once __DIR__ . '/resource_modules.php';
 require_once __DIR__ . '/module_functions.php';
 require_once __DIR__ . '/text_helpers.php';
+require_once __DIR__ . '/cli_helpers.php';
 require_once __DIR__ . '/text_builders.php';
 
 /** Internal native traversal ABI shared by the supported concrete collection families. */
@@ -44,7 +45,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'text_helpers', 'text_builders', 'resource_modules']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'cli_helpers', 'text_helpers', 'text_builders', 'resource_modules']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -83,6 +84,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
         }
     }
     prepareTextBuilders($metadata, $publication, $plan);
+    prepareCliHelpers($publication, $plan);
     prepareTextHelpers($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
     prepareJson($metadata, $publication, $plan);

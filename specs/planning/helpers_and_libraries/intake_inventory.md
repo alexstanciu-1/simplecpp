@@ -9,6 +9,7 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 | Operational family | Proven v0.2 scope |
 | --- | --- |
 | Filesystem | 21 general operations and 18 PHP exposures, including byte-preserving reads/writes, path operations, staging and a checked Linux snapshot. [Contract](../../filesystem_module.md) |
+| CLI arguments and environment | General typed argument count/list and environment lookup, with PHP count, packed mixed list aliases and getenv. [Contract](../../runtime_api_summary.md#executable-arguments-and-environment) |
 | Datetime | All 11 general clock, sleep, UTC and local-time operations, including exact unsigned clock transport. [Audit and proof](datetime_audit.md#stage-1-outcome) |
 | Byte strings, Unicode strings, string builders | Byte indexing, slicing, comparison and typed-hash join. Existing strlen, substr and strpos keep byte units. Three explicit UTF-8 code-point helpers and two owning ten-operation builders. [Family proof](string_families_audit.md#stage-1-outcome) |
 | Vector construction and capacity | Fill, capacity, reserve, resize, compact and both clear spellings. [Family audit](vector_capacity_audit.md) |
@@ -30,6 +31,7 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 | Tokenizer | Excluded from native helper intake by decision. Its implementation and benchmarks belong to the Simple C++ tokenizer. [Benchmark](../benchmarks/tokenizer/current_native.md) |
 | Iterators and storage | Built-in traversal, custom iterators and yield producers exist. Sparse stable-ID storage and keyed duplicate membership await concrete consumers. [Iteration](../../../compiler/docs/foreach.md) |
 | Compiler support | Bitsets, work queues, binary codecs and memory accounting await compiler or measurement consumers. The eleven donor filesystem publication operations belong with the publisher. [Filesystem audit](filesystem_audit.md) |
+| Shell execution and PHP root argument variables | shell_exec remains deferred. The PHP-flavor review owns implicit $argc and $argv. [Family audit](cli_environment_shell_audit.md) |
 | Async/task helpers | Cooperative suspension and joined parallel batches exist. Background ownership, cancellation, progress and intermediate publication await a concurrency use case. [Task audit](async_mysqli_ui_webview_audit.md#asynctask-helpers) |
 | Flavor and platform expansion | Separate flavor reviews own PHP date/time compatibility, indexed unset, donor container aliases and additional natural JS/Python APIs. Additional database engines, widget toolkits and non-Linux desktop providers are outside the selected contracts. |
 
@@ -37,12 +39,11 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 
 | Candidate | What remains to settle |
 | --- | --- |
-| CLI arguments, environment and shell | Audited. Recommend argument count, an owned argument-list snapshot and single-name environment lookup. Defer shell_exec pending a PHP compatibility caller. The normal generated entry still needs argument transport. [Donor comparison, probes and proposed contract](cli_environment_shell_audit.md) |
 | Filesystem locks | The filesystem audit reserved fs_lock_empty, fs_lock_try, fs_lock_release and fs_lock_transfer for a separate handle goal. A future decision must cover contention versus error and alias invalidation on transfer. [Lock disposition](filesystem_audit.md) |
 | Versioned stable hashing | String and span hashes have separate intake. The donors disagree on the algorithm. A persisted hash needs an explicit version and shared byte test vectors. String inputs can be considered independently of publication of a public span type. [Hash comparison](string_families_audit.md#adjacent-hashing-family) |
 | Remaining core and release-only spellings | Reconcile source-visible debug/output, predicates, constants and compatibility aliases against existing language contracts. Classify compiler-emitted evaluation/debug hooks with their owners. Results/errors, conversions, lifetime operations, enum/layout queries and source-language operators already have dedicated evidence rows below. An equivalent language capability alone does not establish a donor spelling or overload. [Source surface index](donor_surfaces.tsv) · [Donor entities](donor_entities.tsv) |
 
-**Closeout.** The agreed implementations are operational. To close the broader mining pass, choose implement, defer or assign an owner for the remaining candidates and record the core spelling decisions. The CLI/environment audit is ready for a scope decision before implementation.
+**Closeout.** The agreed implementations are operational. To close the broader mining pass, choose implement, defer or assign an owner for the remaining candidates and record the core spelling decisions. The CLI/environment group has completed implementation.
 
 **Visibility.** C++ uses general names by default. PHP, JS and Python can add them with `"general_api": true` on the root project. Selecting a module remains a separate requirement. [Module and lookup contract](../../../compiler/docs/modules.md)
 

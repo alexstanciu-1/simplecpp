@@ -1,0 +1,1 @@
+    return detail::invocation.count;

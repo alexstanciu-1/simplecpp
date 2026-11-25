@@ -107,7 +107,10 @@ final class Cpp_Program
 	public static function main_adapter(string $root): string
 	{
 		$entry = '::' . ($root === '' ? '' : $root . '::') . 'scpp_entry_body';
+		if (!Cpp_Entry_Binding::ARGUMENTS) {
+			return "\n#include <scpp/entry.hpp>\nint main() { return ::scpp::run_entry_with_exceptions($entry); }\n";
+		}
 		return "\n#include <scpp/entry.hpp>\n"
-			. "int main() { return ::scpp::run_entry_with_exceptions($entry); }\n";
+			. "int main(int argc, char** argv) { return ::scpp::run_entry_with_exceptions($entry, argc, argv); }\n";
 	}
 }
