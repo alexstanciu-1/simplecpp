@@ -26,7 +26,7 @@ foreach ($optionalWidths as $identity) {
     unset($metadata->compiler->value_types->$identity, $metadata->compiler->three_way->types->$identity);
     $metadata->compiler->strict_identity->types = array_values(array_diff($metadata->compiler->strict_identity->types, [$identity]));
 }
-unset($metadata->compiler->modules->{'runtime-numeric'});
+unset($metadata->compiler->modules->{'runtime-numeric'}, $metadata->compiler->published_transport_types);
 $metadata->compiler->integer_operators->compounds->types = ['int64', 'uint8'];
 $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);

@@ -267,6 +267,13 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
+    if (isset($publication->datetime)) {
+        $header = headerPath(at($publication->datetime, 'header'));
+        foreach (names(at($publication->datetime, 'operations')) as $name) {
+            requireThat(isset(DATETIME_SIGNATURES[$name]), 'Unknown datetime operation');
+            $headers[] = moduleOperationHeader($header, $name);
+        }
+    }
     foreach (FUNCTION_MODULES as $family) {
         if (!isset($publication->{$family})) continue;
         $catalog = $metadata->{$family};

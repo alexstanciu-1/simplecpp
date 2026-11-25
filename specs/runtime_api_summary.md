@@ -169,8 +169,8 @@ strictly typed. Hashes own independent copies and expose no public traversal yet
 [Datetime](datetime_module.md) publishes selected `scpp::dt` clock/sleep/UTC/local functions
 through the PHP generator. The production CMake option `SCPP_ENABLE_DATETIME` adds
 `scpp_datetime`, depending on core. Types are existing int64/uint64/string/result_int64;
-no new container or dynamic runtime capability is required. Source callable integration
-and PHP compatibility functions remain deferred. Host-local DST resolution is delegated
+no new container or dynamic runtime capability is required. The general source API binds all 11 selected operations directly.
+PHP compatibility functions remain deferred. Host-local DST resolution is delegated
 to the host, and valid Unix timestamp -1 is distinguished from conversion failure.
 
 ## Bounded mixed/dynamic publication

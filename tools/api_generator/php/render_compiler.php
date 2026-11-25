@@ -37,7 +37,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
+    fields($compiler, ['published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
     $extentFamilies = [];
     foreach (object($compiler->generic_syntax ?? new \stdClass()) as $family => $arguments) {
         requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $family) && $arguments === ['type', 'integer_extent'], 'Unsupported generic syntax: ' . $family);
@@ -78,6 +78,21 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $updates = compilerUpdatePlan($compiler, $definitions);
     $unary = compilerUnaryPlan($compiler, $definitions);
     $promotions = compilerPromotionPlan($compiler, $conversions, $definitions, $binary);
+    // Transport types participate in declarations and identity passing only. In particular
+    // the PHP host never needs to represent UINT64_MAX or fold a uint64 operation.
+    $transportRequires = '';
+    foreach (object($compiler->published_transport_types ?? new \stdClass()) as $identity => $module) {
+        requireThat(is_string($module) && isset($types[$identity], $compiler->modules->$module) && !isset($definitions[$identity]),
+            'Invalid published transport type: ' . $identity);
+        if ($runtime === null || !hasType($runtime, $identity)) continue;
+        $export = typeExport($providers, $identity);
+        $definitions[$identity] = ['class' => $identity, 'cpp' => $export['symbol'],
+            'cpp_header' => providerHeader($providers, $export['provider']), 'aliases' => [$identity],
+            'strategy' => 'transport', 'literal_family' => null, 'literals' => [], 'copy_semantics' => 'trivial',
+            'declarations' => ['inferred_local' => true, 'global_storage' => true, 'instance_field' => true],
+            'required_module' => $module];
+        $transportRequires .= "require_once __DIR__ . '/$identity.php';\n";
+    }
     foreach ($definitions as $identity => $definition) {
         $keyContract = $runtime['hashes']['key_contracts'][$identity] ?? null;
         $typeTraits = $keyContract === null ? '' : "\tuse hash_key_specializations;\n\tuse concrete_value_storage;\n\n";
@@ -340,6 +355,19 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $runtimeCases[] = "\t\t\t$labels => \$bindings['$name'] ??= new runtime_function('$name', ["
             . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
     }
+    foreach ($runtime['datetime']['operations'] ?? [] as $op) {
+        $name = $op['source_name'];
+        if ($name === null) continue;
+        foreach ([...$op['parameters'], $op['result']] as $type) {
+            requireThat($type === 'void' || isset($runtimeTypes[$type]), 'Datetime binding requires a compiler type: ' . $type);
+        }
+        $arguments = array_map(static fn(string $type): string => 'type_' . $runtimeTypes[$type] . '::instance()', $op['parameters']);
+        $result = $op['result'] === 'void' ? 'void' : $runtimeTypes[$op['result']];
+        $symbol = '::' . $runtime['datetime']['namespace'] . '::' . $op['name'];
+        $mask = (1 << count($arguments)) - 1;
+        $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings[\$key] ??= new runtime_function('$name', ["
+            . implode(', ', $arguments) . "], type_$result::instance(), '$symbol', '{$op['header']}', const_reference_mask: $mask, required_module: 'runtime-datetime', exact_arguments: true),";
+    }
     foreach (FUNCTION_MODULES as $family) {
         foreach (array_merge($runtime[$family]['functions'] ?? [], $runtime[$family]['php_exposures'] ?? []) as $name => $binding) {
             $types = array_column($binding['parameters'], 'type');
@@ -397,7 +425,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@module_cases@' => implode("\n", $moduleCases),
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
-        '@boxed_require@' => isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : '',
+        '@optional_requires@' => $transportRequires . (isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : ''),
         '@extent_families@' => implode(', ', $extentFamilies),
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations, '@application_specializations@' => $applicationVectors . $applicationHashes,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),

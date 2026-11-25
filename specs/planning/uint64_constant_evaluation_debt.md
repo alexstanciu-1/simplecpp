@@ -10,7 +10,9 @@ Support native uint64 without requiring PHP to evaluate values above PHP_INT_MAX
 This is a constant-evaluation limitation, not permission to emit incorrect arithmetic,
 round through a PHP float, reinterpret a negative PHP integer as a positive fact, or
 prove an unsafe conversion safe. Complete uint64 constant evaluation is deferred to v0.3.
-This document does not claim uint64 source support is already implemented.
+Stage 1 datetime now supports exact source storage, parameters and returns for
+published uint64 values. Arithmetic and constant evaluation remain separate work.
+[Datetime source contract](../datetime_module.md#general-source-api)
 
 - Keep ordinary representable scalar facts as PHP integers.
 - An upper-range uint64 result may have a known type and an unknown constant value.

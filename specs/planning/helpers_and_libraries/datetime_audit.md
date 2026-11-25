@@ -93,3 +93,12 @@ microtime() and microtime(bool) expose text and fractional seconds and have a
 separate contract. The five release JSS dt.* aliases are donor evidence for the
 later flavor review. General dt_sleep_ms is distinct from async_sleep_ms.
 [Donor surface index](donor_surfaces.tsv) · [PHP donor wrappers](../../../v0.1/runtime/include/lang/php/php_datetime.hpp) · [Microtime contract](../../../v0.1/specs/builtins/datetime/microtime.md)
+
+## Stage 1 outcome
+
+All 11 general bindings now come from publication metadata. The compiler honors
+exact arguments on its unary path, including literal zero. Each operation owns
+a narrow declaration header. The datetime module activates numeric transport,
+and the source-to-native fixture passes UINT64_MAX through a source-defined
+identity function. [Active contract](../../datetime_module.md) ·
+[Executable proof](../../../compiler/tests/datetime_native.py)

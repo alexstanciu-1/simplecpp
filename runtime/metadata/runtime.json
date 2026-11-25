@@ -1110,6 +1110,19 @@
   },
   "datetime": {
     "binding": "native_datetime",
+    "general_names": {
+      "now_unix_seconds": "dt_now",
+      "now_unix_millis": "dt_now_ms",
+      "monotonic_millis": "dt_monotonic_ms",
+      "monotonic_micros": "dt_monotonic_us",
+      "monotonic_nanos": "dt_monotonic_ns",
+      "sleep_millis": "dt_sleep_ms",
+      "format_iso_utc": "dt_format_iso_utc",
+      "parse_iso_utc": "dt_parse_iso_utc",
+      "format_local": "dt_format",
+      "format_local_now": "dt_format_now",
+      "parse_common_local": "dt_parse"
+    },
     "utc_years": "0000_9999",
     "parse_failure": "result_error",
     "format_failure": "throw_runtime_error",
@@ -1169,6 +1182,7 @@
     ]
   },
   "compiler": {
+    "published_transport_types": {"uint64": "runtime-numeric"},
     "generic_syntax": { "fixed_array": ["type", "integer_extent"] },
     "exception": {
       "name": "Exception",

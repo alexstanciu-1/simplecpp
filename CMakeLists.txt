@@ -134,13 +134,16 @@ add_dependencies(scpp_runtime scpp_runtime_publication)
 # Runtime-only source exports intentionally omit the compiler tree.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
   set(compiler_generated ${CMAKE_CURRENT_SOURCE_DIR}/compiler/generated)
+  if(SCPP_ENABLE_DATETIME)
+    set(compiler_optional_types ${compiler_generated}/types/uint64.php)
+  endif()
   add_custom_target(scpp_compiler_publication ALL
     COMMAND ${CMAKE_COMMAND}
       -DPHP=${PHP_EXECUTABLE} -DGENERATOR=${php_generator_source}
       -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int8.php ${compiler_generated}/types/int16.php ${compiler_generated}/types/int32.php ${compiler_generated}/types/uint16.php ${compiler_generated}/types/uint32.php ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_optional_types} ${compiler_generated}/types/int8.php ${compiler_generated}/types/int16.php ${compiler_generated}/types/int32.php ${compiler_generated}/types/uint16.php ${compiler_generated}/types/uint32.php ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata} ${runtime_publication}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
@@ -551,6 +554,11 @@ if(BUILD_TESTING)
   add_test(NAME compiler_typed_functions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions_native.py)
   add_test(NAME compiler_integer_radix_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_radix_native.py --quick)
   add_test(NAME compiler_fixed_array_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/fixed_array_native.py --quick)
+  if(SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_datetime_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/datetime_native.py
+      ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${CMAKE_BINARY_DIR})
+  endif()
   if(SCPP_ENABLE_REGEX)
     add_test(NAME compiler_regex_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/regex_native.py

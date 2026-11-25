@@ -824,11 +824,15 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
     if($m === null) {
         return;
     }
-    fields($m, ['binding', 'utc_years', 'parse_failure', 'format_failure', 'operations', 'local_dst']);
+    fields($m, ['binding', 'utc_years', 'parse_failure', 'format_failure', 'operations', 'local_dst', 'general_names']);
     literals($m, ['binding' => 'native_datetime', 'utc_years' => '0000_9999', 'local_dst' => 'host_normalize_and_select', 'parse_failure' => 'result_error', 'format_failure' => 'throw_runtime_error']);
     $registered = names(at($m, 'operations'), 'Duplicate datetime operation policy');
     requireThat($registered !== [], 'Empty datetime policy');
+    $generalNames = object($m->general_names ?? new \stdClass());
+    requireThat(array_diff(array_keys($generalNames), $registered) === [], 'Unregistered datetime source mapping');
+    names(array_values($generalNames), 'Duplicate datetime source name');
     foreach($registered as $name) {
+        if (isset($generalNames[$name])) requireThat(preg_match('/^dt_[a-z_0-9]+$/D', $generalNames[$name]) === 1, 'Invalid datetime source name');
         requireThat(isset(DATETIME_SIGNATURES[$name]), "Unsupported datetime operation: $name");
     }
     if(!property_exists($publication, 'datetime')) {
@@ -853,7 +857,11 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
         if($result === 'result_int64') {
             requireThat(in_array('result_int64', array_column($plan['carriers'], 'name'), true), 'Datetime parse requires published result_int64');
         }
-        $operations[] = ['name' => $name, 'result' => $result, 'arguments' => array_map(fn(string $a):string => "const $a&", $args)];
+        $identities = array_diff(array_unique([...$args, $result]), ['void']);
+        $includes = array_map(fn(string $id): string => providerHeader($plan['submodules'], $id),
+            exportProviders($plan['submodules'], $identities));
+        $operations[] = ['name' => $name, 'source_name' => $generalNames[$name] ?? null, 'parameters' => $args,
+            'header' => moduleOperationHeader($header, $name), 'includes' => $includes, 'result' => $result, 'arguments' => array_map(fn(string $a):string => "const $a&", $args)];
     }
     requireThat($operations !== [], 'Empty datetime publication');
     $plan['datetime'] = ['module' => 'datetime', 'namespace' => 'scpp::dt', 'header' => $header, 'utc_years' => [0, 9999], 'local_dst' => 'host_normalize_and_select', 'parse_failure' => 'result_error', 'format_failure' => 'throw_runtime_error', 'operations' => $operations, 'build' => ['target' => 'scpp_datetime', 'requires' => 'scpp_runtime', 'generated_sources' => ['src/datetime.cpp'], 'private_sources' => ['runtime/src/datetime/datetime.cpp'], 'private_includes' => ['runtime/src/datetime', 'runtime/src/numeric']]];

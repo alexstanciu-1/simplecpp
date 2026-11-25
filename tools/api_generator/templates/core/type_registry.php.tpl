@@ -6,7 +6,7 @@ require_once __DIR__ . '/vectors.php';
 require_once __DIR__ . '/interfaces.php';
 require_once __DIR__ . '/carriers.php';
 require_once __DIR__ . '/hashes.php';
-@boxed_require@
+@optional_requires@
 // Generated from runtime compiler module metadata. Do not edit.
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry

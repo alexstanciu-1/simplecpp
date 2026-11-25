@@ -2759,6 +2759,8 @@ CPP;
 						$type = $function->parameters[0];
 						foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
 						$operand = $this->conversion($type, $conversion, $operand, $operands[0]);
+					} elseif ($function->exact_arguments) {
+						$operand = $function->parameters[0]->lower_cpp_exact_argument($operands[0], $conversion, $operand, $this->inline_adapters);
 					}
 					return $symbol . '(' . $operand . ')';
 				}
