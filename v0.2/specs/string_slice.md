@@ -137,3 +137,7 @@ and parses extrema for all eight integer types. The generated string consumer pa
 ASan+UBSan using Clang/libstdc++, which exercises the floating from_chars path as well
 as the default libc++ fallback. Leak detection is disabled for that environment's
 known LSan limitation; no clean LSan run is claimed.
+
+## Byte positions
+
+String length and indexed access count encoded bytes, including embedded NUL. For example, the UTF-8 encoding of `é中😀` has length 9. Indexing outside the stored bytes throws. Compiler offsets and source spans likewise count bytes. See the [source string bindings](../compiler/docs/strings.md#metadata-declared-byte-functions).

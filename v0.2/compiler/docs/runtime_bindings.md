@@ -219,3 +219,11 @@ The earlier wrapper descriptions above record the pre-alias stages.
 
 See the [integration handoff](../../specs/planning/alias_provider_integration.md)
 for the deliberately pending combined verification.
+
+## Publication and callable contracts
+
+The [runtime declarations](../../runtime/metadata/runtime.json) and [publication catalog](../../runtime/metadata/publication.json) supply the active metadata. A callable's published name, aliases, overloads, defaults and argument modes determine its source boundary. Exact overloads take precedence over an admitted fallback. A qualified alias must be declared.
+
+Passing a value snapshot requires the necessary copy or transfer capability. A nonretaining observation grants access during the call. Retaining a borrow or transferring a callback requires its own lifetime contract. Reference arguments require compatible stable storage. Admitting storage for a type does not grant copying, indexing, initialization from arbitrary values, or traversal.
+
+Check exact boxed predicates against the stored kind. Check a replacement result before publishing it to the destination. A shared conversion requires admission in the requested direction. Module activation determines which declarations and native requirements enter a build.

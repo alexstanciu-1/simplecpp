@@ -31,7 +31,7 @@ initialization flow to check early reads and method calls. A mutable required
 field still admits reassignment at the ordinary required destination boundary.
 Use `?Node` for a field that may be empty after construction, as above. Struct
 instance fields and static fields retain their respective bootstrap exceptions.
-The [normative contract](../../../specs/type_use_modifiers.md) defines the rules.
+The [normative contract](../../specs/type_use_modifiers.md) defines the rules.
 
 Existing conversion preparation rejects known null at required destinations and
 selects `require_owner` for potentially empty values. Lowering emits the owner's

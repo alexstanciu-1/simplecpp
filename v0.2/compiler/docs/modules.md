@@ -184,3 +184,9 @@ previous session current; successful new publication retires it even if subseque
 The module-availability test generates an isolated optional-byte fixture and checks aliases, independent
 contexts, all-flavor declaration boundaries, module removal/re-addition, unchanged reuse and recovery
 against fresh emitted artifacts. Production metadata and generated types remain unchanged in availability.
+
+## Executable entry and dependency boundary
+
+Only the selected application entry may contain top-level executable statements. Other sources contribute declarations to the same program. An explicit entry must resolve in the selected source set on each build, including after deletion. Without an explicit entry, discovery requires exactly one root-level main. Logical source identity uses the module and its relative source path.
+
+The [native build host](native_build.md) consumes the published bundle and dependency link inputs. Build dependency artifacts separately.

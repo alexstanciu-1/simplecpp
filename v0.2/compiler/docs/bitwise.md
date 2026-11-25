@@ -3,7 +3,7 @@
 Doc Status: supporting
 
 The [scalar contract](../../../specs/compiler_scalars_v0_2.md#integer-bitwise-and-shift-group--2026-11-06)
-and [checked count contract](../../../specs/compact_layout_types.md#71-checked-integer-shift-counts)
+and [checked count contract](../../specs/numeric_module.md#checked-shift-counts)
 own this slice. Int64/int and uint8/byte support `& | ^ ~ << >>` and five compounds.
 Bitwise binaries reuse integer promotion and checked compound write-back. Unary `~`
 and shifts preserve the operand/left representation. Counts use the declared left

@@ -101,3 +101,13 @@ publications stay build-local, such as `build/clang/generated-ownership-proof/`,
 outside the production cleanup root. Old output
 roots outside the selected directory require an explicit clean; the generator does
 not search the repository for abandoned builds.
+
+## Integer arithmetic and comparison
+
+Identical canonical integer operand types retain their type for arithmetic. Different signed types select int64 and different unsigned types select uint64. A signed type paired with an unsigned type narrower than 64 bits selects int64. Signed and uint64 arithmetic has no common domain. Compare exact integer values across signedness, including negative values against uint64. Narrow unsigned results preserve their width before an enclosing operation consumes them. Promotion does not widen ordinary assignment permissions.
+
+Admitted integer/floating pairs select float64. Remainder requires integers. Division and remainder check the divisor for zero. Boolean-to-integer casts produce exactly zero or one. Boolean operands require an explicit conversion before integer arithmetic. See [promotion and compiler coverage](../compiler/docs/integer_promotion.md).
+
+### Checked shift counts
+
+A shift count must be nonnegative and smaller than the declared left operand's bit width, including in compound shifts. Invalid counts throw ValueError before the native shift. Failure leaves a compound destination unchanged. Operand admission and evaluation follow the rules of the source operation.

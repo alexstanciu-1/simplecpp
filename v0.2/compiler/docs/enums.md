@@ -2,7 +2,7 @@
 
 Doc Status: supporting
 
-The [compact-layout contract](../../../specs/compact_layout_types.md#30-php-bootstrap-compiler-integer-enums)
+The [compact-layout contract](../../specs/compact_layout_types.md#backed-enums)
 owns source behavior. PHP uses `case Name = literal;`; C++ and JS use comma-separated
 `Name = literal` entries. C++ emits `enum class` with an explicit underlying alias.
 

@@ -61,7 +61,7 @@ private compiled runtime implementations may use templates.
 
 ## T's contract
 
-[Runtime module metadata](../../../specs/runtime_module_metadata.md) separates
+[Runtime module metadata](../../compiler/docs/runtime_bindings.md#publication-and-callable-contracts) separates
 `value_storable` formation from argument-dependent `copyable_value` capabilities.
 [Generic contracts](../../../specs/metaprogramming_contract.md) define copyability
 through representation, copy construction/assignment and cleanup information.

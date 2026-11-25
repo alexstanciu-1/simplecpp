@@ -4,7 +4,7 @@ Doc Status: supporting
 
 The bounded slice implements binary `+ - * / %` on canonical int64 operands in all
 three flavors. `int` and `int64` share one identity. Results are int64. The owning
-contracts are [integer arithmetic](../../../specs/compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons)
+contracts are [integer arithmetic](../../specs/numeric_module.md#integer-arithmetic-and-comparison)
 and [ordered evaluation](../../../specs/expression_evaluation.md).
 
 Integer division truncates toward zero; nonzero remainder has the dividend's sign.

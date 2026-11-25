@@ -177,3 +177,5 @@ checked one-layer value copy. Empty/error/sentinel extraction throws. See the
 [carrier contract](specs/carrier_slice.md) for states, boolean distinctions,
 scpp::error_t and the optional explicit-only extraction policy. No new lifted
 arithmetic overload matrix or source compiler integration is introduced.
+
+For application authoring, see [typed boundaries](specs/authoring_guide.md), [object presence and ownership](specs/type_use_modifiers.md), and [compact records and backed enums](specs/compact_layout_types.md).

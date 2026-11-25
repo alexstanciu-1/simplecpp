@@ -186,7 +186,7 @@ padding and count in focused groups. Split/join uses the concrete vector<string>
 Verify source spellings, embedded NUL, arbitrary bytes and valid UTF-8, admission,
 incremental recovery versus fresh builds, and Clang frontend/backend/link timings.
 
-See [the byte/text portability precedent](../../../specs/portability/utf8_text_contract.md),
+See [the active byte-string contract](../string_slice.md#byte-positions),
 [PHP string functions](https://www.php.net/manual/en/ref.strings.php) and
 [ECMAScript text processing](https://tc39.es/ecma262/multipage/text-processing.html).
 

@@ -968,7 +968,7 @@ containers. Static-property policy is not expanded by this instance-property
 slice. Do not broaden required local/value contracts by implication.
 
 This decision deliberately supersedes the **initialization-only** restriction in
-[type-use modifiers](../../../specs/type_use_modifiers.md#temporary-field-storage-exceptions)
+[type-use modifiers](../type_use_modifiers.md#temporary-field-storage-exceptions)
 for the planned instance-property slice. The owning normative contract must be
 updated alongside implementation; this planning note is not semantic authority.
 Do not silently restore the old later-null-assignment rejection or stronger

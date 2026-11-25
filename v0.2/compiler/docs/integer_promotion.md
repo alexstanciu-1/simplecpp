@@ -3,7 +3,7 @@
 Doc Status: supporting
 Date: 2026-11-06
 
-The [integer contract](../../../specs/compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons)
+The [integer contract](../../specs/numeric_module.md#integer-arithmetic-and-comparison)
 owns semantics. Active int64/int and uint8/byte support `+ - * / %` and all six
 ordinary comparisons in both operand orders. Same canonical types preserve their
 arithmetic identity; mixed int64/uint8 selects int64. Comparisons return bool and
