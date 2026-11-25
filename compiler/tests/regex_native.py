@@ -54,6 +54,31 @@ def fixture(flavor):
         for suffix, args, expected in [('Plain', '"a.b/"', r'a\\.b/'), ('Delimited', '"a.b/", "/"', r'a\\.b\\/')]:
             value = local(prefix + suffix, 'string', f'{prefix}_quote({args})')
             statements.append(f'if ({value} !== "{expected}") {{ return 8; }}')
+    if flavor == 'php':
+        statements.append(r'''
+$row result_or_false<vector<string>> = regex_match("/(a)?(b)(z)?/", "xxb", -1);
+$v vector<string> = $row;
+if (count($v) !== 3 || $v[0] !== "b" || $v[1] !== "" || $v[2] !== "b") { return 11; }
+$v = regex_match("/x/", "x", 2);
+if (count($v) !== 0) { return 12; }
+$row = regex_match("/[/", "x");
+if (isset($row)) { return 13; }
+$input vector<string> = ["aa", "!", "ba"];
+$v = regex_grep("/a/", $input);
+if (count($v) !== 2 || $v[1] !== "ba") { return 14; }
+$v = regex_filter("/a/", "*", $input, 1);
+if (count($v) !== 2 || $v[0] !== "*a" || $v[1] !== "b*") { return 15; }
+$v = regex_split("/(,)/", ",a,b,", -1, 3);
+if (count($v) !== 5 || $v[0] !== "," || $v[3] !== "b") { return 16; }
+$t string = regex_replace("/(?:|a)/", "-", "a");
+if ($t !== "---") { return 17; }
+$t = regex_replace("/()/u", "-", "é");
+if ($t !== "-é-") { return 18; }
+$t = regex_replace("/(a)(b)/", "\\2\\1", "abab", 1);
+if ($t !== "baab") { return 19; }
+$bad result_or_false<string> = regex_replace("/[/", "", "", 0);
+if (isset($bad)) { return 20; }
+''')
     end = local('endByte', 'int', '99')
     for i, (pattern, subject, offset, start, after) in enumerate([
         ('/x/', 'x', 0, 0, 1), ('/x/', 'é!x', 2, 3, 4),

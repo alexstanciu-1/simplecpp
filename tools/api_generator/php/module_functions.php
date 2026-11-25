@@ -115,6 +115,7 @@ function moduleFunctionTypeExport(array $plan, string $type): array {
     $identity = $plan['source_types']->{$type} ?? $type;
     requireThat(hasType($plan, $identity) || hasValue($plan, $identity)
         || (isset($plan['string']) && $identity === 'string')
+        || in_array($identity, array_column($plan['vectors'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['carriers'] ?? [], 'name'), true),
         'Module function requires a published type: ' . $type);
     return typeExport($plan['submodules'], $identity) + ['identity' => $identity];

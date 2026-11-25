@@ -1,4 +1,4 @@
 {
-  "functions": ["regex_find_span", "regex_test", "preg_match", "regex_quote", "regex_jit_available"],
+  "functions": ["regex_find_span", "regex_test", "preg_match", "regex_match", "regex_grep", "regex_split", "regex_replace", "regex_filter", "regex_quote", "regex_jit_available"],
   "php_exposures": ["preg_quote", "preg_jit_available"]
 }

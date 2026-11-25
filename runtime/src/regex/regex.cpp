@@ -1,4 +1,6 @@
 #include "regex_provider.hpp"
+#include "scpp/value_error.hpp"
+#include <algorithm>
 
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
@@ -140,5 +142,215 @@ string quote(const string& text, const string& delimiter) {
 
 string quote(const string& text) {
     return quote(text, string{});
+}
+}
+
+namespace {
+using namespace scpp;
+std::string_view bytes(const string& value) {
+    return {value.data(), static_cast<std::size_t>(value.size())};
+}
+
+string owned(std::string_view value) {
+    return value.empty() ? string{} : string{value.data(), static_cast<int64>(value.size())};
+}
+
+// Capturing operations share a compiled pattern and a full ovector for one source call.
+struct capture_pattern {
+    std::unique_ptr<pcre2_code, decltype(&pcre2_code_free)> code{nullptr, pcre2_code_free};
+    std::unique_ptr<pcre2_match_data, decltype(&pcre2_match_data_free)> data{nullptr, pcre2_match_data_free};
+    bool utf = false;
+
+    explicit capture_pattern(const string& pattern) {
+        pattern_body body;
+        if (!parse(bytes(pattern), body)) return;
+        int error;
+        PCRE2_SIZE offset;
+        code.reset(pcre2_compile(reinterpret_cast<PCRE2_SPTR>(body.bytes.data()), body.bytes.size(),
+                                 body.options, &error, &offset, nullptr));
+        if (!code) return;
+        data.reset(pcre2_match_data_create_from_pattern(code.get(), nullptr));
+        uint32_t options = 0;
+        pcre2_pattern_info(code.get(), PCRE2_INFO_ALLOPTIONS, &options);
+        utf = (options & PCRE2_UTF) != 0;
+    }
+
+    int find(std::string_view text, size_t offset, uint32_t flags) const {
+        return pcre2_match(code.get(), reinterpret_cast<PCRE2_SPTR>(text.data()), text.size(),
+                           offset, flags, data.get(), nullptr);
+    }
+
+    std::string_view capture(std::string_view text, int index) const {
+        const auto* pair = pcre2_get_ovector_pointer(data.get()) + index * 2;
+        if (pair[0] == PCRE2_UNSET) return {};
+        return text.substr(pair[0], pair[1] - pair[0]);
+    }
+
+    // The callback returns false once its limit is satisfied.
+    template<class Visit>
+    bool each(std::string_view text, size_t offset, Visit visit) const {
+        uint32_t flags = 0;
+        while (offset <= text.size()) {
+            const int count = find(text, offset, flags);
+            if (count == PCRE2_ERROR_NOMATCH) {
+                if (!flags || offset == text.size()) break;
+                ++offset;
+                while (utf && offset < text.size() && (static_cast<unsigned char>(text[offset]) & 0xc0) == 0x80)
+                    ++offset;
+                flags = 0;
+                continue;
+            }
+            if (count < 0) return false;
+            const auto* bounds = pcre2_get_ovector_pointer(data.get());
+            if (!visit(count, bounds[0], bounds[1])) break;
+            offset = bounds[1];
+            flags = bounds[0] == bounds[1] ? PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED : 0;
+        }
+        return true;
+    }
+};
+
+void validate_limit(int64 limit) {
+    if (limit < -1) throw ValueError("regex limit must be -1 or nonnegative");
+}
+
+void expand(std::string& output, std::string_view replacement, const capture_pattern& pattern,
+            std::string_view subject, int count) {
+    for (size_t i = 0; i < replacement.size(); ++i) {
+        char ch = replacement[i];
+        if (ch == '$' || ch == '\\') {
+            size_t pos = i + 1;
+            bool braced = ch == '$' && pos < replacement.size() && replacement[pos] == '{';
+            if (braced) ++pos;
+            const auto first = pos;
+            int index = 0;
+            while (pos < replacement.size() && replacement[pos] >= '0' && replacement[pos] <= '9') {
+                if (index < count) index = index * 10 + replacement[pos] - '0';
+                ++pos;
+            }
+            if (pos > first && (!braced || (pos < replacement.size() && replacement[pos] == '}'))) {
+                if (index < count) output.append(pattern.capture(subject, index));
+                i = braced ? pos : pos - 1;
+                continue;
+            }
+        }
+        output.push_back(ch);
+    }
+}
+
+template<class Render>
+bool rewrite(const capture_pattern& pattern, std::string_view text, int64 limit,
+             std::string& output, int64& changed, Render render) {
+    size_t copied = 0;
+    if (limit != 0 && !pattern.each(text, 0, [&](int count, size_t start, size_t end) {
+        output.append(text.substr(copied, start - copied));
+        render(output, count);
+        copied = end;
+        return ++changed != limit;
+    })) return false;
+    output.append(text.substr(copied));
+    return true;
+}
+
+size_t capture_offset(int64 offset, int64 size) {
+    return offset < 0 ? static_cast<size_t>(std::max(int64{0}, size + offset)) : static_cast<size_t>(offset);
+}
+}
+
+namespace scpp::regex {
+result_or_false_vector_string match(const string& pattern, const string& subject, int64 offset) {
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return result_or_false_vector_string::from_false();
+    vector_string row;
+    auto text = bytes(subject);
+    if (!compiled.each(text, capture_offset(offset, subject.size()), [&](int count, size_t, size_t) {
+        for (int i = 0; i < count; ++i) row.append(owned(compiled.capture(text, i)));
+        return false;
+    })) return result_or_false_vector_string::from_false();
+    return result_or_false_vector_string{std::move(row)};
+}
+
+result_or_false_vector_string match(const string& pattern, const string& subject) {
+    return match(pattern, subject, 0);
+}
+
+result_or_false_vector_string grep(const string& pattern, const vector_string& input) {
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return result_or_false_vector_string::from_false();
+    vector_string output;
+    for (int64 i = 0; i < input.size(); ++i) {
+        auto value = input.at(i);
+        const auto count = compiled.find(bytes(value), 0, 0);
+        if (count == PCRE2_ERROR_NOMATCH) continue;
+        if (count < 0) return result_or_false_vector_string::from_false();
+        output.append(std::move(value));
+    }
+    return result_or_false_vector_string{std::move(output)};
+}
+
+result_or_false_string replace(const string& pattern, const string& replacement, const string& subject, int64 limit) {
+    validate_limit(limit);
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return result_or_false_string::from_false();
+    std::string output;
+    int64 changed = 0;
+    if (!rewrite(compiled, bytes(subject), limit, output, changed, [&](std::string& out, int count) {
+        expand(out, bytes(replacement), compiled, bytes(subject), count);
+    })) return result_or_false_string::from_false();
+    return result_or_false_string{owned(output)};
+}
+
+result_or_false_string replace(const string& pattern, const string& replacement, const string& subject) {
+    return replace(pattern, replacement, subject, -1);
+}
+
+result_or_false_vector_string filter(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
+    validate_limit(limit);
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return result_or_false_vector_string::from_false();
+    vector_string output;
+    for (int64 i = 0; i < input.size(); ++i) {
+        auto value = input.at(i);
+        int64 changed = 0;
+        std::string row;
+        if (!rewrite(compiled, bytes(value), limit, row, changed, [&](std::string& out, int count) {
+            expand(out, bytes(replacement), compiled, bytes(value), count);
+        })) return result_or_false_vector_string::from_false();
+        if (changed) output.append(owned(row));
+    }
+    return result_or_false_vector_string{std::move(output)};
+}
+
+result_or_false_vector_string filter(const string& pattern, const string& replacement, const vector_string& input) {
+    return filter(pattern, replacement, input, -1);
+}
+
+result_or_false_vector_string split(const string& pattern, const string& subject, int64 limit, int64 flags) {
+    validate_limit(limit);
+    if (flags & 4) throw ValueError("regex_split offset captures are unsupported");
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return result_or_false_vector_string::from_false();
+    vector_string fields;
+    const auto text = bytes(subject);
+    size_t copied = 0;
+    auto append = [&](std::string_view field) {
+        if (!(flags & 1) || !field.empty()) fields.append(owned(field));
+    };
+    if (limit != 1 && !compiled.each(text, 0, [&](int count, size_t start, size_t end) {
+        append(text.substr(copied, start - copied));
+        if (flags & 2)
+            for (int i = 1; i < count; ++i) append(compiled.capture(text, i));
+        copied = end;
+        return limit <= 0 || fields.size() < limit - 1;
+    })) return result_or_false_vector_string::from_false();
+    append(text.substr(copied));
+    return result_or_false_vector_string{std::move(fields)};
+}
+
+result_or_false_vector_string split(const string& pattern, const string& subject, int64 limit) {
+    return split(pattern, subject, limit, 0);
+}
+result_or_false_vector_string split(const string& pattern, const string& subject) {
+    return split(pattern, subject, -1, 0);
 }
 }
