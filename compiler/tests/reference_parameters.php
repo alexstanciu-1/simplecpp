@@ -122,6 +122,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$call = '$v vector<int> = [1];return apply(fn(const &$view)=>count($view),$v);';
 		$prepare($apply . $call);
 		rejects(fn() => $prepare($apply . str_replace('const &$view', '&$view', $call)), 'Expected exact callback signature');
+		$ctor = 'class Reader {public function __construct(const vector<int> &$v) {echo count($v);}}';
+		$construct = '$v vector<int> = [1];$r=new Reader($v);return 8;';
+		$prepare($ctor . $construct);
+		rejects(fn() => $prepare(str_replace('echo count($v);', 'clean($v);', $ctor) . $construct), 'Cannot write through read-only reference');
 	}
 	// A changed local and two aliased reference parameters must not reuse old range proofs.
 	$set = $fn('large', [$p('v', 'int', true)], 'int', $var('v') . '=300; return 1;');

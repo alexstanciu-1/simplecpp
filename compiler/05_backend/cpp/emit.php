@@ -524,12 +524,7 @@ CPP;
 		$owner = $type->cpp_type();
 		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $headers);
-		$args = [];
-		foreach ($constructor?->parameters ?? [] as $parameter) {
-			$name = $this->name($parameter);
-			$args[] = $parameter->type_def()->cpp_trivial_value() ? $name : 'static_cast<' . $parameter->type_def()->cpp_type() . '&&>(' . $name . ')';
-		}
-		$forward = implode(', ', $args);
+		$forward = implode(', ', array_map($this->forward_argument(...), $constructor?->parameters ?? []));
 		$payload_args = $constructor !== null && self::self_value_constructor($constructor) ? '0, ' . $forward : $forward;
 		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : ::scpp::application_control(destroy_value, dispose_allocation), value($payload_args) {}\n";
 		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tauto* storage = new allocation($forward);\n\tresult.ptr = storage;\n\tresult.view = &storage->value;\n\treturn result;\n}\n";
@@ -3545,12 +3540,14 @@ CPP;
 				$conversion = isset($site->arguments[$index]) ? $site->conversion($index) : $parameter->default_conversion();
 				$type = $parameter->type_def();
 				foreach ($type->conversion_headers($conversion) as $header) $headers[$header] = true;
-				$value = $this->value($argument, $globals, $declarations, $headers);
+				$value = $parameter->mode === passing_mode::value
+					? $this->conversion($type, $conversion, $this->value($argument, $globals, $declarations, $headers), $argument)
+					: $this->name($argument->local_def());
 				if ($reordered) {
 					$field = 'slot_' . $site->named->slots[$index];
-					$fields[] = ($type instanceof callback_type_definition ? $type->cpp_declarator($field) : $this->member_type($type) . ' ' . $field) . ';';
+					$fields[] = ($type instanceof callback_type_definition ? $type->cpp_declarator($field) : $parameter->mode->qualify($this->member_type($type)) . ' ' . $field) . ';';
 				}
-				$arguments[] = $this->conversion($type, $conversion, $value, $argument);
+				$arguments[] = $value;
 			}
 			// With labels alone the binder selects the fixed prefix and the tail defaults to empty.
 			if ($site->named !== null && !$site->unpacked && ($tail = $constructor->variadic_slot()) !== null) {
@@ -3559,7 +3556,7 @@ CPP;
 				if ($reordered) $fields[] = $this->member_type($type) . ' slot_' . $tail . ';';
 			}
 			if ($reordered) {
-				// Aggregate fields are the actual value parameters, initialized once in written order.
+				// Aggregate fields preserve each parameter’s passing mode and written evaluation order.
 				// Their lifetime ends after base initialization, before the derived fields and body.
 				$values = '[&]() { struct scpp_escape_inputs { ' . implode(' ', $fields) . ' }; return scpp_escape_inputs{' . implode(', ', $arguments) . '}; }()';
 				$arguments = [$constructor->parent->definition->cpp_type() . '::scpp_escape_named_base{}', $values];

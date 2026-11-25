@@ -300,7 +300,7 @@ final class Function_Preparation
 				$collection = Type_Resolution::readonly_collection_input($parameter_type);
 				if ($declaration->parent instanceof ast_method_owner) {
 					if (!$collection || !($declaration->parent instanceof ast_record_declaration)
-						|| $declaration->is_constructor() || $declaration->is_destructor()) {
+						|| $declaration->is_destructor()) {
 						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const method references require a vector or hash on an ordinary class, struct or interface method');
 					}
 				} elseif (!$collection && !($parameter_type instanceof text_builder_type)) {

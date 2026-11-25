@@ -216,8 +216,8 @@ final class Record_Syntax
 				$c->name(token_kind::identifier);
 				$parameters = $parser->parameters($python);
 				foreach ($parameters as $parameter) {
-					if ($parameter->mode !== passing_mode::value) {
-						throw new diagnostic($c->tokens->source, $c->offset(), 'Constructors require by-value parameters');
+					if ($parameter->mode === passing_mode::reference) {
+						throw new diagnostic($c->tokens->source, $c->offset(), 'Constructors cannot take writable reference parameters');
 					}
 				}
 				$void = new ast_type_reference($at, $at, 'void');

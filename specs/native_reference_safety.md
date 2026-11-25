@@ -21,6 +21,17 @@ overrides and interface implementations must preserve both the canonical collect
 type and the read-only reference mode. Dispatch preserves the caller’s slot.
 [Method and signature-edit tests](../compiler/tests/readonly_collection_methods_native.py).
 
+## Constructor collection borrows
+
+A PHP class or struct constructor may declare a required fixed parameter such as
+`const vector<int> &$items` or `const hash<int,string> &$items`. The ordinary
+binder requires an exact-type named local or parameter. Inline construction,
+allocation and parent constructor forwarding borrow that slot for the call.
+Named argument staging preserves the binding when a later argument changes the
+collection. Assigning the collection to a field gives the field an independent
+collection value. Writes through the read-only view and writable reference
+constructor declarations are rejected. [Native and recovery tests](../compiler/tests/readonly_constructors_native.py).
+
 ## Read-only collection inputs on PHP callables
 
 A closure declares a collection borrow as `const vector<int> &$view` or

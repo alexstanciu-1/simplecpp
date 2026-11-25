@@ -28,7 +28,7 @@ declaring struct, including accesses on another instance. Default initialization
 memberwise copying and native layout follow the ordinary field rules.
 
 Both inline and shared receivers select the same method by the record's nominal
-type. Methods can read and assign fields through `this`. A call checks the receiver before evaluating any explicit argument. When the receiver is shared, or is an inline field within a shared allocation, the call retains the selected allocation through argument evaluation and body execution. An inline receiver is updated in place. Defaults follow ordinary function conversion and omission rules. Writable reference parameters use the ordinary function binder. Each requires a named local or parameter of the exact storage type, and writes update that storage directly. Constructors also accept trailing literal defaults. All constructor parameters are by value.
+type. Methods can read and assign fields through `this`. A call checks the receiver before evaluating any explicit argument. When the receiver is shared, or is an inline field within a shared allocation, the call retains the selected allocation through argument evaluation and body execution. An inline receiver is updated in place. Defaults follow ordinary function conversion and omission rules. Writable reference parameters use the ordinary function binder. Each requires a named local or parameter of the exact storage type, and writes update that storage directly. Constructors also accept trailing literal defaults. PHP class and struct constructors can also borrow a typed vector or hash using a fixed read-only reference parameter.
 
 An instance method can initialize or assign an inline local from its receiver, pass it to a by-value parameter of its own record type, or return it by value. The spelling is `$this` (PHP) or `this` (C++/JS). Both inline and shared receivers produce an inline memberwise copy. Scalar fields copy independently and shared fields retain the same allocation.
 
@@ -155,8 +155,7 @@ Explicit arguments are evaluated once in source order; value snapshots and refer
 bindings retain their distinct semantics. Two references may alias the same storage;
 read-only access does not promise that another alias cannot change it.
 
-This extends parameter admission only: constructor parameters, receiver lifetime
-restrictions and reference-return restrictions remain unchanged. No method-specific
+PHP constructor collection borrows follow the [read-only reference contract](native_reference_safety.md#constructor-collection-borrows). No method-specific
 packing or borrowing implementation is defined.
 
 ## Same-origin method reference returns — 2026-10-07

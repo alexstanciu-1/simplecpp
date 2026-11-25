@@ -14,7 +14,7 @@ The inventory pass is complete. Direct translation still has language gaps. The 
 
 ### Collections and borrowing backlog
 
-Status at the read-only callable input slice. This tracks PHP collection traversal and
+Status at the read-only constructor input slice. This tracks PHP collection traversal and
 borrowing. The rows group language decisions by the proof they need. They are
 different sizes and should not be used to calculate a percentage complete.
 
@@ -23,11 +23,11 @@ different sizes and should not be used to calculate a percentage complete.
 | Whole-collection references | Exact-type named vector and hash slots support writable calls and forwarding. Two reference parameters can denote the same caller slot. Synchronous PHP free functions and class, struct and interface methods accept explicit read-only collection references. [Whole-slot contract](../native_reference_safety.md) · [Read-only tests](../../compiler/tests/readonly_parameters_native.py) |
 | Writable traversal of owned storage | Keyed and unkeyed PHP loops work for typed vector and hash locals, ordinary by-value parameters, and owned variadic packs in synchronous code. A write is visible before break, return or throw. A visible key assignment cannot redirect the write. Read-only packs reject. [Traversal contract](../collection_traversal.md#php-writable-vector-and-hash-foreach) · [Native and recovery tests](../../compiler/tests/writable_foreach_native.py) |
 | 1. Writable traversal through a mutable reference parameter | Vector and hash writes reach the caller. Preparation protects same-type reference parameters and borrowed captures that may alias the source, including through mutable calls. [Alias and recovery tests](../../compiler/tests/writable_foreach_native.py) |
+| 2. Explicit read-only collection parameters | Direct, virtual and interface methods, closures, typed callbacks, owned callables and PHP class and struct constructors can borrow exact-type named collection slots. [Constructor tests](../../compiler/tests/readonly_constructors_native.py) · [Callable tests](../../compiler/tests/readonly_callable_inputs_native.py) |
 | Protection during traversal | Preparation guards structural mutation through the source, known lexical aliases and mutable calls. Vector writes to existing indexes are visible. Separate hash writes are rejected because assignment can insert. The loop binding ends at loop exit. [Preparation](../../compiler/04_analyze/prepare/prepare.php) |
 
 | Remaining work | Status | Decision or acceptance case |
 | --- | --- | --- |
-| 2. Explicit read-only collection parameters on methods and callables | Methods, closures, typed callbacks and owned callables delivered | Constructor admission remains a separate decision. Native tests cover alias visibility, mode mismatches and cross-file recovery. A read-only borrow may observe changes made through another writable alias. [Declaration checks](../../compiler/04_analyze/prepare/functions.php) |
 | 3. Scoped borrows of a selected element | Design decision | Today a loop binding writes through an index or key, and an inline record can be changed by copying, editing and assigning it back. Decide whether a selected element may be passed to a read-only or mutable reference helper, mutated in place, or captured for a strictly lexical use. Prove what happens when the helper re-enters, aliases the collection, or throws after a write. |
 | 4. Durable aliases and reference returns into elements | Deferred lifetime design | Covers `$item =& $v[$i]`, escaping captures, and returning an interior slot by reference. Specify what happens after vector relocation, hash removal and reinsertion of the same key, or whole-container replacement. A stable reference to the container variable alone does not identify a surviving element. [Reference safety](../native_reference_safety.md) |
 | 5. Automatic read-only borrow inference | Optimization debt | Start with by-value parameters. Consider local copies after the parameter proof. Preserve snapshots across argument evaluation, other aliases, forwarding and escapes. Measure eliminated copies and preparation cost, and invalidate the proof after a relevant caller or callee edit. [Inference debt](#compiler-debt-for-inferred-read-only-borrows) |
@@ -38,7 +38,7 @@ needs a decision about where its writes would be observable. Async and generator
 loops need a rule for mutation while suspended. Boxed traversal needs separate
 decisions for mixed copy-on-write and dynamic shared identity. Existing-value hash
 updates through a second name would need an operation or proof that excludes
-insertion. These are possible extensions, not prerequisites for rows 2–5.
+insertion. These are possible extensions, not prerequisites for rows 3–5.
 
 Fixed arrays are tracked separately. General nested indexed writes belong to
 expressions and access, typed-to-boxed conversion to structured conversion, and
