@@ -359,11 +359,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $exception = $runtime === null ? coreExceptionBinding($metadata) : ($runtime['exception'] ?? null);
     $asyncTypes = array_map(static fn(string $name): string => 'type_' . $name . '::class', array_unique($runtimeTypes));
     $numericScalars = [];
-    $readonlyPackElements = [];
     foreach ($definitions as $definition) {
-        if ($definition['literal_family'] !== null && $definition['strategy'] !== 'null') {
-            $readonlyPackElements[] = 'type_' . $definition['class'] . '::instance()';
-        }
         if ($definition['strategy'] === 'integer' || $definition['strategy'] === 'floating') {
             $numericScalars[] = 'type_' . $definition['class'] . '::instance()';
         }
@@ -374,7 +370,6 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@async_value_types@' => implode(', ', [...$asyncTypes, 'type_void::class']),
         '@exception@' => $exception === null ? 'null' : "type_exception::instance("
             . implode(', ', array_map(static fn($value) => var_export($value, true), $exception)) . ')',
-        '@readonly_pack_elements@' => implode(', ', $readonlyPackElements),
         '@numeric_scalar_cases@' => $numericScalars === [] ? '' : "\t\t\t" . implode(', ', $numericScalars) . ' => true,',
         '@module_cases@' => implode("\n", $moduleCases),
         '@cpp_type_aliases@' => $shortTypes === '' ? '' : "\t\t\t$shortTypes => true,",

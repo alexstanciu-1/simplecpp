@@ -72,3 +72,33 @@ with TemporaryDirectory(prefix='scpp-readonly-variadic-') as directory:
         ('provider', provider.replace('string &...', 'string ...') + mutable + static_target, 'Static redeclaration signature must match exactly'),
         ('provider', provider + mutable + static_target, adapt_trace),
     ])
+
+records = '''
+struct Point {public int $x=3;}
+class Counter {public int $n=5;}
+struct Batch {
+    public int $size=0;
+    public function __construct(Point &...$xs) {$this->size=count($xs);}
+}
+function points(Point &...$xs):int {
+    $copy=$xs[0];$copy->x=8;$original=$xs[0];return $copy->x*10+$original->x;
+}
+function counters(Counter &...$xs):void {$handle=$xs[0];$handle->n=9;}
+'''
+record_entry = '''
+$p Point;$c=new Counter();echo points($p),":",$p->x,":";
+$owners vector<Counter> = [$c];counters(...$owners);echo $c->n;
+$batch Batch($p);$size function<int(Point...)> = fn(&...$xs)=>count($xs);
+echo ":",$batch->size,":",$size($p,$p);
+return 8;
+'''
+record_trace = b'83:3:9:1:2'
+with TemporaryDirectory(prefix='scpp-readonly-pack-elements-') as directory:
+    revisions(Path(directory), 'php', dict(main=record_entry, provider=records), [
+        (None, None, record_trace),
+        ('provider', records.replace('$copy->x=8;', '$xs[0]=$copy;'), 'read-only variadic pack'),
+        ('provider', records.replace('$handle->n=9;', '$xs[0]=new Counter();'), 'read-only variadic pack'),
+        ('provider', records.replace('Point &...', 'byte &...'), 'Unavailable runtime specialization'),
+        ('provider', records.replace('Point &...', 'byte ...'), 'Unavailable runtime specialization'),
+        ('provider', records, record_trace),
+    ])

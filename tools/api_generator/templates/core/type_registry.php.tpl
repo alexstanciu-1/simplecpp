@@ -64,15 +64,6 @@ final class type_registry
 		};
 	}
 
-	/** Compatibility packs admit the published non-null scalar literal families. */
-	public static function supports_readonly_pack_element(type_definition $element): bool
-	{
-		return match ($element) {
-			@readonly_pack_elements@ => true,
-			default => false,
-		};
-	}
-
 	/** Syntactic argument contract, available before names and storage providers resolve. */
 	public const array EXTENT_FAMILIES = [@extent_families@];
 

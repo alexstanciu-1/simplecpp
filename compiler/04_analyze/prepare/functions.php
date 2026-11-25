@@ -317,14 +317,11 @@ final class Function_Preparation
 		$declaration->settle_return_type($type, $reference_origin);
 	}
 
-	/** Named and contextual variadics share one vector storage and element-access contract. */
+	/** Named and contextual variadics share the same owned vector storage contract. */
 	public static function require_pack_type(ast_parameter_declaration $parameter, ?type_definition $type): void
 	{
 		if (!($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
 			throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameter requires a supported vector element');
-		}
-		if ($parameter->is_readonly_pack() && !type_registry::supports_readonly_pack_element($type->element_type)) {
-			throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only variadic packs require a canonical int, float, bool or string element');
 		}
 	}
 

@@ -224,8 +224,8 @@ silently accept an unsupported lifetime.
 ## Read-only owned compatibility packs — 2026-10-22
 
 Named source free functions and static/instance methods accept `T &...$values`
-for canonical `int`, `float`, `bool` and `string`. This is a compatibility spelling
-for a read-only owned value pack, not caller-element references. It is distinct
+for every element type supported by an ordinary owned variadic pack. The callee
+receives a read-only owned value pack. This spelling is distinct
 from fixed `T &$value`, which retains its live alias and write-back contract.
 
 Tail arguments use ordinary value-pack admission, conversion and copy restrictions.
@@ -245,8 +245,10 @@ whole pack to an eligible read-only parameter. Mutation, append, replacement,
 cleanup/removal and writable-reference forwarding through the pack or its aliases
 reject during shared preparation. An ordinary copy creates independent mutable
 value storage; returning an ordinary value copy preserves it after pack cleanup.
-Borrowed references to pack storage may not escape the call. Existing escape and
-capture restrictions apply without new lifetime inference.
+Reading an inline record yields a value copy. A copied shared handle retains
+object identity and can mutate the referenced object. The pack slot remains
+read-only. Borrowed references to pack storage may not escape the call. Existing
+escape and capture restrictions apply without new lifetime inference.
 
 The backend may borrow call-owned storage when safe, or pass owned values; it must
 preserve these semantics. No caller aliasing, pack-of-references representation or
@@ -261,8 +263,7 @@ PHP class and struct constructors also accept read-only packs, including empty
 packs during default construction and packs forwarded to a parent constructor.
 
 This scope does not introduce explicit `const T &...$values` spelling, general
-read-only value parameters, wider element types,
-provider variadic bridges or asynchronous retention.
+read-only value parameters, provider variadic bridges or asynchronous retention.
 Those contracts remain separate. Pinned v0.1 evidence executes tested free/static
 scalar read-only packs and rejects direct element writes. Its instance-method
 packing probes fail native compilation; current method support follows the v0.2
