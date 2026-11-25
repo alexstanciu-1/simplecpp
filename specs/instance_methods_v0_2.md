@@ -142,7 +142,13 @@ under [the existing reference rules](native_reference_safety.md).
 
 A typed variadic tail is an owned `vector<T>`, may be empty and may follow fixed
 parameters (including references or supported by-value defaults). It must be last;
-true reference variadics, explicit pack defaults and call-site unpacking remain excluded.
+true reference variadics and explicit pack defaults remain excluded.
+For an ordinary PHP class or struct instance method, `$receiver->sum($base, ...$items)`
+evaluates the receiver once before the fixed arguments and final vector. The selected
+object stays alive through invocation even if evaluating the arguments replaces its
+owner. The matching vector supplies the whole by-value pack. Mutating the pack
+preserves the caller’s vector storage. Base overrides and interface implementations
+must preserve the variadic marker as well as the pack type.
 The bounded `T &...$values` compatibility spelling below denotes read-only owned values.
 Element admission/conversion and copy capability are the same as for free functions.
 Explicit arguments are evaluated once in source order; value snapshots and reference

@@ -242,7 +242,7 @@ For example, `str_repeat(times: repetitions(), string: fragment())` evaluates
 `repetitions()` first and passes its result as the second argument.
 Typed callback calls require positional arguments.
 
-A synchronous PHP free function, static method, arrow, or block closure can end its parameter list with one by-value
+A synchronous PHP free function, ordinary class or struct method (static or instance), arrow, or block closure can end its parameter list with one by-value
 `T ...$values`. Inside the body, `$values` is an owned `vector<T>`. Positional
 calls bind the fixed prefix (including its ordinary defaults), then evaluate and
 convert each remaining argument once in source order using the vector element

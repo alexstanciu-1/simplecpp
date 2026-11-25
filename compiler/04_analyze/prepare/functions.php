@@ -301,9 +301,10 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
 			}
 			if ($parameter->type_reference instanceof ast_variadic_type_reference) {
-				if (($declaration->parent instanceof ast_method_owner && !$declaration->is_static) || $declaration->is_async || $type instanceof generator_type_definition
+				if (($declaration->parent instanceof ast_enum_declaration && !$declaration->is_static) || $declaration->is_constructor()
+					|| $declaration->is_destructor() || $declaration->is_async || $type instanceof generator_type_definition
 					|| !($parameter_type instanceof vector_type_definition && $parameter_type instanceof sequence_initializer_type)) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameters require a synchronous free function or static method with a supported vector element');
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameters require a synchronous function or ordinary method with a supported vector element');
 				}
 			}
 			$parameter->settle_type($parameter_type);

@@ -155,7 +155,10 @@ $static = 'class S {public static function n(int ...$xs):int {return count($xs);
 $php($static . '$v vector<int> = [1,2];$op function<int(int...)> = S::n(...);echo $op(),S::n(...$v);return 8;');
 rejects(fn() => $php($static . 'class D extends S {public static function n(vector<int> $xs):int {return 1;}}return 8;'),
 	'Static redeclaration signature must match exactly');
-rejects(fn() => $php(str_replace('public static function', 'public function', $static) . 'return 8;'), 'Variadic parameters require');
+$php(str_replace('public static function', 'public function', $static) . '$s=new S();return $s->n(1,2);');
+rejects(fn() => $php('class C {public function __construct(int ...$xs) {}} return 8;'), 'Variadic parameters require');
+rejects(fn() => $php(str_replace('public static function', 'public function', $static)
+	. '$s=new S();$op function<int(int...)> = $s->n(...);return 8;'), 'Callback reference requires a named free function');
 rejects(fn() => $php('function f(int ...$xs,int $y):int {return 0;}return 8;'), 'Variadic parameter must be last');
 rejects(fn() => $php('function f(int ...$xs=1):int {return 0;}return 8;'), 'Variadic parameter must be last');
 rejects(fn() => $php($variadic . 'return gather(base: 1);'), 'Variadic calls require positional arguments');
