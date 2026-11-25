@@ -765,12 +765,11 @@ final class Preparation
 		$collection = null;
 		if ($statement->value instanceof ast_writable_element) {
 			$collection = $statement->source_value instanceof ast_name_expression ? $statement->source_value->local_binding() : null;
-			$owned = $collection instanceof ast_local_declaration || ($collection instanceof ast_parameter_declaration
-				&& $collection->mode === passing_mode::value && !($collection->type_reference instanceof ast_variadic_type_reference));
-			if (!$owned
+			if (!($collection instanceof ast_local_declaration || $collection instanceof ast_parameter_declaration)
 				|| !($source_type instanceof vector_type_definition || $source_type instanceof hash_type_definition) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
-				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires a local or ordinary by-value parameter owning a vector or hash in a synchronous body');
+				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires a named local or parameter of vector or hash type in a synchronous body');
 			}
+			Readonly_Access::require_writable($statement->source_value, $collection);
 			$this->require_collection_available($statement, $collection);
 		}
 		$segment = $source_type instanceof segment_type && $source_type->key !== null;
@@ -835,12 +834,15 @@ final class Preparation
 			$this->local_frames[] = [];
 			$outer_loop = $this->loop;
 			$this->loop = $statement;
-			if ($collection !== null) $this->iterated_collections[$collection->storage_id()] = true;
+			if ($collection !== null) {
+				$outer_collections = $this->iterated_collections;
+				$this->guard_iteration_source($collection, $function);
+			}
 			try {
 				$completion = $this->sequence($statement->body->statements, $source, $target, $function);
 			}
 			finally {
-				if ($collection !== null) unset($this->iterated_collections[$collection->storage_id()]);
+				if ($collection !== null) $this->iterated_collections = $outer_collections;
 				$this->loop = $outer_loop;
 				array_pop($this->local_frames);
 			}
@@ -935,6 +937,19 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(), 'Function fixed-array storage exceeds 64 KiB');
 		}
 		$this->array_bytes += $bytes;
+	}
+
+	/** A caller can supply the same slot through multiple reference parameters or lexical captures. */
+	private function guard_iteration_source(ast_local_binding $source, statement_return_target $function): void
+	{
+		$this->iterated_collections[$source->storage_id()] = true;
+		if (!self::borrows_mutably($source)) return;
+		$inputs = $function instanceof ast_lambda_expression ? [...$function->parameters, ...$function->captures] : $function->parameters;
+		foreach ($inputs as $peer) {
+			if (self::borrows_mutably($peer) && $peer->type_def() === $source->type_def()) {
+				$this->iterated_collections[$peer->storage_id()] = true;
+			}
+		}
 	}
 
 	/** A separate hash write could insert a key while the loop holds a selection. */
@@ -2818,6 +2833,12 @@ final class Preparation
 	}
 
 	/** STATIC METHODS */
+	private static function borrows_mutably(ast_local_binding $binding): bool
+	{
+		return ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::reference)
+			|| ($binding instanceof ast_closure_capture && $binding->by_reference);
+	}
+
 	/**
 	 * Keep definite constructor states only where all paths agree.
 	 * @param array<string,int>|null $joined

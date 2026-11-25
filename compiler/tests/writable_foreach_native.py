@@ -131,11 +131,73 @@ parameter_trace = b'14;15;46:23:1415:45'
 with TemporaryDirectory(prefix='scpp-writable-foreach-parameters-') as directory:
     edits = [(None, None, parameter_trace)]
     for written, changed, error in [
-        ('vector<int> $items', 'vector<int> &$items', 'ordinary by-value parameter'),
-        ('hash<int,string> $map', 'const hash<int,string> &$map', 'ordinary by-value parameter'),
+        ('hash<int,string> $map', 'const hash<int,string> &$map', 'read-only reference'),
         ('$n*=2;', '$items[]=9;', 'during writable foreach'),
         ('$n+=10;', '$map[$key]=1;', 'during writable foreach'),
     ]:
         edits.extend([('provider', parameter_provider.replace(written, changed), error),
                       ('provider', parameter_provider, parameter_trace)])
     revisions(Path(directory), 'php', dict(main=parameter_main, provider=parameter_provider), edits)
+
+pack_provider = """
+function doubled(int ...$items):vector<int> {
+    foreach ($items as &$item) {$item*=2;}
+    return $items;
+}
+"""
+pack_main = """
+$values vector<int> = [2,3];
+$result=doubled(...$values);$direct=doubled(5);$empty=doubled();
+echo $result[0],",",$result[1],";",$values[0],",",$values[1],";",$direct[0],";",count($empty);
+return 8;
+"""
+pack_trace = b'4,6;2,3;10;0'
+with TemporaryDirectory(prefix='scpp-writable-foreach-pack-') as directory:
+    revisions(Path(directory), 'php', dict(main=pack_main, provider=pack_provider), [
+        (None, None, pack_trace),
+        ('provider', pack_provider.replace('int ...', 'int &...'), 'read-only variadic pack'),
+        ('provider', pack_provider, pack_trace),
+    ])
+
+reference_provider = """
+function clearValues(vector<int> &$v):void {clean($v);}
+function readSize(const vector<int> &$v):int {return count($v);}
+function run(callback<void> $cb):void {$cb();}
+function visit(vector<int> &$items,vector<int> &$peer,vector<int> $copy,callback<void> $cb):void {
+    $alias =& $peer;
+    $clear=function() use (&$alias):void {clean($alias);};
+    foreach ($items as $k => &$item) {
+        $item+=3;echo $alias[$k],readSize($peer);
+        clean($copy);run($cb);
+    }
+    $clear();
+}
+function bump(hash<int,string> &$h,hash<int,string> &$peer):void {
+    foreach ($h as $key => &$value) {$value++;echo $peer[$key];}
+}
+"""
+reference_main = """
+function noop():void {}
+$v vector<int> = [1,2];visit($v,$v,$v,noop(...));echo count($v);
+$lambda=function(vector<int> &$rows) use (&$v):void {
+    foreach ($rows as &$row) {$row+=1;echo count($v);}
+};
+$v[]=8;$lambda($v);echo $v[0];
+$h hash<int,string> = [];$h["a"]=5;bump($h,$h);echo $h["a"];return 8;
+"""
+reference_trace = b'425201966'
+with TemporaryDirectory(prefix='scpp-writable-foreach-reference-') as directory:
+    edits = [(None, None, reference_trace)]
+    for change in ['clean($alias);', '$peer[]=7;', '$peer=$copy;', 'clearValues($peer);',
+                   '$clear();', 'run(function() use (&$peer):void {clean($peer);});',
+                   'foreach ($peer as &$second) {$second=0;}']:
+        edits.append(('provider', reference_provider.replace('clean($copy);', change), 'during writable foreach'))
+    edits += [
+        ('provider', reference_provider.replace('echo $peer[$key];', '$peer[$key]=9;'), 'during writable foreach'),
+        ('provider', reference_provider.replace('vector<int> $copy', 'vector<int> &$copy'), 'during writable foreach'),
+        ('provider', reference_provider, reference_trace),
+        ('main', reference_main.replace('noop(...)', 'function() use (&$v):void {clean($v);}'), 'capture-free'),
+        ('main', reference_main.replace('echo count($v);}', 'clean($v);}'), 'during writable foreach'),
+        ('main', reference_main, reference_trace),
+    ]
+    revisions(Path(directory), 'php', dict(main=reference_main, provider=reference_provider), edits)

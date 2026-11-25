@@ -68,9 +68,11 @@ references. These methods do not make arbitrary dangling native references safe.
 ## PHP writable vector and hash foreach
 
 In a synchronous body, `foreach ($items as &$item)` and
-`foreach ($items as $key => &$item)` accept a named local or an ordinary by-value
-parameter that owns a typed vector or hash. Writes to a parameter update the
-callee’s collection copy. Reference parameters and variadic packs are ineligible.
+`foreach ($items as $key => &$item)` accept a named writable local or parameter of typed vector or hash type.
+Writes through a mutable reference parameter update the caller’s collection;
+writes through a by-value parameter update the callee’s copy. An owned variadic pack (such as `int ...$items`) follows
+the vector rule, including when the caller unpacks a vector. An empty pack runs
+zero iterations. Read-only references and read-only packs are ineligible.
 The element name is fresh and scoped to the loop. Each iteration
 selects one vector index or live hash entry. Changing the optional key variable leaves the selection intact.
 
@@ -87,6 +89,15 @@ storage cannot be invoked during the loop. By-value and read-only helper calls
 remain eligible. The element cannot serve as reference storage for a call, local
 alias, reference capture or segment grant. Ordinary indexed writes to existing
 vector slots remain visible through the loop binding.
+
+For a borrowed source, the loop also protects other mutable reference parameters
+and by-reference lexical captures of the same canonical collection type. Distinct
+names may refer to the same caller slot. Reads through these names observe writes
+immediately. Structural mutation resumes after the loop. A by-value parameter
+remains independent. A lexical closure with a mutable capture of a protected
+slot cannot be invoked during the loop. Typed callback forwarding requires a
+capture-free target, and owned callable storage excludes borrowed environments.
+Passing a protected slot as a mutable argument to either form is rejected.
 
 A writable hash loop visits live keys in insertion order, including after erasure
 and reinsertion. Write through the element binding to replace the selected value.

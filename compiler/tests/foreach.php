@@ -154,9 +154,12 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	if ($flavor === flavor::php) {
 		$double = 'function doubled(vector<int> $items):vector<int> {foreach ($items as &$n) {$n*=2;}return $items;}';
 		$emit('writable_parameter', $double . $setup . '$out=doubled($items);echo $items[0],$out[0];return 8;', '12');
-		foreach (['int ...$items', 'int &...$items'] as $pack) {
-			rejects(fn() => $prepare('function visit(' . $pack . '):void {foreach ($items as &$n) {$n=1;}}visit(2);return 8;'), 'ordinary by-value parameter');
-		}
+		$ref = 'function bump(vector<int> &$items,vector<int> &$peer):void {foreach ($items as &$n) {$n+=1;echo count($peer);}}';
+		$emit('writable_reference_parameter', $ref . $setup . 'bump($items,$items);echo $items[0];return 8;', '3332');
+		rejects(fn() => $prepare(str_replace('echo count($peer);', 'clean($peer);', $ref) . $setup . 'bump($items,$items);return 8;'), 'during writable foreach');
+		$pack = 'function doubled(int ...$items):vector<int> {foreach ($items as &$n) {$n*=2;}return $items;}';
+		$prepare($pack . '$out=doubled(3);return $out[0];');
+		rejects(fn() => $prepare(str_replace('int ...', 'int &...', $pack) . 'doubled(3);return 8;'), 'read-only variadic pack');
 		$hash = '$map hash<int,string> = [];$map["key"]=1;';
 		$emit('writable_hash', $hash . 'foreach ($map as $k => &$n) {$k="other";$n+=2;}echo $map["key"];return 8;', '3');
 		rejects(fn() => $prepare($hash . 'foreach ($map as &$n) {$map["key"]=4;}return 8;'), 'during writable foreach');
