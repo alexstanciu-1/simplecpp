@@ -4,10 +4,13 @@ namespace Scpp\Api;
 
 /** Resolve a whole optional module's type, carrier and operation declarations before either backend renders them. */
 function prepareResourceModules(object $publication, array &$plan): void {
-    foreach (object($publication->resource_modules ?? (object)[]) as $module => $catalog) {
-        requireThat(in_array($module, ['io', 'process', 'curl', 'mysqli', 'ui', 'webview'], true), 'Unknown resource module');
+    $catalogs = object($publication->resource_modules ?? (object)[]);
+    requireThat(!isset($catalogs['filesystem']), 'Filesystem resources belong to the filesystem publication');
+    if (isset($publication->filesystem->resources)) $catalogs['filesystem'] = $publication->filesystem->resources;
+    foreach ($catalogs as $module => $catalog) {
+        requireThat(in_array($module, ['io', 'process', 'curl', 'mysqli', 'ui', 'webview', 'filesystem'], true), 'Unknown resource module');
         fields($catalog, ['types', 'operations', 'constants']);
-        $base = "scpp/$module/";
+        $base = $module === 'filesystem' ? substr($plan['filesystem']['header'], 0, -4) . '/' : "scpp/$module/";
         $types = [];
         foreach (object(at($catalog, 'types')) as $name => $type) {
             requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module type');
@@ -34,7 +37,7 @@ function prepareResourceModules(object $publication, array &$plan): void {
         }
         $ops = [];
         foreach (listValue(at($catalog, 'operations')) as $row) {
-            fields($row, ['native','general','php','parameters','result','required','dispatch','method','constructor','property','slot_pack']);
+            fields($row, ['native','general','php','parameters','result','required','dispatch','method','constructor','property','slot_pack','mutable_parameters']);
             $native = textValue(at($row, 'native'));
             requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $native) === 1 && !isset($ops[$native]), 'Invalid or duplicate module operation');
             $params = listValue(at($row, 'parameters'));
@@ -53,6 +56,13 @@ function prepareResourceModules(object $publication, array &$plan): void {
                 else $includes[] = providerHeader($plan['submodules'], moduleFunctionTypeExport($plan, $id)['provider']);
                 if ($index < count($params) && !in_array($id, ['int64','bool_t'], true)) $mask |= 1 << $index;
             }
+            $mutable = 0;
+            foreach (listValue($row->mutable_parameters ?? []) as $index) {
+                requireThat(is_int($index) && $index >= 0 && $index < $required && $index < 32
+                    && !($mutable & (1 << $index)), 'Invalid mutable module parameter');
+                $mutable |= 1 << $index;
+            }
+            $mask &= ~$mutable;
             $header = $base . $native . '.hpp';
             $surfaces = [];
             foreach (['general','php'] as $surface) {
@@ -86,7 +96,7 @@ function prepareResourceModules(object $publication, array &$plan): void {
             requireThat($surfaces !== [], 'Missing module operation surface');
             $dispatch = $row->dispatch ?? null;
             requireThat($dispatch === null || (is_int($dispatch) && $dispatch >= 0 && $dispatch < $required), 'Invalid module overload index');
-            $ops[$native] = compact('params','result','mask','header','includes','required','surfaces','dispatch','slotPack');
+            $ops[$native] = compact('params','result','mutable','mask','header','includes','required','surfaces','dispatch','slotPack');
         }
         $constants = object($catalog->constants ?? (object)[]);
         foreach ($constants as $name => $value) requireThat(preg_match('/^[A-Z][A-Z0-9_]*$/D', $name) && is_int($value), 'Invalid module constant');
@@ -95,6 +105,7 @@ function prepareResourceModules(object $publication, array &$plan): void {
 }
 
 function resourceNamespace(string $module): string {
+    if ($module === 'filesystem') return 'fs';
     return in_array($module, ['mysqli','webview'], true) ? $module . '_api' : $module;
 }
 
@@ -132,7 +143,13 @@ function renderResourceModules(array $plan, array &$files): void {
                 continue;
             }
             $params = [];
-            foreach ($op['params'] as $i => $id) $params[] = $op['mask'] & (1 << $i) ? "const scpp::$id&" : "scpp::$id";
+            foreach ($op['params'] as $i => $id) {
+                $params[] = match (true) {
+                    (bool) ($op['mutable'] & (1 << $i)) => "scpp::$id&",
+                    (bool) ($op['mask'] & (1 << $i)) => "const scpp::$id&",
+                    default => "scpp::$id",
+                };
+            }
             $decl = '';
             for ($i = $op['required']; $i <= count($params); ++$i) {
                 $return = $op['result'] === 'void' ? 'void' : '[[nodiscard]] scpp::' . $op['result'];
@@ -141,8 +158,9 @@ function renderResourceModules(array $plan, array &$files): void {
             $files['public/' . $op['header']] = moduleHeaderBody($op['includes'], 'scpp::' . resourceNamespace($module), $decl);
             $bridge .= includeHeader($op['header']);
         }
-        $files["private/{$module}_provider.hpp"] = "#pragma once\n" . $bridge;
-        $files["private/{$module}_values.hpp"] = includeHeader('carrier_semantics.hpp') . $defs;
+        $prefix = $module === 'filesystem' ? 'filesystem_locks' : $module;
+        $files["private/{$prefix}_provider.hpp"] = "#pragma once\n" . $bridge;
+        $files["private/{$prefix}_values.hpp"] = includeHeader('carrier_semantics.hpp') . $defs;
     }
 }
 
@@ -157,6 +175,7 @@ function compilerResourceCases(?array $runtime, array $types): array {
             foreach ($op['surfaces'] as $key) {
                 $name = substr($key, strrpos($key, ':') + 1);
                 $member = str_starts_with($key, 'php:') && !str_starts_with($key, 'php:func:') && !str_starts_with($key, 'php:new:') ? ', free_receiver: true' : '';
+                if ($op['mutable']) $member .= ", reference_mask: {$op['mutable']}";
                 if ($op['slotPack']) $member .= ', borrows_slots: true';
                 $call = "new runtime_function('$name', [" . implode(', ', $args) . "], type_{$types[$op['result']]}::instance(), '::scpp::$namespace::$native', '{$op['header']}', required_parameters: {$op['required']}, const_reference_mask: {$op['mask']}, required_module: 'runtime-$module'$member)";
                 $groups[$key][] = [$op, $call];

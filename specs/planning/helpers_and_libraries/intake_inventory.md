@@ -8,7 +8,7 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 
 | Operational family | Proven v0.2 scope |
 | --- | --- |
-| Filesystem | 21 general operations and 18 PHP exposures, including byte-preserving reads/writes, path operations, staging and a checked Linux snapshot. [Contract](../../filesystem_module.md) |
+| Filesystem | 25 general operations and 18 PHP exposures, including byte-preserving reads/writes, staging, checked Linux snapshots and all four file-lock operations. [Contract](../../filesystem_module.md) |
 | CLI arguments and environment | General typed argument count/list and environment lookup, with PHP count, packed mixed list aliases and getenv. [Contract](../../runtime_api_summary.md#executable-arguments-and-environment) |
 | Datetime | All 11 general clock, sleep, UTC and local-time operations, including exact unsigned clock transport. [Audit and proof](datetime_audit.md#stage-1-outcome) |
 | Byte strings, Unicode strings, string builders | Byte indexing, slicing, comparison and typed-hash join. Existing strlen, substr and strpos keep byte units. Three explicit UTF-8 code-point helpers and two owning ten-operation builders. [Family proof](string_families_audit.md#stage-1-outcome) |
@@ -39,7 +39,6 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 
 | Candidate | What remains to settle |
 | --- | --- |
-| Filesystem locks | Audited. Recommend all four general operations in the filesystem module. Try replaces only its output slot on acquisition; release and transfer affect all aliases of the held token. The archived Linux cross-process fixture passed. [Family audit](filesystem_locks_audit.md) |
 | Versioned stable hashing | String and span hashes have separate intake. The donors disagree on the algorithm. A persisted hash needs an explicit version and shared byte test vectors. String inputs can be considered independently of publication of a public span type. [Hash comparison](string_families_audit.md#adjacent-hashing-family) |
 | Remaining core and release-only spellings | Reconcile source-visible debug/output, predicates, constants and compatibility aliases against existing language contracts. Classify compiler-emitted evaluation/debug hooks with their owners. Results/errors, conversions, lifetime operations, enum/layout queries and source-language operators already have dedicated evidence rows below. An equivalent language capability alone does not establish a donor spelling or overload. [Source surface index](donor_surfaces.tsv) · [Donor entities](donor_entities.tsv) |
 

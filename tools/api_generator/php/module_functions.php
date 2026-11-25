@@ -12,7 +12,9 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     if ($catalog === null || !property_exists($publication, $family)) return;
 
     fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures', 'php_constants', 'callbacks']);
-    fields($publication->{$family}, ['functions', 'php_exposures', 'callbacks']);
+    $requestFields = ['functions', 'php_exposures', 'callbacks'];
+    if ($family === 'filesystem') $requestFields[] = 'resources';
+    fields($publication->{$family}, $requestFields);
     $surface = $catalog->surface ?? null;
     requireThat($surface === null || $surface === 'general', 'Unknown module function surface');
     $provider = textValue(at($catalog, 'provider'));

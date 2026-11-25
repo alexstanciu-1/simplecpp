@@ -304,6 +304,22 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         $catalog = $metadata->{$family};
         if (($catalog->surface ?? null) !== 'general') continue;
         $header = providerHeader($plan, $catalog->provider);
+        if ($family === 'filesystem' && isset($publication->filesystem->resources)) {
+            $resources = $publication->filesystem->resources;
+            foreach (object(at($resources, 'types')) as $name => $type) {
+                requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module type');
+                $headers[] = moduleOperationHeader($header, $name);
+                foreach (names($type->carriers ?? []) as $carrier) {
+                    requireThat(in_array($carrier, ['result','result_or_false','result_or_bool','nullable'], true), 'Unsupported module carrier');
+                    $headers[] = moduleOperationHeader($header, $carrier . '_' . $name);
+                }
+            }
+            foreach (listValue(at($resources, 'operations')) as $operation) {
+                $name = textValue(at($operation, 'native'));
+                requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module operation');
+                $headers[] = moduleOperationHeader($header, $name);
+            }
+        }
         foreach (names($publication->{$family}->functions) as $name) {
             requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module function name');
             $headers[] = moduleOperationHeader($header, $name);

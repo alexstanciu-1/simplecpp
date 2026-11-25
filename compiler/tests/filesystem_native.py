@@ -39,7 +39,10 @@ def check_publication(work):
         run(php, generator, 'emit-compiler', catalog, request, facts, context, compiler)
         return json.loads(run(php, generator, 'provider-headers', catalog, request))
 
-    assert relocated in publish()
+    published = publish()
+    assert relocated in published
+    lock_header = relocated.removesuffix('.hpp') + '/lock_try.hpp'
+    assert lock_header in published and (runtime/'public'/lock_header).is_file()
     header = runtime / 'public' / relocated
     bridge = runtime / 'private/filesystem_provider.hpp'
     registry = compiler / 'types/registry.php'
@@ -55,6 +58,7 @@ def check_publication(work):
     assert 'scpp/php/file_get_contents.hpp' not in publish()
     assert not (runtime / 'public/scpp/php/file_get_contents.hpp').exists()
     assert 'file_get_contents' not in registry.read_text()
+    assert 'fs_lock_try' not in registry.read_text() and not (runtime/'public'/lock_header).exists()
     assert ' scan(' not in header.read_text()
     # Compiling the full implementation against the reduced headers took the isolated
     # publication test over three seconds. The default checks its generated inventory.

@@ -29,3 +29,18 @@ Each path and byte buffer below is a `string`. Each offset, size and timestamp i
 These signatures give the supported arities. OS path operations reject embedded NUL through their declared failure channel. Lexical filename and parent operations accept the full path string including embedded NUL. Predicates return false on lookup failure.
 
 On Linux a snapshot requires a regular file, a nonnegative representable size and a matching whole-second modification time. The final path component must not be a symlink. The read checks device, inode, size and modification time across the initial path lookup, opened descriptor, and final descriptor and path observations. It reads at most one byte beyond the expected size to detect growth. It closes the descriptor on success and failure. Edits preserving identity, size and whole-second modification time can pass these checks.
+
+## Advisory file locks
+
+The four general operations use an opaque `file_lock_handle`. Copies alias the same token. Callers serialize operations on a shared token. Linux supports nonblocking advisory locks on regular files. Participants must use a stable file identity and keep the lock file in place. Release leaves the file and its contents intact.
+
+| General signature | Effect |
+| --- | --- |
+| `fs_lock_empty(): file_lock_handle` | Creates a fresh empty token on every platform. |
+| `fs_lock_try(file_lock_handle &$out, string path, bool shared = false): result<bool>` | Takes a writable named local or parameter. Acquisition returns true and replaces only that slot. Earlier aliases of its previous token remain empty or released. Contention returns a successful false. A held output, invalid path, open failure or other OS failure gives a checked error. Both contention and error preserve the output. |
+| `fs_lock_release(file_lock_handle h): result<bool>` | On Linux, succeeds with true for an empty or released token. Unlocking a held token releases it for all aliases. Unlock failure keeps ownership for retry. If close reports an error after unlock, the token is already released. |
+| `fs_lock_transfer(file_lock_handle h): result<file_lock_handle>` | Moves the descriptor into a fresh token, preserving the lock continuously. The old token and all its aliases become released. Transfer from an empty or released token fails. Failure allocating the destination preserves the acquisition. |
+
+Shared mode opens an existing file read-only and permits other shared readers. Exclusive mode opens read/write and creates a missing file subject to umask. Contending for a lock through a second independent open follows the same rules within or across processes. An empty path, embedded NUL, directory, FIFO or missing parent gives a checked error. Symlinks follow normal open resolution. There is no blocking wait or upgrade operation.
+
+The final owning token performs nonthrowing cleanup. The descriptor is close-on-exec. After fork, explicit release or transfer of a live inherited token fails in the child. The child's final reference closes only its descriptor. Explicit parent release unlocks even while a child retains a descriptor. On other platforms try, release and transfer return checked unsupported errors.
