@@ -263,8 +263,12 @@ independent. An empty vector supplies zero elements.
 When a call selects a source declaration, labels may bind its fixed parameters.
 For example, `score(bonus: first(), base: second())` evaluates `first()` before
 `second()`, applies defaults to omitted optional fixed parameters, and supplies
-an empty pack. A label naming the tail is an error. Unpacking requires positional
-arguments. Typed callbacks and owned callables retain positional invocation.
+an empty pack. To supply the pack, write every fixed argument before one final
+unlabeled vector, as in `score(bonus: first(), base: second(), ...items())`.
+The vector expression runs once after both fixed expressions, and the callee owns
+its pack. Missing fixed arguments (including defaulted ones), labels on the pack,
+and additional operands after the vector are errors in this form. Typed callbacks
+and owned callables retain positional invocation.
 Reference packs remain deferred.
 
 PHP class and struct constructors accept the same trailing by-value pack. Both

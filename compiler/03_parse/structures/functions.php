@@ -464,6 +464,7 @@ class ast_call_expression extends ast_expression
 /** The final positional operand supplies the whole variadic vector. */
 final class ast_unpacked_call extends ast_call_expression
 {
+	public bool $unpacked { get => true; }
 }
 
 /** Caller-side repetition settings share ordinary operand traversal and reset. */
@@ -528,7 +529,7 @@ final class Named_Arguments
 				$target = $function instanceof ast_lambda_expression ? $site->name : $function->name();
 				throw new diagnostic($site->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . ' on ' . $target);
 			}
-			if ($slot === $variadic) throw new diagnostic($site->source(), $argument->byte_start(), 'Named arguments may only bind fixed parameters');
+			if ($slot === $variadic && ($label !== null || !($site->unpacked ?? false))) throw new diagnostic($site->source(), $argument->byte_start(), 'Named arguments may only bind fixed parameters');
 			if (!isset($function->parameters[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Too many positional arguments');
 			if (isset($used[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $label);
 			$used[$slot] = true;
@@ -589,7 +590,8 @@ final class ast_named_call extends ast_call_expression
 
 	/** @param ast_expression[] $arguments @param string[] $labels */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name, ?token_kind $separator,
-		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */, call_qualifier $qualifier)
+		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */, call_qualifier $qualifier,
+		public readonly bool $unpacked = false)
 	{
 		parent::__construct($start, $end, $name, $separator, $arguments, $receiver, $qualifier);
 		$this->named = new Named_Arguments($labels);

@@ -142,12 +142,12 @@ $fixtures['unpack'] = ['files' => Cpp_Program::emit($unpack)->files, 'stdout_hex
 // Each caller uses its own label syntax against the same published PHP parameter names.
 $named_variadic = (new Program_Frontend())->prepare_sources('main', [
 	'main' => new source_file('main', 'function score(int $base,int $bonus=4,int ...$items):int {return $base*10+$bonus+count($items);}'
-		. 'echo from_cpp(),from_js(),from_py();return 8;', flavor::php),
-	'cpp' => new source_file('cpp', 'int from_cpp() {return score(bonus:2,base:1);}', flavor::cpp),
-	'js' => new source_file('js', 'function from_js():int {return score(base:3);}', flavor::js),
+		. '$xs vector<int> = [1,2];echo from_cpp(),from_js(),from_py(),cpp_pack($xs),js_pack($xs);return 8;', flavor::php),
+	'cpp' => new source_file('cpp', 'int from_cpp() {return score(bonus:2,base:1);} int cpp_pack(vector<int> xs) {return score(bonus:2,base:1,...xs);}', flavor::cpp),
+	'js' => new source_file('js', 'function from_js():int {return score(base:3);} function js_pack(xs:vector<int>):int {return score(base:3,bonus:4,...xs);}', flavor::js),
 	'py' => new source_file('py', "def from_py() -> int:\n    return score(bonus=6,base=5)\n", flavor::python),
 ], new entry_target(31));
-$fixtures['named_variadic'] = ['files' => Cpp_Program::emit($named_variadic)->files, 'stdout_hex' => bin2hex('123456')];
+$fixtures['named_variadic'] = ['files' => Cpp_Program::emit($named_variadic)->files, 'stdout_hex' => bin2hex('1234561436')];
 // PHP follows the normative type-before-name signature; shorthand and deferred features reject.
 $php = static fn(string $code) => (new Source_Frontend())->prepare(new source_file('php', $code, flavor::php), new entry_target(31));
 foreach (['function f($x int): void {}', 'function f(int &...$x): void {}',
@@ -185,7 +185,10 @@ foreach (['gather(...$xs)', 'gather(1,2,...$xs)'] as $call) {
 foreach (['gather(1,...$xs,2)', 'gather(1,...$xs,...$xs)'] as $call) {
 	rejects(fn() => $php($prefix . 'return ' . $call . ';'), 'final argument');
 }
-rejects(fn() => $php($prefix . 'return gather(base:1,...$xs);'), 'named argument');
+$php($prefix . 'return gather(base:1,...$xs);');
+rejects(fn() => $php($prefix . 'return gather(base:1,xs:...$xs);'), 'cannot have an argument label');
+rejects(fn() => $php($prefix . 'return gather(base:1,2,...$xs);'), 'Positional argument after named');
+rejects(fn() => $php($prefix . 'return gather(base:1,...$xs,2);'), 'final argument');
 rejects(fn() => $php($prefix . 'return count(...$xs);'), 'Unpacking requires');
 rejects(fn() => $php($prefix . '$ss vector<string> = [];return gather(1,...$ss);'), 'Unpacked argument requires');
 $php('$f = fn(int ...$xs):int => count($xs); echo $f(),$f(1,2);return 8;');

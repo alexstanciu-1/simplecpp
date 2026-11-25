@@ -215,13 +215,13 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_callable_reference) {
 			return ['kind' => 'callable_reference', 'name' => $expression->name, 'span' => self::span($expression)];
 		}
-		if ($expression instanceof ast_named_call) {
-			return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->named->labels,
-				'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
-		}
 		if ($expression instanceof ast_call_expression) {
 			$arguments = array_map(self::expression(...), $expression->arguments);
-			if ($expression instanceof ast_unpacked_call) $arguments[array_key_last($arguments)]['unpacked'] = true;
+			if ($expression->unpacked ?? false) $arguments[array_key_last($arguments)]['unpacked'] = true;
+			if ($expression instanceof ast_named_call) {
+				return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->named->labels,
+					'arguments' => $arguments, 'span' => self::span($expression)];
+			}
 			if ($expression->qualifier === call_qualifier::local) {
 				return ['kind' => 'local_call', 'name' => $expression->name, 'arguments' => $arguments,
 					'span' => self::span($expression)];

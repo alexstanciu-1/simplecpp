@@ -3005,7 +3005,7 @@ CPP;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
 		$variadic = $callback ? $function->variadic_slot : ($runtime ? null : $function->variadic_slot());
 		// An unpacked operand already supplies the native by-value vector parameter.
-		if ($value instanceof ast_unpacked_call || ($value instanceof ast_construction_expression && $value->unpacked)) $variadic = null;
+		if ($value->unpacked ?? false) $variadic = null;
 		if ($variadic !== null) {
 			$last = array_pop($parameters);
 			$pack = $callback ? $last : $last->type_def();
@@ -3415,8 +3415,8 @@ CPP;
 				}
 				$arguments[] = $this->conversion($type, $conversion, $value, $argument);
 			}
-			// Named slots describe only the fixed prefix. Supply the owned tail after its defaults.
-			if ($site->named !== null && ($tail = $constructor->variadic_slot()) !== null) {
+			// With labels alone the binder selects the fixed prefix and the tail defaults to empty.
+			if ($site->named !== null && !$site->unpacked && ($tail = $constructor->variadic_slot()) !== null) {
 				$type = $constructor->parameters[$tail]->type_def();
 				$arguments[] = $type->lower_cpp_empty();
 				if ($reordered) $fields[] = $this->member_type($type) . ' slot_' . $tail . ';';

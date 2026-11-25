@@ -1771,7 +1771,7 @@ final class Preparation
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
-		if ($call instanceof ast_unpacked_call) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
+		if ($call->unpacked ?? false) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
 		$slots = null;
 		if ($call instanceof ast_named_call) {
 			if (!($runtime instanceof runtime_function) || $runtime->parameter_names === null || $call->receiver !== null) {
@@ -2210,7 +2210,7 @@ final class Preparation
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
-			if ($call instanceof ast_unpacked_call) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
+			if ($call->unpacked ?? false) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
 				$this->ambiguous_construction($call);
@@ -2593,7 +2593,7 @@ final class Preparation
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
 		$variadic = $callback ? $function->variadic_slot : $function->variadic_slot();
-		$unpacked = $call instanceof ast_construction_expression ? $call->unpacked : $call instanceof ast_unpacked_call;
+		$unpacked = $call->unpacked ?? false;
 		if ($unpacked && ($variadic === null || $supplied !== $variadic + 1)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires one vector after all fixed arguments of a variadic target');
 		}

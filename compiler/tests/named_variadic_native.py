@@ -1,4 +1,4 @@
-"""Named fixed parameters preserve written order and leave an owned variadic tail empty."""
+"""Named fixed parameters preserve written order with an empty or unpacked variadic tail."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -48,4 +48,49 @@ with TemporaryDirectory(prefix='scpp-named-variadic-') as directory:
         ('main', entry.replace('score(base:1)', 'score(base:1,items:4)'), 'only bind fixed parameters'),
         ('main', entry.replace('score(base:1)', 'score(bonus:4)'), 'Missing required argument: base'),
         ('main', entry, trace),
+    ])
+
+provider = '''
+function combine(int $base,int $bonus=4,int ...$xs):int {
+    $n=$base*10+$bonus;
+    foreach ($xs as $x) {$n=$n+$x;}
+    if (count($xs)>0) {$xs[0]=99;}
+    $xs[]=100;return $n;
+}
+'''
+parent = '''
+class ParentScore {
+    public int $n=0;
+    public function __construct(int $base,int $bonus,int ...$xs) {
+        $this->n=$base*10+$bonus+count($xs);$xs[]=9;
+    }
+}
+'''
+derived = '''
+class DerivedScore extends ParentScore {
+    public function __construct(vector<int> $xs) {
+        parent::__construct(bonus:mark(2),base:mark(1),...items($xs));echo count($xs);
+    }
+}
+'''
+caller = '''
+function mark(int $n):int {echo $n;return $n;}
+function items(vector<int> $xs):vector<int> {echo "V";return $xs;}
+$v vector<int> = [3,5];$empty vector<int> = [];
+echo combine(bonus:mark(2),base:mark(1),...items($v)),":";
+echo combine(1,bonus:2,...$v),":",$v[0],count($v),":",combine(base:1,bonus:2,...$empty),";";
+$b=new DerivedScore($v);echo $b->n;return 8;
+'''
+trace = b'21V20:20:32:12;21V214'
+with TemporaryDirectory(prefix='scpp-named-unpack-') as directory:
+    revisions(Path(directory), 'php', dict(main=caller, provider=provider, parent=parent, derived=derived), [
+        (None, None, trace),
+        ('provider', provider.replace('$bonus', '$extra'), 'Unknown named argument: bonus'),
+        ('provider', provider, trace),
+        ('parent', parent.replace('$base', '$start'), 'Unknown named argument: base'),
+        ('parent', parent, trace),
+        ('main', caller.replace('1,bonus:2,...$v', 'base:1,...$v'), 'after all fixed arguments'),
+        ('main', caller.replace('1,bonus:2,...$v', '1,base:2,...$v'), 'Parameter supplied twice'),
+        ('main', caller.replace('1,bonus:2,...$v', '1,bonus:2,...$v[0]'), 'Unpacked argument requires'),
+        ('main', caller, trace),
     ])

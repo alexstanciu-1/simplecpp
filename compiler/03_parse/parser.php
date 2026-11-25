@@ -997,8 +997,8 @@ final class Parser
 		$labels = [];
 		$unpacked = false;
 		$arguments = $this->arguments($labels, $unpacked);
+		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels, $qualifier, $unpacked);
 		if ($unpacked) return new ast_unpacked_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
-		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels, $qualifier);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 	}
 
@@ -1027,11 +1027,11 @@ final class Parser
 				if ($labels === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), ast_named_call::UNSUPPORTED_TARGET);
 				$labels[count($arguments)] = $this->cursor->name(token_kind::identifier);
 				$this->cursor->take($this->cursor->tokens->source->flavor === flavor::python ? token_kind::assign : token_kind::colon, 'argument label separator');
-			} elseif ($labels) {
+			} elseif ($labels && !$this->cursor->is(token_kind::ellipsis)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Positional argument after named argument');
 			}
 			if ($this->cursor->is(token_kind::ellipsis)) {
-				if ($unpacked === null || $labels) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Unpacking requires a positional variadic call');
+				if ($unpacked === null || isset($labels[count($arguments)])) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'An unpacked vector cannot have an argument label');
 				$this->cursor->take(token_kind::ellipsis, '...');
 				$unpacked = true;
 			}
