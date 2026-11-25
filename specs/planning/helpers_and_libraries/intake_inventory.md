@@ -38,6 +38,8 @@ Reconciled against `codex/helpers-and-libs` through `cfd9f27c9` on 2026-11-25. A
 | Async/task helpers | Cooperative suspension and joined parallel batches exist. Background ownership, cancellation, progress and intermediate publication await a concurrency use case. [Task audit](async_mysqli_ui_webview_audit.md#asynctask-helpers) |
 | Flavor and platform expansion | Separate flavor reviews own PHP date/time compatibility, indexed unset, donor container aliases and additional natural JS/Python APIs. Additional database engines, widget toolkits and non-Linux desktop providers are outside the selected contracts. |
 
+[Additional v0.1 mining leads](archived_gems.md) records follow-up candidates from the portability facade, native providers, reference applications and developer tools.
+
 ### Stage 1 closeout
 
 The selected predicate family is operational. The [core closeout audit](core_closeout_audit.md) records the remaining flavor and tooling deferral recommendations. Broader echo coverage remains compiler-owned.
