@@ -1952,9 +1952,7 @@ final class Preparation
 			$type = ($syntax === null || ($index === $variadic && $syntax->first_child === null))
 				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
 				: Type_Resolution::signature($syntax, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
-			if ($index === $variadic && !($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameter requires a supported vector element');
-			}
+			if ($index === $variadic) Function_Preparation::require_pack_type($parameter, $type);
 			if (!Type_Resolution::callback_component($type) || $parameter->mode === passing_mode::readonly_reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
 			}

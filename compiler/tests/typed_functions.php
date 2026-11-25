@@ -166,7 +166,10 @@ $php('function f(int &...$xs):int {return 0;} $op function<int(int...)> = f(...)
 rejects(fn() => $php('function &f(int &...$xs):vector<int> {return $xs;}return 8;'), 'exactly one writable parameter');
 rejects(fn() => $php('struct Item {public int $n=0;} function f(Item &...$xs):void {}return 8;'), 'canonical int, float, bool or string');
 rejects(fn() => $php('class Item {public function __construct(int &...$xs) {$xs[]=1;}}return 8;'), 'read-only variadic pack');
-rejects(fn() => $php('$f=fn(int &...$xs):int => count($xs);return 8;'), 'Expected');
+$php('$f=fn(int &...$xs):int => count($xs);return 8;');
+rejects(fn() => $php('$f=fn(&...$xs):int => count($xs);return 8;'), 'explicit parameter type');
+rejects(fn() => $php('function mutate(vector<int> &$v):int {return 1;} $f=fn(int &...$xs):int => mutate($xs);return 8;'), 'read-only variadic pack');
+rejects(fn() => $php('struct Item {public int $n=0;} $f function<int(Item...)> = fn(&...$xs)=>count($xs);return 8;'), 'canonical int, float, bool or string');
 
 $variadic = 'function gather(int $base=2,int ...$xs):int {echo $base;foreach ($xs as $x) {echo $x;}return count($xs);}';
 $php($variadic . 'echo gather(),gather(1,3,5);return 8;');

@@ -28,3 +28,14 @@ with TemporaryDirectory(prefix='scpp-variadic-closures-') as directory:
         ('main', source.replace('fn(...$xs)', 'fn($xs)'), 'Expected exact callback signature'),
         ('main', source, expected),
     ])
+
+readonly_source = source.replace('int ...$xs', 'int &...$xs').replace('fn(...$xs)', 'fn(&...$xs)').replace('function(...$labels)', 'function(&...$labels)')
+with TemporaryDirectory(prefix='scpp-readonly-closures-') as directory:
+    revisions(Path(directory), 'php', dict(main=readonly_source, consumer=consumer), [
+        (None, None, expected),
+        ('main', readonly_source.replace('echo $prefix;', '$xs[0]=0;echo $prefix;'), 'read-only variadic pack'),
+        ('main', readonly_source.replace('return $offset+count($labels);', '$labels[]="x";return $offset;'), 'read-only variadic pack'),
+        ('main', readonly_source, expected),
+        ('consumer', consumer.replace('int...', 'vector<int>').replace('$op(4,5)', '$op([4,5])'), 'Expected exact callback signature'),
+        ('consumer', consumer, expected),
+    ])

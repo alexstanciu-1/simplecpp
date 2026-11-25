@@ -252,6 +252,10 @@ The corresponding last input is written `T...` in `callback<R,T...>` and
 `function<R(T...)>`. Named and anonymous targets must match the marker exactly. A fixed
 `vector<T>` input and a variadic `T...` input have distinct source signatures.
 A closure may write `...$values` when its callable destination supplies the element type.
+PHP arrows and block closures may declare the pack read-only with `T &...$values`,
+or `&...$values` when a callable destination supplies the element type. The same
+scalar eligibility and write checks apply as for a named read-only pack. Direct
+and adapted invocations both supply the ordinary owned vector.
 The ellipsis is always explicit. A positional call can supply its entire tail
 as one final unpacked vector, for example `score($base, ...$items)` or
 `$op(...$items)` for a pack-only signature. Supply every fixed argument

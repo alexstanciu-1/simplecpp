@@ -301,14 +301,11 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
 			}
 			if ($parameter->type_reference instanceof ast_variadic_type_reference) {
-				if ($parameter->is_readonly_pack() && !type_registry::supports_readonly_pack_element($parameter_type->element_type)) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only variadic packs require a canonical int, float, bool or string element');
-				}
 				if (($declaration->parent instanceof ast_enum_declaration && !$declaration->is_static)
-					|| $declaration->is_destructor() || $declaration->is_async || $type instanceof generator_type_definition
-					|| !($parameter_type instanceof vector_type_definition && $parameter_type instanceof sequence_initializer_type)) {
+					|| $declaration->is_destructor() || $declaration->is_async || $type instanceof generator_type_definition) {
 					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameters require a synchronous function or ordinary method with a supported vector element');
 				}
+				self::require_pack_type($parameter, $parameter_type);
 			}
 			$parameter->settle_type($parameter_type);
 			if (($optional || $parameter->default_value !== null) && !($parameter->type_reference instanceof ast_variadic_type_reference)) {
@@ -318,6 +315,17 @@ final class Function_Preparation
 		}
 		$reference_origin = $declaration->returns_reference ? self::reference_return_origin($declaration, $type) : null;
 		$declaration->settle_return_type($type, $reference_origin);
+	}
+
+	/** Named and contextual variadics share one vector storage and element-access contract. */
+	public static function require_pack_type(ast_parameter_declaration $parameter, ?type_definition $type): void
+	{
+		if (!($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
+			throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameter requires a supported vector element');
+		}
+		if ($parameter->is_readonly_pack() && !type_registry::supports_readonly_pack_element($type->element_type)) {
+			throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only variadic packs require a canonical int, float, bool or string element');
+		}
 	}
 
 	/** Validate the optional suffix and prepare a default once against its declared type. */

@@ -876,16 +876,16 @@ final class Parser
 					$type = $this->type_reference(allow_void: true, parameter: true);
 				}
 			}
-			elseif ($lambda && $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ellipsis)) {
-				$type = new ast_variadic_type_reference(null, $this->cursor->take(token_kind::ellipsis, '...') + 1);
-				$mode = passing_mode::value;
-				$name = $this->cursor->binding_name(token_kind::variable);
-			}
 			elseif ($lambda && ($this->cursor->is(token_kind::ampersand) || $this->cursor->is(token_kind::variable)
+				|| ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ellipsis))
 				|| ($this->cursor->tokens->source->flavor === flavor::cpp && $this->cursor->is(token_kind::identifier)
 					&& ($this->cursor->next_is(token_kind::rparen) || $this->cursor->next_is(token_kind::comma) || $this->cursor->next_is(token_kind::assign))))) {
 				$type = null;
 				$mode = $this->parameter_mode();
+				if ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ellipsis)) {
+					$type = new ast_variadic_type_reference(null, $this->cursor->take(token_kind::ellipsis, '...') + 1, $mode === passing_mode::reference);
+					$mode = passing_mode::value;
+				}
 				$name = $this->cursor->binding_name($this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 			}
 			else {
@@ -901,7 +901,7 @@ final class Parser
 					$this->cursor->take(token_kind::ampersand, '& after const parameter type');
 					$mode = passing_mode::readonly_reference;
 				} else $mode = $this->parameter_mode();
-				if (($mode === passing_mode::value || (!$lambda && $mode === passing_mode::reference)) && $this->cursor->tokens->source->flavor === flavor::php
+				if ($mode !== passing_mode::readonly_reference && $this->cursor->tokens->source->flavor === flavor::php
 					&& $this->cursor->is(token_kind::ellipsis)) {
 					$type = new ast_variadic_type_reference($type, $this->cursor->take(token_kind::ellipsis, '...') + 1, $mode === passing_mode::reference);
 					$mode = passing_mode::value;
