@@ -2,11 +2,11 @@
 
 Doc Status: planning
 
-[Filesystem family audit and proposed implementation boundary](filesystem_audit.md)
+[Filesystem donor audit and implemented boundary](filesystem_audit.md)
 
-[Stage 1 reconciliation and approved caller migration](intake_inventory.md) · [Family and receiver index](donor_surfaces.tsv) · [Native family methods](donor_native_methods.tsv) · [Operation crosswalk](intake.tsv) · [Donor types, constants and members](donor_entities.tsv)
+[Current Stage 1 family inventory, deferrals and remaining decisions](intake_inventory.md) · [Family and receiver index](donor_surfaces.tsv) · [Native family methods](donor_native_methods.tsv) · [Operation crosswalk](intake.tsv) · [Donor types, constants and members](donor_entities.tsv)
 
-The [family integration process](integration_process.md) records how the promoted contracts govern new work. The single-operation suggestions below describe the earlier pilot.
+The [family integration process](integration_process.md) records how the promoted contracts govern new work. The design discussion and single-operation suggestions below describe the earlier pilot. The current inventory records the implemented visibility rules.
 
 ## Inventory and scope
 

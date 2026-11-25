@@ -2,9 +2,53 @@
 
 Doc Status: planning
 
-The filesystem family has completed Stage 1 with 21 general operations and 18 PHP exposures. The counts below preserve the pre-implementation inventory. [Filesystem contract](../../filesystem_module.md) · [Family audit](filesystem_audit.md)
+## Current family status
 
-Snapshot of `codex/helpers-and-libs` at `e8b03d67f`, 2026-11-25. The separate pilot at `7936b9bec` supplies experimental evidence for three operations. This inventory makes no language or publication changes.
+Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All implementation groups selected through mysqli, UI and Webview have source-to-native evidence for their agreed v0.2 contracts. The wider donor inventory still contains separate intake decisions. Compile-time, LLVM and execution tuning belong to Stage 2.
+
+| Operational family | Proven v0.2 scope |
+| --- | --- |
+| Filesystem | 21 general operations and 18 PHP exposures, including byte-preserving reads/writes, path operations, staging and a checked Linux snapshot. [Contract](../../filesystem_module.md) |
+| Datetime | All 11 general clock, sleep, UTC and local-time operations, including exact unsigned clock transport. [Audit and proof](datetime_audit.md#stage-1-outcome) |
+| Byte strings, Unicode strings, string builders | Byte indexing, slicing, comparison and typed-hash join. Existing strlen, substr and strpos keep byte units. Three explicit UTF-8 code-point helpers and two owning ten-operation builders. [Family proof](string_families_audit.md#stage-1-outcome) |
+| Vector construction and capacity | Fill, capacity, reserve, resize, compact and both clear spellings. [Family audit](vector_capacity_audit.md) |
+| Typed vector/hash operations and map/filter | Construction, indexing, mutation, membership, removal, clear and traversal. The six general transform names cover generic, sequence and keyed cases for their admitted receivers. [Operations](typed_container_operations_audit.md) · [Transforms](collection_map_filter_audit.md) |
+| Boxed collections | Table-valued mixed and dynamic support indexing, probes, mutation, traversal and same-family generic map/filter. Keys and order survive transforms, with mixed copy-on-write and dynamic shared identity. [Contract](../../collection_traversal.md) |
+| JSON codec, document/nodes, pull reader | Checked encode/decode for the published types, immutable documents with retained nodes and diagnostics, and a checked pull reader with a shared cursor. [Contract](../../json_module.md) |
+| Regex | General PCRE2 operations and ten PHP preg names, including captures, output parameters, split, filter and callback replacement. [Contract](../../regex_module.md) |
+| Stream I/O, Process, curl | Byte streams with shared cursor/close state, managed Linux children with captured output, checked curl requests and PHP adapters. Each module and a combined caller reached a native executable. [Group verification](stream_process_curl_audit.md#stage-1-verification) |
+| mysqli | General database calls and PHP connection, statement and result receivers. Parameter binding reads the live slot at execute time and requires compiler lifetime proof. [Contract](../../database_desktop_modules.md) |
+| UI, Webview | Standalone GTK window/events and optional WebKitGTK views. Native commands are available to app-owned pages. Remote HTTP(S) pages display in a separate context. Both generated callers ran on dev002. [Group verification](async_mysqli_ui_webview_audit.md#implementation-evidence) |
+
+### Deferred or owned elsewhere
+
+| Area | Disposition |
+| --- | --- |
+| Fixed arrays | Keep direct native arrays for stack locals and inline fields. Broader element/extent coverage, traversal and sequence map/filter remain explicit debt. [Array audit](typed_container_operations_audit.md) |
+| Grapheme operations | Code-point helpers shipped. Grapheme count and slice await a segmentation contract and implementation. [Unicode audit](string_families_audit.md) |
+| Source buffers and spans | Public buffer/span ownership, line indexing, span hashing and builder span append await a source caller. The current compiler owns its source snapshots and diagnostic offset mapping. [Donor surface index](donor_surfaces.tsv) |
+| Tokenizer | Excluded from native helper intake by decision. Its implementation and benchmarks belong to the Simple C++ tokenizer. [Benchmark](../benchmarks/tokenizer/current_native.md) |
+| Iterators and storage | Built-in traversal, custom iterators and yield producers exist. Sparse stable-ID storage and keyed duplicate membership await concrete consumers. [Iteration](../../../compiler/docs/foreach.md) |
+| Compiler support | Bitsets, work queues, binary codecs and memory accounting await compiler or measurement consumers. The eleven donor filesystem publication operations belong with the publisher. [Filesystem audit](filesystem_audit.md) |
+| Async/task helpers | Cooperative suspension and joined parallel batches exist. Background ownership, cancellation, progress and intermediate publication await a concurrency use case. [Task audit](async_mysqli_ui_webview_audit.md#asynctask-helpers) |
+| Flavor and platform expansion | Separate flavor reviews own PHP date/time compatibility, indexed unset, donor container aliases and additional natural JS/Python APIs. Additional database engines, widget toolkits and non-Linux desktop providers are outside the selected contracts. |
+
+### Remaining Stage 1 decisions
+
+| Candidate | What remains to settle |
+| --- | --- |
+| CLI arguments, environment and shell | Five donor calls have separate intake from managed Process: cli_argc, cli_argv, cli_args, getenv and shell_exec. Audit executable-entry argument ownership, inclusion of the program name, unset versus empty environment values, and whether shell-command execution belongs in the public API. [Core catalog](../../../v0.1/specs/planning/runtime_surface_audit/catalog_core_1.tsv) · [Process audit](stream_process_curl_audit.md) |
+| Filesystem locks | The filesystem audit reserved fs_lock_empty, fs_lock_try, fs_lock_release and fs_lock_transfer for a separate handle goal. A future decision must cover contention versus error and alias invalidation on transfer. [Lock disposition](filesystem_audit.md) |
+| Versioned stable hashing | String and span hashes have separate intake. The donors disagree on the algorithm. A persisted hash needs an explicit version and shared byte test vectors. String inputs can be considered independently of publication of a public span type. [Hash comparison](string_families_audit.md#adjacent-hashing-family) |
+| Remaining core and release-only spellings | Reconcile source-visible debug/output, predicates, constants and compatibility aliases against existing language contracts. Classify compiler-emitted evaluation/debug hooks with their owners. Results/errors, conversions, lifetime operations, enum/layout queries and source-language operators already have dedicated evidence rows below. An equivalent language capability alone does not establish a donor spelling or overload. [Source surface index](donor_surfaces.tsv) · [Donor entities](donor_entities.tsv) |
+
+**Closeout.** The agreed implementations are operational. To close the broader mining pass, choose implement, defer or assign an owner for the remaining candidates and record the core spelling decisions. CLI arguments and environment are the next suggested audit because ordinary command-line applications use them and their contracts can be tested with a small executable. Shell execution can receive its own disposition in that audit.
+
+**Visibility.** C++ uses general names by default. PHP, JS and Python can add them with `"general_api": true` on the root project. Selecting a module remains a separate requirement. [Module and lookup contract](../../../compiler/docs/modules.md)
+
+## Historical intake evidence
+
+The tables below retain the pre-implementation snapshot at `e8b03d67f` and pilot evidence from `7936b9bec`. Their spelling counts are useful for locating donor contracts. Current family coverage is recorded above.
 
 ## Reading the inventory
 
@@ -22,7 +66,7 @@ The 364 names in the original [donor scan](symbols.tsv) are all represented. The
 
 **Donor coverage.** The two release maps at `d2f63e37e` contain 187 legacy and 257 strict entries. The my-try input at `624ab8a2d` has 752 function signatures across 15 catalogs. Its complete parameter modes, defaults, member owners, native bindings and qualified aliases are available by callable ID in the [catalog evidence](../../../v0.1/specs/planning/runtime_surface_audit/README.md). Compared the function records in those tables with all 15 pinned catalogs. The [companion entity table](donor_entities.tsv) includes 33 my-try types, 43 constants, 25 properties, and 74 release shallow class/member declarations across the two profiles. Shallow signatures locate surfaces and sometimes erase contract details.
 
-**Native-only donor leads.** v0.1 also ships a binary reader/writer used for compiler artifacts and a MySQL provider with PHP mysqli bindings. Neither has a my-try module catalog. Keep binary's little-endian primitives under compiler infrastructure review. For mysqli the shallow stubs cover only part of the specified API; review the connection, result and statement methods/properties with the MariaDB dependency before scheduling that library. Native support, class methods and backend internals are not enumerated as global helper spellings. [mysqli member contract](../../../v0.1/specs/builtins/db/mysqli.md) · [Release provider directory inventory](README.md#inventory-and-scope)
+**Native-only donor leads.** v0.1 also ships a binary reader/writer used for compiler artifacts and a MySQL provider with PHP mysqli bindings. Neither has a my-try module catalog. Keep binary's little-endian primitives under compiler infrastructure review. The mysqli shallow stubs cover only part of the specified API. The later family audit also inspected connection, result and statement methods and properties. Native support, class methods and backend internals are not enumerated as global helper spellings. [mysqli member contract](../../../v0.1/specs/builtins/db/mysqli.md) · [Release provider directory inventory](README.md#inventory-and-scope)
 
 ## Source surfaces outside the free-function lists
 
@@ -48,54 +92,7 @@ The [family and receiver index](donor_surfaces.tsv) records 449 pieces of eviden
 
 To reproduce both supplemental indexes from the pinned Git objects, run `python3 specs/planning/helpers_and_libraries/donor_surfaces.py --output /tmp/scpp-donor-index` from the repository root. Inspect a historical source with `git show <revision>:<donor-path>`. The my-try method dispatch is in `compiler/my-try/04_analyze/prepare/semantics/methods.php`; the concrete native headers are in `runtime/public/scpp/`. The release PHP call and method fallbacks are in `generators/php/src/Generator/Generator.php`.
 
-## Family audit and implementation
-
-The [JSON and regex group audit](json_regex_group_audit.md) covers encode/decode, document and nodes, pull reader, then regex as four checkpoints of one goal. The [JSON contract](../../json_module.md) and [regex contract](../../regex_module.md) describe the implemented surfaces. The counts below record the original inventory.
-
-The [Stream I/O, Process and curl audit](stream_process_curl_audit.md) records the donor inventory. The [v0.2 contracts](../../stream_process_curl_modules.md) cover the implemented group.
-
-Use a whole family as the implementation unit. First reconcile its donor specs, catalogs, compiler/type-owned forms, native providers and tests. A narrow probe can settle a contract question. Record the v0.2 disposition of every operation, overload and receiver, including deferred flavor surfaces. Then set up an implementation goal covering the full agreed family and its source-level proofs. Individual performance tuning follows in Stage 2.
-
-| Family | Evidence on v0.2 and proposed treatment |
-| --- | --- |
-| Strings | [Combined byte, Unicode and builder audit](string_families_audit.md). Of 54 distinct my-try string names, 22 have matching registry spellings and two are pilot-only. v0.2 also has additions such as PHP `str_repeat` and `stripos`. Compare byte, UTF-8 and grapheme operations separately. Builder types and their methods form a separate lifetime/API decision. |
-| Filesystem | Five general free bindings exist: `fs_get`, `fs_put`, `fs_rename`, `fs_remove`, `fs_stage`. The donor filesystem catalog has 35 distinct names. Four match the registry; `fs_stage` comes from the v0.2 side. Audit the full filesystem family. Use the get/put pair to probe flavor adaptation. Check failed read versus empty bytes and failed write versus zero bytes written. |
-| Regex | The optional PCRE2 module publishes neutral `regex_test`, `regex_find_span`, and PHP-only `preg_match`. The historical match/capture/replace APIs include different outputs and callback contracts. Compare each signature independently. |
-| Datetime | Stage 1 implemented all 11 general names, including exact unsigned clock transport. [Source probes and proposed scope](datetime_audit.md). [Module contract](../../datetime_module.md) |
-| JSON | Three donor spellings map to native symbols covering all 12 selected operations, including concrete encode overloads. Document nodes and pull readers are separate families with their own types and lifetime questions. [Module contract](../../json_module.md) |
-| Typed collection map/filter | Stage 1 implements all six general names for vectors and typed hashes. Fixed arrays remain deferred. The generic names also admit same-family boxed transforms. [Donor comparison and source probes](collection_map_filter_audit.md). Both donors expose `collection_map`, `collection_filter`, `sequence_map`, `sequence_filter`, `keyed_map`, and `keyed_filter`. These are six strict release bindings and twelve my-try callable IDs in the core catalog. Audit receiver coverage per donor. For example, the release contract explicitly admits fixed arrays for the sequence adapters. Check dense sequence output, preservation of hash keys and iteration order, and the callback contract. [Release collection contract](https://github.com/alexstanciu-1/simplecpp/blob/d2f63e37efe949355c11b137cc4c3520fbfc6368/specs/builtins/collections.md) |
-| Vector construction and capacity | Stage 1 implemented. [Family audit and resize probe](vector_capacity_audit.md) · [Current contract](../../vector_slice.md#vector-construction-and-capacity). Seven names across both release profiles and my-try: `vector_filled`, `vector_capacity`, `vector_reserve`, `vector_resize`, `vector_compact`, `vector_clear`, and `vector_clear_keep_capacity`. The eight my-try callable IDs include two arities for compact. Probe mutation, retained capacity, and a resize fill value that aliases an existing element. |
-| Typed container operations | [Vector and hash audit](typed_container_operations_audit.md) records existing operations, tested donor spelling gaps and the PHP indexed-unset decision. |
-| Fixed arrays | Deferred by decision. Locals use direct native array lowering and stack storage. The type also admits inline instance fields. Revisit donor coverage, traversal and sequence transform overloads in a dedicated family pass. |
-| Boxed container operations | Existing indexing, probes, removal and traversal retain their receiver-specific contracts. Generic map and filter accept table-valued mixed and dynamic, preserving keys, order and family. [Source contract](../../collection_traversal.md#typed-map-and-filter). |
-| Source buffers and spans | Keep byte-offset to line/column mapping as a candidate for diagnostics written in Simple C++. The current compiler owns each file snapshot and indexes LF for one-based byte columns. The donor also treats standalone CR as a line break. Defer a public buffer/span until a caller needs a range to cross an API boundary and its owner lifetime can be specified. [Current lookup](../../../compiler/01_prepare_inputs/structures.php) · [Donor contract](../../../v0.1/specs/compiler_support_runtime_contract.md) |
-| Tokenizer | Excluded from helper intake by decision. Keep the Simple C++ implementation and its [recorded benchmark](../benchmarks/tokenizer/current_native.md). |
-| Iterators and storage | Built-in traversal, typed custom iterators and yield producers cover iteration. Defer sparse stable-ID storage until a table needs IDs that survive deletion. Revisit keyed duplicate membership for a consumer with valid multiplicity. [Traversal](../../../compiler/docs/foreach.md) · [Donor storage](../../../v0.1/my-try/docs/storage/STORAGE.md) |
-| Compiler-support utilities | Defer bitsets, work queues, binary codecs and memory accounting until a compiler pass, persisted format or measurement needs one. Versioned stable hashing retains its [own intake](string_families_audit.md). |
-| IO and process | Implemented byte streams and Linux managed processes. Core CLI, environment and shell helpers retain their separate intake. |
-| curl | Implemented checked general requests and PHP adapters with private libcurl linkage. |
-| Async/task helpers | Cooperative async and joined parallel batches have v0.2 contracts. Background handles, cancellation, progress and intermediate publication need a concurrency consumer. [Scope audit](async_mysqli_ui_webview_audit.md#asynctask-helpers) |
-| mysqli | Implemented with MariaDB Connector/C, PHP receivers and general database calls. Borrowed parameter slots require compiler lifetime proof. [Active contract](../../database_desktop_modules.md) |
-| UI | Implemented as an independently selectable GTK 3 window and event module. [Active contract](../../database_desktop_modules.md) |
-| Webview | Implemented using WebKitGTK. App-owned pages have a native command bridge. Remote websites use a separate display-only context. [Active contract](../../database_desktop_modules.md) |
-| Release-only PHP and internal forms | Profile aliases, debug hooks, generated-code support, and operators can appear in the same maps as application APIs. Record an explicit disposition when their family is reviewed. |
-
-## Current visibility and migration
-
-The successfully generated core and optional-library registries share the same lookup rules. With filesystem, regex, JSON and datetime selected, the callable registry has 158 keys, including ten neutral free-call keys. These are the five filesystem functions above, `regex_test`, `regex_find_span`, `balanced_range`, `string_byte_from_int`, and `strlen`. PHP also has three generated padding constants. This is a registration inventory. Compiler intrinsics, type-owned operations and module checks have separate paths. In particular, keep PHP's natural `strlen` exposure when reviewing the neutral key. A blanket guard on every neutral key would change that behavior.
-
-**Agreed migration.** When the visibility guard lands, existing PHP and JS source callers of general filesystem functions get the project-level general-API opt-in in their manifests. Keep their structured result contracts. C++ uses the general surface by default. Module selection still controls dependencies. The inventory does not choose a manifest key. Apply visibility consistently to ordinary lookup, rooted calls and imports. Include a mixed-flavor project and an incremental manifest toggle in the guard's proof.
-
-| Current filesystem consumer | Where to apply or verify the opt-in |
-| --- | --- |
-| Access-log, stock-ledger, route-table | Three base single-file pilot manifests and six checked-in 50/100 KB variants. The scaling generator copies each base manifest; benchmark staging must preserve it. [Base projects](../../../samples/single-file-pilots) · [Generator](../../../samples/single-file-pilots/scaled/generate.py) |
-| Translated compiler path and publisher cleanup | PHP proof sources contain general reads/writes. Their Python harnesses construct the application manifests. Update the manifest writers. [Translation](../../../compiler/tests/translated_compiler_path.py) · [Publisher](../../../compiler/tests/translated_publisher_cleanup.py) |
-| Filesystem native fixture | The harness generates PHP, JS and C++ apps, toggles module selection and imports `fs_get` under an alias in PHP. Exercise module and opt-in independently so each diagnostic proves the intended rule. [Fixture](../../../compiler/tests/filesystem_native.py) |
-| Historical translated framework sample | The PHS filesystem shim also calls `fs_get`. Classify its owning toolchain before editing any manifest. [Shim](../../../v0.1/reference-samples/my-try/phpp/scpp_framework/filesystem.phs) |
-
-If regex general names subsequently receive the same gate, review the [regex fixture](../../../compiler/tests/regex_native.py) independently. Host PHP calls such as the bootstrap compiler's own `file_get_contents` run in PHP itself and do not establish a Simple C++ source dependency.
-
-## Verification and reproduction
+## Historical verification and reproduction
 
 Generated fresh runtime and compiler outputs into scratch directories for both core and the optional-library profile. The stock standalone numeric configuration failed during provider enumeration. The base publication already requests `int32` and the numeric overlay appends it again. The generator independently rejects the composed request with `Duplicate published type`. Numeric-only expansion therefore remains unverified in this snapshot. No requests were edited to manufacture a successful configuration.
 
