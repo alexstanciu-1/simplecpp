@@ -234,14 +234,31 @@ The comparison excludes synthetic Python layout tokens and the native end
 marker. [Emitter](../../compiler/examples/tokenizer/emit_punctuation.php) ·
 [Differential test](../../compiler/tests/translated_punctuation.py)
 
-This slice required no new v0.2 language or runtime capability. Park further
-tokenizer expansion for the freeze review. The next proposed bootstrap check is
-the generated-types and lowering boundary: take one application-defined vector
-from prepared element identity through concrete header rendering and link inputs,
-and compare the native path with the existing PHP backend. The PHP backend still
-loads the API generator's renderer at compilation time.
-[Backend owner](../../compiler/05_backend/cpp/concrete.php) ·
-[Existing vector proof](../../compiler/tests/application_vectors_native.py)
+This slice required no new v0.2 language or runtime capability. Further
+tokenizer expansion is parked for the freeze review.
+
+**Generated types and lowering, application-vector checkpoint.** On dev002 at
+`173165972` the existing full application-vector regression passed in 54 seconds.
+The focused `compiler_translated_vector_recipe` check passed in 1.44 seconds.
+PHP publishes the configured production recipe and buffer support into Simple C++
+before loading the application. Its native executable then renders the header
+from prepared element and specialization facts. The executable replays source
+requests and releases; each publication reports the complete set of live files.
+
+Two independent source files resolved the same canonical vector of an inline
+record. The native output matched the PHP header path and bytes with two users
+and with one. Releasing the last user produced an empty file set. Fresh and
+incremental outputs agreed at each step. Compiling PHP-emitted callers with the
+native header and the vector-free application's link inputs produced `77`,
+`07`, and `00` respectively. No additional runtime archive was needed.
+
+The bridge still supplies prepared names, the SHA-256 artifact key and include
+dependencies. File installation, caller lowering and base link planning remain
+host responsibilities. This qualifies native rendering for the selected vector
+recipe; the production backend continues to use PHP for rendering.
+[Native renderer](../../compiler/examples/concrete_vector/render.php.scpp) ·
+[Build-time publisher](../../compiler/examples/concrete_vector/publish.php) ·
+[Differential test](../../compiler/tests/translated_vector_recipe.py)
 
 Acceptance checks:
 
