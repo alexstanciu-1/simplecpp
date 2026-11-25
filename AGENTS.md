@@ -90,6 +90,12 @@ Run long tests only on dev002 (`alex-ai@dev002.travelfuse.ro`). This includes
 full regression runs, exhaustive test matrices, and sustained benchmarks.
 Use WSL2 for quick, focused checks. If dev002 is unavailable, defer the long run.
 
+Write focused tests that prove the intended behavior. Aim for under 3 seconds per
+default test with reasonable effort. Run the suite on dev002 with 24 jobs and
+rerun slower tests in isolation before moving a matrix to on-demand. Keep a
+default check for the same behavior. If it still exceeds 3 seconds in isolation,
+note in the test what you tried and why it takes longer.
+
 See `docs/ai_onboarding/workflows.md` for the fuller task-routing and validation guide.
 
 ## Focused Tool Use and Daybreak Blocks
