@@ -76,3 +76,31 @@ The increase in time is consistent with scanning more siblings on each hit.
 Keep the native fixture as an identity and lifetime reference. Before adopting
 its lookup structure in the compiler port, measure actual sibling counts and
 lookup frequency on representative compiler inputs.
+
+### Observed production lookup widths
+
+On dev002 at `2edf8458c`, a disposable checkout recorded each production
+`callable_signature_index::element()` visit, whether its terminal owner was
+still alive, and the child count in each PHP WeakMap immediately after selecting
+the component. The probe held no extra component or owner references. Timing an
+instrumented build would include the probe's file writes, so this run reports
+counts only.
+
+| Input or default workflow | Lookups | Live-owner hits | Widest visited map |
+| --- | ---: | ---: | ---: |
+| Queue report, access log, stock ledger, route table (four cold project builds) | 0 | 0 | — |
+| Translated compiler path and callable reference inputs | 0 | 0 | — |
+| Callable collections | 36 | 32 | 1 |
+| Translated closure dependencies | 4 | 0 | 1 |
+| Ten other callable, callback, closure and reference-return regressions combined | 46 | 29 | 2 |
+
+All four project builds emitted manifests and all 14 measured regressions
+passed. The dedicated interning proof was excluded. Of 86 lookups across these
+workloads, three traversed a map of width two, all at the result component.
+The PHP index splits reference and variadic modes into separate branches, so its
+widths need not equal the native fixture's sibling counts.
+
+Defer a specialized native lookup structure for the freeze. The high-width
+benchmark establishes a scaling limit, but these applications supplied no
+traffic at that boundary. Revisit the choice with a larger callable-heavy
+application or the native compiler's own workload.
