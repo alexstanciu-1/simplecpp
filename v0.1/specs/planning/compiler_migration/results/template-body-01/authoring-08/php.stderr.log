@@ -1,0 +1,9 @@
+PHP Fatal error:  Uncaught InvalidArgumentException: Semantic result or parameter count differs from prepared ABI in /tmp/template-body-08/source/src/04_analyze/type_model/data/callables.php:64
+Stack trace:
+#0 /tmp/template-body-08/source/src/04_analyze/type_model/data/callables.php(84): type_model\Runtime_Callable_Abi->validate()
+#1 /tmp/template-body-08/source/probe.php(71): type_model\Runtime_Callable->__construct()
+#2 /tmp/template-body-08/source/probe.php(14): template_body_test\Fixtures::providers()
+#3 /tmp/template-body-08/source/main.php(2): template_body_test\Probe::run()
+#4 Command line code(1): require('...')
+#5 {main}
+  thrown in /tmp/template-body-08/source/src/04_analyze/type_model/data/callables.php on line 64

@@ -1,0 +1,162 @@
+{
+  "performance-manifest01": {
+    "1": {
+      "seconds": 33.97,
+      "peak_rss_kib": 1004632,
+      "phases": {
+        "frontend": 4.731003999710083,
+        "preparation": 7.983006715774536,
+        "rendering": 11.230009317398071,
+        "layout_depths": 4.704003810882568,
+        "manifest": 1.2350010871887207
+      }
+    },
+    "32": {
+      "seconds": 17.18,
+      "peak_rss_kib": 1008784,
+      "phases": {
+        "frontend": 1.016000747680664,
+        "preparation": 5.185004472732544,
+        "rendering": 1.0620009899139404,
+        "layout_depths": 4.649003982543945,
+        "manifest": 1.2040009498596191
+      }
+    },
+    "repeat": {
+      "seconds": 17.26,
+      "peak_rss_kib": 1010112,
+      "phases": {
+        "frontend": 1.0070006847381592,
+        "preparation": 5.160004377365112,
+        "rendering": 1.0560009479522705,
+        "layout_depths": 4.716003894805908,
+        "manifest": 1.220000982284546
+      }
+    }
+  },
+  "performance-layout01": {
+    "1": {
+      "seconds": 29.45,
+      "peak_rss_kib": 1006320,
+      "phases": {
+        "frontend": 4.953003883361816,
+        "preparation": 8.067006587982178,
+        "rendering": 11.148009061813354,
+        "layout_depths": 0.015000104904174805,
+        "manifest": 1.207000970840454
+      }
+    },
+    "8": {
+      "seconds": 13.22,
+      "peak_rss_kib": 1005604,
+      "phases": {
+        "frontend": 1.0480008125305176,
+        "preparation": 5.232004404067993,
+        "rendering": 1.7770013809204102,
+        "layout_depths": 0.01399993896484375,
+        "manifest": 1.1800010204315186
+      }
+    },
+    "32": {
+      "seconds": 12.56,
+      "peak_rss_kib": 1012204,
+      "phases": {
+        "frontend": 1.0080008506774902,
+        "preparation": 5.111004114151001,
+        "rendering": 1.0620007514953613,
+        "layout_depths": 0.015000104904174805,
+        "manifest": 1.2290010452270508
+      }
+    },
+    "repeat": {
+      "seconds": 12.54,
+      "peak_rss_kib": 1008004,
+      "phases": {
+        "frontend": 1.021000862121582,
+        "preparation": 5.15800404548645,
+        "rendering": 1.0730009078979492,
+        "layout_depths": 0.015000104904174805,
+        "manifest": 1.2170007228851318
+      }
+    }
+  },
+  "compiler_sizes": {
+    ".cpp": {
+      "maximum_bytes": 180095,
+      "over_200000": 0
+    },
+    ".hpp": {
+      "maximum_bytes": 58472,
+      "over_200000": 0
+    }
+  },
+  "workload_sizes": {
+    ".cpp": {
+      "maximum_bytes": 179863,
+      "over_200000": 0
+    },
+    ".hpp": {
+      "maximum_bytes": 58472,
+      "over_200000": 0
+    }
+  },
+  "layout_one_worker_manifest_exact_match": true,
+  "threads": {
+    "exit": 0,
+    "stages": {
+      "done": {
+        "maximum_threads": 1,
+        "maximum_active_threads": 1
+      },
+      "emit-start": {
+        "maximum_threads": 33,
+        "maximum_active_threads": 32
+      },
+      "init-start": {
+        "maximum_threads": 1,
+        "maximum_active_threads": 1
+      },
+      "prepare-start": {
+        "maximum_threads": 33,
+        "maximum_active_threads": 1
+      },
+      "startup": {
+        "maximum_threads": 1,
+        "maximum_active_threads": 0
+      },
+      "sync-start": {
+        "maximum_threads": 33,
+        "maximum_active_threads": 8
+      }
+    }
+  },
+  "threads_fast": {
+    "exit": 0,
+    "stages": {
+      "done": {
+        "maximum_threads": 1,
+        "maximum_active_threads": 1
+      },
+      "emit-start": {
+        "maximum_threads": 33,
+        "maximum_active_threads": 32
+      },
+      "init-start": {
+        "maximum_threads": 1,
+        "maximum_active_threads": 1
+      },
+      "prepare-start": {
+        "maximum_threads": 33,
+        "maximum_active_threads": 32
+      },
+      "startup": {
+        "maximum_threads": 1,
+        "maximum_active_threads": 1
+      },
+      "sync-start": {
+        "maximum_threads": 33,
+        "maximum_active_threads": 32
+      }
+    }
+  }
+}

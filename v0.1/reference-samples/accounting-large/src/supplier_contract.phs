@@ -1,0 +1,122 @@
+// Purchasing terms, tolerances and payment holds for a supplier.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class SupplierContract {
+    public string $id = "";
+    public string $legal_name = "";
+    public string $control_account = "";
+    public string $currency = "";
+    public string $buyer = "";
+    public string $remittance_reference = "";
+    public int $order_limit = 0;
+    public int $committed = 0;
+    public int $term_days = 0;
+    public int $price_tolerance = 0;
+    public int $quantity_tolerance = 0;
+    public int $minimum_payment = 0;
+    public bool $active = false;
+    public bool $payment_hold = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("supplier_contract.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->legal_name, 1, 80)) {
+            return accounting_failure("supplier_contract.legal_name", "legal_name must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->control_account, 1, 80)) {
+            return accounting_failure("supplier_contract.control_account", "control_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->currency, 1, 3)) {
+            return accounting_failure("supplier_contract.currency", "currency must contain 1..3 printable bytes");
+        }
+        if (!DocumentRules::text($this->buyer, 1, 80)) {
+            return accounting_failure("supplier_contract.buyer", "buyer must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->remittance_reference, 1, 80)) {
+            return accounting_failure("supplier_contract.remittance_reference", "remittance_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->order_limit, 0, 1000000000)) {
+            return accounting_failure("supplier_contract.order_limit", "order_limit must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->committed, 0, 1000000000)) {
+            return accounting_failure("supplier_contract.committed", "committed must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->term_days, 0, 365)) {
+            return accounting_failure("supplier_contract.term_days", "term_days must be in [0, 365]");
+        }
+        if (!DocumentRules::integer($this->price_tolerance, 0, 10000)) {
+            return accounting_failure("supplier_contract.price_tolerance", "price_tolerance must be in [0, 10000]");
+        }
+        if (!DocumentRules::integer($this->quantity_tolerance, 0, 10000)) {
+            return accounting_failure("supplier_contract.quantity_tolerance", "quantity_tolerance must be in [0, 10000]");
+        }
+        if (!DocumentRules::integer($this->minimum_payment, 0, 1000000000)) {
+            return accounting_failure("supplier_contract.minimum_payment", "minimum_payment must be in [0, 1000000000]");
+        }
+        if ($this->committed > $this->order_limit) {
+            return accounting_failure("supplier_contract.commitment", "Commitment exceeds the contract limit");
+        }
+        return accounting_success();
+    }
+
+    public function uncommitted_limit(): int {
+        return $this->order_limit - $this->committed;
+    }
+
+    public function copy(): SupplierContract {
+        $snapshot SupplierContract = new SupplierContract();
+        $snapshot->id = $this->id;
+        $snapshot->legal_name = $this->legal_name;
+        $snapshot->control_account = $this->control_account;
+        $snapshot->currency = $this->currency;
+        $snapshot->buyer = $this->buyer;
+        $snapshot->remittance_reference = $this->remittance_reference;
+        $snapshot->order_limit = $this->order_limit;
+        $snapshot->committed = $this->committed;
+        $snapshot->term_days = $this->term_days;
+        $snapshot->price_tolerance = $this->price_tolerance;
+        $snapshot->quantity_tolerance = $this->quantity_tolerance;
+        $snapshot->minimum_payment = $this->minimum_payment;
+        $snapshot->active = $this->active;
+        $snapshot->payment_hold = $this->payment_hold;
+        return $snapshot;
+    }
+
+    public function differences(SupplierContract $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->legal_name !== $other->legal_name) { $fields[] = "legal_name"; }
+        if ($this->control_account !== $other->control_account) { $fields[] = "control_account"; }
+        if ($this->currency !== $other->currency) { $fields[] = "currency"; }
+        if ($this->buyer !== $other->buyer) { $fields[] = "buyer"; }
+        if ($this->remittance_reference !== $other->remittance_reference) { $fields[] = "remittance_reference"; }
+        if ($this->order_limit !== $other->order_limit) { $fields[] = "order_limit"; }
+        if ($this->committed !== $other->committed) { $fields[] = "committed"; }
+        if ($this->term_days !== $other->term_days) { $fields[] = "term_days"; }
+        if ($this->price_tolerance !== $other->price_tolerance) { $fields[] = "price_tolerance"; }
+        if ($this->quantity_tolerance !== $other->quantity_tolerance) { $fields[] = "quantity_tolerance"; }
+        if ($this->minimum_payment !== $other->minimum_payment) { $fields[] = "minimum_payment"; }
+        if ($this->active !== $other->active) { $fields[] = "active"; }
+        if ($this->payment_hold !== $other->payment_hold) { $fields[] = "payment_hold"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "SupplierContract\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "legal_name=" . $this->legal_name . "\n";
+        $text .= "control_account=" . $this->control_account . "\n";
+        $text .= "currency=" . $this->currency . "\n";
+        $text .= "buyer=" . $this->buyer . "\n";
+        $text .= "remittance_reference=" . $this->remittance_reference . "\n";
+        $text .= "order_limit=" . (string)$this->order_limit . "\n";
+        $text .= "committed=" . (string)$this->committed . "\n";
+        $text .= "term_days=" . (string)$this->term_days . "\n";
+        $text .= "price_tolerance=" . (string)$this->price_tolerance . "\n";
+        $text .= "quantity_tolerance=" . (string)$this->quantity_tolerance . "\n";
+        $text .= "minimum_payment=" . (string)$this->minimum_payment . "\n";
+        $text .= "active=" . DocumentRules::flag($this->active) . "\n";
+        $text .= "payment_hold=" . DocumentRules::flag($this->payment_hold) . "\n";
+        return $text;
+    }
+}

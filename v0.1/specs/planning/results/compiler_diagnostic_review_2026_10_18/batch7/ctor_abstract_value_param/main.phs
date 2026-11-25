@@ -1,0 +1,1 @@
+abstract class A { abstract function f(): int; } class C { function __construct(value<A> $a) {} } return 0;

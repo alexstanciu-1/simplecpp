@@ -1,0 +1,209 @@
+{
+  "trait_body": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "trait_signature": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "constant_type": {
+    "base": {
+      "stage": "sync",
+      "error": "a.phs: Expected '=' at a.phs: byte 8\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Finish tokenization and parsing before preparation"
+    }
+  },
+  "import_target": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "598571717aa75f6906040b63bd92316c9943ba07a4dd49e826670a0fc2120d1b",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "Missing import target or wrong symbol kind: \\X\\A",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Missing import target or wrong symbol kind: \\X\\A"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "Missing import target or wrong symbol kind: \\X\\A",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Missing import target or wrong symbol kind: \\X\\A"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "Missing import target or wrong symbol kind: \\X\\A",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Missing import target or wrong symbol kind: \\X\\A"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "598571717aa75f6906040b63bd92316c9943ba07a4dd49e826670a0fc2120d1b",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "hash_key": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "2107424baf6dcd7bc46187737687cb6125bfc4d5d07d93aec806ea8c61055290",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0522d133fa613c51ae4b220d69c97132b7ad8ec98dcba07efab418cb227d0124",
+      "empty": false,
+      "ready": true
+    },
+    "retry": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0522d133fa613c51ae4b220d69c97132b7ad8ec98dcba07efab418cb227d0124",
+      "empty": false,
+      "ready": true
+    },
+    "fresh_invalid": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0522d133fa613c51ae4b220d69c97132b7ad8ec98dcba07efab418cb227d0124",
+      "empty": false,
+      "ready": true
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "2107424baf6dcd7bc46187737687cb6125bfc4d5d07d93aec806ea8c61055290",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "two_failures": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "f436b104bad3ebd28d425a1e5c8d16fc5b73625d8ecdb2f3a7f55f3b3746f2c7",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for x\nS2S needs an established local declaration for y\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for x\nS2S needs an established local declaration for y\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for x\nS2S needs an established local declaration for y\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for x\nS2S needs an established local declaration for y\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for x\nS2S needs an established local declaration for y\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for x\nS2S needs an established local declaration for y\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "f436b104bad3ebd28d425a1e5c8d16fc5b73625d8ecdb2f3a7f55f3b3746f2c7",
+      "empty": false,
+      "ready": true
+    }
+  }
+}

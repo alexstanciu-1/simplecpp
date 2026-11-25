@@ -1,0 +1,1 @@
+use D\Child; $c = new Child(); $b B\Base = $c; return $b->f();

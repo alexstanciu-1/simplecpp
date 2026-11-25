@@ -1,5 +1,0 @@
-function pick(?int $value): int {
-	return $value ?? 10;
-}
-echo pick(null), "\n";
-echo pick(3), "\n";

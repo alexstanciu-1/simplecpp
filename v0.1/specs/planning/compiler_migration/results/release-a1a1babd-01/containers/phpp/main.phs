@@ -1,0 +1,59 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$index = new \samples\Indexes();
+$index->initialize();
+echo $index->row(37), ":", $index->file("/root/a.phs"), ":", $index->copy_edit(), ":", $index->first(), "\n";
+$positions hash<int, int> = [];
+$positions[42] = 2;
+$positions[7] = 5;
+$positions_copy = $positions;
+$positions_copy[42] = 8;
+echo count($positions), ":", $positions[42], ":", $positions_copy[42], ":", $positions[7], "\n";
+$groups hash<vector<int>, string> = [];
+$ids vector<int> = [];
+$ids[] = 3;
+$groups["folder"] = $ids;
+$groups_copy = $groups;
+$groups_copy["folder"][0] = 9;
+echo $groups["folder"][0], ":", $groups_copy["folder"][0], "\n";
+

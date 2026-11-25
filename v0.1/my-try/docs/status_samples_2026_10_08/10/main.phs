@@ -1,0 +1,9 @@
+$sum int = 0;
+for ($i = 0; $i < 4; $i++) {
+    if ($i === 1) { continue; }
+    elseif ($i === 3) { break; }
+    else { $sum += $i; }
+}
+while ($sum < 4) { $sum++; }
+do { $sum--; } while ($sum > 3);
+return $sum;

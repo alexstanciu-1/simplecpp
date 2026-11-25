@@ -1,0 +1,25 @@
+{
+  "bindings": {
+    "results": "/tmp/json-reader-bindings-02",
+    "legacy": "executed all fourteen methods",
+    "ordinary": "executed all fourteen methods",
+    "concrete": "expected sequencing blocker; no execution"
+  },
+  "facade": [
+    {
+      "name": "document-regression",
+      "seconds": 17.61352580899984,
+      "passed": true
+    },
+    {
+      "name": "reader-protocol",
+      "seconds": 13.798654059999535,
+      "passed": true
+    },
+    {
+      "name": "typed-php-native",
+      "seconds": 22.129454353002075,
+      "passed": true
+    }
+  ]
+}

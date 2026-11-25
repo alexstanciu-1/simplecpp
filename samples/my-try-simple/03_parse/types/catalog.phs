@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/types/catalog.phs
+function sample_unit_036(): void
+{
+    $value int = 37;
+    sample_unit_037();
+    return;
+}

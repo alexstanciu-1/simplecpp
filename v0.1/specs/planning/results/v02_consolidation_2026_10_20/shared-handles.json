@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "changed": [
+    "types/n5061796c6f6164.hpp"
+  ],
+  "generated_program_runs": 2,
+  "proofs": [
+    "handle aliasing",
+    "last-owner destruction",
+    "upcast identity",
+    "value copy",
+    "conservative template payload",
+    "layout edit stable units"
+  ]
+}

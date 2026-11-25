@@ -1,0 +1,34 @@
+diff --git a/compiler/src/compile/model/project_reference_resolution.phs b/compiler/src/compile/model/project_reference_resolution.phs
+index ef3f7e44..49eab358 100644
+--- a/compiler/src/compile/model/project_reference_resolution.phs
++++ b/compiler/src/compile/model/project_reference_resolution.phs
+@@ -224,7 +224,7 @@ final class project_reference_resolution {
+ 	public static function reference_key(ProjectReferenceResolution $artifact, ProjectReferenceResolutionRow $row): string {
+ 		$calleeName string = project_reference_resolution::callee_name($artifact, $row);
+ 		if ($calleeName === "") {
+-			$calleeName = "missing_call_candidate";
++			$calleeName = "missing_call_expression";
+ 		}
+ 		return reference_identity::debug_string_from_parts(project_reference_resolution::from_symbol_key($artifact, $row), $calleeName, $row->reference_id);
+ 	}
+@@ -550,8 +550,8 @@ final class project_reference_resolution {
+ 		}
+ 		$index int = 0;
+ 		while ($index < count($artifact->rows)) {
+-			$candidate ProjectReferenceResolutionRow = $artifact->rows[$index];
+-			if ((int)$candidate->reference_id === (int)$row->reference_id) {
++			$existingRow ProjectReferenceResolutionRow = $artifact->rows[$index];
++			if ((int)$existingRow->reference_id === (int)$row->reference_id) {
+ 				$artifact->rows[$index] = $row;
+ 				return;
+ 			}
+diff --git a/compiler/src/structures/project/project_reference_resolution.phs b/compiler/src/structures/project/project_reference_resolution.phs
+index 4b3bc0dc..e1101446 100644
+--- a/compiler/src/structures/project/project_reference_resolution.phs
++++ b/compiler/src/structures/project/project_reference_resolution.phs
+@@ -1,4 +1,4 @@
+-// Role: Project reference-resolution table for direct call candidates.
++// Role: Project reference-resolution table for direct call-expression references.
+ class ProjectReferenceResolution {
+ 	public uint16 $artifact_kind_id = 1;
+ 	public uint16 $schema_version = 1;

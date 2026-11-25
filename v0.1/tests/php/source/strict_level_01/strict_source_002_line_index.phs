@@ -1,0 +1,35 @@
+$empty string = "";
+$empty_buffer /** source_buffer */ = source_buffer_take($empty);
+$empty_index /** source_line_index */ = source_line_index_build($empty_buffer);
+$empty_loc /** source_location */ = source_line_index_offset_to_location($empty_index, 0);
+
+echo source_line_index_line_count($empty_index), "\n";
+echo source_location_line($empty_loc), ":", source_location_column($empty_loc), ":", source_location_offset($empty_loc), "\n";
+
+$unix string = "a\nbc\n";
+$unix_buffer /** source_buffer */ = source_buffer_take($unix);
+$unix_index /** source_line_index */ = source_line_index_build($unix_buffer);
+$unix_loc /** source_location */ = source_line_index_offset_to_location($unix_index, 3);
+
+echo source_line_index_line_count($unix_index), "\n";
+echo source_location_line($unix_loc), ":", source_location_column($unix_loc), ":", source_location_offset($unix_loc), "\n";
+echo source_line_index_line_column_to_offset($unix_index, 3, 1), "\n";
+
+$windows string = "a\r\nbc\r\nd";
+$windows_buffer /** source_buffer */ = source_buffer_take($windows);
+$windows_index /** source_line_index */ = source_line_index_build($windows_buffer);
+$windows_loc /** source_location */ = source_line_index_offset_to_location($windows_index, 4);
+
+echo source_line_index_line_count($windows_index), "\n";
+echo source_location_line($windows_loc), ":", source_location_column($windows_loc), ":", source_location_offset($windows_loc), "\n";
+echo source_line_index_line_column_to_offset($windows_index, 3, 1), "\n";
+
+$utf8 string = "é\nz";
+$utf8_buffer /** source_buffer */ = source_buffer_take($utf8);
+$utf8_index /** source_line_index */ = source_line_index_build($utf8_buffer);
+$utf8_newline /** source_location */ = source_line_index_offset_to_location($utf8_index, 2);
+$utf8_z /** source_location */ = source_line_index_offset_to_location($utf8_index, 3);
+
+echo source_location_line($utf8_newline), ":", source_location_column($utf8_newline), ":", source_location_offset($utf8_newline), "\n";
+echo source_location_line($utf8_z), ":", source_location_column($utf8_z), ":", source_location_offset($utf8_z), "\n";
+echo source_line_index_line_column_to_offset($utf8_index, 1, 2), "\n";

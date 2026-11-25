@@ -1,0 +1,20 @@
+{
+  "base_commit": "82c4fdec",
+  "production_source_sha256": {
+    "src/04_analyze/type_model/data/lifecycle_roles.php": "cd0df15a08770e66d9ec39a1f04b38e3c5ba41efd9d9bfbab142332dacfb26a3",
+    "src/04_analyze/type_model/data/lifecycle.php": "81f2098d0d5a5742d3a7ef3f051757649933985429e6d5f38df8c9ea669cd11e",
+    "src/04_analyze/type_model/data/lifetime_contract.php": "24b887008c69856c3f48ff7da2e2330107fdf73236f6595cc4c806f8bbd7e123",
+    "src/04_analyze/type_model/data/lifetime_policy_codec.php": "0d16b35a80455c627851e5375c9647d65892bd5858dbd628a682ac7cee389337"
+  },
+  "tests_sha256": {
+    "compiler/tests/type_lifetimes/probe.php": "b1c89b0ee530d9f2204da79c8ba647d132cb1e7f5724e46b4b856e8bb3cb01a9",
+    "compiler/tests/type_lifetimes/oracle.php": "1e082fa296cd5e8ba2fd783f1278154810cc6d7cd99fa6fca7b671aa94485e78",
+    "compiler/tests/type_lifetimes/run.py": "19afba33033a58449dd93f0b2d98fd328112c0de2a3552fc2eef4ecdcff80ed0",
+    "compiler/tests/type_lifetimes/purity.php": "9bccee87ba5718c6003938559402676b6c33674a142ba935bfd687d42b3c49ec"
+  },
+  "reference_sha256": {
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/lifecycle.php": "d4c35417826d54ba3bf480e7f94c5590dc06e890a639df79b6e02f0eeebbdb69",
+    "compiler/reference/pre-rewrite/src/04_analyze/type_model/data/definitions.php": "abbe0fcba5cabbbd1827b18532f23fef8a09df725d78d6c104a4ef9b60400177"
+  },
+  "target_revision": "9b4b33f35f053b487e018c94d6a4a7888d77c64a"
+}

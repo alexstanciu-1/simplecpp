@@ -1,0 +1,19 @@
+{
+  "revision": "5951486e7",
+  "experimental_patch": "/tmp/shared-self-reuse-audit-01/experiment.patch",
+  "runner": "/tmp/shared-self-reuse-audit-01/shared_self.py",
+  "results": "/tmp/shared-self-core-01",
+  "ordinary": {
+    "passed": true,
+    "seconds": 14.99,
+    "stdout": "9:9:12"
+  },
+  "prelowered": {
+    "passed": false,
+    "seconds": 18.73,
+    "stage": "native template-free token gate",
+    "diagnostic": "prelower_templates: template token in application input (including provider headers): /tmp/shared-self-core-01/concrete/cache/artifacts/a931b99d8770a747e4c338a6d7e9d9905d9181ab64e1b0e1d395e20518370971.hpp"
+  },
+  "production_changes_retained": false,
+  "bootstrap_rerun": false
+}

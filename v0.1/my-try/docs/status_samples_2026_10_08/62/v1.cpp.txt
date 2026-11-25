@@ -1,0 +1,88 @@
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+class Has_Value;
+class Item;
+class Nested;
+
+class Has_Value : public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+	virtual int_t<> value();
+};
+
+class Nested : public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+};
+
+class Item : public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+};
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+bool_t Has_Value::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Has_Value::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+int_t<> Has_Value::value() {
+	SCPP_CALL_DEPTH_GUARD("Has_Value::value", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/62/main.phs", 1);
+	return static_cast<int_t<> >(7);
+}
+
+bool_t Nested::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Nested::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+bool_t Item::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Item::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/62/main.phs", 0);
+	return create<Item>()->value();
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+

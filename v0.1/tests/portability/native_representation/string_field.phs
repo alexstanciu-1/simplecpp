@@ -1,0 +1,9 @@
+struct string_row {
+    string $text;
+}
+
+$original string_row = [];
+$original->text = "before";
+$copy string_row = $original;
+$copy->text = "after";
+echo $original->text, ":", $copy->text, "\n";

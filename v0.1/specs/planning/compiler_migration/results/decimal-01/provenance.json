@@ -1,0 +1,7 @@
+{
+  "original_revision": "75e9b0f7c3f6420255b3b126429afbfa0e13ccb1",
+  "owner": "src/04_analyze/check_bodies/utilities/literals.php",
+  "owner_validation_normalization_zero_and_bitwidth_prefix_unchanged": true,
+  "original_owner_sha256": "678a874127736b2963a0200f1ef7551c0bc9bc66c1dbc0a7d94bbebc82ae0027",
+  "adapted_owner_sha256": "c846d4f2952de42bcf59d6e929d38979926815f07cffa5151294ef1fbcd3b729"
+}

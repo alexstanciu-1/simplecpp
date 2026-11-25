@@ -1,0 +1,422 @@
+# Type-use storage modifiers
+Doc Status: normative
+
+## v0.2 nullable records and distinct object contracts — revised 2026-10-23
+
+Explicit ownership handles have one spelling for their possibly-empty contract.
+`shared<T>`, `unique<T>` and `weak<T>` may carry absence under their existing
+ownership rules. As of the accepted 2026-10-23 revision, applying `?` or `nullable<>`
+directly to an explicit ownership handle is rejected as redundant. This applies
+through the nullable and ownership semantic roles, including registered definitions
+with different names; no second absence layer is introduced. Existing rejection of
+redundant storage overrides (`shared<Class>`, `value<Struct>`) remains in force.
+Weak handles still require explicit locking where presence/access requires it;
+unique handles remain empty-but-valid after an admitted explicit move.
+
+`Class` and `?Class` now retain distinct frontend identities while sharing the same
+native shared-handle storage. Known null to a required object assignment, argument,
+return or ordinary value default rejects (the remaining field-storage exceptions below are separate). Optional objects accept null. Optional-to-required value
+boundaries check presence before entry/replacement and preserve object identity;
+permitted derived-to-base adaptation composes with that check. References remain
+invariant, including nullability. Interfaces follow the same contract.
+
+By-value override parameters may broaden required to optional, and results may
+strengthen optional to required, composed with admitted ancestry. Reverse directions
+reject; an override bridge never inserts a potentially failing absence check.
+### Required shared fields in classes
+
+An instance field in a class with a source-declared class or interface type
+retains its written presence contract. A required field rejects a null default or assignment.
+An optional value assigned to it uses the ordinary presence check before
+the field is written. Optional fields may start empty and be reset to null.
+
+A required field needs a valid declaration default or initialization by its
+declaring class's constructor. An inherited constructor initializes the base's
+fields. A child with new required fields lacking defaults must declare its own
+constructor. Each direct assignment to a field of the current instance
+establishes initialization only after its right-hand side and conversion succeed.
+
+A constructor must initialize its required fields on every normal exit, including
+explicit returns. A path that throws does not have to finish initialization.
+A read of a tracked field on the current object requires that field to be
+initialized. An ordinary instance method call on the current object requires
+all its tracked fields to be initialized. In the
+bounded implementation, direct writes and structured branches can establish
+initialization. Loops cannot establish it, and protected regions with pending
+fields are deferred. Mutable required fields can be reassigned after
+initialization. Readonly fields retain their single-write rules.
+
+Native shared-handle storage may be empty during construction. The
+constructor checks introduce no separate runtime field state.
+
+### Temporary field storage exceptions
+
+Nominal shared-object instance fields in **struct** owners may still start empty,
+receive an object and later be reset to null, including fields written without
+`?`. Preparation treats these field values as potentially empty. Passing or
+returning one through a required boundary checks presence. Existing shared
+dereference guards remain.
+
+Static fields retain the initialization-only exception. Empty backing storage or
+a literal null initializer does not authorize later null assignments to a
+required static field. Authored callable inputs retain their own contracts.
+
+### Required class locals — v0.2, 2026-10-23
+
+A required class/interface local may be declared without an initializer. Such a
+local has no readable source value until successful assignment on every reachable
+incoming path. Unused declarations are legal. Native empty shared-handle backing is
+an implementation detail, not a nullable source contract.
+
+```php
+$node Node;
+if ($condition) { $node = left_node(); }
+else { $node = right_node(); }
+consume($node); // both normal incoming paths assigned
+```
+
+Reads include receivers, arguments, reference binding and closure capture. A plain
+assignment destination is not a read, but its RHS is checked before the destination
+becomes initialized. Branches that return/throw do not contribute to later normal
+reads. Lazy operands and selection arms cannot initialize sibling paths. Loop exit
+checks account for zero iterations, breaks and continues; do-while conditions follow
+the body. This is structured definite assignment, not constant-condition folding or
+whole-program control-flow/effect analysis.
+
+Catch and finally reads conservatively use facts from before the protected body:
+an operation may throw before an assignment completes. Successful finally assignments
+apply to resumed exits. Unreachable syntax still undergoes ordinary semantic checking,
+but creates no reachable read-before-assignment requirement. Function/reference calls
+are not an implicit out-parameter initialization protocol.
+
+Struct locals retain ordinary default construction. If no valid default construction
+exists, direct initialization is required; no raw unconstructed struct storage or
+new lifetime protocol is introduced. Optional objects and explicit ownership handles
+retain their existing empty/default contracts. Converter-owned `_uninitialized_`
+properties are separate from this local flow rule.
+
+For admitted `take` payloads, direct success conditions establish assignment on the
+payload-success path. Negation swaps paths; short-circuit `&&`/`||` prepare the RHS
+from its executing path. `if`, loop tests and conditional-expression branches consume
+these facts. Thus `if (!take(...)) { throw ...; }` establishes its required output for
+the following normal path. A `result_or_bool` true sentinel does not assign a payload,
+so its boolean result cannot establish required-local assignment.
+
+This bounded analysis does not correlate a saved boolean variable with an earlier
+extraction, infer facts through arbitrary comparisons/calls, or fold constants. Payload admission remains operation-specific; the capability-based nullable take
+rule is defined in error_values_and_take.md.
+
+Inline records retain a genuine optional payload: `?Struct` is `nullable<Struct>`,
+and `?value<Class>` is `nullable<value<Class>>`. Absence differs from a present
+default-valued record. Member access requires checked extraction first; no optional
+chaining or new interior borrow is implied. Payload copy capability must propagate:
+wrapping a noncopyable record must not make it copyable. Nullable truthiness retains
+the existing rule (absent is false; present delegates to the payload's admitted
+condition contract), not an invented unconditional presence rule for all records.
+
+Inline nullable value boundaries use exact payload types. Default construction and
+`null` produce absence without constructing or copying a payload. A concrete payload
+can be copied into its nullable wrapper; same-payload wrapper copying preserves
+absence/presence. Checked required-value extraction copies the contained value and
+leaves the source unchanged, or throws `invalid_nullable_unwrap_empty` on absence.
+These rules apply to locals, plain assignments, by-value arguments and returns.
+They preserve the payload's ordinary field-copy semantics, not a recursive deep copy.
+
+`nullable<T>` is copyable only when `T` is copyable, even when a particular source
+value happens to be absent. Invalid copies reject during preparation. Constructing
+absence, resetting to `null`, and exact reference binding do not require copying.
+Reset destroys any present payload. `=== null` / `!== null` inspect presence without
+extracting or copying the payload. An inline class payload still carries its explicit
+`value<Class>` storage identity; no handle/inline conversion is implied.
+
+Implementation checkpoints are tracked in CH10. Object presence and the bounded
+inline-record value operations above are enabled through shared preparation and
+existing runtime lowering. Exact nullable-record selections follow the
+[selection matrix](conditional_expression_matrix.md#v02-nullable-inline-record-selections--2026-10-07).
+Explicit payload transfer into/out of a nullable and contextual nullable data literals
+remain later slices. The runtime's general C++ template is not rewritten by source normalization.
+
+Record presence/conditions follow the [v0.2 probe amendment](count_empty_isset_contract.md#v02-collection-only-emptiness--2026-10-07):
+inline records are always present/truthy and nullable records delegate to that rule.
+`empty` is not a presence operation and rejects both record forms.
+
+### Capability-based optional values — 2026-10-23
+
+Optional value boundaries use the payload's registered `value_storable` capability,
+not a scalar/record/container-name whitelist. Exact wrapping, copying, checked
+extraction, null defaults and existing conditional/coalescing selections apply to
+admitted generic values, including nested applications. Copying still requires the
+existing `copyable_value` contract. Absence and explicit presence tests do not require
+payload default construction or copying. Reference parameters remain invariant.
+
+Storage capability does not grant implicit truthiness: optional payloads without an
+admitted condition contract require explicit presence tests or extraction. This
+revision does not add container covariance, wrapper-delegated indexing, interior
+borrows. `take` separately requires exact writable output storage and copy capability. Required/nullable class-handle boundaries use the migration described above;
+initialization and remaining consumer integration are still open.
+
+Agreed 2026-10-02 for the my-try v0.2 frontend.
+
+`value<T>` requests value storage. When the type registry already identifies `T`
+as a value type, the request is a semantic no-op: `value<T>` and `T` have the same
+semantic type, storage compatibility and operator/conversion behavior. The source
+AST retains the explicit modifier node; prepared type identity does not retain a
+redundant modifier.
+
+Exception agreed 2026-10-07 for source record declarations: `value<MyStruct>`
+is an error, as is `shared<MyClass>`. These repeat the declaration's default
+storage and can misrepresent its kind to readers. This overrides the earlier
+struct-normalization rule; scalar/enum/runtime-value normalization is unchanged.
+
+The current registry establishes default value storage from its registered facts:
+
+- boolean, integer and floating families;
+- nominal definitions whose kind is `structure` or `enumeration`;
+- template applications whose registered result kind is `structure`.
+
+This rule does not inspect source spelling, C++ type names or target layout. A custom
+registered integer follows the same rule as `int`; a class named `int` does not.
+Aliases use their resolved definition. Copyability and default value storage are
+different properties: identifying a struct as a value does not prove that all its
+fields can be copied. Source structs follow the
+[memberwise copy contract](compact_layout_types.md); owned copies require the
+[`copyable_value` contract](metaprogramming_contract.md#61-default-contract-for-a-bare-type-parameter).
+Neither the presence nor the normalization of an AST modifier grants copy permission.
+
+Enums retain their own nominal identity even when stored in an integer representation.
+Redundant `value<Enum>` normalization does not grant integer conversions, arithmetic,
+reference compatibility with the backing integer, or default initialization. Enum
+backing/storage rules remain governed by [compact layout types](compact_layout_types.md#3-enum-semantics).
+
+Under the [v0.2 separated-family contract](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05),
+both `mixed` and tagged `dynamic` are value-stored bindings. `value<dynamic>` is
+therefore redundant, just like `value<mixed>`. This does not request deep copying:
+dynamic container payloads still share identity, scalar payloads copy as values,
+and replacing a binding does not replace another binding's payload.
+
+Normalization precedes assignment, argument, reference, return and operator checks,
+and template application interning. Therefore `vector<value<int>>` and `vector<int>`
+reuse the same canonical application, and nested redundant requests such as
+`value<value<int>>` normalize to `int` while retaining their source syntax.
+
+For class-like definitions, the existing effective by-value modifier remains distinct;
+repeated effective modifiers remain rejected. The currently registered nominal
+`string` and runtime ownership/container families retain their class-like
+classification. This slice does not redefine their storage contracts, introduce
+class allocation, make `value<shared<T>>` valid, or add automatic pointer dereferencing.
+`value<void>` remains invalid storage.
+
+C++ emission consumes the normalized type use. Thus `value<int>` lowers to
+`scpp::int_t<>`, without an extra `value_p` wrapper or header. Ordinary scalar
+conversions and the existing native program-exit adaptation still apply when their
+destination requires them. Source syntax alone never suppresses a required conversion.
+
+## Null defaults for handle parameters — 2026-10-21
+
+A copyable explicit ownership-handle parameter may declare `= null` under its
+existing possibly-empty contract. Unique defaults remain excluded by the current
+default-copy requirement. Non-null handle defaults remain deferred.
+
+Ordinary object parameters require `?Class` (or `?Interface`) for a null default;
+`Class $x = null` rejects. Optional objects also accept explicit null arguments and
+returns. Explicit ownership handles keep their separate argument/return policy;
+this object-contract revision does not widen it. Reference defaults and ownership
+transfer rules are unchanged.
+
+## v0.2 ownership composition — 2026-10-06
+
+### Non-void owning targets — 2026-10-18
+
+`shared<void>` and `unique<void>` are invalid type applications. Reject them during
+semantic preparation, before interning the application or emitting C++, even in an
+unused declaration or nested type application. Apply the rule to the resolved
+ownership family and no-value target identity, independently of aliases or spelling.
+Owning a target does not require that target to be copyable; this rule introduces
+no general copyability constraint on ownership targets.
+
+This amendment leaves `weak<void>` and other weak-target admission unchanged. It
+does not introduce opaque void ownership, custom deleters, or new weak operations.
+
+### Existing composition rules
+
+Ownership roles are semantic definition facts, not spelling or storage modifiers.
+`shared<T>`, `unique<T>` and `weak<T>` preserve their C++ ownership meanings, with
+the safety/subset decisions in the [ownership contract](../runtime/specs/spec.md#v02-ownership-boundary--2026-10-06).
+
+An ownership wrapper's immediate resolved target must not itself be an ownership
+wrapper. All nine shared/unique/weak combinations reject during preparation; none
+is flattened. `value<shared<T>>`, `value<unique<T>>` and `value<weak<T>>` also reject.
+Registered aliases preserve the same role and restrictions. An unrelated definition
+does not acquire ownership merely because it has a matching name.
+
+This is not a recursive ban on containers of handles, named holders with ownership
+fields, or all nullable/Result compositions. Those retain their separate formation
+and operation rules. Rare shared-replaceable-handle use cases should use named
+library-owned holder types/functions, optionally implemented in native C++, rather
+than compiler-supported direct nesting. No extra nested-wrapper support is promised.
+
+## v0.2 bounded owned construction — 2026-10-06
+
+Amended 2026-10-07: the original CH07 shared-by-default struct construction was
+temporary and was replaced by declaration-directed storage. The v0.2 PHP flavor
+now defines a typed local `$p Point;` as an inline value and uses bare
+`new Point()` or `new Point` for a `shared<Point>` allocation. Local owners support struct construction with required by-value arguments and exact-owner copies. See [struct initialization](compact_layout_types.md#24-initialization).
+The explicit ownership forms below describe later ownership work.
+
+| Source form | Class | Struct |
+| --- | --- | --- |
+| `T` | Shared object handle | Inline value |
+| `value<T>` | Inline object | Error: redundant storage |
+| `shared<T>` | Error: redundant storage | Shared object handle |
+| `unique<T>` | Exclusive ownership | Exclusive ownership |
+| `weak<T>` | Non-owning observation | Non-owning observation |
+
+A direct explicitly typed local initializer may select inline/shared/unique
+storage: `$v value<Class> = new Class();`, `$s shared<Struct> = new Struct();`,
+or `$u unique<T> = new T();`. The payload must match exactly; construction does
+not allocate an intermediate object. Weak never allocates: derive from an existing
+shared owner, then lock before accessing. `lock(weak<Class>)` returns bare `Class`,
+not the rejected spelling `shared<Class>`. Parentheses preserve these rules.
+
+### Direct local construction shortcuts — v0.2, 2026-10-07
+
+`$v value = new Class();`, `$s shared = new Struct();` and
+`$u unique = new T(args);` infer the exact constructor payload and normalize to
+their fully specified storage types during preparation. Parentheses around `new`
+are permitted. The ordinary constructor, argument, storage and lifetime rules apply;
+no intermediate allocation or handle-to-value copy is introduced.
+
+These are local declaration shortcuts only. Factories, existing variables,
+conditionals, data literals and declarations without an initializer cannot supply
+the omitted payload. Parameters, returns and properties still require complete
+storage types. Bare weak construction is not supported. Redundant modifiers remain
+errors: `shared = new Class()` and `value = new Struct()` reject just like their
+explicit counterparts. Registered ownership definition identity, not merely a
+user type's spelling, determines whether a named type is a shortcut.
+
+Ownership wrappers take an unmodified payload; `unique<value<Class>>` and similar
+stacked storage requests reject alongside the existing direct ownership nesting.
+Inline record copies require memberwise copyability. Shared/weak copies do not
+copy the payload. Existing handles never implicitly clone into inline objects.
+
+Fresh construction can initialize exact storage without copying an existing handle.
+It does not make unique handles copyable or authorize implicit moves from named
+variables. Contextual unique construction on later assignment, arguments, returns,
+fields and container entries remains deferred. In those contexts `new T()` retains
+its declaration-directed default result, which must satisfy ordinary boundary rules.
+
+The initial implementation admits no constructor arguments and requires a proven
+default initialization for every field, recursively through nested value structs.
+Its admitted field defaults are scalar, mixed/dynamic, error, empty ownership or
+nullable handles, empty vector/hash containers and recursively admitted structs.
+Result fields and unrecognized runtime construction contracts reject in preparation.
+Runtime value-type construction, user constructor/destructor bodies, inheritance,
+and explicit allocation-helper source spellings are separate slices. Plain public
+typed instance properties now share the class/struct lookup and read/write path.
+Missing/duplicate properties reject during preparation. Heap-backed properties may
+be written through stable receiver paths but cannot bind native aliases/reference
+arguments; inline projections preserve the existing stable-storage rules. Weak
+member access rejects until locked. Property initializers, methods and access-control
+extensions remain separate slices; runtime value types do not become heap objects.
+
+## v0.2 explicit unique transfer — 2026-10-06
+
+`move($source)` extracts unique ownership into an owning value when evaluated.
+Unlike C++ `std::move` alone, it performs the move construction immediately.
+The source becomes empty but remains valid storage; its native aliases remain
+bound and observe that empty state. No pointee copying or allocation is involved.
+Moving an empty handle is valid. Replacement releases the destination's previous
+ownership after extraction; self-transfer, including through an alias, preserves
+the original ownership. There is no Rust-style moved-variable invalidation.
+
+Local transfer accepts an exact-type unique transfer as the direct initializer or
+statement assignment of whole local/parameter storage. Valid aliases of that whole
+storage are accepted on either side. The result owns its value, is not addressable,
+and cannot be bound by native reference. Ordinary named unique copies still reject.
+Discarded moves, presence tests of moves, value-producing/chained assignments,
+conditional joins, direct fields (including locally known aliases), container
+elements and shared/weak moves remain outside this slice. The subsequent
+[unique ancestry contract](inheritance_v0_2.md#unique-derivedbase-transfers) admits
+checked derived/base transfers through existing consuming boundaries.
+Invalid combinations reject in preparation; no source transfer happens at compile time.
+
+Transfers are not transactional: a later runtime failure does not undo a completed
+extraction. Owning temporaries release their resources during unwinding.
+
+## v0.2 consuming arguments and unique returns — 2026-10-06
+
+Fixed by-value `unique<T>` parameters consume exact-type owned values. A named
+variable requires `move($variable)`; passing it directly is a rejected copy.
+Reference parameters still bind stable storage without transfer; a move result
+cannot bind to a reference parameter.
+
+A by-value unique function result is an owned temporary: it may initialize or
+replace local storage, feed another fixed by-value parameter, or be returned onward
+without another `move`. A reference-returning call is not an owned temporary.
+Named value returns require `return move($variable);`, including named by-value
+parameters. This also permits explicit extraction from a reference parameter;
+the caller's referenced storage becomes empty. `return produce();` forwards a
+unique-valued call result. Contextual `return new T();` remains rejected for a
+unique result: first construct an explicitly typed unique local.
+
+Explicit arguments are evaluated left-to-right into temporaries. Each move extracts
+at its own evaluation point; consuming temporaries then transfer into the callee.
+A later argument failure prevents entry into that callee, destroys already-created
+argument temporaries and does not restore moved sources. Two explicit moves of the
+same source therefore supply its prior ownership first, then an empty handle.
+This is not Rust exclusive-borrow enforcement.
+
+Unique variadic packs, other cross-type ownership conversions, conditional ownership joins,
+field/container transfer and implicit null argument/return conversions remain deferred.
+
+## v0.2 weak derivation and explicit locking — 2026-10-06
+
+`weak(expression)` derives `weak<T>` from an exact `shared<T>` operand. It neither
+allocates nor copies the pointee, consumes the shared handle, or retains strong
+ownership. Empty shared produces empty weak. Weak handles are copyable independently
+of pointee copyability. `unique<T>` and other families are not accepted; implicit
+shared-to-weak conversions remain rejected. Cross-payload weak conversions are
+limited to proven class/struct/interface ancestry upcasts, as specified in
+[inheritance](inheritance_v0_2.md#weak-derivedbase-upcasts); they do not lock or
+extend lifetime.
+
+`lock(expression)` accepts exact `weak<T>` and returns its shared representation:
+`?T` for classes/interfaces and `shared<T>` for structs. `weak($view)` accepts
+the corresponding required or optional default shared class/interface handle as well. A successful
+lock acquires ownership of the same object. An empty or expired weak returns empty
+storage, not an exception or an additional physical nullable wrapper. Both operations evaluate
+their single operand exactly once and produce non-addressable handle values. They
+are language ownership operations, not user-overloadable calls or general member
+dispatch. The helper spelling does not enable source `$observer->lock()`.
+
+Retain the acquired handle for the required lifetime:
+
+```php
+$owner = new Item();
+$observer = weak($owner);
+$held = lock($observer);
+if ($held) {
+    $owner = null;
+    // $held still owns the same Item.
+}
+```
+
+The `is_empty()` member of `weak<T>` reports whether the handle has a control
+block. It returns true for a default-empty handle or one derived from an empty
+owner. It returns false for observers of both live and expired objects. For
+PHP and C++ flavors use `observer->is_empty()`; for JS use
+`observer.is_empty()`. The method evaluates its receiver once and reads only
+the control-block pointer. Use `lock()` to acquire a shared owner.
+
+Weak truthiness, negation, `isset`/`empty` and strict-null comparisons remain
+rejected; apply those operations to the locked shared result instead. A condition
+such as `if (lock($observer))` tests acquisition but does not retain that temporary
+owner throughout the body. Lock once into a local when the body needs ownership.
+Locking is ownership acquisition, not a mutex or a guarantee of pointee thread safety.
+
+Shared-valued temporary expressions are valid operands. `weak(make_item())` expires
+after the temporary's full expression if no other strong owner exists. In contrast,
+`$held = lock(weak(make_item()));` acquires ownership before that temporary is released.
+No hidden persistent owner is introduced to make an otherwise expired weak usable.
+General handle member access, expiration/count observers, inheritance conversions
+and broader construction remain separate slices.

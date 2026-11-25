@@ -1,0 +1,17 @@
+{
+  "external_source_hash_differences": [],
+  "scratch_non_entrypoint_phs_differences": [],
+  "extra_scratch_phs_files": [],
+  "scratch_entrypoint": "intentional twenty-witness harness",
+  "active_native_layout": "latency-expanded.ninja",
+  "partition_consumers": true,
+  "linked_object_count": 744,
+  "restored_smoke_passed": true,
+  "expanded_source_diagnostics_passed": true,
+  "latest_verified_series": [
+    "history-frontend-expanded-results",
+    "counter-flow-results",
+    "numeric-pipeline-results",
+    "multiconsumer-partitioned-results"
+  ]
+}

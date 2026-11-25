@@ -83,7 +83,7 @@ independent of conditional syntax admission.
 
 ## PHP-first compiler delivery — 2026-11-04
 
-The active `v0.2/compiler/` implements braced and single-statement arms, nested
+The active `compiler/` implements braced and single-statement arms, nested
 conditionals and standalone lexical blocks in all three flavors. Both conditional-chain
 spellings normalize to the same AST. `elseif` is reserved in each flavor. Braced while/do-while are now covered by [the loop contract](loop_statements_v0_2.md).
 

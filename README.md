@@ -1,230 +1,177 @@
-# Prism++
+# v0.2 foundation
+
 Doc Status: supporting
-<sub><i>Too old to compromise. Still young enough to build it.</i></sub>
 
-Prism++ compiles simple, high-level languages into controlled, deterministic C++.
+Runtime public APIs follow the [minimal public header rule](specs/runtime_public_headers.md).
 
-It is designed for developers who want:
-- the simplicity of scripting languages
-- the performance and ecosystem of C++
-- and fine-grained control over memory, data, and execution
+This is the active destination for explicitly reviewed reuse slices. The compiler, runtime, tools and tests build from the repository root. Normal external compiler,
+standard-library and build-tool dependencies are permitted.
 
-without being exposed directly to the complexity and risks of raw C++.
+The [runtime rewrite objectives](specs/planning/runtime_rewrite_objectives.md)
+record the agreed architectural purpose: remove runtime complexity that compensated
+for the type-blind compiler, preserve Simple C++ contracts, and reuse proven v0.1
+implementation and knowledge, including modules. The note also records the intended
+compiler/runtime boundary, core milestone and open design decisions.
 
----
+The runtime core publishes int64 and byte (an alias of uint8), with additional integer widths
+selected through the optional [numeric module](specs/numeric_module.md). It also
+implements bool/null, float64, strings,
+concrete vectors, typed hashes, nullable/result carriers and concrete record ownership/value APIs.
+The [API summary](specs/runtime_api_summary.md) and linked family contracts define
+supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request.
+The [private packed-storage foundation](specs/packed_storage.md) preserves compact
+keys and dense-list storage. [Private mixed ownership](specs/mixed_storage.md) adds
+tagged scalars and COW containers. [Private dynamic ownership](specs/dynamic_storage.md)
+adds shared-container identity and checked scalar family conversion.
+[Concrete mixed/dynamic APIs](specs/boxed_slice.md) are now generated on request;
+operators and source compiler integration remain separate work.
+[Results containing mixed/dynamic](specs/boxed_results.md) are also available on
+explicit request. The optional [JSON module](specs/json_module.md) now decodes directly
+into either family and encodes both through checked results. Direct int64, float64,
+bool_t and string encoding, including their nullable forms, is also available.
+All twelve operations are generated independently on request.
 
-## Overview
+Compiled `mt_join` batches share a process-wide worker pool. The caller participates,
+and background workers start on demand and remain available for later joins. Set
+`SCPP_MT_WAIT=sleep` (default) to block idle workers or `SCPP_MT_WAIT=active` to
+keep them polling between batches on dedicated CPUs.
 
-Prism++ is not a virtual machine, not a JIT, and not a full reimplementation of existing languages.
+The optional [datetime module](specs/datetime_module.md) provides eleven clock,
+sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
+configuring, then link `scpp_datetime`; the core has no datetime dependency.
+Source compiler integration and PHP compatibility wrappers remain deferred.
 
-Instead, it defines a **constrained execution model** that maps high-level code into a predictable subset of C++.
+The JSON module also has a production build profile. From the repository root:
 
-This model focuses on:
-- explicit and controlled data types
-- well-defined memory behavior
-- predictable runtime semantics
-- gradual access to low-level capabilities
-
-The result is code that remains easy to write and reason about, while compiling down to efficient native binaries.
-
----
-
-## Goals
-
-- Provide a simple and expressive surface syntax
-- Preserve access to C++ capabilities (memory, threads, system APIs)
-- Reduce exposure to undefined behavior through controlled abstractions (ongoing effort, continuously improving)
-- Enable gradual refinement from high-level code to low-level control
-- Keep runtime behavior predictable and inspectable
-
----
-
-## Non-Goals
-
-Prism++ is intentionally not:
-
-- a virtual machine
-- a JIT compiler
-- a drop-in replacement for PHP or any other language runtime
-- a full safety guarantee system
-
----
-
-## Safety Model
-
-Prism++ improves safety by constraining how programs interact with C++:
-
-- Memory is accessed through controlled abstractions
-- Type interactions are explicit and predictable
-- Undefined behavior is minimized by design (ongoing effort, continuously improving)
-- Runtime checks are used where compile-time guarantees are not possible
-
-This results in a system that is **safer than raw C++**, while still allowing low-level control when needed.
-
----
-
-## Example
-
-```php
-<?php
-
-function add(int|float $a, int $b): float {
-	return $a + $b;
-}
-
-echo add(10, 20), "\n";
+```sh
+cmake --preset default -DSCPP_ENABLE_JSON=ON
+cmake --build --preset default
+./build/clang/scpp_json_demo
 ```
 
-Compiled C++ output is structured around:
-- explicit types
-- controlled conversions
-- predictable execution
+Link `scpp_json` to use it. `SCPP_ENABLE_JSON` and `SCPP_ENABLE_DATETIME` can be
+enabled together and both work with `BUILD_TESTING=OFF`. `SCPP_ENABLE_NUMERIC=ON`
+adds the configured optional integer demand; datetime selects uint64 as a dependency.
+All options share the shared `runtime/generated/` root: regeneration cleans disabled
+module artifacts as well as removing the corresponding build targets. Options default
+to OFF.
 
----
+Native scalar operator adapters are optional and default to OFF. To generate
+`runtime/generated/public/scpp/native_bridge.hpp` for handwritten C++ consumers:
 
-## Philosophy
-
-Prism++ is built on a simple idea:
-
-> High-level code and low-level control should not be mutually exclusive.
-
-Developers should be able to start simple and progressively gain control,
-without rewriting everything or switching ecosystems.
-
----
-
-## Status
-
-Prism++ is under active development.
-
-The current focus is:
-- defining the execution model
-- refining type and memory semantics
-- improving correctness and predictability
-- establishing a deliberate project-rooted Ninja build path
-
----
-
-## Installer Scripts
-
-Starter installer scripts are available in:
-
-- `install/windows.cmd`
-- `install/macos.sh`
-- `install/ubuntu.sh`
-
-They install the required toolchain, create a normal user-local launcher install (`%LOCALAPPDATA%\Programs\scpp\bin` on Windows, `~/.local/bin` on Linux/macOS), and run the repo-based installer. The installed CLI command is `scpp`. On Windows, the installer now applies user PATH updates through PowerShell and falls back to `setx` if needed.
-When `sccache` is installed, Prism++ build and test flows use it automatically as a compiler launcher.
-
-## Name
-
-Ã¢â‚¬Å“PrismÃ¢â‚¬Â reflects the idea of transforming simple input into structured, precise output,
-while preserving clarity and control.
-
----
-
-## License
-
-[To be defined]
-
-## Installation
-
-Platform installers now provision Ninja as part of the first-binary setup and attempt to provision `sccache` as well.
-On Windows, the installer skips Git installation or upgrade when `git` is already available on PATH to avoid unnecessary conflicts with open Git shells.
-
-
-## Current project build direction
-
-Prism++ now has an explicit project-mode staging contract:
-
-- `scpp init` creates `prism.json` and a local `.prism/` work tree
-- `scpp build` is the first public build command
-- `scpp run` builds the configured entrypoint and then executes it
-- `scpp docs <name>` prints curated local documentation without requiring web access
-- `scpp usability-harness` generates deterministic spec-driven trial projects and classifies results
-- build output is rooted under `.prism/build` and `.prism/generated`
-- Ninja is the default backend
-- `scpp build` defaults to `build.mode = "debug"` for faster iteration
-- on Linux/macOS, `scpp build` prefers `mold`, then `lld`, then the system default linker
-- compiler selection can be pinned in `prism.json` with `build.cxx` or overridden per-build with `SCPP_CXX`
-- the runtime is built as a reusable cached artifact and only rebuilt when runtime inputs change
-- the first public build target is one configured entrypoint -> one executable
-
-The full deliberate multi-file model is still in progress, but the command shape and project layout are now fixed around `scpp init` + `scpp build` / `scpp run`.
-- optional FastCGI companion builds are now available through `prism.json` fastcgi settings and a handwritten `native_cpp/` handler
-
-## AI Onboarding
-
-AI-facing repo guidance now lives under:
-
-- `docs/ai_onboarding/README.md`
-- `docs/ai_onboarding/coding_style.md`
-- `docs/examples/php/README.md`
-- `docs/examples/php/strict/README.md`
-- `docs/examples/php/legacy/README.md`
-- `specs/simple_cpp_php_strict_quick_learn.md` - mandatory quick-learn for PHP++ / PHS strict authoring
-
-Start there when orienting Codex or another assistant to the project structure, semantic authority order, and validation workflow.
-For PHP++ / PHS work, `specs/simple_cpp_php_strict_quick_learn.md` is a mandatory read before making coding decisions.
-For PHP authoring examples, prefer the strict examples first when the project profile is `strict`, and use the legacy examples only for explicitly legacy-profiled projects.
-
-## Usability Harness
-
-The usability harness validates that small Simple C++ / PHP-like programs remain usable for first-time users.
-
-Run:
-
-```bash
-scpp usability-harness
+```sh
+cmake --preset default -DSCPP_ENABLE_NATIVE_BRIDGE=ON
+cmake --build --preset default
 ```
 
-Useful options:
+Consumers must explicitly include `<scpp/native_bridge.hpp>`. Core code uses typed
+operands, such as `value + scpp::int64{2}`. Disabling the option removes the header
+on regeneration; explicit native construction remains available. The selected
+request is written to `build/clang/runtime-publication.json` for all configurations.
 
-Run all templates (ignore enabled flags):
+The sole API generator is [PHP 8.5 tooling](tools/api_generator/README.md).
+It resolves metadata and explicit native C++ probe facts into public headers,
+C++ definitions and a prepared API description. The runtime remains C++;
+generated public headers remain template-free.
 
-```bash
-scpp usability-harness --all
+The [PHP compiler](compiler/README.md) implements shared preparation and native lowering for the PHP, C++, JS and Python syntax flavors.
+
+Runtime builds require 64-bit PHP 8.5 or later and Python 3.10+ (including with
+tests disabled). No Cargo, Rust toolchain, Composer packages or old-tree files
+are needed for generation.
+
+Build from this directory with the default preset: Ninja, 8 jobs, Clang,
+libc++ and mold. Ninja/Clang/mold must be installed and discoverable; configuration
+rejects a different generator/compiler or missing mold.
+
+```sh
+cmake --preset default
+cmake --build --preset default
+ctest --preset default
+./build/clang/scpp_runtime_demo
 ```
 
-Run only micro tests:
+The build directory is `build/clang/` (ignored by Git). Generated public API files
+live in `runtime/generated/`. The build preset sets eight jobs; the configure
+preset also sets `CMAKE_BUILD_PARALLEL_LEVEL=8`. Project executables and the separate
+generated-consumer link proofs explicitly use the discovered mold linker. The
+`ubsan` configure/build/test presets retain that toolchain and eight build jobs while
+enabling undefined-behavior checks with recovery disabled.
 
-```bash
-scpp usability-harness --kind micro
+The [plain C++ example](examples/runtime_demo.cpp) combines numeric, bool/null,
+string and vector APIs; it does not exercise carriers. It prints `Ada: 21; ratio=7`.
+The [API summary](specs/runtime_api_summary.md) lists
+supported/rejected operators and casts, ownership boundaries and deferred language
+decisions. Typed hashes and private packed storage have been ported; boxed
+mixed/dynamic APIs are generated, while source compiler integration remains separate work.
+
+## Generator and artifact ownership
+
+The [PHP API generator](tools/api_generator/README.md) owns publication.
+Frozen artifact fixtures and PHP/Python tests provide regression evidence.
+
+`runtime/metadata/runtime.json` owns identities, policies and operation bindings.
+`publication.json` selects concrete types/operators/adapters. PHP tooling prepares
+one resolved API description and emits public headers, C++ definitions, prepared.json and inventory.
+The runtime links only the emitted API and handwritten private runtime algorithms.
+Native layout facts come from the standalone C++ probe, never from a legacy runtime.
+
+The production publication lives in `runtime/generated/` for inspection and testing.
+Each build checks it against its own demand and target facts before compilation;
+unchanged output keeps its timestamps. It represents the most recently built
+configuration, so builds sharing this checkout must run sequentially. Target facts,
+objects and isolated proof publications remain build-local. Generated files and
+CMake outputs remain untracked. The configured
+launcher invokes PHP with the current build's explicit facts/context:
+
+```sh
+./build/clang/scpp_api_generator runtime/metadata/runtime.json \
+  build/clang/runtime-publication.json runtime/generated --check
 ```
 
-Run only scenario tests:
+Remove `--check` to publish. Preparation validates before writing; check mode is
+read-only. Normal generation fully cleans `.hpp`, `.cpp` and `.json` files in its
+dedicated output directory before rewriting the new publication, with a versioned
+manifest written last. Other extensions are preserved. Publication is per-file
+rather than transactional. Cross-compilation and sealed ABI packages remain outside this slice.
 
-```bash
-scpp usability-harness --kind scenario
+PHP metadata parsing preserves large/raw number tokens, rejects decoded duplicate
+keys and limits nesting to 128 containers. This is a tooling boundary, not a
+runtime JSON module port. See the generator README for the current implementation
+and validation commands.
+
+## Validation
+
+Focused tests cover parser/model behavior, preparation rejection, deterministic
+emission, generated freshness, independent public headers and valid/invalid overload
+composition. Separate publications exercise every integer width, reduced string
+APIs, core-only vectors, additional vector element families and explicit elementwise
+casts. The runnable example covers the numeric, bool/null, string and vector families;
+carriers have separate consumer and publication tests.
+
+Fresh standalone Clang/libc++ UBSan builds pass without old-tree dependencies or
+pregenerated files. String/vector ownership and partial-cast failure consumers pass
+Clang/libstdc++ ASan+UBSan. Leak detection is disabled because LeakSanitizer cannot
+run in the traced execution environment. libc++ ASan has an independently reproduced
+allocation/deallocation mismatch in the installed exception libraries; its checks
+were not suppressed. Neither limitation is counted as a successful sanitizer check.
+
+See the family contracts in the API summary for current behavior and the
+[compiler README](compiler/README.md) for compiler ownership and validation. Retired plans remain available in Git history.
+
+## Nullable and result carriers
+
+```cpp
+nullable_int64 maybe{int64{20}};
+result_int64 computed{int64{3}};
+int64 sum = maybe + computed;
 ```
 
-Run a specific template:
+The default publishes all four carrier families for int64, bool_t, string and
+vector_string. Payload construction stays explicit; extraction is an implicit,
+checked one-layer value copy. Empty/error/sentinel extraction throws. See the
+[carrier contract](specs/carrier_slice.md) for states, boolean distinctions,
+scpp::error_t and the optional explicit-only extraction policy. No new lifted
+arithmetic overload matrix or source compiler integration is introduced.
 
-```bash
-scpp usability-harness --template <id>
-```
-
-Run a specific campaign:
-
-```bash
-scpp usability-harness --campaign <name>
-```
-
-Results are written to:
-
-```
-tests/generated/usability_harness/
-```
-
-Including:
-- `report.json`
-- `summary.txt`
-- `feature_summary.json`
-- `campaign_summary.json`
-- `quarantine/` for failing cases with logs and generated C++
-
-For detailed harness behavior and artifact layout, see `tools/usability_harness/README.md`.
-
-## Guidance
-- `specs/git_workflow_release_procedure.md` - authoritative Git workflow, pull-request, and release-notes procedure
-- `specs/strict_mode.md` Ã¢â‚¬â€ recommended coding discipline (not enforced)
+For application authoring, see [typed boundaries](specs/authoring_guide.md), [object presence and ownership](specs/type_use_modifiers.md), and [compact records and backed enums](specs/compact_layout_types.md).

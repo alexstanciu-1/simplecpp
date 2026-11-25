@@ -1,0 +1,80 @@
+[
+  {
+    "name": "provider-ordinary-publish",
+    "seconds": 0.761,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "ordinary-publish",
+    "seconds": 0.801,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "provider-concrete-publish",
+    "seconds": 0.817,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "concrete-publish",
+    "seconds": 0.906,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "contracts",
+    "seconds": 0.999,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "ordinary-build",
+    "seconds": 21.54,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "ordinary-execute",
+    "seconds": 0.006,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "provider-ordinary-build",
+    "seconds": 21.632,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "provider-ordinary-execute",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "provider-concrete-build",
+    "seconds": 46.657,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "provider-concrete-execute",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "concrete-build",
+    "seconds": 61.586,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "concrete-execute",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0
+  }
+]

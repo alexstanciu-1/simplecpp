@@ -1,0 +1,43 @@
+{
+  "passed": false,
+  "commands": [
+    {
+      "label": "target-facts",
+      "command": [
+        "/usr/lib/llvm-18/bin/clang",
+        "-target",
+        "x86_64-unknown-linux-gnu",
+        "-x",
+        "c++",
+        "-S",
+        "-emit-llvm",
+        "/tmp/layout-worker-02/target.cpp",
+        "-o",
+        "/tmp/layout-worker-02/target.ll"
+      ],
+      "seconds": 0.051,
+      "exit": 0
+    },
+    {
+      "label": "imports",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/sync_imports.php",
+        "/tmp/layout-worker-02/source"
+      ],
+      "seconds": 0.141,
+      "exit": 0
+    },
+    {
+      "label": "check",
+      "command": [
+        "php",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/check.php",
+        "/tmp/layout-worker-02/source"
+      ],
+      "seconds": 1.209,
+      "exit": 0
+    }
+  ],
+  "native_build_attempts": 0
+}

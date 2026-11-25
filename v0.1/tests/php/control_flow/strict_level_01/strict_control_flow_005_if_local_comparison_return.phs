@@ -1,0 +1,9 @@
+function run(): int
+{
+	$left int = 4;
+	$right int = 5;
+	if ($left < $right) {
+		return 42;
+	}
+	return 0;
+}

@@ -1,0 +1,69 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/data_initializer.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+#include "scpp/string_t.hpp"
+#include "scpp/hash_t.hpp"
+#include "scpp/mixed_t.hpp"
+#include "scpp/bool_t.hpp"
+#include "scpp/index_read.hpp"
+
+int main()
+{
+	scpp::vector_t<scpp::int_t<>> local_values = ([&]() -> scpp::vector_t<scpp::int_t<>> {
+scpp::initializer_buffer<scpp::int_t<>> initializer_0(2);
+{
+scpp::int_t<> initializer_value_1 = static_cast<scpp::int_t<>>(1LL);
+initializer_0.append(initializer_value_1);
+}
+{
+scpp::int_t<> initializer_value_2 = static_cast<scpp::int_t<>>(2LL);
+initializer_0.append(initializer_value_2);
+}
+return scpp::data_initializer<scpp::vector_t<scpp::int_t<>>>::from_list(initializer_0.view());
+}());
+	scpp::hash_t<scpp::vector_t<scpp::int_t<>>, scpp::string_t> local_table = ([&]() -> scpp::hash_t<scpp::vector_t<scpp::int_t<>>, scpp::string_t> {
+scpp::initializer_buffer<scpp::initializer_entry<scpp::vector_t<scpp::int_t<>>, scpp::string_t>> initializer_3(1);
+{
+scpp::string_t initializer_key_4 = scpp::string_t("row");
+scpp::vector_t<scpp::int_t<>> initializer_value_5 = ([&]() -> scpp::vector_t<scpp::int_t<>> {
+scpp::initializer_buffer<scpp::int_t<>> initializer_6(2);
+{
+scpp::int_t<> initializer_value_7 = static_cast<scpp::int_t<>>(3LL);
+initializer_6.append(initializer_value_7);
+}
+{
+scpp::int_t<> initializer_value_8 = static_cast<scpp::int_t<>>(4LL);
+initializer_6.append(initializer_value_8);
+}
+return scpp::data_initializer<scpp::vector_t<scpp::int_t<>>>::from_list(initializer_6.view());
+}());
+initializer_3.append(scpp::initializer_entry<scpp::vector_t<scpp::int_t<>>, scpp::string_t>{initializer_key_4, initializer_value_5});
+}
+return scpp::data_initializer<scpp::hash_t<scpp::vector_t<scpp::int_t<>>, scpp::string_t>>::from_key_value(initializer_3.view());
+}());
+	scpp::mixed_t local_boxed = ([&]() -> scpp::mixed_t {
+scpp::initializer_buffer<scpp::initializer_entry<scpp::mixed_t, scpp::mixed_t>> initializer_9(1);
+{
+scpp::mixed_t initializer_key_10 = scpp::mixed_t{scpp::string_t("nested")};
+scpp::mixed_t initializer_value_11 = ([&]() -> scpp::mixed_t {
+scpp::initializer_buffer<scpp::mixed_t> initializer_12(2);
+{
+scpp::mixed_t initializer_value_13 = scpp::mixed_t{static_cast<scpp::int_t<>>(1LL)};
+initializer_12.append(initializer_value_13);
+}
+{
+scpp::mixed_t initializer_value_14 = scpp::mixed_t{static_cast<scpp::bool_t>(false)};
+initializer_12.append(initializer_value_14);
+}
+return scpp::data_initializer<scpp::mixed_t>::from_list(initializer_12.view());
+}());
+initializer_9.append(scpp::initializer_entry<scpp::mixed_t, scpp::mixed_t>{initializer_key_10, initializer_value_11});
+}
+return scpp::data_initializer<scpp::mixed_t>::from_key_value(initializer_9.view());
+}());
+	return static_cast<int>((([&]() -> scpp::int_t<> { const auto& index_receiver_15 = local_values; scpp::int_t<> index_key_15 = static_cast<scpp::int_t<>>(0LL); return scpp::checked_index_read(index_receiver_15, index_key_15); }())).native_value());
+	return 0;
+}

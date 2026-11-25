@@ -1,2 +1,0 @@
-const LIMIT = 9;
-echo LIMIT, "\n";

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/scpp_framework/json_reader.phs
+function sample_unit_251(): void
+{
+    $value int = 252;
+    sample_unit_252();
+    return;
+}

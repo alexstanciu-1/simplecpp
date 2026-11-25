@@ -1,0 +1,56 @@
+--- before/__callable/source_units_group_5.cpp
++++ after/__callable/source_units_group_5.cpp
+@@ -52,7 +52,7 @@
+ #include "__callable/__latency_fn_structure_row_ids_uint32_from_int.hpp"
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-void __latency_fn_source_units_publish_source_read_worker_batch(shared_p<SourceReadTable>& table, const shared_p<SourceReadTable>& descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& batch, shared_p<SourceReadWorkerPublicationStats>& stats) {
++void __latency_fn_source_units_publish_source_read_worker_batch(shared_p<SourceReadTable>& table, shared_p<SourceReadTable> descriptorSourceReads, const vector_t<shared_p<SourceReadWorkerResult>>& batch, shared_p<SourceReadWorkerPublicationStats>& stats) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::publish_source_read_worker_batch", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[45]);
+ 	stats->publish_batches = (stats->publish_batches + static_cast<int_t<> >(1));
+ 	if (static_cast<bool>((php::count(batch) > cast<int_t<>>(stats->largest_publish_batch)))) {
+@@ -83,7 +83,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-int_t<> __latency_fn_source_units_source_read_worker_probe_mismatch_count(const shared_p<SourceReadTable>& sourceReads, const vector_t<int_t<>>& workerDescriptors) {
++int_t<> __latency_fn_source_units_source_read_worker_probe_mismatch_count(shared_p<SourceReadTable> sourceReads, const vector_t<int_t<>>& workerDescriptors) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_worker_probe_mismatch_count", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[47]);
+ 	int_t<> mismatches = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	if (static_cast<bool>(php::condition_truthy(php::not_identical(php::count(workerDescriptors), cast<int_t<>>(sourceReads->result_count))))) {
+@@ -104,7 +104,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-int_t<> __latency_fn_source_units_source_read_table_metadata_mismatch_count(const shared_p<SourceReadTable>& left, const shared_p<SourceReadTable>& right) {
++int_t<> __latency_fn_source_units_source_read_table_metadata_mismatch_count(shared_p<SourceReadTable> left, shared_p<SourceReadTable> right) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_table_metadata_mismatch_count", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[48]);
+ 	int_t<> mismatches = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	if (static_cast<bool>(php::condition_truthy(php::not_identical(cast<int_t<>>(left->result_count), cast<int_t<>>(right->result_count))))) {
+@@ -124,7 +124,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-int_t<> __latency_fn_source_units_source_read_table_text_hash_mismatch_count(const shared_p<SourceReadTable>& left, const shared_p<SourceReadTable>& right) {
++int_t<> __latency_fn_source_units_source_read_table_text_hash_mismatch_count(shared_p<SourceReadTable> left, shared_p<SourceReadTable> right) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_table_text_hash_mismatch_count", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[49]);
+ 	int_t<> mismatches = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	if (static_cast<bool>(php::condition_truthy(php::not_identical(php::count(left->source_texts), php::count(right->source_texts))))) {
+@@ -144,7 +144,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-int_t<> __latency_fn_source_units_source_read_descriptor_result_metadata_mismatch_count(const shared_p<SourceReadTable>& descriptorSourceReads, const shared_p<SourceReadTable>& workerSourceReads) {
++int_t<> __latency_fn_source_units_source_read_descriptor_result_metadata_mismatch_count(shared_p<SourceReadTable> descriptorSourceReads, shared_p<SourceReadTable> workerSourceReads) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::source_read_descriptor_result_metadata_mismatch_count", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[50]);
+ 	int_t<> mismatches = required_cast<int_t<>>(static_cast<int_t<> >(0));
+ 	if (static_cast<bool>(php::condition_truthy(php::not_identical(cast<int_t<>>(descriptorSourceReads->descriptor_count), cast<int_t<>>(workerSourceReads->result_count))))) {
+@@ -166,7 +166,7 @@
+ 
+ namespace scpp { extern const int __latency_lines_source_units[]; }
+ namespace scpp {
+-void __latency_fn_source_units_record_source_read_worker_publication_not_selected(shared_p<CompilerProjectRunReport>& report, const shared_p<SourceReadTable>& sourceReads, int_t<> workerCount) {
++void __latency_fn_source_units_record_source_read_worker_publication_not_selected(shared_p<CompilerProjectRunReport>& report, shared_p<SourceReadTable> sourceReads, int_t<> workerCount) {
+ 	SCPP_CALL_DEPTH_GUARD("source_units::record_source_read_worker_publication_not_selected", "/tmp/scpp-edit-latency-20260919/app/compile/model/source_units.phs", __latency_lines_source_units[51]);
+ 	__latency_fn_proof_metrics_add_mt_single_pipeline_live_publication_summary(report, workerCount, static_cast<bool_t>(false), static_cast<bool_t>(true), static_cast<bool_t>(false), __latency_fn_structure_row_ids_uint32_from_int(static_cast<int_t<> >(0)), __latency_fn_structure_row_ids_uint32_from_int(static_cast<int_t<> >(0)));
+ 	__latency_fn_proof_metrics_add_report_counter(report, __latency_fn_proof_metrics_key_source_read_worker_publication_runs(), __latency_fn_structure_row_ids_uint32_from_int(static_cast<int_t<> >(1)));

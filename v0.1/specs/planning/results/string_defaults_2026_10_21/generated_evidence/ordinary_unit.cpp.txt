@@ -1,0 +1,191 @@
+#include "callables/n6261746368.hpp"
+#include "scpp/support/string_representation.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/bool_t.hpp"
+#include "lang/php/operators/identity/strict_identity.hpp"
+#include "scpp/generated/operators.hpp"
+#include "modules/strings/strings.hpp"
+#include "callables/n726561645f66697874757265.hpp"
+#include "scpp/error_t.hpp"
+#include "scpp/result.hpp"
+#include "modules/filesystem/filesystem.hpp"
+#include "lang/php/support/php_take.hpp"
+#include "lang/php/support/php_string.hpp"
+#include "callables/n72756e5f63617365.hpp"
+#include "scpp/cast.hpp"
+#include "modules/datetime/datetime.hpp"
+scpp::int_t<> function_batch(scpp::string_t& local_op, scpp::string_t& local_s, scpp::string_t& local_t, scpp::string_t& local_needle, scpp::string_t& local_repl, scpp::int_t<> local_count)
+{
+	scpp::int_t<> local_sum = static_cast<scpp::int_t<>>(0LL);
+if ((([&]() -> scpp::bool_t { auto operand_0 = local_op; auto operand_1 = scpp::string_t("replace"); return scpp::php::identical(operand_0, operand_1); }())).native_value()) {
+{
+	scpp::int_t<> local_i = static_cast<scpp::int_t<>>(0LL);
+for (; (([&]() -> scpp::bool_t { auto operand_2 = local_i; auto operand_3 = local_count; return (operand_2 < operand_3); }())).native_value(); (void)(static_cast<scpp::int_t<>>(local_i++))) {
+	([&]() -> scpp::int_t<> { auto& target_4 = local_sum; auto previous_5 = target_4; previous_5 = ([&]() -> scpp::int_t<> { auto operand_10 = previous_5; auto operand_11 = ([&]() -> scpp::int_t<> {
+	scpp::string_t argument_9 = ([&]() -> scpp::string_t {
+	scpp::string_t argument_6 = local_needle;
+	scpp::string_t argument_7 = local_repl;
+	scpp::string_t argument_8 = local_s;
+	return scpp::str::replace(argument_6, argument_7, argument_8);
+}());
+	return scpp::str::byte_length(argument_9);
+}()); return (operand_10 + operand_11); }()); target_4 = previous_5; return target_4; }());
+}
+}
+}
+else if ((([&]() -> scpp::bool_t { auto operand_12 = local_op; auto operand_13 = scpp::string_t("compare"); return scpp::php::identical(operand_12, operand_13); }())).native_value()) {
+{
+	scpp::int_t<> local_i = static_cast<scpp::int_t<>>(0LL);
+for (; (([&]() -> scpp::bool_t { auto operand_14 = local_i; auto operand_15 = local_count; return (operand_14 < operand_15); }())).native_value(); (void)(static_cast<scpp::int_t<>>(local_i++))) {
+	scpp::int_t<> local_v = ([&]() -> scpp::int_t<> {
+	scpp::string_t argument_16 = local_s;
+	scpp::string_t argument_17 = local_t;
+	scpp::int_t<> argument_18 = static_cast<scpp::int_t<>>(0LL);
+	return scpp::str::substr_compare(argument_16, argument_17, argument_18);
+}());
+if ((([&]() -> scpp::bool_t { auto operand_19 = local_v; auto operand_20 = static_cast<scpp::int_t<>>(0LL); return (operand_19 < operand_20); }())).native_value()) {
+	([&]() -> scpp::int_t<> { auto& target_21 = local_sum; auto previous_22 = target_21; previous_22 = ([&]() -> scpp::int_t<> { auto operand_23 = previous_22; auto operand_24 = static_cast<scpp::int_t<>>(0LL); return (operand_23 + operand_24); }()); target_21 = previous_22; return target_21; }());
+}
+else if ((([&]() -> scpp::bool_t { auto operand_25 = local_v; auto operand_26 = static_cast<scpp::int_t<>>(0LL); return (operand_25 > operand_26); }())).native_value()) {
+	([&]() -> scpp::int_t<> { auto& target_27 = local_sum; auto previous_28 = target_27; previous_28 = ([&]() -> scpp::int_t<> { auto operand_29 = previous_28; auto operand_30 = static_cast<scpp::int_t<>>(2LL); return (operand_29 + operand_30); }()); target_27 = previous_28; return target_27; }());
+}
+else {
+	([&]() -> scpp::int_t<> { auto& target_31 = local_sum; auto previous_32 = target_31; previous_32 = ([&]() -> scpp::int_t<> { auto operand_33 = previous_32; auto operand_34 = static_cast<scpp::int_t<>>(1LL); return (operand_33 + operand_34); }()); target_31 = previous_32; return target_31; }());
+}
+}
+}
+}
+else {
+{
+	scpp::int_t<> local_i = static_cast<scpp::int_t<>>(0LL);
+for (; (([&]() -> scpp::bool_t { auto operand_35 = local_i; auto operand_36 = local_count; return (operand_35 < operand_36); }())).native_value(); (void)(static_cast<scpp::int_t<>>(local_i++))) {
+	([&]() -> scpp::int_t<> { auto& target_37 = local_sum; auto previous_38 = target_37; previous_38 = ([&]() -> scpp::int_t<> { auto operand_40 = previous_38; auto operand_41 = ([&]() -> scpp::int_t<> {
+	scpp::string_t argument_39 = local_s;
+	return scpp::str::byte_length(argument_39);
+}()); return (operand_40 + operand_41); }()); target_37 = previous_38; return target_37; }());
+}
+}
+}
+	return local_sum;
+}
+
+scpp::string_t function_readU_fixture(scpp::string_t local_path)
+{
+	scpp::string_t local_value = scpp::string_t("");
+	scpp::error_t local_err;
+if (((!([&]() -> scpp::bool_t { auto take_source_1 = ([&]() -> scpp::result<scpp::string_t> {
+	scpp::string_t argument_0 = local_path;
+	return scpp::fs::get(argument_0);
+}()); return scpp::php::take(local_value, local_err, take_source_1); }()))).native_value()) {
+	::scpp::php::echo_one(scpp::string_t("ERROR: corpus read\x0A" ""));
+}
+	return local_value;
+}
+
+void function_runU_case(scpp::string_t local_id, scpp::string_t local_op, scpp::string_t local_base)
+{
+	scpp::string_t local_s = ([&]() -> scpp::string_t {
+	scpp::string_t argument_2 = ([&]() -> scpp::string_t { auto operand_0 = local_base; auto operand_1 = scpp::string_t("/s"); return (operand_0 + operand_1); }());
+	return function_readU_fixture(argument_2);
+}());
+	scpp::string_t local_t = ([&]() -> scpp::string_t {
+	scpp::string_t argument_5 = ([&]() -> scpp::string_t { auto operand_3 = local_base; auto operand_4 = scpp::string_t("/t"); return (operand_3 + operand_4); }());
+	return function_readU_fixture(argument_5);
+}());
+	scpp::string_t local_needle = ([&]() -> scpp::string_t {
+	scpp::string_t argument_8 = ([&]() -> scpp::string_t { auto operand_6 = local_base; auto operand_7 = scpp::string_t("/n"); return (operand_6 + operand_7); }());
+	return function_readU_fixture(argument_8);
+}());
+	scpp::string_t local_repl = ([&]() -> scpp::string_t {
+	scpp::string_t argument_11 = ([&]() -> scpp::string_t { auto operand_9 = local_base; auto operand_10 = scpp::string_t("/r"); return (operand_9 + operand_10); }());
+	return function_readU_fixture(argument_11);
+}());
+	scpp::string_t local_expected = ([&]() -> scpp::string_t {
+	scpp::string_t argument_14 = ([&]() -> scpp::string_t { auto operand_12 = local_base; auto operand_13 = scpp::string_t("/expected"); return (operand_12 + operand_13); }());
+	return function_readU_fixture(argument_14);
+}());
+if ((([&]() -> scpp::bool_t { auto operand_15 = local_op; auto operand_16 = scpp::string_t("replace"); return scpp::php::identical(operand_15, operand_16); }())).native_value()) {
+if ((([&]() -> scpp::bool_t { auto operand_20 = ([&]() -> scpp::string_t {
+	scpp::string_t argument_17 = local_needle;
+	scpp::string_t argument_18 = local_repl;
+	scpp::string_t argument_19 = local_s;
+	return scpp::str::replace(argument_17, argument_18, argument_19);
+}()); auto operand_21 = local_expected; return scpp::php::not_identical(operand_20, operand_21); }())).native_value()) {
+	::scpp::php::echo_one(scpp::string_t("ERROR: replacement mismatch\x0A" ""));
+}
+}
+else if ((([&]() -> scpp::bool_t { auto operand_22 = local_op; auto operand_23 = scpp::string_t("compare"); return scpp::php::identical(operand_22, operand_23); }())).native_value()) {
+	scpp::int_t<> local_v = ([&]() -> scpp::int_t<> {
+	scpp::string_t argument_24 = local_s;
+	scpp::string_t argument_25 = local_t;
+	scpp::int_t<> argument_26 = static_cast<scpp::int_t<>>(0LL);
+	return scpp::str::substr_compare(argument_24, argument_25, argument_26);
+}());
+	scpp::int_t<> local_sign = static_cast<scpp::int_t<>>(0LL);
+if ((([&]() -> scpp::bool_t { auto operand_27 = local_v; auto operand_28 = static_cast<scpp::int_t<>>(0LL); return (operand_27 < operand_28); }())).native_value()) {
+	local_sign = (-static_cast<scpp::int_t<>>(1LL));
+}
+else if ((([&]() -> scpp::bool_t { auto operand_29 = local_v; auto operand_30 = static_cast<scpp::int_t<>>(0LL); return (operand_29 > operand_30); }())).native_value()) {
+	local_sign = static_cast<scpp::int_t<>>(1LL);
+}
+if ((([&]() -> scpp::bool_t { auto operand_31 = local_sign; auto operand_32 = scpp::cast<scpp::int_t<>>(local_expected); return scpp::php::not_identical(operand_31, operand_32); }())).native_value()) {
+	::scpp::php::echo_one(scpp::string_t("ERROR: comparison mismatch\x0A" ""));
+}
+}
+	scpp::int_t<> local_count = static_cast<scpp::int_t<>>(1LL);
+while ((static_cast<scpp::bool_t>(true)).native_value()) {
+	scpp::int_t<std::uint64_t> local_start = ([&]() -> scpp::int_t<std::uint64_t> {
+	return scpp::dt::monotonic_nanos();
+}());
+	scpp::int_t<> local_warm = ([&]() -> scpp::int_t<> {
+	scpp::string_t& argument_33 = local_op;
+	scpp::string_t& argument_34 = local_s;
+	scpp::string_t& argument_35 = local_t;
+	scpp::string_t& argument_36 = local_needle;
+	scpp::string_t& argument_37 = local_repl;
+	scpp::int_t<> argument_38 = local_count;
+	return function_batch(argument_33, argument_34, argument_35, argument_36, argument_37, argument_38);
+}());
+	scpp::int_t<> local_elapsed = scpp::cast<scpp::int_t<>>(([&]() -> scpp::int_t<std::uint64_t> { auto operand_39 = ([&]() -> scpp::int_t<std::uint64_t> {
+	return scpp::dt::monotonic_nanos();
+}()); auto operand_40 = local_start; return (operand_39 - operand_40); }()));
+if ((([&]() -> scpp::bool_t { auto operand_41 = local_warm; auto operand_42 = static_cast<scpp::int_t<>>(0LL); return (operand_41 < operand_42); }())).native_value()) {
+	::scpp::php::echo_one(scpp::string_t("ERROR: checksum\x0A" ""));
+}
+if ((scpp::bool_t(static_cast<bool>(([&]() -> scpp::bool_t { auto operand_43 = local_elapsed; auto operand_44 = static_cast<scpp::int_t<>>(20000000LL); return (operand_43 >= operand_44); }())) || static_cast<bool>(([&]() -> scpp::bool_t { auto operand_45 = local_count; auto operand_46 = static_cast<scpp::int_t<>>(67108864LL); return (operand_45 >= operand_46); }())))).native_value()) {
+break;
+}
+	([&]() -> scpp::int_t<> { auto& target_47 = local_count; auto previous_48 = target_47; previous_48 = ([&]() -> scpp::int_t<> { auto operand_49 = previous_48; auto operand_50 = static_cast<scpp::int_t<>>(2LL); return (operand_49 * operand_50); }()); target_47 = previous_48; return target_47; }());
+}
+{
+	scpp::int_t<> local_trial = static_cast<scpp::int_t<>>(0LL);
+for (; (([&]() -> scpp::bool_t { auto operand_51 = local_trial; auto operand_52 = static_cast<scpp::int_t<>>(7LL); return (operand_51 < operand_52); }())).native_value(); (void)(static_cast<scpp::int_t<>>(local_trial++))) {
+	scpp::int_t<std::uint64_t> local_start = ([&]() -> scpp::int_t<std::uint64_t> {
+	return scpp::dt::monotonic_nanos();
+}());
+	scpp::int_t<> local_sum = ([&]() -> scpp::int_t<> {
+	scpp::string_t& argument_53 = local_op;
+	scpp::string_t& argument_54 = local_s;
+	scpp::string_t& argument_55 = local_t;
+	scpp::string_t& argument_56 = local_needle;
+	scpp::string_t& argument_57 = local_repl;
+	scpp::int_t<> argument_58 = local_count;
+	return function_batch(argument_53, argument_54, argument_55, argument_56, argument_57, argument_58);
+}());
+	scpp::int_t<> local_elapsed = scpp::cast<scpp::int_t<>>(([&]() -> scpp::int_t<std::uint64_t> { auto operand_59 = ([&]() -> scpp::int_t<std::uint64_t> {
+	return scpp::dt::monotonic_nanos();
+}()); auto operand_60 = local_start; return (operand_59 - operand_60); }()));
+	::scpp::php::echo_one(local_id);
+	::scpp::php::echo_one(scpp::string_t(",mytry,"));
+	::scpp::php::echo_one(local_trial);
+	::scpp::php::echo_one(scpp::string_t(","));
+	::scpp::php::echo_one(local_count);
+	::scpp::php::echo_one(scpp::string_t(","));
+	::scpp::php::echo_one(local_elapsed);
+	::scpp::php::echo_one(scpp::string_t(","));
+	::scpp::php::echo_one(local_sum);
+	::scpp::php::echo_one(scpp::string_t("\x0A" ""));
+}
+}
+}
+

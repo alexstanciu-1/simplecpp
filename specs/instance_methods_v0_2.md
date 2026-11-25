@@ -4,7 +4,7 @@ Doc Status: normative
 This records the bounded instance-method contract approved on 2026-10-07. Classes
 and structs share declaration, parameter, return and visibility semantics; their
 storage/copy differences remain unchanged. Availability is tracked in the
-[CH10 checkpoint](../compiler/my-try/docs/catalog/10_objects.md#instance-methods--2026-10-07).
+CH10 checkpoint.
 
 ## PHP bootstrap compiler coverage
 
@@ -132,8 +132,8 @@ and applies the [ordinary label binding and conversion rules](compiler_entry_v0_
 Instance and static methods on both classes and structs use the ordinary function
 parameter contract, including fixed by-value parameters, writable `T &$value` and
 read-only `const T &$value` references, and a typed trailing `T ...$values` pack.
-The [read-only](native_reference_safety.md#read-only-reference-defaults--2026-10-22) and
-[writable literal-default rules](native_reference_safety.md#writable-reference-defaults--2026-10-22)
+The [read-only](native_reference_safety.md#reference-parameters-and-defaults) and
+[writable literal-default rules](native_reference_safety.md#reference-parameters-and-defaults)
 also apply to fixed canonical scalar reference parameters on source methods.
 Explicit native reference arguments require exact compatible stable storage; no implicit conversions,
 temporary binding or heap-interior borrowing are introduced. Read-only access is
@@ -156,7 +156,7 @@ packing or borrowing implementation is defined.
 ## Same-origin method reference returns — 2026-10-07
 
 Instance/static methods on classes/structs share the
-[same-origin reference-return contract](native_reference_safety.md#v02-same-origin-reference-returns--2026-10-06).
+[same-origin reference-return contract](native_reference_safety.md#same-origin-returns).
 `function &select(T &$value): T` requires exactly one fixed writable reference
 parameter of the return storage type. Every return selects that whole parameter,
 directly, through local aliases or through nonrecursive function/method forwarding.
@@ -196,14 +196,14 @@ Borrowed receiver captures remain borrowed; a value copy produced inside the bou
 closure follows ordinary value rules. Neither struct self copying nor class self
 acquisition promotes inline or unique ownership to shared ownership.
 The converter-owned `_struct_copy_` protocol is separate from this native capability. The
-[bounded closure receiver contract](language/closures.md#v02-borrowed-receiver-captures)
+[bounded closure receiver contract](language/closures.md)
 additionally permits explicit `use ($this)` and automatic arrow receiver capture:
 these borrow the instance within the current invocation, without copying or retaining it.
 
 Methods currently have no declared read-only receiver contract. Therefore method
 calls through read-only access paths reject during preparation, even for a method
 whose current body happens not to mutate. Do not infer API mutability from body text.
-This preserves the [read-only reference contract](native_reference_safety.md#v02-explicit-read-only-reference-parameters--2026-10-06),
+This preserves the [read-only reference contract](native_reference_safety.md#reference-parameters-and-defaults),
 not global immutability of shared objects.
 
 The bounded lifetime admission supports retained shared receivers, current `$this`,

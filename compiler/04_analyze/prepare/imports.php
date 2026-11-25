@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+namespace scpp\compiler;
+
+/** Validate all file-local imports after publication, including unused imports and unchanged source files. */
+final class Import_Preparation
+{
+	/**
+	 * Function/constant imports share validation; no aliases are published as declarations.
+	 * Recheck each incremental pass so removed targets and new namespace conflicts cannot hide in cached bodies.
+	 *
+	 * @param ast_file_node[] $files
+	 */
+	public static function files(array $files /** array<string,ast_file_node> */, scope $symbols): void
+	{
+		$errors = [];
+		$traits = [];
+		foreach ($files as $file) $traits += $file->trait_context->origins ?? [];
+		foreach ($files as $file)
+		{
+			foreach ($file->imports as $import)
+			{
+				$message = self::error($file, $import, $symbols, $traits);
+				if ($message !== null) {
+					$errors[] = new diagnostic($file->source(), $import->byte_start(), $message);
+				}
+			}
+		}
+		if ($errors !== []) {
+			throw new diagnostic_group(Declaration_Diagnostics::ordered($errors));
+		}
+	}
+
+	/** Check the supported kind, absolute target and namespace-body binding conflicts. @param ast_trait_declaration[] $traits */
+	private static function error(ast_file_node $file, ast_import $import, scope $symbols, array $traits /** array<string,ast_trait_declaration> */): ?string
+	{
+		$found = false;
+		$kinds = match ($import->kind) {
+			import_kind::function_only => ['func'],
+			import_kind::constant_only => ['const'],
+			import_kind::symbol => ['func', 'const', 'class'],
+		};
+		foreach ($kinds as $kind) {
+			$key = $kind . ':' . $import->target;
+			if (!isset($traits[$key]) && $symbols->resolve($key) === null) {
+				$function = $kind === 'func' ? runtime_functions::free($key, $file->source()->flavor) : null;
+				if ($function instanceof runtime_function && !$file->type_availability->allows($function->required_module)) {
+					return 'Function ' . $function->name() . ' requires module ' . $function->required_module;
+				}
+				$runtime = match ($kind) {
+					'func' => $function !== null,
+					'const' => $file->source()->flavor === flavor::php && runtime_constants::integer($key) !== null,
+					'class' => $import->target === type_registry::exception()?->name,
+				};
+				if (!$runtime) continue;
+			}
+			$found = true;
+			$label = match ($kind) {
+				'func' => 'function', 'class' => 'type', default => 'constant',
+			};
+			$resolved = match ($kind) {
+				'func' => $file->function_key($import->local_name),
+				'class' => $file->type_key($import->local_name),
+				default => $file->constant_key($import->local_name),
+			};
+			if ($resolved !== $key) {
+				return 'Conflicting ' . $label . ' import: ' . $import->local_name;
+			}
+			$local_key = $kind . ':' . Source_Names::resolve($import->local_name, $file->scope->namespace);
+			if (($local_key !== $key) && (isset($traits[$local_key]) || $symbols->resolve($local_key) !== null)) {
+				return ucfirst($label) . ' import conflicts with namespace declaration: ' . $import->local_name;
+			}
+		}
+		return $found ? null : 'Unknown ' . ($import->kind === import_kind::constant_only ? 'constant' : 'function') . ' import: ' . $import->target;
+	}
+}

@@ -1,3 +1,0 @@
-$items /** vector<string> */ = ["a", "b", "c"];
-unset($items[1]);
-echo "count=", count($items), "\n";

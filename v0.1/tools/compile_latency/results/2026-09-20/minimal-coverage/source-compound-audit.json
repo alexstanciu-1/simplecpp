@@ -1,0 +1,2181 @@
+{
+  "scope": "Bounded single-line public static PHS methods; exact body text comparison, not semantic equivalence or exhaustive source grammar",
+  "commit": "9103637e",
+  "counts": {
+    "added": 7,
+    "body_or_mixed": 101,
+    "signature_only": 202
+  },
+  "methods": [
+    {
+      "source": "compiler/src/compile/artifacts/analysis_context_identity.phs",
+      "method": "stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function stable_hash(AnalysisEntryContextRow $row, ProjectSymbolIndex $symbols): uint64 {",
+      "after_signature": "\tpublic static function stable_hash(AnalysisEntryContextRow $row, ProjectSymbolIndex $symbols): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/abi_bridge/runtime_abi_bridge.phs",
+      "method": "artifact_json",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function artifact_json(RuntimeAbiBridgeArtifact $artifact): string {",
+      "after_signature": "\tpublic static function artifact_json(RuntimeAbiBridgeArtifact $artifact): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/abi_bridge/runtime_abi_bridge.phs",
+      "method": "debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function debug_string(RuntimeAbiBridgeArtifact $artifact): string {",
+      "after_signature": "\tpublic static function debug_string(RuntimeAbiBridgeArtifact $artifact): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/abi_bridge/runtime_abi_bridge.phs",
+      "method": "row_json",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function row_json(SemanticRuntimeAbiBridgeDescriptorRow $row): string {",
+      "after_signature": "\tpublic static function row_json(SemanticRuntimeAbiBridgeDescriptorRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/abi_bridge/runtime_abi_bridge.phs",
+      "method": "stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function stable_hash(RuntimeAbiBridgeArtifact $artifact): uint64 {",
+      "after_signature": "\tpublic static function stable_hash(RuntimeAbiBridgeArtifact $artifact): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_emission_decisions.phs",
+      "method": "artifact_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function artifact_debug_string(BackendEmissionDecisionArtifact $artifact): string {",
+      "after_signature": "\tpublic static function artifact_debug_string(BackendEmissionDecisionArtifact $artifact): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_emission_decisions.phs",
+      "method": "artifact_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function artifact_stable_hash(BackendEmissionDecisionArtifact $artifact): uint64 {",
+      "after_signature": "\tpublic static function artifact_stable_hash(BackendEmissionDecisionArtifact $artifact): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_emission_decisions.phs",
+      "method": "block_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function block_debug_string(BackendEmissionBlockRow $row): string {",
+      "after_signature": "\tpublic static function block_debug_string(BackendEmissionBlockRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_emission_decisions.phs",
+      "method": "block_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function block_stable_hash(BackendEmissionBlockRow $row): uint64 {",
+      "after_signature": "\tpublic static function block_stable_hash(BackendEmissionBlockRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_emission_decisions.phs",
+      "method": "decision_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function decision_debug_string(BackendEmissionDecisionRow $row): string {",
+      "after_signature": "\tpublic static function decision_debug_string(BackendEmissionDecisionRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_emission_decisions.phs",
+      "method": "decision_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function decision_stable_hash(BackendEmissionDecisionRow $row): uint64 {",
+      "after_signature": "\tpublic static function decision_stable_hash(BackendEmissionDecisionRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_emission_decisions.phs",
+      "method": "value_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function value_debug_string(BackendEmissionValueRow $row): string {",
+      "after_signature": "\tpublic static function value_debug_string(BackendEmissionValueRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_emission_decisions.phs",
+      "method": "value_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function value_stable_hash(BackendEmissionValueRow $row): uint64 {",
+      "after_signature": "\tpublic static function value_stable_hash(BackendEmissionValueRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "backend_request_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function backend_request_debug_string(BackendRequestAuthorizationRow $row): string {",
+      "after_signature": "\tpublic static function backend_request_debug_string(BackendRequestAuthorizationRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "backend_request_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function backend_request_stable_hash(BackendRequestAuthorizationRow $row): uint64 {",
+      "after_signature": "\tpublic static function backend_request_stable_hash(BackendRequestAuthorizationRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "binary_operand_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function binary_operand_debug_string(BackendBinaryOperandRow $row): string {",
+      "after_signature": "\tpublic static function binary_operand_debug_string(BackendBinaryOperandRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "binary_operand_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function binary_operand_stable_hash(BackendBinaryOperandRow $row): uint64 {",
+      "after_signature": "\tpublic static function binary_operand_stable_hash(BackendBinaryOperandRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "call_argument_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function call_argument_debug_string(BackendCallArgumentRow $row): string {",
+      "after_signature": "\tpublic static function call_argument_debug_string(BackendCallArgumentRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "call_argument_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function call_argument_stable_hash(BackendCallArgumentRow $row): uint64 {",
+      "after_signature": "\tpublic static function call_argument_stable_hash(BackendCallArgumentRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "callable_abi_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function callable_abi_debug_string(CallableAbiReadinessRow $row): string {",
+      "after_signature": "\tpublic static function callable_abi_debug_string(CallableAbiReadinessRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "callable_abi_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function callable_abi_stable_hash(CallableAbiReadinessRow $row): uint64 {",
+      "after_signature": "\tpublic static function callable_abi_stable_hash(CallableAbiReadinessRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "control_flow_operand_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function control_flow_operand_debug_string(BackendControlFlowOperandRow $row): string {",
+      "after_signature": "\tpublic static function control_flow_operand_debug_string(BackendControlFlowOperandRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "control_flow_operand_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function control_flow_operand_stable_hash(BackendControlFlowOperandRow $row): uint64 {",
+      "after_signature": "\tpublic static function control_flow_operand_stable_hash(BackendControlFlowOperandRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "direct_call_gate_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function direct_call_gate_debug_string(DirectCallAuthorizationGateRow $row): string {",
+      "after_signature": "\tpublic static function direct_call_gate_debug_string(DirectCallAuthorizationGateRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "direct_call_gate_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function direct_call_gate_stable_hash(DirectCallAuthorizationGateRow $row): uint64 {",
+      "after_signature": "\tpublic static function direct_call_gate_stable_hash(DirectCallAuthorizationGateRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "local_operand_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function local_operand_debug_string(BackendLocalOperandRow $row): string {",
+      "after_signature": "\tpublic static function local_operand_debug_string(BackendLocalOperandRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/backend_preflight_requests.phs",
+      "method": "local_operand_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function local_operand_stable_hash(BackendLocalOperandRow $row): uint64 {",
+      "after_signature": "\tpublic static function local_operand_stable_hash(BackendLocalOperandRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/compiler_entry_backend.phs",
+      "method": "accepted_literal_return_node_from_body_summary",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function accepted_literal_return_node_from_body_summary(ProjectSymbolIndexRow $symbol, FrontendModel $model, const string &$sourceText, FrontendLiteralPayloadRow &$literal): FrontendNodeRow {",
+      "after_signature": "\tpublic static function accepted_literal_return_node_from_body_summary(ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, FrontendLiteralPayloadRow &$literal): FrontendNodeRow {"
+    },
+    {
+      "source": "compiler/src/compile/backend/compiler_entry_backend.phs",
+      "method": "literal_return_emission_from_frontend",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function literal_return_emission_from_frontend(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, const string &$sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {",
+      "after_signature": "\tpublic static function literal_return_emission_from_frontend(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {"
+    },
+    {
+      "source": "compiler/src/compile/backend/compiler_entry_backend.phs",
+      "method": "scalar_local_body_emission",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function scalar_local_body_emission(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {",
+      "after_signature": "\tpublic static function scalar_local_body_emission(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, BackendRequestAuthorizationArtifact &$backendRequests, LoweringPlan &$plan, CapabilityCoverageArtifact &$capabilityCoverage): BackendEmissionDecisionArtifact {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_api_sink_preflight.phs",
+      "method": "handle_summary_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function handle_summary_debug_string(LlvmApiHandleMapSummaryRow $row): string {",
+      "after_signature": "\tpublic static function handle_summary_debug_string(LlvmApiHandleMapSummaryRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_api_sink_preflight.phs",
+      "method": "handle_summary_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function handle_summary_stable_hash(LlvmApiHandleMapSummaryRow $row): uint64 {",
+      "after_signature": "\tpublic static function handle_summary_stable_hash(LlvmApiHandleMapSummaryRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_api_sink_preflight.phs",
+      "method": "module_build_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_build_debug_string(LlvmApiModuleBuildRow $row): string {",
+      "after_signature": "\tpublic static function module_build_debug_string(LlvmApiModuleBuildRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_api_sink_preflight.phs",
+      "method": "module_build_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_build_stable_hash(LlvmApiModuleBuildRow $row): uint64 {",
+      "after_signature": "\tpublic static function module_build_stable_hash(LlvmApiModuleBuildRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_api_sink_preflight.phs",
+      "method": "preflight_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function preflight_debug_string(LlvmApiSinkPreflightRow $row): string {",
+      "after_signature": "\tpublic static function preflight_debug_string(LlvmApiSinkPreflightRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_api_sink_preflight.phs",
+      "method": "preflight_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function preflight_stable_hash(LlvmApiSinkPreflightRow $row): uint64 {",
+      "after_signature": "\tpublic static function preflight_stable_hash(LlvmApiSinkPreflightRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "by_reference_parameter_mutation_return_function_text_from_symbol_rows",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function by_reference_parameter_mutation_return_function_text_from_symbol_rows(string $llvmFunctionName, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, const string &$sourceText): string {",
+      "after_signature": "\tpublic static function by_reference_parameter_mutation_return_function_text_from_symbol_rows(string $llvmFunctionName, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "direct_call_function_text_from_local_reference_argument",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function direct_call_function_text_from_local_reference_argument(string $llvmFunctionName, string $returnType, string $targetFunctionText, string $targetName, uint32 $localTypeRefId, int32 $initialValue): string {",
+      "after_signature": "\tpublic static function direct_call_function_text_from_local_reference_argument(string $llvmFunctionName, string $returnType, string $targetFunctionText, string $targetName, uint32 $localTypeRefId, int32 $initialValue): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "direct_call_function_text_from_target_text",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function direct_call_function_text_from_target_text(string $llvmFunctionName, string $returnType, string $targetFunctionText, string $targetName, string $argumentListText): string {",
+      "after_signature": "\tpublic static function direct_call_function_text_from_target_text(string $llvmFunctionName, string $returnType, string $targetFunctionText, string $targetName, string $argumentListText): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "literal_function_text_from_emission",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function literal_function_text_from_emission(string $llvmFunctionName, BackendEmissionDecisionArtifact &$emission): string {",
+      "after_signature": "\tpublic static function literal_function_text_from_emission(string $llvmFunctionName, BackendEmissionDecisionArtifact &$emission): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "literal_function_text_from_emission_and_backend_requests",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function literal_function_text_from_emission_and_backend_requests(string $llvmFunctionName, BackendEmissionDecisionArtifact &$emission, BackendRequestAuthorizationArtifact &$requests): string {",
+      "after_signature": "\tpublic static function literal_function_text_from_emission_and_backend_requests(string $llvmFunctionName, BackendEmissionDecisionArtifact &$emission, BackendRequestAuthorizationArtifact &$requests): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "local_function_text_from_emission",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function local_function_text_from_emission(string $llvmFunctionName, BackendEmissionDecisionArtifact &$emission): string {",
+      "after_signature": "\tpublic static function local_function_text_from_emission(string $llvmFunctionName, BackendEmissionDecisionArtifact &$emission): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "main_exit_text_for_descriptor",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function main_exit_text_for_descriptor(LlvmPrimitiveAbiDescriptorRow $descriptor): string {",
+      "after_signature": "\tpublic static function main_exit_text_for_descriptor(LlvmPrimitiveAbiDescriptorRow $descriptor): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "module_text_from_echo_scalar_emission",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_text_from_echo_scalar_emission(BackendEmissionDecisionArtifact &$emission): string {",
+      "after_signature": "\tpublic static function module_text_from_echo_scalar_emission(BackendEmissionDecisionArtifact &$emission): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "module_text_from_echo_scalar_emission_and_backend_requests",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_text_from_echo_scalar_emission_and_backend_requests(BackendEmissionDecisionArtifact &$emission, BackendRequestAuthorizationArtifact &$requests): string {",
+      "after_signature": "\tpublic static function module_text_from_echo_scalar_emission_and_backend_requests(BackendEmissionDecisionArtifact &$emission, BackendRequestAuthorizationArtifact &$requests): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "module_text_from_emission",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_text_from_emission(BackendEmissionDecisionArtifact &$emission): string {",
+      "after_signature": "\tpublic static function module_text_from_emission(BackendEmissionDecisionArtifact &$emission): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "module_text_from_emission_and_backend_requests",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_text_from_emission_and_backend_requests(BackendEmissionDecisionArtifact &$emission, BackendRequestAuthorizationArtifact &$requests): string {",
+      "after_signature": "\tpublic static function module_text_from_emission_and_backend_requests(BackendEmissionDecisionArtifact &$emission, BackendRequestAuthorizationArtifact &$requests): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "module_text_from_entry_and_target_emissions_with_target_name",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_text_from_entry_and_target_emissions_with_target_name(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendEmissionDecisionArtifact &$targetEmission, BackendRequestAuthorizationArtifact &$targetRequests, string $targetName): string {",
+      "after_signature": "\tpublic static function module_text_from_entry_and_target_emissions_with_target_name(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, BackendEmissionDecisionArtifact &$targetEmission, BackendRequestAuthorizationArtifact &$targetRequests, string $targetName): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "module_text_from_entry_call_with_target_text",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_text_from_entry_call_with_target_text(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, string $targetFunctionText, string $targetName): string {",
+      "after_signature": "\tpublic static function module_text_from_entry_call_with_target_text(BackendEmissionDecisionArtifact &$entryEmission, BackendRequestAuthorizationArtifact &$entryRequests, string $targetFunctionText, string $targetName): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "module_text_from_local_emission",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_text_from_local_emission(BackendEmissionDecisionArtifact &$emission): string {",
+      "after_signature": "\tpublic static function module_text_from_local_emission(BackendEmissionDecisionArtifact &$emission): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "module_text_from_local_emission_and_backend_requests",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function module_text_from_local_emission_and_backend_requests(BackendEmissionDecisionArtifact &$emission, BackendRequestAuthorizationArtifact &$requests): string {",
+      "after_signature": "\tpublic static function module_text_from_local_emission_and_backend_requests(BackendEmissionDecisionArtifact &$emission, BackendRequestAuthorizationArtifact &$requests): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "parameter_add_function_text_from_value",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function parameter_add_function_text_from_value(string $llvmFunctionName, int $rightLiteralValue): string {",
+      "after_signature": "\tpublic static function parameter_add_function_text_from_value(string $llvmFunctionName, int $rightLiteralValue): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "parameter_arg_index_for_variable_node",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parameter_arg_index_for_variable_node(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, const string &$sourceText, FrontendNodeRow $variableNode, uint32 &$typeRefIdOut): int {",
+      "after_signature": "\tpublic static function parameter_arg_index_for_variable_node(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, FrontendNodeRow $variableNode, uint32 &$typeRefIdOut): int {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "parameter_function_text_from_symbol_rows",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function parameter_function_text_from_symbol_rows(string $llvmFunctionName, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, const string &$sourceText): string {",
+      "after_signature": "\tpublic static function parameter_function_text_from_symbol_rows(string $llvmFunctionName, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "parameter_return_operand_text",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parameter_return_operand_text(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, const string &$sourceText, FrontendNodeRow $node, uint32 &$typeRefIdOut): string {",
+      "after_signature": "\tpublic static function parameter_return_operand_text(ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText, FrontendNodeRow $node, uint32 &$typeRefIdOut): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "preflight_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function preflight_debug_string(FunctionBodyTextEmissionPreflightRow $row): string {",
+      "after_signature": "\tpublic static function preflight_debug_string(FunctionBodyTextEmissionPreflightRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "preflight_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function preflight_stable_hash(FunctionBodyTextEmissionPreflightRow $row): uint64 {",
+      "after_signature": "\tpublic static function preflight_stable_hash(FunctionBodyTextEmissionPreflightRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "return_binary_value_text",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function return_binary_value_text(SemanticOperatorLookupRow $operatorRow, string $returnType, int $valueId, int $leftValue, int $rightValue): string {",
+      "after_signature": "\tpublic static function return_binary_value_text(SemanticOperatorLookupRow $operatorRow, string $returnType, int $valueId, int $leftValue, int $rightValue): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "return_ternary_select_from_condition_text",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function return_ternary_select_from_condition_text(string $returnType, int $valueId, string $conditionText, int $thenValue, int $elseValue): string {",
+      "after_signature": "\tpublic static function return_ternary_select_from_condition_text(string $returnType, int $valueId, string $conditionText, int $thenValue, int $elseValue): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "return_value_text_from_emission",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function return_value_text_from_emission(BackendEmissionDecisionArtifact &$emission, BackendEmissionValueRow $value, string $returnType): string {",
+      "after_signature": "\tpublic static function return_value_text_from_emission(BackendEmissionDecisionArtifact &$emission, BackendEmissionValueRow $value, string $returnType): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "sink_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function sink_debug_string(BackendSinkBoundaryRow $row): string {",
+      "after_signature": "\tpublic static function sink_debug_string(BackendSinkBoundaryRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/llvm_text_from_plan.phs",
+      "method": "sink_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function sink_stable_hash(BackendSinkBoundaryRow $row): uint64 {",
+      "after_signature": "\tpublic static function sink_stable_hash(BackendSinkBoundaryRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/local_body_lowering.phs",
+      "method": "append_if_condition_backend_request",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_if_condition_backend_request(BackendRequestAuthorizationArtifact &$backendRequests, CapabilityCoverageArtifact $capabilityCoverage, uint32 $ifSourceRowId, uint32 $conditionSourceRowId, uint32 $bodyFirstSourceRowId, uint32 $bodyLastSourceRowId, uint32 $elseBodyFirstSourceRowId, uint32 $elseBodyLastSourceRowId, uint32 $conditionTypeRefId, int32 $conditionValue, uint32 $conditionLocalSourceRowId, bool $conditionIsLocal, ProjectSymbolIndexRow $entrySymbol): void {",
+      "after_signature": "\tpublic static function append_if_condition_backend_request(BackendRequestAuthorizationArtifact &$backendRequests, CapabilityCoverageArtifact $capabilityCoverage, uint32 $ifSourceRowId, uint32 $conditionSourceRowId, uint32 $bodyFirstSourceRowId, uint32 $bodyLastSourceRowId, uint32 $elseBodyFirstSourceRowId, uint32 $elseBodyLastSourceRowId, uint32 $conditionTypeRefId, int32 $conditionValue, uint32 $conditionLocalSourceRowId, uint16 $conditionOperandKindId, ProjectSymbolIndexRow $entrySymbol): void {"
+    },
+    {
+      "source": "compiler/src/compile/backend/lowering_plan.phs",
+      "method": "blocked_request_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function blocked_request_debug_string(LoweringBlockedRequestRow $row): string {",
+      "after_signature": "\tpublic static function blocked_request_debug_string(LoweringBlockedRequestRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/lowering_plan.phs",
+      "method": "blocked_request_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function blocked_request_stable_hash(LoweringBlockedRequestRow $row): uint64 {",
+      "after_signature": "\tpublic static function blocked_request_stable_hash(LoweringBlockedRequestRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/lowering_plan.phs",
+      "method": "plan_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function plan_debug_string(LoweringPlan $plan): string {",
+      "after_signature": "\tpublic static function plan_debug_string(LoweringPlan $plan): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/lowering_plan.phs",
+      "method": "plan_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function plan_stable_hash(LoweringPlan $plan): uint64 {",
+      "after_signature": "\tpublic static function plan_stable_hash(LoweringPlan $plan): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/lowering_plan.phs",
+      "method": "step_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function step_debug_string(LoweringStep $row): string {",
+      "after_signature": "\tpublic static function step_debug_string(LoweringStep $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/backend/lowering_plan.phs",
+      "method": "step_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function step_stable_hash(LoweringStep $row): uint64 {",
+      "after_signature": "\tpublic static function step_stable_hash(LoweringStep $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/scalar_body_statement_collection.phs",
+      "method": "condition_operand_is_local",
+      "kind": "added",
+      "before_signature": null,
+      "after_signature": "\tpublic static function condition_operand_is_local(ScalarConditionOperand $operand): bool {"
+    },
+    {
+      "source": "compiler/src/compile/backend/scalar_body_statement_collection.phs",
+      "method": "condition_operand_is_local_immediate",
+      "kind": "added",
+      "before_signature": null,
+      "after_signature": "\tpublic static function condition_operand_is_local_immediate(ScalarConditionOperand $operand): bool {"
+    },
+    {
+      "source": "compiler/src/compile/backend/scalar_body_statement_collection.phs",
+      "method": "condition_operand_local_id",
+      "kind": "added",
+      "before_signature": null,
+      "after_signature": "\tpublic static function condition_operand_local_id(): uint16 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/scalar_body_statement_collection.phs",
+      "method": "condition_operand_local_immediate_id",
+      "kind": "added",
+      "before_signature": null,
+      "after_signature": "\tpublic static function condition_operand_local_immediate_id(): uint16 {"
+    },
+    {
+      "source": "compiler/src/compile/backend/scalar_body_statement_collection.phs",
+      "method": "condition_operand_none_id",
+      "kind": "added",
+      "before_signature": null,
+      "after_signature": "\tpublic static function condition_operand_none_id(): uint16 {"
+    },
+    {
+      "source": "compiler/src/compile/capabilities/runtime_helper_contract_readiness.phs",
+      "method": "artifact_json",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function artifact_json(RuntimeHelperContractReadinessArtifact $artifact): string {",
+      "after_signature": "\tpublic static function artifact_json(RuntimeHelperContractReadinessArtifact $artifact): string {"
+    },
+    {
+      "source": "compiler/src/compile/capabilities/runtime_helper_contract_readiness.phs",
+      "method": "debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function debug_string(RuntimeHelperContractReadinessArtifact $artifact): string {",
+      "after_signature": "\tpublic static function debug_string(RuntimeHelperContractReadinessArtifact $artifact): string {"
+    },
+    {
+      "source": "compiler/src/compile/capabilities/runtime_helper_contract_readiness.phs",
+      "method": "row_json",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function row_json(RuntimeHelperContractReadinessRow $row): string {",
+      "after_signature": "\tpublic static function row_json(RuntimeHelperContractReadinessRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/capabilities/runtime_helper_contract_readiness.phs",
+      "method": "stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function stable_hash(RuntimeHelperContractReadinessArtifact $artifact): uint64 {",
+      "after_signature": "\tpublic static function stable_hash(RuntimeHelperContractReadinessArtifact $artifact): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "append_expression_local_reads",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_expression_local_reads(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, const string &$sourceText, uint32 $expressionNodeId, uint32 $statementNodeId, uint16 $rowKindId, uint16 $branchKindId, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function append_expression_local_reads(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, string $sourceText, uint32 $expressionNodeId, uint32 $statementNodeId, uint16 $rowKindId, uint16 $branchKindId, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "append_for_statement",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_for_statement(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, const string &$sourceText, FrontendNodeRow $forNode, FrontendStatementPayloadRow $forStatement, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function append_for_statement(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, string $sourceText, FrontendNodeRow $forNode, FrontendStatementPayloadRow $forStatement, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "append_if_statement",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_if_statement(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, const string &$sourceText, FrontendNodeRow $ifNode, FrontendStatementPayloadRow $ifStatement, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function append_if_statement(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, string $sourceText, FrontendNodeRow $ifNode, FrontendStatementPayloadRow $ifStatement, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "append_local_write_set_row",
+      "kind": "added",
+      "before_signature": null,
+      "after_signature": "\tpublic static function append_local_write_set_row(ControlFlowLocalWriteSet &$writes, uint32 $nameId, uint32 $sourceRowId, uint32 $typeRefId): void {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "append_local_write_statement",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_local_write_statement(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, const string &$sourceText, FrontendNodeRow $statementNode, uint16 $rowKindId, uint16 $branchKindId, vector<uint32> &$nameIds, vector<uint32> &$sourceRowIds, vector<uint32> &$typeRefIds, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function append_local_write_statement(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, string $sourceText, FrontendNodeRow $statementNode, uint16 $rowKindId, uint16 $branchKindId, ControlFlowLocalWriteSet &$writes, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "append_merge_for_if",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_merge_for_if(ControlFlowDataflowArtifact &$artifact, uint32 $ifNodeId, vector<uint32> $thenNameIds, vector<uint32> $thenSourceRowIds, vector<uint32> $thenTypeRefIds, vector<uint32> $elseNameIds, vector<uint32> $elseSourceRowIds, vector<uint32> $elseTypeRefIds): void {",
+      "after_signature": "\tpublic static function append_merge_for_if(ControlFlowDataflowArtifact &$artifact, uint32 $ifNodeId, ControlFlowLocalWriteSet $thenWrites, ControlFlowLocalWriteSet $elseWrites): void {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "append_post_branch_read",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_post_branch_read(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, const string &$sourceText, FrontendNodeRow $statementNode, vector<uint32> $branchLocalNameIds, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function append_post_branch_read(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, string $sourceText, FrontendNodeRow $statementNode, vector<uint32> $branchLocalNameIds, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "append_while_statement",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_while_statement(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, const string &$sourceText, FrontendNodeRow $whileNode, FrontendStatementPayloadRow $whileStatement, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function append_while_statement(ControlFlowDataflowArtifact &$artifact, FrontendModel $model, string $sourceText, FrontendNodeRow $whileNode, FrontendStatementPayloadRow $whileStatement, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "empty_local_write_set",
+      "kind": "added",
+      "before_signature": null,
+      "after_signature": "\tpublic static function empty_local_write_set(): ControlFlowLocalWriteSet {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "from_frontend_model",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function from_frontend_model(ProjectSymbolIndexRow $symbol, FrontendModel $model, const string &$sourceText): ControlFlowDataflowArtifact {",
+      "after_signature": "\tpublic static function from_frontend_model(ProjectSymbolIndexRow $symbol, FrontendModel $model, string $sourceText): ControlFlowDataflowArtifact {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "project_has_blocking_diagnostic",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function project_has_blocking_diagnostic(ProjectSymbolIndex $symbols, FrontendModel $model, const string &$sourceText): bool {",
+      "after_signature": "\tpublic static function project_has_blocking_diagnostic(ProjectSymbolIndex $symbols, FrontendModel $model, string $sourceText): bool {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "project_tsv",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function project_tsv(ProjectSymbolIndex $symbols, FrontendModel $model, const string &$sourceText): string {",
+      "after_signature": "\tpublic static function project_tsv(ProjectSymbolIndex $symbols, FrontendModel $model, string $sourceText): string {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_dataflows.phs",
+      "method": "statement_local_name_and_type_ref",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function statement_local_name_and_type_ref(FrontendModel $model, const string &$sourceText, FrontendNodeRow $statementNode, FrontendStatementPayloadRow $statement, string &$name, uint32 &$typeRefId, FrontendModelKernelCounters $counters): bool {",
+      "after_signature": "\tpublic static function statement_local_name_and_type_ref(FrontendModel $model, string $sourceText, FrontendNodeRow $statementNode, FrontendStatementPayloadRow $statement, string &$name, uint32 &$typeRefId, FrontendModelKernelCounters $counters): bool {"
+    },
+    {
+      "source": "compiler/src/compile/control_flow/control_flow_transfers.phs",
+      "method": "append_transfer_row",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function append_transfer_row(string &$text, uint32 $rowId, ProjectSymbolIndexRow $symbol, FrontendModel $model, FrontendNodeRow $statementNode, uint16 $transferKindId, uint32 $enclosingLoopNodeId, uint16 $loopDepth, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function append_transfer_row(string &$text, uint32 $rowId, ProjectSymbolIndexRow $symbol, FrontendModel $model, FrontendNodeRow $statementNode, uint16 $transferKindId, uint32 $enclosingLoopNodeId, uint16 $loopDepth, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_binary_expression_from_left_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_binary_expression_from_left_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, uint16 $operatorId, string $operatorSymbol, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_binary_expression_from_left_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, uint16 $operatorId, string $operatorSymbol, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_binary_minus_expression_from_left_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_binary_minus_expression_from_left_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_binary_minus_expression_from_left_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_binary_plus_expression_from_left_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_binary_plus_expression_from_left_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_binary_plus_expression_from_left_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_call_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_call_expression(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_call_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_empty_initializer_expression_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_empty_initializer_expression_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $typeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_empty_initializer_expression_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $typeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_function_parameter_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_function_parameter_expression(PhsParserState $state, const string &$source, FrontendModel $model, FrontendModelKernelCounters $counters, uint32 &$parameterTypeRefId): uint32 {",
+      "after_signature": "\tpublic static function append_function_parameter_expression(PhsParserState $state, string $source, FrontendModel $model, FrontendModelKernelCounters $counters, uint32 &$parameterTypeRefId): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_generated_binary_expression_from_left_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_generated_binary_expression_from_left_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_generated_binary_expression_from_left_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $leftNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_identifier_expression_from_token_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_identifier_expression_from_token_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, TokenRow $nameToken, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_identifier_expression_from_token_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, TokenRow $nameToken, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_identifier_expression_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_identifier_expression_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_identifier_expression_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_literal_expression_with_numeric_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_literal_expression_with_numeric_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $numericTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_literal_expression_with_numeric_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $numericTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_null_literal_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_null_literal_expression(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_null_literal_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_parameter_default_literal_if_present",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_parameter_default_literal_if_present(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parameterNodeId, uint32 $parameterTypeRefId, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function append_parameter_default_literal_if_present(PhsParserState $state, string $source, FrontendModel $model, uint32 $parameterNodeId, uint32 $parameterTypeRefId, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_string_literal_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_string_literal_expression(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_string_literal_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_unary_minus_integer_literal_expression_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_unary_minus_integer_literal_expression_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $numericTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_unary_minus_integer_literal_expression_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $numericTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_unary_minus_local_expression_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_unary_minus_local_expression_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $numericTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_unary_minus_local_expression_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $numericTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_variable_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_variable_expression(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_variable_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "append_variable_expression_with_type",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_variable_expression_with_type(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function append_variable_expression_with_type(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $inferredTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_assignment_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_assignment_statement(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_assignment_statement(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_bound_identifier_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_bound_identifier_expression(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_bound_identifier_expression(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_call_expression_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_call_expression_statement(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_call_expression_statement(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_call_expression_with_argument_list",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_call_expression_with_argument_list(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_call_expression_with_argument_list(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_compound_assignment_operator_after_target",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_compound_assignment_operator_after_target(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_compound_assignment_operator_after_target(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_const_declaration_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_const_declaration_statement(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_const_declaration_statement(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_const_keyword",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_const_keyword(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_const_keyword(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_double_symbol",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_double_symbol(PhsParserState $state, const string &$source, int $offset, string $single, string $combined): bool {",
+      "after_signature": "\tpublic static function at_double_symbol(PhsParserState $state, string $source, int $offset, string $single, string $combined): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_echo_postfix_update_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_echo_postfix_update_statement(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_echo_postfix_update_statement(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_echo_prefix_update_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_echo_prefix_update_statement(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_echo_prefix_update_statement(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_function_parameter",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_function_parameter(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_function_parameter(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_local_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_local_declaration(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_local_declaration(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_namespace_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_namespace_declaration(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_namespace_declaration(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_qualified_zero_arg_call_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_qualified_zero_arg_call_expression(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_qualified_zero_arg_call_expression(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_scalar_expression_start_at_offset",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_scalar_expression_start_at_offset(PhsParserState $state, const string &$source, int $offset): bool {",
+      "after_signature": "\tpublic static function at_scalar_expression_start_at_offset(PhsParserState $state, string $source, int $offset): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_use_function_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_use_function_declaration(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_use_function_declaration(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_use_keyword",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_use_keyword(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_use_keyword(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "at_zero_arg_call_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_zero_arg_call_expression(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_zero_arg_call_expression(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "attach_synthetic_script_entry_body",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function attach_synthetic_script_entry_body(FrontendModel $model, const string &$source, uint32 $declarationNodeId, uint32 $declarationPayloadId, uint32 $bodyNodeId, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function attach_synthetic_script_entry_body(FrontendModel $model, string $source, uint32 $declarationNodeId, uint32 $declarationPayloadId, uint32 $bodyNodeId, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "binary_operator_row_for_current",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function binary_operator_row_for_current(PhsParserState $state, const string &$source, uint32 $typeRefId): SemanticOperatorLookupRow {",
+      "after_signature": "\tpublic static function binary_operator_row_for_current(PhsParserState $state, string $source, uint32 $typeRefId): SemanticOperatorLookupRow {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "body_shape_digest_from_body_node",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function body_shape_digest_from_body_node(FrontendModel $model, const string &$source, uint32 $bodyNodeId, uint32 &$bodyLengthOut, uint32 &$bodyHashOut, uint32 &$walkRowsOut, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function body_shape_digest_from_body_node(FrontendModel $model, string $source, uint32 $bodyNodeId, uint32 &$bodyLengthOut, uint32 &$bodyHashOut, uint32 &$walkRowsOut, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "compound_assignment_base_operator_at_offset",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function compound_assignment_base_operator_at_offset(PhsParserState $state, const string &$source, int $offset): string {",
+      "after_signature": "\tpublic static function compound_assignment_base_operator_at_offset(PhsParserState $state, string $source, int $offset): string {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "consume_blocked_unary_logical_not_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function consume_blocked_unary_logical_not_expression(PhsParserState $state, const string &$source): uint32 {",
+      "after_signature": "\tpublic static function consume_blocked_unary_logical_not_expression(PhsParserState $state, string $source): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "consume_blocked_unary_logical_not_operand",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function consume_blocked_unary_logical_not_operand(PhsParserState $state, const string &$source): void {",
+      "after_signature": "\tpublic static function consume_blocked_unary_logical_not_operand(PhsParserState $state, string $source): void {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "consume_compound_assignment_operator",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function consume_compound_assignment_operator(PhsParserState $state, const string &$source, uint32 $typeRefId): uint16 {",
+      "after_signature": "\tpublic static function consume_compound_assignment_operator(PhsParserState $state, string $source, uint32 $typeRefId): uint16 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "consume_optional_echo_trailing_string_argument",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function consume_optional_echo_trailing_string_argument(PhsParserState $state, const string &$source): void {",
+      "after_signature": "\tpublic static function consume_optional_echo_trailing_string_argument(PhsParserState $state, string $source): void {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "consume_prefix_update_operator",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function consume_prefix_update_operator(PhsParserState $state, const string &$source): string {",
+      "after_signature": "\tpublic static function consume_prefix_update_operator(PhsParserState $state, string $source): string {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "expect_const_keyword",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function expect_const_keyword(PhsParserState $state, const string &$source): TokenRow {",
+      "after_signature": "\tpublic static function expect_const_keyword(PhsParserState $state, string $source): TokenRow {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "expect_function_import_keyword",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function expect_function_import_keyword(PhsParserState $state, const string &$source): TokenRow {",
+      "after_signature": "\tpublic static function expect_function_import_keyword(PhsParserState $state, string $source): TokenRow {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "expect_namespace_keyword",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function expect_namespace_keyword(PhsParserState $state, const string &$source): TokenRow {",
+      "after_signature": "\tpublic static function expect_namespace_keyword(PhsParserState $state, string $source): TokenRow {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "expect_type_name_token",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function expect_type_name_token(PhsParserState $state, const string &$source): TokenRow {",
+      "after_signature": "\tpublic static function expect_type_name_token(PhsParserState $state, string $source): TokenRow {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "expect_use_keyword",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function expect_use_keyword(PhsParserState $state, const string &$source): TokenRow {",
+      "after_signature": "\tpublic static function expect_use_keyword(PhsParserState $state, string $source): TokenRow {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_assignment_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_assignment_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_assignment_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_assignment_statement_with_terminator",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_assignment_statement_with_terminator(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, string $terminator, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_assignment_statement_with_terminator(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, string $terminator, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_body_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_body_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_body_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_const_declaration_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_const_declaration_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_const_declaration_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_control_transfer_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_control_transfer_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, string $keyword, uint16 $statementKindId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_control_transfer_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, string $keyword, uint16 $statementKindId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_echo_argument_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_echo_argument_expression(PhsParserState $state, const string &$source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_echo_argument_expression(PhsParserState $state, string $source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_echo_argument_list",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_echo_argument_list(PhsParserState $state, const string &$source, FrontendModel $model, uint32 &$firstArgumentNodeId, uint16 &$argumentCount, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function parse_echo_argument_list(PhsParserState $state, string $source, FrontendModel $model, uint32 &$firstArgumentNodeId, uint16 &$argumentCount, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_echo_postfix_update_statement_sequence",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_echo_postfix_update_statement_sequence(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_echo_postfix_update_statement_sequence(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_echo_prefix_update_statement_sequence",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_echo_prefix_update_statement_sequence(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_echo_prefix_update_statement_sequence(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_echo_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_echo_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_echo_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_expression_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_expression_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_expression_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_for_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_for_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_for_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_function_body",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_function_body(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $declarationNodeId, uint32 $returnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_function_body(PhsParserState $state, string $source, FrontendModel $model, uint32 $declarationNodeId, uint32 $returnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_function_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_function_declaration(PhsParserState $state, const string &$source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_function_declaration(PhsParserState $state, string $source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_if_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_if_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_if_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_local_declaration_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_local_declaration_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_local_declaration_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_namespace_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_namespace_declaration(PhsParserState $state, const string &$source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_namespace_declaration(PhsParserState $state, string $source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_namespace_name_range",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_namespace_name_range(PhsParserState $state, const string &$source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_namespace_name_range(PhsParserState $state, string $source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_return_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_return_expression(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $returnNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_return_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $returnNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_return_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_return_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_return_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_scalar_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_scalar_expression(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_scalar_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_scalar_expression_with_min_precedence",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_scalar_expression_with_min_precedence(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedTypeRefId, uint16 $minPrecedence, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_scalar_expression_with_min_precedence(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedTypeRefId, uint16 $minPrecedence, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_scalar_primary_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_scalar_primary_expression(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_scalar_primary_expression(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_source_unit",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_source_unit(SourceUnitTableRow $sourceUnit, const string &$source, TokenStream $tokens, FrontendModelKernelCounters $counters): FrontendModel {",
+      "after_signature": "\tpublic static function parse_source_unit(SourceUnitTableRow $sourceUnit, string $source, TokenStream $tokens, FrontendModelKernelCounters $counters): FrontendModel {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_source_unit_with_node_segment_policy",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_source_unit_with_node_segment_policy(SourceUnitTableRow $sourceUnit, const string &$source, TokenStream $tokens, FrontendModelKernelCounters $counters, uint32 $segmentThreshold, uint32 $segmentCapacity): FrontendModel {",
+      "after_signature": "\tpublic static function parse_source_unit_with_node_segment_policy(SourceUnitTableRow $sourceUnit, string $source, TokenStream $tokens, FrontendModelKernelCounters $counters, uint32 $segmentThreshold, uint32 $segmentCapacity): FrontendModel {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_statement_list_until_close",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_statement_list_until_close(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_statement_list_until_close(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_statement_list_until_close_with_implicit_return",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_statement_list_until_close_with_implicit_return(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_statement_list_until_close_with_implicit_return(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, bool $allowNestedIf, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_statement_list_until_eof_with_implicit_return",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_statement_list_until_eof_with_implicit_return(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_statement_list_until_eof_with_implicit_return(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_synthetic_script_entry_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_synthetic_script_entry_declaration(PhsParserState $state, const string &$source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_synthetic_script_entry_declaration(PhsParserState $state, string $source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_synthetic_script_entry_declaration_until_close",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_synthetic_script_entry_declaration_until_close(PhsParserState $state, const string &$source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_synthetic_script_entry_declaration_until_close(PhsParserState $state, string $source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_type_ref_id",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_type_ref_id(PhsParserState $state, const string &$source): uint32 {",
+      "after_signature": "\tpublic static function parse_type_ref_id(PhsParserState $state, string $source): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_use_function_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_use_function_declaration(PhsParserState $state, const string &$source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_use_function_declaration(PhsParserState $state, string $source, FrontendModel $model, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "parse_while_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parse_while_statement(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function parse_while_statement(PhsParserState $state, string $source, FrontendModel $model, uint32 $parentNodeId, uint32 $expectedReturnTypeRefId, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "prefix_update_variable_offset",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function prefix_update_variable_offset(PhsParserState $state, const string &$source): int {",
+      "after_signature": "\tpublic static function prefix_update_variable_offset(PhsParserState $state, string $source): int {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/frontend_model_builder.phs",
+      "method": "record_function_parameter_local_types",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_function_parameter_local_types(PhsParserState $state, const string &$source, FrontendModel $model, uint32 $declarationNodeId, FrontendModelKernelCounters $counters): void {",
+      "after_signature": "\tpublic static function record_function_parameter_local_types(PhsParserState $state, string $source, FrontendModel $model, uint32 $declarationNodeId, FrontendModelKernelCounters $counters): void {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/parser_cursor.phs",
+      "method": "at",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at(const string &$source, TokenStream $tokens, PhsParserCursor $cursor, uint16 $kindId, string $literal): bool {",
+      "after_signature": "\tpublic static function at(string $source, TokenStream $tokens, PhsParserCursor $cursor, uint16 $kindId, string $literal): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/parser_cursor.phs",
+      "method": "peek_at",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function peek_at(const string &$source, TokenStream $tokens, PhsParserCursor $cursor, int $offset, uint16 $kindId, string $literal): bool {",
+      "after_signature": "\tpublic static function peek_at(string $source, TokenStream $tokens, PhsParserCursor $cursor, int $offset, uint16 $kindId, string $literal): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/parser_state.phs",
+      "method": "at",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at(PhsParserState $state, const string &$source, uint16 $kindId, string $literal): bool {",
+      "after_signature": "\tpublic static function at(PhsParserState $state, string $source, uint16 $kindId, string $literal): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/parser_state.phs",
+      "method": "at_bool_literal",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_bool_literal(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_bool_literal(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/parser_state.phs",
+      "method": "at_null_literal",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function at_null_literal(PhsParserState $state, const string &$source): bool {",
+      "after_signature": "\tpublic static function at_null_literal(PhsParserState $state, string $source): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/parser_state.phs",
+      "method": "expect",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function expect(PhsParserState $state, const string &$source, uint16 $kindId, string $literal): TokenRow {",
+      "after_signature": "\tpublic static function expect(PhsParserState $state, string $source, uint16 $kindId, string $literal): TokenRow {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "byte_at",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function byte_at(const string &$text, int $offset): int {",
+      "after_signature": "\tpublic static function byte_at(string $text, int $offset): int {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "from_runtime_token_buffer",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function from_runtime_token_buffer(uint32 $sourceUnitId, uint32 $sourceBufferId, const string &$source): TokenStream {",
+      "after_signature": "\tpublic static function from_runtime_token_buffer(uint32 $sourceUnitId, uint32 $sourceBufferId, string $source): TokenStream {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "from_runtime_token_buffer_with_segment_policy",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function from_runtime_token_buffer_with_segment_policy(uint32 $sourceUnitId, uint32 $sourceBufferId, const string &$source, uint32 $segmentThreshold, uint32 $segmentCapacity): TokenStream {",
+      "after_signature": "\tpublic static function from_runtime_token_buffer_with_segment_policy(uint32 $sourceUnitId, uint32 $sourceBufferId, string $source, uint32 $segmentThreshold, uint32 $segmentCapacity): TokenStream {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "from_source_text",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function from_source_text(uint32 $sourceUnitId, uint32 $sourceBufferId, const string &$source): TokenStream {",
+      "after_signature": "\tpublic static function from_source_text(uint32 $sourceUnitId, uint32 $sourceBufferId, string $source): TokenStream {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "from_source_text_local",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function from_source_text_local(uint32 $sourceUnitId, uint32 $sourceBufferId, const string &$source): TokenStream {",
+      "after_signature": "\tpublic static function from_source_text_local(uint32 $sourceUnitId, uint32 $sourceBufferId, string $source): TokenStream {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "from_source_text_with_segment_policy",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function from_source_text_with_segment_policy(uint32 $sourceUnitId, uint32 $sourceBufferId, const string &$source, uint32 $segmentThreshold, uint32 $segmentCapacity): TokenStream {",
+      "after_signature": "\tpublic static function from_source_text_with_segment_policy(uint32 $sourceUnitId, uint32 $sourceBufferId, string $source, uint32 $segmentThreshold, uint32 $segmentCapacity): TokenStream {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "keyword_kind_id",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function keyword_kind_id(const string &$source, int $start, int $length): uint16 {",
+      "after_signature": "\tpublic static function keyword_kind_id(string $source, int $start, int $length): uint16 {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "slice_equals",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function slice_equals(const string &$source, int $start, int $length, string $literal): bool {",
+      "after_signature": "\tpublic static function slice_equals(string $source, int $start, int $length, string $literal): bool {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "token_text",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function token_text(const string &$source, TokenRow $row): string {",
+      "after_signature": "\tpublic static function token_text(string $source, TokenRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/frontend_adapter/phs/phs_tokenizer.phs",
+      "method": "token_text_equals",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function token_text_equals(const string &$source, TokenRow $row, string $literal): bool {",
+      "after_signature": "\tpublic static function token_text_equals(string $source, TokenRow $row, string $literal): bool {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/partition_readiness.phs",
+      "method": "debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function debug_string(PartitionReadinessRow $row): string {",
+      "after_signature": "\tpublic static function debug_string(PartitionReadinessRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/partition_readiness.phs",
+      "method": "stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function stable_hash(PartitionReadinessRow $row): uint64 {",
+      "after_signature": "\tpublic static function stable_hash(PartitionReadinessRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "dirty_source_projection_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function dirty_source_projection_debug_string(ResidentDaemonDirtySourceProjectionRow $row): string {",
+      "after_signature": "\tpublic static function dirty_source_projection_debug_string(ResidentDaemonDirtySourceProjectionRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "dirty_source_projection_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function dirty_source_projection_stable_hash(ResidentDaemonDirtySourceProjectionRow $row): uint64 {",
+      "after_signature": "\tpublic static function dirty_source_projection_stable_hash(ResidentDaemonDirtySourceProjectionRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "loop_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function loop_debug_string(ResidentDaemonLoopPolicyRow $row): string {",
+      "after_signature": "\tpublic static function loop_debug_string(ResidentDaemonLoopPolicyRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "loop_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function loop_stable_hash(ResidentDaemonLoopPolicyRow $row): uint64 {",
+      "after_signature": "\tpublic static function loop_stable_hash(ResidentDaemonLoopPolicyRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "request_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function request_debug_string(ResidentDaemonIpcArtifact $artifact, ResidentDaemonRequestRow $row): string {",
+      "after_signature": "\tpublic static function request_debug_string(ResidentDaemonIpcArtifact $artifact, ResidentDaemonRequestRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "request_json",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function request_json(ResidentDaemonIpcArtifact $artifact, ResidentDaemonRequestRow $row): string {",
+      "after_signature": "\tpublic static function request_json(ResidentDaemonIpcArtifact $artifact, ResidentDaemonRequestRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "request_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function request_stable_hash(ResidentDaemonRequestRow $row): uint64 {",
+      "after_signature": "\tpublic static function request_stable_hash(ResidentDaemonRequestRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "response_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function response_debug_string(ResidentDaemonResponseRow $row): string {",
+      "after_signature": "\tpublic static function response_debug_string(ResidentDaemonResponseRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "response_json",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function response_json(ResidentDaemonIpcArtifact $artifact, ResidentDaemonResponseRow $row): string {",
+      "after_signature": "\tpublic static function response_json(ResidentDaemonIpcArtifact $artifact, ResidentDaemonResponseRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "response_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function response_stable_hash(ResidentDaemonResponseRow $row): uint64 {",
+      "after_signature": "\tpublic static function response_stable_hash(ResidentDaemonResponseRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "session_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function session_debug_string(ResidentDaemonIpcArtifact $artifact, ResidentDaemonSessionRow $row): string {",
+      "after_signature": "\tpublic static function session_debug_string(ResidentDaemonIpcArtifact $artifact, ResidentDaemonSessionRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "session_json",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function session_json(ResidentDaemonIpcArtifact $artifact, ResidentDaemonSessionRow $row): string {",
+      "after_signature": "\tpublic static function session_json(ResidentDaemonIpcArtifact $artifact, ResidentDaemonSessionRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "session_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function session_stable_hash(ResidentDaemonSessionRow $row): uint64 {",
+      "after_signature": "\tpublic static function session_stable_hash(ResidentDaemonSessionRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "source_slot_event_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function source_slot_event_debug_string(ResidentDaemonSourceSlotEventRow $row): string {",
+      "after_signature": "\tpublic static function source_slot_event_debug_string(ResidentDaemonSourceSlotEventRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "source_slot_event_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function source_slot_event_stable_hash(ResidentDaemonSourceSlotEventRow $row): uint64 {",
+      "after_signature": "\tpublic static function source_slot_event_stable_hash(ResidentDaemonSourceSlotEventRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "source_slot_scan_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function source_slot_scan_debug_string(ResidentDaemonSourceSlotScanRow $row): string {",
+      "after_signature": "\tpublic static function source_slot_scan_debug_string(ResidentDaemonSourceSlotScanRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "source_slot_scan_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function source_slot_scan_stable_hash(ResidentDaemonSourceSlotScanRow $row): uint64 {",
+      "after_signature": "\tpublic static function source_slot_scan_stable_hash(ResidentDaemonSourceSlotScanRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "source_slot_stat_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function source_slot_stat_debug_string(ResidentDaemonIpcArtifact $artifact, ResidentDaemonSourceSlotStatRow $row): string {",
+      "after_signature": "\tpublic static function source_slot_stat_debug_string(ResidentDaemonIpcArtifact $artifact, ResidentDaemonSourceSlotStatRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_daemon_file_ipc.phs",
+      "method": "source_slot_stat_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function source_slot_stat_stable_hash(ResidentDaemonSourceSlotStatRow $row): uint64 {",
+      "after_signature": "\tpublic static function source_slot_stat_stable_hash(ResidentDaemonSourceSlotStatRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "record_real_worker_locked_publication_metrics",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_real_worker_locked_publication_metrics(CompilerProjectRunReport &$report, const SourceUnitTable &$sourceUnits, const vector<SourceUnitFrontendWorkerPayloadInput> &$inputs, const SourceUnitFrontendWorkerLockedPublicationStats &$stats, int $workerCount, bool $selected, uint32 $taskRunElapsedUs, uint32 $totalElapsedUs): void {",
+      "after_signature": "\tpublic static function record_real_worker_locked_publication_metrics(CompilerProjectRunReport &$report, SourceUnitTable $sourceUnits, vector<SourceUnitFrontendWorkerPayloadInput> $inputs, SourceUnitFrontendWorkerLockedPublicationStats $stats, int $workerCount, bool $selected, uint32 $taskRunElapsedUs, uint32 $totalElapsedUs): void {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "record_real_worker_publication_metrics",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_real_worker_publication_metrics(CompilerProjectRunReport &$report, const SourceUnitTable &$sourceUnits, const vector<SourceUnitFrontendWorkerPayloadInput> &$inputs, const vector<SourceUnitFrontendWorkerBuildResult> &$results, int $workerCount, bool $selected, uint32 $taskRunElapsedUs, uint32 $frontendPublishElapsedUs, uint32 $symbolPublishElapsedUs, uint32 $publicationElapsedUs, uint32 $totalElapsedUs): void {",
+      "after_signature": "\tpublic static function record_real_worker_publication_metrics(CompilerProjectRunReport &$report, SourceUnitTable $sourceUnits, vector<SourceUnitFrontendWorkerPayloadInput> $inputs, vector<SourceUnitFrontendWorkerBuildResult> $results, int $workerCount, bool $selected, uint32 $taskRunElapsedUs, uint32 $frontendPublishElapsedUs, uint32 $symbolPublishElapsedUs, uint32 $publicationElapsedUs, uint32 $totalElapsedUs): void {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "source_text_for_worker_input",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_text_for_worker_input(const SourceUnitFrontendWorkerPayloadInput &$input): string {",
+      "after_signature": "\tpublic static function source_text_for_worker_input(SourceUnitFrontendWorkerPayloadInput $input): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "source_texts_for_payload_tables",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_texts_for_payload_tables(const SourceUnitTable &$sourceUnits, const vector<ResidentSourceUnitFrontendPayloadTableRow> &$payloadTables): vector<string> {",
+      "after_signature": "\tpublic static function source_texts_for_payload_tables(SourceUnitTable $sourceUnits, vector<ResidentSourceUnitFrontendPayloadTableRow> $payloadTables): vector<string> {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "source_unit_source_byte_max",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_unit_source_byte_max(const SourceUnitTable &$sourceUnits): uint32 {",
+      "after_signature": "\tpublic static function source_unit_source_byte_max(SourceUnitTable $sourceUnits): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "source_unit_source_byte_total",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_unit_source_byte_total(const SourceUnitTable &$sourceUnits): uint32 {",
+      "after_signature": "\tpublic static function source_unit_source_byte_total(SourceUnitTable $sourceUnits): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_build_result_for_input",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_build_result_for_input(const SourceUnitFrontendWorkerPayloadInput &$input): SourceUnitFrontendWorkerBuildResult {",
+      "after_signature": "\tpublic static function worker_build_result_for_input(SourceUnitFrontendWorkerPayloadInput $input): SourceUnitFrontendWorkerBuildResult {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_build_results",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_build_results(const vector<SourceUnitFrontendWorkerPayloadInput> &$inputs, int $workerCount): vector<SourceUnitFrontendWorkerBuildResult> {",
+      "after_signature": "\tpublic static function worker_frontend_build_results(vector<SourceUnitFrontendWorkerPayloadInput> $inputs, int $workerCount): vector<SourceUnitFrontendWorkerBuildResult> {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_build_results_are_publishable",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_build_results_are_publishable(const SourceUnitTable &$sourceUnits, const vector<SourceUnitFrontendWorkerBuildResult> &$results): bool {",
+      "after_signature": "\tpublic static function worker_frontend_build_results_are_publishable(SourceUnitTable $sourceUnits, vector<SourceUnitFrontendWorkerBuildResult> $results): bool {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_input_payload_copy_byte_total",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_input_payload_copy_byte_total(const vector<SourceUnitFrontendWorkerPayloadInput> &$inputs): int {",
+      "after_signature": "\tpublic static function worker_frontend_input_payload_copy_byte_total(vector<SourceUnitFrontendWorkerPayloadInput> $inputs): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_inputs_use_source_unit_sidecars",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_inputs_use_source_unit_sidecars(const vector<SourceUnitFrontendWorkerPayloadInput> &$inputs): bool {",
+      "after_signature": "\tpublic static function worker_frontend_inputs_use_source_unit_sidecars(vector<SourceUnitFrontendWorkerPayloadInput> $inputs): bool {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_result_elapsed_us",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_result_elapsed_us(const SourceUnitFrontendWorkerBuildResult &$result): int {",
+      "after_signature": "\tpublic static function worker_frontend_result_elapsed_us(SourceUnitFrontendWorkerBuildResult $result): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_result_elapsed_us_max",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_result_elapsed_us_max(const vector<SourceUnitFrontendWorkerBuildResult> &$results): int {",
+      "after_signature": "\tpublic static function worker_frontend_result_elapsed_us_max(vector<SourceUnitFrontendWorkerBuildResult> $results): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_result_elapsed_us_total",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_result_elapsed_us_total(const vector<SourceUnitFrontendWorkerBuildResult> &$results): int {",
+      "after_signature": "\tpublic static function worker_frontend_result_elapsed_us_total(vector<SourceUnitFrontendWorkerBuildResult> $results): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_result_parser_elapsed_us_max",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_result_parser_elapsed_us_max(const vector<SourceUnitFrontendWorkerBuildResult> &$results): int {",
+      "after_signature": "\tpublic static function worker_frontend_result_parser_elapsed_us_max(vector<SourceUnitFrontendWorkerBuildResult> $results): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_result_parser_elapsed_us_total",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_result_parser_elapsed_us_total(const vector<SourceUnitFrontendWorkerBuildResult> &$results): int {",
+      "after_signature": "\tpublic static function worker_frontend_result_parser_elapsed_us_total(vector<SourceUnitFrontendWorkerBuildResult> $results): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_result_payload_copy_byte_total",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_result_payload_copy_byte_total(const vector<SourceUnitFrontendWorkerBuildResult> &$results): int {",
+      "after_signature": "\tpublic static function worker_frontend_result_payload_copy_byte_total(vector<SourceUnitFrontendWorkerBuildResult> $results): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_result_symbol_elapsed_us_total",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_result_symbol_elapsed_us_total(const vector<SourceUnitFrontendWorkerBuildResult> &$results): int {",
+      "after_signature": "\tpublic static function worker_frontend_result_symbol_elapsed_us_total(vector<SourceUnitFrontendWorkerBuildResult> $results): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_frontend_result_tokenizer_elapsed_us_total",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_frontend_result_tokenizer_elapsed_us_total(const vector<SourceUnitFrontendWorkerBuildResult> &$results): int {",
+      "after_signature": "\tpublic static function worker_frontend_result_tokenizer_elapsed_us_total(vector<SourceUnitFrontendWorkerBuildResult> $results): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_payload_descriptor_for_input",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_payload_descriptor_for_input(const SourceUnitFrontendWorkerPayloadInput &$input): int {",
+      "after_signature": "\tpublic static function worker_payload_descriptor_for_input(SourceUnitFrontendWorkerPayloadInput $input): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_payload_descriptors",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_payload_descriptors(const vector<SourceUnitFrontendWorkerPayloadInput> &$inputs, int $workerCount): vector<int> {",
+      "after_signature": "\tpublic static function worker_payload_descriptors(vector<SourceUnitFrontendWorkerPayloadInput> $inputs, int $workerCount): vector<int> {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_payload_descriptors_sequential",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_payload_descriptors_sequential(const vector<SourceUnitFrontendWorkerPayloadInput> &$inputs): vector<int> {",
+      "after_signature": "\tpublic static function worker_payload_descriptors_sequential(vector<SourceUnitFrontendWorkerPayloadInput> $inputs): vector<int> {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_payload_input",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_payload_input(const SourceUnitTableRow &$sourceUnit, string $sourceText): SourceUnitFrontendWorkerPayloadInput {",
+      "after_signature": "\tpublic static function worker_payload_input(SourceUnitTableRow $sourceUnit, string $sourceText): SourceUnitFrontendWorkerPayloadInput {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_payload_input_from_source_units",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_payload_input_from_source_units(const SourceUnitTable &$sourceUnits, const SourceUnitTableRow &$sourceUnit): SourceUnitFrontendWorkerPayloadInput {",
+      "after_signature": "\tpublic static function worker_payload_input_from_source_units(SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit): SourceUnitFrontendWorkerPayloadInput {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_payload_inputs_for_payload_tables",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_payload_inputs_for_payload_tables(const SourceUnitTable &$sourceUnits, const vector<ResidentSourceUnitFrontendPayloadTableRow> &$payloadTables): vector<SourceUnitFrontendWorkerPayloadInput> {",
+      "after_signature": "\tpublic static function worker_payload_inputs_for_payload_tables(SourceUnitTable $sourceUnits, vector<ResidentSourceUnitFrontendPayloadTableRow> $payloadTables): vector<SourceUnitFrontendWorkerPayloadInput> {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_payload_inputs_for_source_units",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_payload_inputs_for_source_units(const SourceUnitTable &$sourceUnits): vector<SourceUnitFrontendWorkerPayloadInput> {",
+      "after_signature": "\tpublic static function worker_payload_inputs_for_source_units(SourceUnitTable $sourceUnits): vector<SourceUnitFrontendWorkerPayloadInput> {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_shadow_source_unit",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_shadow_source_unit(SourceUnitTableRow $sourceUnit, const string &$sourceText): SourceUnitTableRow {",
+      "after_signature": "\tpublic static function worker_shadow_source_unit(SourceUnitTableRow $sourceUnit, string $sourceText): SourceUnitTableRow {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_frontend_payload_tables.phs",
+      "method": "worker_shadow_source_unit_from_input",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_shadow_source_unit_from_input(const SourceUnitFrontendWorkerPayloadInput &$input): SourceUnitTableRow {",
+      "after_signature": "\tpublic static function worker_shadow_source_unit_from_input(SourceUnitFrontendWorkerPayloadInput $input): SourceUnitTableRow {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "append_symbol_fact_publication_row",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_symbol_fact_publication_row(PartitionReadinessArtifact &$artifact, SourceUnitTableRow $sourceUnit, uint32 $ownerRunId, const vector<uint32> &$firstSymbolIds, const vector<uint32> &$symbolCounts): void {",
+      "after_signature": "\tpublic static function append_symbol_fact_publication_row(PartitionReadinessArtifact &$artifact, SourceUnitTableRow $sourceUnit, uint32 $ownerRunId, vector<uint32> $firstSymbolIds, vector<uint32> $symbolCounts): void {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "record_symbol_fact_live_worker_publication_metrics",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_symbol_fact_live_worker_publication_metrics(CompilerProjectRunReport &$report, const SourceUnitTable &$sourceUnits, uint32 $ownerRunId, const vector<uint32> &$firstSymbolIds, const vector<uint32> &$symbolCounts, int $workerCount): void {",
+      "after_signature": "\tpublic static function record_symbol_fact_live_worker_publication_metrics(CompilerProjectRunReport &$report, SourceUnitTable $sourceUnits, uint32 $ownerRunId, vector<uint32> $firstSymbolIds, vector<uint32> $symbolCounts, int $workerCount): void {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "record_symbol_fact_publication_metrics",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_symbol_fact_publication_metrics(CompilerProjectRunReport &$report, const SourceUnitTable &$sourceUnits, uint32 $ownerRunId, const vector<uint32> &$firstSymbolIds, const vector<uint32> &$symbolCounts, int $workerCount, bool $frontendPayloadSourceWorkerReady, bool &$symbolFactWorkerCandidateReady): void {",
+      "after_signature": "\tpublic static function record_symbol_fact_publication_metrics(CompilerProjectRunReport &$report, SourceUnitTable $sourceUnits, uint32 $ownerRunId, vector<uint32> $firstSymbolIds, vector<uint32> $symbolCounts, int $workerCount, bool $frontendPayloadSourceWorkerReady, bool &$symbolFactWorkerCandidateReady): void {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "source_unit_table_for_worker_input",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_unit_table_for_worker_input(const SourceUnitFrontendWorkerPayloadInput &$input, const SourceUnitTableRow &$sourceUnit, const string &$sourceText): SourceUnitTable {",
+      "after_signature": "\tpublic static function source_unit_table_for_worker_input(SourceUnitFrontendWorkerPayloadInput $input, SourceUnitTableRow $sourceUnit, string $sourceText): SourceUnitTable {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "symbol_fact_publication_artifact",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function symbol_fact_publication_artifact(const SourceUnitTable &$sourceUnits, uint32 $ownerRunId, const vector<uint32> &$firstSymbolIds, const vector<uint32> &$symbolCounts, bool $simulatedOrder): PartitionReadinessArtifact {",
+      "after_signature": "\tpublic static function symbol_fact_publication_artifact(SourceUnitTable $sourceUnits, uint32 $ownerRunId, vector<uint32> $firstSymbolIds, vector<uint32> $symbolCounts, bool $simulatedOrder): PartitionReadinessArtifact {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "symbol_fact_publication_published_row_total",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function symbol_fact_publication_published_row_total(const PartitionReadinessArtifact &$artifact): uint32 {",
+      "after_signature": "\tpublic static function symbol_fact_publication_published_row_total(PartitionReadinessArtifact $artifact): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "symbol_fact_publication_row",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function symbol_fact_publication_row(SourceUnitTableRow $sourceUnit, uint32 $ownerRunId, const vector<uint32> &$firstSymbolIds, const vector<uint32> &$symbolCounts): PartitionReadinessRow {",
+      "after_signature": "\tpublic static function symbol_fact_publication_row(SourceUnitTableRow $sourceUnit, uint32 $ownerRunId, vector<uint32> $firstSymbolIds, vector<uint32> $symbolCounts): PartitionReadinessRow {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "symbol_fact_worker_descriptor_for_input",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function symbol_fact_worker_descriptor_for_input(const SourceUnitFrontendWorkerPayloadInput &$input): int {",
+      "after_signature": "\tpublic static function symbol_fact_worker_descriptor_for_input(SourceUnitFrontendWorkerPayloadInput $input): int {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "symbol_fact_worker_descriptors",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function symbol_fact_worker_descriptors(const vector<SourceUnitFrontendWorkerPayloadInput> &$inputs, int $workerCount): vector<int> {",
+      "after_signature": "\tpublic static function symbol_fact_worker_descriptors(vector<SourceUnitFrontendWorkerPayloadInput> $inputs, int $workerCount): vector<int> {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/resident_source_unit_symbol_states.phs",
+      "method": "symbol_fact_worker_inputs",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function symbol_fact_worker_inputs(const SourceUnitTable &$sourceUnits): vector<SourceUnitFrontendWorkerPayloadInput> {",
+      "after_signature": "\tpublic static function symbol_fact_worker_inputs(SourceUnitTable $sourceUnits): vector<SourceUnitFrontendWorkerPayloadInput> {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/source_unit_early_skip.phs",
+      "method": "decision_debug_string",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function decision_debug_string(ResidentSourceUnitEarlySkipDecisionRow $row): string {",
+      "after_signature": "\tpublic static function decision_debug_string(ResidentSourceUnitEarlySkipDecisionRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/incremental/source_unit_early_skip.phs",
+      "method": "decision_stable_hash",
+      "kind": "body_or_mixed",
+      "before_signature": "\tpublic static function decision_stable_hash(ResidentSourceUnitEarlySkipDecisionRow $row): uint64 {",
+      "after_signature": "\tpublic static function decision_stable_hash(ResidentSourceUnitEarlySkipDecisionRow $row): uint64 {"
+    },
+    {
+      "source": "compiler/src/compile/model/frontend_body_summaries.phs",
+      "method": "append_statement",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_statement(FrontendBodySummaryArtifact &$artifact, FrontendModel $model, const string &$sourceText, uint32 $scopeNodeId, uint32 $parentStatementNodeId, FrontendNodeRow $statementNode, bool $allowImplicitLocal, FrontendModelKernelCounters $counters): bool {",
+      "after_signature": "\tpublic static function append_statement(FrontendBodySummaryArtifact &$artifact, FrontendModel $model, string $sourceText, uint32 $scopeNodeId, uint32 $parentStatementNodeId, FrontendNodeRow $statementNode, bool $allowImplicitLocal, FrontendModelKernelCounters $counters): bool {"
+    },
+    {
+      "source": "compiler/src/compile/model/frontend_body_summaries.phs",
+      "method": "from_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function from_declaration(FrontendModel $model, const string &$sourceText, FrontendDeclarationPayloadRow $declaration): FrontendBodySummaryArtifact {",
+      "after_signature": "\tpublic static function from_declaration(FrontendModel $model, string $sourceText, FrontendDeclarationPayloadRow $declaration): FrontendBodySummaryArtifact {"
+    },
+    {
+      "source": "compiler/src/compile/model/frontend_body_summaries.phs",
+      "method": "from_symbol",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function from_symbol(FrontendModel $model, const string &$sourceText, ProjectSymbolIndexRow $symbol, FrontendModelKernelCounters $counters): FrontendBodySummaryArtifact {",
+      "after_signature": "\tpublic static function from_symbol(FrontendModel $model, string $sourceText, ProjectSymbolIndexRow $symbol, FrontendModelKernelCounters $counters): FrontendBodySummaryArtifact {"
+    },
+    {
+      "source": "compiler/src/compile/model/frontend_body_summaries.phs",
+      "method": "local_id_for_name_range",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function local_id_for_name_range(FrontendBodySummaryArtifact &$artifact, const string &$sourceText, SourceRangeRow $nameRange): uint32 {",
+      "after_signature": "\tpublic static function local_id_for_name_range(FrontendBodySummaryArtifact &$artifact, string $sourceText, SourceRangeRow $nameRange): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/model/frontend_body_summaries.phs",
+      "method": "local_id_for_variable_node",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function local_id_for_variable_node(FrontendBodySummaryArtifact &$artifact, FrontendModel $model, const string &$sourceText, FrontendNodeRow $variableNode, FrontendModelKernelCounters $counters): uint32 {",
+      "after_signature": "\tpublic static function local_id_for_variable_node(FrontendBodySummaryArtifact &$artifact, FrontendModel $model, string $sourceText, FrontendNodeRow $variableNode, FrontendModelKernelCounters $counters): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/model/frontend_body_summaries.phs",
+      "method": "source_range_text_equals",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_range_text_equals(const string &$sourceText, SourceRangeRow $left, SourceRangeRow $right): bool {",
+      "after_signature": "\tpublic static function source_range_text_equals(string $sourceText, SourceRangeRow $left, SourceRangeRow $right): bool {"
+    },
+    {
+      "source": "compiler/src/compile/model/frontend_body_summaries.phs",
+      "method": "variable_name_text",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function variable_name_text(FrontendModel $model, const string &$sourceText, FrontendNodeRow $variableNode, FrontendModelKernelCounters $counters): string {",
+      "after_signature": "\tpublic static function variable_name_text(FrontendModel $model, string $sourceText, FrontendNodeRow $variableNode, FrontendModelKernelCounters $counters): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_reference_resolution.phs",
+      "method": "append_direct_call_from_call_expression_source_range",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_direct_call_from_call_expression_source_range(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, const string &$sourceText, ProjectSymbolIndexRow $fromSymbol, uint32 $callExpressionNodeId, uint32 $calleeStartOffset, uint32 $calleeLength, uint32 $actualArgCount): ProjectReferenceResolutionRow {",
+      "after_signature": "\tpublic static function append_direct_call_from_call_expression_source_range(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, string $sourceText, ProjectSymbolIndexRow $fromSymbol, uint32 $callExpressionNodeId, uint32 $calleeStartOffset, uint32 $calleeLength, uint32 $actualArgCount): ProjectReferenceResolutionRow {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_reference_resolution.phs",
+      "method": "append_direct_call_from_frontend",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_direct_call_from_frontend(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, FrontendModel $model, const string &$sourceText, ProjectSymbolIndexRow $fromSymbol): ProjectReferenceResolutionRow {",
+      "after_signature": "\tpublic static function append_direct_call_from_frontend(ProjectReferenceResolution $artifact, ProjectSymbolIndex $symbols, FrontendModel $model, string $sourceText, ProjectSymbolIndexRow $fromSymbol): ProjectReferenceResolutionRow {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_reference_resolution.phs",
+      "method": "callee_name_from_call_expression",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function callee_name_from_call_expression(FrontendModel $model, const string &$sourceText, FrontendNodeRow $callNode): string {",
+      "after_signature": "\tpublic static function callee_name_from_call_expression(FrontendModel $model, string $sourceText, FrontendNodeRow $callNode): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_reference_resolution.phs",
+      "method": "callee_name_from_source_range",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function callee_name_from_source_range(const string &$sourceText, uint32 $startOffset, uint32 $length): string {",
+      "after_signature": "\tpublic static function callee_name_from_source_range(string $sourceText, uint32 $startOffset, uint32 $length): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_reference_resolution.phs",
+      "method": "record_reference_contract_publication_metrics",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_reference_contract_publication_metrics(CompilerProjectRunReport &$report, SourceUnitTable $sourceUnits, uint32 $ownerRunId, ProjectSymbolIndex $projectSymbols, ProjectSymbolIndexRow $entrySymbol, const string &$entryText, ProjectReferenceResolution $references, ProjectCallableContractArtifact $contracts, int $workerCount, bool $upstreamSymbolFactWorkerReady, bool &$referenceContractWorkerCandidateReady): void {",
+      "after_signature": "\tpublic static function record_reference_contract_publication_metrics(CompilerProjectRunReport &$report, SourceUnitTable $sourceUnits, uint32 $ownerRunId, ProjectSymbolIndex $projectSymbols, ProjectSymbolIndexRow $entrySymbol, string $entryText, ProjectReferenceResolution $references, ProjectCallableContractArtifact $contracts, int $workerCount, bool $upstreamSymbolFactWorkerReady, bool &$referenceContractWorkerCandidateReady): void {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_reference_resolution.phs",
+      "method": "reference_contract_worker_input",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function reference_contract_worker_input(SourceUnitTable $sourceUnits, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $entrySymbol, const string &$entryText): ReferenceContractWorkerInput {",
+      "after_signature": "\tpublic static function reference_contract_worker_input(SourceUnitTable $sourceUnits, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $entrySymbol, string $entryText): ReferenceContractWorkerInput {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_reference_resolution.phs",
+      "method": "reference_contract_worker_inputs",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function reference_contract_worker_inputs(SourceUnitTable $sourceUnits, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $entrySymbol, const string &$entryText): vector<ReferenceContractWorkerInput> {",
+      "after_signature": "\tpublic static function reference_contract_worker_inputs(SourceUnitTable $sourceUnits, ProjectSymbolIndex $symbols, ProjectSymbolIndexRow $entrySymbol, string $entryText): vector<ReferenceContractWorkerInput> {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "append_from_declaration_sidecar",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_from_declaration_sidecar(ProjectSymbolIndex $index, SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit, const string &$sourceText, FrontendModel $model): bool {",
+      "after_signature": "\tpublic static function append_from_declaration_sidecar(ProjectSymbolIndex $index, SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit, string $sourceText, FrontendModel $model): bool {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "append_from_model",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_from_model(ProjectSymbolIndex $index, SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit, const string &$sourceText, FrontendModel $model): void {",
+      "after_signature": "\tpublic static function append_from_model(ProjectSymbolIndex $index, SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit, string $sourceText, FrontendModel $model): void {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "append_from_model_by_node_scan",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_from_model_by_node_scan(ProjectSymbolIndex $index, SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit, const string &$sourceText, FrontendModel $model): void {",
+      "after_signature": "\tpublic static function append_from_model_by_node_scan(ProjectSymbolIndex $index, SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit, string $sourceText, FrontendModel $model): void {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "append_function_import_from_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_function_import_from_declaration(ProjectSymbolIndex $index, SourceUnitTableRow $sourceUnit, const string &$sourceText, FrontendModel $model, FrontendNodeRow $declarationNode, FrontendDeclarationPayloadRow $declaration): uint32 {",
+      "after_signature": "\tpublic static function append_function_import_from_declaration(ProjectSymbolIndex $index, SourceUnitTableRow $sourceUnit, string $sourceText, FrontendModel $model, FrontendNodeRow $declarationNode, FrontendDeclarationPayloadRow $declaration): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "declaration_body_shape",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function declaration_body_shape(FrontendModel $model, const string &$sourceText, FrontendDeclarationPayloadRow $declaration, uint32 &$bodyLengthOut, uint32 &$walkRowsOut, bool &$usedCachedDigest): string {",
+      "after_signature": "\tpublic static function declaration_body_shape(FrontendModel $model, string $sourceText, FrontendDeclarationPayloadRow $declaration, uint32 &$bodyLengthOut, uint32 &$walkRowsOut, bool &$usedCachedDigest): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "declaration_function_name",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function declaration_function_name(FrontendModel $model, const string &$sourceText, FrontendDeclarationPayloadRow $declaration): string {",
+      "after_signature": "\tpublic static function declaration_function_name(FrontendModel $model, string $sourceText, FrontendDeclarationPayloadRow $declaration): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "declaration_namespace_name",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function declaration_namespace_name(FrontendModel $model, const string &$sourceText, FrontendDeclarationPayloadRow $declaration): string {",
+      "after_signature": "\tpublic static function declaration_namespace_name(FrontendModel $model, string $sourceText, FrontendDeclarationPayloadRow $declaration): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "declaration_qualified_function_name",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function declaration_qualified_function_name(FrontendModel $model, const string &$sourceText, FrontendDeclarationPayloadRow $declaration, string $functionName): string {",
+      "after_signature": "\tpublic static function declaration_qualified_function_name(FrontendModel $model, string $sourceText, FrontendDeclarationPayloadRow $declaration, string $functionName): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "declaration_return_type_name",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function declaration_return_type_name(FrontendModel $model, const string &$sourceText, FrontendNodeRow $declarationNode, FrontendDeclarationPayloadRow $declaration): string {",
+      "after_signature": "\tpublic static function declaration_return_type_name(FrontendModel $model, string $sourceText, FrontendNodeRow $declarationNode, FrontendDeclarationPayloadRow $declaration): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "name_payload_text",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function name_payload_text(FrontendModel $model, const string &$sourceText, uint32 $namePayloadId): string {",
+      "after_signature": "\tpublic static function name_payload_text(FrontendModel $model, string $sourceText, uint32 $namePayloadId): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "parameter_name",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function parameter_name(ProjectSymbolIndex $index, FrontendModel $model, const string &$sourceText, ProjectSymbolParameterRow $row): string {",
+      "after_signature": "\tpublic static function parameter_name(ProjectSymbolIndex $index, FrontendModel $model, string $sourceText, ProjectSymbolParameterRow $row): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "row_from_declaration",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function row_from_declaration(ProjectSymbolIndex $index, SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit, const string &$sourceText, FrontendModel $model, FrontendNodeRow $declarationNode, FrontendDeclarationPayloadRow $declaration): ProjectSymbolIndexRow {",
+      "after_signature": "\tpublic static function row_from_declaration(ProjectSymbolIndex $index, SourceUnitTable $sourceUnits, SourceUnitTableRow $sourceUnit, string $sourceText, FrontendModel $model, FrontendNodeRow $declarationNode, FrontendDeclarationPayloadRow $declaration): ProjectSymbolIndexRow {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "source_range_text",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_range_text(FrontendModel $model, const string &$sourceText, uint32 $sourceRangeId): string {",
+      "after_signature": "\tpublic static function source_range_text(FrontendModel $model, string $sourceText, uint32 $sourceRangeId): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/project_symbol_index.phs",
+      "method": "type_syntax_name",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function type_syntax_name(FrontendModel $model, const string &$sourceText, FrontendTypeSyntaxPayloadRow $typeSyntax): string {",
+      "after_signature": "\tpublic static function type_syntax_name(FrontendModel $model, string $sourceText, FrontendTypeSyntaxPayloadRow $typeSyntax): string {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_buffers.phs",
+      "method": "content_hash32_slice",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function content_hash32_slice(const string &$sourceText, uint32 $startOffset, uint32 $length): uint32 {",
+      "after_signature": "\tpublic static function content_hash32_slice(string $sourceText, uint32 $startOffset, uint32 $length): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_buffers.phs",
+      "method": "row_from_source_unit",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function row_from_source_unit(SourceUnitTableRow $sourceUnit, const string &$sourceText): SourceBufferRow {",
+      "after_signature": "\tpublic static function row_from_source_unit(SourceUnitTableRow $sourceUnit, string $sourceText): SourceBufferRow {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "append_source_read_worker_result",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function append_source_read_worker_result(SourceReadTable &$table, const SourceReadTable &$descriptorSourceReads, SourceReadWorkerResult $workerResult): void {",
+      "after_signature": "\tpublic static function append_source_read_worker_result(SourceReadTable &$table, SourceReadTable $descriptorSourceReads, SourceReadWorkerResult $workerResult): void {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "publish_source_read_worker_batch",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function publish_source_read_worker_batch(SourceReadTable &$table, const SourceReadTable &$descriptorSourceReads, vector<SourceReadWorkerResult> $batch, SourceReadWorkerPublicationStats &$stats): void {",
+      "after_signature": "\tpublic static function publish_source_read_worker_batch(SourceReadTable &$table, SourceReadTable $descriptorSourceReads, vector<SourceReadWorkerResult> $batch, SourceReadWorkerPublicationStats &$stats): void {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "record_source_read_metrics",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_source_read_metrics(CompilerProjectRunReport &$report, const SourceReadTable &$sourceReads, uint32 $elapsedUs): void {",
+      "after_signature": "\tpublic static function record_source_read_metrics(CompilerProjectRunReport &$report, SourceReadTable $sourceReads, uint32 $elapsedUs): void {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "record_source_read_worker_probe_metrics",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_source_read_worker_probe_metrics(CompilerProjectRunReport &$report, const SourceReadTable &$sourceReads, int $workerCount): void {",
+      "after_signature": "\tpublic static function record_source_read_worker_probe_metrics(CompilerProjectRunReport &$report, SourceReadTable $sourceReads, int $workerCount): void {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "record_source_read_worker_publication_not_selected",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function record_source_read_worker_publication_not_selected(CompilerProjectRunReport &$report, const SourceReadTable &$sourceReads, int $workerCount): void {",
+      "after_signature": "\tpublic static function record_source_read_worker_publication_not_selected(CompilerProjectRunReport &$report, SourceReadTable $sourceReads, int $workerCount): void {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_descriptor_result_metadata_mismatch_count",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_descriptor_result_metadata_mismatch_count(const SourceReadTable &$descriptorSourceReads, const SourceReadTable &$workerSourceReads): int {",
+      "after_signature": "\tpublic static function source_read_descriptor_result_metadata_mismatch_count(SourceReadTable $descriptorSourceReads, SourceReadTable $workerSourceReads): int {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_descriptor_row",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_descriptor_row(const ProjectManifestSourceRow &$source, int $manifestOrder): SourceReadDescriptorRow {",
+      "after_signature": "\tpublic static function source_read_descriptor_row(ProjectManifestSourceRow $source, int $manifestOrder): SourceReadDescriptorRow {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_descriptor_table_from_manifest",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_descriptor_table_from_manifest(const ProjectManifest &$manifest): SourceReadTable {",
+      "after_signature": "\tpublic static function source_read_descriptor_table_from_manifest(ProjectManifest $manifest): SourceReadTable {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_hash_match",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_hash_match(const SourceReadTable &$sourceReads): bool {",
+      "after_signature": "\tpublic static function source_read_hash_match(SourceReadTable $sourceReads): bool {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_line_count",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_line_count(const SourceReadTable &$sourceReads): uint32 {",
+      "after_signature": "\tpublic static function source_read_line_count(SourceReadTable $sourceReads): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_manifest_order_match",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_manifest_order_match(const SourceReadTable &$sourceReads): bool {",
+      "after_signature": "\tpublic static function source_read_manifest_order_match(SourceReadTable $sourceReads): bool {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_result_metadata_bytes",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_result_metadata_bytes(const SourceReadTable &$sourceReads): uint32 {",
+      "after_signature": "\tpublic static function source_read_result_metadata_bytes(SourceReadTable $sourceReads): uint32 {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_result_row",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_result_row(const SourceReadDescriptorRow &$descriptor, const string &$sourceText, bool $readOk): SourceReadResultRow {",
+      "after_signature": "\tpublic static function source_read_result_row(SourceReadDescriptorRow $descriptor, string $sourceText, bool $readOk): SourceReadResultRow {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_table_from_manifest",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_table_from_manifest(const ProjectManifest &$manifest): SourceReadTable {",
+      "after_signature": "\tpublic static function source_read_table_from_manifest(ProjectManifest $manifest): SourceReadTable {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_table_from_worker_results",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_table_from_worker_results(const SourceReadTable &$descriptorSourceReads, const vector<SourceReadWorkerResult> &$workerResults): SourceReadTable {",
+      "after_signature": "\tpublic static function source_read_table_from_worker_results(SourceReadTable $descriptorSourceReads, vector<SourceReadWorkerResult> $workerResults): SourceReadTable {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_table_metadata_mismatch_count",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_table_metadata_mismatch_count(const SourceReadTable &$left, const SourceReadTable &$right): int {",
+      "after_signature": "\tpublic static function source_read_table_metadata_mismatch_count(SourceReadTable $left, SourceReadTable $right): int {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_table_text_hash_mismatch_count",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_table_text_hash_mismatch_count(const SourceReadTable &$left, const SourceReadTable &$right): int {",
+      "after_signature": "\tpublic static function source_read_table_text_hash_mismatch_count(SourceReadTable $left, SourceReadTable $right): int {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_worker_count_for_manifest",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_worker_count_for_manifest(const ProjectManifest &$manifest): int {",
+      "after_signature": "\tpublic static function source_read_worker_count_for_manifest(ProjectManifest $manifest): int {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_worker_probe_inputs",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_worker_probe_inputs(const SourceReadTable &$sourceReads): vector<SourceReadWorkerProbeInput> {",
+      "after_signature": "\tpublic static function source_read_worker_probe_inputs(SourceReadTable $sourceReads): vector<SourceReadWorkerProbeInput> {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "source_read_worker_probe_mismatch_count",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function source_read_worker_probe_mismatch_count(const SourceReadTable &$sourceReads, const vector<int> &$workerDescriptors): int {",
+      "after_signature": "\tpublic static function source_read_worker_probe_mismatch_count(SourceReadTable $sourceReads, vector<int> $workerDescriptors): int {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "table_from_manifest",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function table_from_manifest(const ProjectManifest &$manifest): SourceUnitTable {",
+      "after_signature": "\tpublic static function table_from_manifest(ProjectManifest $manifest): SourceUnitTable {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "table_from_source_read_table",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function table_from_source_read_table(const ProjectManifest &$manifest, const SourceReadTable &$sourceReads): SourceUnitTable {",
+      "after_signature": "\tpublic static function table_from_source_read_table(ProjectManifest $manifest, SourceReadTable $sourceReads): SourceUnitTable {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "table_from_source_read_table_adopting_texts",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function table_from_source_read_table_adopting_texts(const ProjectManifest &$manifest, SourceReadTable &$sourceReads): SourceUnitTable {",
+      "after_signature": "\tpublic static function table_from_source_read_table_adopting_texts(ProjectManifest $manifest, SourceReadTable &$sourceReads): SourceUnitTable {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "table_row",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function table_row(const ProjectManifestSourceRow &$source, const string &$sourceText): SourceUnitTableRow {",
+      "after_signature": "\tpublic static function table_row(ProjectManifestSourceRow $source, string $sourceText): SourceUnitTableRow {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "worker_published_source_read_table",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_published_source_read_table(CompilerProjectRunReport &$report, const SourceReadTable &$coordinatorSourceReads, int $workerCount): SourceReadTable {",
+      "after_signature": "\tpublic static function worker_published_source_read_table(CompilerProjectRunReport &$report, SourceReadTable $coordinatorSourceReads, int $workerCount): SourceReadTable {"
+    },
+    {
+      "source": "compiler/src/compile/model/source_units.phs",
+      "method": "worker_published_source_read_table_from_descriptors",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function worker_published_source_read_table_from_descriptors(CompilerProjectRunReport &$report, const SourceReadTable &$descriptorSourceReads, int $workerCount): SourceReadTable {",
+      "after_signature": "\tpublic static function worker_published_source_read_table_from_descriptors(CompilerProjectRunReport &$report, SourceReadTable $descriptorSourceReads, int $workerCount): SourceReadTable {"
+    },
+    {
+      "source": "compiler/src/compile/support/compiler_export_artifacts.phs",
+      "method": "branch_dataflow_tsv",
+      "kind": "signature_only",
+      "before_signature": "\tpublic static function branch_dataflow_tsv(ProjectSymbolIndex $symbols, FrontendModel $model, const string &$sourceText): string {",
+      "after_signature": "\tpublic static function branch_dataflow_tsv(ProjectSymbolIndex $symbols, FrontendModel $model, string $sourceText): string {"
+    }
+  ]
+}

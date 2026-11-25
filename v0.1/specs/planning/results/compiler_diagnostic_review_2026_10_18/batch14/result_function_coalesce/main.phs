@@ -1,0 +1,1 @@
+$f function<int()> = fn(): int => 1; $r result<function<int()>> = $f; $g = $r ?? $f; return $g();

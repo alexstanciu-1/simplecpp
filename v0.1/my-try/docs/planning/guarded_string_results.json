@@ -1,0 +1,152 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/guarded-string/20261019-01",
+  "scope": {
+    "carriers": 4,
+    "binary_signatures": 48,
+    "binary_value_state_error_cases": 68080,
+    "local_property_snapshot_cases": 23328,
+    "negative_sources": 642,
+    "retained_edit_sequences": 16
+  },
+  "suites": {
+    "focused-01": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 4,
+        "binary_signatures": 48,
+        "unary_signatures": 0,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "results": {
+      "commands": 616,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 166,
+        "runtime_programs": 2
+      }
+    },
+    "nullable": {
+      "commands": 268,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 99
+      }
+    },
+    "string_comparisons": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "comparison_forms": 7,
+        "string_values": 18,
+        "value_error_cases": 9072,
+        "snapshot_cases": 4536,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "string_identity": {
+      "commands": 12,
+      "all_expected_exits": true
+    },
+    "guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 19,
+        "binary_signatures": 228,
+        "unary_signatures": 16,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_float": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 12,
+        "binary_signatures": 144,
+        "unary_signatures": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_mixed": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 8,
+        "binary_signatures": 192,
+        "unary_signatures": 0,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_bool": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 4,
+        "binary_signatures": 48,
+        "unary_signatures": 4,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    }
+  },
+  "source_integrity": {
+    "checked": 6203,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "01686f19e04e6187439508eada715a264d3ffca70d8f2737b8a497a990d268df",
+  "attempts": {
+    "focused-01": "Passed in 10.78s.",
+    "regressions": "All eight passed; tested source unchanged throughout."
+  },
+  "fixture_updates": "Ordinary string comparison fixture retires 24 newly admitted wrapper/plain ordering negatives; equality, identity, spaceship and other invalid pairs remain.",
+  "runtime_implementation_changed": false,
+  "runtime_specification_changed": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "issue_status": {
+    "V-L07": "partially-implemented-and-verified"
+  },
+  "overall_issue_progress": {
+    "total": 64,
+    "implemented_and_verified": 18,
+    "partial": 1,
+    "unrepaired": 45,
+    "fully_closed_percent": 28.125,
+    "rounded_estimate_with_partial_percent": 30,
+    "basis": "Issue count, not engineering effort; includes deferred issues."
+  }
+}

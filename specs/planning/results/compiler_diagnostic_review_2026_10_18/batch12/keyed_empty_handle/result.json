@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n"
-}

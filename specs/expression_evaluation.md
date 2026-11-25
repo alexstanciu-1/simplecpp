@@ -109,7 +109,7 @@ RHS. Existing kind-change errors remain; text concatenation keeps its text contr
 Ordinary admitted value expressions, including fields, calls, nested updates and
 lazy expressions, may be RHS operands. They may not introduce implicit locals.
 Indexed destinations follow the existing-element path contract in
-[array semantics](array_semantics.md#v02-indexed-compound-updates).
+[array semantics](array_semantics.md#indexed-compound-updates).
 Fixed-width compound updates remain deferred.
 
 The AST and prepared facts retain compound-assignment intent and its selected
@@ -474,7 +474,7 @@ text-context conversions.
 
 ## v0.2 shared object identity — 2026-10-23
 
-The frontend admits the existing [shared strict-identity contract](../runtime/specs/spec.md#7a-shared-strict-identity-semantics-with-php-adapter-exposure)
+The frontend admits the existing shared strict-identity contract
 for `===` and `!==` on shared object handles, including optional class/interface
 values and explicit shared struct handles. Payload types must match or have an
 admitted base/derived relationship in either direction. Ancestry is checked during

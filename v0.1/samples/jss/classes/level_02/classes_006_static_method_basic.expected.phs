@@ -1,0 +1,6 @@
+class Box {
+	public static function value(): int {
+		return 7;
+	}
+}
+echo Box::value(), "\n";

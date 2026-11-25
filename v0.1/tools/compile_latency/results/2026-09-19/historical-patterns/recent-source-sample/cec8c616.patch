@@ -1,0 +1,28 @@
+commit cec8c6168605aedd84deee5d5f275de60f091147
+Author:     Alex Stanciu <ealexs@gmail.com>
+AuthorDate: Tue Aug 11 18:08:33 2026 +0300
+Commit:     Alex Stanciu <ealexs@gmail.com>
+CommitDate: Tue Aug 11 18:08:33 2026 +0300
+
+    Retarget direct call evidence wording
+
+diff --git a/compiler/src/structures/incremental/resident_project_snapshot_diff_row.phs b/compiler/src/structures/incremental/resident_project_snapshot_diff_row.phs
+index e3cda44b..901a745c 100644
+--- a/compiler/src/structures/incremental/resident_project_snapshot_diff_row.phs
++++ b/compiler/src/structures/incremental/resident_project_snapshot_diff_row.phs
+@@ -1,4 +1,4 @@
+-// Role: In-process resident snapshot comparison between two project case runs.
++// Role: In-process resident snapshot comparison between two compiler project runs.
+ struct ResidentProjectSnapshotDiffRow {
+ 	public uint32 $diff_id = 0;
+ 	public uint32 $owner_run_id = 0;
+diff --git a/compiler/src/structures/incremental/resident_project_snapshot_row.phs b/compiler/src/structures/incremental/resident_project_snapshot_row.phs
+index 0bb112df..56d8c29c 100644
+--- a/compiler/src/structures/incremental/resident_project_snapshot_row.phs
++++ b/compiler/src/structures/incremental/resident_project_snapshot_row.phs
+@@ -1,4 +1,4 @@
+-// Role: Compact in-process resident snapshot proof for one project case run.
++// Role: Compact in-process resident snapshot proof for one compiler project run.
+ struct ResidentProjectSnapshotRow {
+ 	public uint32 $snapshot_id = 0;
+ 	public uint32 $owner_run_id = 0;

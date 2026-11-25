@@ -1,0 +1,64 @@
+function sample_customer_credit(): CustomerCredit {
+    $draft CustomerCredit = new CustomerCredit();
+    $draft->id = "CN-001";
+    $draft->customer_id = "CUS-001";
+    $draft->invoice_id = "INV-001";
+    $draft->reason = "price correction";
+    $draft->revenue_account = "revenue";
+    $draft->tax_account = "tax-payable";
+    $draft->net_amount = 1000;
+    $draft->tax_amount = 200;
+    $draft->allocated_net = 300;
+    $draft->allocated_tax = 60;
+    $draft->period = 1;
+    $draft->approval_level = 2;
+    $draft->approved = true;
+    $draft->voided = false;
+    return $draft;
+}
+
+function check_customer_credit(WorkloadChecks $checks): void {
+    $draft CustomerCredit = sample_customer_credit();
+    $checks->accepted($draft->validate(), "customer_credit valid draft");
+    $checks->equal($draft->unallocated_amount(), 840, "customer_credit independent business result");
+    $copy CustomerCredit = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "customer_credit snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "customer_credit snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "customer_credit.id", "customer_credit id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "customer_credit.id", "customer_credit id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "customer_credit.id", "customer_credit id width");
+    $copy = $draft->copy();
+    $copy->id = "CN-001-changed";
+    $checks->expect($draft->id === "CN-001", "customer_credit id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "customer_credit id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "customer_credit id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->net_amount = -1;
+    $checks->rejected($copy->validate(), "customer_credit.net_amount", "customer_credit net_amount below");
+    $copy = $draft->copy();
+    $copy->net_amount = 1000000001;
+    $checks->rejected($copy->validate(), "customer_credit.net_amount", "customer_credit net_amount above");
+    $copy = $draft->copy();
+    $copy->tax_amount = -1;
+    $checks->rejected($copy->validate(), "customer_credit.tax_amount", "customer_credit tax_amount below");
+    $copy = $draft->copy();
+    $copy->tax_amount = 1000000001;
+    $checks->rejected($copy->validate(), "customer_credit.tax_amount", "customer_credit tax_amount above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "customer_credit approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "customer_credit approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "customer_credit approved change identity");
+    }
+}

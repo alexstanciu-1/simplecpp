@@ -1,0 +1,147 @@
+# Failed-generation cleanup (slice 4)
+
+Doc Status: supporting
+
+`Generation_Cleanup::failed()` releases only the current published session's previous
+history and removed-source references. It never acknowledges preparation/emission work,
+forgets watches, clears facts or rolls back symbol publication. Success and failure
+share the same private history-release operation, but retain different gate checks.
+No new model fields or retained cleanup records are introduced.
+
+`Incremental_Project::run()` first adopts a successfully published frontend session.
+Its private `compile()` continues preparation, emission and bundle publication. If that
+continuation throws, the coordinator invokes failure cleanup and rethrows the original
+exception. Jobs/readers must have finished before this gate in a future native executor.
+
+Read/tokenize/parse failures do not adopt the candidate. The existing frontend catch
+clears candidate source roots; the project retains its previous current session. An
+initial frontend failure leaves the project without a session. This path does not call
+failure cleanup on an unpublished candidate. Frontend-only API/service history policy
+is unchanged; this slice integrates the retained executable coordinator.
+
+After declaration/body failure, the current published declarations and stable entries
+remain, including tombstones. Valid unaffected caches remain reusable; dirty/failed
+bodies remain pending. Missing-symbol watches remain registered. Declaration/duplicate
+errors can stop preparation before any body traversal; their pending membership is
+preserved too. Retrying without edits does not lose the error or grow retained history.
+
+After lowering/emission/publication failure, prepared facts and downstream dirty-source
+membership survive for retry. The last successful in-memory output baseline remains.
+The bundle writer stages changed artifacts before installing any replacement. Its
+exclusive bundle reservation spans backup, installation, manifest commit and retirement.
+If publication fails, rollback restores replaced and withdrawn files at their original
+paths and removes newly installed files before releasing the reservation. Repairing the
+output destination permits retry without source edits and without re-preparing bodies.
+Native failure occurs after C++ publication and needs no prior AST generation.
+
+## Translated preparation proof
+
+The [bounded native preparation stage](../examples/preparation_recovery/preparation.php.scpp)
+translates the body completion and pending-work rules for one zero-argument
+integer-return function per source unit. It consumes return syntax exported
+by the existing frontend. The supported expressions are a canonical decimal
+literal and a call to a published function in the same subset. The worker saves
+its active body while preparing a job and restores it in `finally`. The pending
+work snapshot allows successful bodies to complete during traversal. Output
+work is acknowledged only after the batch succeeds.
+
+The [test](../tests/translated_preparation_recovery.py) prepares an initial
+program, edits two bodies, and encounters a missing function after one body
+completes. A repeat failure leaves the same body pending and the previous
+output intact. Adding the declaration repairs the input on the same native
+compiler instance. The unaffected and already completed bodies are reused.
+The repaired function bodies match both a fresh native instance and the
+PHP-hosted compiler byte for byte, with AST inputs from cpp, php, and js.
+
+The full native analyzer and its watcher graph are later bootstrap work.
+
+## Translated publisher proof
+
+The translated fixture writes two new artifacts to exclusively reserved paths.
+The manifest is the commit point. One rename switches it to the new artifacts
+after both writes succeed, and readers holding the previous manifest can still
+read its artifacts. Before the commit, the attempt owns its reservations and
+releases them in finally when a write or promotion fails.
+
+The test obstructs the second artifact's staging directory with a regular file.
+The translated publisher reports the reservation failure after the first write,
+and the test verifies that the previous manifest and both previous artifacts
+are byte-for-byte intact. It repairs only the destination and retries with the
+same publisher instance and payloads. Every surviving file belongs to one of
+the committed manifests. A second attempt targets a manifest occupied by a
+directory and verifies cleanup of both artifacts and the manifest stage while
+preserving that directory. The proof covers a single writer and recoverable
+filesystem errors under POSIX. The fixture uses a two-entry manifest to
+exercise the commit boundary in a translated program.
+
+Run the proof with the filesystem runtime enabled and built, using
+`ctest --preset default -R compiler_translated_publisher_cleanup`.
+
+
+## Lifetime qualification
+
+Existing cross-source expression facts use stable symbol entries, not direct links to
+retired declarations. Local facts stay inside their source generation. In the tested
+failures no extra dirty-fact sweep was necessary: releasing history made retired syntax
+collectible while preserving current facts and watches.
+
+Diagnostics intentionally retain source snapshots. PHP exception traces can also retain
+objects/arguments; callers keeping exceptions or old sessions extend those lifetimes.
+Cleanup does not mutilate diagnostics or caller-owned objects. The verification drops
+exception objects before weak-lifetime checks and keeps only formatted messages. PHP
+cycles remain the responsibility of the existing collector; production does not force
+GC per run. This is bounded project-owned history, not a promise of constant process RSS.
+
+## Verification
+
+```sh
+XDEBUG_MODE=off php compiler/tests/retention/failures.php > failures.json
+XDEBUG_MODE=off php compiler/tests/retention/close_timing.php failed > failed-close.json
+```
+
+The failure tool uses one resident project per flavor. Each runs an initial failure
+before any session, then ten failures per category: invalid UTF-8, incomplete parsing,
+unknown return type, missing function body dependency, duplicate declaration and blocked
+output publication. Semantic failures mix replacement edits and no-edit retries.
+Recovery introduces the missing declaration, removes duplicates or repairs the output
+path. Exact preparation counts prove quiet caches survive and publication retry performs
+zero body preparation. Stable slots, missing-name watches, queue membership and unchanged
+manifest on publication failure are checked.
+
+At every observed gate the project has one session, no retired roots, no stale watches,
+no retired pending bodies and consistent duplicate chains/indexes. Weak-observed retired
+families become collectible; releasing the project leaves no tracked survivors.
+
+Local evidence in `build/retention-slice4/`:
+
+- 198 measured project invocations across cpp/php/js: 180 expected failures and 18
+  successes; additionally three initial frontend failures before session creation.
+- Slice 3 regression: 171 transitions, including duplicates and re-addition.
+- Repeated-edit regression: 75 successful invocations; lifetime gates also pass.
+- Native regression: 54 successful executable checks across all flavors, plus expected
+  failures and retries. Raw Clang frontend/LLVM/link timings are in `native/results.json`
+  and summarized in `native-report.md`. No new forced native rebuild policy.
+
+## Timings
+
+Small two-file fixture, 25 changed-source failures and 25 no-edit failure retries per
+flavor (75 samples per row). The timing tool invokes the production cleanup method at
+the failure gate without adding clocks to compiler code. Graph inspection is excluded.
+
+| Failure mode | History release avg (min–max), ms | Explicit PHP GC avg (min–max), ms |
+| --- | ---: | ---: |
+| Changed source | 0.00151 (0.00064–0.00288) | 0.02431 (0.01494–0.06658) |
+| No-edit retry | 0.00101 (0.00047–0.00295) | 0.01581 (0.00919–0.11327) |
+
+Whole failed invocations in the separate three-file fixture averaged 0.38–0.56 ms for
+lexical/parse/declaration/body/duplicate failures and 1.48 ms for blocked publication.
+These are small-fixture observations including timer overhead, not large-program
+performance promises. GC is process-wide and test-invoked, not exclusive history-release
+cost. Success-close timing remains separately recorded in `success-close-timing.json`.
+
+Lowering uses the same catch boundary, but this fixture does not inject an artificial
+lowering defect. Crash-safe output transactions, native synchronization, symbol-slot
+reclamation and frontend-service integration remain outside this slice.
+
+[The long-session equivalence proof](incremental_equivalence.md) compares repeated
+failures/recoveries against fresh compiler processes without changing cleanup policy.

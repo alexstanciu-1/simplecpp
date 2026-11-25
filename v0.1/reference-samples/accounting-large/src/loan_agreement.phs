@@ -1,0 +1,125 @@
+// Principal movements and a fictional per-period interest rate.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class LoanAgreement {
+    public string $id = "";
+    public string $lender = "";
+    public string $liability_account = "";
+    public string $interest_account = "";
+    public string $bank_account = "";
+    public string $currency = "";
+    public int $facility_limit = 0;
+    public int $drawn_principal = 0;
+    public int $repaid_principal = 0;
+    public int $period_rate_basis_points = 0;
+    public int $instalments_remaining = 0;
+    public int $next_due_period = 0;
+    public bool $active = false;
+    public bool $secured = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("loan_agreement.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->lender, 1, 80)) {
+            return accounting_failure("loan_agreement.lender", "lender must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->liability_account, 1, 80)) {
+            return accounting_failure("loan_agreement.liability_account", "liability_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->interest_account, 1, 80)) {
+            return accounting_failure("loan_agreement.interest_account", "interest_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->bank_account, 1, 80)) {
+            return accounting_failure("loan_agreement.bank_account", "bank_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->currency, 1, 3)) {
+            return accounting_failure("loan_agreement.currency", "currency must contain 1..3 printable bytes");
+        }
+        if (!DocumentRules::integer($this->facility_limit, 0, 1000000000)) {
+            return accounting_failure("loan_agreement.facility_limit", "facility_limit must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->drawn_principal, 0, 1000000000)) {
+            return accounting_failure("loan_agreement.drawn_principal", "drawn_principal must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->repaid_principal, 0, 1000000000)) {
+            return accounting_failure("loan_agreement.repaid_principal", "repaid_principal must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period_rate_basis_points, 0, 10000)) {
+            return accounting_failure("loan_agreement.period_rate_basis_points", "period_rate_basis_points must be in [0, 10000]");
+        }
+        if (!DocumentRules::integer($this->instalments_remaining, 1, 1200)) {
+            return accounting_failure("loan_agreement.instalments_remaining", "instalments_remaining must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->next_due_period, 1, 1200)) {
+            return accounting_failure("loan_agreement.next_due_period", "next_due_period must be in [1, 1200]");
+        }
+        if ($this->drawn_principal > $this->facility_limit) {
+            return accounting_failure("loan_agreement.facility", "Draw exceeds facility");
+        }
+        if ($this->repaid_principal > $this->drawn_principal) {
+            return accounting_failure("loan_agreement.repayment", "Repayment exceeds draw");
+        }
+        return accounting_success();
+    }
+
+    public function principal_outstanding(): int {
+        return $this->drawn_principal - $this->repaid_principal;
+    }
+
+    public function copy(): LoanAgreement {
+        $snapshot LoanAgreement = new LoanAgreement();
+        $snapshot->id = $this->id;
+        $snapshot->lender = $this->lender;
+        $snapshot->liability_account = $this->liability_account;
+        $snapshot->interest_account = $this->interest_account;
+        $snapshot->bank_account = $this->bank_account;
+        $snapshot->currency = $this->currency;
+        $snapshot->facility_limit = $this->facility_limit;
+        $snapshot->drawn_principal = $this->drawn_principal;
+        $snapshot->repaid_principal = $this->repaid_principal;
+        $snapshot->period_rate_basis_points = $this->period_rate_basis_points;
+        $snapshot->instalments_remaining = $this->instalments_remaining;
+        $snapshot->next_due_period = $this->next_due_period;
+        $snapshot->active = $this->active;
+        $snapshot->secured = $this->secured;
+        return $snapshot;
+    }
+
+    public function differences(LoanAgreement $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->lender !== $other->lender) { $fields[] = "lender"; }
+        if ($this->liability_account !== $other->liability_account) { $fields[] = "liability_account"; }
+        if ($this->interest_account !== $other->interest_account) { $fields[] = "interest_account"; }
+        if ($this->bank_account !== $other->bank_account) { $fields[] = "bank_account"; }
+        if ($this->currency !== $other->currency) { $fields[] = "currency"; }
+        if ($this->facility_limit !== $other->facility_limit) { $fields[] = "facility_limit"; }
+        if ($this->drawn_principal !== $other->drawn_principal) { $fields[] = "drawn_principal"; }
+        if ($this->repaid_principal !== $other->repaid_principal) { $fields[] = "repaid_principal"; }
+        if ($this->period_rate_basis_points !== $other->period_rate_basis_points) { $fields[] = "period_rate_basis_points"; }
+        if ($this->instalments_remaining !== $other->instalments_remaining) { $fields[] = "instalments_remaining"; }
+        if ($this->next_due_period !== $other->next_due_period) { $fields[] = "next_due_period"; }
+        if ($this->active !== $other->active) { $fields[] = "active"; }
+        if ($this->secured !== $other->secured) { $fields[] = "secured"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "LoanAgreement\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "lender=" . $this->lender . "\n";
+        $text .= "liability_account=" . $this->liability_account . "\n";
+        $text .= "interest_account=" . $this->interest_account . "\n";
+        $text .= "bank_account=" . $this->bank_account . "\n";
+        $text .= "currency=" . $this->currency . "\n";
+        $text .= "facility_limit=" . (string)$this->facility_limit . "\n";
+        $text .= "drawn_principal=" . (string)$this->drawn_principal . "\n";
+        $text .= "repaid_principal=" . (string)$this->repaid_principal . "\n";
+        $text .= "period_rate_basis_points=" . (string)$this->period_rate_basis_points . "\n";
+        $text .= "instalments_remaining=" . (string)$this->instalments_remaining . "\n";
+        $text .= "next_due_period=" . (string)$this->next_due_period . "\n";
+        $text .= "active=" . DocumentRules::flag($this->active) . "\n";
+        $text .= "secured=" . DocumentRules::flag($this->secured) . "\n";
+        return $text;
+    }
+}

@@ -29,4 +29,4 @@ this bounded slice. They reject during preparation, including in unreachable cod
 
 The type-aware compiler retains one statement with ordered operands. The legacy
 exporter's sibling `AST_ECHO` representation remains an implementation detail; both
-lower to sequential runtime calls. See [legacy output rules](../generators/php/specs/rules.md#17-output-rules).
+lower to sequential runtime calls. See legacy output rules.

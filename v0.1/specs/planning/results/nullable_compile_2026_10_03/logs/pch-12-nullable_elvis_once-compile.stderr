@@ -1,0 +1,7 @@
+/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_once.cpp:10:2: warning: expression result unused [-Wunused-value]
+   10 |         static_cast<scpp::int_t<>>(local_n++);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_elvis_once.cpp:16:2: warning: expression result unused [-Wunused-value]
+   16 |         static_cast<scpp::int_t<>>(local_n++);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2 warnings generated.

@@ -1,0 +1,5 @@
+$left int = 7;
+$right int = 3;
+$sum = $left + $right * 2;
+$ok = ($sum > 4) && !($right === 0);
+return $ok ? -$sum : 0;

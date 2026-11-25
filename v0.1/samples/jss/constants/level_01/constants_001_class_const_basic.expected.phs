@@ -1,0 +1,4 @@
+class Box {
+	public const SIZE = 12;
+}
+echo Box::SIZE, "\n";

@@ -1,0 +1,65 @@
+$err error;
+
+$app ui_app = null;
+if (!take($app, $err, ui_app_create())) {
+	echo "ui_app_create failed\n";
+} else {
+	$window ui_window = null;
+	if (!take($window, $err, ui_window_create($app, "Strict WebView Bridge", 900, 600))) {
+		echo "ui_window_create failed\n";
+		ui_app_exit($app);
+	} else {
+		$view webview = null;
+		if (!take($view, $err, webview_create($window))) {
+			echo "webview_create failed\n";
+			ui_window_close($window);
+			ui_app_exit($app);
+		} else {
+			$loaded bool = false;
+			if (!take($loaded, $err, webview_load_app($view, "app"))) {
+				echo "webview_load_app failed\n";
+				webview_close($view);
+				ui_window_close($window);
+				ui_app_exit($app);
+			} else {
+				$shown bool = false;
+				if (!take($shown, $err, ui_window_show($window))) {
+					echo "ui_window_show failed\n";
+					webview_close($view);
+					ui_window_close($window);
+					ui_app_exit($app);
+				} else {
+					$running bool = true;
+					while ($running) {
+						if (ui_app_poll($app)) {
+							$event ui_event = ui_app_next_event($app);
+							$type string = ui_event_type($event);
+
+							if ($type === "window_close") {
+								$running = false;
+							} else {
+								if ($type === "webview_message") {
+									$id int = webview_message_id($event);
+									$command string = webview_message_command($event);
+									$payload_json string = webview_message_payload_json($event);
+
+									if ($command === "bridge.ping") {
+										$reply_json string = "{\"status\":\"pong\",\"handledBy\":\"strict-php\",\"payload\":" . $payload_json . "}";
+										webview_reply_ok($view, $id, $reply_json);
+									} else {
+										webview_reply_error($view, $id, "unknown_command", $command);
+									}
+								}
+							}
+						}
+						dt_sleep_ms(16);
+					}
+
+					webview_close($view);
+					ui_window_close($window);
+					ui_app_exit($app);
+				}
+			}
+		}
+	}
+}

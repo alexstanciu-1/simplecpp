@@ -1,0 +1,16 @@
+{
+  "authoring_start_epoch": 1790097247.2020218,
+  "php_ready_epoch": 1790097346.123332,
+  "php_ready_sha256": {
+    "src/01_prepare_inputs/load_runtime/handlers/resources.php": "bfb6d231bbca6506c49ee736aca48528976e3ef128fbbde65d5e68fb14665377"
+  },
+  "authoring_to_php_ready_seconds": 98.921,
+  "native_build_attempts_to_first_pass": 1,
+  "native_corrective_cycles": 0,
+  "checker_corrective_cycles": 1,
+  "checker_correction": "Nullable local ?int annotation is not supported. Use a concrete transfer destination and construct nullable result payload explicitly by branch.",
+  "native_build_seconds": 33.3,
+  "native_evidence_completed_epoch": 1790097380.0591347,
+  "consolidation_start_epoch": 1790097432.505711,
+  "consolidation_end_epoch": 1790097483.9448547
+}

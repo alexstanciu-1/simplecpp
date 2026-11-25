@@ -1,0 +1,13 @@
+class BuildInfo {
+	public static int $version = 3;
+	public const LABEL = "JSS";
+	public string $name = "frontend";
+	public static function current(): int {
+		return BuildInfo::$version;
+	}
+	public function tag(): string {
+		return BuildInfo::LABEL . ":" . $this->name;
+	}
+}
+$info BuildInfo = new BuildInfo();
+echo BuildInfo::current(), " ", $info->tag(), "\n";

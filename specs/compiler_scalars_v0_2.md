@@ -478,7 +478,7 @@ is implied.
 
 This is the agreed replacement model, not a claim of completed migration: the canonical byte/uint8 identity is now implemented, while conversion rows and
 operator coverage remain bounded pending subsequent slices.
-The [implementation plan and conversion tables](../v0.2/specs/planning/scalar_families_and_conversions.md)
+The [implementation plan and conversion tables](planning/scalar_families_and_conversions.md)
 track the migration and remaining policy decisions. Earlier implementation-slice
 restrictions above describe existing coverage where migration is pending.
 
@@ -495,7 +495,7 @@ class uint8 and a byte alias, requiring regeneration and a native rebuild.
 
 ## Integer family promotion — 2026-11-06
 
-The integer policy in [compact layout types](compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons)
+The integer policy in [compact layout types](numeric_module.md#integer-arithmetic-and-comparison)
 supersedes the older mixed-signedness rejection. Active int64 and uint8 support
 `+ - * / %` and `== != < <= > >=` in both operand orders. Same-type arithmetic
 preserves identity; mixed byte/int arithmetic selects int64. Comparisons are exact.

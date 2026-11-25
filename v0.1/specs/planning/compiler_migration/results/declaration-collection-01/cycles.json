@@ -1,0 +1,19 @@
+{
+  "first_host_behavior_outcomes": 97,
+  "host_behavior_failures": 0,
+  "post_php_ready_checker_corrections": 3,
+  "checker_reasons": [
+    "Unsupported OverflowException changed to RuntimeException",
+    "Namespace constants made fully qualified",
+    "Unsupported string casts replaced by string concatenation and compact-int normalization"
+  ],
+  "native_build_attempts": 1,
+  "native_behavior_attempts": 1,
+  "native_failure_corrective_cycles": 0,
+  "final_verification_native_builds": 0,
+  "host_purity_assertions": 9,
+  "final_ready_files": 39,
+  "converter_changes": false,
+  "framework_changes": false,
+  "target_changes": false
+}

@@ -1,0 +1,1 @@
+class B { function __construct(unique<int> $p) {} } class C extends B {} $p unique<int>; $c = new C(move($p)); return 0;

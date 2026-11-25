@@ -1,5 +1,0 @@
-#!@Python3_EXECUTABLE@
-"""Invoke API tooling with the PHP interpreter selected at configuration."""
-import os
-import sys
-os.execv('@PHP_EXECUTABLE@', ['@PHP_EXECUTABLE@', '@php_generator_source@', *sys.argv[1:]])

@@ -1,0 +1,6 @@
+function sum(int ...$values): int {
+    $total int = 0;
+    foreach ($values as $value) { $total += $value; }
+    return $total;
+}
+return sum(1, 2, 3);

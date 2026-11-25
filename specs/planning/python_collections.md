@@ -1,0 +1,36 @@
+# Python list, tuple, set and dict integration
+
+Doc Status: planning
+
+## Starting point and proposed scope
+
+Python-origin boxed lists already carry sequence identity. Boxed dict literals preserve integer and string keys separately. Both families already implement Python membership over their supported values. Untagged keyed containers from cpp, php and js enter Python as mappings, including empty containers and containers with consecutive integer keys. The packed table currently admits integer keys from zero through 2³¹−1. Tuple and set values need new contracts. [Frontend contract](../compiler_frontends.md#python-syntax-flavor-in-v02) · [Boxed runtime](../../runtime/src/boxed/boxed_value.cpp) · [Packed keys](../../runtime/src/hash/packed_key.hpp)
+
+Keep the agreed nested-value restriction. Box admitted scalars and containers within their own family. Application-defined payloads use explicit typed collections such as `hash<T,K>`. Proposed first surface: Python literals with a known destination, including function parameters and returns where context supplies the type. Use `dynamic` for Python-style shared container identity. An explicit `mixed` destination retains Simple C++ value/copy-on-write semantics. Review implicit literal typing separately. [Boxed family contract](../dynamic_types.md) · [Construction contract](../data_initialization.md)
+
+## Observable contracts
+
+| Kind | Construction and traversal | Membership and equality | Mutation and keys |
+|---|---|---|---|
+| List | Ordered elements, including duplicates. Iterate values. | Scan elements with Python identity-or-equality semantics. Sequence equality respects order and kind. | Indexed replacement, append and deletion. Deleting shifts later positions. Unhashable. |
+| Tuple | Ordered fixed slots of admitted values, including heterogeneous values and duplicates. Iterate values. | Same membership rule as list. A tuple and a list with equal elements compare unequal. | Slots are immutable. A shared mutable child remains observable through its slot. Hashable exactly when every element is hashable. |
+| Set | Distinct hashable elements. Iteration order is unspecified. | Hashed element lookup. Equality compares members independently of order. | Add and discard elements. A mutable set is unhashable. |
+| Dict | Unique hashable keys in insertion order. Iterate keys. | Hashed key lookup. Equality compares key/value pairs independently of order. | An equal key replaces the value in its existing position. Deletion followed by reinsertion puts the key last. Unhashable. |
+
+## Delivery order
+
+1. **Establish the baseline for lists and dicts.** Run the existing Python membership comparison and record current results by operation and receiver. Pass `[7]`, `{0: 7}`, `[]` and `{}` through the same typed boundary. Verify membership, iteration, aliases and child mutation for Python-created values and for peer-created mappings. Specify the Python-facing calls and exception types before changing the common collection APIs. [Existing comparison](../../compiler/tests/python_membership_conformance.py)
+2. **Complete Python list behavior on the shared sequence interface.** Add missing length, indexing, indexed write, append, deletion and iteration capabilities as needed. Normalize a negative position once against the same receiver. Out-of-range reads and replacements raise Python-facing IndexError. Exercise zero length, alias mutation and deletion at the front. Keep explicitly typed vector operations governed by their published contract.
+3. **Introduce tuple as a value.** Admit `()`, `(x,)` and `(x, y)` in Python expression contexts. Preserve grouping for `(x)` and the existing call-argument grammar. Publish construction, length, sequence read, iteration, equality and membership. Prefer one immutable backing sequence with retained slots for the shared-identity path. Prove that replacing a slot fails and that changing a shared list inside a tuple is visible. Tuple key support follows in the next slice.
+4. **Integrate dict keys and set elements through one hash/equality contract.** Start with the admitted scalar domain: None, bool, signed int64, float64 and current strings. Add tuples recursively. Equal keys must have equal hashes; collisions still require equality. Cover negative keys, numeric strings, True/1/1.0, signed zero, exact int/float comparison above 2⁵³, infinities and NaN identity. If boxed scalars cannot preserve an identity-sensitive case, record the mismatch before claiming conformance. Use the same contract for construction, lookup, membership, replacement and deletion. Benchmark a Python-key table against the packed int/string path before choosing wider storage. Prove `{1: a(), True: b(), "1": c()}` evaluates each call once in order, keeps two keys, and retains the final value for key 1. Missing subscription raises KeyError; membership of an absent hashable key returns false. An unhashable dictionary probe raises TypeError.
+5. **Add mutable sets on the same key machinery.** Admit `{x}`, `{x, y}` and the empty `set()` constructor with an explicit name-resolution rule. Preserve `{}` as a dict and `{k: v}` as keyed syntax. Construct in source order, collapse equal elements, and expose membership, iteration, length, add and discard. Check duplicate effectful elements, an unhashable list element, tuple elements and mutation through a shared alias. Verify results without depending on traversal order.
+
+The four-kind milestone covers the operations above within the agreed value domain. Record separate follow-ups for slicing, unpacking, comprehensions, dict views, set algebra, frozenset, additional hashable types and Python object protocols. Review cycle ownership and recursive equality before admitting operations that can construct cyclic shared graphs.
+
+## Compiler and verification
+
+Python parsing owns the literal distinctions. Reuse existing ordered expression and keyed-entry nodes wherever sufficient. Retain the kind on the literal that needs it. Preparation resolves the destination and its published collection capabilities during the existing expression walk. Lower against those bindings. A statically known receiver can use a direct call; a boxed receiver selects its operation by runtime kind. Existing vector and typed-hash implementations participate through their own bindings. Python iteration and membership should require no compiler-maintained list of concrete container types.
+
+For each slice, compare claimed behavior with Python and run the emitted C++ under Clang. Check source-order effects, single evaluation, failure timing, and catchable errors. Exercise unchanged Python callers against cpp/php/js providers and verify each peer's original literal, copy and key behavior. Change a dependency, remove it and restore it; compare diagnostics and recovered output with a fresh build. Record AST size and preparation visits for ordinary literals, and measure preparation and native costs before selecting a new default storage layout.
+
+The first design review should settle ownership at typed boundaries: approve dynamic as the shared-identity path, and decide how a Python-created tuple or set travels through a peer that has no literal spelling for it. Proposed behavior is to preserve the kind on return and expose only the operations published for that peer and destination.

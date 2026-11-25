@@ -1,0 +1,489 @@
+{
+  "TYPE-01": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "TYPE-01-source-compile-0.stderr"
+      ]
+    }
+  },
+  "TYPE-02": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "TYPE-02-source-compile-0.stderr"
+      ]
+    }
+  },
+  "TYPE-03": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "TYPE-03-source-compile-0.stderr"
+      ]
+    }
+  },
+  "TYPE-04": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "TYPE-04-source-compile-0.stderr"
+      ]
+    }
+  },
+  "NAME-01": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emit",
+      "error": "Duplicate C++ artifact identity or path"
+    }
+  },
+  "NAME-02": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "Missing import target or wrong symbol kind: \\Missing\\C"
+    }
+  },
+  "NAME-03": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "Conflicting import binding: X"
+    }
+  },
+  "NAME-04": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "Private method is not accessible here: f\n"
+    }
+  },
+  "CALL-01": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n"
+    }
+  },
+  "CALL-02": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S non-void function f can reach the end without returning a value\n"
+    }
+  },
+  "CALL-03": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    }
+  },
+  "REF-01": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S reference return cannot escape local, value-parameter or interior storage\n"
+    }
+  },
+  "REF-02": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S reference arguments require stable storage of the exact parameter type\n"
+    }
+  },
+  "REF-03": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+    }
+  },
+  "OP-01": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 4
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 4
+    }
+  },
+  "OP-02": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 3
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 3
+    }
+  },
+  "OP-03": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 2
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 2
+    }
+  },
+  "OP-04": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 3
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 3
+    }
+  },
+  "OP-05": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+    }
+  },
+  "CONT-01": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S reference binding requires stable storage\n"
+    }
+  },
+  "CONT-02": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S coalesce does not permit result_or_bool on either side\n"
+    }
+  },
+  "CONT-03": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n"
+    }
+  },
+  "OBJ-01": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "OBJ-01-source-compile-0.stderr"
+      ]
+    }
+  },
+  "OBJ-02": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "Interface implementation requires a compatible public instance signature\n"
+    }
+  },
+  "OBJ-03": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "prepare",
+      "error": "Cyclic type relationship\nCyclic type relationship\n"
+    }
+  },
+  "LOW-01": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed",
+      "execution": "passed",
+      "expected_exit": 1
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "LOW-01-source-compile-0.stderr"
+      ]
+    }
+  },
+  "LOW-03": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "LOW-03-source-compile-0.stderr"
+      ]
+    }
+  },
+  "LOW-04": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "LOW-04-source-compile-0.stderr"
+      ]
+    }
+  },
+  "LOW-05": {
+    "control": {
+      "stage": "emitted",
+      "compile": "passed",
+      "compile_logs": [],
+      "link": "passed"
+    },
+    "source": {
+      "stage": "emitted",
+      "compile": "failed",
+      "compile_logs": [
+        "LOW-05-source-compile-0.stderr"
+      ]
+    }
+  },
+  "REC-01": {
+    "recovery": {
+      "base": {
+        "prepared": true,
+        "emitted": true,
+        "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+        "empty": false,
+        "ready": true
+      },
+      "edit": {
+        "stage": "prepare",
+        "error": "S2S needs an established local declaration for missing\n",
+        "empty": true,
+        "ready": false,
+        "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+        "direct_retry": "S2S needs an established local declaration for missing\n"
+      },
+      "retry": {
+        "stage": "prepare",
+        "error": "S2S needs an established local declaration for missing\n",
+        "empty": true,
+        "ready": false,
+        "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+        "direct_retry": "S2S needs an established local declaration for missing\n"
+      },
+      "fresh_invalid": {
+        "stage": "prepare",
+        "error": "S2S needs an established local declaration for missing\n",
+        "empty": true,
+        "ready": false,
+        "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+        "direct_retry": "S2S needs an established local declaration for missing\n"
+      },
+      "repair": {
+        "prepared": true,
+        "emitted": true,
+        "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+        "empty": false,
+        "ready": true
+      }
+    }
+  },
+  "REC-02": {
+    "recovery": {
+      "base": {
+        "prepared": true,
+        "emitted": true,
+        "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+        "empty": false,
+        "ready": true
+      },
+      "edit": {
+        "stage": "sync",
+        "error": "a.phs: Expected '}' at a.phs: byte 35\n",
+        "empty": true,
+        "ready": false,
+        "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+        "direct_retry": "Finish tokenization and parsing before preparation"
+      },
+      "retry": {
+        "stage": "sync",
+        "error": "a.phs: Expected '}' at a.phs: byte 35\n",
+        "empty": true,
+        "ready": false,
+        "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+        "direct_retry": "Finish tokenization and parsing before preparation"
+      },
+      "fresh_invalid": {
+        "stage": "sync",
+        "error": "a.phs: Expected '}' at a.phs: byte 35\n",
+        "empty": true,
+        "ready": false,
+        "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+        "direct_retry": "Finish tokenization and parsing before preparation"
+      },
+      "repair": {
+        "prepared": true,
+        "emitted": true,
+        "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+        "empty": false,
+        "ready": true
+      }
+    }
+  }
+}

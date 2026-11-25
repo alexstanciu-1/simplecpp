@@ -1,0 +1,11 @@
+class Main {
+	public static function hello(): void {
+		echo "hello\n";
+	}
+
+	public static function run(): void {
+		static::hello();
+	}
+}
+
+Main::run();

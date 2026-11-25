@@ -1,0 +1,7 @@
+{
+  "tools/php_portability/src/converter.php": "9e69a98dee68a9a6ba074c1409bc0acd6e5864672fa6a3e81f31c2c5e77e6313",
+  "tools/php_portability/validate.py": "bd91211db82ecaf2b51136256f17baffec90ae8e4026e6c81b89aa6349a71e9e",
+  "tests/portability/value_records/main.php": "9485f3a5f6d70af3238d2758808b6138b17b73a0a41c5c2a00f1859079927216",
+  "tests/portability/value_records/operations.php": "5babe61f14c99d47ad47dc4a58efa6c4ca126866fb95b5d974373bcfc9d584dc",
+  "tests/portability/value_records/span.php": "5ce59895b14692b7ac62cd5656d37e8b9d6709990ee257fb2757d18984cb4cde"
+}

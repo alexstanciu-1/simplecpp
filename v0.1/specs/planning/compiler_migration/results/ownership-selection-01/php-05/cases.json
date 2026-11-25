@@ -1,0 +1,104 @@
+[
+  {
+    "source": "function f(): int { return 0; } return 0;",
+    "dependencies": [],
+    "selected": false,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(const Nested &$n): int { return 0; } return 0;",
+    "dependencies": [],
+    "selected": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): int { $n Nested; return 0; } return 0;",
+    "dependencies": [
+      [
+        "construct:",
+        "Nested"
+      ],
+      [
+        "destroy:",
+        "Nested"
+      ]
+    ],
+    "selected": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): Nested { $n Nested; return $n; } return 0;",
+    "dependencies": [
+      [
+        "construct:",
+        "Nested"
+      ],
+      [
+        "destroy:",
+        "Nested"
+      ],
+      [
+        "move:",
+        "Nested"
+      ]
+    ],
+    "selected": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): Nested { return new Nested(); } return 0;",
+    "dependencies": [
+      [
+        "construct:",
+        "Nested"
+      ],
+      [
+        "destroy:",
+        "Nested"
+      ]
+    ],
+    "selected": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(const Nested &$n): int { return g($n); } function g(const Nested &$n): int { return 0; } return 0;",
+    "dependencies": [
+      [
+        "body:",
+        "g"
+      ]
+    ],
+    "selected": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): Nested { return g(); } function g(): Nested { return new Nested(); } return 0;",
+    "dependencies": [
+      [
+        "body:",
+        "g"
+      ],
+      [
+        "destroy:",
+        "Nested"
+      ]
+    ],
+    "selected": true,
+    "expected": "accepted"
+  },
+  {
+    "source": "function f(): int { $a Nested; $b Nested; return 0; } return 0;",
+    "dependencies": [
+      [
+        "construct:",
+        "Nested"
+      ],
+      [
+        "destroy:",
+        "Nested"
+      ]
+    ],
+    "selected": true,
+    "expected": "accepted"
+  }
+]

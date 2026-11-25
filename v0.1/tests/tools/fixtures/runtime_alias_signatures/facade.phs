@@ -1,0 +1,21 @@
+function keep_lock(file_lock_handle $handle): file_lock_handle { return $handle; }
+function keep_process(\process_handle $handle): \process_handle { return $handle; }
+function keep_output(process_output $output): process_output { return $output; }
+function acquire_lock(\file_lock_handle &$handle, string $path): result<bool> {
+	return fs_lock_try($handle, $path);
+}
+function release_lock(file_lock_handle $handle): result<bool> { return fs_lock_release($handle); }
+class RuntimeBox {
+	private $lock file_lock_handle = null;
+	private $process \process_handle = null;
+	public $output process_output = null;
+	public function set_lock(file_lock_handle $handle): void { $this->lock = $handle; }
+	public function get_lock(): file_lock_handle { return $this->lock; }
+	public function set_process(\process_handle $handle): void { $this->process = $handle; }
+	public function get_process(): \process_handle { return $this->process; }
+	public function set_output(process_output $output): void { $this->output = $output; }
+	public function get_output(): process_output { return $this->output; }
+	public function acquire(file_lock_handle &$handle, string $path): result<bool> { return fs_lock_try($handle, $path); }
+}
+// Ordinary user classes still need declaration handling across file boundaries.
+function keep_user(UserRecord $record): UserRecord { return $record; }

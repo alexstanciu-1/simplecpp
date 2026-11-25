@@ -1,0 +1,22 @@
+--- before/__callable/llvm_text_from_plan_group_16.cpp
++++ after/__callable/llvm_text_from_plan_group_16.cpp
+@@ -267,7 +267,15 @@
+ 	string_t llvmType = required_cast<string_t>(__latency_fn_llvm_text_from_plan_llvm_type_for_type_ref(parameter->type_ref_id));
+ 	int_t<> align = required_cast<int_t<>>(__latency_fn_llvm_text_from_plan_llvm_align_for_type_ref(parameter->type_ref_id));
+ 	string_t resultName = required_cast<string_t>(__latency_fn_llvm_text_from_plan_binary_result_name_for_operator(operatorRow, static_cast<int_t<> >(1)));
+-	return (string_t("define ") + cast<string_t>(llvmType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("(") + cast<string_t>(__latency_fn_llvm_text_from_plan_parameter_signature_text_with_reference_slots(symbols, symbol)) + string_t(") {\n") + string_t("entry:\n") + string_t("  %ref_load_1 = load ") + cast<string_t>(llvmType) + string_t(", ptr %arg_1, align ") + cast<string_t>(align) + string_t("\n") + string_t("  ") + cast<string_t>(resultName) + string_t(" = ") + cast<string_t>(__latency_fn_llvm_text_from_plan_binary_instruction_for_operator(operatorRow)) + string_t(" ") + cast<string_t>(llvmType) + string_t(" %ref_load_1, ") + cast<string_t>(cast<int_t<>>(rightLiteral->numeric_payload)) + string_t("\n") + string_t("  store ") + cast<string_t>(llvmType) + string_t(" ") + cast<string_t>(resultName) + string_t(", ptr %arg_1, align ") + cast<string_t>(align) + string_t("\n") + string_t("  %ref_load_2 = load ") + cast<string_t>(llvmType) + string_t(", ptr %arg_1, align ") + cast<string_t>(align) + string_t("\n") + string_t("  ret ") + cast<string_t>(llvmType) + string_t(" %ref_load_2\n") + string_t("}\n\n"));
+-}
+-
+-}
++	string_t text = required_cast<string_t>((string_t("define ") + cast<string_t>(llvmType) + string_t(" ") + cast<string_t>(llvmFunctionName) + string_t("(") + cast<string_t>(__latency_fn_llvm_text_from_plan_parameter_signature_text_with_reference_slots(symbols, symbol)) + string_t(") {\n")));
++	text = (cast<string_t>(text) + string_t("entry:\n"));
++	text = (cast<string_t>(text) + string_t("  %ref_load_1 = load ") + cast<string_t>(llvmType) + string_t(", ptr %arg_1, align ") + cast<string_t>(align) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("  ") + cast<string_t>(resultName) + string_t(" = ") + cast<string_t>(__latency_fn_llvm_text_from_plan_binary_instruction_for_operator(operatorRow)) + string_t(" ") + cast<string_t>(llvmType) + string_t(" %ref_load_1, ") + cast<string_t>(cast<int_t<>>(rightLiteral->numeric_payload)) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("  store ") + cast<string_t>(llvmType) + string_t(" ") + cast<string_t>(resultName) + string_t(", ptr %arg_1, align ") + cast<string_t>(align) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("  %ref_load_2 = load ") + cast<string_t>(llvmType) + string_t(", ptr %arg_1, align ") + cast<string_t>(align) + string_t("\n"));
++	text = (cast<string_t>(text) + string_t("  ret ") + cast<string_t>(llvmType) + string_t(" %ref_load_2\n"));
++	text = (cast<string_t>(text) + string_t("}\n\n"));
++	return text;
++}
++
++}

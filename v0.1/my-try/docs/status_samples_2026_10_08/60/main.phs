@@ -1,0 +1,10 @@
+class Base {
+    protected int $value;
+    public function __construct(int $value) { $this->value = $value; }
+    public function read(): int { return $this->value; }
+}
+class Child extends Base {
+    public function __construct() { parent::__construct(7); }
+    public function doubled(): int { $value = parent::read(); return $value * 2; }
+}
+return (new Child())->doubled();
