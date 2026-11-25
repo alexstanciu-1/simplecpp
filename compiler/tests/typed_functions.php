@@ -147,6 +147,13 @@ rejects(fn() => $php('function f(int ...$xs,int $y):int {return 0;}return 8;'), 
 rejects(fn() => $php('function f(int ...$xs=1):int {return 0;}return 8;'), 'Variadic parameter must be last');
 rejects(fn() => $php($variadic . 'return gather(base: 1);'), 'Variadic calls require positional arguments');
 
+$php('$f = fn(int ...$xs):int => count($xs); echo $f(),$f(1,2);return 8;');
+$php('$f function<int(int...)> = function(...$xs) {return count($xs);};return 8;');
+rejects(fn() => $php('$f = fn(...$xs):int => count($xs);return 8;'), 'explicit parameter type');
+rejects(fn() => $php('$f function<int(int...)> = fn($xs) => count($xs);return 8;'), 'Expected exact callback signature');
+rejects(fn() => $php('$f function<int(int...)> = fn(string ...$xs) => count($xs);return 8;'), 'Expected exact callable signature');
+rejects(fn() => $php('$f = fn(int ...$xs=1):int => count($xs);return 8;'), 'Variadic parameter must be last');
+
 $directory = sys_get_temp_dir() . '/scpp-typed-functions-' . bin2hex(random_bytes(8));
 mkdir($directory);
 try

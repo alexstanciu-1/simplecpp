@@ -1926,7 +1926,8 @@ final class Preparation
 	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected): void
 	{
 		$function = $this->owner->parent;
-		if ($expected !== null && count($lambda->parameters) !== count($expected->inputs)) {
+		$variadic = $lambda->variadic_slot();
+		if ($expected !== null && (count($lambda->parameters) !== count($expected->inputs) || $variadic !== $expected->variadic_slot)) {
 			throw new diagnostic($lambda->source(), $lambda->byte_start(), 'Expected exact callback signature ' . $expected->name);
 		}
 		$result = $lambda->result === null
@@ -1945,14 +1946,18 @@ final class Preparation
 				$reason = $lambda->parent instanceof ast_inline_job ? 'Duplicate inline job binding: ' : 'Duplicate lambda parameter: ';
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), $reason . $name);
 			}
-			$type = $parameter->type_reference === null
+			$syntax = $parameter->type_reference;
+			$type = ($syntax === null || ($index === $variadic && $syntax->first_child === null))
 				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
-				: Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
+				: Type_Resolution::signature($syntax, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
+			if ($index === $variadic && !($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameter requires a supported vector element');
+			}
 			if (!Type_Resolution::callback_component($type) || $parameter->mode === passing_mode::readonly_reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
 			}
 			$parameter->settle_type($type);
-			if ($optional || $parameter->default_value !== null) {
+			if ($index !== $variadic && ($optional || $parameter->default_value !== null)) {
 				Function_Preparation::parameter_default($parameter, $this->symbols, $this->owner, $this->dependencies);
 				$optional = true;
 			}
@@ -2000,7 +2005,7 @@ final class Preparation
 			else $scope->reference_return($lambda->body, $lambda->parameters[$origin], $lambda->body);
 		}
 		if ($scope->borrows_receiver) $this->borrow_receiver($lambda);
-		$type = new lambda_type_definition(new callback_type_definition($result, $inputs, $modes, $origin), $lambda->captures !== [],
+		$type = new lambda_type_definition(new callback_type_definition($result, $inputs, $modes, $origin, $variadic), $lambda->captures !== [],
 			$scope->borrows_receiver, $scope->borrows_receiver || $borrowed !== [], $optional);
 		$lambda->settle_lambda($type, $conversion, $writes);
 		if ($lambda->body instanceof ast_block) {
