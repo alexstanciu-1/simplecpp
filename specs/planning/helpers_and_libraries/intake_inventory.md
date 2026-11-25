@@ -4,7 +4,7 @@ Doc Status: planning
 
 ## Current family status
 
-Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All implementation groups selected through mysqli, UI and Webview have source-to-native evidence for their agreed v0.2 contracts. The wider donor inventory still contains separate intake decisions. Compile-time, LLVM and execution tuning belong to Stage 2.
+Reconciled against `codex/helpers-and-libs` through `cfd9f27c9` on 2026-11-25. All implementation groups selected through mysqli, UI and Webview have source-to-native evidence for their agreed v0.2 contracts. The wider donor inventory still contains separate intake decisions. Compile-time, LLVM and execution tuning belong to Stage 2.
 
 | Operational family | Proven v0.2 scope |
 | --- | --- |
@@ -40,9 +40,9 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 
 | Candidate | What remains to settle |
 | --- | --- |
-| Remaining core and release-only spellings | Reconcile source-visible debug/output, predicates, constants and compatibility aliases against existing language contracts. Classify compiler-emitted evaluation/debug hooks with their owners. Results/errors, conversions, lifetime operations, enum/layout queries and source-language operators already have dedicated evidence rows below. An equivalent language capability alone does not establish a donor spelling or overload. [Source surface index](donor_surfaces.tsv) · [Donor entities](donor_entities.tsv) |
+| Exact-mixed type predicates | Audit recommends implementing `is_bool(mixed)`, `is_int(mixed)` and `is_float(mixed)` together. Other core spellings and release aliases now have individual dispositions. [Core closeout audit](core_closeout_audit.md) |
 
-**Closeout.** The agreed implementations are operational. To close the broader mining pass, choose implement, defer or assign an owner for the remaining candidates and record the core spelling decisions. The CLI/environment group has completed implementation.
+**Closeout.** The remaining core inventory has been audited. The predicate family awaits a decision and implementation. Broader echo coverage is tracked by the compiler. Debug formatting, process-memory metrics and flavor compatibility have proposed deferrals.
 
 **Visibility.** C++ uses general names by default. PHP, JS and Python can add them with `"general_api": true` on the root project. Selecting a module remains a separate requirement. [Module and lookup contract](../../../compiler/docs/modules.md)
 
