@@ -1,0 +1,9 @@
+# queue|status
+imports|waiting
+payments|failed
+imports|running
+mail|failed
+payments|failed
+mail|waiting
+payments|retrying
+broken

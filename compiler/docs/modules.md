@@ -78,7 +78,7 @@ link the same runtime implementation from source when using the declared archive
 ## Filesystem module
 
 Configure the default build with `cmake --preset default -DSCPP_ENABLE_FILESYSTEM=ON`
-and build `scpp_filesystem`. In the application manifest select
+and run `cmake --build --preset default --target scpp_filesystem`. In a compiler checkout this target also publishes the matching compiler bindings. In the application manifest select
 `"dependencies": {"runtime": {"modules": ["filesystem"]}}`. The compiler checks that
 selection when preparing a filesystem call or import. Changing the selection uses
 the same fresh frontend generation as a change to an optional type dependency.

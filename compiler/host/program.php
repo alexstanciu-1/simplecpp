@@ -19,7 +19,9 @@ final class Program_Command
 		}
 		require_once __DIR__ . '/native_build.php';
 		$config = Native_Build::configuration($arguments[6]);
-		$report = (new Project_Compiler())->run($arguments[2], $arguments[3], $arguments[4], false, $options['functions']);
+		$session = (new Module_Loader())->load($arguments[2], $arguments[4]);
+		Native_Build::check_dependencies($session);
+		$report = (new Project_Compiler())->run_loaded($session, $arguments[3], $arguments[4], false, $options['functions']);
 		$report['native'] = Native_Build::run($arguments[4], $arguments[5], $config);
 		self::report($report);
 		return $report['native']['exit_code'] === 0 ? 0 : 1;

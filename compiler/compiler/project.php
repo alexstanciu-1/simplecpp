@@ -6,13 +6,16 @@ namespace scpp\compiler;
 /** Owns project loading, change checks, compilation and publication; never writes host output. */
 final class Project_Compiler
 {
+	/** PROPERTIES */
 	private readonly ?string $runtime;
 
+	/** CONSTRUCTOR */
 	public function __construct(?string $runtime = null)
 	{
 		$this->runtime = $runtime;
 	}
 
+	/** METHODS */
 	/** Incremental analyzer entry point; never invokes preparation, lowering or native emission. */
 	public function frontend(string $path, ?compilation_session $previous = null, ?string $output_directory = null): compilation_session
 	{
@@ -35,6 +38,16 @@ final class Project_Compiler
 	public function run(string $path, string $facts, string $directory, bool $force = false, array $optimize_functions = []): array /** array<string,mixed> */
 	{
 		$session = (new Module_Loader($this->runtime))->load($path, $directory);
+		return $this->run_loaded($session, $facts, $directory, $force, $optimize_functions);
+	}
+
+	/**
+	 * Compile the session whose dependency graph was loaded by the caller.
+	 * @param string[] $optimize_functions
+	 * @return mixed[]
+	 */
+	public function run_loaded(compilation_session $session, string $facts, string $directory, bool $force, array $optimize_functions /** list<string> */): array /** array<string,mixed> */
+	{
 		$state = Project_Changes::capture($session, $facts, $directory, $optimize_functions);
 		[$previous, $cached] = Cpp_Bundle::with_reader($directory,
 			static function (bool $present) use ($directory, $force, $state): array {

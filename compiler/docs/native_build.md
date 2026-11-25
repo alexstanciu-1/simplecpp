@@ -37,7 +37,7 @@ pipe characters in native graph input paths reject in this slice; the current
 Ninja/Make depfile grammar does not reliably round-trip those spellings.
 
 The bundle manifest supplies generated translation units, external native sources and
-prebuilt dependency link inputs. This command does not rebuild dependencies. Use
+prebuilt dependency link inputs. The build command checks that selected dependency archives exist before compiling source. Build those dependencies separately. Use
 native facts and prebuilt runtime artifacts compatible with the chosen target,
 compiler and standard library. The default runtime manifest selects the existing
 Clang/libc++ archive; it does not automatically substitute a GCC archive.

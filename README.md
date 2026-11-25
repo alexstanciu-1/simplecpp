@@ -8,6 +8,17 @@ The `simplecpp-active.zip` release asset contains the compiler, runtime, specs a
 git archive --format=zip --prefix=simplecpp/ -o simplecpp-active.zip HEAD -- . ':!v0.1'
 ```
 
+## Run a file-processing prototype
+
+On Linux with the default build toolchain installed, run the queue report from the repository root.
+
+```sh
+python3 examples/queue-report/check.py
+build/clang/examples/queue-report/native/program examples/queue-report/snapshot.txt
+```
+
+The first command enables the optional filesystem module in the default build directory, builds its runtime and compiler bindings, compiles the application, and checks the report against [the expected output](examples/queue-report/expected.txt). Pass your own snapshot to the executable. Each line contains a queue name and a job status separated by `|`. The [application](examples/queue-report/main.php) counts waiting, running and failed jobs, counts malformed rows, and lists failures by queue.
+
 Runtime public APIs follow the [minimal public header rule](specs/runtime_public_headers.md).
 
 This is the active destination for explicitly reviewed reuse slices. The compiler, runtime, tools and tests build from the repository root. Normal external compiler,

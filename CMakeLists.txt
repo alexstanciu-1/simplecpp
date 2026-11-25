@@ -221,6 +221,9 @@ endif()
 
 if(SCPP_ENABLE_FILESYSTEM)
   add_library(scpp_filesystem STATIC runtime/src/filesystem/filesystem.cpp)
+  if(TARGET scpp_compiler_publication)
+    add_dependencies(scpp_filesystem scpp_compiler_publication)
+  endif()
   if(filesystem_locks STREQUAL "OBJECT")
     target_sources(scpp_filesystem PRIVATE runtime/src/filesystem/file_lock.cpp)
   endif()
@@ -693,6 +696,16 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/regex_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+  # The bundled application manifests select archives from the default preset.
+  if(CMAKE_BINARY_DIR STREQUAL "${CMAKE_SOURCE_DIR}/build/clang")
+    if(SCPP_ENABLE_FILESYSTEM)
+      add_test(NAME example_queue_report COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/examples/queue-report/check.py --configured)
+    else()
+      add_test(NAME example_queue_report_setup COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/examples/queue-report/check.py --check-disabled)
+    endif()
   endif()
   if(SCPP_ENABLE_FILESYSTEM)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND filesystem_locks STREQUAL "OBJECT")

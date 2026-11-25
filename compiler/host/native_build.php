@@ -10,6 +10,26 @@ final class Native_Build
 {
 	private const CONTEXT_STAMP = '.scpp-native-context';
 
+	/** Check selected prebuilt dependencies before preparing application source. */
+	public static function check_dependencies(compilation_session $session): void
+	{
+		$runtime = dirname(__DIR__, 2) . '/runtime';
+		foreach ($session->modules as $module) {
+			if ($module === $session->entry) continue;
+			$filesystem = $module->manifest === $runtime . '/filesystem.module.json';
+			$setup = 'Run cmake --preset default -DSCPP_ENABLE_FILESYSTEM=ON and cmake --build --preset default --target scpp_filesystem.';
+			if ($filesystem && !is_file($runtime . '/generated/private/filesystem_provider.hpp')) {
+				throw new \RuntimeException('The selected filesystem module has no published runtime bindings. ' . $setup);
+			}
+			foreach ($module->artifacts as $artifact) {
+				if (!is_file($artifact)) {
+					throw new \RuntimeException("Missing prebuilt artifact for $module->name: $artifact. "
+						. ($filesystem ? $setup : 'Build the dependency before building the application.'));
+				}
+			}
+		}
+	}
+
 	/**
 	 * Read an explicit host configuration; relative flag operands are interpreted in the native build directory.
 	 * @return mixed[]

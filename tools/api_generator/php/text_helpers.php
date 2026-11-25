@@ -45,6 +45,7 @@ function compilerTextBinding(string $name, array $binding, array $types, ?string
 function renderTextHelpers(array $plan, array &$files): void {
     foreach ($plan['text_helpers'] ?? [] as $name => $binding) {
         if (in_array($name, ['hash_string', 'stable_hash_string_u64'], true)) $files['src/runtime.cpp'] .= includeHeader('stable_string_hash.hpp');
+        if ($name === 'string_byte_slice_equals') $files['src/runtime.cpp'] .= "#include <cstring>\n";
         if (str_starts_with($name, 'string_utf8_')) $files['src/runtime.cpp'] .= includeHeader('utf8_codepoints.hpp');
         $signature = $binding['result'] . " $name(" . implode(', ', $binding['native_parameters']) . ')';
         $declaration = $name === 'string_byte_find' ? substr($signature, 0, -1) . ' = 0)' : $signature;
@@ -72,5 +73,5 @@ function renderHashJoin(array $plan, array &$files): void {
         $definitions .= "$signature {\n" . template('strings/hash_join') . "}\n";
     }
     $files['public/' . $header] = moduleHeaderBody([$plan['hashes']['header']], 'scpp::php', $declarations);
-    $files['src/runtime.cpp'] .= includeHeader($header) . "namespace scpp::php {\n$definitions}\n";
+    $files['src/hash.cpp'] .= includeHeader($header) . "namespace scpp::php {\n$definitions}\n";
 }
