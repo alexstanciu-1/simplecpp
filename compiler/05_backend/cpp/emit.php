@@ -3002,6 +3002,8 @@ CPP;
 		$operands = $runtime ? $value->runtime_operands() : $value->arguments;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
 		$variadic = $callback ? $function->variadic_slot : ($runtime ? null : $function->variadic_slot());
+		// An unpacked operand already supplies the native by-value vector parameter.
+		if ($value instanceof ast_unpacked_call) $variadic = null;
 		if ($variadic !== null) {
 			$last = array_pop($parameters);
 			$pack = $callback ? $last : $last->type_def();

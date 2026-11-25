@@ -218,25 +218,27 @@ final class Syntax_Inspection
 				'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_call_expression) {
+			$arguments = array_map(self::expression(...), $expression->arguments);
+			if ($expression instanceof ast_unpacked_call) $arguments[array_key_last($arguments)]['unpacked'] = true;
 			if ($expression->qualifier === call_qualifier::local) {
-				return ['kind' => 'local_call', 'name' => $expression->name, 'arguments' => array_map(self::expression(...), $expression->arguments),
+				return ['kind' => 'local_call', 'name' => $expression->name, 'arguments' => $arguments,
 					'span' => self::span($expression)];
 			}
 			if ($expression->qualifier === call_qualifier::lexical_parent || $expression->qualifier === call_qualifier::called_type) {
 				return ['kind' => $expression->qualifier === call_qualifier::called_type ? 'late_static_call' : 'parent_call', 'name' => $expression->name,
-					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
+					'arguments' => $arguments, 'span' => self::span($expression)];
 			}
 			if ($expression->receiver !== null) {
 				return ['kind' => 'member_or_qualified_call', 'name' => $expression->name,
 					'receiver' => self::expression($expression->receiver),
-					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
+					'arguments' => $arguments, 'span' => self::span($expression)];
 			}
 			$name_end = $expression->start;
 			while ($expression->lexical_root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {
 				$name_end++;
 			}
 			return ['kind' => 'call', 'name' => self::name($expression, $expression->name, $expression->start,
-				$name_end), 'arguments' => array_map(self::expression(...), $expression->arguments),
+				$name_end), 'arguments' => $arguments,
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_string_expression) {

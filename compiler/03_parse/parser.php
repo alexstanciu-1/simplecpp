@@ -983,7 +983,8 @@ final class Parser
 	/** Parse the common argument list after a function path or member name. */
 	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver, call_qualifier $qualifier = call_qualifier::ordinary): ast_expression
 	{
-		if ($this->cursor->next_is(token_kind::ellipsis)) {
+		if ($this->cursor->next_is(token_kind::ellipsis)
+			&& ($this->cursor->tokens->tokens[$this->cursor->position() + 2]->kind ?? null) === token_kind::rparen) {
 			$this->cursor->take(token_kind::lparen, '(');
 			$this->cursor->take(token_kind::ellipsis, '...');
 			$end = $this->cursor->take(token_kind::rparen, ')') + 1;
@@ -994,7 +995,9 @@ final class Parser
 			return new ast_callable_reference($name, $start, $end);
 		}
 		$labels = [];
-		$arguments = $this->arguments($labels);
+		$unpacked = false;
+		$arguments = $this->arguments($labels, $unpacked);
+		if ($unpacked) return new ast_unpacked_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels, $qualifier);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 	}
@@ -1013,7 +1016,7 @@ final class Parser
 	 * @param string[]|null $labels
 	 * @return ast_expression[]
 	 */
-	private function arguments(?array &$labels = null): array /** list<ast_expression> */
+	private function arguments(?array &$labels = null, ?bool &$unpacked = null): array /** list<ast_expression> */
 	{
 		$this->cursor->take(token_kind::lparen, '(');
 		$arguments = [];
@@ -1026,7 +1029,15 @@ final class Parser
 			} elseif ($labels) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Positional argument after named argument');
 			}
+			if ($this->cursor->is(token_kind::ellipsis)) {
+				if ($unpacked === null || $labels) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Unpacking requires a positional variadic call');
+				$this->cursor->take(token_kind::ellipsis, '...');
+				$unpacked = true;
+			}
 			$arguments[] = $this->value(argument_operand: true);
+			if ($unpacked && !$this->cursor->is(token_kind::rparen)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Unpacked vector must be the final argument');
+			}
 			if (!$this->cursor->is(token_kind::comma)) {
 				break;
 			}

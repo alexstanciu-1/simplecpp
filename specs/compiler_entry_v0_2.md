@@ -252,8 +252,14 @@ The corresponding last input is written `T...` in `callback<R,T...>` and
 `function<R(T...)>`. Named and anonymous targets must match the marker exactly. A fixed
 `vector<T>` input and a variadic `T...` input have distinct source signatures.
 A closure may write `...$values` when its callable destination supplies the element type.
-The ellipsis is always explicit. Reference packs, unpacking and named arguments to
-variadic calls remain deferred.
+The ellipsis is always explicit. A positional call can supply its entire tail
+as one final unpacked vector, for example `score($base, ...$items)` or
+`$op(...$items)` for a pack-only signature. Supply every fixed argument
+before the vector. The vector must match the pack storage type exactly.
+It is evaluated once, after the fixed arguments, and passed with ordinary
+vector value semantics. Mutating the pack leaves the caller’s vector storage
+independent. An empty vector supplies zero elements. Reference packs and named
+arguments to variadic calls remain deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
 ### Named callbacks

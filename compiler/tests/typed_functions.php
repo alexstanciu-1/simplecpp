@@ -131,6 +131,14 @@ $multi = (new Program_Frontend())->prepare_sources('main', [
 ], new entry_target(31));
 $bundle = Cpp_Program::emit($multi);
 $fixtures['multifile'] = ['files' => $bundle->files, 'stdout_hex' => bin2hex('cross')];
+// A PHP-declared variadic target accepts an unpacked vector across source flavors.
+$unpack = (new Program_Frontend())->prepare_sources('main', [
+	'main' => new source_file('main', 'function n(int ...$xs):int {$xs[]=9;return count($xs);}'
+		. '$xs vector<int> = [1,2];echo forward($xs),count($xs);return 8;', flavor::php),
+	'cpp' => new source_file('cpp', 'int forward(vector<int> xs) {return n(...xs)+via(n(...),xs);}', flavor::cpp),
+	'js' => new source_file('js', 'function via(op:callback<int,int...>,xs:vector<int>):int {return op(...xs);}', flavor::js),
+], new entry_target(31));
+$fixtures['unpack'] = ['files' => Cpp_Program::emit($unpack)->files, 'stdout_hex' => bin2hex('62')];
 // PHP follows the normative type-before-name signature; shorthand and deferred features reject.
 $php = static fn(string $code) => (new Source_Frontend())->prepare(new source_file('php', $code, flavor::php), new entry_target(31));
 foreach (['function f($x int): void {}', 'function f(int &...$x): void {}',
@@ -147,6 +155,16 @@ rejects(fn() => $php('function f(int ...$xs,int $y):int {return 0;}return 8;'), 
 rejects(fn() => $php('function f(int ...$xs=1):int {return 0;}return 8;'), 'Variadic parameter must be last');
 rejects(fn() => $php($variadic . 'return gather(base: 1);'), 'Variadic calls require positional arguments');
 
+$prefix = $variadic . '$xs vector<int> = [];';
+foreach (['gather(...$xs)', 'gather(1,2,...$xs)'] as $call) {
+	rejects(fn() => $php($prefix . 'return ' . $call . ';'), 'after all fixed arguments');
+}
+foreach (['gather(1,...$xs,2)', 'gather(1,...$xs,...$xs)'] as $call) {
+	rejects(fn() => $php($prefix . 'return ' . $call . ';'), 'final argument');
+}
+rejects(fn() => $php($prefix . 'return gather(base:1,...$xs);'), 'named argument');
+rejects(fn() => $php($prefix . 'return count(...$xs);'), 'Unpacking requires');
+rejects(fn() => $php($prefix . '$ss vector<string> = [];return gather(1,...$ss);'), 'Unpacked argument requires');
 $php('$f = fn(int ...$xs):int => count($xs); echo $f(),$f(1,2);return 8;');
 $php('$f function<int(int...)> = function(...$xs) {return count($xs);};return 8;');
 rejects(fn() => $php('$f = fn(...$xs):int => count($xs);return 8;'), 'explicit parameter type');

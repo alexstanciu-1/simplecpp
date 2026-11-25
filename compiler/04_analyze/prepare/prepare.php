@@ -1770,6 +1770,7 @@ final class Preparation
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
+		if ($call instanceof ast_unpacked_call) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
 		$slots = null;
 		if ($call instanceof ast_named_call) {
 			if (!($runtime instanceof runtime_function) || $runtime->parameter_names === null || $call->receiver !== null) {
@@ -2208,6 +2209,7 @@ final class Preparation
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
+			if ($call instanceof ast_unpacked_call) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
 			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
 				$this->ambiguous_construction($call);
@@ -2590,6 +2592,10 @@ final class Preparation
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
 		$variadic = $callback ? $function->variadic_slot : $function->variadic_slot();
+		$unpacked = $call instanceof ast_unpacked_call;
+		if ($unpacked && ($variadic === null || $supplied !== $variadic + 1)) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires one vector after all fixed arguments of a variadic target');
+		}
 		$slots = null;
 		if (isset($call->named)) {
 			if ($callback) throw new diagnostic($call->source(), $call->byte_start(), 'Typed callback calls require positional arguments');
@@ -2610,8 +2616,11 @@ final class Preparation
 			if ($variadic !== null && $slot >= $variadic) $slot = $variadic;
 			$parameter = $callback ? null : $function->parameters[$slot];
 			$type = $parameter === null ? $function->inputs[$slot] : $parameter->type_def();
-			if ($slot === $variadic) $type = $type->element_type;
+			if ($slot === $variadic && !$unpacked) $type = $type->element_type;
 			$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
+			if ($unpacked && $slot === $variadic && $argument->type_def() !== $type) {
+				throw new diagnostic($argument->source(), $argument->byte_start(), 'Unpacked argument requires ' . $type->name);
+			}
 			$mode = $parameter?->mode ?? $function->input_mode($slot);
 			if ($mode !== passing_mode::value) {
 				$this->bind_reference($argument, $type, $writes, $mode === passing_mode::readonly_reference);
