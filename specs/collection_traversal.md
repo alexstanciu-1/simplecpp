@@ -95,9 +95,17 @@ its declared parameter supports that mode. The borrow lasts through that invocat
 A read-only parameter observes replacement or mutation through a second parameter
 bound to the same slot. Writes remain visible if the helper throws. The same collection protections
 apply during argument evaluation and callback re-entry. Indirect
-calls, methods, local aliases, reference captures and segment grants cannot borrow
+calls, methods, local aliases and segment grants cannot borrow
 the selected element. Ordinary indexed writes to existing
 vector slots remain visible through the loop binding.
+
+An inferred local PHP closure inside the loop may capture the selected slot with
+`use (&$point)`. Creation binds the current slot once. Direct calls of that
+local during the iteration read and write the live element under the same access
+rules as the loop body. The borrow ends with its lexical scope, including on
+continue, break, return or exception. Forwarding the closure as a callback,
+storing or returning it, and recapturing the borrowed binding in a nested
+closure are outside this contract.
 
 For a borrowed source, the loop also protects other mutable reference parameters
 and by-reference lexical captures of the same canonical collection type. Distinct

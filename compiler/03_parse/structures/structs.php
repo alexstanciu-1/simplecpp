@@ -286,11 +286,11 @@ final class ast_field_assignment extends ast_statement
 		$value->attach($this);
 	}
 	/** A plain assignment to an immediate field of an inline writable-loop element. */
-	public function selected_record_element(): ?ast_writable_element
+	public function selected_record_element(): ?ast_local_binding
 	{
 		$receiver = $this->target instanceof ast_field_expression ? $this->target->receiver : null;
 		$binding = $receiver instanceof ast_name_expression ? $receiver->local_binding() : null;
-		return $binding instanceof ast_writable_element && $binding->type_def() instanceof record_type_definition ? $binding : null;
+		return ast_writable_element::origin($binding) !== null && $binding->type_def() instanceof record_type_definition ? $binding : null;
 	}
 }
 

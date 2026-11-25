@@ -100,3 +100,63 @@ with TemporaryDirectory(prefix='scpp-selected-record-field-') as work:
         ('main', field_writes.replace('$point->x=nextValue();', '$point->x+=1;'), 'Assign a whole writable foreach element'),
         ('main', field_writes, visible),
     ])
+
+capture_loop = """
+function invoke(callback<void> $fn):void {$fn();}
+function store(function<void()> $fn):void {}
+function bump(int &$n):void {$n+=2;}
+function &refValue(int &$n):int {return $n;}
+$ints vector<int> = [3];
+foreach ($ints as &$n) {
+    bump($n);$snap=fn():int=>$n;
+    $add=function() use (&$n):void {bump($n);};
+    $ints[0]=11;$add();$add();echo $snap(),":",$ints[0],";";
+}
+$p Sample;$v vector<Sample> = [$p,$p];$h hash<Sample,int> = [];
+$h[2]=$p;$h[5]=$p;$h->remove(2);
+foreach ($v as $i => &$point) {
+    $f=function() use (&$point):void {$point->x=12;};
+    $f();$copy=$v[$i];echo $copy->x;
+    if ($i===0) {continue;}break;
+}
+try {
+    foreach ($h as $k => &$point) {
+        $f=function() use (&$point):void {$point->x=20;throw new Exception("stop");};
+        $k=2;$f();
+    }
+} catch (Exception $e) {$copy=$h[5];echo $copy->x;}
+return 8;
+"""
+with TemporaryDirectory(prefix='scpp-selected-element-capture-') as work:
+    trace = b'5:15;121220'
+    edits = [(None, None, trace)]
+    for operation in ['$point->x+=2;', '$point->x++;']:
+        for outside in [False, True]:
+            invalid = (capture_loop.replace('$f();$copy=', operation+'$copy=') if outside else
+                       capture_loop.replace('$point->x=12;', operation))
+            edits.append(('main', invalid, 'Assign a whole writable foreach element'))
+    for call in ['bump($n);$snap', '{bump($n);}']:
+        edits.append(('main', capture_loop.replace(call, call.replace('bump($n)', 'refValue($n)')), 'cannot bind a reference parameter'))
+    for replacement, error in [
+        ('$bad=function() use (&$v):void {clean($v);};', 'during writable foreach'),
+        ('invoke($f);', 'direct local invocation'),
+        ('store($f);', 'direct local invocation'),
+        ('$alias =& $f;', 'direct local invocation'),
+        ('invoke(function() use (&$point):void {});', 'requires an inferred local closure'),
+        ('$nested=function() use (&$point):void {$g=function() use (&$point):void {};};', 'Nested capture'),
+    ]:
+        edits.append(('main', capture_loop.replace('$f();$copy=', replacement+'$copy='), error))
+    edits += [
+        ('main', capture_loop.replace('return 8;', '$f();return 8;'), None),
+        ('main', '''function escaped(vector<int> &$rows):function<void()> {
+            foreach ($rows as &$row) {
+                $op=function() use (&$row):void {$row++;};return $op;
+            }
+            return function():void {};
+        }return 8;''', 'direct local invocation'),
+        ('main', capture_loop, trace),
+        ('record', record.replace('public int $x', 'public readonly int $x'), 'Cannot modify readonly property'),
+        ('record', None, None),
+        ('record', record, trace),
+    ]
+    revisions(Path(work), 'php', dict(main=capture_loop, record=record), edits)
