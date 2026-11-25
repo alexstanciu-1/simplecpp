@@ -81,3 +81,21 @@ Replacing the left enclosing body expired its previously prepared call while the
 The direct PHP idiom of returning an owning `$this` from a lexical binding is deferred for classes. The caller already holds a live reference after locking the slot and can obtain the operand interface with `object_cast`. The lexical binding keeps only the signature information needed for validation. An intermediate fixture that made it own another function body produced an incomplete allocation type in generated C++; this checkpoint does not establish support for that recursive ownership shape.
 
 Run the translated preparation recovery test for this native proof and `check_slot.py` for the production PHP incremental comparison. The native slice covers local lambda identity and zero-argument invocation. Callable parameter modes, captures, reference returns and calls whose arguments can reassign an owned callable have separate semantics.
+
+## Published runtime descriptor checkpoint after ac8b05663
+
+Run `ctest --preset default -j1 -R '^compiler_translated_runtime_descriptor$'`. The proof reads the published PHP binding for `strlen` (name, arity, parameter/result type, C++ symbol and header). Its native translation keeps the descriptor in a runtime registry. Application source declarations take precedence during preparation; an already-prepared caller observes its target through the same weak slot used by the other translated cases.
+
+On dev002 the caller bound to the builtin, rebound to a one-argument source declaration, rejected a two-argument replacement at the original call, and recovered after deleting the declaration. The failed edit preserved every previously published body. Recovery selected the identical runtime descriptor and matched a fresh compilation. The unrelated body retained its identity and stayed out of the preparation batch. The test compiles and runs the three caller outputs from the translated executable; the results are 3, 9 and 3 for the same input string.
+
+This slice accepts one already-lowered string operand and a published integer result. It scans source names in the small fixture to select affected callers. Production dependency watches, descriptor generation, overload selection and argument-expression lowering remain outside the translation.
+
+## Construction and blocking waits
+
+Two focused native translations exercise the remaining production call-target roles on the development line based on d96d6c7a1. Run `ctest --preset default -j1 -R '^compiler_translated_(construction|blocking_wait)$'` after building the default preset.
+
+For Python call-shaped construction, the slot observes the stable class entry. Validation consults the current record’s optional constructor signature, and lowering selects the record’s owner factory. The probe replaces an explicit constructor with an implicit one, rejects the old one-argument call, accepts zero arguments, deletes the class, and restores the explicit declaration. Deletion and implicit construction produce distinct diagnostics. The old record expires while its class entry remains live. The translated factory expressions match production C++ byte for byte; native applications produce exit values 7, 5 and 7. Failed host edits preserve the successful bundle and repaired output matches fresh compilation.
+
+For `async_wait`, the prepared bridge observes the nested call expression. Two calls to the same authored async function carry different checked operands. Reset clears the producer; removing its syntax owner permits expiry. Both hosts reject a non-async function and a non-call operand. The translated helper calls match the PHP compiler output before and after repair. The production bundles run natively and return the selected values through the blocking helper.
+
+The fixture converts each live owner to the common target interface before taking its weak reference. This avoids requiring implicit conversions between weak handles of different types. These checks cover the slot’s lifetime and the selected signature, operand or result expression in bounded cases. They do not translate the complete argument binder, async executor, or incremental watcher graph.
