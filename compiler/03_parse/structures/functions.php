@@ -152,14 +152,22 @@ interface statement_return_target
 	public function return_type_def(): type_definition;
 }
 
-/** Arity of a source parameter list with trailing defaults. */
-trait ast_fixed_parameter_list
+/** Arity of a source parameter list with trailing defaults or a typed tail. */
+trait ast_parameter_list
 {
+	public function variadic_slot(): ?int
+	{
+		$last = count($this->parameters) - 1;
+		return ($this->parameters[$last]->type_reference ?? null) instanceof ast_variadic_type_reference ? $last : null;
+	}
+
 	/** Defaults form a trailing suffix; only the first omitted parameter needs inspection. */
 	public function accepts_argument_count(int $supplied /** uint32 */): bool
 	{
-		return $supplied <= count($this->parameters)
-			&& (!isset($this->parameters[$supplied]) || $this->parameters[$supplied]->default_value !== null);
+		$count = count($this->parameters);
+		if ($supplied >= $count) return $supplied === $count || $this->variadic_slot() !== null;
+		$omitted = $this->parameters[$supplied];
+		return $omitted->default_value !== null || $omitted->type_reference instanceof ast_variadic_type_reference;
 	}
 }
 
@@ -178,7 +186,7 @@ final class ast_closure_capture extends ast_local_declaration
 /** Owns the signature and body while its enclosing function owns incremental preparation. */
 final class ast_lambda_expression extends ast_expression implements statement_return_target
 {
-	use ast_fixed_parameter_list;
+	use ast_parameter_list;
 
 	/** PROPERTIES */
 	/** Prepared result conversion. */
@@ -716,7 +724,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature, statement_return_target
 {
 	use ast_declaration { name as private namespace_name; }
-	use ast_fixed_parameter_list;
+	use ast_parameter_list;
 
 	/** PROPERTIES */
 	/** Native non-owning authored trait; null for an ordinary member. */

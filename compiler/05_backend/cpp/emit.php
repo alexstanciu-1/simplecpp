@@ -3001,6 +3001,11 @@ CPP;
 		$runtime = $function instanceof runtime_function;
 		$operands = $runtime ? $value->runtime_operands() : $value->arguments;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
+		$variadic = $callback ? $function->variadic_slot : ($runtime ? null : $function->variadic_slot());
+		if ($variadic !== null) {
+			$last = array_pop($parameters);
+			$pack = $callback ? $last : $last->type_def();
+		}
 		if (isset($value->named)) {
 			$parameters = $value->named->evaluation_parameters($parameters);
 		}
@@ -3018,7 +3023,7 @@ CPP;
 			$name = $selected;
 		} elseif ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
 			foreach ($operands as $index => $argument) {
-				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index], $value->conversion($index))) continue;
+				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index] ?? $pack->element_type, $value->conversion($index))) continue;
 				// An argument can replace the slot through a closure that borrows it.
 				$selected = 'selected_callable_' . $value->start;
 				$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
@@ -3048,7 +3053,7 @@ CPP;
 			if ($function->has_virtual_dispatch() || $value->interface_dispatch) $name = '(' . $place . ').'
 				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
 			else $arguments[] = $place;
-		} elseif ($parameters === [] && $steps === []) {
+		} elseif ($variadic === null && $parameters === [] && $steps === []) {
 			return $name . '()';
 		}
 		$direct_arguments = [];
@@ -3072,7 +3077,7 @@ CPP;
 				? new Cpp_Staged_Result($type, 'argument_' . $value->start . '_' . $index) : null;
 			$operand = $by_value ? $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
 				logical_root: $conversion === value_conversion::identity, destination: $destination) : $this->name($argument->local_def());
-			if ((count($parameters) > 1 || $method || $steps !== []) && count($this->async_steps) !== $step_start) {
+			if (($variadic !== null || count($parameters) > 1 || $method || $steps !== []) && count($this->async_steps) !== $step_start) {
 				$argument_steps[$index] = array_splice($this->async_steps, $step_start);
 				if ($operand === '' && $destination !== null) {
 					array_unshift($argument_steps[$index], $destination->declaration($required_headers));
@@ -3089,7 +3094,7 @@ CPP;
 					: $this->conversion($type, $conversion, $operand, $argument);
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
-			if (!$method && $steps === [] && count($parameters) === 1) {
+			if ($variadic === null && !$method && $steps === [] && count($parameters) === 1) {
 				$tag = $value instanceof ast_struct_default && self::self_value_constructor($function) ? '0, ' : '';
 				return $name . '(' . $tag . $operand . ')';
 			}
@@ -3109,7 +3114,7 @@ CPP;
 			$arguments[0] = 'enum_receiver' . $suffix;
 			$direct = false;
 		}
-		if ($argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && (!($function instanceof ast_function_declaration) || !$function->is_constructor())
+		if ($variadic === null && $argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && (!($function instanceof ast_function_declaration) || !$function->is_constructor())
 			&& !$has_reference && count($order_sensitive) <= 1))) {
 			if (isset($value->named)) $direct_arguments = $value->named->parameter_order($direct_arguments);
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
@@ -3120,7 +3125,7 @@ CPP;
 			$type = $callback || $runtime ? $parameter : $parameter->type_def();
 			$operand = $direct_arguments[$index];
 			if (isset($argument_steps[$index])) array_push($steps, ...$argument_steps[$index]);
-			if (isset($constructed_arguments[$index]) || !isset($order_sensitive[$index]) || $index === $inline_index) {
+			if (isset($constructed_arguments[$index]) || !isset($order_sensitive[$index]) || ($index === $inline_index && $variadic === null)) {
 				continue;
 			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
@@ -3133,6 +3138,21 @@ CPP;
 		}
 		if (isset($value->named)) $direct_arguments = $value->named->parameter_order($direct_arguments);
 		array_push($arguments, ...$direct_arguments);
+		if ($variadic !== null) {
+			$name_pack = 'pack_' . $value->start . '_' . $value->end;
+			$steps[] = $pack->cpp_type() . " $name_pack{};";
+			if ($pack instanceof application_collection_type) $this->concrete_collections->request($pack);
+			for ($i = $variadic; $i < count($operands); ++$i) {
+				$element = $operands[$i];
+				[$operand, $prerequisites] = $this->staged_operand($element, $global_references, $declarations, $required_headers);
+				array_push($steps, ...$prerequisites);
+				$conversion = $value->conversion($i);
+				foreach ($pack->element_type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$steps[] = $pack->lower_cpp_sequence_append($element, $conversion, $name_pack, $operand, $this->inline_adapters) . ';';
+			}
+			$arguments[] = 'static_cast<' . $pack->cpp_type() . "&&>($name_pack)";
+			if ($before !== $this->suspensions) ++$this->async_owned_steps;
+		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		if ($before !== $this->suspensions) {
 			array_push($this->async_steps, ...$steps);

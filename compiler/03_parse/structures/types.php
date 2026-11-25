@@ -54,6 +54,20 @@ class ast_type_reference extends ast_node
 
 }
 
+/** A trailing T... parameter owns the same storage as vector<T>. */
+final class ast_variadic_type_reference extends ast_type_reference
+{
+	public function __construct(ast_type_reference $element, int $end)
+	{
+		parent::__construct($element->start, $end, 'vector', $element);
+	}
+
+	public function spelling(): string
+	{
+		return $this->first_child->spelling() . '...';
+	}
+}
+
 /** A writable reference component in a callable signature, e.g. callback<int&,int&>. */
 final class ast_callable_reference_component extends ast_type_reference
 {

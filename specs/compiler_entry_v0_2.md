@@ -240,7 +240,19 @@ parameter names. Those names are part of its public API. Renaming one breaks cal
 that use the old label. The first binding is PHP `str_repeat(string, times)`.
 For example, `str_repeat(times: repetitions(), string: fragment())` evaluates
 `repetitions()` first and passes its result as the second argument.
-Typed callback calls require positional arguments. Variadic signatures remain deferred.
+Typed callback calls require positional arguments.
+
+A synchronous named PHP free function can end its parameter list with one by-value
+`T ...$values`. Inside the body, `$values` is an owned `vector<T>`. Positional
+calls bind the fixed prefix (including its ordinary defaults), then evaluate and
+convert each remaining argument once in source order using the vector element
+contract. Zero trailing arguments produce an empty vector.
+
+The corresponding last input is written `T...` in `callback<R,T...>` and
+`function<R(T...)>`. Named targets must match the marker exactly. A fixed
+`vector<T>` input and a variadic `T...` input have distinct source signatures.
+Reference packs, unpacking, variadic closure declarations and named arguments to
+variadic functions are deferred.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
 ### Named callbacks
@@ -463,7 +475,7 @@ exclusive borrowing claim or general alias graph is required by this bounded sli
 
 Passing mode participates in signature-change invalidation. Read-only references,
 reference parameter defaults, reference returns, local aliases, interior references,
-variadics and escaping captures remain deferred. Value-parameter defaults continue
+reference variadics and escaping borrowed captures remain deferred. Value-parameter defaults continue
 to work after required reference parameters. Global assignment syntax remains deferred.
 
 ### Braced conditional bodies

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** A fixed-arity signature owned by its declaring parameter, with canonical component types. */
+/** A callable signature owned by its declaring parameter, with canonical component types. */
 final class callback_type_definition extends type_definition
 {
 	/**
@@ -11,11 +11,18 @@ final class callback_type_definition extends type_definition
 	 * @param passing_mode[] $modes Mutable reference positions in ascending input order.
 	 */
 	public function __construct(public readonly type_definition $result, public readonly array $inputs /** list<type_definition> */,
-		private readonly array $modes /** array<uint32,passing_mode> */ = [], public readonly ?int $reference_origin /** uint32|null */ = null)
+		private readonly array $modes /** array<uint32,passing_mode> */ = [], public readonly ?int $reference_origin /** uint32|null */ = null,
+		public readonly ?int $variadic_slot = null)
 	{
 		$name = $result->name . ($reference_origin === null ? '' : '&');
-		foreach ($inputs as $i => $input) $name .= ',' . $input->name . $this->input_suffix($i);
+		foreach ($inputs as $i => $input) $name .= ',' . $this->input_spelling($i);
 		parent::__construct('callback<' . $name . '>');
+	}
+
+	public function input_spelling(int $index): string
+	{
+		$type = $this->inputs[$index];
+		return $index === $this->variadic_slot ? $type->element_type->name . '...' : $type->name . $this->input_suffix($index);
 	}
 
 	public function result_suffix(): string
@@ -65,7 +72,7 @@ final class callback_type_definition extends type_definition
 
 	public function matches(type_definition $other): bool
 	{
-		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs && $other->modes === $this->modes && $other->reference_origin === $this->reference_origin;
+		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs && $other->variadic_slot === $this->variadic_slot && $other->modes === $this->modes && $other->reference_origin === $this->reference_origin;
 	}
 
 	/** Only capture-free closures can cross the native function-pointer boundary. */
@@ -87,7 +94,7 @@ final class callback_type_definition extends type_definition
 	/** Validate the callable target against its prepared signature. */
 	public function require_target(ast_callable_reference $site, ast_function_declaration $target): void
 	{
-		$matches = $target->reference_return_origin === $this->reference_origin && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
+		$matches = $target->variadic_slot() === $this->variadic_slot && $target->reference_return_origin === $this->reference_origin && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
 		if ($matches) {
 			foreach ($target->parameters as $index => $parameter) {
 				if ($parameter->mode !== $this->input_mode($index) || $parameter->default_value !== null || $parameter->type_def() !== $this->inputs[$index]) {
@@ -108,6 +115,7 @@ final class callable_signature_index
 	/** @var \WeakMap<type_definition,callable_signature_index>|null */
 	private ?\WeakMap $children = null;
 	private ?self $reference_inputs = null;
+	private ?self $variadic = null;
 	/** @var \WeakReference<owned_callable_type>|null */
 	private ?\WeakReference $element = null;
 
@@ -116,6 +124,7 @@ final class callable_signature_index
 	{
 		static $root = new self();
 		$node = $signature->reference_origin === null ? $root : ($root->reference_inputs ??= new self());
+		if ($signature->variadic_slot !== null) $node = $node->variadic ??= new self();
 		foreach ([$signature->result, ...$signature->inputs] as $i => $component) {
 			if ($i > 0 && $signature->input_mode($i - 1) === passing_mode::reference) $node = $node->reference_inputs ??= new self();
 			$node->children ??= new \WeakMap();
@@ -138,7 +147,7 @@ final class owned_callable_type extends type_definition implements presence_test
 	public function __construct(public readonly callback_type_definition $signature)
 	{
 		$inputs = [];
-		foreach ($signature->inputs as $i => $input) $inputs[] = $input->name . $signature->input_suffix($i);
+		foreach ($signature->inputs as $i => $input) $inputs[] = $signature->input_spelling($i);
 		parent::__construct('function<' . $signature->result->name . $signature->result_suffix() . '(' . implode(',', $inputs) . ')>');
 	}
 

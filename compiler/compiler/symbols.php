@@ -227,6 +227,7 @@ final class Symbol_Publication implements declaration_sink
 	private static function signature_type(?ast_type_reference $type): ?string
 	{
 		if ($type === null) return null;
+		if ($type instanceof ast_variadic_type_reference) return self::signature_type($type->first_child) . '...';
 		if ($type instanceof ast_intersection_reference) return self::signature_type($type->left) . '&' . self::signature_type($type->right);
 		if ($type->first_child === null) {
 			$alias = $type->lexical_root()->imported_type_target($type->name);

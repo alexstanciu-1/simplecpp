@@ -896,8 +896,15 @@ final class Parser
 					$this->cursor->take(token_kind::ampersand, '& after const parameter type');
 					$mode = passing_mode::readonly_reference;
 				} else $mode = $this->parameter_mode();
+				if (!$lambda && $mode === passing_mode::value && $this->cursor->tokens->source->flavor === flavor::php
+					&& $this->cursor->is(token_kind::ellipsis)) {
+					$type = new ast_variadic_type_reference($type, $this->cursor->take(token_kind::ellipsis, '...') + 1);
+				}
 				$name = $this->cursor->binding_name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
+			}
+			if ($type instanceof ast_variadic_type_reference && !$this->cursor->is(token_kind::rparen)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Variadic parameter must be last and has no default');
 			}
 			$default = null;
 			if ($this->cursor->is(token_kind::assign)) {
@@ -1096,6 +1103,10 @@ final class Parser
 			$next = $this->named_type();
 			$first = new ast_type_reference($start, $end, $word, $child, $next);
 			return new ast_compound_type_reference($start, $next->end, $separator, $first);
+		}
+		if ($argument_of === 'callback' && $this->cursor->is(token_kind::ellipsis)) {
+			$element = new ast_type_reference($start, $end, $word, $child);
+			return new ast_variadic_type_reference($element, $this->cursor->take(token_kind::ellipsis, '...') + 1);
 		}
 		$reference = ($argument_of === 'callback' || $argument_of === 'function') && $this->cursor->is(token_kind::ampersand);
 		if ($reference) $end = $this->cursor->take(token_kind::ampersand, '&') + 1;

@@ -1605,6 +1605,10 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_callable_reference) {
+			if ($destination instanceof owned_callable_type || ($allow_callback && $destination instanceof callback_type_definition)) {
+				$this->callback_reference($syntax, $destination instanceof owned_callable_type ? $destination->signature : $destination);
+				return;
+			}
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Callable reference requires a typed callback argument');
 		}
 		if ($syntax instanceof ast_await_expression) {
@@ -2580,27 +2584,29 @@ final class Preparation
 	{
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
+		$variadic = $callback ? $function->variadic_slot : $function->variadic_slot();
 		$slots = null;
 		if (isset($call->named)) {
 			if ($callback) throw new diagnostic($call->source(), $call->byte_start(), 'Typed callback calls require positional arguments');
+			if ($variadic !== null) throw new diagnostic($call->source(), $call->byte_start(), 'Variadic calls require positional arguments');
 			$call->named->bind_slots($call, $function);
 			$slots = $call->named->slots;
 		}
-		if ($callback ? $supplied !== count($function->inputs) : !$function->accepts_argument_count($supplied)) {
+		$accepted = $callback
+			? ($variadic === null ? $supplied === count($function->inputs) : $supplied >= $variadic)
+			: $function->accepts_argument_count($supplied);
+		if (!$accepted) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($function instanceof ast_function_declaration ? $function->name() : $call->name));
 		}
 		$conversions = [];
 		$writes = [];
 		foreach ($call->arguments as $index => $argument) {
 			$slot = $slots[$index] ?? $index;
+			if ($variadic !== null && $slot >= $variadic) $slot = $variadic;
 			$parameter = $callback ? null : $function->parameters[$slot];
 			$type = $parameter === null ? $function->inputs[$slot] : $parameter->type_def();
-			if ($argument instanceof ast_callable_reference && ($type instanceof callback_type_definition || $type instanceof owned_callable_type)) {
-				$this->expression_visits++;
-				$this->callback_reference($argument, $type instanceof owned_callable_type ? $type->signature : $type);
-			} else {
-				$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
-			}
+			if ($slot === $variadic) $type = $type->element_type;
+			$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
 			$mode = $parameter?->mode ?? $function->input_mode($slot);
 			if ($mode !== passing_mode::value) {
 				$this->bind_reference($argument, $type, $writes, $mode === passing_mode::readonly_reference);

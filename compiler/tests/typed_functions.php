@@ -133,10 +133,19 @@ $bundle = Cpp_Program::emit($multi);
 $fixtures['multifile'] = ['files' => $bundle->files, 'stdout_hex' => bin2hex('cross')];
 // PHP follows the normative type-before-name signature; shorthand and deferred features reject.
 $php = static fn(string $code) => (new Source_Frontend())->prepare(new source_file('php', $code, flavor::php), new entry_target(31));
-foreach (['function f($x int): void {}', 'function f(int ...$x): void {}',
+foreach (['function f($x int): void {}', 'function f(int &...$x): void {}',
 	'function f(int $x, int $x): void {}'] as $invalid) {
 	rejects(fn() => $php($invalid . 'return 8;'), str_contains($invalid, 'int $x,') ? 'Duplicate local' : 'Expected');
 }
+
+$variadic = 'function gather(int $base=2,int ...$xs):int {echo $base;foreach ($xs as $x) {echo $x;}return count($xs);}';
+$php($variadic . 'echo gather(),gather(1,3,5);return 8;');
+$php('function run(callback<int,int...> $op):int {return $op();}'
+	. 'function use_owned(function<int(int...)> $op):int {return $op(1,2);}'
+	. 'function n(int ...$xs):int {return count($xs);} echo use_owned(n(...)),run(n(...));return 8;');
+rejects(fn() => $php('function f(int ...$xs,int $y):int {return 0;}return 8;'), 'Variadic parameter must be last');
+rejects(fn() => $php('function f(int ...$xs=1):int {return 0;}return 8;'), 'Variadic parameter must be last');
+rejects(fn() => $php($variadic . 'return gather(base: 1);'), 'Variadic calls require positional arguments');
 
 $directory = sys_get_temp_dir() . '/scpp-typed-functions-' . bin2hex(random_bytes(8));
 mkdir($directory);

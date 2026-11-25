@@ -145,8 +145,15 @@ final class Type_Resolution
 	{
 		$types = [];
 		$modes = [];
+		$variadic = null;
 		for ($part = $syntax->first_child; $part !== null; $part = $part->next_sibling) {
 			$type = self::named($part, $symbols, $namespace, $watcher, $dependencies, $types === []);
+			if ($part instanceof ast_variadic_type_reference) {
+				if ($types === [] || !($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
+					throw new diagnostic($part->source(), $part->byte_start(), 'Variadic marker requires a trailing input with a supported vector element');
+				}
+				$variadic = count($types) - 1;
+			}
 			if (!self::callback_component($type)) {
 				throw new diagnostic($part->source(), $part->byte_start(), 'Unsupported callback signature component: ' . $part->spelling());
 			}
@@ -161,7 +168,7 @@ final class Type_Resolution
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Reference return requires exactly one writable parameter of the return type');
 			}
 		}
-		return new callback_type_definition($result, $types, $modes, $origin);
+		return new callback_type_definition($result, $types, $modes, $origin, $variadic);
 	}
 
 	/** Inline values and intersection projection are outside the fixed by-value callback ABI. */

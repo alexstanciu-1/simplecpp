@@ -300,8 +300,14 @@ final class Function_Preparation
 				|| !($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition))) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
 			}
+			if ($parameter->type_reference instanceof ast_variadic_type_reference) {
+				if ($declaration->parent instanceof ast_method_owner || $declaration->is_async || $type instanceof generator_type_definition
+					|| !($parameter_type instanceof vector_type_definition && $parameter_type instanceof sequence_initializer_type)) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameters require an ordinary free function and a supported vector element');
+				}
+			}
 			$parameter->settle_type($parameter_type);
-			if ($optional || $parameter->default_value !== null) {
+			if (($optional || $parameter->default_value !== null) && !($parameter->type_reference instanceof ast_variadic_type_reference)) {
 				self::parameter_default($parameter, $symbols, $watcher, $dependencies);
 				$optional = true;
 			}
