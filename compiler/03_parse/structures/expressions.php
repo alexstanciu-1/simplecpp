@@ -296,6 +296,9 @@ final class ast_isset_expression extends ast_expression
 	/** Native owning queried expression. */
 	public readonly ast_expression $operand;
 
+	/** Prepared single-key PHP hash probe; the index remains owned by the operand. */
+	public ?ast_index_expression $hash_entry = null;
+
 	/** $start/$end: token positions including the keyword and closing parenthesis. */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, ast_expression $operand)
 	{
@@ -304,9 +307,16 @@ final class ast_isset_expression extends ast_expression
 		$operand->attach($this);
 	}
 
-	public function settle_presence(): void
+	public function settle_presence(?ast_index_expression $hash_entry = null): void
 	{
+		$this->hash_entry = $hash_entry;
 		$this->settle_value(type_bool::instance(), null);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->hash_entry = null;
 	}
 }
 

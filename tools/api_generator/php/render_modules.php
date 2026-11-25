@@ -6,6 +6,7 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         return;
     }
     $hashes = $plan['hashes'];
+    $issetHeader = BANNER . "#pragma once\n" . includeHeader($hashes['header']);
     $mt = !empty($plan['mt_segments']);
     $h = ($mt ? "namespace scpp::mt { struct job; }\n" : '') . "namespace scpp {\n";
     $d = BANNER . includeHeader($hashes['header']) . includeHeader('concrete_index_impl.hpp') . includeHeader('new') . includeHeader('cstring') . includeHeader('scalar_semantics.hpp') . "namespace scpp {\n";
@@ -13,6 +14,7 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $n = $hash['name'];
         $k = $hash['key'];
         $v = $hash['value'];
+        $issetHeader .= template('collections/php_hash_isset', ['hash' => '::scpp::' . $n, 'key' => '::scpp::' . $k, 'method' => 'has']);
         $count = $hashes['count_type'];
         $nullable = 'nullable_' . $v;
         $lh = template('core/lifecycle_declaration', ['n' => $n]);
@@ -45,6 +47,7 @@ function renderHashes(array $plan, array &$files, array &$groups): void {
         $h .= "private:\n" . $parts['private_declaration'] . "    struct storage;\n    storage* storage_ = nullptr;\n};\n";
     }
     $groups[] = ['provider' => $plan['hash_publication']['provider'], 'declarations' => $h . "}\n", 'system' => []];
+    $files['public/scpp/php/hash_isset.hpp'] = $issetHeader;
     $files['src/hash.cpp'] = $d . "}\n";
 }
 

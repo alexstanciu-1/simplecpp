@@ -62,8 +62,8 @@ final class Cpp_Concrete_Collections
 	/** PROPERTIES */
 	/** @var application_collection_type[] Native non-owning, only specializations used by this source emission. */
 	private array $types /** array<string,application_collection_type> */ = [];
-	/** @var string[] Private optional helpers requested by selected statements. */
-	private array $destination_headers = [];
+	/** @var string[] Private helper headers requested by this source. */
+	private array $operation_headers = [];
 	private readonly string $root;
 
 	/** CONSTRUCTOR */
@@ -92,7 +92,7 @@ final class Cpp_Concrete_Collections
 		$helper = 'destination_' . $name;
 		$key = hash('sha256', $this->root . "\0" . $name);
 		$path = 'units/' . hash('sha256', 'destination:' . $key) . '.hpp';
-		if (!isset($this->destination_headers[$path])) {
+		if (!isset($this->operation_headers[$path])) {
 			$params = [];
 			$names = [];
 			foreach ($writes as $i => $write) {
@@ -101,10 +101,25 @@ final class Cpp_Concrete_Collections
 			}
 			$text = $type->destination_append_definition(['@helper@' => $helper, '@vector@' => $name,
 				'@element@' => $type->write_type()->cpp_type(), '@parameters@' => implode(', ', $params), '@inputs@' => implode(', ', $names)]);
-			$this->destination_headers[$path] = "#pragma once\n#include \"" . $key . ".hpp\"\n"
+			$this->operation_headers[$path] = "#pragma once\n#include \"" . $key . ".hpp\"\n"
 				. Cpp_Emitter::namespace_body($this->root, $text);
 		}
 		return $helper . '::append(' . implode(', ', [$receiver, ...$inputs]) . ')';
+	}
+
+	/** Publish the concrete PHP probe only for a caller that uses this application hash. */
+	public function request_hash_isset(application_collection_type&hash_type_definition $hash): void
+	{
+		$this->request($hash);
+		$key = hash('sha256', $this->root . "\0" . $hash->cpp_type());
+		$path = 'units/' . hash('sha256', 'php-isset:' . $key) . '.hpp';
+		if (isset($this->operation_headers[$path])) return;
+		$body = \Scpp\Api\template('collections/php_hash_isset', [
+			'hash' => (new cpp_concrete_type($hash, $this->root))->cppType('scpp::php'),
+			'key' => (new cpp_concrete_type($hash->key_type, $this->root))->cppType('scpp::php'),
+			'method' => $hash->probes_stored_owner() ? 'has_present_owner' : 'has',
+		]);
+		$this->operation_headers[$path] = "#pragma once\n#include \"" . $key . ".hpp\"\n" . $body;
 	}
 
 	/** Signatures may precede concrete definitions, including methods on their own element type. */
@@ -151,6 +166,6 @@ final class Cpp_Concrete_Collections
 			}
 			$files['units/' . $key . '.hpp'] = $header . Cpp_Emitter::namespace_body($this->root, $forwards . $body) . "\n#endif\n";
 		}
-		return $files + $this->destination_headers;
+		return $files + $this->operation_headers;
 	}
 }
