@@ -2555,6 +2555,9 @@ final class Preparation
 		} elseif ($input instanceof hash_type_definition && !in_array($operation, [runtime_factory::sequence_map, runtime_factory::sequence_filter], true)) {
 			$element = $input->value_type;
 			$key = $input->key_type;
+		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter], true)) {
+			$element = $input;
+			$key = null;
 		} else {
 			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
 		}
@@ -2571,6 +2574,7 @@ final class Preparation
 		if (!($signature instanceof callback_type_definition) || $signature->inputs !== [$element]
 			|| $signature->input_mode(0) !== passing_mode::value || $signature->reference_origin !== null
 			|| ($type instanceof lambda_type_definition && $type->has_defaults)
+			|| (!$filter && $input instanceof boxed_type_definition && $signature->result !== $input)
 			|| $signature->result === type_void::instance() || ($filter && $signature->result !== type_bool::instance())) {
 			throw new diagnostic($callback->source(), $callback->byte_start(), 'Invalid callback signature for ' . $operation->name);
 		}
@@ -2583,7 +2587,7 @@ final class Preparation
 		} else {
 			$this->dependencies?->callable_site($this->owner, $call);
 		}
-		$output = $filter ? $input : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+		$output = ($filter || $input instanceof boxed_type_definition) ? $input : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
 		if ($output === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable collection result for ' . $operation->name);
 		$call->settle_runtime(new collection_transform_function($operation, $input, $type, $output, $filter));
 	}

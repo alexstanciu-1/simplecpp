@@ -44,6 +44,26 @@ $stringKeys hash<int,string> = [];
 $stringKeys["05"] = 1; $stringKeys["5"] = 2;
 $typed = collection_map($stringKeys,fn($x):int=>$x+10);
 if(count($typed)!==2 || $typed["05"]!==11 || $typed["5"]!==12){return 9;}
+$table mixed = []; $table[19]=1; $table["a\0b"]=2; $table[8]=3;
+$mapped = collection_map($table,fn(mixed $x):mixed=>$x+1);
+$m = collection_filter($mapped,fn(mixed $x):bool=>(int)$x!==3);
+if(count($m)!==2 || (int)$m[19]!==2 || (int)$m[8]!==4 || (int)$mapped["a\0b"]!==3){return 10;}
+foreach ($mapped as $k=>$value) {echo (int)$value,";";}
+$mixInner mixed = []; $mixInner["n"]=1; $table["inner"]=$mixInner;
+$mcopy=collection_map($table,fn(mixed $x):mixed=>$x);
+$child=$mcopy["inner"]; $child["n"]=9;
+$sourceChild=$table["inner"];
+if((int)$sourceChild["n"]!==1){return 13;}
+$d dynamic = {}; $inner dynamic = {}; $inner["n"]=1;
+$d["inner"]=$inner;
+$copy=collection_map($d,fn(dynamic $x):dynamic=>$x);
+$keep=collection_filter($copy,fn(dynamic $x):bool=>true);
+$nested=$keep["inner"]; $nested["n"]=9;
+$keep->clear();
+if(count($d)!==1 || count($copy)!==1 || (int)$inner["n"]!==9){return 11;}
+$noneBox function<bool(dynamic)>;
+$blank dynamic = {}; $noneKept=collection_filter($blank,$noneBox);
+if(count($noneKept)!==0){return 12;}
 return 0;
 '''
 models = '''class Bag { public vector<int> $numbers; }
@@ -91,7 +111,7 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
         subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I', root/'runtime/generated/public',
                         *(out/unit for unit in bundle['translation_units']), runtime, '-o', binary], check=True)
         result = subprocess.run([binary], capture_output=True, check=True)
-        assert result.stdout == b'19;8;', result.stdout
+        assert result.stdout == b'19;8;2;3;4;', result.stdout
         manifest.write_text('{}')
         check('sequence_map')
         manifest.write_text('{"general_api":true}')
@@ -101,8 +121,12 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
                                   ('collection_filter($v,fn(int &$x):bool=>true)', 'Invalid callback'),
                                   ('sequence_map($v,fn(int $x=0):int=>$x)', 'Invalid callback'),
                                   ('sequence_map($v,fn($x)=>$x)', 'explicit result type'),
-                                  ('collection_map($v,void_op(...))', 'Invalid callback')]:
-            main.write_text('$v vector<int> = [1]; '+expression+'; return 0;')
+                                  ('collection_map($v,void_op(...))', 'Invalid callback'),
+                                  ('collection_map($b,fn(mixed $x):int=>1)', 'Invalid callback'),
+                                  ('collection_filter($b,fn(mixed $x):mixed=>$x)', 'Invalid callback'),
+                                  ('sequence_map($b,fn(mixed $x):mixed=>$x)', 'Unsupported collection'),
+                                  ('keyed_map($b,fn(mixed $x):mixed=>$x)', 'Unsupported collection')]:
+            main.write_text('$v vector<int> = [1]; $b mixed = []; '+expression+'; return 0;')
             check(error)
         main.write_text(main_source)
         model.write_text(models.replace('label(int $x):string', 'label(int $x):int').replace('$x===2 ? "two":"other"', '$x'))
@@ -120,9 +144,11 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
         app = work / flavor
         app.mkdir()
         (app / 'calls.php').write_text('function values():vector<int>{return [1];} '
-                                       'function op():function<int(int)>{return fn($n)=>$n+1;}')
+                                       'function op():function<int(int)>{return fn($n)=>$n+1;} '
+                                       'function boxed():mixed{$x mixed=[]; return $x;} '
+                                       'function identity():function<mixed(mixed)>{return fn($x)=>$x;}')
         terminator = '' if flavor == 'py' else ';'
-        (app / ('main.' + flavor)).write_text('return count(sequence_map(values(),op()))' + terminator)
+        (app / ('main.' + flavor)).write_text('return count(sequence_map(values(),op())) + count(collection_map(boxed(),identity()))' + terminator)
         settings = app / 'module.json'
         settings.write_text('{}')
         result = fresh(app, work / (flavor + '-out'))

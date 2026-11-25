@@ -76,7 +76,8 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareHashes($metadata, $publication, $plan);
     foreach (names(property_exists($publication, 'collection_transforms') ? $publication->collection_transforms : [], 'Duplicate collection transform') as $name) {
         requireThat(preg_match('/^(collection|sequence|keyed)_(map|filter)$/D', $name, $match) === 1, 'Unknown collection transform');
-        if (($match[1] !== 'keyed' && $plan['vectors'] !== []) || ($match[1] !== 'sequence' && isset($plan['hashes']))) {
+        if (($match[1] !== 'keyed' && $plan['vectors'] !== []) || ($match[1] !== 'sequence' && isset($plan['hashes']))
+            || ($match[1] === 'collection' && isset($plan['boxed_dispatch']))) {
             $plan['collection_transforms'][] = $name;
         }
     }

@@ -157,6 +157,15 @@ function compilerTraversalMethods(array $plan, string $value, string $key, bool 
     $keys = isset($plan['next_key_method']) ? strtr(readFile(__DIR__ . '/../templates/collections/compiler_key_iteration.php.tpl'), [
         '@next_key@' => $plan['next_key_method'], '@current_value@' => $plan['current_value_method'],
     ]) : '';
+    // A transform forwards the classified native key to the result without boxing it for a source variable.
+    if ($boxed) $output .= str_replace('@next@', $plan['next_method'], <<<'PHP'
+
+	public function lower_cpp_iteration_next_classified(string $receiver, string $value, string $key): string
+	{
+		return '(' . $receiver . ').@next@(iteration_position, iteration_limit, ' . $key . '.index, ' . $key . '.text, ' . $value . ')';
+	}
+
+PHP);
     return $output . $keys . strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
         '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
         '@limit@' => $plan['limit_method'], '@next@' => $plan['next_method'],

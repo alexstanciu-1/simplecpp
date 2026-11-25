@@ -54,3 +54,20 @@ The [active contract](../../collection_traversal.md#typed-map-and-filter) descri
 live borrowing, callback admission and result ownership. The source-to-executable
 fixture is [collection_transforms.py](../../../compiler/tests/collection_transforms.py).
 Stage 2 compile-time and execution measurements remain open.
+
+## Boxed implementation checkpoint
+
+The two generic names now support the four my-try boxed overloads. Map accepts
+mixed → mixed or dynamic → dynamic. Filter accepts the input family → bool.
+Traversal preserves classified keys, encounter order and ordinary nested
+ownership. The output starts as a fresh container, including on empty input.
+The generic helpers use the existing project visibility and callback admission.
+The keyed and sequence names retain their typed receiver contracts. Revisit
+release-only keyed adapters for mixed and implicit map-result boxing during
+flavor review if a real caller requires them.
+
+The source fixture exercises both families, sparse keys, a NUL-containing key,
+callback order, mixed copies, nested dynamic sharing, an independent outer result
+and empty input. Separate native probes supplied a scalar mixed and a null
+dynamic. Both exited with boxed_expected_container before executing the callback.
+Fixed arrays remain deferred family debt.

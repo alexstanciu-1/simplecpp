@@ -79,8 +79,12 @@ default. Other flavors select it with the project setting `"general_api": true`.
 
 T is the input value type, K the hash key type and U the map callback's result.
 The result must be an available runtime or application collection specialization.
-These helpers accept vectors and typed hashes. Fixed arrays and boxed collections
-are outside this family.
+For table-valued `mixed` and `dynamic`, the two `collection_*` helpers preserve
+the input family and the actual keys in encounter order. Map requires a same-family
+callback result. Filter requires bool. Empty input yields a fresh empty table of
+the same family. A scalar or null input raises the existing boxed traversal error
+before any callback invocation. Copies of nested values follow ordinary mixed
+copy-on-write and dynamic shared identity. Fixed-array transforms remain deferred.
 
 Both arguments are evaluated once under ordinary call rules. The helper borrows
 the live input and keeps its selected owner alive through traversal. The foreach
