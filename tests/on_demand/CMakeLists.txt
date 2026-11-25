@@ -146,3 +146,9 @@ add_test(NAME runtime_family_contract_full COMMAND ${Python3_EXECUTABLE} -B
 add_test(NAME vector_provider_exports_full COMMAND ${Python3_EXECUTABLE} -B
   ${PROJECT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py)
 set_tests_properties(runtime_family_contract_full vector_provider_exports_full PROPERTIES LABELS on_demand)
+
+if(SCPP_ENABLE_DATETIME)
+  add_test(NAME compiler_callable_signature_churn COMMAND ${Python3_EXECUTABLE} -B
+    ${PROJECT_SOURCE_DIR}/compiler/tests/callable_signature_churn.py ${CMAKE_CXX_COMPILER} ${CMAKE_BINARY_DIR})
+  set_tests_properties(compiler_callable_signature_churn PROPERTIES LABELS on_demand ENVIRONMENT "XDEBUG_MODE=off")
+endif()

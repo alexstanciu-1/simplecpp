@@ -1,0 +1,31 @@
+function generation(Signature_Index $index, Component $result, int $width, int $hits): int {
+    $owners vector<Owned_Callable> = [];
+    for ($i = 0; $i < $width; $i++) {
+        $signature = new Signature($result, false, false);
+        $signature->input(new Component("Local"), false);
+        $owners[] = $index->element($signature);
+    }
+    $start = dt_monotonic_ms();
+    for ($i = 0; $i < $hits; $i++) {
+        $owner = $owners[$i % $width];
+        if ($index->element($owner->signature) !== $owner) throw Exception::make("identity changed");
+    }
+    return dt_monotonic_ms() - $start;
+}
+
+function sample(int $width): void {
+    $index = new Signature_Index();
+    $result = new Component("Result");
+    $elapsed = generation($index, $result, $width, 131072);
+    // Each generation drops all owners and its distinct nominal input types.
+    $after = $index->count_nodes();
+    for ($i = 0; $i < 32; $i++) { generation($index, $result, $width, 0); }
+    $cycled = $index->count_nodes();
+    generation($index, $result, 1, 0);
+    echo $width, " ", $elapsed, " ", $after, " ", $cycled, " ", $index->count_nodes(), "\n";
+}
+
+sample(8);
+sample(64);
+sample(256);
+return 0;

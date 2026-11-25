@@ -30,6 +30,49 @@ lookup costs, general weak-map semantics, or full strongly connected component
 validation. The cycle check follows reachable calls for one reference-returning
 root and accepts a reachable cycle that excludes that root.
 
-Next, test callable-signature interning across equivalent live types, distinct
-parameter modes, expiry, and reintroduction. That cache has its own ownership
-contract and cannot be qualified by the observer test alone.
+## Callable-signature interning
+
+The production frontend can allocate separate owned callable types for parameter
+declarations. Collection element resolution and dependency grouping use
+`callable_signature_index::element()` when they need a canonical live identity.
+The first live owner keeps the signature and its component types alive. The
+index observes the component keys and the canonical owner through weak references.
+
+The default test `compiler_translated_callable_signatures` feeds 19 declarations
+from two independent frontend preparations into the production index and compares
+the resulting 15 identity groups with a native Simple C++ implementation. It
+varies result type, arity, parameter order, writable parameters, reference return
+origin, and a trailing variadic parameter versus an ordinary vector. Builtin
+components agree across preparations. Separate classes named Box stay distinct.
+
+The native test also releases the last owner while a component is still alive,
+looks up the same signature again, and reuses an expired child edge below a live
+prefix. Both implementations release a retired nominal component. The native
+fixture uses linked children because recursive concrete collection fields are
+currently unsupported. Lookup scans siblings and can recycle an expired edge
+on insertion. Production uses PHP WeakMap, which automatically removes an entry
+when its key expires. These tests qualify identity and ownership for the tested
+signatures. The following on-demand measurement covers one common-result prefix.
+
+### Native lookup and retirement under repeated replacement
+
+On dev002, `compiler_callable_signature_churn` builds the translated fixture
+with Clang at `-O2`. Enable `SCPP_ON_DEMAND_TESTS` and `SCPP_ENABLE_DATETIME`,
+then run `ctest --preset default -V -R '^compiler_callable_signature_churn$'`.
+Each row measures 131,072 round-robin successful lookups and identity checks
+across distinct one-parameter signatures with the same result type. The
+monotonic timer excludes construction, retirement, node counting, and startup.
+
+| Live signatures | Median of 5 runs (range) | Nodes after release | After 32 more generations | After one narrow generation |
+| ---: | ---: | ---: | ---: | ---: |
+| 8 | 6 ms (5–6) | 10 | 10 | 10 |
+| 64 | 15 ms (12–15) | 66 | 66 | 66 |
+| 256 | 55 ms (54–56) | 258 | 258 | 258 |
+
+There is one root and one result node in addition to the input nodes.
+Expired input slots are reused across generations. They remain allocated when
+the width falls to one. These counts measure index metadata, not process memory.
+The increase in time is consistent with scanning more siblings on each hit.
+Keep the native fixture as an identity and lifetime reference. Before adopting
+its lookup structure in the compiler port, measure actual sibling counts and
+lookup frequency on representative compiler inputs.
