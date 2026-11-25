@@ -235,3 +235,17 @@ The default core publication exposes these operations independently of managed P
 Executable startup retains the supplied count and argument slots before entering the authored body. Slot zero preserves the invocation spelling. Empty arguments, spaces and non-UTF-8 bytes are preserved. An argument list obtained by a function in another translation unit observes the same invocation. The runtime reads the process environment at each lookup; callers sharing the process with native code that changes its environment must coordinate those changes.
 
 [Publication](../runtime/metadata/publication.json) · [Executable source proof](../compiler/tests/cli_environment_native.py)
+
+## Stable string fingerprints
+
+The general API publishes `hash_string(string): string` and
+`stable_hash_string_u64(string): uint64`. Both borrow the input and compute
+FNV-1a 64-bit over its exact bytes, including NUL and invalid UTF-8. Start
+at 14695981039346656037. For each byte in order, XOR the byte into the
+accumulator and multiply by 1099511628211 modulo 2⁶⁴.
+
+The string result contains exactly 16 lowercase hexadecimal digits, most
+significant first, including leading zeros. The numeric result preserves all
+64 bits and requires the project's numeric module. The hex form is available
+with core alone. These fingerprints are suitable for deterministic comparisons
+where collisions are acceptable.

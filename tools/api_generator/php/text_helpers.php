@@ -28,10 +28,11 @@ function prepareTextHelpers(mixed $metadata, mixed $publication, array &$plan): 
     }
 }
 
-function compilerTextBinding(string $name, array $binding, array $types): string {
+function compilerTextBinding(string $name, array $binding, array $types, ?string $resultModule): string {
     $args = array_map(static fn($t) => "type_{$types[$t]}::instance()", $binding['parameters']);
     $symbol = "::scpp::str::$name";
     $extra = $name === 'string_byte_find' ? ', required_parameters: 2' : '';
+    if ($resultModule !== null) $extra .= ', required_module: ' . var_export($resultModule, true);
     $header = $binding['header'];
     if ($name === 'string_byte_len') {
         $symbol = 'size';
@@ -43,6 +44,7 @@ function compilerTextBinding(string $name, array $binding, array $types): string
 
 function renderTextHelpers(array $plan, array &$files): void {
     foreach ($plan['text_helpers'] ?? [] as $name => $binding) {
+        if (in_array($name, ['hash_string', 'stable_hash_string_u64'], true)) $files['src/runtime.cpp'] .= includeHeader('stable_string_hash.hpp');
         if (str_starts_with($name, 'string_utf8_')) $files['src/runtime.cpp'] .= includeHeader('utf8_codepoints.hpp');
         $signature = $binding['result'] . " $name(" . implode(', ', $binding['native_parameters']) . ')';
         $declaration = $name === 'string_byte_find' ? substr($signature, 0, -1) . ' = 0)' : $signature;

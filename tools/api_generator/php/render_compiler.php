@@ -395,7 +395,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach (compilerBuilderCases($runtime['text_builders'] ?? [], $runtimeTypes) as $case) $runtimeCases[] = $case;
     foreach (compilerCliCases($runtime ?? [], $runtimeTypes) as $case) $runtimeCases[] = $case;
     foreach ($runtime['text_helpers'] ?? [] as $name => $binding) {
-        $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings[\$key] ??= " . compilerTextBinding($name, $binding, $runtimeTypes) . ',';
+        $resultModule = $definitions[$binding['result']]['required_module'] ?? null;
+        $call = compilerTextBinding($name, $binding, $runtimeTypes, $resultModule);
+        $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings[\$key] ??= $call,";
     }
     foreach ($runtime['datetime']['operations'] ?? [] as $op) {
         $name = $op['source_name'];

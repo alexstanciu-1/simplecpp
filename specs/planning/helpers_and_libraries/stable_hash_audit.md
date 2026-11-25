@@ -31,3 +31,7 @@ Compiled each pinned header against its matching donor runtime with Clang, once 
 ## Implementation acceptance
 
 Use a minimal source caller to verify both return types, all bytes of the embedded-NUL case, leading zeros, and a numeric result above the signed maximum. Record the numeric helper's uint64 dependency in its provider and check the minimal hex-only caller's includes. Before migrating a persisted consumer, establish which format wrote its keys and version or rebuild that consumer's entries. FNV-1a is a noncryptographic fingerprint.
+
+## Stage 1 outcome
+
+Both general string helpers are operational. The compiled-source regression runs both against all five vectors above. It checks PHP general-API visibility, the numeric result's module requirement and the hex caller's include closure. Public byte spans remain deferred.

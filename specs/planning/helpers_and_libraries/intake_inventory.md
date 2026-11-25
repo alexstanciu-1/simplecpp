@@ -12,6 +12,7 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 | CLI arguments and environment | General typed argument count/list and environment lookup, with PHP count, packed mixed list aliases and getenv. [Contract](../../runtime_api_summary.md#executable-arguments-and-environment) |
 | Datetime | All 11 general clock, sleep, UTC and local-time operations, including exact unsigned clock transport. [Audit and proof](datetime_audit.md#stage-1-outcome) |
 | Byte strings, Unicode strings, string builders | Byte indexing, slicing, comparison and typed-hash join. Existing strlen, substr and strpos keep byte units. Three explicit UTF-8 code-point helpers and two owning ten-operation builders. [Family proof](string_families_audit.md#stage-1-outcome) |
+| Stable string hashing | Both general helpers publish the same FNV-1a 64-bit fingerprint, as lowercase hex or an unsigned numeric value. [Contract](../../runtime_api_summary.md#stable-string-fingerprints) · [Donor vectors](stable_hash_audit.md) |
 | Vector construction and capacity | Fill, capacity, reserve, resize, compact and both clear spellings. [Family audit](vector_capacity_audit.md) |
 | Typed vector/hash operations and map/filter | Construction, indexing, mutation, membership, removal, clear and traversal. The six general transform names cover generic, sequence and keyed cases for their admitted receivers. [Operations](typed_container_operations_audit.md) · [Transforms](collection_map_filter_audit.md) |
 | Boxed collections | Table-valued mixed and dynamic support indexing, probes, mutation, traversal and same-family generic map/filter. Keys and order survive transforms, with mixed copy-on-write and dynamic shared identity. [Contract](../../collection_traversal.md) |
@@ -39,7 +40,6 @@ Reconciled against `codex/helpers-and-libs` at `eb604db79` on 2026-11-25. All im
 
 | Candidate | What remains to settle |
 | --- | --- |
-| Versioned stable hashing | Audited. Propose the two string helpers with my-try FNV-1a 64-bit semantics. The release donor changed results across standard libraries. Defer byte-span helpers with the span type. [Donor comparison and test vectors](stable_hash_audit.md) |
 | Remaining core and release-only spellings | Reconcile source-visible debug/output, predicates, constants and compatibility aliases against existing language contracts. Classify compiler-emitted evaluation/debug hooks with their owners. Results/errors, conversions, lifetime operations, enum/layout queries and source-language operators already have dedicated evidence rows below. An equivalent language capability alone does not establish a donor spelling or overload. [Source surface index](donor_surfaces.tsv) · [Donor entities](donor_entities.tsv) |
 
 **Closeout.** The agreed implementations are operational. To close the broader mining pass, choose implement, defer or assign an owner for the remaining candidates and record the core spelling decisions. The CLI/environment group has completed implementation.

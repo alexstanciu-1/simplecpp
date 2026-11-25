@@ -7,6 +7,8 @@ $core = decode(readFile($root . '/runtime/metadata/publication.json'), 'core');
 $core->types = ['byte', 'int64'];
 unset($core->modules);
 $meta = decode($metadata, 'metadata');
+rejects(fn() => prepareRuntime($meta, $core, $facts), 'requires a published type: uint64');
+$core->text_helpers = array_values(array_diff($core->text_helpers, ['stable_hash_string_u64']));
 $plan = prepareRuntime($meta, $core, $facts);
 requireThat(array_column($plan['types'], 'name') === ['uint8', 'int64'], 'Core integer/byte surface grew');
 requireThat(hasValue($plan, 'float64'), 'Core float64 missing');
