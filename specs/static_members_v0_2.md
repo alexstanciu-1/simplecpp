@@ -164,6 +164,13 @@ under that spec's exact-signature, visibility and finality rules; they do not es
 virtual dispatch. The inheritance spec owns implemented instance overrides/interfaces
 and construction boundaries, superseding the original blanket CH11 deferral.
 
+A synchronous PHP static method may declare a trailing by-value pack. For
+`Scores::sum(int $base, int ...$items)`, callers may supply individual tail
+arguments or unpack a matching vector after the fixed prefix. The reference
+`Scores::sum(...)` adapts to a matching typed callback or owned callable.
+Redeclarations must preserve the variadic marker even when both declarations
+would pass the same native vector type.
+
 Late-bound `static::` and shared-class `new static` are enabled in concrete static
 call implementations under the inheritance contract. Static signatures are checked
 eagerly; bodies are checked per demanded called-type instance, not for every unused
