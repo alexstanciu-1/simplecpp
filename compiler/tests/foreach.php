@@ -152,6 +152,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	rejects(fn() => $prepare($decl('int', 'n', '1') . $loop($v('n'), '') . 'return 8;'), 'iterable');
 	rejects(fn() => $prepare($setup . $loop($v('items'), '') . 'echo ' . $v('value') . ';return 8;'), 'Unknown');
 	if ($flavor === flavor::php) {
+		$hash = '$map hash<int,string> = [];$map["key"]=1;';
+		$emit('writable_hash', $hash . 'foreach ($map as $k => &$n) {$k="other";$n+=2;}echo $map["key"];return 8;', '3');
+		rejects(fn() => $prepare($hash . 'foreach ($map as &$n) {$map["key"]=4;}return 8;'), 'during writable foreach');
 		$emit('writable', $setup . 'foreach ($items as $key => &$value) {$value+=2;echo $items[$key];}return 8;', '345');
 	} else rejects(fn() => $prepare($setup . 'foreach (' . $v('items') . ' as &' . $v('value') . ') {} return 8;'), 'Expected');
 }

@@ -65,12 +65,12 @@ sequence is preserved. Independent loops have independent integer positions.
 This value traversal protocol excludes concurrent mutation and escaping element
 references. These methods do not make arbitrary dangling native references safe.
 
-## PHP writable vector foreach
+## PHP writable vector and hash foreach
 
 In a synchronous body, `foreach ($items as &$item)` and
 `foreach ($items as $key => &$item)` require a named, writable local that owns
-a typed vector. The element name is fresh and scoped to the loop. Each iteration
-selects one index. Changing the optional key variable leaves the selection intact.
+a typed vector or hash. The element name is fresh and scoped to the loop. Each iteration
+selects one vector index or live hash entry. Changing the optional key variable leaves the selection intact.
 
 Reading the element reads the current slot. Assignments and supported compound
 updates replace it immediately. Reads through another name for the vector see
@@ -78,13 +78,18 @@ the completed write, including before a break, return or exception. A by-value
 capture takes the current element value. Shared handles retain object identity.
 For inline records, edit a value copy and assign the whole element back.
 
-The vector must keep its size, order and storage throughout the loop. Preparation
+The collection must keep its size, order and storage throughout the loop. Preparation
 rejects append, removal, resize, reserve, reset, replacement and mutable reference
-calls on the vector or a lexical alias. A closure with a mutable capture of that
+calls on the collection or a lexical alias. A closure with a mutable capture of that
 storage cannot be invoked during the loop. By-value and read-only helper calls
 remain eligible. The element cannot serve as reference storage for a call, local
 alias, reference capture or segment grant. Ordinary indexed writes to existing
-slots remain visible through the loop binding.
+vector slots remain visible through the loop binding.
+
+A writable hash loop visits live keys in insertion order, including after erasure
+and reinsertion. Write through the element binding to replace the selected value.
+Preparation rejects separate indexed writes through the hash or an alias, even
+when the written key exists. Keyed assignment could otherwise insert a new entry.
 
 ## Typed map and filter
 

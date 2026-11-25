@@ -1,4 +1,4 @@
-"""Indexed writes are immediate; an active vector cannot be structurally invalidated."""
+"""Writable traversal updates selected vector and hash entries immediately."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -77,3 +77,36 @@ return 8;
 '''
 with TemporaryDirectory(prefix='scpp-writable-foreach-values-') as directory:
     revisions(Path(directory), 'php', dict(main=records), [(None, None, b'8140axbx2')])
+
+hash_provider = '''
+function observe(const hash<int,string> &$map,string $key):int {return $map[$key];}
+'''
+hash_main = '''
+function early():hash<int,string> {
+    $map hash<int,string> = [];$map["one"]=1;
+    foreach ($map as &$value) {$value=9;return $map;}
+    return $map;
+}
+$map hash<int,string> = [];$alias =& $map;
+$map["a"]=1;$map["b"]=2;$map["c"]=3;$map->remove("b");$map["b"]=4;
+$other hash<int,int> = [];$other[17]=0;
+foreach ($map as $key => &$value) {
+    $saved=$key;$key="unused";
+    foreach ($other as &$inner) {$inner++;$value+=10;}
+    echo $saved,observe($alias,$saved),";";
+}
+foreach ($map as &$value) {$value=7;break;}
+try {foreach ($map as &$value) {$value++;throw new Exception("stop");}}
+catch (Exception $e) {echo $map["a"];}
+$result=early();echo $result["one"],$other[17];return 8;
+'''
+hash_trace = b'a11;c13;b14;893'
+with TemporaryDirectory(prefix='scpp-writable-hash-') as directory:
+    edits = [(None, None, hash_trace)]
+    for write in ['$map["new"]=1;', '$alias[$key]=1;', '$alias[$key]+=1;',
+                  '$alias[$key]++;', '$alias->remove($key);', 'clean($alias);']:
+        edits.append(('main', hash_main.replace('$saved=$key;', write), 'during writable foreach'))
+    edits += [('main', hash_main, hash_trace),
+              ('provider', hash_provider.replace('const hash', 'hash'), 'during writable foreach'),
+              ('provider', hash_provider, hash_trace)]
+    revisions(Path(directory), 'php', dict(main=hash_main, provider=hash_provider), edits)

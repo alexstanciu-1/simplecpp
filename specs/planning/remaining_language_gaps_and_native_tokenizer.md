@@ -318,7 +318,7 @@ See [G05 verification](#g05-verification) for the typed migration paths.
 
 ### G06 · Collection traversal
 
-PHP supports scoped writable iteration over an owned local typed vector in synchronous code.
+PHP supports scoped writable iteration over an owned local typed vector or hash in synchronous code.
 See the [traversal contract](../collection_traversal.md) and [native tests](../../compiler/tests/writable_foreach_native.py).
 In `settle_preparation()`, the compiler sorts each stored group by called-type
 name while preserving its identity keys. The [lifetime fixture](../../compiler/tests/called_method_lifetime.php)
@@ -327,8 +327,8 @@ the Left caller and checks that the original Right key still selects the same bo
 
 **Partial (4)**
 
-- `CTRL-FOREACH-003` — Reference foreach over typed vectors
-- `CTRL-FOREACH-004` — Keyed reference foreach over typed vectors
+- `CTRL-FOREACH-003` — Reference foreach over typed vectors and hashes
+- `CTRL-FOREACH-004` — Keyed reference foreach over typed vectors and hashes
 - `CTRL-FOREACH-001` — Value foreach
 - `CTRL-FOREACH-002` — Keyed foreach
 

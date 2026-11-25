@@ -461,6 +461,9 @@ def prove(work):
         ({'helper.php': helper.replace('return $rows', '$rows[] = 7; return $rows')}, 'Append'),
         ({'point.php': 'class Shared {} struct Point { public const bool ENABLED = true; public int $x = 1; public Shared $shared; }'}, 'isolated inline'),
     ]
+    cases.append(({'main.php': '$m hash<int,int> = [];$m[1]=2;$alias =& $m;'
+                  'foreach ($m as &$v) {parallel { update_hash(segment($alias,0,1)); };}return 8;'},
+                  'during writable foreach'))
     for i, (change, error) in enumerate(cases):
         compile_source(app, work / f'invalid-{i}', valid | change, error)
 

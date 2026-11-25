@@ -1001,12 +1001,21 @@ CPP;
 				$source = $statement->source_value;
 				$owner = $this->name($source->local_def());
 				$index = 'iteration_index_' . $statement->start;
-				$limit = 'iteration_limit_' . $statement->start;
-				$count = $source->type_def()->lower_cpp_cardinality(collection_cardinality::count, $owner);
-				$lines[] = "for (scpp::int64 $index = 0, $limit = $count; $index < $limit; ++$index) {";
+				$type = $source->type_def();
+				if ($type instanceof key_iterable_type) {
+					$prefix = 'loop_' . $statement->start . '_';
+					$lines[] = '{ scpp::int64 ' . $prefix . 'iteration_position{}, ' . $prefix . 'iteration_limit{};';
+					$lines[] = $type->lower_cpp_iteration_initialize($owner, $prefix);
+					$lines[] = $type->iteration_key_type()->cpp_type() . ' ' . $index . '{};';
+					$lines[] = 'while (' . $type->lower_cpp_iteration_next_key($owner, $index, $prefix) . ') {';
+				} else {
+					$limit = 'iteration_limit_' . $statement->start;
+					$count = $type->lower_cpp_cardinality(collection_cardinality::count, $owner);
+					$lines[] = "for (scpp::int64 $index = 0, $limit = $count; $index < $limit; ++$index) {";
+				}
 				if ($statement->key !== null) $lines[] = '[[maybe_unused]] auto ' . $this->name($statement->key) . ' = ' . $index . ';';
 				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, null) as $line) $lines[] = "\t" . $line;
-				$lines[] = '}';
+				$lines[] = $type instanceof key_iterable_type ? '} }' : '}';
 			}
 			elseif ($statement instanceof ast_foreach_statement && ($source_type = $statement->source_value->type_def()) instanceof segment_type
 				&& $source_type->key !== null) {
@@ -1710,18 +1719,22 @@ CPP;
 		return $lines;
 	}
 
+	/** Read a selected element or identify the native local storage. */
 	private function name(ast_local_binding $binding): string
 	{
 		if ($binding instanceof ast_writable_element) {
 			$loop = $binding->parent;
 			$source = $loop->source_value;
-			return $source->type_def()->lower_cpp_element_read($this->name($source->local_def()), 'iteration_index_' . $loop->start);
+			$owner = $this->name($source->local_def());
+			$type = $source->type_def();
+			if ($type instanceof key_iterable_type) return $type->lower_cpp_iteration_current_value($owner, 'loop_' . $loop->start . '_iteration_position');
+			return $type->lower_cpp_element_read($owner, 'iteration_index_' . $loop->start);
 		}
 		return ($this->generator_locals[$binding->storage_id()] ?? null)
 			?? 'var_' . self::name_component($binding->declaration_key()) . '_' . $binding->storage_id();
 	}
 
-	/** Write immediately through the same checked vector setter as an indexed assignment. */
+	/** Write immediately through the same collection setter as an indexed assignment. */
 	private function iteration_store(ast_writable_element $element, string $value): string
 	{
 		$loop = $element->parent;
@@ -2147,6 +2160,7 @@ CPP;
 		return $this->binding_initialization($statement, $prefix, $converted);
 	}
 
+	/** Preserve prefix or postfix results while writing through a selected element. */
 	private function local_update(ast_update_statement $update): string
 	{
 		$local = $update->local_def();

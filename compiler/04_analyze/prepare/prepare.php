@@ -54,8 +54,8 @@ final class Preparation
 	private int $name_lookups /** uint32 */ = 0;
 	/** Native non-owning innermost active loop within this callable. */
 	private ?ast_repeating_statement $loop = null;
-	/** Active writable vector loops, keyed by canonical local storage ID in this callable. @var array<int,true> */
-	private array $iterated_vectors = [];
+	/** Active writable collection loops, keyed by canonical local storage ID in this callable. @var array<int,true> */
+	private array $iterated_collections /** array<uint32,bool> */ = [];
 	/** Reachable nonlocal exits, keyed by destination token and direction. @var bool[] */
 	private array $outward = [];
 	/** Current finalizer boundary for lexical transfer checks. */
@@ -281,6 +281,7 @@ final class Preparation
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
 				$this->value($statement->target);
+				$this->require_index_write_available($receiver);
 				Readonly_Access::write($receiver, true);
 				if (!($receiver->type_def() instanceof indexed_mutation_type)) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
@@ -308,6 +309,7 @@ final class Preparation
 				} else {
 					$this->value($receiver);
 					$binding = $receiver->declaration();
+					$this->require_index_write_available($receiver);
 					Readonly_Access::write($receiver, true);
 					if (!($binding instanceof ast_local_binding)
 						&& !($binding instanceof ast_global_declaration && $binding->parent instanceof ast_record_declaration)) {
@@ -332,7 +334,7 @@ final class Preparation
 					$this->writable_property($statement->receiver, payload: true);
 				} else {
 					$this->value($statement->receiver);
-					if ($statement->receiver instanceof ast_name_expression) $this->require_vector_available($statement, $statement->receiver->local_binding());
+					if ($statement->receiver instanceof ast_name_expression) $this->require_collection_available($statement, $statement->receiver->local_binding());
 					Readonly_Access::write($statement->receiver, true);
 					if ($statement->receiver->local_binding() === null) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
@@ -760,14 +762,14 @@ final class Preparation
 	{
 		$this->value($statement->source_value);
 		$source_type = $statement->source_value->type_def();
-		$vector = null;
+		$collection = null;
 		if ($statement->value instanceof ast_writable_element) {
-			$vector = $statement->source_value instanceof ast_name_expression ? $statement->source_value->local_binding() : null;
-			if (!($vector instanceof ast_local_declaration)
-				|| !($source_type instanceof vector_type_definition) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
-				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires an owned local vector in a synchronous body');
+			$collection = $statement->source_value instanceof ast_name_expression ? $statement->source_value->local_binding() : null;
+			if (!($collection instanceof ast_local_declaration)
+				|| !($source_type instanceof vector_type_definition || $source_type instanceof hash_type_definition) || $function->is_async || $function->return_type_def() instanceof generator_type_definition) {
+				throw new diagnostic($source, $statement->byte_start(), 'Writable foreach requires an owned local vector or hash in a synchronous body');
 			}
-			$this->require_vector_available($statement, $vector);
+			$this->require_collection_available($statement, $collection);
 		}
 		$segment = $source_type instanceof segment_type && $source_type->key !== null;
 		$type = $source_type->iteration();
@@ -801,8 +803,8 @@ final class Preparation
 		}
 		$destination = $this->find_local($statement->value->short_name);
 		if ($destination !== null) {
-			$this->require_vector_available($statement, $destination);
-			if ($vector !== null || $destination instanceof ast_writable_element) {
+			$this->require_collection_available($statement, $destination);
+			if ($collection !== null || $destination instanceof ast_writable_element) {
 				throw new diagnostic($source, $statement->value->byte_start(), 'Writable foreach requires a fresh element binding');
 			}
 		}
@@ -831,12 +833,12 @@ final class Preparation
 			$this->local_frames[] = [];
 			$outer_loop = $this->loop;
 			$this->loop = $statement;
-			if ($vector !== null) $this->iterated_vectors[$vector->storage_id()] = true;
+			if ($collection !== null) $this->iterated_collections[$collection->storage_id()] = true;
 			try {
 				$completion = $this->sequence($statement->body->statements, $source, $target, $function);
 			}
 			finally {
-				if ($vector !== null) unset($this->iterated_vectors[$vector->storage_id()]);
+				if ($collection !== null) unset($this->iterated_collections[$collection->storage_id()]);
 				$this->loop = $outer_loop;
 				array_pop($this->local_frames);
 			}
@@ -933,11 +935,19 @@ final class Preparation
 		$this->array_bytes += $bytes;
 	}
 
-	/** Aliases resolve to the same storage as the original vector. */
-	private function require_vector_available(ast_node $site, ?ast_local_binding $binding): void
+	/** A separate hash write could insert a key while the loop holds a selection. */
+	private function require_index_write_available(ast_expression $receiver): void
 	{
-		if ($binding !== null && isset($this->iterated_vectors[$binding->storage_id()])) {
-			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot structurally mutate or borrow the vector during writable foreach');
+		if ($receiver instanceof ast_name_expression && $receiver->type_def() instanceof hash_type_definition) {
+			$this->require_collection_available($receiver, $receiver->local_binding());
+		}
+	}
+
+	/** Aliases resolve to the same storage as the original collection. */
+	private function require_collection_available(ast_node $site, ?ast_local_binding $binding): void
+	{
+		if ($binding !== null && isset($this->iterated_collections[$binding->storage_id()])) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot structurally mutate or borrow the collection during writable foreach');
 		}
 	}
 
@@ -962,7 +972,7 @@ final class Preparation
 		} else {
 			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
 		}
-		$this->require_vector_available($target, $origin);
+		$this->require_collection_available($target, $origin);
 		if ($origin instanceof ast_writable_element) throw new diagnostic($source, $target->byte_start(), 'Cannot alias a writable foreach element');
 		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
 			&& ($this->enclosing_lambda !== null || !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
@@ -1148,7 +1158,7 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(),
 				'Assignment requires an existing local; global writes are deferred: ' . $name);
 		}
-		$this->require_vector_available($site, $local);
+		$this->require_collection_available($site, $local);
 		Readonly_Access::require_writable($site, $local);
 		return $local;
 	}
@@ -1166,6 +1176,7 @@ final class Preparation
 	{
 		if ($statement instanceof ast_index_update) {
 			$this->value($statement->target);
+			$this->require_index_write_available($statement->target->receiver);
 			Readonly_Access::write($statement->target->receiver, true);
 			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a mutable collection');
@@ -1819,7 +1830,7 @@ final class Preparation
 	private function invalidate_references(ast_expression $call, array $writes /** list<uint32> */): void
 	{
 		foreach ($writes as $id) {
-			if (isset($this->iterated_vectors[$id])) throw new diagnostic($call->source(), $call->byte_start(), 'Call may mutate the vector during writable foreach');
+			if (isset($this->iterated_collections[$id])) throw new diagnostic($call->source(), $call->byte_start(), 'Call may mutate the collection during writable foreach');
 			$read = $this->guard_reads[$id] ?? null;
 			if ($read !== null && ($read < $call->start || $read >= $call->end)) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Separate guarded argument use and mutable reference access into different expressions');
@@ -2057,7 +2068,7 @@ final class Preparation
 			if ($capture->by_reference) {
 				// Different capture names can borrow the same slot through local aliases.
 				$origin = $capture->initializer->local_def();
-				$this->require_vector_available($capture, $origin);
+				$this->require_collection_available($capture, $origin);
 				if ($origin instanceof ast_writable_element) throw new diagnostic($capture->source(), $capture->byte_start(), 'Cannot capture a writable foreach element by reference');
 				$id = $origin->storage_id();
 				if (!isset($borrowed[$id])) {
@@ -2131,8 +2142,9 @@ final class Preparation
 	private function joined_batch(ast_call_expression $call, ?string $initializing): void
 	{
 		if ($this->dependencies?->mt === null) throw new diagnostic($call->source(), $call->byte_start(), 'Joined segments require fresh compilation');
-		Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg, ?callback_type_definition $signature = null) use ($initializing): void {
+		Mt_Provisioning::batch($call, $this->symbols, $this->dependencies, $this->owner, function (ast_expression $arg, ?callback_type_definition $signature = null, bool $writable_segment = false) use ($initializing): void {
 			$this->value($arg, $initializing, allow_callback: $signature !== null, destination: $signature);
+			if ($writable_segment) $this->require_index_write_available($arg);
 		}, function (ast_produced_binding $index, \Closure $bind): void {
 			$this->local_frames[] = [$index->declaration_key() => $index];
 			$this->forget_values();
