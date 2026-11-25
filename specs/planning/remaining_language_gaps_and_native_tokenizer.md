@@ -260,6 +260,25 @@ recipe; the production backend continues to use PHP for rendering.
 [Build-time publisher](../../compiler/examples/concrete_vector/publish.php) ·
 [Differential test](../../compiler/tests/translated_vector_recipe.py)
 
+**Native command-line build driver checkpoint.** The Linux proof builds and
+runs the two-source vector application with the native-rendered header. It
+reads translation units, native sources when present, and ordered link inputs
+from the published manifest. It invokes Clang with literal arguments and stages
+the executable beside its destination. After a successful link it renames the
+executable into place, runs it, forwards the captured streams and returns its
+exit status. The driver uses the filesystem, JSON, I/O, process and datetime
+modules. Polling sleeps between attempts.
+
+On dev002 the application printed `77` and exited with status 8 through both
+the driver and the direct control. With a generated unit containing a deliberate
+`#error`, the driver returned Clang's failure status and reproduced its stderr
+byte for byte. The previous executable survived and no staging file remained.
+The focused test took 1.60 seconds. The proof consumes a settled bundle;
+production reader locking, incremental Ninja builds and retained service
+transport remain separate checks.
+[Driver](../../compiler/examples/native_driver/main.php.scpp) ·
+[Native comparison](../../compiler/tests/translated_native_driver.py)
+
 Acceptance checks:
 
 1. Compare offset, length, kind, and spelling with the oracle on real inputs, including longest punctuation, flavor keywords, comments, quotes, and token-length limits.

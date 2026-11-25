@@ -874,6 +874,11 @@ if(BUILD_TESTING)
   add_test(NAME compiler_translated_construction COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_construction.py)
   add_test(NAME compiler_translated_blocking_wait COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_blocking_wait.py)
   add_test(NAME compiler_translated_closure_dependencies COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_closure_dependencies.py)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_FILESYSTEM
+     AND SCPP_ENABLE_JSON AND SCPP_ENABLE_IO AND SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_translated_native_driver COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_native_driver.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
   add_test(NAME compiler_translated_vector_recipe COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_vector_recipe.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
   add_test(NAME compiler_translated_punctuation COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_punctuation.py)

@@ -1,6 +1,7 @@
 """Allocation-failure, presizing and lifetime proofs using emitted literal expressions."""
 import argparse
 import json
+import sys
 from pathlib import Path
 import re
 import subprocess
@@ -161,9 +162,13 @@ int main() {
     source = source.replace('    assert(live == initial_live);', extra + '    assert(live == initial_live);')
     path = out / 'proof.cpp'
     path.write_text(source)
-    flags = ['-std=c++23', '-O1', '-g', '-Wall', '-Wextra', '-Werror', *includes(runtime)]
+    flags = ['-std=c++23', '-O1' if sanitize else '-O0', '-g' if sanitize else '-g0', '-Wall', '-Wextra', '-Werror', *includes(runtime)]
     if sanitize:
         flags += ['-fsanitize=address,undefined', '-fsanitize-address-use-after-scope', '-fno-sanitize-recover=all']
+    # The probe embeds generated implementation code. Link only the routines it exercises,
+    # since other published carriers may depend on optional module objects.
+    if sys.platform.startswith("linux"):
+        flags += ["-ffunction-sections", "-fdata-sections", "-Wl,--gc-sections"]
     run([cxx, *flags, path, '-o', out / 'proof'])
     run([out / 'proof'])
     print(cxx, 'PASS allocation failures, exact presizing/no growth, ownership and backing lifetimes', 'ASan/UBSan' if sanitize else '')

@@ -1,0 +1,78 @@
+// Linux command-line proof over a settled compiler bundle.
+function write_diagnostic(string $bytes): void {
+    if ($bytes === "") return;
+    $stream file_stream = io_open("/dev/stderr", "ab");
+    try {
+        $offset = 0;
+        while ($offset < strlen($bytes)) {
+            $written int = io_write($stream, substr($bytes, $offset));
+            if ($written === 0) throw Exception::make("Cannot write diagnostics");
+            $offset += $written;
+        }
+        if (!io_flush($stream)) throw Exception::make("Cannot flush diagnostics");
+    } finally {
+        io_close($stream);
+    }
+}
+
+function execute(string $executable, vector<string> $arguments): int {
+    $child process_handle = process_start($executable, $arguments, "", 0);
+    try {
+        $done bool = process_poll($child);
+        while (!$done) {
+            dt_sleep_ms(1);
+            $done = process_poll($child);
+        }
+        $output process_output = process_result($child);
+        echo $output->stdout_text;
+        write_diagnostic($output->stderr_text);
+        if ($output->signal !== 0) return 128 + $output->signal;
+        return $output->exit_code;
+    } finally {
+        process_close($child);
+    }
+}
+
+function append_inputs(json_node $root, string $field, string $prefix, vector<string> &$args): void {
+    $list json_node = json_node_member($root, $field);
+    $kind string = json_node_kind($list);
+    if ($kind !== "array") throw Exception::make("Expected manifest array " . $field);
+    $count int = json_node_size($list);
+    if ($field === "translation_units" && $count === 0) throw Exception::make("Empty executable bundle");
+    for ($i = 0; $i < $count; $i++) {
+        $item json_node = json_node_at($list, $i);
+        $path string = json_node_string($item);
+        $args[] = $prefix . $path;
+    }
+}
+
+$cli = cli_arguments();
+if (count($cli) < 4) {
+    write_diagnostic("usage: driver BUNDLE ABSOLUTE_OUTPUT ABSOLUTE_CXX [CXX_FLAG ...]\n");
+    return 2;
+}
+$bundle = $cli[1];
+$exe = $cli[2];
+if (!str_starts_with($exe, "/")) throw Exception::make("Expected absolute executable output path");
+$text string = fs_get($bundle . "/manifest.json");
+$error ?json_parse_error = null;
+$doc json_document = json_document_parse($text, $error);
+$root json_node = json_document_root($doc);
+$args vector<string> = [];
+for ($i = 4; $i < count($cli); $i++) { $args[] = $cli[$i]; }
+append_inputs($root, "translation_units", $bundle . "/", $args);
+$has_native bool = json_node_has($root, "native_sources");
+if ($has_native) append_inputs($root, "native_sources", "", $args);
+append_inputs($root, "link_inputs", "", $args);
+
+$stage string = fs_stage(fs_dirname($exe));
+try {
+    $args[] = "-o";
+    $args[] = $stage;
+    $status = execute($cli[3], $args);
+    if ($status !== 0) return $status;
+    if (!fs_rename($stage, $exe)) throw Exception::make("Cannot publish executable");
+} finally {
+    if (fs_exists($stage)) fs_remove($stage);
+}
+return execute($exe, []);

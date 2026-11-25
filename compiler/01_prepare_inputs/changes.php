@@ -71,7 +71,12 @@ final class Project_Changes
 		return $mtime >= $read_started - 1;
 	}
 
-	/** Read only selected sources whose last successful verification still needed confirmation. */
+	/**
+	 * Read only selected sources whose last successful verification still needed confirmation.
+	 * @param array<string,mixed> $state
+	 * @param array<string,mixed>|null $baseline
+	 * @param array<string,list<string>> $settled
+	 */
 	public static function confirm(array &$state /** array<string,mixed> */, ?array $baseline /** array<string,mixed> */,
 		array &$settled /** array<string,list<string>> */): void
 	{
