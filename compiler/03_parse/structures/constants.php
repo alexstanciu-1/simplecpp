@@ -9,7 +9,7 @@ final readonly class runtime_integer_constant implements name_binding
 	private string $key;
 	public int $value /** int64 */;
 
-	public function __construct(string $key, int $value /** int64 */)
+	public function __construct(string $key, int $value /** int64 */, public ?string $required_module = null)
 	{
 		$this->key = $key;
 		$this->value = $value;

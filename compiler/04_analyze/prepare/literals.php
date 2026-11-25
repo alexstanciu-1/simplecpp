@@ -143,7 +143,7 @@ final class Literal_Declaration_Preparation
 		$dependencies->watch($entry, $owner);
 		$target = $entry->declaration();
 		if ($target === null && $expr->source()->flavor === flavor::php) {
-			$runtime = runtime_constants::integer($file->runtime_constant_key($expr->name));
+			$runtime = $file->type_availability->runtime_constant($file->runtime_constant_key($expr->name));
 			if ($runtime !== null) {
 				$expr->settle_runtime_constant($runtime);
 				return $runtime->value;

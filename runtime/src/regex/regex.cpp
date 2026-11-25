@@ -354,3 +354,134 @@ result_or_false_vector_string split(const string& pattern, const string& subject
     return split(pattern, subject, -1, 0);
 }
 }
+
+namespace {
+template<class Field>
+void capture_fields(const capture_pattern& pattern, std::string_view subject, int count, Field field) {
+    for (int i = 0; i < count; ++i)
+        field(static_cast<int64>(i), scpp::mixed::from_string(owned(pattern.capture(subject, i))));
+    uint32_t names = 0, stride = 0;
+    PCRE2_SPTR table = nullptr;
+    pcre2_pattern_info(pattern.code.get(), PCRE2_INFO_NAMECOUNT, &names);
+    pcre2_pattern_info(pattern.code.get(), PCRE2_INFO_NAMEENTRYSIZE, &stride);
+    pcre2_pattern_info(pattern.code.get(), PCRE2_INFO_NAMETABLE, &table);
+    for (uint32_t i = 0; i < names; ++i) {
+        const auto* entry = table + i * stride;
+        const int group = entry[0] * 256 + entry[1];
+        field(string{reinterpret_cast<const char*>(entry + 2)}, mixed::from_string(
+            group < count ? owned(pattern.capture(subject, group)) : string{}));
+    }
+}
+
+result_or_false_int64 php_matches(const string& pattern, const string& subject, mixed* matches,
+                                  int64 flags, int64 offset, bool all) {
+    if ((!all && flags != 0) || (all && flags != 0 && flags != 1 && flags != 2))
+        throw ValueError("unsupported match flags");
+    auto output = mixed::container();
+    capture_pattern compiled(pattern);
+    int64 hits = 0;
+    auto text = bytes(subject);
+    bool ok = compiled.data && compiled.each(text, capture_offset(offset, subject.size()), [&](int count, size_t, size_t) {
+        ++hits;
+        if (matches) {
+            auto row = mixed::container();
+            capture_fields(compiled, text, count, [&](const auto& key, mixed value) {
+                if (all && flags != 2) {
+                    auto column = output.has(key) ? output.read(key) : mixed::container();
+                    column.append(std::move(value));
+                    output.set(key, std::move(column));
+                } else row.set(key, std::move(value));
+            });
+            if (!all) output = std::move(row);
+            else if (flags == 2) output.append(std::move(row));
+        }
+        return all;
+    });
+    if (matches) *matches = ok ? std::move(output) : mixed::container();
+    return ok ? result_or_false_int64{hits} : result_or_false_int64::from_false();
+}
+}
+
+namespace scpp::regex {
+result_or_false_int64 preg_match(const string& pattern, const string& subject, mixed& matches, int64 flags, int64 offset) {
+    return php_matches(pattern, subject, &matches, flags, offset, false);
+}
+result_or_false_int64 preg_match(const string& pattern, const string& subject, mixed& matches, int64 flags) {
+    return preg_match(pattern, subject, matches, flags, 0);
+}
+result_or_false_int64 preg_match(const string& pattern, const string& subject, mixed& matches) {
+    return preg_match(pattern, subject, matches, 0, 0);
+}
+result_or_false_int64 preg_match_all(const string& pattern, const string& subject, mixed& matches, int64 flags, int64 offset) {
+    return php_matches(pattern, subject, &matches, flags, offset, true);
+}
+result_or_false_int64 preg_match_all(const string& pattern, const string& subject, mixed& matches, int64 flags) {
+    return preg_match_all(pattern, subject, matches, flags, 0);
+}
+result_or_false_int64 preg_match_all(const string& pattern, const string& subject, mixed& matches) {
+    return preg_match_all(pattern, subject, matches, 0, 0);
+}
+result_or_false_int64 preg_match_all(const string& pattern, const string& subject) {
+    return php_matches(pattern, subject, nullptr, 0, 0, true);
+}
+}
+
+namespace scpp::regex {
+result_or_false_mixed preg_split(const string& pattern, const string& subject, int64 limit, int64 flags) {
+    auto fields = split(pattern, subject, limit, flags);
+    if (!fields.has_value()) return result_or_false_mixed::from_false();
+    auto vec = fields.value();
+    auto output = mixed::container();
+    for (int64 i = 0; i < vec.size(); ++i) output.append(mixed::from_string(vec.at(i)));
+    return result_or_false_mixed{std::move(output)};
+}
+result_or_false_mixed preg_split(const string& pattern, const string& subject, int64 limit) {
+    return preg_split(pattern, subject, limit, 0);
+}
+result_or_false_mixed preg_split(const string& pattern, const string& subject) {
+    return preg_split(pattern, subject, -1, 0);
+}
+
+namespace {
+result_or_false_mixed select_rows(const string& pattern, const mixed& input, const string* replacement, int64 limit) {
+    validate_limit(limit);
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return result_or_false_mixed::from_false();
+    auto output = mixed::container();
+    if (input.kind() != boxed_kind::container) return result_or_false_mixed{std::move(output)};
+    int64 position = 0, numeric_key;
+    string text_key;
+    mixed entry;
+    const auto stop = input.iteration_limit();
+    while (input.iteration_next(position, stop, numeric_key, text_key, entry)) {
+        auto subject = entry.get_string();
+        if (replacement) {
+            int64 changed = 0;
+            std::string rewritten;
+            if (!rewrite(compiled, bytes(subject), limit, rewritten, changed, [&](std::string& out, int count) {
+                expand(out, bytes(*replacement), compiled, bytes(subject), count);
+            })) return result_or_false_mixed::from_false();
+            if (!changed) continue;
+            entry = mixed::from_string(owned(rewritten));
+        } else {
+            int count = compiled.find(bytes(subject), 0, 0);
+            if (count == PCRE2_ERROR_NOMATCH) continue;
+            if (count < 0) return result_or_false_mixed::from_false();
+        }
+        if (numeric_key < 0) output.set(text_key, entry);
+        else output.set(numeric_key, entry);
+    }
+    return result_or_false_mixed{std::move(output)};
+}
+}
+
+result_or_false_mixed preg_grep(const string& pattern, const mixed& input) {
+    return select_rows(pattern, input, nullptr, -1);
+}
+result_or_false_mixed preg_filter(const string& pattern, const string& replacement, const mixed& input, int64 limit) {
+    return select_rows(pattern, input, &replacement, limit);
+}
+result_or_false_mixed preg_filter(const string& pattern, const string& replacement, const mixed& input) {
+    return preg_filter(pattern, replacement, input, -1);
+}
+}

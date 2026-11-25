@@ -56,6 +56,31 @@ def fixture(flavor):
             statements.append(f'if ({value} !== "{expected}") {{ return 8; }}')
     if flavor == 'php':
         statements.append(r'''
+$boxes mixed = ["p"=>"ax", "q"=>"xz", "r"=>"!"];
+$kept result_or_false<mixed> = preg_grep("/x/", $boxes);
+$values mixed = $kept;
+if (count($values) !== 2 || (string)$values["q"] !== "xz") { return 21; }
+$values["q"] = "updated";
+$original mixed = $kept;
+if ((string)$original["q"] !== "xz") { return 30; }
+$values = preg_filter("/x/", "x", $boxes, 1);
+if (count($values) !== 2 || (string)$values["p"] !== "ax") { return 22; }
+$kept = preg_split("/,/", "", -1, PREG_SPLIT_NO_EMPTY);
+if (!isset($kept)) { return 23; }
+$values = $kept;
+if (count($values) !== 0) { return 24; }
+$kept = preg_split("/[/", "");
+if (isset($kept)) { return 25; }
+$n int = preg_match_all("/(?<letter>a)/", "aa", $values);
+$column mixed = $values["letter"];
+if ($n !== 2 || (string)$column[1] !== "a") { return 26; }
+$n = preg_match_all("/(?<letter>a)/", "aa", $values, PREG_SET_ORDER, -1);
+$column = $values[0];
+if ($n !== 1 || (string)$column["letter"] !== "a") { return 27; }
+$n = preg_match("/(?<letter>a)/", "a", $values);
+if ($n !== 1 || (string)$values[0] !== "a" || (string)$values["letter"] !== "a") { return 28; }
+$status result_or_false<int> = preg_match("/[/", "", $values);
+if (isset($status) || count($values) !== 0) { return 29; }
 $row result_or_false<vector<string>> = regex_match("/(a)?(b)(z)?/", "xxb", -1);
 $v vector<string> = $row;
 if (count($v) !== 3 || $v[0] !== "b" || $v[1] !== "" || $v[2] !== "b") { return 11; }

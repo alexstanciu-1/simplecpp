@@ -29,11 +29,16 @@ Publication adds the ordinary carrier requests to a boxed publication:
 }
 ```
 
-The bounded composition does not admit nullable/result_or_false/result_or_bool
+The regex publication additionally selects `result_or_false<mixed>`. PHP grep, filter
+and split return a successful mixed collection, including an empty collection,
+or the false sentinel on regex failure. Mixed payloads retain their usual COW semantics.
+The carrier follows the ordinary result_or_false default and move-reset rules.
+
+The bounded composition excludes nullable and result_or_bool
 boxed payloads, nested carriers, boxed typed hashes/vectors, or arbitrary records.
 Missing payloads, duplicate requests and header conflicts reject before output.
 
-## States and API
+## States and API for result<T>
 
 The [carrier contract](carrier_slice.md) applies unchanged:
 

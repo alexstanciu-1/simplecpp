@@ -69,6 +69,11 @@ if(SCPP_ENABLE_JSON)
   string(JSON runtime_profile SET "${runtime_profile}" carriers specializations ${count}
     "{\"family\":\"nullable\",\"payload\":\"float64\"}")
 endif()
+if(SCPP_ENABLE_REGEX)
+  string(JSON count LENGTH "${runtime_profile}" carriers specializations)
+  string(JSON runtime_profile SET "${runtime_profile}" carriers specializations ${count}
+    "{\"family\":\"result_or_false\",\"payload\":\"mixed\"}")
+endif()
 foreach(family filesystem regex)
   string(TOUPPER "${family}" option_name)
   if(SCPP_ENABLE_${option_name})

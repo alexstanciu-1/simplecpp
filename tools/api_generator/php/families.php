@@ -670,7 +670,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         requireThat($family !== 'nullable' || hasValue($plan, 'null_t'), 'Nullable requires published null_t');
         $payloadInfo = carrierPayload($plan, $payload);
         requireThat($payloadInfo !== null, 'Carrier payload must be a published scalar, string, vector or supported boxed family');
-        requireThat($payloadInfo['kind'] !== 'boxed' || $family === 'result', 'Boxed payloads currently require the result family');
+        requireThat($payloadInfo['kind'] !== 'boxed' || $family === 'result' || ($family === 'result_or_false' && $payload === 'mixed'), 'Unsupported carrier family for boxed payload');
         requireThat($family !== 'result' || (isset($plan['string']) && hasType($plan, 'int64')), 'Result error payload requires string and int64');
         $name = $family . '_' . $payload;
         requireThat(!isset($carriers[$name]), 'Duplicate carrier specialization');

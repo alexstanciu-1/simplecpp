@@ -30,6 +30,12 @@ final readonly class type_availability
 			?? (($this->general_api || $flavor === flavor::cpp) ? runtime_functions::resolve('general:' . $key) : null);
 	}
 
+	public function runtime_constant(string $key): ?runtime_integer_constant
+	{
+		$constant = runtime_constants::integer($key);
+		return $constant !== null && $this->allows($constant->required_module) ? $constant : null;
+	}
+
 	/** Compare immutable selections before sharing a retained syntax generation. */
 	public function same_as(self $other): bool
 	{

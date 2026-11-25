@@ -430,6 +430,12 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $exportedNames = array_merge($exportedNames, array_keys((array) ($runtime['aliases'] ?? [])));
     $shortTypes = implode(', ', array_map(static fn($name) => var_export($name, true), $exportedNames));
     $constantCases = [];
+    foreach (FUNCTION_MODULES as $family) {
+        foreach ($runtime[$family]['php_constants'] ?? [] as $name => $value) {
+            $module = $runtime[$family]['module'];
+            $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value, '$module'),";
+        }
+    }
     foreach ($runtime['php_integer_constants'] ?? [] as $name => $value) {
         $constantCases[] = "\t\t\t'const:$name' => \$constants[\$key] ??= new runtime_integer_constant(\$key, $value),";
     }

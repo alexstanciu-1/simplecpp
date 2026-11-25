@@ -9,7 +9,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $catalog = familyMetadata($metadata, $publication, $family, $family, $family);
     if ($catalog === null || !property_exists($publication, $family)) return;
 
-    fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures']);
+    fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures', 'php_constants']);
     fields($publication->{$family}, ['functions', 'php_exposures']);
     $surface = $catalog->surface ?? null;
     requireThat($surface === null || $surface === 'general', 'Unknown module function surface');
@@ -77,6 +77,10 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     requireThat($functions !== [], 'Empty module function publication');
     $requires = array_values(array_unique($requires));
     $plan[$family] = compact('provider', 'header', 'module', 'namespace', 'requires', 'functions');
+    foreach (object($catalog->php_constants ?? (object)[]) as $constant => $value) {
+        requireThat(preg_match('/^[A-Z][A-Z_0-9]*$/D', $constant) === 1 && is_int($value), 'Invalid module integer constant');
+        $plan[$family]['php_constants'][$constant] = $value;
+    }
     foreach (names($publication->{$family}->php_exposures ?? [], 'Duplicate PHP exposure') as $name) {
         $alias = at(at($catalog, 'php_exposures'), $name);
         fields($alias, ['target', 'native_name', 'false_result']);
@@ -115,6 +119,7 @@ function moduleFunctionTypeExport(array $plan, string $type): array {
     $identity = $plan['source_types']->{$type} ?? $type;
     requireThat(hasType($plan, $identity) || hasValue($plan, $identity)
         || (isset($plan['string']) && $identity === 'string')
+        || (isset($plan['boxed_dispatch']) && in_array($identity, array_column($plan['boxed']['families'], 'name'), true))
         || in_array($identity, array_column($plan['vectors'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['carriers'] ?? [], 'name'), true),
         'Module function requires a published type: ' . $type);

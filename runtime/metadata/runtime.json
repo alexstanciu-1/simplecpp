@@ -795,9 +795,11 @@
   "regex": {
     "provider": "regex.functions",
     "namespace": "scpp::regex",
+    "php_constants": {"PREG_PATTERN_ORDER": 1, "PREG_SET_ORDER": 2, "PREG_SPLIT_NO_EMPTY": 1, "PREG_SPLIT_DELIM_CAPTURE": 2},
     "surface": "general",
     "php_exposures": {
       "preg_quote": {"target": "regex_quote"},
+      "preg_replace": {"target": "regex_replace"},
       "preg_jit_available": {"target": "regex_jit_available"}
     },
     "functions": {
@@ -845,8 +847,28 @@
         "result": "result<bool_t>"
       },
       "preg_match": {
-        "native_name": "preg_match", "flavor": "php",
-        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
+        "native_name": "preg_match", "flavor": "php", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false<int64>"
+      },
+      "preg_split": {
+        "native_name": "preg_split", "flavor": "php", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_mixed"
+      },
+      "preg_grep": {
+        "native_name": "preg_grep", "flavor": "php", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "const_reference"}],
+        "result": "result_or_false_mixed"
+      },
+      "preg_filter": {
+        "native_name": "preg_filter", "flavor": "php", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false_mixed"
+      },
+      "preg_match_all": {
+        "native_name": "preg_match_all", "flavor": "php", "required_parameters": 2,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
         "result": "result_or_false<int64>"
       }
     }

@@ -50,7 +50,7 @@ final class Import_Preparation
 				}
 				$runtime = match ($kind) {
 					'func' => $function !== null,
-					'const' => $file->source()->flavor === flavor::php && runtime_constants::integer($key) !== null,
+					'const' => $file->source()->flavor === flavor::php && $file->type_availability->runtime_constant($key) !== null,
 					'class' => $import->target === type_registry::exception()?->name,
 				};
 				if (!$runtime) continue;
