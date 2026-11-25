@@ -228,6 +228,7 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
             '@reference_mutation@' => $family['copy'] === 'shared_container_identity' ? 'true' : 'false',
             '@field_admission@' => $family['source_collection']['instance_field_default'] === 'null' ? 'true' : 'false',
             '@append_method@' => strtr(readFile(__DIR__ . '/../templates/collections/compiler_append.php.tpl'), ['@append@' => $family['source_collection']['append_method']]),
+            '@empty_method@' => $family['source_collection']['empty_method'],
             '@count_method@' => $family['source_collection']['count_method'],
             '@iteration@' => compilerTraversalMethods($family['traversal'], 'self::instance()', isset($runtime['submodules']['type_exports']['mixed']) ? 'type_mixed::instance()' : 'null', true),
             '@name@' => $name, '@header@' => $header, '@ops@' => $ops, '@factories@' => $factories,

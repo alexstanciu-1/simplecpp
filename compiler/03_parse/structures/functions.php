@@ -318,10 +318,10 @@ class ast_call_expression extends ast_expression
 		$this->settle_value($type, null);
 	}
 
-	public function settle_cardinality(collection_cardinality $operation, counted_collection_type $receiver): void
+	public function settle_cardinality(collection_cardinality $operation, type_definition $result): void
 	{
 		$this->cardinality = $operation;
-		$this->settle_value($receiver->cardinality_result($operation), null);
+		$this->settle_value($result, null);
 	}
 
 	/** The explicit bridge reuses its existing operand and its checked argument conversions. */

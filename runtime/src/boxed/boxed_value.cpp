@@ -174,6 +174,12 @@ bool boxed_value<Family>::remove(std::string_view key) {
     return mutate([&](table& t) { return t.remove(key); });
 }
 template<boxed_family Family>
+bool boxed_value<Family>::empty() const {
+    if (type() == kind::string) return std::get<std::shared_ptr<const std::string>>(value_)->empty();
+    if (type() == kind::container) return container_size() == 0;
+    throw std::runtime_error("invalid_empty_operand");
+}
+template<boxed_family Family>
 std::size_t boxed_value<Family>::container_size() const {
     const auto* t = read_table();
     if (!t) throw std::runtime_error("boxed_expected_container");

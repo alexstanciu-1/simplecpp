@@ -25,6 +25,7 @@ int64 @n@::get_integer() const { return int64{static_cast<long long>(@self@.get_
 float64 @n@::get_floating() const { return float64{@self@.get_floating()}; }
 string @n@::get_string() const { const auto bytes = @self@.get_string(); return string{bytes.data(), detail::checked_integer_cast<@count@>(bytes.size())}; }
 int64 @n@::append(@n@ value) { return int64{static_cast<long long>(@self@.append(std::move(@value@)))}; }
+bool_t @n@::empty() const { return @self@.empty(); }
 int64 @n@::container_size() const { return int64{detail::checked_integer_cast<long long>(@self@.container_size())}; }
 bool_t @n@::is_packed_container() const { return bool_t{@self@.is_packed_container()}; }
 void @n@::clean() noexcept { @self@.clean(); }

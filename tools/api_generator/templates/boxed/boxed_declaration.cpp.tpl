@@ -27,6 +27,7 @@ public:
     bool_t remove(const int64& key);
     bool_t remove(const string& key);
     int64 append(@n@ value);
+    bool_t empty() const;
     int64 container_size() const;
     bool_t is_packed_container() const;
     void clean() noexcept;

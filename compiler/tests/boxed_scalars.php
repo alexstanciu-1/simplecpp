@@ -171,6 +171,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		verify($locals[1]->type_def()->name === $family && $locals[2]->type_def()->name === 'float64'
 			&& $locals[3]->type_def()->name === 'bool_t', 'Boxed operator result identity changed');
 		verify(!$locals[0]->constant_known(), 'Boxed storage leaked a scalar constant fact');
+		$text = $var('text');
 		$src = $decl($family, 'x', '8.75') . $decl($family, 'copy', $x) . "$x = 2;"
 			. $decl('int', 'converted', $var('copy')) . 'echo ' . $var('converted') . ';'
 			. $decl($family, 'y', $var('copy') . ' + 2') . 'echo (int)' . $y . ';'
@@ -181,12 +182,14 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 			. $decl('null', 'n', $var('nil')) . "$x = \"a\\0b\"; echo (string)$x;"
 			. "$y = \"a\\0c\"; if ($x < $y) { echo \"S\"; }"
 			. "$x = -1.75;" . $decl('int', 'last', "$x + 2") . 'echo ' . $var('last') . ';'
-			. "$x = 3; $y = 4; echo (int)($x + $y); return 8;";
+			. "$x = 3; $y = 4; echo (int)($x + $y);"
+			. $decl('string', 'text', '""') . "$x = $text; echo (int)empty($x);"
+			. "$text = \"0\"; $x = $text; echo (int)empty($x), (int)empty($text); return 8;";
 		$entry = $prepare($src);
 		$before = serialize($entry);
 		$cpp = (new Cpp_Emitter())->emit($entry);
 		verify($before === serialize($entry), 'Emitter mutated boxed facts');
-		$fixtures[$flavor->name . '-' . $family] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("8104Y2551a\0bS07")];
+		$fixtures[$flavor->name . '-' . $family] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("8104Y2551a\0bS07100")];
 		$literal = $decl($family, 'x', '8') . $infer('sum', "$x + 2") . $infer('less', "$x < 3")
 			. 'echo (int)' . $var('sum') . ', (int)' . $var('less') . "; $x = 1; if ($x < 3) { echo 1; } return 8;";
 		$cpp = (new Cpp_Emitter())->emit($prepare($literal));

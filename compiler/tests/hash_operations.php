@@ -106,7 +106,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	verify(substr_count($cardinality_cpp, '.size()') === 18 && substr_count($cardinality_cpp, '.empty()') === 12,
 		'Expected one published member call per source observation');
 	$fixtures[$flavor->name . '-cardinality'] = ['cpp' => $cardinality_cpp, 'stdout_hex' => bin2hex(str_repeat('012011011', 2))];
-	foreach (['count(1)', 'empty("abc")', 'count()', 'empty(1,2)'] as $invalid) {
+	foreach (['count(1)', 'count("abc")', 'empty(1)', 'count()', 'empty(1,2)'] as $invalid) {
 		rejects(fn() => $prepare("$invalid; return 8;"), 'requires');
 	}
 	$shadow = $prepare($function('int', 'count', 'return 8;') . 'return count();');

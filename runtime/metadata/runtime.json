@@ -1283,6 +1283,7 @@
     "conversion": "explicit_scalar_only",
     "source_collection": {
       "count_method": "container_size",
+      "empty_method": "empty",
       "append_method": "append",
       "instance_field_default": "null",
       "key_types": ["int64", "string"],

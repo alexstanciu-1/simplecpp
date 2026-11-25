@@ -20,7 +20,7 @@ key normalization, mutation, incremental recovery and suspended traversal covera
 | Instance fields | Both supported, null default | Generated field contract; normal struct copy/lifetime |
 | Append `[] = value` | Both supported | Generated appendable capability; mixed null bootstraps, dynamic null rejects |
 | Indexed compounds/increment/decrement | Both supported for approved scalar payloads | Generated scalar dispatch; existing-key mutation capability |
-| count/empty | Both supported; container kind required | Generated counted_collection_type implementation uses container_size |
+| count/empty | Count requires a container. Empty accepts strings and containers | Generated bindings dispatch to container_size and empty |
 | has/remove | Both supported with normalized int64/string keys | Generated method overloads and source key adapters |
 | clear | Both supported, container required | Preserves dynamic table identity and mixed copy independence |
 | Nested indexed expressions | Deferred | Runtime can hold nested boxes; compiler currently handles one indexing level |
