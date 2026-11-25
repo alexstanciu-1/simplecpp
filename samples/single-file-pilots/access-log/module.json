@@ -1,1 +1,1 @@
-{"dependencies":{"runtime":{"modules":["filesystem"]}}}
+{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem"]}}}

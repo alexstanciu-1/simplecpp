@@ -556,6 +556,16 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    add_test(NAME compiler_filesystem_publication COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+      $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime> --publication)
+    if(UNIX)
+      add_test(NAME compiler_filesystem_family COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_family.py
+        ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+        $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    endif()
     add_test(NAME compiler_translated_path COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_compiler_path.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}

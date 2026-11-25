@@ -6,6 +6,8 @@ Reviewed v0.2 at `8ea9c87a6`, release v0.1 at `d2f63e37e` and my-try at `624ab8a
 
 **Count by operation.** My-try publishes 35 filesystem callables. They comprise 19 ordinary path/file operations (including the target-host query), one checked snapshot, four lock operations and eleven compiler publication operations. v0.2 ships four of the ordinary operations and adds its own staging operation. v0.1 strict maps 23 general filesystem names, including the snapshot and three locks. My-try adds the empty-lock factory. The legacy PHP surface supplies 18 natural filesystem names, and release JSS maps 18 dotted aliases. The aliases describe additional ways to call the same operations. [Donor signatures and native bindings](../../../v0.1/specs/planning/runtime_surface_audit/catalog_filesystem_1.tsv) · [Release mappings](intake.tsv) · [JSS signatures](donor_surfaces.tsv)
 
+The implemented Stage 1 contracts are recorded in the [filesystem module specification](../../filesystem_module.md). The audit below preserves the donor comparison and original proposal.
+
 ## Proposed family goal
 
 Deliver the general path/file operations, preserve stage, and deliver the bounded PHP surface below. Include the checked snapshot as a distinct general operation with its platform contract. This gives **21 general names** (19 ordinary, stage, snapshot) and **18 proposed PHP names**. Decide the two PHP contracts called out below before creating the goal. Keep the four locks together for a dedicated resource-handle goal. Keep the eleven compiler publication functions with the publisher. The project-level opt-in and existing-caller migration belong in this first family goal. Individual performance tuning follows operational proof.

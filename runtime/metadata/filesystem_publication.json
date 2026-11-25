@@ -1,3 +1,45 @@
 {
-  "functions": ["fs_get", "fs_put", "fs_rename", "fs_remove", "fs_stage"]
+  "functions": [
+    "fs_get",
+    "fs_put",
+    "fs_rename",
+    "fs_remove",
+    "fs_stage",
+    "fs_exists",
+    "fs_is_file",
+    "fs_is_dir",
+    "fs_is_link",
+    "fs_mkdir",
+    "fs_touch",
+    "fs_rmdir",
+    "fs_copy",
+    "fs_size",
+    "fs_mtime",
+    "fs_scan",
+    "fs_realpath",
+    "fs_basename",
+    "fs_dirname",
+    "fs_is_windows",
+    "fs_read_snapshot"
+  ],
+  "php_exposures": [
+    "file_get_contents",
+    "file_put_contents",
+    "rename",
+    "unlink",
+    "file_exists",
+    "is_file",
+    "is_dir",
+    "is_link",
+    "mkdir",
+    "touch",
+    "rmdir",
+    "copy",
+    "scandir",
+    "filesize",
+    "filemtime",
+    "realpath",
+    "basename",
+    "dirname"
+  ]
 }

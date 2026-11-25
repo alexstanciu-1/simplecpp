@@ -333,19 +333,20 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
     }
     foreach (FUNCTION_MODULES as $family) {
-        foreach ($runtime[$family]['functions'] ?? [] as $name => $binding) {
+        foreach (array_merge($runtime[$family]['functions'] ?? [], $runtime[$family]['php_exposures'] ?? []) as $name => $binding) {
             $types = array_column($binding['parameters'], 'type');
             foreach ([...$types, $binding['result']] as $type) {
                 requireThat(isset($runtimeTypes[$type]), 'Module function signature requires a compiler type: ' . $type);
             }
             $arguments = array_map(static fn(string $type): string => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
             $result = $runtimeTypes[$binding['result']];
-            $symbol = var_export('::' . $runtime[$family]['namespace'] . '::' . $binding['native_name'], true);
-            $header = var_export($runtime[$family]['header'], true);
+            $symbol = var_export('::' . ($binding['symbol'] ?? ($runtime[$family]['namespace'] . '::' . $binding['native_name'])), true);
+            $header = var_export($binding['header'] ?? $runtime[$family]['header'], true);
             $module = var_export($runtime[$family]['module'], true);
             $refs = $binding['reference_mask'] ? ', reference_mask: ' . $binding['reference_mask'] : '';
             $mask = $binding['const_reference_mask'];
-            $key = ($binding['flavor'] === null ? '' : $binding['flavor'] . ':') . 'func:' . $name;
+            $surface = $binding['flavor'] ?? $binding['surface'] ?? null;
+            $key = ($surface === null ? '' : $surface . ':') . 'func:' . $name;
             $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_function('$name', ["
                 . implode(', ', $arguments) . "], type_$result::instance(), $symbol, $header$refs, const_reference_mask: $mask, required_module: $module),";
         }

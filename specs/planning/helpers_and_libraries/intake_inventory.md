@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-[Filesystem family audit and proposed implementation boundary](filesystem_audit.md)
+The filesystem family has completed Stage 1 with 21 general operations and 18 PHP exposures. The counts below preserve the pre-implementation inventory. [Filesystem contract](../../filesystem_module.md) · [Family audit](filesystem_audit.md)
 
 Snapshot of `codex/helpers-and-libs` at `e8b03d67f`, 2026-11-25. The separate pilot at `7936b9bec` supplies experimental evidence for three operations. This inventory makes no language or publication changes.
 

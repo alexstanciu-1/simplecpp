@@ -267,6 +267,21 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
+    foreach (FUNCTION_MODULES as $family) {
+        if (!isset($publication->{$family})) continue;
+        $catalog = $metadata->{$family};
+        if (($catalog->surface ?? null) !== 'general') continue;
+        $header = providerHeader($plan, $catalog->provider);
+        foreach (names($publication->{$family}->functions) as $name) {
+            requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module function name');
+            $headers[] = moduleOperationHeader($header, $name);
+        }
+        foreach (names($publication->{$family}->php_exposures ?? []) as $name) {
+            requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid PHP function name');
+            $alias = at($catalog->php_exposures, $name);
+            if (isset($alias->false_result) || isset($alias->native_name)) $headers[] = "scpp/php/$name.hpp";
+        }
+    }
     if (isset($publication->vectors, $metadata->vector->reserve)) $headers[] = 'scpp/value_error.hpp';
     if (($publication->string->index_read ?? false) && isset($metadata->string->index_read->view_provider)) {
         $headers[] = providerHeader($plan, $metadata->string->index_read->view_provider);

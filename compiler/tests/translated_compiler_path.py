@@ -44,7 +44,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     for file in EXAMPLE.glob('*.php.scpp'):
         target = 'main.php' if file.name == 'proof.php.scpp' else file.stem
         shutil.copyfile(file, translator / target)
-    (translator / 'module.json').write_text('{"dependencies":{"runtime":{"modules":["filesystem"]}}}')
+    (translator / 'module.json').write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem"]}}}')
     host_bundle, executable = work / 'translator-cpp', work / 'translated-compiler'
     project(translator, host_bundle)
     build_bundle(host_bundle, [FILESYSTEM, RUNTIME], executable)

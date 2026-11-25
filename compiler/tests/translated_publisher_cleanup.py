@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-publisher-cleanup-') as directory:
     work = Path(directory)
     app, compiled = work / 'app', work / 'compiled'
     app.mkdir()
-    (app / 'module.json').write_text('{"dependencies":{"runtime":{"modules":["filesystem"]}}}')
+    (app / 'module.json').write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem"]}}}')
     shutil.copyfile(fixture, app / 'main.php')
     run(php, ROOT / 'compiler/main.php', 'project', app, facts, compiled)
 

@@ -10,7 +10,7 @@ final readonly class type_availability
 	private array $modules /** array<string,bool> */;
 
 	/** @param string[] $modules */
-	public function __construct(array $modules /** list<string> */ = [])
+	public function __construct(array $modules /** list<string> */ = [], public bool $general_api = false)
 	{
 		$selected = array_fill_keys($modules, true);
 		ksort($selected);
@@ -23,9 +23,16 @@ final readonly class type_availability
 		return $module === null || isset($this->modules[$module]);
 	}
 
+	/** Select a published free name under this project's source-surface policy. */
+	public function runtime_function(string $key, flavor $flavor): runtime_function|runtime_overloads|null
+	{
+		return runtime_functions::free($key, $flavor)
+			?? (($this->general_api || $flavor === flavor::cpp) ? runtime_functions::resolve('general:' . $key) : null);
+	}
+
 	/** Compare immutable selections before sharing a retained syntax generation. */
 	public function same_as(self $other): bool
 	{
-		return $this->modules === $other->modules;
+		return $this->general_api === $other->general_api && $this->modules === $other->modules;
 	}
 }

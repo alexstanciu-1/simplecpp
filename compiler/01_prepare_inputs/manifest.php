@@ -65,8 +65,10 @@ final class Module_Loader
 		$app = $this->documents[$manifest];
 		$mode = property_exists($app, 'async_task_methods') ? $app->async_task_methods : 'inline';
 		if (!in_array($mode, ['inline', 'grouped'], true)) throw new \RuntimeException('async_task_methods must be inline or grouped');
+		$general_api = property_exists($app, 'general_api') ? $app->general_api : false;
+		if (!is_bool($general_api)) throw new \RuntimeException('general_api must be a boolean');
 		$session = Program_Loader::modules($this->definitions, $entry, true, array_keys($this->definitions),
-			$this->cpp_namespace($root), $mode === 'grouped');
+			$this->cpp_namespace($root), $mode === 'grouped', $general_api);
 		$this->write_inventory($session);
 		return $session;
 	}
@@ -154,7 +156,7 @@ final class Module_Loader
 			throw new \RuntimeException('Invalid module JSON: ' . $path . ': ' . $error->getMessage());
 		}
 		$document = $this->fields($document,
-			['name', 'type', 'entry', 'sources', 'dependencies', 'modules', 'defaults', 'artifacts', 'cpp_namespace', 'async_task_methods'], $path);
+			['name', 'type', 'entry', 'sources', 'dependencies', 'modules', 'defaults', 'artifacts', 'cpp_namespace', 'async_task_methods', 'general_api'], $path);
 		$root = dirname($path);
 		$name = property_exists($document, 'name') ? $document->name : basename($root);
 		$type = property_exists($document, 'type') ? $document->type : 'default';

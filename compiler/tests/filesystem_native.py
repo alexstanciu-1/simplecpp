@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[2]
-php, cxx, linker, filesystem_archive, runtime_archive = sys.argv[1:]
+php, cxx, linker, filesystem_archive, runtime_archive = sys.argv[1:6]
 include = root / 'runtime/generated/public'
 
 
@@ -47,8 +47,20 @@ def check_publication(work):
     assert relocated in bridge.read_text()
     bindings = registry.read_text()
     for function in profile['filesystem']['functions']:
-        assert any(f'func:{function}' in line and relocated in line for line in bindings.splitlines())
+        operation_header = relocated.removesuffix('.hpp') + '/' + function + '.hpp'
+        assert any(f'general:func:{function}' in line and operation_header in line for line in bindings.splitlines())
+        assert (runtime / 'public' / operation_header).is_file()
 
+    profile['filesystem'] = {'functions': ['fs_is_dir']}
+    assert 'scpp/php/file_get_contents.hpp' not in publish()
+    assert not (runtime / 'public/scpp/php/file_get_contents.hpp').exists()
+    assert 'file_get_contents' not in registry.read_text()
+    assert ' scan(' not in header.read_text()
+    # Compiling the full implementation against the reduced headers took the isolated
+    # publication test over three seconds. The default checks its generated inventory.
+    if '--compile-reduced' in sys.argv[6:]:
+        run(cxx, '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I', runtime / 'private',
+            '-I', runtime / 'public', root / 'runtime/src/filesystem/filesystem.cpp')
     del profile['filesystem']
     assert relocated not in publish()
     assert not header.exists() and not bridge.exists()
@@ -70,12 +82,24 @@ function verify(bool $condition, string $message): void {
 $manifest = "$app/module.json";
 $target = new entry_target(31);
 $project = new Incremental_Project($app, $out, $target, $runtime);
-$enabled = '{"dependencies":{"runtime":{"modules":["filesystem"]}}}';
+$enabled = '{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem"]}}}';
 file_put_contents($manifest, $enabled);
 $project->run();
 $before = file_get_contents("$out/manifest.json");
 
-file_put_contents($manifest, '{}');
+if (!is_file("$app/main.cpp")) {
+    file_put_contents($manifest, '{"dependencies":{"runtime":{"modules":["filesystem"]}}}');
+    try {
+        $project->run();
+        throw new RuntimeException('Hidden general function remained visible');
+    } catch (diagnostic|diagnostic_group $error) {
+        verify(str_contains($error->getMessage(), 'fs_get'), $error->getMessage());
+    }
+    verify(file_get_contents("$out/manifest.json") === $before, 'Visibility failure changed the manifest');
+    file_put_contents($manifest, $enabled);
+    $project->run();
+}
+file_put_contents($manifest, '{"general_api":true}');
 for ($attempt = 0; $attempt < 2; $attempt++) {
     try {
         $project->run();
@@ -103,7 +127,9 @@ verify($project->run()['preparation']['prepared'] === 0, 'Unchanged input lost p
 
 with tempfile.TemporaryDirectory(prefix='scpp-filesystem-native-') as directory:
     work = Path(directory)
-    check_publication(work)
+    if '--publication' in sys.argv[6:]:
+        check_publication(work)
+        sys.exit(0)
     contents = bytes(range(256)) * 40
     (work / 'bytes').write_bytes(contents)
     (work / 'empty').touch()
@@ -190,7 +216,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-filesystem-native-') as directory:
             'libscpp_filesystem.a', 'libscpp_runtime.a'
         ]
         units = [output / path for path in bundle['translation_units']]
-        assert any('#include <scpp/filesystem.hpp>' in unit.read_text() for unit in units)
+        assert any('#include <scpp/filesystem/fs_get.hpp>' in unit.read_text() for unit in units)
         binary = app / 'program'
         run(cxx, '-std=c++23', '-stdlib=libc++', '-O1', f'--ld-path={linker}',
             '-I', include, *units, filesystem_archive, runtime_archive, '-o', binary)

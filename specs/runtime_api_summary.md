@@ -211,3 +211,7 @@ String byte counts now use the metadata-selected native signed representation
 (default `__INT64_TYPE__`) for construction and `size()`. Wrapped count overloads
 are retired; vector/hash counts and other scalar wrappers remain unchanged. See
 [string boundaries](string_slice.md).
+
+## Optional filesystem module
+
+The [filesystem contract](filesystem_module.md) defines the general and PHP names, project visibility, operation signatures and failure channels.

@@ -2199,7 +2199,7 @@ final class Preparation
 				$qualified = substr($call->name, 0, $last) . '::' . substr($call->name, $last + 1);
 				if ($this->qualified_call($call, $qualified, $initializing, false)) return;
 			}
-			$runtime = runtime_functions::free($file->runtime_function_key($call->name, $key), $file->source()->flavor);
+			$runtime = $file->type_availability->runtime_function($file->runtime_function_key($call->name, $key), $file->source()->flavor);
 			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_function ? $runtime->required_module : null)) {
 				$this->ambiguous_construction($call);
 			}

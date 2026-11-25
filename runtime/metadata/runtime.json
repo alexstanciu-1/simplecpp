@@ -819,34 +819,292 @@
     "functions": {
       "fs_get": {
         "native_name": "get",
-        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
         "result": "result<string>"
       },
       "fs_put": {
         "native_name": "put",
         "parameters": [
-          {"type": "string", "native_passing": "const_reference"},
-          {"type": "string", "native_passing": "const_reference"}
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          },
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
         ],
         "result": "result<int64>"
       },
       "fs_rename": {
         "native_name": "rename",
         "parameters": [
-          {"type": "string", "native_passing": "const_reference"},
-          {"type": "string", "native_passing": "const_reference"}
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          },
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
         ],
         "result": "bool_t"
       },
       "fs_remove": {
         "native_name": "remove",
-        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
         "result": "bool_t"
       },
       "fs_stage": {
         "native_name": "stage",
-        "parameters": [{"type": "string", "native_passing": "const_reference"}],
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
         "result": "result<string>"
+      },
+      "fs_exists": {
+        "native_name": "exists",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_is_file": {
+        "native_name": "is_file",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_is_dir": {
+        "native_name": "is_dir",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_is_link": {
+        "native_name": "is_link",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_mkdir": {
+        "native_name": "mkdir",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_touch": {
+        "native_name": "touch",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_rmdir": {
+        "native_name": "rmdir",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_copy": {
+        "native_name": "copy",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          },
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "bool_t"
+      },
+      "fs_size": {
+        "native_name": "size",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "result<int64>"
+      },
+      "fs_mtime": {
+        "native_name": "mtime",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "result<int64>"
+      },
+      "fs_scan": {
+        "native_name": "scan",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "result_vector_string"
+      },
+      "fs_realpath": {
+        "native_name": "realpath",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "result<string>"
+      },
+      "fs_basename": {
+        "native_name": "basename",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "string"
+      },
+      "fs_dirname": {
+        "native_name": "dirname",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          }
+        ],
+        "result": "string"
+      },
+      "fs_is_windows": {
+        "native_name": "is_windows",
+        "parameters": [],
+        "result": "bool_t"
+      },
+      "fs_read_snapshot": {
+        "native_name": "read_snapshot",
+        "parameters": [
+          {
+            "type": "string",
+            "native_passing": "const_reference"
+          },
+          {
+            "type": "int64",
+            "native_passing": "value"
+          },
+          {
+            "type": "int64",
+            "native_passing": "value"
+          }
+        ],
+        "result": "result<string>"
+      }
+    },
+    "surface": "general",
+    "php_exposures": {
+      "file_get_contents": {
+        "target": "fs_get",
+        "false_result": "result_or_false_string"
+      },
+      "file_put_contents": {
+        "target": "fs_put",
+        "false_result": "result_or_false_int64"
+      },
+      "rename": {
+        "target": "fs_rename"
+      },
+      "unlink": {
+        "target": "fs_remove",
+        "native_name": "unlink"
+      },
+      "file_exists": {
+        "target": "fs_exists"
+      },
+      "is_file": {
+        "target": "fs_is_file"
+      },
+      "is_dir": {
+        "target": "fs_is_dir"
+      },
+      "is_link": {
+        "target": "fs_is_link"
+      },
+      "mkdir": {
+        "target": "fs_mkdir"
+      },
+      "touch": {
+        "target": "fs_touch"
+      },
+      "rmdir": {
+        "target": "fs_rmdir"
+      },
+      "copy": {
+        "target": "fs_copy"
+      },
+      "scandir": {
+        "target": "fs_scan",
+        "false_result": "result_or_false_vector_string"
+      },
+      "filesize": {
+        "target": "fs_size",
+        "false_result": "result_or_false_int64"
+      },
+      "filemtime": {
+        "target": "fs_mtime",
+        "false_result": "result_or_false_int64"
+      },
+      "realpath": {
+        "target": "fs_realpath",
+        "false_result": "result_or_false_string"
+      },
+      "basename": {
+        "target": "fs_basename"
+      },
+      "dirname": {
+        "target": "fs_dirname"
       }
     }
   },
