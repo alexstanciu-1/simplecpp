@@ -165,7 +165,7 @@ $php('function f(int &...$xs):int {return 0;} $op function<int(int...)> = f(...)
 
 rejects(fn() => $php('function &f(int &...$xs):vector<int> {return $xs;}return 8;'), 'exactly one writable parameter');
 rejects(fn() => $php('struct Item {public int $n=0;} function f(Item &...$xs):void {}return 8;'), 'canonical int, float, bool or string');
-rejects(fn() => $php('class Item {public function __construct(int &...$xs) {}}return 8;'), 'named ordinary function');
+rejects(fn() => $php('class Item {public function __construct(int &...$xs) {$xs[]=1;}}return 8;'), 'read-only variadic pack');
 rejects(fn() => $php('$f=fn(int &...$xs):int => count($xs);return 8;'), 'Expected');
 
 $variadic = 'function gather(int $base=2,int ...$xs):int {echo $base;foreach ($xs as $x) {echo $x;}return count($xs);}';

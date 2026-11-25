@@ -77,3 +77,18 @@ with TemporaryDirectory(prefix='scpp-parent-pack-') as directory:
         ('derived', derived.replace('int ...$xs', 'vector<int> $xs'), 'Unpacking requires'),
         ('derived', derived, b'222'),
     ])
+
+readonly_cell = cell.replace('int ...$xs', 'int &...$xs').replace('$xs[]=25;', '')
+readonly_derived = derived.replace('int ...$xs', 'int &...$xs')
+with TemporaryDirectory(prefix='scpp-readonly-ctors-') as directory:
+    revisions(Path(directory), 'php', dict(main=entry, base=base, cell=readonly_cell, children=children), [
+        (None, None, trace),
+        ('cell', readonly_cell.replace('int &...$xs', 'vector<int> $xs'), 'zero-argument constructor'),
+        ('cell', readonly_cell, trace),
+    ])
+with TemporaryDirectory(prefix='scpp-readonly-parent-') as directory:
+    revisions(Path(directory), 'php', dict(main=main, parent=parent, derived=readonly_derived), [
+        (None, None, b'222'),
+        ('parent', parent.replace('int ...$xs', 'int &...$xs'), 'read-only variadic pack'),
+        ('parent', parent.replace('int ...$xs', 'int &...$xs').replace('$xs[]=9;', ''), b'222'),
+    ])

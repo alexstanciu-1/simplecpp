@@ -257,8 +257,11 @@ A free function or static method with a read-only pack can supply an ordinary
 variadic typed callback or owned callable of the same signature. The caller
 supplies an owned vector and the target enforces read-only access in its body.
 
+PHP class and struct constructors also accept read-only packs, including empty
+packs during default construction and packs forwarded to a parent constructor.
+
 This scope does not introduce explicit `const T &...$values` spelling, general
-read-only value parameters, wider element types, constructor/anonymous-callable/
+read-only value parameters, wider element types, anonymous-callable/
 provider variadic bridges or asynchronous retention.
 Those contracts remain separate. Pinned v0.1 evidence executes tested free/static
 scalar read-only packs and rejects direct element writes. Its instance-method

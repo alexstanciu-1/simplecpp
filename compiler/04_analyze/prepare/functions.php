@@ -301,9 +301,8 @@ final class Function_Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
 			}
 			if ($parameter->type_reference instanceof ast_variadic_type_reference) {
-				if ($parameter->is_readonly_pack() && ($declaration->is_constructor()
-					|| !type_registry::supports_readonly_pack_element($parameter_type->element_type))) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only variadic packs require a named ordinary function or method and a canonical int, float, bool or string element');
+				if ($parameter->is_readonly_pack() && !type_registry::supports_readonly_pack_element($parameter_type->element_type)) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only variadic packs require a canonical int, float, bool or string element');
 				}
 				if (($declaration->parent instanceof ast_enum_declaration && !$declaration->is_static)
 					|| $declaration->is_destructor() || $declaration->is_async || $type instanceof generator_type_definition
