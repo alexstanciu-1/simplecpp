@@ -335,6 +335,14 @@ if(BUILD_TESTING)
   if(mt_segments)
     add_test(NAME compiler_mt_segments_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/mt_segments_native.py ${native_facts} $<TARGET_FILE:scpp_runtime> ${CMAKE_CXX_COMPILER} --quick)
+    set(mt_contracts readonly_helper job_caps)
+    if(hash_publication_type STREQUAL "OBJECT")
+      list(APPEND mt_contracts hash_segments)
+    endif()
+    foreach(contract IN LISTS mt_contracts)
+      add_test(NAME compiler_mt_${contract} COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/mt_segments_native.py ${native_facts} $<TARGET_FILE:scpp_runtime> ${CMAKE_CXX_COMPILER} --${contract})
+    endforeach()
   endif()
   add_test(NAME compiler_functions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/functions.php)
   add_test(NAME compiler_direct_lowering COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/direct_lowering.php)
@@ -671,6 +679,8 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_instance_owned_callables_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_owned_callable_fields_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/owned_callable_fields_native.py --quick)
   set_tests_properties(compiler_owned_callable_fields_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
+  add_test(NAME compiler_absent_callable_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/static_callable_properties_native.py --absent)
   add_test(NAME compiler_static_callable_properties_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/static_callable_properties_native.py --quick)
   set_tests_properties(compiler_static_callable_properties_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_erased_reference_returns_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/erased_reference_returns_native.py --quick)
@@ -763,6 +773,8 @@ if(BUILD_TESTING)
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/carrier_providers.py)
   add_test(NAME vector_provider_exports COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py --quick)
+  add_test(NAME runtime_provider_application_cache COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/submodules.py --cache-only)
   add_test(NAME runtime_submodule_providers COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/submodules.py --quick)
   add_test(NAME numeric_contract COMMAND ${PHP_EXECUTABLE}

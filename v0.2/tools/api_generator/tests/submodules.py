@@ -27,7 +27,7 @@ def artifacts(root):
     return {str(p.relative_to(root)): p.read_text() for p in root.rglob('*') if p.suffix in ('.cpp', '.hpp')}
 
 
-def proof(work, quick=False):
+def proof(work, quick=False, cache_only=False):
     work.mkdir(parents=True, exist_ok=True)
     facts = ROOT / 'build/clang/native-layout/facts.json'
     context = facts.with_name('context.json')
@@ -41,6 +41,9 @@ def proof(work, quick=False):
     published.pop('async_frames', None)
     published['vectors'].pop('header', None)  # Provider metadata owns the relocatable spelling.
     publication.write_text(json.dumps(published))
+    if cache_only:
+        cached_application_proof(work / 'cached-application', original, facts, context, publication, quick=True)
+        return
     report = {'configuration': 'Clang, C++23, libc++, O2/g0, mold, sequential commands, no PCH/LTO; variant runtime compiled once and reused for application builds', 'variants': {}}
 
     def generate(metadata, runtime, compiler, demand=publication):
@@ -600,7 +603,7 @@ def review_contract_proof(work, original, publication_path, facts, context):
          '-I', ROOT / 'runtime/src/sequence', runtime / 'src/runtime.cpp'])
 
 
-def cached_application_proof(work, original, facts, context, publication):
+def cached_application_proof(work, original, facts, context, publication, quick=False):
     """Restart the actual project compiler after regeneration and reuse application/native outputs."""
     work.mkdir(exist_ok=True)
     compiler = work / 'compiler'
@@ -626,8 +629,7 @@ def cached_application_proof(work, original, facts, context, publication):
         metadata.write_text(json.dumps(value))
         run(['php', generator, 'emit-runtime', metadata, publication, facts, context, runtime])
         run(['php', generator, 'emit-compiler', metadata, publication, facts, context, compiler / 'generated'])
-    generate(original)
-    for flavor in ('cpp', 'php', 'js'):
+    for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
         app, out, native = (work / flavor / name for name in ('app', 'out', 'native'))
         for directory in (app, out, native):
             directory.mkdir(parents=True, exist_ok=True)
@@ -650,6 +652,20 @@ def cached_application_proof(work, original, facts, context, publication):
         assert compile_project()['rebuilt']
         assert 'scpp::uint8 ' in '\n'.join(artifacts(out).values())
         assert not compile_project()['rebuilt'], 'Initial application cache not reusable'
+        if quick:
+            old_header = original['submodules']['core.string']['header']
+            new_header = 'scpp/cache/text.hpp'
+            assert f'#include <{old_header}>' in '\n'.join(artifacts(out).values())
+            relocated = json.loads(json.dumps(original))
+            relocated['submodules']['core.string']['header'] = new_header
+            generate(relocated)
+            assert compile_project()['rebuilt'], 'Provider relocation left the old application cached'
+            emitted = '\n'.join(artifacts(out).values())
+            assert f'#include <{new_header}>' in emitted and f'#include <{old_header}>' not in emitted
+            assert not compile_project()['rebuilt'], 'Relocated application missed the warm cache'
+            assert (source.stat().st_mtime_ns, source.read_bytes()) == source_before
+            assert (provider_source.stat().st_mtime_ns, provider_source.read_bytes()) == provider_before
+            return
         units = sorted(out.rglob('*.cpp'))
         flags = ['clang++', '-std=c++23', '-stdlib=libc++', '-O2', '-g0', '-I', str(runtime / 'public'),
                  '-I', str(runtime / 'private'), '-I', str(ROOT / 'runtime/src/numeric'),
@@ -726,9 +742,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--quick', action='store_true')
+    parser.add_argument('--cache-only', action='store_true')
     args = parser.parse_args()
     if args.output:
-        proof(args.output.resolve(), args.quick)
+        proof(args.output.resolve(), args.quick, args.cache_only)
     else:
         with tempfile.TemporaryDirectory(prefix='scpp-submodules-') as directory:
-            proof(Path(directory), args.quick)
+            proof(Path(directory), args.quick, args.cache_only)

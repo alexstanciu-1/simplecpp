@@ -73,8 +73,7 @@ EACH_BATCH = """function each_batch(vector<int> &$entries, vector<int> &$output,
 }
 """
 
-MIXED_BATCH = """function parallel(): int { return 7; }
-function tick(int &$calls, int $result): int {
+CAP_BATCH = """function tick(int &$calls, int $result): int {
     $calls += 1;
     return $result;
 }
@@ -95,7 +94,9 @@ function independent_caps(vector<int> &$ids): vector<int> {
     };
 }
 function sibling(read_segment<int> $id): int { return note_entry($id[0]); }
-function mixed_each(int $parts): int {
+"""
+
+MIXED_BATCH = "function parallel(): int { return 7; }\n" + CAP_BATCH + """function mixed_each(int $parts): int {
     $calls = 0;
     $cells vector<int> = [0,0,0];
     $results = parallel (workers: tick($calls, 1)) {
@@ -321,6 +322,40 @@ def prove_each(work):
     compile_source(app, work / 'rejected', sources, 'MT safety: worker cannot access global or static storage')
 
 
+def prove_readonly_helper(work):
+    app = work / 'app'
+    app.mkdir()
+    sources = {'main.php': 'return 0;', 'worker.php': """
+        function write_slot(segment<int> $s): int { $s[0] = 1; return $s[0]; }
+        function relay(read_segment<int> $s): int { return write_slot($s); }
+        function batch(vector<int> &$v): vector<int> {
+            return parallel { relay(segment($v,0,1)); };
+        }
+    """}
+    compile_source(app, work / 'rejected', sources, 'conversion from read_segment<int64> to segment<int64>')
+
+
+def prove_native_contract(work, name):
+    app = work / 'app'
+    app.mkdir()
+    sources = {'main.php': 'return 0;'}
+    if name == 'job_caps':
+        sources.update({'batch.php': CAP_BATCH, 'probe_hook.php': 'function note_entry(int $id): int { return $id; }'})
+    else:
+        sources.update({'batch.php': HASH_BATCH, 'point.php': 'struct Point { public int $x = 1; }'})
+    out = work / 'out'
+    manifest = compile_source(app, out, sources)
+    # The cap observer supplies the instrumented implementation of note_entry.
+    hook = manifest['sources'].get('probe_hook.php')
+    units = [out / u for u in manifest['translation_units'] if u not in ('entry.cpp', hook)]
+    driver = work / 'probe.cpp'
+    driver.write_text(f'#include "mt_{name}_probe.hpp"\nint main() {{ check_{name}(); }}\n')
+    binary = work / 'probe'
+    subprocess.run([*FLAGS, '-I', Path(__file__).parent, driver, *units, LIBRARY, '-o', binary], check=True)
+    for policy in ('sleep', 'active'):
+        subprocess.run([binary], env=dict(os.environ, SCPP_MT_WAIT=policy), check=True, timeout=15)
+
+
 def prove(work):
     app = work / 'app'
     app.mkdir()
@@ -434,5 +469,9 @@ if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-mt-') as temp:
         if sys.argv[4:] == ['--quick']:
             prove_each(Path(temp))
+        elif sys.argv[4:] == ['--readonly_helper']:
+            prove_readonly_helper(Path(temp))
+        elif sys.argv[4:] in (['--job_caps'], ['--hash_segments']):
+            prove_native_contract(Path(temp), sys.argv[4][2:])
         else:
             prove(Path(temp))

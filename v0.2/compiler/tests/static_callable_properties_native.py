@@ -6,14 +6,17 @@ from tempfile import TemporaryDirectory
 from collection_goal_native import guard, revisions
 
 
-def prove(work, quick=False):
-    holder = """
+HOLDER = """
         class Handler {
             public static function<int(int)> $run;
             public static function install(int $offset):void {self::$run=fn($n)=>$n+$offset;}
             public static function current(int $n):int {return (self::$run)($n);}
         }
     """
+
+
+def prove(work, quick=False):
+    holder = HOLDER
     writer = 'function replaceTarget():int {Handler::$run=fn($n)=>$n+10;return 2;}'
     reader = 'function first():int {return (Handler::$run)(replaceTarget());}'
     main = """
@@ -56,7 +59,11 @@ def prove(work, quick=False):
         ('holder', holder.replace('$run;', '$run=fn($n)=>$n;'), 'Static callable property starts absent'),
         ('holder', holder, b'99'),
     ])
-    guard(work, 'php', 'absent', holder + """
+    prove_absent(work)
+
+
+def prove_absent(work):
+    guard(work, 'php', 'absent', HOLDER + """
         function install():int {echo "A";Handler::install(9);return 2;}
         (Handler::$run)(install());return 8;
     """, expected_stdout=b'A', exception_type='std::bad_function_call', exception_header='functional')
@@ -65,6 +72,10 @@ def prove(work, quick=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--quick', action='store_true')
+    parser.add_argument('--absent', action='store_true')
     args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-static-callable-properties-') as directory:
-        prove(Path(directory), args.quick)
+        if args.absent:
+            prove_absent(Path(directory))
+        else:
+            prove(Path(directory), args.quick)
