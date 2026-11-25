@@ -723,13 +723,19 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		$this->preparation_work?->complete($this->dependency_source_key(), $this);
 	}
 
-	/** Query the prepared operation only when lowering this body's private count-reader entry. */
-	public function counts_parameter(ast_parameter_declaration $parameter): bool
+	/** Query the prepared operation only when lowering this body's private collection-reader entry. */
+	public function reads_parameter_without_copy(ast_parameter_declaration $parameter): bool
 	{
 		if (count($this->statements) !== 1 || !($this->statements[0] instanceof ast_return_statement)) return false;
 		$value = $this->statements[0]->value;
-		return $value instanceof ast_call_expression && $value->cardinality === collection_cardinality::count
-			&& $value->arguments[0] instanceof ast_name_expression && $value->arguments[0]->refers_to($parameter);
+		if ($value instanceof ast_index_expression && $value->index instanceof ast_integer_expression) {
+			$receiver = $value->receiver;
+		} elseif ($value instanceof ast_call_expression && $value->cardinality === collection_cardinality::count) {
+			$receiver = $value->arguments[0];
+		} else {
+			return false;
+		}
+		return $receiver instanceof ast_name_expression && $receiver->refers_to($parameter);
 	}
 
 	public function require_prepared(): void
@@ -848,7 +854,7 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	}
 
 	/** Signature-only eligibility keeps cross-unit declarations stable across reader/writer edits. */
-	public function private_count_input(): ?ast_parameter_declaration
+	public function private_reader_input(): ?ast_parameter_declaration
 	{
 		if (count($this->parameters) !== 1 || $this->parent instanceof ast_method_owner || $this->is_async || $this->returns_reference
 			|| $this->return_type_def() !== type_int64::instance()) return null;
