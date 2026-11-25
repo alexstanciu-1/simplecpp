@@ -58,3 +58,25 @@ def prove(module, source, disabled_call, helper=''):
 
 if sys.argv[2] == 'io':
     prove('io', io, 'fopen("a","r")', 'int origin(){return SEEK_SET;}')
+
+if sys.argv[2] == 'process':
+    prove('process', r'''
+$args vector<string> =[];
+$h process_handle=process_start("/bin/cat",$args,"a\0b",0); $alias=$h;
+$done bool=process_poll($h); while(!$done){$done=process_poll($alias);}
+$o process_output=process_result($alias); $ok bool=process_close($h);
+if(!$ok || isset(process_poll($alias)) || $o->stdout_text!=="a\0b" || $o->exit_code!==0){return 1;}
+$ok=process_close($alias); if(!$ok || isset(process_start("/missing/scpp-program",$args,"",0))){return 2;}
+$args=["-c","echo problem >&2; exit 127"];
+$h=process_start("/bin/sh",$args,"",0,"/tmp");
+$done=process_poll($h); while(!$done){$done=process_poll($h);}
+$o=process_result($h); if($o->exit_code!==127 || $o->stderr_text!=="problem\n"){return 3;}
+$args=["10"]; $h=process_start("/bin/sleep",$args,"",1);
+$done=process_poll($h); while(!$done){$done=process_poll($h);}
+$o=process_result($h); if(!$o->timed_out || $o->stopped){return 4;}
+$h=process_start("/bin/sleep",$args,"",0); $done=process_poll($h);
+if($done || isset(process_result($h))){return 5;}
+$ok=process_stop($h); $done=process_poll($h); while(!$done){$done=process_poll($h);}
+$o=process_result($h); if(!$ok || !$o->stopped || $o->timed_out || $o->signal===0){return 6;}
+return 0;
+''', 'process_start("/bin/true",[],"",0)')

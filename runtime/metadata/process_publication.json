@@ -1,0 +1,11 @@
+{
+  "types": {"process_handle": {"carriers": ["result"]}, "process_output": {"fields": {"stdout_text": "string", "stderr_text": "string", "exit_code": "int64", "signal": "int64", "timed_out": "bool_t", "stopped": "bool_t"}, "carriers": ["result"]}},
+  "operations": [
+    {"native": "start", "general": ["process_start"], "parameters": ["string", "vector_string", "string", "int64", "string"], "result": "result_process_handle", "required": 4},
+    {"native": "poll", "general": ["process_poll"], "parameters": ["process_handle"], "result": "result_bool_t"},
+    {"native": "stop", "general": ["process_stop"], "parameters": ["process_handle"], "result": "result_bool_t"},
+    {"native": "collect", "general": ["process_result"], "parameters": ["process_handle"], "result": "result_process_output"},
+    {"native": "close", "general": ["process_close"], "parameters": ["process_handle"], "result": "result_bool_t"}
+  ],
+  "constants": {}
+}
