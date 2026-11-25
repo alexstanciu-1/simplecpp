@@ -725,6 +725,7 @@
       "bool_t"
     ]
   },
+  "collection_transforms": ["collection_map", "collection_filter", "sequence_map", "sequence_filter", "keyed_map", "keyed_filter"],
   "vectors": {
     "capacity_helpers": true,
     "header": "scpp/vectors.hpp",

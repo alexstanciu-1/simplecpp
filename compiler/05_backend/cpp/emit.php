@@ -2695,6 +2695,9 @@ CPP;
 			$function = $value->implementation();
 			if ($function instanceof runtime_function) {
 				if ($value_type instanceof application_collection_type) $this->concrete_collections->request($value_type);
+				if ($function instanceof collection_transform_function) {
+					return $this->collection_transform($value, $function, $global_references, $declarations, $required_headers);
+				}
 				$use = match ($function->name()) {
 					'enum_from_value' => dependency_use::enum_from_value,
 					'enum_try_from_value' => dependency_use::enum_try_from_value,
@@ -3165,6 +3168,34 @@ CPP;
 			return $call;
 		}
 		return $steps === [] ? $call : '([&]()' . $return_clause . ' { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+	}
+
+	/** Consume the selected typed traversal; its operand temporaries live through the entire loop. */
+	private function collection_transform(ast_call_expression $call, collection_transform_function $function,
+		array &$globals, array &$declarations, array &$headers): string
+	{
+		[$input, $callback] = $call->arguments;
+		$type = $input->type_def();
+		$out = $function->return_type_def();
+		$result = $out->cpp_type();
+		$owner_steps = [];
+		$receiver = $this->retained_place($input, $globals, $declarations, $headers, $owner_steps, full_expression: true);
+		$callable = $this->value($callback, $globals, $declarations, $headers);
+		$keyed = $type instanceof hash_type_definition;
+		$key = $keyed ? 'key' : null;
+		$output = $type->iteration_output_type();
+		$element = $type->iteration_value_type()->cpp_type();
+		$item = $output === null ? 'item' : 'item.value';
+		$lines = ["$result result;", ($output ?? $element) . ' item{};'];
+		if ($keyed) $lines[] = $type->key_type->cpp_type() . ' key{};';
+		$lines[] = $type->lower_cpp_iteration_storage($keyed) . $type->lower_cpp_iteration_initialize('source');
+		$lines[] = 'while (' . $type->lower_cpp_iteration_next('source', 'item', $key) . ') {';
+		$value = $function->filter ? "static_cast<$element&&>($item)" : "callback(static_cast<$element&&>($item))";
+		$insert = ($keyed ? $out->lower_cpp_write('result', 'key', $value) : $out->lower_cpp_append_value('result', $value)) . ';';
+		$lines[] = $function->filter ? "if (callback($item)) $insert" : $insert;
+		$lines[] = '} return result;';
+		// A selected owned callable survives reassignment of its source slot by the callback.
+		return '[](const auto& source, auto callback) { ' . implode(' ', $lines) . ' }(' . $receiver . ', ' . $callable . ')';
 	}
 
 	/** Collect declarations for a callable's result and inputs even when the local starts absent. @param (ast_declaration_interface|type_definition)[] $declarations */

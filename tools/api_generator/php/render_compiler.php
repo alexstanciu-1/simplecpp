@@ -233,6 +233,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
     $runtimeCases = [];
+    foreach ($runtime['collection_transforms'] ?? [] as $name) {
+        $runtimeCases[] = "\t\t\t'general:func:$name' => runtime_factory::$name,";
+    }
     if ($vectorFactory) {
         $runtimeCases[] = "\t\t\t'general:func:vector_filled' => runtime_factory::vector_filled,";
     }

@@ -43,3 +43,14 @@ Proposed rule: evaluate both arguments once under v0.2 call rules, retain the se
 **Proposed integration.** Publish the six general names through metadata with project visibility as for vector_filled. Preparation should select the receiver policy, resolve the callback's signature and validate a synchronous exact by-value T parameter. Reject reference inputs/returns, defaulted or extra parameters, void map results, non-bool predicates and unavailable output specializations. Named references and explicitly typed lambdas supply U. An untyped map lambda whose return has no settled type needs either a contextual rule or a diagnostic; the typed stand-ins did not prove that inference. Reuse existing borrowed/owned callable representations and the value-only or keyed traversal and insertion bindings. Avoid six independent native algorithms or an unbounded prepublished input × output matrix. Lowering must request application-owned result providers even for a result used only as a temporary.
 
 The first implementation proof should cover named, capture-free and captured callables, empty and throwing cases, type-changing map, sparse ordered filter, wrong adapter/receiver, mutable aliases, and a callback return-type edit with incremental recovery against fresh output. Verify compiled callers, include closure and emitted dispatch before choosing any Stage 2 optimization.
+
+## Stage 1 implementation
+
+The default publication now includes all six typed general names. The compiler
+selects value or paired traversal and the concrete result during preparation.
+The lowered caller uses the published collection advance and insertion operations
+directly. The new family adds no public C++ wrapper or runtime archive entry.
+The [active contract](../../collection_traversal.md#typed-map-and-filter) describes
+live borrowing, callback admission and result ownership. The source-to-executable
+fixture is [collection_transforms.py](../../../compiler/tests/collection_transforms.py).
+Stage 2 compile-time and execution measurements remain open.

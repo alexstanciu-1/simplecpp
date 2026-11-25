@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Immutable published function signature and C++ binding, e.g. strlen(string): int. */
-final readonly class runtime_function implements callable_signature
+readonly class runtime_function implements callable_signature
 {
 	/** PROPERTIES */
 	private string $source_name;
@@ -86,8 +86,25 @@ final readonly class runtime_overloads
 	}
 }
 
-/** A published free function with a result specialized from its fill operand. */
+/** The selected traversal and callback signature for a typed collection transform. */
+final readonly class collection_transform_function extends runtime_function
+{
+	public function __construct(runtime_factory $operation, type_definition $input, type_definition $callable,
+		type_definition $output, public bool $filter)
+	{
+		parent::__construct($operation->name, [$input, $callable], $output, $operation->name,
+			$output->cpp_headers()[0], const_reference_mask: 1);
+	}
+}
+
+/** Published free functions whose signatures depend on source operand types. */
 enum runtime_factory
 {
 	case vector_filled;
+	case collection_map;
+	case collection_filter;
+	case sequence_map;
+	case sequence_filter;
+	case keyed_map;
+	case keyed_filter;
 }

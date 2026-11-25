@@ -26,6 +26,8 @@ abstract class vector_type_definition extends type_definition implements appenda
 	}
 
 	/** METHODS */
+	abstract public function lower_cpp_append_value(string $receiver, string $value): string;
+
 	/** Bind the factory on the canonical vector, including application-owned element types. */
 	public function filled_function(): runtime_function
 	{

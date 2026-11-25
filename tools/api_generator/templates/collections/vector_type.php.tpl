@@ -42,6 +42,12 @@ final class @class@ extends vector_type_definition@interfaces@
 	public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string
 	{
 		$value = @element@->lower_cpp_exact_argument($element, $conversion, $value, $adapters);
+		return $this->lower_cpp_append_value($receiver, $value);
+	}
+
+	/** Append a native value already proven to have the exact element type. */
+	public function lower_cpp_append_value(string $receiver, string $value): string
+	{
 		return '(' . $receiver . ').@append@(' . $value . ')';
 	}
 

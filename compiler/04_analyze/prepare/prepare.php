@@ -1919,7 +1919,7 @@ final class Preparation
 	}
 
 	/** A lambda body uses the enclosing work owner, with a fresh lexical and value environment. */
-	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected): void
+	private function lambda(ast_lambda_expression $lambda, ?callback_type_definition $expected, ?type_definition $transform_element = null): void
 	{
 		$function = $this->owner->parent;
 		if ($expected !== null && count($lambda->parameters) !== count($expected->inputs)) {
@@ -1928,7 +1928,7 @@ final class Preparation
 		$result = $lambda->result === null
 			? ($expected?->result ?? throw new diagnostic($lambda->source(), $lambda->byte_start(), 'Lambda requires an explicit result type without a callback context'))
 			: Type_Resolution::signature($lambda->result, $this->symbols, $function, $this->dependencies, true, $this->owner);
-		if (!Type_Resolution::callback_component($result)) {
+		if (!Type_Resolution::callback_component($result) && !($transform_element !== null && $result instanceof record_type_definition)) {
 			throw new diagnostic($lambda->result->source(), $lambda->result->byte_start(), 'Lambda requires a supported result type');
 		}
 		$locals = [];
@@ -1942,9 +1942,9 @@ final class Preparation
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), $reason . $name);
 			}
 			$type = $parameter->type_reference === null
-				? ($expected?->inputs[$index] ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
+				? ($expected?->inputs[$index] ?? $transform_element ?? throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires an explicit parameter type without a callback context'))
 				: Type_Resolution::signature($parameter->type_reference, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
-			if (!Type_Resolution::callback_component($type) || $parameter->mode === passing_mode::readonly_reference) {
+			if ((!Type_Resolution::callback_component($type) && !($transform_element !== null && $type instanceof record_type_definition)) || $parameter->mode === passing_mode::readonly_reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
 			}
 			$parameter->settle_type($type);
@@ -2216,6 +2216,10 @@ final class Preparation
 					$vector = Type_Resolution::collection('vector', $fill->type_def(), null);
 					if (!($vector instanceof vector_type_definition)) throw new diagnostic($fill->source(), $fill->byte_start(), 'Unsupported vector_filled element type');
 					$this->runtime_call($call, $vector->filled_function(), $fill);
+					return;
+				}
+				if ($runtime instanceof runtime_factory) {
+					$this->collection_transform($call, $runtime, $initializing);
 					return;
 				}
 				$this->runtime_call($call, $runtime);
@@ -2537,8 +2541,55 @@ final class Preparation
 		}
 	}
 
+	/** Select a concrete traversal and result using the settled input and callback types. */
+	private function collection_transform(ast_call_expression $call, runtime_factory $operation, ?string $initializing): void
+	{
+		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+		if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires a collection and a callback');
+		[$source, $callback] = $call->arguments;
+		$this->value($source, $initializing);
+		$input = $source->type_def();
+		if ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
+			$element = $input->element_type;
+			$key = null;
+		} elseif ($input instanceof hash_type_definition && !in_array($operation, [runtime_factory::sequence_map, runtime_factory::sequence_filter], true)) {
+			$element = $input->value_type;
+			$key = $input->key_type;
+		} else {
+			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
+		}
+		$filter = in_array($operation, [runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
+		if ($callback instanceof ast_callable_reference) {
+			$this->callback_reference($callback, null, $element);
+		} elseif ($callback instanceof ast_lambda_expression && !($this->owner->parent->return_type_def() instanceof generator_type_definition)) {
+			$this->lambda($callback, $filter ? new callback_type_definition(type_bool::instance(), [$element]) : null, $element);
+		} else {
+			$this->value($callback, $initializing, allow_callback: true);
+		}
+		$type = $callback->type_def();
+		$signature = $type instanceof lambda_type_definition || $type instanceof owned_callable_type ? $type->signature : $type;
+		if (!($signature instanceof callback_type_definition) || $signature->inputs !== [$element]
+			|| $signature->input_mode(0) !== passing_mode::value || $signature->reference_origin !== null
+			|| ($type instanceof lambda_type_definition && $type->has_defaults)
+			|| $signature->result === type_void::instance() || ($filter && $signature->result !== type_bool::instance())) {
+			throw new diagnostic($callback->source(), $callback->byte_start(), 'Invalid callback signature for ' . $operation->name);
+		}
+		if ($type instanceof lambda_type_definition) {
+			$lambda = $callback instanceof ast_name_expression ? $callback->local_binding()?->initializer : $callback;
+			if ($lambda instanceof ast_lambda_expression) {
+				$this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $lambda);
+				if ($lambda->borrowed_writes !== []) $this->invalidate_references($call, $lambda->borrowed_writes);
+			}
+		} else {
+			$this->dependencies?->callable_site($this->owner, $call);
+		}
+		$output = $filter ? $input : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+		if ($output === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable collection result for ' . $operation->name);
+		$call->settle_runtime(new collection_transform_function($operation, $input, $type, $output, $filter));
+	}
+
 	/** Watch both missing and existing targets without inspecting their bodies. */
-	private function callback_reference(ast_callable_reference $site, callback_type_definition $signature): void
+	private function callback_reference(ast_callable_reference $site, ?callback_type_definition $signature, ?type_definition $element = null): void
 	{
 		$this->name_lookups++;
 		$file = $site->lexical_root();
@@ -2576,6 +2627,7 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(), 'Callback requires a source free function or static method: ' . $site->name);
 		}
 		$target->require_access($this->owner->parent->parent, $site, null, $this->access_watcher());
+		$signature ??= new callback_type_definition($target->return_type_def(), [$element]);
 		$signature->require_target($site, $target);
 		if ($record instanceof ast_record_declaration && $this->dependencies !== null) {
 			$symbol = $this->dependencies->static_call($this->owner, $symbol, $type);
