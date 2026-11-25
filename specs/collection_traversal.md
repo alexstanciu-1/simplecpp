@@ -80,7 +80,10 @@ Reading the element reads the current slot. Assignments and supported compound
 updates replace it immediately. Reads through another name for the collection see
 the completed write, including before a break, return or exception. A by-value
 capture takes the current element value. Shared handles retain object identity.
-For inline records, edit a value copy and assign the whole element back.
+For an inline record, plain assignment to an immediate writable field (for example,
+`$point->x = 12;`) updates that field in the selected slot. Earlier value copies retain
+their contents. Field visibility, read-only rules and assignment conversions apply.
+For deeper inline writes or compound field updates, edit a copy and assign it back.
 
 The collection must keep its size, order and storage throughout the loop. Preparation
 rejects append, removal, resize, reserve, reset, replacement and mutable reference

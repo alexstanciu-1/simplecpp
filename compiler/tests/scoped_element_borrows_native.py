@@ -75,3 +75,28 @@ with TemporaryDirectory(prefix='scpp-readonly-element-borrows-') as work:
         ('provider', None, None),
         ('provider', row_helpers, shared),
     ])
+
+record = 'struct Sample {public int $x=1; public int $y=2;}'
+field_writes = """
+function nextValue():int {echo "R";return 12;}
+$initial Sample;$points vector<Sample> = [$initial];
+foreach ($points as &$point) {
+    $before=$point;$point->x=nextValue();$after=$points[0];echo $before->x,",",$after->x,",",$after->y,";";
+}
+$map hash<Sample,int> = [];$map[1]=$initial;$map[9]=$initial;$map->remove(1);
+foreach ($map as $k => &$point) {
+    $k=1;$before=$point;$point->x=nextValue();$after=$map[9];echo $before->x,",",$after->x,",",$after->y;
+}
+return 8;
+"""
+with TemporaryDirectory(prefix='scpp-selected-record-field-') as work:
+    visible = b'R1,12,2;R1,12,2'
+    revisions(Path(work), 'php', dict(main=field_writes, record=record), [
+        (None, None, visible),
+        ('record', record.replace('public int $x', 'public readonly int $x'), 'Cannot modify readonly property'),
+        ('record', record.replace('public int $x', 'private int $x'), 'Cannot access private field'),
+        ('record', None, None),
+        ('record', record, visible),
+        ('main', field_writes.replace('$point->x=nextValue();', '$point->x+=1;'), 'Assign a whole writable foreach element'),
+        ('main', field_writes, visible),
+    ])

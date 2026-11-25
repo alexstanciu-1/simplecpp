@@ -52,6 +52,7 @@ final class Readonly_Access
 	public static function write(ast_expression $site, bool $payload = false, ?ast_instance_field $initializing = null): void
 	{
 		if ($payload && $site->type_def()->mutates_referenced_value()) return;
+		$target = $site;
 		while ($site instanceof ast_field_expression) {
 			$field = self::field($site);
 			if ($field->is_readonly && $field !== $initializing) {
@@ -64,6 +65,8 @@ final class Readonly_Access
 		if ($storage->type_def() instanceof segment_type && $storage->type_def()->read_only)
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write through a read-only segment');
 		if ($storage instanceof ast_name_expression && $storage->local_binding() instanceof ast_writable_element) {
+			$assignment = $target->parent;
+			if ($assignment instanceof ast_field_assignment && $assignment->target === $target && $assignment->selected_record_element() === $storage->local_binding()) return;
 			throw new diagnostic($site->source(), $site->byte_start(), 'Assign a whole writable foreach element to update its slot');
 		}
 		if ($site instanceof ast_name_expression) self::require_writable($site, $site->local_binding());
