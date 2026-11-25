@@ -1,0 +1,106 @@
+function check(bool $ok, string $detail): void {
+    if (!$ok) throw Exception::make($detail);
+}
+
+final class Record_Visits implements Body_Visitor {
+    public vector<Body> $bodies;
+    public override function visit(Body $body): void { $this->bodies[] = $body; }
+}
+
+function verify_edges(Dependencies $graph, Body $owner, Body $closure, Symbol $symbol, Symbol $peer): void {
+    $graph->watch_closure_call($owner, $closure, $symbol);
+    $bucket = $graph->calls->find($closure);
+    $graph->watch_closure_call($owner, $closure, $peer);
+    $graph->watch_closure_call($owner, $closure, $symbol);
+    check($bucket !== null && $graph->calls->find($closure) === $bucket, "copied identity bucket");
+    $visits = new Record_Visits();
+    $graph->callees($closure, $visits);
+    check(count($visits->bodies) === 2 && $visits->bodies[0] === $symbol->head
+        && $visits->bodies[1] === $peer->head, "lost, reordered or duplicated closure targets");
+}
+
+function run(Dependencies $graph, Symbol $symbol): weak<Body> {
+    $owner = new Body();
+    $closure = new Body();
+    $peer = new Symbol();
+    $peer->head = new Body();
+    $sibling = new Body();
+    $symbol->head = new Body();
+    verify_edges($graph, $owner, $closure, $symbol, $peer);
+    validate($graph, $closure);
+    $graph->observers->add($peer, $sibling);
+    $graph->changed($symbol);
+    $graph->changed($symbol);
+    $graph->dispatch();
+    check($owner->deliveries === 1 && $sibling->deliveries === 0, "edit delivery or isolation");
+
+    $graph->changed($symbol);
+    $graph->changed($peer);
+    $graph->dispatch();
+    check($owner->deliveries === 2 && $sibling->deliveries === 1, "overlapping subscriptions delivered twice");
+    $replacement = new Body();
+    $symbol->head = $replacement;
+    $graph->calls->add($replacement, $owner);
+    $rejected = false;
+    try {
+        validate($graph, $closure);
+    } catch (Closure_Cycle $error) {
+        echo $error->detail;
+        $rejected = true;
+    }
+    check($rejected, "reference-return cycle missed");
+    $symbol->head = new Body();
+    validate($graph, $closure);
+    $peer->head = $replacement;
+    // A reachable cycle that excludes the reference-returning root is legal.
+    $graph->calls->forget($replacement);
+    $graph->calls->add($replacement, $replacement);
+    validate($graph, $closure);
+    $graph->retire($owner);
+    $graph->changed($peer);
+    $graph->dispatch();
+    check($owner->deliveries === 3 && $sibling->deliveries === 2, "final retirement delivery");
+    $graph->changed($symbol);
+    $graph->dispatch();
+    check($owner->deliveries === 3 && $graph->calls->find($owner) === null, "retired watcher received an edit");
+    return weak($owner);
+}
+
+function transient(Dependencies $graph, Symbol $symbol, Body $live): weak<Body> {
+    $temporary = new Body();
+    $graph->calls->add($temporary, $live);
+    $graph->calls->add($live, $temporary);
+    $graph->observers->add($symbol, $temporary);
+    return weak($temporary);
+}
+
+function retire_queued(Dependencies $graph, Symbol $symbol): weak<Body> {
+    $body = new Body();
+    $graph->observers->add($symbol, $body);
+    $graph->changed($symbol);
+    $graph->retire($body);
+    return weak($body);
+}
+
+$graph = new Dependencies();
+$symbol = new Symbol();
+$retired = run($graph, $symbol);
+check(lock($retired) === null, "retired enclosing body retained");
+$live = new Body();
+$temporary = transient($graph, $symbol, $live);
+check(lock($temporary) === null, "weak key or target retained syntax");
+$visits = new Record_Visits();
+$graph->callees($live, $visits);
+check(count($visits->bodies) === 0, "visitor delivered expired target");
+$again = new Body();
+$graph->calls->add($live, $again);
+$graph->calls->add($again, $live);
+$graph->callees($live, $visits);
+$graph->callees($again, $visits);
+check(count($visits->bodies) === 2 && $visits->bodies[0] === $again && $visits->bodies[1] === $live,
+    "expired rows or targets corrupted new registrations");
+$queued = retire_queued($graph, $symbol);
+check(lock($queued) !== null, "pending notification released retired body too early");
+$graph->dispatch();
+check(lock($queued) === null, "dispatch retained retired body");
+return 8;
