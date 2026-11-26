@@ -1,0 +1,27 @@
+// The launcher sets the application's canonical directory as the process cwd.
+host_directory();
+$lock = fs_lock_empty();
+if (fs_is_link(".scpp/compiler.lock")) throw Exception::make("Invalid frontend lock");
+$owner bool = fs_lock_try($lock, ".scpp/compiler.lock");
+if (!$owner) return 0;
+try {
+	host_listen();
+	$session = new Frontend_Session();
+	while (true) {
+		$request = host_request();
+		if ($request === "") break;
+		if ($request === "stop\n") {
+			host_reply("stopped\n");
+			break;
+		}
+		if ($request === "status\n") {
+			host_reply((string)$session->generation . "\n");
+		} else {
+			host_reply(handle_request($session, ".", $request) . "\n");
+		}
+	}
+} finally {
+	host_close();
+	if (!fs_lock_release($lock)) throw Exception::make("Cannot release frontend lock");
+}
+return 0;
