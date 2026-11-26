@@ -91,7 +91,17 @@ function convertedAt(vector<int> $items):float {return $items[0];}
 function convertedKeyAt(vector<float> $items,int $pos=1.75):float {return $items[$pos];}
 """
 forward_calls = """
-function fromRef(vector<int> &$refItems):int {return innerVector($refItems);}
+function fromRef(vector<int> &$refItems):int {
+    $refItems[0]=6;$read=innerVector($refItems);$refItems[0]+=1;return $read;
+}
+function fromRefHash(hash<int,int> &$refItems,int $key):int {
+    $refItems[$key]=4;$read=innerHash(key:$key,items:$refItems);$refItems[$key]+=1;return $read;
+}
+function mutableForwardReads():int {
+    $v vector<int> = [1];$h hash<int,int> = [];$h[0]=2;
+    $vr=fromRef($v);$hr=fromRefHash($h,0);
+    return 1000*$vr+100*$hr+10*$v[0]+$h[0];
+}
 function fromReadonly(const vector<int> &$readItems):int {return innerVector($readItems);}
 function fromReadonlyHash(const hash<int,int> &$items,int $key):int {return innerHash(key:$key,items:$items);}
 function readonlyForwardReads():int {
@@ -148,28 +158,38 @@ function defaultReads():int {
 }
 function changeVector(vector<int> &$v):int {$v[0]=9;echo "V";return 0;}
 function changeHash(hash<int,int> &$h):int {$h[0]=9;echo "H";return 0;}
+function vectorAliasOrder(vector<int> &$items,vector<int> &$alias):void {
+    echo element(items:$items,key:changeVector($alias));$items[0]=5;
+    echo element(key:changeVector($alias),items:$items);
+}
+function hashAliasOrder(hash<int,int> &$items,hash<int,int> &$alias):void {
+    echo byKey(items:$items,key:changeHash($alias));$items[0]=7;
+    echo byKey(key:changeHash($alias),items:$items);
+}
 function orderedReads():int {
     $v vector<int> = [5];$h hash<int,int> = [];$h[0]=7;
     echo element(items:$v,key:changeVector($v));$v[0]=5;
     echo element(key:changeVector($v),items:$v);
     echo byKey(items:$h,key:changeHash($h));$h[0]=7;
     echo byKey(key:changeHash($h),items:$h);
+    $v[0]=5;$h[0]=7;
+    vectorAliasOrder($v,$v);hashAliasOrder($h,$h);
     return 8;
 }
 echo scalarReads(),"|",readonlyForwardReads(),"|",positionalKeyProbe(),"/",reversedKeyProbe(),"|",forwardReads(),":",namedReads(),":",defaultReads(),":";return orderedReads();
 """
 with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     work = Path(directory)
-    expected = b'1111|5757|680/680|668857:24:5577:V5V9H7H9'
+    expected = b'1111|5757|680/680|668857:24:5577:V5V9H7H9V5V9H7H9'
     forward_writer = forward_reader.replace('return $items[', '$items[0]=9;return $items[')
     forward_writer += scalar_reader.replace('return $items[0];}', '$items[0]=false;return $items[0];}', 1).replace(
         'return $items[$key];}', '$items[$key]=-4.5;return $items[$key];}')
     edits = [(None, None, expected),
-             ('forward_reader', forward_writer, b'11|9957|680/680|969857:24:5577:V5V9H7H9'),
+             ('forward_reader', forward_writer, b'11|9957|680/680|969857:24:5577:V5V9H7H9V5V9H7H9'),
              ('forward_reader', forward_reader + scalar_reader, expected),
              ('main', named_calls.replace('int $which', 'int &$which'), expected.replace(b'680/680', b'681/681')),
              ('main', named_calls, expected),
-             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'1111|5757|680/680|668857:24:6688:V5V9H7H9'),
+             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'1111|5757|680/680|668857:24:6688:V5V9H7H9V5V9H7H9'),
              ('reader', keyed_reader.replace('$key=0', '$key'), 'Argument count mismatch'),
              ('reader', keyed_reader, expected),
              ('reader', keyed_reader.replace('$key', '$offset'), 'Unknown named argument: key'),
@@ -179,8 +199,9 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
     assert 'convertedKeyAt_collection_reader(var_' not in units
     assert re.search(r'convertedAt_collection_reader\(const [^;{]+\)\s*\{\s*return convertedAt_\(', units)
-    for parameter in ('refItems', 'packItems'):
-        assert 'innerVector_(var_' + parameter in units
+    assert 'innerVector_collection_reader(var_refItems' in units
+    assert 'innerHash_collection_reader(var_refItems' in units
+    assert 'innerVector_(var_packItems' in units
     for symbol in ('element', 'byKey'):
         assert units.count(symbol + '_collection_reader(var_') == 6, units
     if not quick:
@@ -219,18 +240,20 @@ if not quick:
         local = 'vector<int> v=[3,5];' if flavor == 'cpp' else 'let v:vector<int> = [3,5];'
         outer = forms['function']('outer', 'int', [('items', 'vector<int>'), ('k', 'int')],
                                   'return element(items,k)*10+items[k];')
-        app = outer + local + 'echo outer(v,1),width(v),first(v),element(v,1),element(key:0,items:v),element(items:v,key:1),v[0],element(v),element(items:v);return 8;'
+        from_ref = forms['function']('fromRef', 'int', [('&items', 'vector<int>'), ('k', 'int')],
+                                     'return element(items,k);')
+        app = from_ref + outer + local + 'echo fromRef(v,1),outer(v,1),width(v),first(v),element(v,1),element(key:0,items:v),element(items:v,key:1),v[0],element(v),element(items:v);return 8;'
         with TemporaryDirectory(prefix='scpp-private-count-') as directory:
             revisions(Path(directory), flavor, dict(main=app, reader=read), [
-                (None, None, b'5523535333'),
-                ('reader', read.replace(key_param + '=0', key_param + '=1'), b'5523535355'),
+                (None, None, b'55523535333'),
+                ('reader', read.replace(key_param + '=0', key_param + '=1'), b'55523535355'),
                 ('reader', read.replace(key_param + '=0', key_param), 'Argument count mismatch'),
-                ('reader', read, b'5523535333'),
-                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'9527999399'),
+                ('reader', read, b'55523535333'),
+                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'99527999399'),
                 ('reader', None, None),
-                ('reader', read, b'5523535333'),
+                ('reader', read, b'55523535333'),
                 ('reader', read.replace('key', 'offset'), 'Unknown named argument: key'),
-                ('main', app.replace('key:', 'offset:'), b'5523535333'),
+                ('main', app.replace('key:', 'offset:'), b'55523535333'),
             ])
 
 

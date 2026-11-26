@@ -2925,7 +2925,7 @@ CPP;
 			// For a complete two-argument call the prepared slots form their own inverse.
 			$reversed = count($value->arguments) === 2 && count($function->parameters) === 2 && ($value->named->slots[0] ?? 0) === 1;
 			$argument = $value->arguments[$reversed ? 1 : 0] ?? null;
-			if (self::plain_local_read($argument, allow_readonly_reference: true)
+			if (self::plain_local_read($argument, collection_operand: true)
 				&& ($input = $function->private_reader_input()) !== null && $argument->type_def() === $input->type_def()) {
 				if (count($function->parameters) === 1) {
 					$name .= 'collection_reader';
@@ -3967,14 +3967,13 @@ CPP;
 			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
 	}
 
-	/** Only the collection operand may forward a read-only reference to the synchronous reader. */
-	private static function plain_local_read(?ast_expression $argument, bool $allow_readonly_reference = false): bool
+	/** A synchronous reader can borrow a reference parameter as its collection operand. */
+	private static function plain_local_read(?ast_expression $argument, bool $collection_operand = false): bool
 	{
 		if (!$argument instanceof ast_name_expression) return false;
 		$binding = $argument->local_binding();
 		if ($binding instanceof ast_parameter_declaration) {
-			return !($binding->type_reference instanceof ast_variadic_type_reference) && ($binding->mode === passing_mode::value
-				|| ($allow_readonly_reference && $binding->mode === passing_mode::readonly_reference));
+			return !($binding->type_reference instanceof ast_variadic_type_reference) && ($collection_operand || $binding->mode === passing_mode::value);
 		}
 		return $binding !== null && $binding::class === ast_local_declaration::class;
 	}

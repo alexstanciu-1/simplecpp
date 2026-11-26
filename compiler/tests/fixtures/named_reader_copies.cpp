@@ -11,6 +11,7 @@ scpp::int64 defaultReads_();
 scpp::int64 orderedReads_();
 scpp::int64 forwardReads_();
 scpp::int64 readonlyForwardReads_();
+scpp::int64 mutableForwardReads_();
 scpp::int64 positionalKeyProbe_();
 scpp::int64 reversedKeyProbe_();
 }
@@ -56,7 +57,7 @@ int main(int argc, char** argv) {
     assert(App::defaultReads_() == 5577);
     assert(vector_copies == 0 && hash_copies == 0);
     assert(App::orderedReads_() == 8);
-    assert(vector_copies == 2 && hash_copies == 2);
+    assert(vector_copies == 4 && hash_copies == 4);
     vector_copies = hash_copies = 0;
     assert(App::forwardReads_() == (writer ? 969857 : 668857));
     const int expected = writer ? 2 : 1;
@@ -66,6 +67,11 @@ int main(int argc, char** argv) {
     assert(App::readonlyForwardReads_() == (writer ? 9957 : 5757));
     const int readonly_copies = writer ? 1 : 0;
     assert(vector_copies == readonly_copies && hash_copies == readonly_copies);
+
+    vector_copies = hash_copies = 0;
+    assert(App::mutableForwardReads_() == (writer ? 9975 : 6475));
+    const int mutable_copies = writer ? 1 : 0;
+    assert(vector_copies == mutable_copies && hash_copies == mutable_copies);
 
     const bool reference_key = std::string_view(argv[1]) == "reference-key";
     const int key_copies = reference_key ? 2 : 1;
