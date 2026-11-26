@@ -288,6 +288,15 @@ final class Type_Resolution
 			? callable_signature_index::element(self::callback_signature($child, $symbols, $namespace, $watcher, $dependencies))
 			: self::argument($child, $symbols, $namespace, $watcher, $dependencies);
 		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
+		if ($syntax->name === 'result') {
+			$record = $element instanceof shared_record_type_definition ? $element->payload : $element;
+			if ($record instanceof record_type_definition && $record->default_type() === $element && $record->declaration->is_data
+				&& $syntax->root()->type_availability->allows('runtime-json') && runtime_functions::resolve('php:func:json_decode_as') !== null) {
+				$record->require_destruction($syntax, true);
+				if ($watcher !== null) $dependencies?->watch($symbols->entry($record->declaration->symbol_key()), $watcher, dependency_use::record_result->value);
+				return $record->record_result();
+			}
+		}
 		return self::collection($syntax->name, $element, $key)
 			?? throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unavailable runtime specialization: ' . $syntax->spelling());
 	}

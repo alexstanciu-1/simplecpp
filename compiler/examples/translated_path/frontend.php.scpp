@@ -230,6 +230,10 @@ final class Translation_Parser {
 		$arguments vector<int> = [];
 		while ($this->source->tokens[$this->index]->kind !== Token_Kind::T_rparen) {
 			$arguments[] = $this->index;
+			if ($this->source->tokens[$this->index]->kind === Token_Kind::T_identifier) {
+				$this->index++;
+				$this->expect(Token_Kind::T_colon, "Expected : after argument label");
+			}
 			$kind = $this->source->tokens[$this->index]->kind;
 			if ($kind === Token_Kind::T_variable) {
 				$this->index++;
@@ -243,6 +247,16 @@ final class Translation_Parser {
 		return $arguments;
 	}
 
+	private function numeric_literal(): void {
+		$kind = $this->source->tokens[$this->index]->kind;
+		if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
+		$kind = $this->source->tokens[$this->index]->kind;
+		if ($kind !== Token_Kind::T_integer && $kind !== Token_Kind::T_floating) {
+			throw new Translation_Diagnostic($this->source->path, $this->source->tokens[$this->index]->offset, "Expected decimal numeric literal", $this->source->text);
+		}
+		$this->index++;
+	}
+
 	private function function_header(): Function_Declaration {
 		$start = $this->index;
 		$this->keyword("function");
@@ -250,6 +264,7 @@ final class Translation_Parser {
 		$this->expect(Token_Kind::T_lparen, "Expected (");
 		$parameters vector<Numeric_Parameter> = [];
 		$names hash<Numeric_Parameter,string> = [];
+		$optional = false;
 		while ($this->source->tokens[$this->index]->kind !== Token_Kind::T_rparen) {
 			$param_token = $this->expect(Token_Kind::T_identifier, "Expected parameter type");
 			$param_word = $this->spelling($param_token);
@@ -260,7 +275,16 @@ final class Translation_Parser {
 			$variable = $this->expect(Token_Kind::T_variable, "Expected parameter name");
 			$param_name = $this->spelling($variable);
 			if (isset($names[$param_name])) throw new Translation_Diagnostic($this->source->path, $variable->offset, "Duplicate parameter: " . $param_name, $this->source->text);
-			$parameter = new Numeric_Parameter($param_name, $is_float, count($parameters));
+			$default_token = 0;
+			if ($this->source->tokens[$this->index]->kind === Token_Kind::T_assign) {
+				$this->index++;
+				$default_token = $this->index;
+				$this->numeric_literal();
+				$optional = true;
+			} elseif ($optional) {
+				throw new Translation_Diagnostic($this->source->path, $variable->offset, "Required parameter after optional parameter", $this->source->text);
+			}
+			$parameter = new Numeric_Parameter($param_name, $is_float, count($parameters), $default_token);
 			$parameters[] = $parameter;
 			$names[$param_name] = $parameter;
 			if (!$this->next_list_item("parameter")) break;
@@ -288,13 +312,7 @@ final class Translation_Parser {
 		} elseif ($this->source->tokens[$literal]->kind === Token_Kind::T_variable) {
 			$this->index++;
 		} else {
-			$kind = $this->source->tokens[$literal]->kind;
-			if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
-			$kind = $this->source->tokens[$this->index]->kind;
-			if ($kind !== Token_Kind::T_integer && $kind !== Token_Kind::T_floating) {
-				throw new Translation_Diagnostic($this->source->path, $this->source->tokens[$this->index]->offset, "Expected decimal numeric literal", $this->source->text);
-			}
-			$this->index++;
+			$this->numeric_literal();
 		}
 		$this->expect(Token_Kind::T_semicolon, "Expected ;");
 		$statement = new Function_Return($return_start, $this->index, $literal, $calls_function, $arguments);

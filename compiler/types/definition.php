@@ -752,6 +752,7 @@ abstract class type_definition
 			if ($source === $this) return value_conversion::identity;
 			$source->require_extraction($value, $context);
 			$transport = value_conversion::EXTRACT;
+			if ($source instanceof record_result_type_definition && $source->payload_type === $this) return $transport | value_conversion::identity;
 			if ($value->source()->flavor === flavor::php && $context !== conversion_context::inference) {
 				$source = carrier_operand_payload($source)
 					?? throw new diagnostic($value->source(), $value->byte_start(), 'Carrier does not participate in payload conversion');

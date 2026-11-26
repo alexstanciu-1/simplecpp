@@ -117,6 +117,7 @@ require_once __DIR__ . '/05_backend/cpp/exceptions.php';
 require_once __DIR__ . '/05_backend/cpp/finally.php';
 require_once __DIR__ . '/05_backend/cpp/initialization.php';
 require_once __DIR__ . '/05_backend/cpp/staged_result.php';
+require_once __DIR__ . '/05_backend/cpp/record_decoder.php';
 require_once __DIR__ . '/05_backend/cpp/emit.php';
 require_once __DIR__ . '/05_backend/cpp/strings.php';
 require_once __DIR__ . '/05_backend/cpp/output.php';

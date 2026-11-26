@@ -150,11 +150,18 @@ Changing only the callee's body reuses the forwarding unit. Changing its return
 type rechecks and emits the direct forwarder. On literal overflow the diagnostic
 points to the return operand and the previous published files remain available for retry.
 
-The retained PHP-flavor slice accepts positional numeric parameters by value.
+The retained PHP-flavor slice accepts numeric parameters by value and positional or named arguments.
 A function may return any of its parameters. Each call argument may be a signed
 decimal integer literal or a parameter from the enclosing function. Preparation
 resolves names in that function, checks arity, and pairs arguments with the
 callee's parameter types in declaration order. The watched signature includes
 the return type and the complete ordered parameter-type list. A change in any
-slot rechecks direct callers. Renaming a positional parameter only requires
-preparing its declaring body.
+slot rechecks direct callers. Renaming a parameter rechecks its declaring body and callers whose written
+labels change binding. Positional callers retain their prepared bodies and emitted
+units. A stale label is diagnosed at its source offset before publication.
+
+Trailing numeric parameters may have signed integer or floating literal defaults.
+Declaration preparation converts each default to the parameter type and checks its
+range. A call records which slots it fills from defaults, including optional slots
+skipped by named arguments. Changing a converted default invalidates the callers
+that omitted that slot. Explicit callers retain their preparation and output.

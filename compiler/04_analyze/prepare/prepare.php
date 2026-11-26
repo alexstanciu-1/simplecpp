@@ -1404,7 +1404,7 @@ final class Preparation
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null): void
 	{
-		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum lookup or object_cast target');
+		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum lookup, object_cast or json_decode_as target');
 		$this->expression_visits++;
 		if ($syntax instanceof ast_throw_expression) {
 			$this->prepare_throw($syntax, $initializing);
@@ -1959,6 +1959,7 @@ final class Preparation
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
 		if ($call->unpacked ?? false) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
+		if ($runtime instanceof json_decoder_contract) $runtime = $this->record_decoder($call, $runtime);
 		if ($runtime instanceof runtime_function && $runtime->borrows_slots) {
 			if ($this->enclosing_lambda !== null || $this->owner->parent->is_async || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Bound parameter frame lifetime is unproven');
@@ -2053,6 +2054,52 @@ final class Preparation
 		}
 		if ($writes !== []) $this->invalidate_references($call, $writes);
 		$call->settle_runtime($runtime, $conversions);
+	}
+
+	/** Resolve the marker without evaluating it and watch the schema used by the native reader. */
+	private function record_decoder(ast_call_expression $call, json_decoder_contract $contract): runtime_function
+	{
+		$marker = $call->arguments[1] ?? null;
+		if (count($call->arguments) !== 2 || !($marker instanceof ast_type_marker)) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'json_decode_as requires text and a data record type marker');
+		}
+		$entry = $this->symbols->entry($marker->lexical_root()->type_key($marker->name));
+		$this->dependencies?->watch($entry, $this->owner);
+		$node = $entry->declaration();
+		if (!($node instanceof ast_record_declaration)) throw new diagnostic($marker->source(), $marker->byte_start(), 'json_decode_as requires a concrete data record');
+		return $this->decode_binding($node, $contract, $marker, false);
+	}
+
+	private function decode_binding(ast_record_declaration $node, json_decoder_contract $contract, ast_node $site, bool $cursor): runtime_function
+	{
+		$records = [];
+		$this->check_decode_schema($node->definition, $contract, $site, $records);
+		return new record_decode_function($node->definition, $contract, $cursor);
+	}
+
+	/** Watch each reachable schema once, including recursive owner fields. @param record_type_definition[] $records */
+	private function check_decode_schema(record_type_definition $record, json_decoder_contract $contract, ast_node $site, array &$records): void
+	{
+		if (isset($records[$record->name])) return;
+		$records[$record->name] = $record;
+		$node = $record->declaration;
+		$this->dependencies?->watch($this->symbols->entry($node->symbol_key()), $this->owner, dependency_use::record_result->value | dependency_use::record_decode->value);
+		if ($node->is_abstract || $node->data_constructor === null || $record->constructor() !== null) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Decoding requires a concrete data record with a generated constructor');
+		}
+		$record->require_destruction($site, true);
+		for ($base = $record->base(); $base !== null; $base = $base->base()) {
+			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
+		}
+		foreach ($node->data_constructor->parameters as $field) {
+			$type = $field->storage_type();
+			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
+			$nested = $leaf instanceof shared_record_type_definition && $leaf->required ? $leaf->payload : $leaf;
+			if ($nested instanceof record_type_definition) $this->check_decode_schema($nested, $contract, $site, $records);
+			elseif (!isset($contract->leaves[$leaf::class])) {
+				throw new diagnostic($site->source(), $site->byte_start(), 'No JSON decoder for ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ')');
+			}
+		}
 	}
 
 	/** Resolve field encoders using the active module's published overloads. */
@@ -2650,6 +2697,14 @@ final class Preparation
 		}
 		$method = $symbol?->declaration();
 		if (!($method instanceof ast_function_declaration)) {
+			if ($name === 'decode' && $record instanceof ast_record_declaration && $record->is_data
+				&& $call->lexical_root()->type_availability->allows('runtime-json') && type_registry::resolve('json_pull_reader') !== null) {
+				$contract = runtime_functions::resolve('php:func:json_decode_as');
+				if ($contract instanceof json_decoder_contract) {
+					$this->runtime_call($call, $this->decode_binding($record, $contract, $call, true));
+					return true;
+				}
+			}
 			if ($late) throw new diagnostic($call->source(), $call->byte_start(), 'Unknown static method: ' . $record->name() . '::' . $name);
 			if ($record instanceof ast_record_declaration && $call->source()->flavor === flavor::cpp) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Unknown type-qualified method: ' . $qualified);

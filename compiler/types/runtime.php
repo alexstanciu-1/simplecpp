@@ -100,6 +100,28 @@ final readonly class json_encoder_overloads extends runtime_overloads
 	}
 }
 
+/** Published record leaf readers selected by a compile-time destination marker. */
+final readonly class json_decoder_contract extends runtime_overloads
+{
+	/** @param array<class-string<type_definition>,string> $leaves */
+	public function __construct(public array $leaves, public string $header)
+	{
+		parent::__construct([], required_module: 'runtime-json');
+	}
+}
+
+/** Nominal target used both for source typing and its concrete C++ declaration. */
+final readonly class record_decode_function extends runtime_function
+{
+	public function __construct(public record_type_definition $target, json_decoder_contract $contract, bool $cursor)
+	{
+		$result = $target->record_result();
+		parent::__construct($cursor ? 'decode' : 'json_decode_as', [$cursor ? type_json_pull_reader::instance() : type_string::instance()],
+			$cursor ? $target->default_type() : $result, $result->cpp_type() . ($cursor ? '::from_cursor' : '::from_text'),
+			$contract->header, const_reference_mask: 1, required_module: $contract->required_module);
+	}
+}
+
 /** The selected traversal and callback signature for a typed collection transform. */
 final readonly class collection_transform_function extends runtime_function
 {

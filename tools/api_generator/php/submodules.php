@@ -287,6 +287,10 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach (['document', 'pull_reader'] as $feature) {
             if ($publication->json->$feature ?? false) $headers[] = moduleOperationHeader($publication->json->header, $feature);
         }
+        if (in_array('decode', names($publication->json->operations), true)) {
+            $headers[] = moduleOperationHeader($publication->json->header, 'decode_record');
+            $headers[] = 'scpp/decoder.hpp';
+        }
         if (array_filter(names($publication->json->operations), fn($id) => str_starts_with($id, 'encode_'))) {
             $headers[] = moduleOperationHeader($publication->json->header, 'encode_record');
             $headers[] = 'scpp/detail/json/record_output.hpp';

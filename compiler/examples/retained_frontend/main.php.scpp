@@ -11,6 +11,11 @@ function prepared_snapshot(Translation $compiler): string {
 		$text = "";
 		foreach ($call->arguments as $index => $argument) {
 			if ($index !== 0) $text .= ", ";
+			$default = $argument->default_value;
+			if ($default !== null) {
+				$text .= $call->signature()->parameters[$index]->floating ? host_cpp_binary64($default->floating) : (string)$default->integer;
+				continue;
+			}
 			$parameter = $argument->forwarded;
 			$text .= $parameter === null ? (string)$argument->literal : $parameter->name;
 		}
