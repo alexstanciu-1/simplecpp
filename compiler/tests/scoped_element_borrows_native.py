@@ -208,7 +208,8 @@ with TemporaryDirectory(prefix='scpp-nested-element-borrow-') as work:
     ]
     revisions(Path(work), 'php', dict(main=nested_loop, record=record), edits)
 
-consumer = 'function applyTwice(callback_view<void> $op):void {$op();$op();}'
+consumer = 'function applyTwice(callback_view<void> $op):void {applyOnce($op);applyOnce(action:$op);}'
+leaf = 'function applyOnce(callback_view<void> $action):void {$action();}'
 view_loop = """
 function &keep(int &$n):int {
     $f=function() use (&$n):void {$n+=1;};applyTwice($f);return $n;
@@ -234,13 +235,12 @@ echo $h[2],",",$h[8];return 8;
 with TemporaryDirectory(prefix='scpp-borrowed-callback-consumer-') as work:
     expected = b'2;8,3;caught:7,1'
     edits = [(None, None, expected),
-             ('consumer', consumer.replace('$op();$op();', '$saved function<void()> = $op;'), 'only direct invocation'),
-             ('consumer', consumer.replace('$op();$op();', 'applyTwice($op);'), 'only direct invocation'),
-             ('consumer', consumer, expected),
+             ('leaf', leaf.replace('$action();', '$saved function<void()> = $action;'), 'only direct invocation'),
+             ('leaf', leaf, expected),
              ('main', view_loop.replace('applyTwice($step)', 'applyTwice($clear)'), 'during writable foreach'),
              ('main', view_loop.replace('applyTwice($step)', 'applyTwice(function() use (&$n):void {})'), 'named local closure'),
              ('main', view_loop, expected),
              ('consumer', consumer.replace('callback_view<void>', 'callback<void>'), 'direct local invocation'),
              ('consumer', None, None),
              ('consumer', consumer, expected)]
-    revisions(Path(work), 'php', dict(main=view_loop, consumer=consumer), edits)
+    revisions(Path(work), 'php', dict(main=view_loop, consumer=consumer, leaf=leaf), edits)

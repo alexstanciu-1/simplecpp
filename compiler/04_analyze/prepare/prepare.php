@@ -155,10 +155,8 @@ final class Preparation
 			}
 			if ($parameter->type_def() instanceof callback_view_type) {
 				foreach ($syntax as $statement) {
-					$call = $statement instanceof ast_call_statement ? $statement->value : null;
-					if ($call === null || $call->name !== $parameter->declaration_key() || $call->arguments !== [] || $call->receiver !== null
-						|| $call->member_separator !== null || $call->qualifier !== ($source->flavor === flavor::php ? call_qualifier::local : call_qualifier::ordinary)) {
-						throw new diagnostic($statement->source(), $statement->byte_start(), 'A callback view consumer permits only direct invocation of its parameter');
+					if (!($statement instanceof ast_call_statement)) {
+						throw new diagnostic($statement->source(), $statement->byte_start(), 'A callback view consumer permits only direct invocation or forwarding of its parameter');
 					}
 				}
 			}
@@ -171,6 +169,19 @@ final class Preparation
 		$this->switch_break_states = [];
 		$this->outward = [];
 		$completion = $this->sequence($syntax, $source, $target, $function);
+		$view = $function->parameters[0] ?? null;
+		if ($view?->type_def() instanceof callback_view_type) {
+			foreach ($syntax as $statement) {
+				$call = $statement->value;
+				if ($call->callable_binding() === $view && $call->arguments === []) continue;
+				$argument = $call->arguments[0] ?? null;
+				if ($call->qualifier === call_qualifier::ordinary && $call->receiver === null && $call->member_separator === null
+					&& count($call->arguments) === 1 && $argument instanceof ast_name_expression && $argument->refers_to($view)
+					&& $call->has_direct_signature() && ($callee = $call->function_def()) instanceof ast_function_declaration
+					&& $callee->parameters[0]->type_def() instanceof callback_view_type) continue;
+				throw new diagnostic($statement->source(), $statement->byte_start(), 'A callback view consumer permits only direct invocation or forwarding of its parameter');
+			}
+		}
 		if (($completion & statement_completion::fallthrough) !== 0) $this->constructor_initialization?->complete($owner);
 		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
 			&& !($function->return_type_def() instanceof generator_type_definition)) {
@@ -2852,18 +2863,19 @@ final class Preparation
 			$type = $parameter === null ? $function->inputs[$slot] : $parameter->type_def();
 			if ($slot === $variadic && !$unpacked) $type = $type->element_type;
 			if ($type instanceof callback_view_type) {
-				// Borrow exactly the inferred local that a direct closure call would invoke.
+				// The first binding accounts for the closure’s writes. Forwarding carries that same view.
 				$local = $argument::class === ast_name_expression::class && !$argument->constant_only && $argument->name !== $initializing
 					? $this->find_local($argument->name) : null;
-				if (!($local instanceof ast_local_declaration) || $local->type_reference !== null || !($local->type_def() instanceof lambda_type_definition)
-					|| !($local->initializer instanceof ast_lambda_expression) || !$type->signature->matches($local->type_def()->signature)) {
-					throw new diagnostic($argument->source(), $argument->byte_start(), 'A callback view requires a named local closure with the exact void() signature');
+				if ($local instanceof ast_local_declaration && $local->type_reference === null && $local->type_def() instanceof lambda_type_definition
+					&& $local->initializer instanceof ast_lambda_expression && $type->signature->matches($local->type_def()->signature)) {
+					$this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $local->initializer);
+					array_push($writes, ...$local->initializer->borrowed_writes);
+				} elseif (!($local instanceof ast_parameter_declaration && $local->type_def() instanceof callback_view_type)) {
+					throw new diagnostic($argument->source(), $argument->byte_start(), 'A callback view requires a named local closure with the exact void() signature or a callback view parameter');
 				}
 				$this->expression_visits++;
 				$this->name_lookups++;
 				$argument->settle_local($local, unknown: true);
-				$this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $local->initializer);
-				array_push($writes, ...$local->initializer->borrowed_writes);
 				$conversions[] = value_conversion::identity;
 				continue;
 			}

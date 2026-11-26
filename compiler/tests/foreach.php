@@ -165,10 +165,12 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		rejects(fn() => $prepare($hash . 'foreach ($map as &$n) {$map["key"]=4;}return 8;'), 'during writable foreach');
 		$nested = 'foreach ($items as &$value) {$outer=function() use (&$value):void {'
 			. '$inner=function() use (&$value):void {$value+=2;};$inner();};$outer();}';
-		$twice = 'function applyTwice(callback_view<void> $op):void {$op();$op();}';
+		$twice = 'function applyTwice(callback_view<void> $op):void {applyOnce($op);applyOnce($op);}'
+			. 'function applyOnce(callback_view<void> $op):void {$op();}';
 		$view = 'foreach ($items as &$n) {$f=function() use (&$n):void {$n++;};applyTwice($f);}';
 		$emit('borrowed_callback', $twice . $setup . $view . 'echo $items[0],$items[2];return 8;', '35');
-		rejects(fn() => $prepare(str_replace('$op();$op();', '$save function<void()> = $op;', $twice) . 'return 8;'), 'only direct invocation');
+		rejects(fn() => $prepare(str_replace('$op();', '$save function<void()> = $op;', $twice) . 'return 8;'), 'only direct invocation');
+		rejects(fn() => $prepare('function other():void {}' . str_replace('$op();', 'other();', $twice) . 'return 8;'), 'only direct invocation');
 		$emit('nested_reference_capture', $setup . $nested . 'echo $items[0],$items[2];return 8;', '35');
 		$emit('writable', $setup . 'foreach ($items as $key => &$value) {$value+=2;echo $items[$key];}return 8;', '345');
 	} else rejects(fn() => $prepare($setup . 'foreach (' . $v('items') . ' as &' . $v('value') . ') {} return 8;'), 'Expected');
