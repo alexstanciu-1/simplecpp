@@ -709,10 +709,15 @@
     "extraction": "implicit_checked_one_layer_value_copy",
     "payload_access": "value",
     "presence": {"value": "has_value", "true": "is_true"},
+    "operand_participation": {
+      "families": ["nullable", "result", "result_or_false", "result_or_bool"],
+      "carrier": "payload_type",
+      "plain": "own_type"
+    },
     "peer_equality": {
       "flavor": "php",
-      "families": ["nullable", "result", "result_or_false", "result_or_bool"],
-      "operands": "same_type",
+      "operands": "operand_participation",
+      "payloads": "matching_types",
       "evaluation": "snapshot_left_then_right",
       "states": "match_alternate_state",
       "operators": {"equal": "not_equal", "identical": "not_identical"}

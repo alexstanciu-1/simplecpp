@@ -233,7 +233,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     [$vectorCode, $vectorCases, $vectorFamily, $applicationVectors] = compilerVectorTypes($metadata, $runtime, $definitions);
     $files['types/vectors.php'] = $vectorCode;
     [$carrierCode, $carrierCases, $carrierLiterals, $carrierTypes] = compilerCarrierTypes($runtime, $definitions);
-    $files['types/carriers.php'] = $carrierCode . compilerPeerEquality($metadata->carriers->peer_equality ?? null, $metadata->carriers->families ?? null);
+    $files['types/carriers.php'] = $carrierCode . compilerPeerEquality($metadata->carriers ?? null);
     $literalCases = array_merge($literalCases, $carrierLiterals);
     $genericCases = [];
     if ($vectorFamily !== null) $genericCases[$vectorFamily] = $vectorCases;

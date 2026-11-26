@@ -1664,18 +1664,6 @@ final class Preparation
 				$owner->prepare_binary($syntax);
 				return;
 			}
-			if ($left === $right && $left instanceof carrier_type_definition) {
-				$comparator = peer_equality_operator($left->family, $syntax->source()->flavor, $syntax->operator);
-				if ($comparator !== null) {
-					$payload = $left->payload_type;
-					if ($payload->binary_result($comparator, $payload) !== type_bool::instance()
-						|| !$payload->binary_syntax_allowed($comparator, $syntax)) {
-						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands or operator');
-					}
-					$syntax->settle_binary(type_bool::instance(), $left, peer_comparator: $comparator);
-					return;
-				}
-			}
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
 				$carrier = $left instanceof carrier_type_definition ? $left : $right;
 				$literal = $carrier === $left ? $syntax->right : $syntax->left;
@@ -1695,6 +1683,19 @@ final class Preparation
 				}
 				if ($syntax->source()->flavor === flavor::python && $syntax->right instanceof ast_keyword_expression && $left !== type_null::instance()) {
 					throw new diagnostic($syntax->source(), $syntax->left->byte_start(), 'Python None test requires a nullable value, shared handle or None');
+				}
+			}
+			$carrier = $left instanceof carrier_type_definition ? $left : $right;
+			if ($carrier instanceof carrier_type_definition) {
+				$comparator = peer_equality_operator($left, $right, $syntax->source()->flavor, $syntax->operator);
+				if ($comparator !== null) {
+					$payload = $carrier->payload_type;
+					if ($payload->binary_result($comparator, $payload) !== type_bool::instance()
+						|| !$payload->binary_syntax_allowed($comparator, $syntax)) {
+						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands or operator');
+					}
+					$syntax->settle_binary(type_bool::instance(), $carrier, peer_comparator: $comparator);
+					return;
 				}
 			}
 			$box = $left instanceof boxed_type_definition ? $left : $right;

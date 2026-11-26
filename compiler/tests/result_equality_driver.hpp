@@ -26,6 +26,7 @@ int test_result_equality() {
     if (!check(first, same, true, true) || !check(empty, independent_empty, true, true)) return 83;
     if (!check(first, message, true, false) || !check(first, file, true, false)
         || !check(first, line, true, false)) return 84;
+    if (App::error_peers_(empty)) return 87;
     if (allocations.load() != before) return 86;
     if (App::before_replace_(first) || first.value() != 9) return 85;
     return App::scpp_entry_body();

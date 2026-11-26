@@ -176,6 +176,10 @@ SCPP;
 		rejects(fn() => $prepare('$a result_or_bool<vector<string>> = true_sentinel; return (int)($a == $a);'),
 			'Unsupported binary operands');
 		$result_source = <<<'SCPP'
+function error_peers(result<int> &$a): bool {
+    $empty ?int = null;
+    return $a == $empty || $empty === $a || $a === 0 || 0 == $a;
+}
 function ordinary(result<int> &$a, result<int> &$b): bool { return $a == $b; }
 function different(result<int> &$a, result<int> &$b): bool { return $a != $b; }
 function identical(result<int> &$a, result<int> &$b): bool { return $a === $b; }
@@ -203,6 +207,8 @@ SCPP;
 		rejects(fn() => $prepare('function invalid(result<vector<string>> &$a): bool { return $a == $a; } return 8;'),
 			'Unsupported binary operands');
 
+		rejects(fn() => $prepare('function invalid(result<vector<string>> &$a, vector<string> &$b): bool { return $b == $a; } return 8;'),
+			'Unsupported binary operands');
 		$throws = <<<'SCPP'
 function fail_left(): ?int { throw new Exception("left"); }
 function right(): ?int { echo "R"; return null; }
@@ -297,7 +303,7 @@ SCPP;
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
 		$library = $directory . '/library.' . $flavor->name;
-		$pair_check = $flavor === flavor::php ? 'echo (int)(provide() === provide()), (int)(provide() == provide());' : '';
+		$pair_check = $flavor === flavor::php ? 'echo (int)(provide() === provide()), (int)(provide() == provide()), (int)(provide() === 0);' : '';
 		file_put_contents($main, $pair_check . 'echo (int)isset(provide()), provide() + 5; return 8;');
 		$compiler = new Project_Compiler();
 		$session = null;
@@ -337,7 +343,7 @@ SCPP;
 			}
 			$fresh = Cpp_Program::emit((new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target))->files;
 			verify($incremental === $fresh, 'Incremental differs from fresh');
-			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex(($pair_check === '' ? '1' : '111') . (string)((int)(float)$value + 5))];
+			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex(($pair_check === '' ? '1' : '1101') . (string)((int)(float)$value + 5))];
 		}
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op failed to reuse bodies');

@@ -49,14 +49,39 @@ abstract class carrier_type_definition extends type_definition implements presen
 		return "($left_present ? ($right_present && $payloads_equal) : !$right_present)";
 	}
 
+	/** Payload presence excludes every alternate state, including a true sentinel. */
+	protected function lower_cpp_payload_presence(string $value): string
+	{
+		return $this->lower_cpp_presence($value);
+	}
+
+	private function lower_matching_peers(ast_binary_expression $expr, string $left, string $right): string
+	{
+		$left_type = $expr->left->type_def();
+		$right_type = $expr->right->type_def();
+		$left_carried = $left_type instanceof self;
+		$right_carried = $right_type instanceof self;
+		$payloads_equal = $this->payload_type->lower_cpp_binary($expr->peer_comparator,
+			$left_carried ? $left_type->lower_cpp_extract($left) : $left,
+			$right_carried ? $right_type->lower_cpp_extract($right) : $right, $this->payload_type);
+		if ($left_type === $right_type) {
+			return $this->lower_cpp_peer_equality($left, $right, $payloads_equal, $expr->peer_comparator);
+		}
+		if (!$left_carried || !$right_carried) {
+			$present = $this->lower_cpp_payload_presence($left_carried ? $left : $right);
+			return "($present && $payloads_equal)";
+		}
+		$both_values = $left_type->lower_cpp_payload_presence($left) . ' && ' . $right_type->lower_cpp_payload_presence($right);
+		$alternate = shared_peer_alternate($left_type, $right_type, $left, $right);
+		return $alternate === null ? "($both_values && $payloads_equal)" : "(($both_values && $payloads_equal) || $alternate)";
+	}
+
 	/** Compare prepared carrier states before reading any payload. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{
 		if ($expr->peer_comparator !== null) {
-			$payloads_equal = $this->payload_type->lower_cpp_binary($expr->peer_comparator,
-				$this->lower_cpp_extract($left), $this->lower_cpp_extract($right), $this->payload_type);
-			$equal = $this->lower_cpp_peer_equality($left, $right, $payloads_equal, $expr->peer_comparator);
+			$equal = $this->lower_matching_peers($expr, $left, $right);
 			return $expr->operator !== $expr->peer_comparator ? '!' . $equal : $equal;
 		}
 		$carrier_first = $expr->left->type_def() === $this;
@@ -73,7 +98,8 @@ abstract class carrier_type_definition extends type_definition implements presen
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
 	{
 		return $expr->peer_comparator === null
-			|| (self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right));
+			|| (!($expr->left instanceof ast_string_expression) && !($expr->right instanceof ast_string_expression)
+				&& self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right));
 	}
 
 	/** Enforce the metadata extraction policy before selecting a payload operation. */

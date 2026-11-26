@@ -77,34 +77,52 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
     return [$code, $cases, $literals, $typeNames];
 }
 
-/** Compile the same-type peer equality policy into direct operator dispatch. */
-function compilerPeerEquality(mixed $rule, mixed $families): string {
+/** Publish shared operand participation and the equality group that consumes it. */
+function compilerPeerEquality(mixed $carriers): string {
     $template = readFile(__DIR__ . '/../templates/carriers/peer_equality.php.tpl');
+    $rule = $carriers->peer_equality ?? null;
+    $participation = $carriers->operand_participation ?? null;
+    $published = [];
+    $stateCounts = [];
+    if ($participation !== null) {
+        fields($participation, ['families', 'carrier', 'plain']);
+        literals($participation, ['carrier' => 'payload_type', 'plain' => 'own_type']);
+        foreach (names(at($participation, 'families')) as $name) {
+            $states = object(at(at($carriers->families, $name), 'states'));
+            foreach (array_keys($states) as $state) {
+                if ($state !== 'value') $stateCounts[$state] = ($stateCounts[$state] ?? 0) + 1;
+            }
+            $published[] = var_export($name, true);
+        }
+    }
+    $familyArm = $published === [] ? '' : "\t\t" . implode(', ', $published) . ' => $type->payload_type,';
+    $shared = [];
+    foreach ($stateCounts as $state => $count) {
+        if ($count < 2) continue;
+        requireThat(in_array($state, ['false', 'true'], true), 'Unsupported shared carrier sentinel');
+        at($carriers->sentinels, $state);
+        $shared[] = "\tif (\$left_type->sentinel_factory('$state') !== null && \$right_type->sentinel_factory('$state') !== null) {\n"
+            . "\t\t\$matches[] = \"((\$left).is_$state() && (\$right).is_$state())\";\n\t}";
+    }
+    $template = strtr($template, ['@families@' => $familyArm, '@shared_states@' => implode("\n", $shared)]);
     if ($rule === null) return str_replace('@dispatch@', "\treturn null;", $template);
-    fields($rule, ['flavor', 'families', 'operands', 'evaluation', 'states', 'operators']);
-    literals($rule, ['operands' => 'same_type', 'evaluation' => 'snapshot_left_then_right', 'states' => 'match_alternate_state']);
+    requireThat($published !== [], 'Equality requires published carrier operands');
+    fields($rule, ['flavor', 'operands', 'payloads', 'evaluation', 'states', 'operators']);
+    literals($rule, ['operands' => 'operand_participation', 'payloads' => 'matching_types',
+        'evaluation' => 'snapshot_left_then_right', 'states' => 'match_alternate_state']);
     $flavor = textValue(at($rule, 'flavor'));
     requireThat(in_array($flavor, ['php', 'cpp', 'js', 'python'], true), 'Unknown peer equality flavor');
-    $tests = [];
-    foreach (names(at($rule, 'families')) as $name) {
-        $states = object(at(at($families, $name), 'states'));
-        $alternates = array_diff_key($states, ['value' => true]);
-        requireThat(($states['value'] ?? null) === 'payload' && $alternates !== []
-            && ($alternates === ['error' => 'error_t'] || $alternates === ['empty' => null]
-                || (array_diff_key($alternates, ['false' => null, 'true' => null]) === []
-                    && array_filter($alternates, static fn($data) => $data !== null) === [])),
-            'Unsupported peer equality alternate states');
-        $tests[] = '$family !== ' . var_export($name, true);
-    }
     $arms = [];
     foreach (fields(at($rule, 'operators'), ['equal', 'identical']) as $positive => $inverse) {
         requireThat($inverse === 'not_' . $positive, 'Invalid inverse equality operator');
         $arms[$positive] = "\t\tbinary_operator::$positive, binary_operator::$inverse => binary_operator::$positive,";
     }
-    requireThat($tests !== [] && $arms !== [], 'Empty peer equality rule');
+    requireThat($arms !== [], 'Empty peer equality rule');
     ksort($arms, SORT_STRING);
-    $excluded = implode(' && ', $tests);
-    $dispatch = "\tif (\$flavor !== flavor::$flavor || ($excluded)) return null;\n"
-        . "\treturn match (\$operator) {\n" . implode("\n", $arms) . "\n\t\tdefault => null,\n\t};";
+    $dispatch = "\tif (\$flavor !== flavor::$flavor) return null;\n"
+        . "\t\$comparator = match (\$operator) {\n" . implode("\n", $arms) . "\n\t\tdefault => null,\n\t};\n"
+        . "\tif (\$comparator === null) return null;\n"
+        . "\t\$payload = carrier_operand_payload(\$left);\n"
+        . "\treturn \$payload !== null && \$payload === carrier_operand_payload(\$right) ? \$comparator : null;";
     return str_replace('@dispatch@', $dispatch, $template);
 }

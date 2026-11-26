@@ -30,11 +30,16 @@ unset($metadata->compiler->modules->{'runtime-numeric'}, $metadata->compiler->pu
 $metadata->compiler->integer_operators->compounds->types = ['int64', 'uint8'];
 $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
-$peerRule = unserialize($originalExportMetadata)->carriers->peer_equality;
-unset($peerRule->operators->equal);
-$strictPeers = compilerPeerEquality($peerRule, $metadata->carriers->families);
+$peerCarriers = unserialize($originalExportMetadata)->carriers;
+unset($peerCarriers->peer_equality->operators->equal);
+$strictPeers = compilerPeerEquality($peerCarriers);
 requireThat(!str_contains($strictPeers, 'binary_operator::equal') && str_contains($strictPeers, 'binary_operator::identical'),
     'Removing ordinary equality must preserve only the strict peer binding');
+$peerCarriers->operand_participation->families = ['nullable', 'result_or_false'];
+$restrictedPeers = compilerPeerEquality($peerCarriers);
+requireThat(str_contains($restrictedPeers, "'nullable', 'result_or_false' =>")
+    && !str_contains($restrictedPeers, "'result_or_bool'") && !str_contains($restrictedPeers, '.is_false()'),
+    'Removing a participating family must also remove its shared alternate comparison');
 $invalidMetadata = unserialize($originalExportMetadata);
 $invalidMetadata->carriers->error->peer_equality->identical->fields[] = 'address';
 try {
