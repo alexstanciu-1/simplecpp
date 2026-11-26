@@ -3,7 +3,7 @@
 #include <string_view>
 
 namespace scpp {
-struct encoder_cycle {};
+@forwards@struct encoder_cycle {};
 
 class Encoder {
     struct frame { const void* identity; const frame* parent; };

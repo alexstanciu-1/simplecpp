@@ -1,5 +1,6 @@
 // Feasibility probe for the existing native Encoder protocol. Compile with assertions enabled.
 #include <scpp/encoder.hpp>
+#include <scpp/boxed.hpp>
 #include <scpp/vectors.hpp>
 #include <cassert>
 #include <cstdlib>

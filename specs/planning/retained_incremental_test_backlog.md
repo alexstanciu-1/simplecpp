@@ -130,7 +130,9 @@ depfiles.
 - **Override body-only edits.** The concrete call in main re-prepares although
   its generated C++ and native object remain unchanged. The base-typed reader
   stays cached. Before narrowing the dependency, establish which receiver and
-  declaration changes need to invalidate concrete dispatch.
+  declaration changes need to invalidate concrete dispatch. On dev002 the
+  measured difference was 2.60 ms at 128 trivial concrete callers and 11.20 ms
+  at 512, relative to base-typed callers. [Timing report and samples](benchmarks/override_preparation/README.md).
 - **Explicit inherited-constructor arguments.** Changing a default also
   re-prepares the site supplying that argument explicitly. Its generated C++
   and native object remain unchanged. Review how inherited constructor lookup

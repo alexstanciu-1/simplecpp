@@ -126,4 +126,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
     pub = copy.deepcopy(publication); del pub['json']
     absent, plan = generate(metadata, pub)
     assert 'json' not in plan and not (absent/'src/json.cpp').exists()
+    pub['structural_encoder'] = True
+    structural, _ = generate(metadata, pub)
+    header = Path('public/scpp/encoder.hpp')
+    assert (structural/header).read_bytes() == (out/header).read_bytes()
+    assert not (absent/header).exists() and not (structural/'src/json.cpp').exists()
     print('JSON publication passed:', serial, 'cases')

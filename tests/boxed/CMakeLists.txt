@@ -35,3 +35,9 @@ add_executable(boxed_clear_lifetime_test clear_lifetime.cpp)
 target_include_directories(boxed_clear_lifetime_test PRIVATE ${PROJECT_SOURCE_DIR}/runtime/src/boxed)
 target_link_libraries(boxed_clear_lifetime_test PRIVATE scpp_boxed_storage)
 add_test(NAME boxed_clear_lifetime COMMAND boxed_clear_lifetime_test)
+
+# Exercise the default structural publication with only the application runtime linked.
+add_executable(boxed_vector_export_test ${PROJECT_SOURCE_DIR}/specs/planning/probes/boxed_vector_export.cpp)
+target_compile_options(boxed_vector_export_test PRIVATE -UNDEBUG)
+target_link_libraries(boxed_vector_export_test PRIVATE scpp_runtime)
+add_test(NAME boxed_vector_export COMMAND boxed_vector_export_test)

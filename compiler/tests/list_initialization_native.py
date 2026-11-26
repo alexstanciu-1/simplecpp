@@ -19,7 +19,7 @@ def run(command, **kwargs):
 
 def includes(runtime):
     return [arg for path in [runtime / 'generated/public', runtime / 'public', runtime / 'generated/private',
-                            runtime / 'src/numeric', runtime / 'src/sequence', runtime / 'src/hash']
+                            runtime / 'src/numeric', runtime / 'src/sequence', runtime / 'src/hash', runtime / 'src/ownership']
             for arg in ('-I', str(path))]
 
 
