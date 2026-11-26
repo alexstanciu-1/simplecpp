@@ -197,18 +197,25 @@ def verify(work, cxx, linker):
         (work/'saved-caller').rename(generated/'main.cpp')
         assert artifacts() == saved
         lower('retry after rollback', 'ok', '', both, 'definition.cpp,main.cpp,')
+        duplicate = app/'alternate.php'
+        duplicate.write_text(definition.read_text().replace('5', '6'))
+        lower('two files declare renamed', 'definition.php:9: Duplicate function: renamed; first declaration at alternate.php:1:10',
+              '', '', '')
+        definition.unlink()
+        lower('keep alternate', 'ok', 'alternate.php,', 'alternate.php,', 'definition.cpp,')
+        lower('unchanged survivor', 'ok', '', '', '')
         fresh_app = work/'cold-app'
         fresh_app.mkdir()
-        for name in ('definition.php', 'main.php'):
+        for name in ('alternate.php', 'main.php'):
             shutil.copyfile(app/name, fresh_app/name)
         with service(exe, fresh_app) as cold:
-            assert cold('lower').split('|') == ['ok', both, both, 'definition.cpp,main.cpp,entry.cpp,']
+            assert cold('lower').split('|') == ['ok', 'alternate.php,main.php,', 'alternate.php,main.php,', 'definition.cpp,main.cpp,entry.cpp,']
         assert all((generated/n).read_bytes() == (fresh_app/'generated'/n).read_bytes() for n in cpp)
         binary = work/'lowered-program'
         subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
                         ROOT/'runtime/generated/public', *(generated/n for n in cpp),
                         *manifest['link_inputs'], '-o', binary], check=True)
-        assert subprocess.run([binary], timeout=10).returncode == 5
+        assert subprocess.run([binary], timeout=10).returncode == 6
 
 
 if __name__ == '__main__':

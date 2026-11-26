@@ -145,9 +145,25 @@ function emit_translation(Prepared_Call $entry): string {
 	return emit_definition_unit($entry->target()) . emit_call_unit($entry) . emit_entry_adapter();
 }
 
+// Each collection attempt owns its links. Retained syntax and the last good symbols stay immutable here.
+final class Translation_Definition_Site {
+	public readonly Translation_Scope $scope;
+	public ?Translation_Definition_Site $duplicate_element = null;
+
+	public function __construct(Translation_Scope $scope) {
+		$this->scope = $scope;
+	}
+
+	public function name_offset(): int {
+		return $this->scope->source->tokens[$this->scope->declaration->start + 1]->offset;
+	}
+}
+
 // Retains the current definition, the caller binding, and the last successful emission.
 final class Translation {
 	private readonly Translation_Symbols $symbols;
+	private hash<Translation_Scope,string> $syntax;
+	private hash<Prepared_Declaration,string> $prepared_sources;
 	private ?Prepared_Declaration $definition = null;
 	private ?Prepared_Call $entry = null;
 	private string $output = "";
@@ -158,24 +174,83 @@ final class Translation {
 	}
 
 	public function compile(?string $definition_text, string $entry_text): string {
-		$work = "";
-		$definition = $this->definition;
-		if ($definition_text === null) {
-			$definition = null;
-		} elseif ($definition === null || $definition_text !== $definition->scope->source->text) {
-			$source = new Translation_Source("definition.php", $definition_text);
-			$parser = new Translation_Parser($source);
-			$scope = $parser->parse_scope();
-			$definition = $this->prepare_definition($scope, $work);
-		}
+		$sources hash<string,string> = [];
+		if ($definition_text !== null) $sources["definition.php"] = $definition_text;
+		return $this->compile_sources($sources, $entry_text);
+	}
 
+	// Each definition source has one nullary integer function; main contains the call.
+	public function compile_sources(hash<string,string> $sources, string $entry_text): string {
+		$scopes hash<Translation_Scope,string> = [];
+		foreach ($sources as $path => $text) {
+			$scope = hash_get_or_null($this->syntax, $path);
+			if ($scope === null || $scope->source->text !== $text) {
+				$parser = new Translation_Parser(new Translation_Source($path, $text));
+				$scope = $parser->parse_scope();
+			}
+			$scopes[$path] = $scope;
+		}
 		$call = $this->entry_syntax();
 		if ($call === null || $entry_text !== $call->source->text) {
 			$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
 			$call = $parser->parse_entry();
 		}
-		$entry = $this->finish_preparation($definition, $call, $work);
+		$work = "";
+		$entry = $this->prepare_scopes($scopes, $call, $work);
+		$this->syntax = $scopes;
 		return $this->render_output($entry);
+	}
+
+	public function prepare_scopes(hash<Translation_Scope,string> $scopes, Call_Syntax $call, string &$work): Prepared_Call {
+		$paths vector<string> = [];
+		foreach ($scopes as $path => $scope) { $paths[] = $path; }
+		if (count($paths) > 1) $this->check_duplicates($paths, $scopes);
+		$prepared_sources hash<Prepared_Declaration,string> = [];
+		$definition ?Prepared_Declaration = null;
+		foreach ($paths as $path) {
+			$scope = $scopes[$path];
+			$prepared = $this->prepare_definition($scope, $work);
+			$prepared_sources[$path] = $prepared;
+			if ($scope->declaration->short_name === $call->name) $definition = $prepared;
+		}
+		if ($definition === null && count($scopes) !== 0) {
+			$work .= $call->source->path . ",";
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
+		}
+		// Withdrawing every definition commits the tombstone even when the pending call then fails.
+		if (count($scopes) === 0) {
+			$this->syntax = [];
+			$this->prepared_sources = [];
+		}
+		$entry = $this->finish_preparation($definition, $call, $work);
+		$this->prepared_sources = $prepared_sources;
+		return $entry;
+	}
+
+	private function check_duplicates(vector<string> &$paths, hash<Translation_Scope,string> $scopes): void {
+		$scratch = $paths;
+		order_paths($paths, $scratch, 0, count($paths));
+		$heads hash<Translation_Definition_Site,string> = [];
+		// Prepending in reverse source order builds each duplicate chain in linear time.
+		for ($i = count($paths); $i > 0; $i--) {
+			$scope = $scopes[$paths[$i - 1]];
+			$key = $scope->declaration->symbol_key();
+			$site = new Translation_Definition_Site($scope);
+			$site->duplicate_element = hash_get_or_null($heads, $key);
+			$heads[$key] = $site;
+		}
+		foreach ($paths as $path) {
+			$scope = $scopes[$path];
+			$head = $heads[$scope->declaration->symbol_key()];
+			$extra = $head->duplicate_element;
+			if ($extra !== null && $extra->scope === $scope) {
+				$original = $head->scope->source;
+				$source = $scope->source;
+				throw new Translation_Diagnostic($source->path, $extra->name_offset(),
+					"Duplicate function: " . $scope->declaration->short_name . "; first declaration at " .
+					$original->path . ":" . translation_location($original->text, $head->name_offset()), $source->text);
+			}
+		}
 	}
 
 	private function render_output(Prepared_Call $entry): string {
@@ -192,12 +267,13 @@ final class Translation {
 	}
 
 	public function prepare_units(Translation_Scope $scope, Call_Syntax $call, string &$work): Prepared_Call {
-		$definition = $this->prepare_definition($scope, $work);
-		return $this->finish_preparation($definition, $call, $work);
+		$scopes hash<Translation_Scope,string> = [];
+		$scopes[$scope->source->path] = $scope;
+		return $this->prepare_scopes($scopes, $call, $work);
 	}
 
 	private function prepare_definition(Translation_Scope $scope, string &$work): Prepared_Declaration {
-		$previous = $this->definition;
+		$previous = hash_get_or_null($this->prepared_sources, $scope->source->path);
 		if ($previous !== null && $previous->scope === $scope) return $previous;
 		$work .= $scope->source->path . ",";
 		return new Prepared_Declaration($scope, prepare_literal($scope));

@@ -8,13 +8,12 @@ function prepared_snapshot(Translation $compiler): string {
 }
 
 function refresh_preparation(Frontend_Session $session, Translation $compiler, string $directory, int &$generation, string &$work): void {
-	$session->refresh($directory);
-	$scope = $session->scope;
+	$session->refresh($directory, true);
 	$call = $session->entry;
-	if ($scope === null || $call === null) throw Exception::make("Incomplete frontend publication");
-	$binding = $compiler->prepare_units($scope, $call, $work);
+	if ($call === null) throw Exception::make("Incomplete frontend publication");
+	$binding = $compiler->prepare_scopes($session->definitions, $call, $work);
 	$definition = $compiler->declaration();
-	if ($definition === null || $definition->scope !== $scope || $binding->syntax !== $call) {
+	if ($definition === null || $definition->scope !== $session->definitions[$definition->scope->source->path] || $binding->syntax !== $call) {
 		throw Exception::make("Preparation lost the frontend syntax identity");
 	}
 	$generation = $session->generation;
@@ -32,7 +31,7 @@ function prepare_request(Frontend_Session $session, Translation $compiler, strin
 	}
 	$entry = $compiler->entry_binding();
 	$reused = "";
-	if ($old_definition !== null && $old_definition === $compiler->declaration()) $reused .= "definition.php,";
+	if ($old_definition !== null && $old_definition === $compiler->declaration()) $reused .= $old_definition->scope->source->path . ",";
 	if ($old_entry !== null && $old_entry === $entry) $reused .= "main.php,";
 	return $status . "|" . (string)$session->generation . "|" . (string)$generation . "|" . $session->parsed
 		. "|" . $work . "|" . $reused;

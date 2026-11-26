@@ -71,12 +71,32 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     for name, data in samples.items():
         (work / name).write_bytes(data)
 
+    left = b'// first source\n  ' + definition
+    right = b'\n\n   ' + updated
+    (work/'left.php').write_bytes(left)
+    (work/'right.php').write_bytes(right)
     translated = run(executable, cwd=work)
     parsed, *diagnostics = translated.stdout.decode().splitlines()
     oracle = work / 'oracle'
     oracle.mkdir()
     (oracle / 'module.json').write_text('{}')
 
+    (oracle/'main.php').write_bytes(initial)
+    (oracle/'right.php').write_bytes(right)
+    (oracle/'left.php').write_bytes(left)
+    duplicate = project(oracle, work/'duplicate-bundle', expected=1)
+    message = (work/'duplicate.txt').read_text()
+    assert message == 'right.php:3:13: Duplicate function: answer_2; first declaration at left.php:2:12', message
+    assert message == duplicate.stderr.decode().replace(str(oracle) + '/', '').strip(), duplicate.stderr
+    for survivor, equivalent in [('right', 'updated'), ('left', 'initial')]:
+        removed = oracle/('left.php' if survivor == 'right' else 'right.php')
+        removed.unlink()
+        project(oracle, work/(survivor+'-bundle'))
+        # These exact translation units are compiled and executed against PHP below.
+        assert (work/(survivor+'-survivor.cpp')).read_bytes() == (work/(equivalent+'.cpp')).read_bytes()
+        removed.write_bytes(left if survivor == 'right' else right)
+    (oracle/'left.php').unlink()
+    (oracle/'right.php').unlink()
     (oracle / 'definition.php').write_bytes(definition)
     (oracle / 'main.php').write_bytes(initial)
     production_ast = run(PHP, '-r', r"""
@@ -123,6 +143,9 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
         assert (line, column, message) == (int(match[1]), int(match[2]), match[3]), text
 
     assert (work / 'initial.cpp').read_bytes() == (work / 'recovered.cpp').read_bytes()
+    # Building the translator and linking both native implementations of each distinct output
+    # can take over three seconds on dev002 even after reusing byte-identical builds.
+    binaries = {}
     for name, current_definition, entry, status in [
         ('initial', definition, initial, 8),
         ('recovered', definition, fixed, 8),
@@ -133,10 +156,19 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
         (oracle / 'main.php').write_bytes(entry)
         reference_bundle, reference = work / f'oracle-{name}', work / f'reference-{name}'
         project(oracle, reference_bundle)
-        build_bundle(reference_bundle, [RUNTIME], reference)
-
-        generated = work / f'generated-{name}'
-        native_binary([work / f'{name}.cpp'], [RUNTIME], generated)
+        # Repairs producing identical native inputs can execute the already-linked pair.
+        source = work/f'{name}.cpp'
+        emitted = tuple((p.relative_to(reference_bundle), p.read_bytes())
+                        for p in sorted(reference_bundle.rglob('*')) if p.suffix in ('.cpp', '.hpp', '.h'))
+        layout = json.loads((reference_bundle/'manifest.json').read_text())
+        inputs = (source.read_bytes(), emitted, tuple(layout['translation_units']), tuple(layout['link_inputs']))
+        if inputs in binaries:
+            generated, reference = binaries[inputs]
+        else:
+            build_bundle(reference_bundle, [RUNTIME], reference)
+            generated = work/f'generated-{name}'
+            native_binary([source], [RUNTIME], generated)
+            binaries[inputs] = generated, reference
         expected = run(reference, expected=status)
         actual = run(generated, expected=status)
         assert (actual.stdout, actual.stderr) == (expected.stdout, expected.stderr)

@@ -57,7 +57,7 @@ final class Unit_Lowering {
 		$caller = $this->caller_text;
 		$adapter = $this->adapter;
 		if ($target !== $this->definition) {
-			$emitted .= "definition.php,";
+			$emitted .= $target->scope->source->path . ",";
 			$definition = emit_definition_unit($target);
 		}
 		if ($entry !== $this->caller) {
