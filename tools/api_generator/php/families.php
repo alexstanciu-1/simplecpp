@@ -619,7 +619,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     if($m === null) {
         return;
     }
-    fields($m, ['provider', 'specialization_providers', 'extraction', 'payload_access', 'presence', 'sentinels', 'construction', 'families', 'error']);
+    fields($m, ['provider', 'specialization_providers', 'extraction', 'payload_access', 'presence', 'peer_equality', 'sentinels', 'construction', 'families', 'error']);
     $extraction = textValue(at($m, 'extraction'));
     $payloadAccess = textValue(at($m, 'payload_access'));
     requireThat($payloadAccess === 'value', 'Unsupported carrier payload access binding');

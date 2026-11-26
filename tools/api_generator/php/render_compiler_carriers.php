@@ -67,3 +67,31 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
     }
     return [$code, $cases, $literals, $typeNames];
 }
+
+/** Compile the same-type, two-state equality policy into direct operator dispatch. */
+function compilerPeerEquality(mixed $rule, mixed $families): string {
+    $template = readFile(__DIR__ . '/../templates/carriers/peer_equality.php.tpl');
+    if ($rule === null) return str_replace('@dispatch@', "\treturn null;", $template);
+    fields($rule, ['flavor', 'families', 'operands', 'evaluation', 'states', 'operators']);
+    literals($rule, ['operands' => 'same_type', 'evaluation' => 'snapshot_left_then_right', 'states' => 'payload_or_single_absence']);
+    $flavor = textValue(at($rule, 'flavor'));
+    requireThat(in_array($flavor, ['php', 'cpp', 'js', 'python'], true), 'Unknown peer equality flavor');
+    $tests = [];
+    foreach (names(at($rule, 'families')) as $name) {
+        $states = object(at(at($families, $name), 'states'));
+        requireThat(count($states) === 2 && ($states['value'] ?? null) === 'payload'
+            && in_array(null, $states, true), 'Peer equality requires one payload and one absent state');
+        $tests[] = '$family !== ' . var_export($name, true);
+    }
+    $arms = [];
+    foreach (fields(at($rule, 'operators'), ['equal', 'identical']) as $positive => $inverse) {
+        requireThat($inverse === 'not_' . $positive, 'Invalid inverse equality operator');
+        $arms[$positive] = "\t\tbinary_operator::$positive, binary_operator::$inverse => binary_operator::$positive,";
+    }
+    requireThat($tests !== [] && $arms !== [], 'Empty peer equality rule');
+    ksort($arms, SORT_STRING);
+    $excluded = implode(' && ', $tests);
+    $dispatch = "\tif (\$flavor !== flavor::$flavor || ($excluded)) return null;\n"
+        . "\treturn match (\$operator) {\n" . implode("\n", $arms) . "\n\t\tdefault => null,\n\t};";
+    return str_replace('@dispatch@', $dispatch, $template);
+}

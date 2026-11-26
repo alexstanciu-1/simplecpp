@@ -113,9 +113,8 @@ final class Cpp_Emitter
 				$required_headers[$header] = true;
 			}
 		}
-		$binding = $type instanceof carrier_type_definition && $value->left->type_def() === $type && $value->right->type_def() === $type
-			? $type->payload_type : $type;
-		foreach ($binding->binary_headers($value->operator) as $header) {
+		$binding = $value->peer_comparator !== null ? $type->payload_type : $type;
+		foreach ($binding->binary_headers($value->peer_comparator ?? $value->operator) as $header) {
 			$required_headers[$header] = true;
 		}
 	}

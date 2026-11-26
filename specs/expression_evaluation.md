@@ -547,11 +547,12 @@ carrier expression once. `===` succeeds only for the sentinel; `!==` succeeds
 for every payload, including integer zero, an empty string and a boolean false.
 This literal rule does not extend to a variable holding false or to loose equality.
 
-For PHP `===` and `!==` between two operands of the same published
-`nullable<T>` or `result_or_false<T>` type, `T` must admit the corresponding same-type strict
-comparison. Capture the left value before evaluating the right. Two absent nullable values are identical, as are two false sentinels.
-A payload differs from either alternate state. Two payloads follow the strict
-identity rule for `T`.
+In PHP, same-type peers of `nullable<T>` and `result_or_false<T>` support
+`==`, `!=`, `===` and `!==` when the corresponding payload equality is admitted.
+The catalog selects ordinary or strict payload comparison and its inverse.
+Capture the left state before evaluating the right. Matching absent states compare
+equal. A payload differs from absence, including a successful boolean false.
+Two payloads use the selected comparator for `T`.
 
 Ordering uses checked one-layer extraction instead of state sorting, followed by
 the payload ordering contract. A non-value state throws. Left extraction/conversion
