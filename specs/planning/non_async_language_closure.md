@@ -73,7 +73,7 @@ Before adopting a contract, decide how a type publishes each capability, when a 
 
 **Native list export probe.** A [focused Clang probe](probes/boxed_vector_export.cpp) sends `begin_array`, typed `write` and `end_array` through the existing `Encoder&`. The destination constructs a fresh packed container, boxes each value in its own family and appends it. Both `mixed` and `dynamic` preserved the order and contents of integer and string vectors after replacement, clearing and destruction of the source, including a heap-backed string. The shared test traversal uses only vector size and checked element reads; a string read currently returns a value.
 
-The default runtime now publishes the structural Encoder with JSON disabled. Run the `boxed_vector_export` CTest to exercise the native probe against that runtime. The JSON writer separately selects its published encoders. Explicit vector casts now select the boxed destination for supported scalar elements. Implicit export and shared boxed subtrees remain open.
+The default runtime now publishes the structural Encoder with JSON disabled. Run the `boxed_vector_export` CTest to exercise the native probe against that runtime. The JSON writer separately selects its published encoders. Explicit casts now export typed vectors and [field-derived data structs](../data_initialization.md#explicit-boxed-export) with scalar leaves into the selected boxed family. Implicit export and shared boxed subtrees remain open.
 
 ### Call-target storage and conversion follow-up
 

@@ -214,9 +214,12 @@ final class Cpp_Emitter
 		}
 		if ($this->record_demand($node, dependency_use::record_encode)) {
 			$includes['scpp/encoder.hpp'] = true;
-			$name = Cpp_Identifier::source($node->short_name);
 			$layout[] = "\tvoid " . self::encode_method($node->definition) . "(::scpp::Encoder&) const;";
 			$layout[] = "\tstatic void scpp_escape_encode_fields(const void*, ::scpp::Encoder&);";
+		}
+		if ($this->record_demand($node, dependency_use::record_json_encode)) {
+			$name = Cpp_Identifier::source($node->short_name);
+			$includes[runtime_functions::resolve('php:func:json_encode')->record_header] = true;
 			$layout[] = "\tstatic ::scpp::result_string scpp_escape_json_encode(const $name&);";
 		}
 		$base = $node->definition->base();
@@ -508,7 +511,7 @@ final class Cpp_Emitter
 				$factory_declaration .= "\tstatic $owner " . self::decode_method($payload) . "(::scpp::Decoder&);\n";
 			}
 		}
-		if ($this->record_demand($payload->declaration, dependency_use::record_encode)) {
+		if ($this->record_demand($payload->declaration, dependency_use::record_json_encode)) {
 			$includes['scpp/encoder.hpp'] = true;
 			$factory_declaration .= "\tstatic ::scpp::result_string scpp_escape_json_encode(const $owner&);\n";
 		}
@@ -585,7 +588,7 @@ CPP;
 			$factory .= $this->owner_factory("inline $owner {$owner}::scpp_escape_from_data($params)", $owner, "$payload::scpp_escape_data_tag{}$tail");
 		}
 		$encode = '';
-		if ($this->record_demand($type->payload->declaration, dependency_use::record_encode)) {
+		if ($this->record_demand($type->payload->declaration, dependency_use::record_json_encode)) {
 			$contract = runtime_functions::resolve('php:func:json_encode');
 			$includes[$contract->record_header] = true;
 			$encode = "inline ::scpp::result_string {$owner}::scpp_escape_json_encode(const $owner& value) {\n"

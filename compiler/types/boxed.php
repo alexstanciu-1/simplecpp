@@ -106,9 +106,24 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return null;
 	}
 
+	public function supports_record_export(): bool
+	{
+		return false;
+	}
+
+	public function exports_scalar(type_definition $element): bool
+	{
+		return $this->export_factory($element) !== null;
+	}
+
 	/** Borrow the evaluated vector once and publish a fresh list after every element has been boxed. */
 	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
 	{
+		if ($conversion === value_conversion::export_record && $source instanceof record_type_definition) {
+			$body = "\treturn " . $this->cpp_type() . '::from_record(&source, &' . $source->cpp_type() . "::scpp_escape_encode_fields);\n";
+			return new cpp_inline_adapter('export_record', [new cpp_adapter_parameter($source, 'source', cpp_adapter_mode::const_reference)],
+				$this, $body, false);
+		}
 		if ($conversion !== value_conversion::export_list) return null;
 		if (!($source instanceof native_sequence_type)) throw new \LogicException('Unprepared list export');
 		$factory = $this->export_factory($source->write_type()) ?? throw new \LogicException('Missing list element factory');

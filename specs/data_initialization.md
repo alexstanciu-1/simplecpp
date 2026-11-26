@@ -33,3 +33,20 @@ The ordinary named-call binder diagnoses unknown, duplicate and missing required
 The generated payload publishes the same ordered public fields to native input and output adapters. An output visitor borrows each field for one synchronous call. An input reader consumes fields in wire order into typed local slots, checks required fields, supplies defaults in declaration order, and invokes the selected payload or owner factory once. The transport owns document completion and publication. An output sink can receive a prefix before a later field fails.
 
 The internal JSON bridge uses the structural pull reader and a synchronous byte sink. The codec supplies typed value decoding and encoding, including format-specific validation. For a vector field, the schema publishes its count, checked element read and typed append operations. The JSON adapter borrows the vector on output, writes its elements in order, and delegates element encoding to the codec. On input it appends decoded elements to a private vector and moves the completed value into the record constructor. A failed element read abandons the private input, preserving the previous destination. This native adapter applies to field-derived signatures. With the JSON module selected, source code can pass a field-derived data struct or class to `json_encode`. Preparation checks each public input field, including inherited inputs, against the active JSON encoders. For a vector it checks the element type. An unsupported field produces a diagnostic naming the record and field. The compiler emits an ordinary const `encode(Encoder&)` method for each reachable record. It borrows fields, reads vector elements in order, and passes nested records to the same encoder. The JSON wrapper returns the ordinary `result<string>`. An absent owner encodes as JSON null. The same field signature and factory serve `json_decode_as($text, Packet::class)`. The marker selects the destination during preparation. Preparation selects a concrete `decode(Decoder&)` field loop for each reachable record. It calls the nested record’s decoder on the same cursor, stages field values, applies defaults, and moves the values to the factory. Closing the root validates the complete document before constructing the root. A nested record can finish construction before a later document error. Authored constructor mappings remain open.
+
+### Explicit boxed export
+
+An explicit `(mixed)$packet` or `(dynamic)$packet` exports a field-derived data
+struct in declaration order. The cast evaluates its operand once and reads the
+current field values. Scalar leaves require both a structural write and a boxing
+factory in the selected family. A vector field uses the same rule for its
+elements. Each field is stored under its declared name and each vector becomes a
+fresh packed list. An embedded by-value field-derived data struct becomes a
+fresh keyed child in the same family, with its own declaration order and
+independent scalar and vector snapshots. Publication follows completion of the
+whole record.
+
+Both destinations consume the same generated `encode(Encoder&) const` field
+walk as JSON. Boxed export requires only the application runtime. Implicit record
+export, authored constructor mappings, vectors of records and shared owners remain
+outside this cast contract.

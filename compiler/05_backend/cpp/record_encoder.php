@@ -18,8 +18,6 @@ trait Cpp_Record_Encoder
 	/** @param mixed[] $declarations @param bool[] $headers */
 	private function encode_definition(record_type_definition $record, array &$declarations, array &$headers): string
 	{
-		$contract = runtime_functions::resolve('php:func:json_encode');
-		$headers[$contract->record_header] = true;
 		$name = $record->cpp_type();
 		$method = self::encode_method($record);
 		$lines = ['out.begin_object();'];
@@ -39,10 +37,12 @@ trait Cpp_Record_Encoder
 			} else $lines[] = $this->encode_leaf($type, $read, $declarations);
 		}
 		$lines[] = 'out.end_object();';
-		return "void {$name}::{$method}(::scpp::Encoder& out) const {\n    " . implode("\n    ", $lines) . "\n}\n"
+		$walk = "void {$name}::{$method}(::scpp::Encoder& out) const {\n    " . implode("\n    ", $lines) . "\n}\n"
 			. "void {$name}::scpp_escape_encode_fields(const void* value, ::scpp::Encoder& out) {\n"
-			. "    static_cast<const $name*>(value)->{$method}(out);\n}\n"
-			. "::scpp::result_string {$name}::scpp_escape_json_encode(const $name& value) {\n"
+			. "    static_cast<const $name*>(value)->{$method}(out);\n}\n";
+		if (!$this->record_demand($record->declaration, dependency_use::record_json_encode)) return $walk;
+		$headers[runtime_functions::resolve('php:func:json_encode')->record_header] = true;
+		return $walk . "::scpp::result_string {$name}::scpp_escape_json_encode(const $name& value) {\n"
 			. "    return ::scpp::json::encode_fields(&value, &scpp_escape_encode_fields);\n}\n";
 	}
 
