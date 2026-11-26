@@ -7,12 +7,16 @@ import subprocess
 from translated_vector_recipe import ROOT
 
 
-def verify(work, exe, cxx, linker, adapter, service):
+def verify(work, exe, cxx, linker, adapter, service, forwarding=False):
     app = work/'parameters'
     app.mkdir()
     (app/'module.json').write_text('{}')
     (app/'main.php').write_text('return caller();')
-    for name, operand in [('caller', 'identity(7)'), ('large', 'identity(9007199254740993)'), ('quiet', '42')]:
+    target = 'relay' if forwarding else 'identity'
+    if forwarding:
+        (app/'relay.php').write_text('function relay(int $value): int { return identity($value); }')
+    dependents = {'identity', 'relay'} if forwarding else {'identity', 'caller', 'large'}
+    for name, operand in [('caller', f'{target}(7)'), ('large', f'{target}(9007199254740993)'), ('quiet', '42')]:
         (app/f'{name}.php').write_text(f'function {name}(): int {{ return {operand}; }}')
     definition = app/'identity.php'
     retained = app/'generated'
@@ -37,8 +41,9 @@ def verify(work, exe, cxx, linker, adapter, service):
             rules = [f'rule cc\n  command = {cxx} -std=c++23 -stdlib=libc++ -I{ROOT}/runtime/generated/public -MMD -MF $out.d -c $in -o $out\n  depfile = $out.d\n  deps = gcc',
                      f'rule link\n  command = {cxx} -stdlib=libc++ --ld-path={linker} $in -o $out']
             rules += [f'build {name}.o: cc {src}' for name, src in units.items()]
+            subjects = 'caller.o large.o identity.o' + (' relay.o' if forwarding else '')
             rules += ['build probe.o: cc probe.cpp',
-                      'build observer: link probe.o caller.o large.o identity.o ' + ' '.join(links),
+                      f'build observer: link probe.o {subjects} ' + ' '.join(links),
                       'default observer ' + ' '.join(name+'.o' for name in units)]
             graph.write_text('\n'.join(rules)+'\n')
         log = directory/'.ninja_log'
@@ -51,14 +56,24 @@ def verify(work, exe, cxx, linker, adapter, service):
         assert subprocess.check_output([directory/'observer'], text=True) == f'7 {large}'
 
     with service(exe, app) as request:
-        for stage, parameter, body, expected, large in [
+        stages = [
             ('cold', 'int', '$value', None, 9007199254740993),
-            ('signature', 'float', '$value', {'identity', 'caller', 'large'}, 9007199254740992),
+            ('signature', 'float', '$value', dependents, 9007199254740992),
             ('rename', 'float', '$renamed', {'identity'}, 9007199254740992),
-            ('repair', 'int', '$value', {'identity', 'caller', 'large'}, 9007199254740993),
+            ('repair', 'int', '$value', dependents, 9007199254740993),
             ('unchanged', 'int', '$value', set(), 9007199254740993),
-        ]:
-            if stage != 'unchanged':
+        ]
+        if forwarding:
+            # Exercise the opposite argument conversion too: relay receives a float
+            # and forwards it to the repaired integer identity.
+            relay_and_callers = {'relay', 'caller', 'large'}
+            stages.extend([('float-relay', 'int', '$value', relay_and_callers, 9007199254740992),
+                           ('restore-relay', 'int', '$value', relay_and_callers, 9007199254740993)])
+        for stage, parameter, body, expected, large in stages:
+            if stage in ('float-relay', 'restore-relay'):
+                relay_type = 'float' if stage == 'float-relay' else 'int'
+                (app/'relay.php').write_text(f'function relay({relay_type} $value): int {{ return identity($value); }}')
+            elif stage != 'unchanged':
                 definition.write_text(f'function identity({parameter} {body}): int {{ return {body}; }}')
             status, prepared, emitted, written = request('lower').split('|')
             assert status == 'ok', status
@@ -81,7 +96,7 @@ def verify(work, exe, cxx, linker, adapter, service):
             native(work/'retained-objs', retained_units, manifest['link_inputs'], retained_expected, large, False)
             # Production publishes parameter names in the shared header, so its
             # dependent objects also rebuild on this name-only edit.
-            php_expected = {'caller', 'large', 'identity'} if stage == 'rename' else expected
+            php_expected = dependents if stage == 'rename' else expected
             native(work/'php-objs', php_units, manifest['link_inputs'], php_expected, large, True)
 
         definition.write_text('function identity(): int { return 7; }')
@@ -92,6 +107,15 @@ def verify(work, exe, cxx, linker, adapter, service):
         definition.write_text('function identity(int $value): int { return $value; }')
         assert request('lower').startswith('ok|')
         assert {p.name: p.read_bytes() for p in retained.glob('*.cpp')} == saved
+        if forwarding:
+            relay = app/'relay.php'
+            original = relay.read_text()
+            relay.write_text(original.replace('identity($value)', 'identity($missing)'))
+            failed = request('lower')
+            assert f'relay.php:{relay.read_text().index("$missing")}: Unknown parameter' in failed and failed.endswith('||'), failed
+            relay.write_text(original)
+            assert request('lower').startswith('ok|')
+            assert {p.name: p.read_bytes() for p in retained.glob('*.cpp')} == saved
     cold = work/'fresh-parameters'
     cold.mkdir()
     for path in app.glob('*.php'):

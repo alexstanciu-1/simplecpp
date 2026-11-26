@@ -955,6 +955,8 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --literal-returns)
     add_test(NAME compiler_retained_parameter_incremental COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --parameter-incremental)
+    add_test(NAME compiler_retained_parameter_forwarding COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --parameter-forwarding)
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_FILESYSTEM
      AND SCPP_ENABLE_JSON AND SCPP_ENABLE_IO AND SCPP_ENABLE_DATETIME)
