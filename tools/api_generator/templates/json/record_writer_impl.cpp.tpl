@@ -1,3 +1,4 @@
+struct unpublished_json_leaf {};
 class record_writer final : public Encoder {
     detail::json::writer& output;
     record_sink sink;
@@ -29,6 +30,8 @@ result_string encode_fields(const void* value, Encoder::visit emit) {
             if (input.value) input.emit(input.value, writer);
             else writer.write_null();
         });
+    } catch (const unpublished_json_leaf&) {
+        return result_string{error_t{string{"json_encode: unpublished field type"}}};
     } catch (const encoder_cycle&) {
         return result_string{error_t{string{"json_encode: circular record reference"}}};
     }

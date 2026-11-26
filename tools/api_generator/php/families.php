@@ -18,6 +18,7 @@ function collectionTraversalPlan(): array {
 
 function checkHeader(array $plan, string $header): void {
     $paths = array_values($plan['headers']);
+    if (isset($plan['structural_encoder'])) $paths[] = 'scpp/encoder.hpp';
     foreach (['scalar_core', 'scalar_numeric'] as $group) {
         $paths[] = providerHeader($plan['submodules'], $plan['submodules']['groups'][$group]['provider']);
     }
@@ -45,7 +46,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'cli_helpers', 'text_helpers', 'text_builders', 'resource_modules']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'cli_helpers', 'text_helpers', 'text_builders', 'resource_modules', 'structural_encoder']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -87,6 +88,10 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareCliHelpers($publication, $plan);
     prepareTextHelpers($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
+    if (needsStructuralEncoder($publication)) {
+        checkHeader($plan, 'scpp/encoder.hpp');
+        $plan['structural_encoder'] = structuralEncoderInputs($plan);
+    }
     prepareJson($metadata, $publication, $plan);
     foreach (FUNCTION_MODULES as $family) prepareModuleFunctions($family, $metadata, $publication, $plan);
     prepareResourceModules($publication, $plan);
@@ -103,6 +108,26 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     $plan['async_frames'] = $publication->async_frames ?? false;
     requireThat(is_bool($plan['async_frames']), 'Invalid async frame selection');
     return $plan;
+}
+
+/** Plain numeric leaves cross the native boundary by value; storage-bearing leaves are borrowed. */
+function structuralEncoderInputs(array $plan): array {
+    $inputs = [];
+    foreach (['int64', 'bool_t', 'float64'] as $type) {
+        if (hasType($plan, $type) || hasValue($plan, $type)) $inputs[$type] = $type;
+    }
+    if (isset($plan['string'])) $inputs['string'] = 'const string&';
+    foreach ($plan['boxed']['families'] ?? [] as $family) {
+        $type = $family['name'];
+        $inputs[$type] = "const $type&";
+    }
+    foreach ($plan['carriers'] ?? [] as $carrier) {
+        if ($carrier['family'] !== 'nullable' || !in_array($carrier['payload'], ['int64', 'bool_t', 'float64', 'string'], true)) continue;
+        $type = $carrier['name'];
+        $inputs[$type] = "const $type&";
+    }
+    ksort($inputs);
+    return $inputs;
 }
 
 /** Whole-value transfer may elide the copy only after body preparation proves a private last use. */
