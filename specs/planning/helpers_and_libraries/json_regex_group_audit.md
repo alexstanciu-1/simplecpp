@@ -159,8 +159,9 @@ above establish behavior to reproduce, not completed v0.2 publication.
 ## Stage 1 evidence
 
 The codec, document, reader, and regex checkpoints reached native executables
-from source projects. The PHP regex bindings use the agreed
-`result_or_false<mixed>` for grep, filter, and split. The fixture distinguishes
+from source projects. The original PHP regex checkpoint used
+`result_or_false<mixed>` for grep, filter, and split. The [current contract](../../regex_module.md)
+uses a typed split and adds a key-preserving vector-input grep overload. The fixture distinguishes
 a successful empty collection from false, writes through the matches output,
 and mutates an extracted collection to verify COW.
 

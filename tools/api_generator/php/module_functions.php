@@ -11,7 +11,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $catalog = familyMetadata($metadata, $publication, $family, $family, $family);
     if ($catalog === null || !property_exists($publication, $family)) return;
 
-    fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures', 'php_constants', 'callbacks']);
+    fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures', 'php_constants', 'callbacks', 'php_overloads']);
     $requestFields = ['functions', 'php_exposures', 'callbacks'];
     if ($family === 'filesystem') $requestFields[] = 'resources';
     fields($publication->{$family}, $requestFields);
@@ -24,7 +24,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $namespace = textValue(at($catalog, 'namespace'));
     requireThat(preg_match('/^scpp(?:::[A-Za-z_][A-Za-z_0-9]*)+$/D', $namespace) === 1, 'Invalid module namespace');
 
-    if ($family === 'regex') prepareRegexCaptureTypes($publication->regex->functions, $header, $plan);
+    if ($family === 'regex') prepareRegexCaptureTypes($publication->regex->functions, $catalog->functions, $header, $plan);
     $functions = [];
     $requires = [];
     $nativeNames = [];
@@ -32,7 +32,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         $pattern = $family === 'filesystem' ? '/^fs_[a-z][a-z_0-9]*$/D' : '/^[a-z][a-z_0-9]*$/D';
         requireThat(preg_match($pattern, $name) === 1, 'Invalid module function name');
         $function = at(at($catalog, 'functions'), $name);
-        fields($function, ['native_name', 'parameters', 'result', 'flavor', 'required_parameters']);
+        fields($function, ['native_name', 'parameters', 'result', 'flavor', 'required_parameters', 'overload']);
         $flavor = $function->flavor ?? null;
         requireThat($flavor === null || in_array($flavor, ['php', 'cpp', 'js'], true), 'Invalid function flavor');
         $native_name = textValue(at($function, 'native_name'));
@@ -71,6 +71,19 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         $required = $function->required_parameters ?? count($inputs);
         requireThat(is_int($required) && $required >= 0 && $required <= count($inputs), 'Invalid required module parameter count');
         $functions[$name]['required_parameters'] = $required;
+        if (isset($function->overload)) {
+            $group = textValue($function->overload);
+            requireThat($flavor === 'php' && preg_match('/^[a-z][a-z_0-9]*$/D', $group), 'Invalid PHP overload group');
+            $policy = at(at($catalog, 'php_overloads'), $group);
+            fields($policy, ['selector', 'list_context', 'arguments']);
+            $selector = at($policy, 'selector');
+            requireThat($required === count($inputs) && is_int($selector) && isset($parameters[$selector])
+                && !($reference_mask & (1 << $selector)), 'Invalid module overload selector');
+            $functions[$name]['overload'] = $group;
+            $functions[$name]['selector'] = $selector;
+            $functions[$name]['list_context'] = textValue(at($policy, 'list_context'));
+            $functions[$name]['arguments'] = listValue(at($policy, 'arguments'));
+        }
         if ($surface === 'general') {
             if ($flavor === null) $functions[$name]['surface'] = 'general';
             $functions[$name]['header'] = moduleOperationHeader($header, $name);
@@ -219,4 +232,59 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         $bridge .= includeHeader($header);
     }
     $files["private/{$family}_provider.hpp"] = $bridge;
+}
+
+/** Build PHP overload tables alongside ordinary module bindings from the same native signatures. */
+function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): array {
+    $runtimeCases = [];
+    foreach (FUNCTION_MODULES as $family) {
+        $overloads = [];
+        foreach (array_merge($runtime[$family]['functions'] ?? [], $runtime[$family]['php_exposures'] ?? []) as $name => $binding) {
+            $types = array_column($binding['parameters'], 'type');
+            foreach ([...$types, $binding['result']] as $type) {
+                requireThat(isset($runtimeTypes[$type]), 'Module function signature requires a compiler type: ' . $type);
+            }
+            $arguments = array_map(static fn(string $type): string => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
+            $result = $runtimeTypes[$binding['result']];
+            $symbol = var_export('::' . ($binding['symbol'] ?? ($runtime[$family]['namespace'] . '::' . $binding['native_name'])), true);
+            $header = var_export($binding['header'] ?? $runtime[$family]['header'], true);
+            $module = var_export($runtime[$family]['module'], true);
+            $refs = $binding['reference_mask'] ? ', reference_mask: ' . $binding['reference_mask'] : '';
+            $mask = $binding['const_reference_mask'];
+            if ($binding['required_parameters'] < count($types)) $refs .= ', required_parameters: ' . $binding['required_parameters'];
+            $surface = $binding['flavor'] ?? $binding['surface'] ?? null;
+            $name = $binding['overload'] ?? $name;
+            $key = ($surface === null ? '' : $surface . ':') . 'func:' . $name;
+            $policy = '';
+            if (isset($binding['overload'])) {
+                $references = [];
+                foreach (array_keys($types) as $slot) {
+                    if ($binding['reference_mask'] & (1 << $slot)) $references[] = $slot;
+                }
+                $policy = compilerPhpAdmission([$name => $binding['arguments']], $name, count($types), $references);
+            }
+            $call = "new runtime_function('$name', [" . implode(', ', $arguments)
+                . "], type_$result::instance(), $symbol, $header$refs, const_reference_mask: $mask, required_module: $module$policy)";
+            if (isset($binding['overload'])) {
+                $index = $binding['selector'];
+                $type = $types[$index];
+                $arity = count($types);
+                requireThat(!isset($overloads[$key]['variants'][$arity][$type]), "Duplicate overload selector for $key");
+                $overloads[$key]['variants'][$arity][$type] = 'type_' . $runtimeTypes[$type] . "::class => $call";
+                $overloads[$key]['index'] = $index;
+                $overloads[$key]['context'] = $binding['list_context'];
+            } else $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= $call,";
+        }
+        foreach ($overloads as $key => $group) {
+            $rows = [];
+            $context = $group['context'];
+            foreach ($group['variants'] as $arity => $variants) {
+                requireThat(isset($variants[$context]), "List context has no matching overload for $key");
+                $rows[] = "$arity => [" . implode(', ', $variants) . ']';
+            }
+            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_overloads([" . implode(', ', $rows)
+                . "], argument_index: {$group['index']}, list_context: type_{$runtimeTypes[$context]}::instance(), required_module: $module, project_selector: true),";
+        }
+    }
+    return $runtimeCases;
 }

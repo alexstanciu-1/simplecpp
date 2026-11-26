@@ -25,8 +25,14 @@ matches argument receives the captures and becomes an empty collection on regex
 failure. Match-all defaults to pattern order and also accepts PREG_SET_ORDER.
 The split flags are PREG_SPLIT_NO_EMPTY and PREG_SPLIT_DELIM_CAPTURE.
 
-PHP grep, filter and split return result_or_false<mixed>. Grep and filter
-preserve the selected input keys. Split produces a packed collection.
+PHP preg_split directly exposes regex_split and returns result_or_false<vector<string>>.
+For preg_grep the second argument selects the overload. A vector<string> yields
+result_or_false<hash<string,int>>, keyed by the original vector indices in encounter
+order. A mixed input yields result_or_false<mixed> and preserves its selected keys.
+A bare collection literal uses mixed. A carrier of either input type supplies its
+payload under the implicit extraction policy; a missing payload raises before grep
+runs. Invalid grep patterns yield false even for an empty input. PHP preg_filter
+returns result_or_false<mixed> and preserves the selected input keys.
 Successful empty collections retain the value state. PHP callbacks take a
 mixed collection of numbered captures. A callback exception propagates.
 

@@ -275,18 +275,34 @@ result_or_false_vector_string match(const string& pattern, const string& subject
     return match(pattern, subject, 0);
 }
 
-result_or_false_vector_string grep(const string& pattern, const vector_string& input) {
+namespace {
+template<class Keep>
+bool grep_strings(const string& pattern, const vector_string& input, Keep keep) {
     capture_pattern compiled(pattern);
-    if (!compiled.data) return result_or_false_vector_string::from_false();
-    vector_string output;
+    if (!compiled.data) return false;
     for (int64 i = 0; i < input.size(); ++i) {
         auto value = input.at(i);
         const auto count = compiled.find(bytes(value), 0, 0);
         if (count == PCRE2_ERROR_NOMATCH) continue;
-        if (count < 0) return result_or_false_vector_string::from_false();
-        output.append(std::move(value));
+        if (count < 0) return false;
+        keep(i, std::move(value));
     }
+    return true;
+}
+}
+
+result_or_false_vector_string grep(const string& pattern, const vector_string& input) {
+    vector_string output;
+    if (!grep_strings(pattern, input, [&](int64, string&& value) { output.append(std::move(value)); }))
+        return result_or_false_vector_string::from_false();
     return result_or_false_vector_string{std::move(output)};
+}
+
+result_or_false_hash_string_int64 preg_grep_vector(const string& pattern, const vector_string& input) {
+    hash_string_int64 output;
+    if (!grep_strings(pattern, input, [&](int64 index, string&& value) { output.set(index, std::move(value)); }))
+        return result_or_false_hash_string_int64::from_false();
+    return result_or_false_hash_string_int64{std::move(output)};
 }
 
 result_or_false_string replace(const string& pattern, const string& replacement, const string& subject, int64 limit) {
@@ -439,21 +455,6 @@ result_or_false_int64 preg_match_all(const string& pattern, const string& subjec
 }
 
 namespace scpp::regex {
-result_or_false_mixed preg_split(const string& pattern, const string& subject, int64 limit, int64 flags) {
-    auto fields = split(pattern, subject, limit, flags);
-    if (!fields.has_value()) return result_or_false_mixed::from_false();
-    auto vec = fields.value();
-    auto output = mixed::container();
-    for (int64 i = 0; i < vec.size(); ++i) output.append(mixed::from_string(vec.at(i)));
-    return result_or_false_mixed{std::move(output)};
-}
-result_or_false_mixed preg_split(const string& pattern, const string& subject, int64 limit) {
-    return preg_split(pattern, subject, limit, 0);
-}
-result_or_false_mixed preg_split(const string& pattern, const string& subject) {
-    return preg_split(pattern, subject, -1, 0);
-}
-
 namespace {
 result_or_false_mixed select_rows(const string& pattern, const mixed& input, const string* replacement, int64 limit) {
     validate_limit(limit);

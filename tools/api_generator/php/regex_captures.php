@@ -2,17 +2,16 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
-/** These three source results cross a precompiled boundary. Reuse the core collection and carrier recipes. */
-function prepareRegexCaptureTypes(array $names, string $moduleHeader, array &$plan): void {
+/** These source results cross a precompiled boundary. Reuse the core collection and carrier recipes. */
+function prepareRegexCaptureTypes(array $names, object $functions, string $moduleHeader, array &$plan): void {
     $payloads = [];
     foreach ($names as $name) {
-        $payload = match ($name) {
-            'regex_match_named' => 'hash_string_string',
-            'regex_match_all', 'regex_match_all_pattern_order' => 'vector_vector_string',
-            'regex_match_all_named' => 'vector_hash_string_string',
-            default => null,
-        };
-        if ($payload !== null) $payloads[$payload] = true;
+        $result = textValue(at(at($functions, $name), 'result'));
+        if (!str_starts_with($result, 'result_or_false_')) continue;
+        $payload = substr($result, strlen('result_or_false_'));
+        if (in_array($payload, ['hash_string_int64', 'hash_string_string', 'vector_vector_string', 'vector_hash_string_string'], true)) {
+            $payloads[$payload] = true;
+        }
     }
     if (!$payloads) return;
     $provider = 'regex.capture_types';

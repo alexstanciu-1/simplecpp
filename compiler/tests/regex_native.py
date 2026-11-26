@@ -104,12 +104,33 @@ $values = preg_grep("/26$/", $numeric);
 if ((string)$values["year"] !== "2026") { return 43; }
 $values = preg_filter("/x/", "x", $boxes, 1);
 if (count($values) !== 2 || (string)$values["p"] !== "ax") { return 22; }
-$kept = preg_split("/,/", "", -1, PREG_SPLIT_NO_EMPTY);
-if (!isset($kept)) { return 23; }
-$values = $kept;
-if (count($values) !== 0) { return 24; }
-$kept = preg_split("/[/", "");
-if (isset($kept)) { return 25; }
+$parts = preg_split("/,/", "", -1, PREG_SPLIT_NO_EMPTY);
+if (!isset($parts)) { return 23; }
+$fields vector<string> = $parts;
+if (count($fields) !== 0) { return 24; }
+$parts = preg_split("/[/", "");
+if ($parts !== false) { return 25; }
+if (cli_argc() > 1) { preg_grep("/./", $parts); return 45; }
+$rowsByIndex = preg_grep("/^keep/", preg_split("/,/", "drop,keepA,drop,keepB"));
+$selected hash<string,int> = $rowsByIndex;
+if (count($selected) !== 2 || $selected->has(0) || $selected[1] !== "keepA" || $selected[3] !== "keepB") { return 46; }
+$rowsByIndex = preg_grep("/z/", preg_split("/,/", "abc"));
+if (!isset($rowsByIndex)) { return 47; }
+$selected = $rowsByIndex;
+if (count($selected) !== 0) { return 48; }
+$rowsByIndex = preg_grep("/a/", $fields);
+if (!isset($rowsByIndex)) { return 49; }
+$selected = $rowsByIndex;
+if (count($selected) !== 0) { return 50; }
+$rowsByIndex = preg_grep("/[/", $fields);
+if ($rowsByIndex !== false) { return 51; }
+$badUtfRows vector<string> = ["ok", string_byte_from_int(255)];
+$rowsByIndex = preg_grep("/./u", $badUtfRows);
+if ($rowsByIndex !== false) { return 54; }
+$boxedAgain mixed = preg_grep("/x/", $kept);
+if ((string)$boxedAgain["p"] !== "ax") { return 52; }
+$literalBox mixed = preg_grep("/keep/", ["drop", "keep"]);
+if ((string)$literalBox[1] !== "keep") { return 53; }
 $n int = preg_match_all("/(?<letter>a)/", "aa", $values);
 $column mixed = $values["letter"];
 if ($n !== 2 || (string)$column[1] !== "a") { return 26; }
@@ -201,11 +222,20 @@ def prove(work, runtime, flavor):
             source_edit(source, 'regex_test("/a/", "a"); return 0;')
             assert 'regex_test' in invoke(resident).get('error', '')
             if flavor == 'php':
-                source_edit(source, 'preg_quote("."); preg_match("/a/", "a"); return 0;')
+                source_edit(source, 'preg_quote("."); preg_match("/a/", "a"); '
+                                   'preg_grep("/x/", preg_split("/,/", "x,y")); return 0;')
                 ok()
+                lowered = b'\n'.join(artifacts(output).values())
+                assert b'::scpp::regex::split(' in lowered and b'::scpp::regex::preg_grep_vector(' in lowered
+                assert b'::scpp::regex::preg_grep(' not in lowered
             source_edit(source, fixture(flavor))
         source_edit(manifest, enabled)
         ok()
+        if flavor == 'php':
+            source_edit(source, '$items vector<int> = [1]; preg_grep("/./", $items); return 0;')
+            assert 'Unsupported argument type for preg_grep' in invoke(resident).get('error', '')
+            source_edit(source, '$boxed mixed = preg_split("/,/", "a"); return 0;')
+            assert 'Unsupported boxing into mixed' in invoke(resident).get('error', '')
         source_edit(source, 'regex_find_span("/a/", "a", 0, 1); return 0;')
         bad = invoke(resident)
         assert 'reference' in bad.get('error', '').lower(), bad
@@ -251,7 +281,10 @@ def prove(work, runtime, flavor):
         subprocess.run([report['executable']], check=True)
         return report
 
-    build()
+    first_build = build()
+    if flavor == 'php':
+        failed = subprocess.run([first_build['executable'], 'failed-split'], capture_output=True, text=True)
+        assert failed.returncode == 1 and failed.stderr.strip() == 'carrier_no_value', failed
     # Recompile the complete fixture with the toolchain already qualified.
     for obj in native.glob('unit-*.o'):
         obj.unlink()
