@@ -79,6 +79,7 @@ def build_driver(work, cxx, linker):
     modules = ['filesystem', 'io', 'json', 'process', 'datetime']
     (tool/'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {'runtime': {'modules': modules}}}))
     shutil.copyfile(ROOT/'compiler/examples/native_driver/main.php.scpp', tool/'main.php')
+    shutil.copyfile(ROOT/'compiler/examples/native_driver/build_inputs.php.scpp', tool/'build_inputs.php')
     bundle = work/'driver-out'
     manifest = fresh(tool, bundle)
     driver = work/'driver-executable'

@@ -233,7 +233,17 @@ final class Inventory_Graph {
             }
             $artifacts .= "]";
         }
+        $paths = $this->link_inputs($entry);
         $inputs = "[";
+        foreach ($paths as $path) {
+            if ($inputs !== "[") $inputs .= ",";
+            $inputs .= quoted($path);
+        }
+        return "{\"artifacts\":" . $artifacts . "},\"link_inputs\":" . $inputs . "]}";
+    }
+
+    public function link_inputs(Inventory_Module $entry): vector<string> {
+        $inputs vector<string> = [];
         $seen hash<string,string> = [];
         for ($i = count($this->ordered); $i > 0; $i--) {
             $name = $this->ordered[$i - 1];
@@ -242,11 +252,10 @@ final class Inventory_Graph {
             foreach ($m->artifacts as $path) {
                 if (isset($seen[$path])) continue;
                 $seen[$path] = $path;
-                if ($inputs !== "[") $inputs .= ",";
-                $inputs .= quoted($path);
+                $inputs[] = $path;
             }
         }
-        return "{\"artifacts\":" . $artifacts . "},\"link_inputs\":" . $inputs . "]}";
+        return $inputs;
     }
 
     public function report(): string {

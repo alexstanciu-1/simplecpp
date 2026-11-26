@@ -38,6 +38,10 @@ bool ready(int fd, short events, Clock::time_point until) {
 }
 
 namespace App {
+bool host_executable_(scpp::string path) {
+    return ::access(path.data(), X_OK) == 0;
+}
+
 void host_directory_() {
     ::umask(0077);
     if (::mkdir(".scpp", 0700) < 0 && errno != EEXIST) fail("mkdir");

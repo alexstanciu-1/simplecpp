@@ -908,6 +908,8 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_socket.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_JSON AND SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_native_ninja_publication COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_ninja_publication.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
     add_test(NAME compiler_native_link_inputs COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_link_inputs.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
     add_test(NAME compiler_native_module_graph COMMAND ${Python3_EXECUTABLE} -B
