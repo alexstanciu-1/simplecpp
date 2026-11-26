@@ -740,6 +740,28 @@ final class ast_function_body extends ast_statement_block implements dependency_
 			$value = $local->initializer;
 		}
 
+		return $this->reads_collection($value, $parameter, $key);
+	}
+
+	/** A private collection local can borrow its named parameter up to the immediate scalar return. */
+	public function borrowed_snapshot(): ?ast_local_declaration
+	{
+		$count = count($this->statements);
+		$local = $this->statements[$count - 2] ?? null;
+		if ($local === null || $local::class !== ast_local_declaration::class || !$local->type_def()->private_copy_allocation_only()
+			|| $this->parent->is_async || $this->parent->returns_reference || !$this->parent->return_type_def()->copy_has_no_observable_effects()) return null;
+		$source = $local->initializer;
+		if (!($source instanceof ast_name_expression) || !(($input = $source->local_binding()) instanceof ast_parameter_declaration)
+			|| $input->type_def() !== $local->type_def() || $source->type_def() !== $local->type_def() || $local->initialization() !== value_conversion::identity) return null;
+		$return = $this->statements[$count - 1];
+		if (!($return instanceof ast_return_statement) || $return->value === null || $return->conversion() !== value_conversion::identity
+			|| $return->value->type_def() !== $this->parent->return_type_def()) return null;
+		return $this->reads_collection($return->value, $local) ? $local : null;
+	}
+
+	/** A prepared scalar read from the named collection; a local snapshot can use an inert value parameter as its key. */
+	private function reads_collection(ast_expression $value, ast_local_binding $collection, ?ast_parameter_declaration $key = null): bool
+	{
 		$index = null;
 		if ($value instanceof ast_index_expression) {
 			$receiver = $value->receiver;
@@ -747,16 +769,19 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		} elseif ($value instanceof ast_call_expression && $value->cardinality !== null) {
 			$receiver = $value->arguments[0];
 		} elseif ($value instanceof ast_call_expression && $value->receiver === null && count($value->arguments) === 2
-			&& ($binding = $value->runtime_binding()) !== null && ($type = $parameter->type_def()) instanceof key_presence_type
+			&& ($binding = $value->runtime_binding()) !== null && ($type = $collection->type_def()) instanceof key_presence_type
 			&& $binding === $type->presence_function() && $value->conversion(0) === value_conversion::identity
 			&& $value->conversion(1) === value_conversion::identity) {
 			[$receiver, $index] = $value->arguments;
 		} else {
 			return false;
 		}
-		if (!($receiver instanceof ast_name_expression) || !$receiver->refers_to($parameter)) return false;
+		if (!($receiver instanceof ast_name_expression) || !$receiver->refers_to($collection)) return false;
 		if ($key !== null) return $index instanceof ast_name_expression && $index->refers_to($key);
-		return $index === null || $index->is_effect_free_literal();
+		if ($index === null || $index->is_effect_free_literal()) return true;
+		return $collection instanceof ast_local_declaration && $index instanceof ast_name_expression
+			&& ($input = $index->local_binding()) instanceof ast_parameter_declaration && $input->mode === passing_mode::value
+			&& $input->type_def()->copy_has_no_observable_effects();
 	}
 
 	public function require_prepared(): void

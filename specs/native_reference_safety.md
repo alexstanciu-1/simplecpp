@@ -20,6 +20,12 @@ destructors and user-code failures must remain observable. Allocation failures f
 operations that still execute propagate under their ordinary contracts. An unknown
 effect requires a private copy.
 
+## Private local collection snapshots
+
+A local initialized by value from a vector or hash observes the contents at initialization through its last use, including when another alias changes the source. The compiler may omit the local’s private allocation under the same copy, destruction and failure rules as a by-value collection parameter. The source must stay alive and the compiler must prove that all uses observe the snapshot.
+
+A synchronous function can end with an ordinary local initialized from an exact-type named parameter followed immediately by a scalar read of that local as its return value. Earlier statements can write through aliases: the snapshot observes the source when the declaration executes. Lowering inspects the final pair in the top-level function body. Count, emptiness, checked indexing and key presence use the prepared reader rules. An inert literal or an ordinary by-value scalar parameter may supply the key. An intervening write, a call to compute the key, or an observable element destructor requires the ordinary copy. Checked operations retain their failures at the read.
+
 ## Reference parameters and defaults
 
 A readonly reference borrows exact-type stable storage without copying. A default on an admitted reference parameter supplies call-local storage when the argument is omitted. A writable default is fresh for each call. A return may not escape storage created for a default. Explicit arguments retain the ordinary binding rules.

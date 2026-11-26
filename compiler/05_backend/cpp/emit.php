@@ -959,8 +959,10 @@ CPP;
 		array &$required_headers /** array<string,bool> */, ?statement_return_target $function = null,
 		?cpp_resume_context $resume = null, ?string $first_initializer = null): array /** list<string> */
 	{
+		$borrowed_snapshot = null;
 		if ($body instanceof ast_function_body) {
 			$body->require_prepared();
+			$borrowed_snapshot = $body->borrowed_snapshot();
 			$this->byte_view = null;
 			/** @var ast_function_declaration $function */
 			$function = $body->parent;
@@ -1386,7 +1388,8 @@ CPP;
 					$lines[] = "\tconst auto scpp_byte_view = " . $field . '.checked_bytes();';
 				}
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot,
-					operand_override: $first_initializer !== null && $statement === $body->statements[0] ? $first_initializer : null);
+					operand_override: $first_initializer !== null && $statement === $body->statements[0] ? $first_initializer : null,
+					borrow_snapshot: $statement === $borrowed_snapshot);
 				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
 					/** @var carrier_type_definition $type */
 					$type = $statement->local_def()->type_def();
@@ -2104,7 +2107,8 @@ CPP;
 	 */
 	private function binding(ast_local_declaration|ast_storage_write $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous', ?string $operand_override = null): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous',
+		?string $operand_override = null, bool $borrow_snapshot = false): string
 	{
 		$snapshot = null;
 		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
@@ -2150,6 +2154,7 @@ CPP;
 			}
 			if ($type instanceof owned_callable_type) $this->callable_dependencies($type->signature, $declarations);
 			$native = $type instanceof lambda_type_definition ? 'auto' : $type->cpp_type();
+			if ($borrow_snapshot) $native = 'const auto&';
 			$prefix = '[[maybe_unused]] ' . $native . ' ' . $this->name($statement);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
