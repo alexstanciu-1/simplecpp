@@ -80,6 +80,11 @@ $declaration = $compiler->declaration();
 if ($declaration === null) { throw Exception::make("Missing prepared declaration"); }
 $initial_entry = $compiler->entry_binding();
 if ($initial_entry === null) { throw Exception::make("Missing prepared caller"); }
+$table = new Translation_Symbols();
+assert_translation($table->find("func:missing") === null, "Lookup allocated a missing name");
+$empty = $table->entry("func:missing");
+assert_translation($table->find("func:missing") === $empty && $empty->declaration() === null,
+	"A known empty symbol was confused with an absent key");
 save_generated("initial.cpp", $first);
 print_function_ast($declaration->scope->declaration);
 check_reused_body($declaration->scope->declaration);
@@ -133,6 +138,11 @@ $old_span = $old_source->tokens[$old_body->statement->literal_token];
 assert_translation($old_body->function_declaration() === $old_function, "Old body parent was replaced");
 assert_translation(substr($old_source->text, $old_span->offset, $old_span->length) === "8",
 	"An old literal span lost its source snapshot");
+assert_translation($recovered_entry->binding_revision() === 0, "Body edit notified the caller");
+$symbol->watch($recovered_entry);
+$peer = new Prepared_Call($recovered_entry->syntax, $symbol);
+$symbol->watch($peer);
+$symbol->watch($peer);
 save_generated("updated.cpp", $next);
 
 try {
@@ -147,7 +157,19 @@ assert_translation($compiler->declaration() === null && $symbol->declaration() =
 	"Deletion failed to publish a tombstone");
 assert_translation($compiler->published_output() === $next, "Deletion replaced the last good output");
 
+assert_translation($recovered_entry->binding_revision() === 1 && $peer->binding_revision() === 1 && $initial_entry->binding_revision() === 0,
+	"Withdrawal must notify the active caller once and skip the retired caller");
+try {
+	$compiler->compile(null, $fixed);
+	throw Exception::make("Repeated deletion still binds");
+} catch (Translation_Diagnostic $missing) {
+	assert_translation($recovered_entry->binding_revision() === 1, "Repeated deletion notified twice");
+}
+
+$symbol->forget($peer);
 $restored = $compiler->compile($definition, $fixed);
+assert_translation($recovered_entry->binding_revision() === 2 && $peer->binding_revision() === 1 && $initial_entry->binding_revision() === 0,
+	"Restoration must notify the active caller exactly once");
 assert_translation($compiler->declaration() !== $declaration, "Restoration reused the retired declaration");
 assert_translation($compiler->entry_binding() === $recovered_entry && $recovered_entry->symbol === $symbol,
 	"Restoration replaced the retained entry");

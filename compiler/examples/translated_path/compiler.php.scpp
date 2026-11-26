@@ -9,12 +9,43 @@ final class Prepared_Declaration {
 	}
 }
 
+// The symbol observes its live callers without retaining retired preparation generations.
+struct Translation_Watch {
+	public weak<Prepared_Call> $caller;
+}
+
 // Stable identity from the compilation scope. The current generation owns the head.
 final class Translation_Symbol {
 	private weak<Prepared_Declaration> $head;
+	private vector<Translation_Watch> $watchers;
+
+	public function watch(Prepared_Call $caller): void {
+		foreach ($this->watchers as $watch) {
+			if (lock($watch->caller) === $caller) return;
+		}
+		$watch Translation_Watch;
+		$watch->caller = weak($caller);
+		$this->watchers[] = $watch;
+	}
+
+	public function forget(Prepared_Call $caller): void {
+		$keep vector<Translation_Watch> = [];
+		foreach ($this->watchers as $watch) {
+			$live = lock($watch->caller);
+			if ($live !== null && $live !== $caller) $keep[] = $watch;
+		}
+		$this->watchers = $keep;
+	}
 
 	public function publish(?Prepared_Declaration $declaration): void {
+		$previous = lock($this->head);
 		$this->head = weak($declaration);
+		// In this grammar every function has the same () : int signature.
+		if (($previous === null) === ($declaration === null)) return;
+		foreach ($this->watchers as $watch) {
+			$caller = lock($watch->caller);
+			if ($caller !== null) $caller->invalidate_binding();
+		}
 	}
 
 	public function declaration(): ?Prepared_Declaration {
@@ -26,8 +57,12 @@ final class Translation_Symbol {
 final class Translation_Symbols {
 	private hash<Translation_Symbol, string> $entries;
 
+	public function find(string $key): ?Translation_Symbol {
+		return hash_get_or_null($this->entries, $key);
+	}
+
 	public function entry(string $key): Translation_Symbol {
-		$entry = hash_get_or_null($this->entries, $key);
+		$entry = $this->find($key);
 		if ($entry === null) {
 			$entry = new Translation_Symbol();
 			$this->entries[$key] = $entry;
@@ -40,6 +75,23 @@ final class Translation_Symbols {
 final class Prepared_Call {
 	public readonly Call_Syntax $syntax;
 	public readonly Translation_Symbol $symbol;
+	private int $revision = 0;
+	private int $checked_revision = -1;
+
+	public function invalidate_binding(): void {
+		$this->revision++;
+	}
+
+	public function binding_revision(): int {
+		return $this->revision;
+	}
+
+	public function check_binding(string &$work): void {
+		if ($this->checked_revision === $this->revision) return;
+		$work .= $this->syntax->source->path . ",";
+		$this->target();
+		$this->checked_revision = $this->revision;
+	}
 
 	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol) {
 		$this->syntax = $syntax;
@@ -157,20 +209,26 @@ final class Translation {
 		if ($definition !== null && $definition === $previous && $entry !== null && $entry->syntax === $call) {
 			return $entry;
 		}
-		$key = "func:" . $call->name;
-		// In this grammar a function's name determines its entire public signature () : int.
-		if ($entry === null || $entry->syntax !== $call || $previous === null || $definition === null ||
-			$previous->scope->declaration->short_name !== $definition->scope->declaration->short_name) {
+		// This slice publishes one definition. Check the candidate before changing the last good head.
+		if ($definition !== null && $definition->scope->declaration->short_name !== $call->name) {
 			$work .= $call->source->path . ",";
-			if ($definition !== null && $definition->scope->resolve($key) === null) {
-				throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
-			}
-			if ($entry === null || $entry->syntax !== $call) {
-				$entry = new Prepared_Call($call, $this->symbols->entry($key));
-			}
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
 		}
 		$this->publish_definition($definition);
-		$entry->target();
+		if ($entry === null || $entry->syntax !== $call) {
+			$symbol = $this->symbols->find("func:" . $call->name);
+			if ($symbol === null) {
+				$work .= $call->source->path . ",";
+				throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
+			}
+			$candidate = new Prepared_Call($call, $symbol);
+			$candidate->check_binding($work);
+			if ($entry !== null) $entry->symbol->forget($entry);
+			$candidate->symbol->watch($candidate);
+			$entry = $candidate;
+		} else {
+			$entry->check_binding($work);
+		}
 		$this->entry = $entry;
 		$this->output_current = false;
 		return $entry;
