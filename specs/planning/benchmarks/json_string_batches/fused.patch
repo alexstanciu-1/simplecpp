@@ -1,0 +1,60 @@
+--- a/tools/api_generator/php/render_json.php
++++ b/tools/api_generator/php/render_json.php
+@@ -83,7 +83,7 @@
+             $export = typeExport($plan['submodules'], $strings);
+             $includes .= includeHeader(providerHeader($plan['submodules'], $export['provider']));
+             $declarations .= "    virtual void read_strings($strings& values) { begin_array(); while (next_element()) values.append(read_string()); }\n";
+-            $definitions .= "    void read_strings($strings& values) override { cursor.begin_array(); while (cursor.next_element()) values.append(cursor.read_string(copy_string, take_string)); }\n";
++            $definitions .= "    void read_strings($strings& values) override { cursor.read_strings(copy_string, take_string, [&](string value) { values.append(std::move(value)); }); }\n";
+         }
+         $files['public/scpp/decoder.hpp'] = BANNER . template('json/decoder', compact('includes', 'declarations'));
+         $files['public/' . $recordHeader] = BANNER . template('json/record_decoder', ['includes' => includeHeader($plan['carriers_header'])]);
+--- a/runtime/src/json/structural_reader.hpp
++++ b/runtime/src/json/structural_reader.hpp
+@@ -164,6 +164,46 @@
+ 			return owned(std::move(bytes));
+ 		});
+ 	}
++	// Keep the element index and format its path only when the string grammar fails.
++	template<class Plain, class Owned, class Append> void read_strings(Plain plain, Owned owned, Append append) {
++		begin_array();
++		auto& scope = frames_.back();
++		std::size_t checkpoint;
++		for (;;) {
++			checkpoint = pos_;
++			skip_whitespace();
++			if (peek() == ']') {
++				++pos_;
++				path_ = scope.path;
++				frames_.pop_back();
++				return;
++			}
++			if (!scope.first) {
++				if (peek() != ',') break;
++				++pos_;
++				skip_whitespace();
++			}
++			if (peek() != '"') break;
++			const auto start = pos_;
++			const auto prefix = parse_string_prefix();
++			if (peek() == '"') {
++				++pos_;
++				append(plain(prefix));
++			} else {
++				try {
++					append(owned(parse_string_tail(start, prefix)));
++				} catch (const reader_detail::json_parse_failure& failure) {
++					failed_ = true;
++					throw read_error(failure, file_, scope.path + "[" + std::to_string(scope.index) + "]");
++				}
++			}
++			scope.first = false;
++			++scope.index;
++		}
++		// Replay unexpected delimiters and value types through the ordinary diagnostic path.
++		pos_ = checkpoint;
++		while (next_element()) append(read_string(plain, owned));
++	}
+ 	std::string read_number() {
+ 		return checked([&] { require_kind("number"); auto value = std::string(parse_number_token()); pending_ = false; return value; });
+ 	}

@@ -1,0 +1,13 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -186,6 +186,10 @@
+ 				default:
+ 					fail_json_parse("invalid escape sequence", pos_ - 1);
+ 			}
++			const auto suffix = input_.substr(pos_);
++			const auto count = plain_string_prefix(suffix);
++			out.append(suffix.data(), count);
++			pos_ += count;
+ 		}
+ 
+ 		fail_json_parse("unterminated string", start);

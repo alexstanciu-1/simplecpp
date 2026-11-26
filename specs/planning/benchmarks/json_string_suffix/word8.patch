@@ -1,0 +1,30 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -1,6 +1,7 @@
+ // Adapted lexical reader from the v0.1 JSON donor at 2f39e536d.
+ #pragma once
+ #include <cstdint>
++#include <cstring>
+ #include <stdexcept>
+ #include <string>
+ #include <string_view>
+@@ -22,7 +23,18 @@
+ // Ordinary bytes have identical spelling in the input and the decoded string.
+ [[nodiscard]] inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
+ 	std::size_t size = 0;
+-	for (const unsigned char byte : bytes) {
++	constexpr std::uint64_t ones = 0x0101010101010101ULL;
++	constexpr auto has_zero_byte = [](std::uint64_t x) {
++		return (x - ones) & ~x & (ones * 0x80);
++	};
++	while (bytes.size() - size >= 8) {
++		std::uint64_t block;
++		std::memcpy(&block, bytes.data() + size, sizeof(block));
++		if (has_zero_byte(block ^ (ones * 0x22)) || has_zero_byte(block ^ (ones * 0x5c))
++		    || has_zero_byte(block & (ones * 0xe0))) break;
++		size += sizeof(block);
++	}
++	for (const unsigned char byte : bytes.substr(size)) {
+ 		if (byte < 0x20 || byte == '"' || byte == '\\') break;
+ 		++size;
+ 	}

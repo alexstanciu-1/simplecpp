@@ -1,11 +1,16 @@
 """Build the same generated scalar and vector record drivers against one JSON publication."""
+import argparse
 import json
 import os
 from pathlib import Path
 import subprocess
-import sys
 
-root, work = [Path(arg).resolve() for arg in sys.argv[1:]]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('root', type=Path)
+parser.add_argument('work', type=Path)
+parser.add_argument('--batched', action='store_true')
+args = parser.parse_args()
+root, work = args.root.resolve(), args.work.resolve()
 app, out = work/'app', work/'out'
 app.mkdir(parents=True, exist_ok=True)
 (app/'module.json').write_text('{"dependencies":{"runtime":{"modules":["json"]}},"general_api":true}')
@@ -17,7 +22,8 @@ generated = subprocess.run(['php', root/'compiler/tests/incremental_executable.p
 assert 'error' not in json.loads(generated.stdout), generated.stdout
 manifest = json.loads((out/'manifest.json').read_text())
 unit = out/manifest['sources']['app/records.php']
-assert '.append(d.read_string())' in unit.read_text(), 'Expected the ordinary per-element vector loop'
+expected = 'd.read_strings(field_0)' if args.batched else '.append(d.read_string())'
+assert expected in unit.read_text(), f'Expected generated string-vector operation {expected}'
 flags = ['clang++', '-O3', '-DNDEBUG', '-stdlib=libc++', '-std=c++23', '-I', root/'runtime/generated/public']
 for record in ['Scalar', 'Words']:
     header, = [out/h for h in manifest['headers'] if f'struct {record} {{' in (out/h).read_text()]

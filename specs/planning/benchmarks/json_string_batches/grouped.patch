@@ -1,0 +1,28 @@
+--- a/tools/api_generator/php/json.php
++++ b/tools/api_generator/php/json.php
+@@ -85,6 +85,10 @@
+             }
+             $vector = jsonIntegerVector($runtime);
+             $sequences = $vector !== null && isset($types[$vector]) ? "type_{$types[$vector]}::class => 'read_integers'" : '';
++            $strings = array_column($runtime['vectors'] ?? [], 'name', 'element')['string'] ?? null;
++            if ($strings !== null && isset($types[$strings])) {
++                $sequences .= ($sequences === '' ? '' : ', ') . "type_{$types[$strings]}::class => 'read_strings'";
++            }
+             $cases[] = "\t\t\t'php:func:json_decode_as', 'general:func:json_decode_as' => \$bindings[\$key] ??= new json_decoder_contract(["
+                 . implode(', ', $leaves) . "], '" . moduleOperationHeader($runtime['json']['header'], 'decode_record') . "', [$sequences]),";
+         }
+--- a/tools/api_generator/php/render_json.php
++++ b/tools/api_generator/php/render_json.php
+@@ -79,6 +79,12 @@
+             $definitions .= "    void read_integers($vector& values) override {\n"
+                 . "        cursor.read_integers([&](int64 value) { values.append(value); });\n    }\n";
+         }
++        if (($strings = array_column($plan['vectors'] ?? [], 'name', 'element')['string'] ?? null) !== null) {
++            $export = typeExport($plan['submodules'], $strings);
++            $includes .= includeHeader(providerHeader($plan['submodules'], $export['provider']));
++            $declarations .= "    virtual void read_strings($strings& values) { begin_array(); while (next_element()) values.append(read_string()); }\n";
++            $definitions .= "    void read_strings($strings& values) override { cursor.begin_array(); while (cursor.next_element()) values.append(cursor.read_string(copy_string, take_string)); }\n";
++        }
+         $files['public/scpp/decoder.hpp'] = BANNER . template('json/decoder', compact('includes', 'declarations'));
+         $files['public/' . $recordHeader] = BANNER . template('json/record_decoder', ['includes' => includeHeader($plan['carriers_header'])]);
+         $implementationHeaders .= includeHeader($recordHeader) . includeHeader('structural_reader.hpp');

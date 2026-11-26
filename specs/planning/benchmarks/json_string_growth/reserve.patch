@@ -1,0 +1,9 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -148,3 +148,5 @@
+ 	[[nodiscard]] std::string parse_string_tail(std::size_t start, std::string_view prefix) {
+-		std::string out(prefix);
++		std::string out;
++		out.reserve(prefix.size() + 1);
++		out.append(prefix);
+ 		while (!at_end()) {

@@ -1,0 +1,32 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -1,6 +1,8 @@
+ // Adapted lexical reader from the v0.1 JSON donor at 2f39e536d.
+ #pragma once
+ #include <cstdint>
++#include <bit>
++#include <immintrin.h>
+ #include <stdexcept>
+ #include <string>
+ #include <string_view>
+@@ -20,9 +22,18 @@
+ }
+ 
+ // Ordinary bytes have identical spelling in the input and the decoded string.
+-[[nodiscard]] inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
++[[nodiscard]] __attribute__((target("avx2"))) inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
+ 	std::size_t size = 0;
+-	for (const unsigned char byte : bytes) {
++	while (bytes.size() - size >= 32) {
++		const auto block = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(bytes.data() + size));
++		const auto quote = _mm256_cmpeq_epi8(block, _mm256_set1_epi8(0x22));
++		const auto slash = _mm256_cmpeq_epi8(block, _mm256_set1_epi8(0x5c));
++		const auto controls = _mm256_cmpeq_epi8(_mm256_min_epu8(block, _mm256_set1_epi8(31)), block);
++		const auto mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_or_si256(controls, _mm256_or_si256(quote, slash))));
++		if (mask) return size + std::countr_zero(mask);
++		size += 32;
++	}
++	for (const unsigned char byte : bytes.substr(size)) {
+ 		if (byte < 0x20 || byte == '"' || byte == '\\') break;
+ 		++size;
+ 	}
