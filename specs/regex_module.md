@@ -139,6 +139,15 @@ preg_replace_callback_array applies the limit independently per pattern and
 publishes the sum only on success, including zero for an empty table. On failure
 or exception the table helper leaves any callback writes to the count slot intact.
 
+Both PHP callback helpers also accept `vector<string>`, `hash<string,int>` and
+`hash<string,string>`. The result is a falseable collection of the subject type.
+Each pattern visits all rows in iteration order, preserving keys, misses and empty
+replacement strings. Each row gets the full limit for that pattern. A table
+finishes one pass before starting the next. The first regex failure discards
+the collection and returns false. A throwing invocation propagates immediately.
+The single helper counts invocations across rows through failure or throw.
+The table publishes count only after every pass succeeds.
+
 Replacement limits are per subject and per pattern. The optional limit is a
 value argument even when the caller supplies a writable integer. Minus one
 means unlimited. Zero replacements still validates the pattern. A negative

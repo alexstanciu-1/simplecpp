@@ -348,8 +348,11 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
                 if ($base !== null) $headers[] = moduleOperationHeader($header, $name);
             }
             foreach ($publication->regex->callbacks ?? [] as $callback) {
-                foreach (regexCallbackRows($catalog, $publication->regex, at($catalog->callbacks, $callback)) as $row => $_)
-                    $headers[] = moduleOperationHeader($header, 'callback_row_' . $row);
+                $definition = at($catalog->callbacks, $callback);
+                foreach (regexCallbackRows($catalog, $publication->regex, $definition) as $row => $_) {
+                    foreach (names(at($definition, 'subjects')) as $subject)
+                        $headers[] = moduleOperationHeader($header, 'callback_row_' . $row . ($subject === 'string' ? '' : '_' . $subject));
+                }
             }
         }
         foreach (names($publication->{$family}->functions) as $name) {

@@ -104,7 +104,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $plan[$family] = compact('provider', 'header', 'module', 'namespace', 'requires', 'functions');
     foreach (names($publication->{$family}->callbacks ?? [], 'Duplicate regex callback') as $name) {
         $item = at(at($catalog, 'callbacks'), $name);
-        fields($item, ['input', 'surface', 'table', 'optional_output', 'capture_rows']);
+        fields($item, ['input', 'surface', 'table', 'optional_output', 'capture_rows', 'subjects']);
         $input = textValue(at($item, 'input'));
         $callbackSurface = textValue(at($item, 'surface'));
         requireThat($family === 'regex' && in_array($input, ['mixed', 'vector_string'], true)
@@ -125,7 +125,14 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             foreach (regexCallbackRows($catalog, $publication->regex, $item) as $row => $shape) {
                 moduleFunctionTypeExport($plan, $row);
                 $rowHeader = moduleOperationHeader($header, 'callback_row_' . $row);
-                $plan[$family]['callback_rows'][$row] = $shape + ['header' => $rowHeader];
+                $plan[$family]['callback_rows'][$row] ??= $shape + ['header' => $rowHeader];
+                foreach (names(at($item, 'subjects')) as $subject) {
+                    $result = 'result_or_false_' . $subject;
+                    moduleFunctionTypeExport($plan, $result);
+                    $subjectHeader = $subject === 'string' ? $rowHeader : moduleOperationHeader($header, "callback_row_{$row}_$subject");
+                    $plan[$family]['callback_rows'][$row]['subjects'][$subject] = $subjectHeader;
+                    $plan[$family]['callbacks'][$name]['subjects'][$subject] = $result;
+                }
                 $plan[$family]['callbacks'][$name]['rows'][$row] = $rowHeader;
             }
         }
@@ -296,6 +303,16 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
             . "result_or_false_string replace_capture_callback(const string&, const void*, callback_row_$row, const string&, int64, int64*, int64);\n";
         $files['public/' . $shape['header']] = moduleHeaderBody($includes, $module['namespace'], $declaration);
         $bridge .= includeHeader($shape['header']);
+        foreach ($shape['subjects'] as $subject => $subjectHeader) {
+            if ($subject === 'string') continue;
+            $result = 'result_or_false_' . $subject;
+            $providers = [$shape['header']];
+            foreach ([$subject, $result] as $type)
+                $providers[] = providerHeader($plan['submodules'], moduleFunctionTypeExport($plan, $type)['provider']);
+            $declaration = "$result replace_capture_callback(const string&, const void*, callback_row_$row, const $subject&, int64, int64*, int64);\n";
+            $files['public/' . $subjectHeader] = moduleHeaderBody($providers, $module['namespace'], $declaration);
+            $bridge .= includeHeader($subjectHeader);
+        }
     }
     if ($family === 'regex') {
         $files['private/regex_capture_bindings.hpp'] = renderRegexModeBindings($plan);

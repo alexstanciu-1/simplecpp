@@ -2038,7 +2038,8 @@ final class Preparation
 		}
 		$operands = $call->runtime_operands($runtime instanceof runtime_function ? $runtime : null);
 		$prepared ??= $call->receiver;
-		if ($runtime instanceof regex_callback_overloads) {
+		$callback_group = $runtime instanceof regex_callback_overloads ? $runtime : null;
+		if ($callback_group !== null) {
 			$prepared = $operands[$runtime->argument_index] ?? throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 			$runtime = $this->regex_callback_binding($runtime, $prepared);
 		}
@@ -2072,6 +2073,11 @@ final class Preparation
 		$labels = $runtime->php_argument_labels !== [] && $call->source()->flavor === flavor::php ? $runtime->php_argument_labels : [];
 		foreach ($operands as $index => $argument) {
 			$slot = $slots[$index] ?? $index;
+			if ($callback_group !== null && $index === $callback_group->argument_index + 1) {
+				$this->value($argument, destination: $argument instanceof ast_collection_expression ? $callback_group->list_context : null);
+				$runtime = $callback_group->binding($runtime->callback->signature->inputs[0], $argument, $argument->type_def());
+				$prepared = $argument;
+			}
 			$type = $runtime->parameters[$slot];
 			$typed = $labels !== [] && ($runtime->php_typed_inputs & (1 << $slot)) !== 0;
 			$label = $labels === [] ? '' : $call->name . ' argument ' . ($slot + 1) . ' (' . $labels[$slot] . ') ';

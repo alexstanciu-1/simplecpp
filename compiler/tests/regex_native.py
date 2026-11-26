@@ -520,6 +520,68 @@ $n = 9;
 $text = preg_replace("/a/", "!", "aba", $n, $n);
 if ($n !== 2 || $text !== "!b!") { return 129; }
 }''')
+        statements.append('''
+class CallbackTrace {
+    public static string $log = "";
+    public static int $n = 0;
+}
+function firstRule(vector<string> $r):string {
+    CallbackTrace::$log .= $r[0];
+    return "X" . $r[1];
+}
+function secondRule(vector<string> $r):string {
+    CallbackTrace::$log .= $r[0];
+    return "";
+}
+function checkedRule(vector<string> $r):string {
+    CallbackTrace::$log .= $r[0];
+    if ($r[0] === "b") { CallbackTrace::$n = 707; throw new Exception("later row"); }
+    return $r[0];
+}
+''')
+        for shape, keys in [('vector<string>', ['0', '1', '2']), ('hash<string,int>', ['17', '2', '9']),
+                            ('hash<string,string>', ['"z"', '"b"', '"a"'])]:
+            def rows(values):
+                entries = values if shape == 'vector<string>' else [
+                    f'{key} => {value}' for key, value in zip(keys, values)]
+                return '[' + ', '.join(entries) + ']'
+
+            statements += ['{', f'$items {shape} = ' + rows(['"a1a1"', '"miss"', '"a2"']) + ';',
+                           '$rulesHere hash<function<string(vector<string>)>,string> = ["/a(.)/" => firstRule(...), "/X(.)/" => secondRule(...)];',
+                           'CallbackTrace::$log = ""; $n int = 1;',
+                           f'$out {shape} = preg_replace_callback_array($rulesHere, $items, $n, $n);',
+                           'if (CallbackTrace::$log !== "a1a2X1X2" || $n !== 4 || count($out) !== 3) { return 180; }',
+                           f'if ($out[{keys[0]}] !== "a1" || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "") {{ return 181; }}',
+                           '$order string = ""; foreach ($out as $cbKey => $cbValue) { $order .= (string)$cbKey; }',
+                           'if ($order !== "' + ''.join(key.strip('"') for key in keys) + '") { return 182; }',
+                           '$out = preg_replace_callback("/a(.)/", firstRule(...), $items, 1);',
+                           f'if ($out[{keys[0]}] !== "X1a1" || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "X2") {{ return 183; }}']
+            for table in (False, True):
+                call = ('preg_replace_callback_array([$p => checkedRule(...)], $items' if table else
+                        'preg_replace_callback($p, checkedRule(...), $items') + ', -1, $n)'
+                statements += ['{', '$items = ' + rows(['"aa"', '$hardSubject', '"a"']) + ';',
+                               '$p string = $hardPattern; CallbackTrace::$log = ""; $n = 99;',
+                               f'$failed result_or_false<{shape}> = {call};',
+                               f'if (isset($failed) || CallbackTrace::$log !== "aaa" || $n !== {99 if table else 3}) {{ return 184; }}',
+                               '$items = ' + rows(['"aa"', '"b"', '"c"']) + ';',
+                               '$p = "/./"; CallbackTrace::$log = ""; $n = 99; $caught = false;',
+                               f'try {{ $out = {call}; }} catch (Exception $failure) {{ $caught = $failure->get_message() === "later row"; }}',
+                               f'if (!$caught || CallbackTrace::$log !== "aab" || CallbackTrace::$n !== 707 || $n !== {99 if table else 3}) {{ return 185; }}', '}']
+            statements += ['$items = []; $n = 99;',
+                           '$out = preg_replace_callback_array([], $items, -1, $n);',
+                           'if (count($out) !== 0 || $n !== 0) { return 186; }', '}']
+        statements.append('''{
+$cbSubjects vector<string> = ["ab", "cab"];
+$cbCount int = 99;
+$cbNamed function<string(hash<regex_offset_capture,string>)> = fn($r) => (string)$r["tag"]->byte_offset;
+$cbOut vector<string> = preg_replace_callback("/(?<tag>b)/", $cbNamed, $cbSubjects, -1, $cbCount, PREG_OFFSET_CAPTURE);
+if ($cbCount !== 2 || $cbOut[0] !== "a1" || $cbOut[1] !== "ca2") { return 187; }
+$cbOut = preg_replace_callback_array(["/b/" => fn($r) => "!"], ["ab", "cab"]);
+if ($cbOut[0] !== "a!" || $cbOut[1] !== "ca!") { return 188; }
+CallbackTrace::$log = ""; $cbCount = 99;
+$cbFailure = preg_replace_callback_array(["/a(.)/" => firstRule(...), "/[/" => firstRule(...)], $cbSubjects, -1, $cbCount);
+if (isset($cbFailure) || $cbCount !== 99 || CallbackTrace::$log !== "abab") { return 189; }
+}''')
         # Each row checks the same plain pieces and their absolute byte offsets.
         statements.append('$splitFlags int = PREG_SPLIT_DELIM_CAPTURE;')
         for pattern, subject, tail, expected in [
@@ -656,7 +718,8 @@ def prove(work, runtime, flavor):
             source_edit(source, 'preg_match("/a/", "a"); return 0;')
             assert 'requires module runtime-regex' in invoke(resident).get('error', '')
         source_edit(source, fixture(flavor))
-        assert 'requires module runtime-regex' in invoke(resident).get('error', '')
+        error = invoke(resident).get('error', '')
+        assert 'requires module runtime-regex' in error, error
         if flavor != 'cpp':
             source_edit(manifest, '{"dependencies":{"runtime":{"modules":["regex"]}}}')
             source_edit(source, 'regex_test("/a/", "a"); return 0;')
@@ -676,6 +739,9 @@ def prove(work, runtime, flavor):
         ok()
         if flavor == 'php':
             lowered = b'\n'.join(artifacts(output).values())
+            for header in ('callback_row_vector_string_vector_string', 'callback_row_vector_string_hash_string_int64',
+                           'callback_row_vector_string_hash_string_string', 'callback_row_hash_regex_offset_capture_string_vector_string'):
+                assert f'scpp/regex/{header}.hpp'.encode() in lowered, header
             for target in ('preg_replace_vector', 'preg_replace_int_keys', 'preg_replace_string_keys',
                            'preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
                            'preg_filter_string_keys', 'preg_filter', 'preg_match_numbered', 'preg_match_all_numbered',

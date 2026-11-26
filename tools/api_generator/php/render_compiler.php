@@ -317,9 +317,19 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             foreach ($binding['rows'] as $row => $header) {
                 $type = $runtimeTypes[$row];
                 $flags = $runtime['regex']['callback_rows'][$row]['flags'];
-                $rows[] = "type_$type::instance()->name => [type_$type::instance(), '$header', $flags]";
+                $headers = [];
+                foreach ($binding['subjects'] as $subject => $_) {
+                    $provider = $runtime['regex']['callback_rows'][$row]['subjects'][$subject];
+                    $headers[] = "type_{$runtimeTypes[$subject]}::class => '$provider'";
+                }
+                $rows[] = "type_$type::instance()->name => [type_$type::instance(), [" . implode(', ', $headers) . "], $flags]";
             }
-            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_overloads('$name', $table, $allowed, [" . implode(', ', $rows) . "]),";
+            $subjects = [];
+            foreach ($binding['subjects'] as $subject => $result) {
+                $type = $runtimeTypes[$subject];
+                $subjects[] = "type_$type::class => type_{$runtimeTypes[$result]}::instance()";
+            }
+            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_overloads('$name', $table, $allowed, [" . implode(', ', $rows) . "], [" . implode(', ', $subjects) . "]),";
             continue;
         }
         $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}', $countOutput),";
