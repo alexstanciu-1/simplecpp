@@ -5,7 +5,11 @@ function prepared_snapshot(Translation $compiler): string {
 	if ($target !== $compiler->declaration()) throw Exception::make("Stale prepared call target");
 	$body = (string)$target->value;
 	$call = $target->call;
-	if ($call !== null) $body = $call->syntax->name . "()";
+	if ($target->returns_parameter) $body = $target->scope->declaration->parameter_name;
+	if ($call !== null) {
+		$argument = $call->parameter() === Parameter_Type::absent ? "" : (string)$call->argument();
+		$body = $call->syntax->name . "(" . $argument . ")";
+	}
 	return $entry->syntax->name . "|" . $target->scope->declaration->symbol_key() . "|" . $body
 		. "|" . bin2hex(emit_translation($entry, $compiler->definitions()));
 }

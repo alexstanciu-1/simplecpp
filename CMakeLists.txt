@@ -30,7 +30,9 @@ file(GLOB_RECURSE generator_sources CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.cpp.tpl
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.php.tpl
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.concrete.json)
-list(APPEND generator_sources ${php_generator_source})
+list(APPEND generator_sources ${php_generator_source}
+  ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/json/record_output.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/structure/record_fields.hpp)
 set(api_tooling ${CMAKE_CURRENT_BINARY_DIR}/scpp-api-tooling)
 configure_file(tools/api_generator/tooling.py.in ${api_tooling} @ONLY)
 file(CHMOD ${api_tooling} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
@@ -601,7 +603,7 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_value_passing compiler_value_passing_native PROPERTIES TIMEOUT 180)
   add_test(NAME compiler_vector_copies COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_copies.php)
   scpp_fixture_test(vector_copies php_int php_string)
-  add_test(NAME compiler_data_record_codec_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/data_record_codec_native.py)
+  add_test(NAME compiler_data_record_codec_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/data_record_codec_native.py --quick --runtime $<TARGET_FILE:scpp_runtime>)
   foreach(flavor php cpp js py)
     add_test(NAME compiler_data_records_${flavor} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/data_records_native.py --quick --flavor ${flavor})
     set_tests_properties(compiler_data_records_${flavor} PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
@@ -951,6 +953,8 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --checked-return)
     add_test(NAME compiler_retained_literal_returns COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --literal-returns)
+    add_test(NAME compiler_retained_parameter_incremental COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --parameter-incremental)
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_FILESYSTEM
      AND SCPP_ENABLE_JSON AND SCPP_ENABLE_IO AND SCPP_ENABLE_DATETIME)

@@ -240,7 +240,16 @@ final class Cpp_Emitter
 					$default = '[]() -> ' . $this->member_type($type) . " { return $initial; }";
 				}
 				$member = $this->member_type($field->parent->definition) . '::' . Cpp_Identifier::source($field->short_name);
-				$members[] = 'field(' . Cpp_String_Literals::bytes($field->short_name) . ", &$member, $default)";
+				$sequence = '';
+				if ($type instanceof native_sequence_type) {
+					$count = $type->lower_cpp_cardinality(collection_cardinality::count, 'items');
+					$read = $type->lower_cpp_element_read('items', 'index');
+					$append = $type->lower_cpp_append_value('items', 'static_cast<decltype(value)&&>(value)');
+					$sequence = ", field.sequence([](const auto& items) { return $count; }, "
+						. "[](const auto& items, auto index) -> decltype(auto) { return $read; }, "
+						. "[](auto& items, auto&& value) { $append; })";
+				}
+				$members[] = 'field(' . Cpp_String_Literals::bytes($field->short_name) . ", &$member, $default$sequence)";
 				$argument = $this->data_argument($field, $i);
 				$args[] = $argument;
 				if ($field->parent !== $node) $base_arguments[] = $argument;

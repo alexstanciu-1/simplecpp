@@ -395,6 +395,10 @@ def verify(work, cxx, linker, adapter, selection=None):
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, ['-I', ROOT/'compiler/examples/retained_frontend/socket', *manifest['link_inputs']])
 
+    if selection == "--parameter-incremental":
+        from retained_parameter_incremental import verify as verify_parameter
+        verify_parameter(work, exe, cxx, linker, adapter, service)
+        return
     if selection == "--literal-returns":
         verify_literal_returns(work, exe, cxx, linker, adapter)
         return

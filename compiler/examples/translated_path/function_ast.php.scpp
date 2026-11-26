@@ -1,12 +1,21 @@
-// The fixed grammar's return statement records its operand token and any nullary call.
+// The bounded numeric call signature has at most one positional parameter.
+enum Parameter_Type: int {
+	case absent = 0;
+	case integer = 1;
+	case floating = 2;
+}
+
+// The return statement retains its operand and any integer call argument.
 final class Function_Return {
 	public readonly int $start;
 	public readonly int $end;
 	public readonly int $literal_token;
 
 	public readonly bool $calls_function;
+	public readonly int $argument_token;
 
-	public function __construct(int $start, int $end, int $literal_token, bool $calls_function = false) {
+	public function __construct(int $start, int $end, int $literal_token, bool $calls_function, int $argument_token) {
+		$this->argument_token = $argument_token;
 		$this->start = $start;
 		$this->end = $end;
 		$this->literal_token = $literal_token;
@@ -48,9 +57,13 @@ final class Function_Declaration {
 	public readonly int $start;
 	public readonly int $header_end;
 	public readonly bool $returns_float;
+	public readonly Parameter_Type $parameter_type;
+	public readonly string $parameter_name;
 	private ?Function_Body $completed_body = null;
 
-	public function __construct(string $name, int $start, int $header_end, bool $returns_float = false) {
+	public function __construct(string $name, int $start, int $header_end, bool $returns_float, Parameter_Type $parameter_type, string $parameter_name) {
+		$this->parameter_type = $parameter_type;
+		$this->parameter_name = $parameter_name;
 		$this->returns_float = $returns_float;
 		if ($start < 0 || $header_end < $start) {
 			throw Exception::make("Invalid function header range");

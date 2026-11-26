@@ -55,6 +55,15 @@ $badReader=json_pull_reader_create(); $ok=$badReader->start("null","bad.json",1)
 if(isset($badReader->read_string()) || isset($badReader->read_null()) || isset($badReader->start("true","",1))){return 18;}
 $reject=json_pull_reader_create(); $ok=$reject->start("[]","",1);
 if(isset($reject->reject("schema failure")) || isset($reject->kind())){return 19;}
+$packet Packet={data:[3,-4,8]}; $encoded=json_encode($packet);
+if(!isset($encoded)){return 20;}
+$wire string=$encoded;
+if($wire!=="{\"data\":[3,-4,8],\"version\":1}"){return 21;}
+$box Box={label:"a\0b"}; $label string=encodeBox($box);
+if($label!=="{\"label\":\"a\\u0000b\"}"){return 22;}
+$badFloat Reading={value:1.0e308 * 2.0}; $failedRecord=json_encode($badFloat);
+if(isset($failedRecord)){return 23;}
+$absent ?Box=null; $emptyOwner string=json_encode($absent); if($emptyOwner!=="null"){return 24;}
 return 0;
 '''
 with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
@@ -64,6 +73,12 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
     manifest, main = app/'module.json', app/'main.php'
     deps = {'dependencies': {'runtime': {'modules': ['json']}}}
     manifest.write_text(json.dumps(dict(deps, general_api=True)))
+    records = app/'records.php'
+    definitions = ('data struct Packet { public vector<int> $data; public int $version=1; }'
+                   'data class Box { public string $label; }'
+                   'data struct Reading { public float $value; }')
+    records.write_text(definitions)
+    (app/'writer.php').write_text('function encodeBox(Box $box):string {return json_encode($box);}')
     main.write_text(source)
     proc = service(app, out)
     try:
@@ -73,8 +88,21 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
         bundle = json.loads((out/'manifest.json').read_text())
         subprocess.run([sys.argv[1], '-std=c++23', '-stdlib=libc++', '--ld-path='+sys.argv[2],
                         '-I', root/'runtime/generated/public', *(out/u for u in bundle['translation_units']),
+                        root/'compiler/tests/fixtures/json_record_copies.cpp',
+                        '-Wl,--wrap=_ZN4scpp12vector_int64C1ERKS0_,--wrap=_ZN4scpp12vector_int64aSERKS0_',
                         *bundle['link_inputs'], '-o', work/'run'], check=True)
         subprocess.run([work/'run'], check=True)
+        records.write_text(definitions.replace('int $version=1', 'hash<int,int> $version'))
+        failed = invoke(proc)
+        assert 'Packet::$version' in failed.get('error', '') and artifacts(out) == baseline, failed
+        records.write_text(definitions)
+        assert 'error' not in invoke(proc) and artifacts(out) == baseline
+        fresh = service(app, work/'fresh')
+        try:
+            assert 'error' not in invoke(fresh) and artifacts(work/'fresh') == baseline
+        finally:
+            fresh.stdin.close()
+            fresh.wait()
         manifest.write_text(json.dumps(deps))
         assert 'Unknown function: json_decode_mixed' in invoke(proc).get('error','')
         main.write_text('json_encode(1); return 0;')
