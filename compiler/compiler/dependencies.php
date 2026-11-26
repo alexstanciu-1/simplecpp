@@ -12,7 +12,7 @@ interface dependency_watcher {
 	public function invalidate_dependencies(): void;
 }
 
-/** Optional emission requirements on an existing symbol/watch relation; native uint8 mask bits. */
+/** Optional emission requirements on an existing symbol/watch relation; native uint16 mask bits. */
 enum dependency_use: int
 {
 	case enum_from_value = 1;
@@ -20,6 +20,8 @@ enum dependency_use: int
 	case enum_value = 4;
 	case async_wait = 16;
 	case async_task = 32;
+	case record_decode = 256;
+	case record_result = 128;
 	case reordered_base = 64;
 	case enum_try_from_value = 8;
 
@@ -41,7 +43,7 @@ final class Dependency_Watches
 	 * Native non-owning symbols/watchers, grouped by stable source key. Owning buckets never escape this coordinator.
 	 * @var \SplObjectStorage<symbol_entry,\ArrayObject<string,\SplObjectStorage<dependency_watcher,int>>>
 	 */
-	private \SplObjectStorage $observers /** SplObjectStorage<symbol_entry,ArrayObject<string,SplObjectStorage<dependency_watcher,uint8>>> */;
+	private \SplObjectStorage $observers /** SplObjectStorage<symbol_entry,ArrayObject<string,SplObjectStorage<dependency_watcher,uint16>>> */;
 	/**
 	 * Native non-owning reverse index for watcher retirement and subscription replacement.
 	 * @var \SplObjectStorage<dependency_watcher,\SplObjectStorage<symbol_entry,bool>>
@@ -91,7 +93,7 @@ final class Dependency_Watches
 	}
 
 	/** Register one identity pair; repeated reads of the same symbol do not allocate additional relations. */
-	public function watch(symbol_entry $symbol, dependency_watcher $watcher, int $uses /** uint8 */ = 0): void
+	public function watch(symbol_entry $symbol, dependency_watcher $watcher, int $uses /** uint16 */ = 0): void
 	{
 		$source_key = $watcher->dependency_source_key();
 		if ($source_key === '') {
@@ -114,7 +116,7 @@ final class Dependency_Watches
 	}
 
 	/** Register the ordinary symbol watch and distinguish an invocation from a name lookup. */
-	public function watch_call(symbol_entry $symbol, ast_function_body $caller, int $uses /** uint8 */ = 0): void
+	public function watch_call(symbol_entry $symbol, ast_function_body $caller, int $uses /** uint16 */ = 0): void
 	{
 		$this->watch($symbol, $caller, $uses);
 		$this->targets[$caller][$symbol] = true;
@@ -221,7 +223,7 @@ final class Dependency_Watches
 	}
 
 	/** Queue observers; publication decides which semantic changes matter and explicitly ends the batch. */
-	public function changed(symbol_entry $symbol, int $only /** uint8 */ = 0): void
+	public function changed(symbol_entry $symbol, int $only /** uint16 */ = 0): void
 	{
 		if (!$this->observers->offsetExists($symbol)) {
 			return;

@@ -21,6 +21,7 @@ final class Cpp_Exit
  */
 final class Cpp_Emitter
 {
+	use Cpp_Record_Decoder;
 	use Cpp_Generator;
 
 	/** PROPERTIES */
@@ -203,6 +204,13 @@ final class Cpp_Emitter
 	public function record_declaration(ast_record_declaration $node, array &$includes /** array<string,bool> */): string
 	{
 		$layout = [];
+		$result = '';
+		if ($node->kind === record_kind::structure && $this->record_demand($node, dependency_use::record_result)) {
+			$result = $this->result_declaration($node->definition, $includes);
+			if ($this->record_demand($node, dependency_use::record_decode)) {
+				$layout[] = "\tstatic " . Cpp_Identifier::source($node->short_name) . ' ' . self::decode_method($node->definition) . '(::scpp::Decoder&);';
+			}
+		}
 		$base = $node->definition->base();
 		$has_local_constructor = isset($node->methods['__construct']);
 		$inherited_constructor = $has_local_constructor ? null : $base?->constructor();
@@ -244,12 +252,14 @@ final class Cpp_Emitter
 				if ($type instanceof native_sequence_type) {
 					$count = $type->lower_cpp_cardinality(collection_cardinality::count, 'items');
 					$read = $type->lower_cpp_element_read('items', 'index');
-					$append = $type->lower_cpp_append_value('items', 'static_cast<decltype(value)&&>(value)');
-					$sequence = ", field.sequence([](const auto& items) { return $count; }, "
-						. "[](const auto& items, auto index) -> decltype(auto) { return $read; }, "
-						. "[](auto& items, auto&& value) { $append; })";
+					$vector = $this->member_type($type);
+					$element = $this->member_type($type->write_type());
+					$append = $type->lower_cpp_append_value('items', 'std::move(value)');
+					$sequence = ", [](const $vector& items) { return $count; }, "
+						. "[](const $vector& items, ::scpp::int64 index) -> decltype(auto) { return $read; }, "
+						. "[]($vector& items, $element value) { $append; }";
 				}
-				$members[] = 'field(' . Cpp_String_Literals::bytes($field->short_name) . ", &$member, $default$sequence)";
+				$members[] = 'std::make_tuple(' . Cpp_String_Literals::bytes($field->short_name) . ", &$member, $default$sequence)";
 				$argument = $this->data_argument($field, $i);
 				$args[] = $argument;
 				if ($field->parent !== $node) $base_arguments[] = $argument;
@@ -261,8 +271,8 @@ final class Cpp_Emitter
 				array_unshift($initializers, $base_name . '(' . implode(', ', $base_arguments) . ')');
 			}
 			$layout[] = "\tusing scpp_escape_schema_owner = $name;";
-			$layout[] = "\ttemplate<class scpp_escape_Field, class scpp_escape_Apply> static decltype(auto) scpp_escape_data_schema(scpp_escape_Field field, scpp_escape_Apply apply) { return apply("
-				. implode(', ', $members) . '); }';
+			$includes['tuple'] = true;
+			$layout[] = "\tstatic auto scpp_escape_data_schema() { return std::make_tuple(" . implode(', ', $members) . '); }';
 			$layout[] = "\tstruct scpp_escape_data_tag {};";
 			$layout[] = "\t$name(scpp_escape_data_tag" . ($params === '' ? '' : ', ' . $this->data_parameters($data, $includes, true)) . ')'
 				. ($initializers === [] ? '' : ' : ' . implode(', ', $initializers)) . ' {}';
@@ -359,7 +369,7 @@ final class Cpp_Emitter
 		}
 		array_push($bases, ...$interface_bases);
 		return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
-			. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
+			. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n") . $result;
 	}
 
 	/** Spell a free prototype, including a generator layout when needed. @param bool[] $includes */
@@ -483,6 +493,13 @@ final class Cpp_Emitter
 			$data_params = $this->data_parameters($data, $includes);
 			$factory_declaration .= "\tstatic $owner scpp_escape_from_data($data_params);\n";
 		}
+		$result = '';
+		if ($payload->default_type() instanceof shared_record_type_definition && $this->record_demand($payload->declaration, dependency_use::record_result)) {
+			$result = $this->result_declaration($payload, $includes);
+			if ($this->record_demand($payload->declaration, dependency_use::record_decode)) {
+				$factory_declaration .= "\tstatic $owner " . self::decode_method($payload) . "(::scpp::Decoder&);\n";
+			}
+		}
 		$presence = $payload->declaration->kind !== record_kind::structure ? "\tstatic $owner require($owner value);\n" : '';
 		return <<<CPP
 #ifndef $guard
@@ -528,6 +545,7 @@ struct $weak {
 	$owner lock() const noexcept;
 	~$weak();
 };
+$result
 #endif
 
 CPP;
@@ -705,6 +723,9 @@ CPP;
 			if (!($node instanceof ast_type_declaration)) continue;
 			$declarations[$node->symbol_key()] = $node;
 			if (!($node instanceof ast_record_declaration)) continue;
+			if ($this->record_demand($node, dependency_use::record_decode)) {
+				$definitions[] = $this->decode_definition($node->definition, $declarations, $required_headers);
+			}
 			foreach (self::variance_bridges($node) as [$contract, $implementation]) {
 				$this->collect_signature_types($contract, $declarations);
 				$this->collect_signature_types($implementation, $declarations);
@@ -2440,6 +2461,12 @@ CPP;
 		}
 		$reorderable = false;
 		$value_type = $value->type_def();
+		if ($value_type instanceof record_result_type_definition) {
+			$payload = $value_type->payload_type;
+			if ($payload instanceof shared_record_type_definition) $declarations[$payload->name] = $payload;
+			$record = $payload instanceof shared_record_type_definition ? $payload->payload : $payload;
+			$declarations[$record->declaration->symbol_key()] = $record->declaration;
+		}
 		if ($value_type instanceof enum_type_definition || $value_type instanceof nullable_enum_type_definition) {
 			$enum = $value_type instanceof nullable_enum_type_definition ? $value_type->payload_type : $value_type;
 			$declarations[$enum->declaration->symbol_key()] = $enum->declaration;
@@ -2930,6 +2957,12 @@ CPP;
 			$function = $value->implementation();
 			if ($function instanceof runtime_function) {
 				if ($value_type instanceof application_collection_type) $this->concrete_collections->request($value_type);
+				if ($function instanceof record_decode_function) {
+					$target = $function->target;
+					$declarations[$target->declaration->symbol_key()] = $target->declaration;
+					$owner = $target->default_type();
+					if ($owner instanceof shared_record_type_definition) $declarations[$owner->name] = $owner;
+				}
 				if ($function instanceof collection_transform_function) {
 					return $this->collection_transform($value, $function, $global_references, $declarations, $required_headers);
 				}
@@ -4079,7 +4112,7 @@ CPP;
 			return;
 		}
 		if ($type instanceof segment_type) self::visit_signature_type_dependencies($type->element, $visit);
-		if ($type instanceof nullable_enum_type_definition) $visit($type->payload_type);
+		if ($type instanceof nullable_enum_type_definition || $type instanceof record_result_type_definition) $visit($type->payload_type);
 		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) $visit($type);
 	}
 

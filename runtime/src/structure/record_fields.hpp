@@ -3,6 +3,7 @@
 #define SCPP_DETAIL_STRUCTURE_RECORD_FIELDS_HPP
 #include <string_view>
 #include <type_traits>
+#include <tuple>
 #include <utility>
 
 namespace scpp::structure {
@@ -23,22 +24,26 @@ struct field {
     using value_type = Value;
 };
 
-struct describe {
-    template<class Count, class At, class Append>
-    static constexpr auto sequence(Count count, At at, Append append) {
-        return sequence_ops<Count, At, Append>{count, at, append};
-    }
-    template<class Record, class Value, class Default, class Shape = leaf>
-    constexpr auto operator()(std::string_view name, Value Record::*member, Default fallback, Shape shape = {}) const {
-        return field<Record, Value, Default, Shape>{name, member, fallback, shape};
-    }
-};
+template<class Record, class Value, class Default>
+constexpr auto describe(const char* name, Value Record::*member, Default fallback) {
+    return field<Record, Value, Default, leaf>{name, member, fallback, {}};
+}
+template<class Record, class Value, class Default, class Count, class At, class Append>
+constexpr auto describe(const char* name, Value Record::*member, Default fallback, Count count, At at, Append append) {
+    using shape = sequence_ops<Count, At, Append>;
+    return field<Record, Value, Default, shape>{name, member, fallback, {count, at, append}};
+}
 
+template<class Record, class Apply> decltype(auto) apply_schema(Apply apply) {
+    static_assert(std::is_same_v<Record, typename Record::scpp_escape_schema_owner>);
+    auto unpack = [](auto... parts) { return describe(parts...); };
+    return std::apply([&](auto... fields) { return apply(std::apply(unpack, fields)...); },
+                      Record::scpp_escape_data_schema());
+}
 }
 // The callback borrows each stored value for the duration of its invocation.
 template<class Record, class Visitor> void visit_fields(const Record& record, Visitor&& visitor) {
-    static_assert(std::is_same_v<Record, typename Record::scpp_escape_schema_owner>);
-    Record::scpp_escape_data_schema(detail::describe{}, [&](auto... fields) {
+    detail::apply_schema<Record>([&](auto... fields) {
         (visitor(fields.name, record.*fields.member, fields.shape), ...);
     });
 }

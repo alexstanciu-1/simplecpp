@@ -16,7 +16,7 @@ final class Cpp_Headers
 	private array $files /** array<string,string> */ = [];
 
 	/** @var int[] Ephemeral lowering requirements from completed watch relations. */
-	private ?array $helper_uses /** array<string,uint8>|null */ = null;
+	private ?array $helper_uses /** array<string,uint16>|null */ = null;
 
 	/** @var array<string,array{declaration:string,definition:string}> Task fragments by private header path for this emission. */
 	private array $grouped_tasks = [];
@@ -108,6 +108,10 @@ final class Cpp_Headers
 							$record_headers[$header_name] = true;
 						} else {
 							$owners[$type->cpp_type()] = 'struct ' . $type->cpp_type() . ';';
+							if ($type->payload->uses_helper(dependency_use::record_result)) {
+								$result = $type->payload->record_result()->cpp_type();
+								$owners[$result] = 'struct ' . $result . ';';
+							}
 							$record_header = $this->publish_record($type->payload->declaration, $emitter, $program->session?->cpp_namespace ?? 'App');
 							if ($node->return_type_def() instanceof generator_type_definition) {
 								$record_headers[$record_header] = true;
@@ -352,8 +356,8 @@ final class Cpp_Headers
 		foreach ($file->declaration_nodes as $record) {
 			if (!($record instanceof ast_type_declaration)) continue;
 			$header = $record instanceof ast_enum_declaration ? hash('sha256', 'enum:' . $record->symbol_key()) . '.hpp' : self::record_header($record);
-			if ($record instanceof ast_record_declaration && !$record->is_final && count($record->methods['__construct']->parameters ?? []) > 1) {
-				// A foreign base initializer can add or retire the constructor's staged entry point.
+			if ($record instanceof ast_record_declaration && ($record->is_data || (!$record->is_final && count($record->methods['__construct']->parameters ?? []) > 1))) {
+				// A foreign caller can add or retire a concrete decoder, result or constructor entry point.
 				$layout = hash('sha256', "layout\0" . $record->symbol_key()) . '.hpp';
 				foreach ([$header, $layout] as $path) {
 					if (($this->files['units/' . $path] ?? null) !== ($previous->files['units/' . $path] ?? null)) return true;

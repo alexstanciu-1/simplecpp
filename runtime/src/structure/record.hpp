@@ -32,8 +32,7 @@ template<class Field> struct input {
 // document boundary so nested records can use the same adapter as the root.
 template<class Record, class Reader, class Factory>
 auto read(Reader& reader, Factory factory) {
-    static_assert(std::is_same_v<Record, typename Record::scpp_escape_schema_owner>);
-    return Record::scpp_escape_data_schema(detail::describe{}, [&](auto... fields) {
+    return detail::apply_schema<Record>([&](auto... fields) {
         auto construct = [&](auto... slots) {
             reader.fields([&](std::string_view name) {
                 if (!(slots.select(name, reader) || ...)) reader.reject("unknown field");

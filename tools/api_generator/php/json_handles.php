@@ -121,7 +121,13 @@ function renderJsonReader(array $plan, array &$files): void {
         $capture = $signature === [] ? '[]' : '[&]';
         $definitions .= "$result json_pull_reader::$call {\n    return detail::json::read_checked<$result>(data_ ? data_->cursor.get() : nullptr, $capture(auto& cursor) { $work });\n}\n";
     }
+    if (in_array('decode', array_column($plan['json']['operations'], 'id'), true)) {
+        $declarations .= "    void with_decoder(void*, void (*)(void*, Decoder&)) const;\n";
+        $definitions .= "void json_pull_reader::with_decoder(void* out, void (*consume)(void*, Decoder&)) const {\n"
+            . "    if (!data_ || !data_->cursor) throw std::runtime_error(\"JSON reader is not initialized\");\n"
+            . "    json::record_reader reader{*data_->cursor};\n    consume(out, reader);\n}\n";
+    }
     $files['public/' . $header] = moduleHeaderBody([$plan['carriers_header']], 'scpp',
-        template('json/pull_reader_type', ['methods' => $declarations]));
+        "class Decoder;\n" . template('json/pull_reader_type', ['methods' => $declarations]));
     $files['src/json.cpp'] .= includeHeader($header) . includeHeader('pull_reader_impl.hpp') . "namespace scpp {\n$definitions}\n";
 }

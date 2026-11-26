@@ -124,7 +124,7 @@ paths record provenance only: builds use v0.2 sources exclusively. The private
 `boxed_inspection` adapter exposes no public cursor, mutable reference or subscription.
 Public traversal/liveness remains RT-DEBT-01.
 
-Typed `from_json`, standalone typed vector/hash encoding,
+Standalone typed vector/hash encoding,
 PHP compatibility wrappers and persistent `{}`/`[]` identity remain separate work.
 The donor's recursive parser/writer has no explicit nesting-depth budget; this slice
 does not establish a hostile-input resource-limit contract or a throughput claim.
@@ -143,6 +143,29 @@ element has an exact published value encoder. The schema supplies the field
 order and the writer borrows the record for the call. Module failures such as a
 nonfinite float return a failed `result<string>`. See [data record
 construction and codecs](data_initialization.md#native-codec-adapters-for-field-derived-signatures).
+
+With the decode operation selected, PHP and the general API expose
+`json_decode_as($text, Packet::class)` returning `result<Packet>`. The marker
+must resolve to a concrete data class or struct with a generated data constructor.
+Supported leaves are published signed int64, boolean and string values, including
+vector elements. The root must be one complete JSON object. Members may arrive
+in any order. Unknown members, duplicates, missing required inputs, malformed
+elements and trailing non-whitespace produce a failed result. The error message
+includes the byte offset and the reader path.
+
+A nested field may be an embedded data struct or a required data class with
+a supported schema. Each record consumes exactly one object on the same
+decoder. The native `Decoder` interface exposes object and array entry,
+field and element advancement, a borrowed field name, typed leaf reads and
+schema rejection. A false result from `next_field()` closes the object.
+At the root it also guarantees document completion. A source call such as
+`Packet::decode($reader)` takes a started JSON pull reader and returns the
+record directly. An authored static method with that name takes precedence.
+Use the text entry point for a checked result.
+
+A successful result owns the struct or the class owner. Extracting a temporary
+moves its payload; extracting a retained struct result into another value copies
+the struct and preserves the saved result. Use `isset($result)` to test success.
 
 ## Document and node publication
 

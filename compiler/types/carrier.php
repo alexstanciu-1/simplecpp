@@ -253,6 +253,57 @@ final class nullable_enum_type_definition extends carrier_type_definition
 	}
 }
 
+/** Owned result of decoding a nominal data record. */
+final class record_result_type_definition extends carrier_type_definition
+{
+	public function __construct(type_definition $payload)
+	{
+		parent::__construct('result', $payload);
+	}
+
+	public function accepts_empty(): bool
+	{
+		return false;
+	}
+
+	public function supports_coalescing(): bool
+	{
+		return false;
+	}
+
+	public function implicit_extraction(): bool
+	{
+		return true;
+	}
+
+	public function sentinel_factory(string $state): ?string
+	{
+		return null;
+	}
+
+	public function lower_cpp_extract(string $value): string
+	{
+		return '(' . $value . ').value()';
+	}
+
+	public function lower_cpp_presence(string $value): string
+	{
+		return '(' . $value . ').has_value()';
+	}
+
+	public function cpp_type(): string
+	{
+		$record = $this->payload_type instanceof shared_record_type_definition ? $this->payload_type->payload : $this->payload_type;
+		return 'record_result_' . Cpp_Emitter::qualified_name($record->declaration);
+	}
+
+	/** @return string[] */
+	public function cpp_headers(): array /** list<string> */
+	{
+		return type_result_dynamic::instance()->cpp_headers();
+	}
+}
+
 /** Compiler-only literal identity for an explicit alternate state; e.g. false_sentinel is not the bool false. */
 abstract class carrier_sentinel_type_definition extends type_definition
 {

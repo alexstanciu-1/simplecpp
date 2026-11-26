@@ -4,6 +4,7 @@ namespace Scpp\Api;
 
 require_once __DIR__ . '/json_handles.php';
 
+const JSON_RECORD_READERS = ['int64' => 'read_integer', 'bool_t' => 'read_boolean', 'string' => 'read_string'];
 const JSON_OPERATIONS = [
     'decode' => ['decode', 'dynamic', 'result_dynamic', 'string'],
     'decode_mixed' => ['decode_mixed', 'mixed', 'result_mixed', 'string'],
@@ -72,6 +73,14 @@ function compilerJsonCases(?array $runtime, array $types): array {
         $name = 'json_' . $op['name'];
         $header = moduleOperationHeader($runtime['json']['header'], $op['id']);
         $binding = "new runtime_function('$name', [$argument::instance()], $result::instance(), '::scpp::json::{$op['name']}', '$header', const_reference_mask: 1, required_module: 'runtime-json', exact_arguments: true)";
+        if ($op['id'] === 'decode') {
+            $leaves = [];
+            foreach (JSON_RECORD_READERS as $id => $method) {
+                if (isset($types[$id])) $leaves[] = 'type_' . $types[$id] . "::class => '$method'";
+            }
+            $cases[] = "\t\t\t'php:func:json_decode_as', 'general:func:json_decode_as' => \$bindings[\$key] ??= new json_decoder_contract(["
+                . implode(', ', $leaves) . "], '" . moduleOperationHeader($runtime['json']['header'], 'decode_record') . "'),";
+        }
         if ($name === 'json_encode') {
             $encoders[] = "$argument::class => $binding";
         } else {

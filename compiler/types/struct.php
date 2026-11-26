@@ -21,6 +21,8 @@ final class record_type_definition extends type_definition implements dependency
 	/** PROPERTIES */
 	/** Native non-owning defining AST. */
 	public readonly ast_record_declaration $declaration;
+	/** Owned canonical result specialization, created on first use. */
+	private ?record_result_type_definition $result = null;
 	/** Canonical shared identity published alongside the value identity before body preparation. */
 	public readonly shared_record_type_definition $shared;
 	/** Required class/interface value; structs reuse their explicit shared identity without another allocation. */
@@ -644,6 +646,17 @@ final class record_type_definition extends type_definition implements dependency
 			}
 		}
 		return $value;
+	}
+
+	/** Emission demand belongs to live source watches, including standalone preparation. */
+	public function uses_helper(dependency_use $use): bool
+	{
+		return $this->dependencies?->has_use($this->symbol, $use) ?? false;
+	}
+
+	public function record_result(): record_result_type_definition
+	{
+		return $this->result ??= new record_result_type_definition($this->default_type());
 	}
 
 	/** Separate source records from synthesized functions, owners and variables in the enclosing app namespace. */

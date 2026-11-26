@@ -160,6 +160,7 @@ public:
 	void reject(const std::string &message) {
 		checked([&] { reader_detail::fail_json_parse(message, pos_, "schema"); });
 	}
+	bool at_root() const noexcept { return frames_.empty(); }
 	void finish_document() {
 		checked([&] {
 			if (pending_ || !frames_.empty()) reader_detail::fail_json_parse("unconsumed JSON value", pos_, "protocol");
