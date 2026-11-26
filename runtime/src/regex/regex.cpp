@@ -614,12 +614,11 @@ result_or_false_int64 preg_match_numbered(const string& pattern, const string& s
     return ok ? result_or_false_int64{int64{hit}} : result_or_false_int64::from_false();
 }
 
-result_or_false_int64 preg_match_all_numbered(const string& pattern, const string& subject, vector_vector_string& matches,
-                                              int64 flags, int64 offset) {
-    validate_match_flags(flags, true);
+namespace {
+result_or_false_int64 collect_numbered_matches(const string& pattern, const string& subject, vector_vector_string& matches,
+                                               bool columns, int64 offset) {
     capture_pattern compiled(pattern);
     vector_vector_string output;
-    const bool columns = flags != 2;
     if (compiled.data && columns) {
         uint32_t groups = 0;
         pcre2_pattern_info(compiled.code.get(), PCRE2_INFO_CAPTURECOUNT, &groups);
@@ -638,6 +637,14 @@ result_or_false_int64 preg_match_all_numbered(const string& pattern, const strin
     });
     matches = ok ? std::move(output) : vector_vector_string{};
     return ok ? result_or_false_int64{hits} : result_or_false_int64::from_false();
+}
+
+} // namespace
+
+result_or_false_int64 preg_match_all_numbered(const string& pattern, const string& subject, vector_vector_string& matches,
+                                              int64 flags, int64 offset) {
+    validate_match_flags(flags, true);
+    return collect_numbered_matches(pattern, subject, matches, flags != 2, offset);
 }
 
 result_or_false_int64 preg_match_numbered(const string& pattern, const string& subject, vector_string& matches, int64 flags) {
@@ -711,16 +718,20 @@ result_or_false_int64 preg_match_named(const string& pattern, const string& subj
         [](auto& output, auto row) { output = std::move(row); });
 }
 
-result_or_false_int64 preg_match_all_named_rows(const string& pattern, const string& subject, vector_hash_string_string& matches,
-                                                int64 flags, int64 offset) {
-    if (flags != 2) throw ValueError("preg_match_all named rows require PREG_SET_ORDER");
+result_or_false_int64 preg_match_all_set_order_named(const string& pattern, const string& subject,
+                                                     vector_hash_string_string& matches, int64 offset) {
     return php_named_rows(pattern, subject, matches, offset, true,
         [](auto& output, auto row) { output.append(std::move(row)); });
 }
 
-result_or_false_int64 preg_match_all_named_columns(const string& pattern, const string& subject, hash_vector_string_string& matches,
-                                                   int64 flags, int64 offset) {
-    if (flags != 0 && flags != 1) throw ValueError("preg_match_all named columns require PREG_PATTERN_ORDER");
+result_or_false_int64 preg_match_all_named_rows(const string& pattern, const string& subject, vector_hash_string_string& matches,
+                                                int64 flags, int64 offset) {
+    if (flags != 2) throw ValueError("preg_match_all named rows require PREG_SET_ORDER");
+    return preg_match_all_set_order_named(pattern, subject, matches, offset);
+}
+
+result_or_false_int64 preg_match_all_pattern_order_named(const string& pattern, const string& subject,
+                                                         hash_vector_string_string& matches, int64 offset) {
     capture_pattern compiled(pattern);
     if (compiled.data) {
         const auto names = names_by_group(compiled);
@@ -746,6 +757,36 @@ result_or_false_int64 preg_match_all_named_columns(const string& pattern, const 
     }
     matches = hash_vector_string_string{};
     return result_or_false_int64::from_false();
+}
+
+result_or_false_int64 preg_match_all_named_columns(const string& pattern, const string& subject, hash_vector_string_string& matches,
+                                                   int64 flags, int64 offset) {
+    if (flags != 0 && flags != 1) throw ValueError("preg_match_all named columns require PREG_PATTERN_ORDER");
+    return preg_match_all_pattern_order_named(pattern, subject, matches, offset);
+}
+
+result_or_false_int64 preg_match_all_set_order_numbered(const string& pattern, const string& subject,
+                                                        vector_vector_string& matches, int64 offset) {
+    return collect_numbered_matches(pattern, subject, matches, false, offset);
+}
+result_or_false_int64 preg_match_all_set_order_numbered(const string& pattern, const string& subject, vector_vector_string& matches) {
+    return preg_match_all_set_order_numbered(pattern, subject, matches, 0);
+}
+
+result_or_false_int64 preg_match_all_set_order_named(const string& pattern, const string& subject, vector_hash_string_string& matches) {
+    return preg_match_all_set_order_named(pattern, subject, matches, 0);
+}
+
+result_or_false_int64 preg_match_all_pattern_order_numbered(const string& pattern, const string& subject,
+                                                            vector_vector_string& matches, int64 offset) {
+    return collect_numbered_matches(pattern, subject, matches, true, offset);
+}
+result_or_false_int64 preg_match_all_pattern_order_numbered(const string& pattern, const string& subject, vector_vector_string& matches) {
+    return preg_match_all_pattern_order_numbered(pattern, subject, matches, 0);
+}
+
+result_or_false_int64 preg_match_all_pattern_order_named(const string& pattern, const string& subject, hash_vector_string_string& matches) {
+    return preg_match_all_pattern_order_named(pattern, subject, matches, 0);
 }
 
 result_or_false_int64 preg_match_named(const string& pattern, const string& subject, hash_string_string& matches, int64 flags) {

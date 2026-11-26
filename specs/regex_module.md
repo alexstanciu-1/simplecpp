@@ -43,6 +43,15 @@ even on a miss. A duplicate name selects its rightmost declared column and keeps
 its original insertion position. An order incompatible with the output slot
 raises ValueError before regex evaluation or mutation. Regex failure clears
 the typed output and returns false.
+
+PHP also exposes `preg_match_all_set_order(pattern, subject, matches[, offset])`
+and `preg_match_all_pattern_order(pattern, subject, matches[, offset])`. The
+name selects the layout. Both accept an exact writable `vector<vector<string>>`
+for numbered captures. Set order accepts `vector<hash<string,string>>` for named
+rows; pattern order accepts `hash<vector<string>,string>` for named columns.
+The optional fourth argument is a byte offset, defaulting to zero. Status,
+capture keys, misses and failures follow the corresponding `preg_match_all` order.
+
 The split flags are PREG_SPLIT_NO_EMPTY and PREG_SPLIT_DELIM_CAPTURE.
 
 PHP preg_split directly exposes regex_split and returns result_or_false<vector<string>>.

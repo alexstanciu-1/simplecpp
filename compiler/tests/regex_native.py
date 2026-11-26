@@ -249,6 +249,24 @@ if ($status !== false || count($columns) !== 0) { return 97; }
 $n = preg_match_all($dupes, "b", $namedRows, PREG_SET_ORDER);
 $status = preg_match_all("/[/", "b", $namedRows, PREG_SET_ORDER);
 if ($status !== false || count($namedRows) !== 0) { return 98; }
+$n = preg_match_all_set_order("/(a)(b)?/", "aba", $matrix);
+if ($n !== 2 || count($matrix) !== 2 || $matrix[0][2] !== "b" || count($matrix[1]) !== 2) { return 99; }
+$n = preg_match_all_set_order("/(.)/u", "éax", $matrix, 2);
+if ($n !== 2 || $matrix[0][0] !== "a") { return 100; }
+$n = preg_match_all_pattern_order("/(a)(b)?/", "aba", $matrix);
+if ($n !== 2 || count($matrix) !== 3 || $matrix[2][0] !== "b" || $matrix[2][1] !== "") { return 101; }
+$n = preg_match_all_pattern_order("/(.)/u", "éax", $matrix, -1);
+if ($n !== 1 || $matrix[1][0] !== "x") { return 102; }
+$n = preg_match_all_set_order($dupes, "ab", $namedRows);
+if ($n !== 2 || $namedRows[0]["x"] !== "a" || $namedRows[1]["x"] !== "b") { return 103; }
+$n = preg_match_all_set_order($dupes, "ab", $namedRows, -1);
+if ($n !== 1 || $namedRows[0]["x"] !== "b") { return 104; }
+$n = preg_match_all_pattern_order($dupes, "ab", $columns);
+if ($n !== 2 || $columns["x"][0] !== "" || $columns["x"][1] !== "b") { return 105; }
+$n = preg_match_all_pattern_order($dupes, "ab", $columns, 2);
+if ($n !== 0 || count($columns) !== 4 || count($columns["x"]) !== 0) { return 106; }
+$status = preg_match_all_pattern_order("/[/", "a", $columns);
+if ($status !== false || count($columns) !== 0) { return 107; }
 $row result_or_false<vector<string>> = regex_match("/(a)?(b)(z)?/", "xxb", -1);
 $v vector<string> = $row;
 if (count($v) !== 3 || $v[0] !== "b" || $v[1] !== "" || $v[2] !== "b") { return 11; }
@@ -340,9 +358,13 @@ def prove(work, runtime, flavor):
             lowered = b'\n'.join(artifacts(output).values())
             for target in ('preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
                            'preg_filter_string_keys', 'preg_filter', 'preg_match_numbered', 'preg_match_all_numbered',
-                           'preg_match_named', 'preg_match_all_named_rows', 'preg_match_all_named_columns'):
+                           'preg_match_named', 'preg_match_all_named_rows', 'preg_match_all_named_columns',
+                           'preg_match_all_set_order_named', 'preg_match_all_pattern_order_named',
+                           'preg_match_all_set_order_numbered', 'preg_match_all_pattern_order_numbered'):
                 assert f'::scpp::regex::{target}('.encode() in lowered, target
             for bad_source, diagnostic in [
+                ('$m hash<vector<string>,string> = []; preg_match_all_set_order("/a/", "a", $m);', 'Unsupported argument type'),
+                ('$m vector<hash<string,string>> = []; preg_match_all_pattern_order("/a/", "a", $m);', 'Unsupported argument type'),
                 ('$m = preg_split("/,/", "a"); preg_match("/a/", "a", $m);', 'Unsupported argument type'),
                 ('$m vector<string> = []; preg_match_all("/a/", "a", $m);', 'Unsupported argument type'),
                 ('function inspect(const vector<string> &$m): void { preg_match("/./", "x", $m); }',
