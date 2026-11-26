@@ -121,7 +121,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             'required_module' => $module];
         $optionalRequires .= "require_once __DIR__ . '/$identity.php';\n";
     }
-    $moduleTypes = ($runtime['json_handles'] ?? []) + ($runtime['resource_types'] ?? []);
+    $moduleTypes = ($runtime['regex_records'] ?? []) + ($runtime['json_handles'] ?? []) + ($runtime['resource_types'] ?? []);
     foreach (($runtime['text_builders'] ?? []) + $moduleTypes as $identity => $builder) {
         $definitions[$identity] = ['class' => $identity, 'cpp' => "::scpp::$identity",
             'cpp_header' => $builder['header'], 'aliases' => [$identity], 'strategy' => $builder['strategy'] ?? 'builder',
@@ -200,6 +200,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         if ($handle) $indexInterface = ' implements runtime_handle_type';
         if (isset($moduleTypes[$identity]['fields']) || isset($moduleTypes[$identity]['properties'])) {
             $indexInterface = $handle ? ' implements runtime_handle_type, runtime_field_type' : ' implements runtime_field_type';
+            if (isset($runtime['regex_records'][$identity])) $indexInterface = ' implements runtime_field_getters';
             $fields = [];
             foreach (($moduleTypes[$identity]['fields'] ?? $moduleTypes[$identity]['properties']) as $field => $type) {
                 $class = $definitions[$type]['class'] ?? $type;
@@ -296,6 +297,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
     }
     foreach ($runtime['regex_vectors'] ?? [] as $vector) $runtimeTypes[$vector['name']] = $vector['name'];
+    foreach (array_keys($runtime['regex_shapes'] ?? []) as $shape) $runtimeTypes[$shape] = $shape;
     $runtimeTypes += $carrierTypes;
     foreach ($runtime['hashes']['specializations'] ?? [] as $hash) {
         if (isset($runtimeTypes[$hash['key']], $runtimeTypes[$hash['value']])) $runtimeTypes[$hash['name']] = $hash['name'];

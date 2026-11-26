@@ -238,3 +238,20 @@ The executable printed `0 3 32` for an empty string, an embedded-NUL three-byte 
 3. **Result adaptation.** For PHP `strpos`, compare check-immediately and return-the-result callers on misses and hits including zero. Keep search and carrier representation fixed when testing only the adapter boundary. Match ABI when comparing with hand LLVM.
 4. **When extra C++ pays.** Pair a simpler emitter that writes explicit steps with a more selective emitter that elides them. Measure PHP lowering time as well as native compilation, first in a focused probe and then on one of the single-file samples. Keep neutral results, regressions and version-dependent outcomes alongside wins.
 5. **Stage 2, checked vector arguments.** In `preg_grep($pattern, preg_split(...))`, the typed split removes per-element boxing. The checked `.value()` still returns an owning vector by value and copies its storage before grep borrows it. Compare safe borrowing or moving for temporary and named carriers, including failure and operand lifetimes, before changing extraction.
+
+## PHP regex capture record allocations
+
+On dev002 with Clang 18.1.3, libc++ and `-O2`, both native offset records
+measured 32 bytes. Appending 64 one-byte nullable-offset captures into a
+reserved vector took zero ordinary C++ allocations. Reading all 64 byte offsets
+also took zero. Reading all 64 present `?string` fields took 64 allocations.
+The record stores an owning string and uses offset `-1` to represent absence.
+The nullable carrier is constructed when the field is read.
+
+For 64 hits of `/(.)/` in numbered pattern order (128 one-byte cells),
+the unflagged, offset-only, null-only and combined calls made 15, 16, 144 and
+16 ordinary C++ allocations respectively. These counts include output vector
+growth. PCRE2 allocator traffic and long-string payloads are outside the
+measurement. Reproduce with the regex module enabled and
+`ctest --preset default -V -R '^compiler_regex_native$'`.
+[Probe](../../../compiler/tests/regex_capture_allocations.cpp)

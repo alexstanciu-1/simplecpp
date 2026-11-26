@@ -171,6 +171,7 @@ function render(array $plan): array {
     renderJson($plan, $files);
     renderResourceModules($plan, $files);
     renderRegexCaptureTypes($plan, $files, $groups);
+    renderRegexModeTypes($plan, $files, $groups);
     foreach (FUNCTION_MODULES as $family) renderModuleFunctions($family, $plan, $files, $groups);
     renderBoxed($plan, $files, $groups);
     renderCliHelpers($plan, $files);

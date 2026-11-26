@@ -32,20 +32,8 @@ function prepareRegexCaptureTypes(array $names, object $functions, string $modul
         $element = str_starts_with($payload, 'vector_') ? substr($payload, 7) : $payload;
         $requires[] = typeExport($plan['submodules'], $element)['provider'];
         if ($element !== $payload) {
-            $row = $shape;
-            $row['name'] = $payload;
-            $row['element'] = $element;
-            $row['source_type'] = $element === 'vector_string' ? 'vector<vector<string>>' : 'vector<hash<string,string>>';
-            $row['native_value'] = '';
-            $row['operations'] = [];
-            $row['initialization'] = ['bulk' => null];
-            $row['methods'] = [];
-            foreach ($shape['methods'] as $method) {
-                if (in_array('const char*', $method['arguments'], true)) continue;
-                $method['arguments'] = array_map(static fn($t) => str_replace('string', $element, $t), $method['arguments']);
-                if ($method['result'] === 'string') $method['result'] = $element;
-                $row['methods'][] = $method;
-            }
+            $source = $element === 'vector_string' ? 'vector<vector<string>>' : 'vector<hash<string,string>>';
+            $row = regexCaptureVector($shape, $payload, $element, $source);
             $plan['regex_vectors'][] = $row;
             $plan['submodules']['type_exports'][$payload] = ['symbol' => 'scpp::' . $payload, 'provider' => $provider];
         }
@@ -77,3 +65,5 @@ function renderRegexCaptureTypes(array $plan, array &$files, array &$groups): vo
     $groups[] = ['provider' => $pub['provider'], 'system' => [], 'declarations' => $decl . "}\n"];
     $files['src/runtime.cpp'] .= includeHeader($pub['header']) . "namespace scpp {\n$body}\n";
 }
+
+require_once __DIR__ . '/regex_modes.php';

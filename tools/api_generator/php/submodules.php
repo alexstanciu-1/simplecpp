@@ -325,6 +325,14 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
                 $headers[] = moduleOperationHeader($header, $name);
             }
         }
+        if ($family === 'regex') {
+            $variants = regexModeVariants($catalog, $publication->regex);
+            if ($variants) {
+                $headers[] = 'scpp/php/regex_hash_isset.hpp';
+                $headers[] = moduleOperationHeader($header, 'flag_types');
+            }
+            foreach ($variants as $name => $_) $headers[] = moduleOperationHeader($header, $name);
+        }
         foreach (names($publication->{$family}->functions) as $name) {
             requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module function name');
             $headers[] = moduleOperationHeader($header, $name);
@@ -374,7 +382,7 @@ function finalizePublicationProviders(array &$plan): void {
         $plan['string_library']['requires'][] = $binding['direct_provider'];
     }
     foreach ($plan['carriers'] ?? [] as $carrier) $published[] = typeExport($providers, $carrier['name'])['provider'];
-    foreach (['string', 'string_view', 'string_library', 'search_policy', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'regex_capture_publication', 'filesystem', 'regex'] as $family) {
+    foreach (['string', 'string_view', 'string_library', 'search_policy', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'regex_capture_publication', 'regex_mode_publication', 'filesystem', 'regex'] as $family) {
         if (!isset($plan[$family])) continue;
         $declaration = $plan[$family];
         $id = $declaration['provider'];

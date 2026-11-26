@@ -48,6 +48,8 @@ final readonly class RuntimeConcreteType implements ConcreteType, ConcreteHashKe
         foreach (array_merge($plan['vectors'] ?? [], $plan['hashes']['specializations'] ?? []) as $type) {
             if ($type['name'] === $identity) $lifecycle = $type['lifecycle'] ?? null;
         }
+        if (isset($plan['regex_shapes'][$identity]) || isset($plan['regex_records'][$identity])
+            || in_array($identity, array_column($plan['regex_modes'] ?? [], 'cell'), true)) $lifecycle = 'owned_copy_noexcept_move';
         $this->keyContract = $plan['hashes']['key_contracts'][$identity] ?? null;
         $this->identity = $identity;
         $this->symbol = $export['symbol'];

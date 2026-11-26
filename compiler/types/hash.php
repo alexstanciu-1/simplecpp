@@ -61,6 +61,16 @@ abstract class hash_type_definition extends type_definition implements readonly_
 		return $this->key_type->lower_cpp_exact_argument($syntax, value_conversion::identity, $key);
 	}
 
+	public function publishes_entry_isset(): bool
+	{
+		return false;
+	}
+
+	public function php_isset_header(): string
+	{
+		return 'scpp/php/hash_isset.hpp';
+	}
+
 	abstract public function presence_function(): runtime_function;
 
 	public function prepare_membership(ast_binary_expression $site): void

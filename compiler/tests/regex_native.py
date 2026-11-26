@@ -290,6 +290,65 @@ if ($t !== "baab") { return 19; }
 $bad result_or_false<string> = regex_replace("/[/", "", "", 0);
 if (isset($bad)) { return 20; }
 ''')
+        # At byte 2, group 1 is unset, group 2 matches empty and group 4 is trailing/unset.
+        statements.append('$capturePattern string = "/(?<pre>x)?(?<empty>)(é)(?<tail>z)?/u";')
+        for suffix, cell, flag, offsets, nulls in [
+            ('Offset', 'regex_offset_capture', 'PREG_OFFSET_CAPTURE', True, False),
+            ('Null', '?string', 'PREG_UNMATCHED_AS_NULL', False, True),
+            ('Both', 'regex_nullable_offset_capture', '(PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL)', True, True),
+        ]:
+            number = local('numbers' + suffix, f'vector<{cell}>', '[]')
+            named = local('named' + suffix, f'hash<{cell},string>', '[]')
+            rows = local('sets' + suffix, f'vector<hash<{cell},string>>', '[]')
+            columns = local('cols' + suffix, f'hash<vector<{cell}>,string>', '[]')
+            matrix = local('matrix' + suffix, f'vector<vector<{cell}>>', '[]')
+            for target in (number, named):
+                statements.append(f'$n = preg_match($capturePattern, "αé", {target}, {flag}, 2);')
+                statements.append(f'if ($n !== 1 || count({number}) !== {5 if nulls else 4}) {{ return 108; }}')
+            statements.append(f'if (isset({named}["missing"]) || !isset({named}["empty"])) {{ return 118; }}')
+            if not offsets:
+                statements.append(f'if (isset({named}["pre"]) || !{named}->has("pre")) {{ return 119; }}')
+            statements.append(f'if ({named}->has("tail") !== {"true" if nulls else "false"}) {{ return 120; }}')
+            field = '->text' if offsets else ''
+            statements.append(f'if ({number}[3]{field} !== "é") {{ return 121; }}')
+            for order, target in [('PREG_SET_ORDER', rows), ('PREG_PATTERN_ORDER', columns)]:
+                statements.append(f'$n = preg_match_all($capturePattern, "αé", {target}, {order} | {flag}, 2);')
+                statements.append('if ($n !== 1) { return 109; }')
+            for args, pre, empty in [
+                (number, '[1]', '[2]'), (named, '["pre"]', '["empty"]'),
+                (rows, '[0]["pre"]', '[0]["empty"]'), (columns, '["pre"][0]', '["empty"][0]'),
+            ]:
+                text = '->text' if offsets else ''
+                absent = 'null' if nulls else '""'
+                statements.append(f'if ({args}{pre}{text} !== {absent} || {args}{empty}{text} !== "") {{ return 110; }}')
+                if offsets:
+                    statements.append(f'if ({args}{pre}->byte_offset !== -1 || {args}{empty}->byte_offset !== 2) {{ return 111; }}')
+            statements.append(f'$n = preg_match_all_set_order($capturePattern, "αé", {matrix}, -2);')
+            statements.append(f'if ($n !== 1 || count({matrix}[0]) !== {5 if nulls else 4}) {{ return 112; }}')
+            statements.append(f'$n = preg_match_all_pattern_order($capturePattern, "αé", {matrix}, 2);')
+            statements.append(f'if ($n !== 1 || count({matrix}) !== 5 || count({matrix}[4]) !== 1) {{ return 113; }}')
+            statements.append(f'$n = preg_match_all_pattern_order($capturePattern, "", {columns});')
+            statements.append(f'if ($n !== 0 || count({columns}["tail"]) !== 0) {{ return 114; }}')
+            statements.append(f'$status = preg_match_all_set_order("/[/", "x", {rows});')
+            statements.append(f'if ($status !== false || count({rows}) !== 0) {{ return 115; }}')
+        statements.append(r'''
+$n = preg_match($capturePattern, "αé", $values, PREG_UNMATCHED_AS_NULL, 2);
+if ($n !== 1 || $values["pre"] !== null || (string)$values["empty"] !== "") { return 122; }
+$n = preg_match($capturePattern, "αé", $values, PREG_OFFSET_CAPTURE, 2);
+$onlyPair mixed = $values["empty"];
+if ($n !== 1 || (string)$onlyPair[0] !== "" || (int)$onlyPair[1] !== 2) { return 123; }
+$flags int = PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL;
+$n = preg_match_all($dupes, "ab", $values, PREG_PATTERN_ORDER | $flags);
+$duplicate mixed = $values["x"];
+$absentPair mixed = $duplicate[0];
+$presentPair mixed = $duplicate[1];
+if ($n !== 2 || $absentPair[0] !== null || (int)$absentPair[1] !== -1 ||
+    (string)$presentPair[0] !== "b" || (int)$presentPair[1] !== 1) { return 116; }
+$n = preg_match_all($dupes, "ab", $values, PREG_SET_ORDER | $flags);
+$firstRow mixed = $values[0];
+$firstPair mixed = $firstRow["x"];
+if ((string)$firstPair[0] !== "a" || (int)$firstPair[1] !== 0) { return 117; }
+''')
     end = local('endByte', 'int', '99')
     for i, (pattern, subject, offset, start, after) in enumerate([
         ('/x/', 'x', 0, 0, 1), ('/x/', 'é!x', 2, 3, 4),
@@ -427,11 +486,12 @@ def prove(work, runtime, flavor):
 
     first_build = build()
     if flavor == 'php':
-        mismatch = work / 'named-order'
-        subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', '--ld-path=' + mold,
-                        '-I', root/'runtime/generated/public', root/'compiler/tests/regex_named_order.cpp',
-                        *links(), '-o', mismatch], check=True)
-        subprocess.run([mismatch], check=True)
+        for name in ('regex_named_order', 'regex_capture_allocations'):
+            executable = work / name
+            subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', '-O2', '--ld-path=' + mold,
+                            '-I', root/'runtime/generated/public', root/'compiler/tests'/f'{name}.cpp',
+                            *links(), '-o', executable], check=True)
+            subprocess.run([executable], check=True)
         failed = subprocess.run([first_build['executable'], 'failed-split'], capture_output=True, text=True)
         assert failed.returncode == 1 and failed.stderr.strip() == 'carrier_no_value', failed
         for args, message in [(['invalid', 'pattern'], 'preg_filter: invalid pattern'),

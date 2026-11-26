@@ -10,7 +10,9 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
     $family = isset($metadata->hash) ? textValue(at($metadata->hash, 'source_type')) : null;
     $transfer = ($runtime['hashes']['transfer_assignment'] ?? false) ? ', private_value_transfer_type' : '';
     foreach ($runtime['vectors'] ?? [] as $vector) $definitions[$vector['name']] = ['class' => $vector['name']];
-    foreach ($runtime['hashes']['specializations'] ?? [] as $hash) {
+    foreach (array_keys($runtime['regex_shapes'] ?? []) as $type) $definitions[$type] = ['class' => $type];
+    foreach ($runtime['regex_modes'] ?? [] as $mode) $definitions[$mode['cell']] = ['class' => $mode['cell']];
+    foreach ([...($runtime['hashes']['specializations'] ?? []), ...($runtime['regex_mode_hashes'] ?? [])] as $hash) {
         if (!isset($definitions[$hash['value']], $definitions[$hash['key']])) continue;
         $value = 'type_' . $definitions[$hash['value']]['class'];
         $key = 'type_' . $definitions[$hash['key']]['class'];
@@ -40,11 +42,14 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             if ($candidate['name'] === ($find['result'] ?? null) && $candidate['family'] === 'nullable'
                 && $candidate['payload'] === $hash['value']) $carrier = $candidate;
         }
-        requireThat($find !== null && !$find['mutates'] && $find['missing'] === 'empty_nullable' && $carrier !== null,
-            'Compiler hash requires copied lookup with a published nullable payload');
-        $lookup = "\t\t\$this->lookup_binding = new runtime_function('hash_find', [\$this, $key::instance()], type_"
-            . $carrier['name'] . "::instance(), " . var_export($find['name'], true)
-            . ", \$this->cpp_headers()[0], const_reference_mask: 3, receiver_method: true);\n";
+        $lookup = '';
+        if (!isset($runtime['regex_shapes'][$hash['name']])) {
+            requireThat($find !== null && !$find['mutates'] && $find['missing'] === 'empty_nullable' && $carrier !== null,
+                'Compiler hash requires copied lookup with a published nullable payload');
+            $lookup = "\t\t\$this->lookup_binding = new runtime_function('hash_find', [\$this, $key::instance()], type_"
+                . $carrier['name'] . "::instance(), " . var_export($find['name'], true)
+                . ", \$this->cpp_headers()[0], const_reference_mask: 3, receiver_method: true);\n";
+        }
         $export = typeExport($runtime['submodules'], $hash['name']);
         $initialization = '';
         $initializationSetup = '';
@@ -65,15 +70,18 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             '@methods@' => compilerCollectionMethods($hash, $definitions),
             '@cardinality@' => compilerCardinalityMethods($hash['methods'], $runtime['hashes']['count_type'], $definitions),
             '@class@' => $class,
-            '@lookup_property@' => "\tprivate readonly runtime_function \$lookup_binding;",
-            '@lookup@' => "\tpublic function lookup_function(): runtime_function\n\t{\n\t\treturn \$this->lookup_binding;\n\t}\n",
+            '@lookup_property@' => $lookup === '' ? '' : "\tprivate readonly runtime_function \$lookup_binding;",
+            '@lookup@' => $lookup === '' ? '' : "\tpublic function lookup_function(): runtime_function\n\t{\n\t\treturn \$this->lookup_binding;\n\t}\n",
 
             '@key@' => $key . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export(providerHeader($runtime['submodules'], $export['provider']), true),
-            '@interfaces@' => ' implements key_iterable_type, key_presence_type, key_lookup_type' . $transfer . ($initialization !== '' ? ', keyed_initializer_type' : '') . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
+            '@interfaces@' => ' implements key_iterable_type, key_presence_type' . ($lookup === '' ? '' : ', key_lookup_type') . $transfer . ($initialization !== '' ? ', keyed_initializer_type' : '') . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($hash['source_family'], true) . " . '<' . $value::instance()->name . ',' . $key::instance()->name . '>', $value::instance(), $key::instance());\n" . $presence . $lookup . $initializationSetup . "\t}\n",
             '@factory@' => "\tpublic static function instance(): self { return self::\$instance ??= new self(); }",
         ];
+        if (isset($runtime['regex_shapes'][$hash['name']])) {
+            $bindings['@methods@'] .= "\n\tpublic function publishes_entry_isset(): bool { return true; }\n\tpublic function php_isset_header(): string { return 'scpp/php/regex_hash_isset.hpp'; }\n";
+        }
         $template = readFile(__DIR__ . '/../templates/collections/hash_type.php.tpl');
         $code .= strtr($template, $bindings);
         foreach (['generic' => false] + ($hash['key'] === 'int64' ? ['append' => true] : []) as $variant => $append) {

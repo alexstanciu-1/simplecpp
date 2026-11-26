@@ -198,6 +198,11 @@ interface runtime_field_type
 	public function runtime_field(string $name): ?type_definition;
 }
 
+/** Read-only runtime fields whose native getters construct the source value on access. */
+interface runtime_field_getters extends runtime_field_type
+{
+}
+
 /** A receiver with a non-addressable indexed value, e.g. text[0]. */
 
 interface index_read_type

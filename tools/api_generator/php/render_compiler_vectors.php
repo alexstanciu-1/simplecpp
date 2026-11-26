@@ -67,7 +67,9 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
     $cases = [];
     $application = false;
     $family = isset($metadata->vector) ? textValue(at($metadata->vector, 'source_type')) : null;
-    foreach ([...($runtime['vectors'] ?? []), ...($runtime['regex_vectors'] ?? [])] as $vector) {
+    foreach (array_keys($runtime['regex_shapes'] ?? []) as $type) $definitions[$type] = ['class' => $type];
+    foreach ($runtime['regex_modes'] ?? [] as $mode) $definitions[$mode['cell']] = ['class' => $mode['cell']];
+    foreach ([...($runtime['vectors'] ?? []), ...($runtime['regex_vectors'] ?? []), ...($runtime['regex_mode_vectors'] ?? [])] as $vector) {
         $element = $vector['element'];
         if (!isset($definitions[$element]) && isset($runtime['regex_capture_publication'])
             && in_array($element, ['vector_string', 'hash_string_string'], true)) $definitions[$element] = ['class' => $element];

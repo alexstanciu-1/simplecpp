@@ -11,8 +11,9 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $catalog = familyMetadata($metadata, $publication, $family, $family, $family);
     if ($catalog === null || !property_exists($publication, $family)) return;
 
-    fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures', 'php_constants', 'callbacks', 'php_overloads']);
+    fields($catalog, ['provider', 'namespace', 'functions', 'surface', 'php_exposures', 'php_constants', 'callbacks', 'php_overloads', 'capture_modes', 'capture_operations']);
     $requestFields = ['functions', 'php_exposures', 'callbacks'];
+    if ($family === 'regex') $requestFields[] = 'capture_modes';
     if ($family === 'filesystem') $requestFields[] = 'resources';
     fields($publication->{$family}, $requestFields);
     $surface = $catalog->surface ?? null;
@@ -25,13 +26,20 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     requireThat(preg_match('/^scpp(?:::[A-Za-z_][A-Za-z_0-9]*)+$/D', $namespace) === 1, 'Invalid module namespace');
 
     if ($family === 'regex') prepareRegexCaptureTypes($publication->regex->functions, $catalog->functions, $header, $plan);
+    $published = names(at($publication->{$family}, 'functions'), 'Duplicate module function');
+    $signatures = object($catalog->functions);
+    if ($family === 'regex' && isset($publication->regex->capture_modes)) {
+        $variants = prepareRegexModes($catalog, $publication->regex, $header, $plan);
+        $published = array_merge($published, array_keys($variants));
+        $signatures += $variants;
+    }
     $functions = [];
     $requires = [];
     $nativeNames = [];
-    foreach (names(at($publication->{$family}, 'functions'), 'Duplicate module function') as $name) {
+    foreach ($published as $name) {
         $pattern = $family === 'filesystem' ? '/^fs_[a-z][a-z_0-9]*$/D' : '/^[a-z][a-z_0-9]*$/D';
         requireThat(preg_match($pattern, $name) === 1, 'Invalid module function name');
-        $function = at(at($catalog, 'functions'), $name);
+        $function = $signatures[$name] ?? throw new \RuntimeException('Unknown module function: ' . $name);
         fields($function, ['native_name', 'parameters', 'result', 'flavor', 'required_parameters', 'overload']);
         $flavor = $function->flavor ?? null;
         requireThat($flavor === null || in_array($flavor, ['php', 'cpp', 'js'], true), 'Invalid function flavor');
@@ -163,6 +171,7 @@ function moduleFunctionTypeExport(array $plan, string $type): array {
         || (isset($plan['boxed_dispatch']) && in_array($identity, array_column($plan['boxed']['families'], 'name'), true))
         || in_array($identity, array_column($plan['vectors'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['hashes']['specializations'] ?? [], 'name'), true)
+        || isset($plan['regex_shapes'][$identity])
         || in_array($identity, array_column($plan['regex_vectors'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['regex_carriers'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['carriers'] ?? [], 'name'), true),
@@ -232,6 +241,9 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
             . "result_or_false_string replace_callback(const string&, const void*, render_$input, const string&, int64);\n";
         $files['public/' . $header] = moduleHeaderBody($callback['includes'], $module['namespace'], $declaration);
         $bridge .= includeHeader($header);
+    }
+    if ($family === 'regex') {
+        $files['private/regex_capture_bindings.hpp'] = renderRegexModeBindings($plan);
     }
     $files["private/{$family}_provider.hpp"] = $bridge;
 }

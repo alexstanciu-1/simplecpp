@@ -52,6 +52,26 @@ rows; pattern order accepts `hash<vector<string>,string>` for named columns.
 The optional fourth argument is a byte offset, defaulting to zero. Status,
 capture keys, misses and failures follow the corresponding `preg_match_all` order.
 
+The following capture cell types apply to PHP single matches, set-order rows
+and pattern-order columns. The surrounding numbered vectors and named hashes
+keep their existing layout and key order.
+
+| Capture modifiers | Native cell | Unmatched cell | Participating empty capture at byte N |
+| --- | --- | --- | --- |
+| None | `string` | `""` | `""` |
+| `PREG_UNMATCHED_AS_NULL` | `?string` | `null` | present `""` |
+| `PREG_OFFSET_CAPTURE` | `regex_offset_capture` | `text = "", byte_offset = -1` | `text = "", byte_offset = N` |
+| Both | `regex_nullable_offset_capture` | `text = null, byte_offset = -1` | `text = "", byte_offset = N` |
+
+The two records expose readonly `text` and `byte_offset` fields. Offsets are
+absolute byte positions in the original subject, including with a nonzero start
+offset or a UTF pattern. Null mode includes trailing unmatched groups in rows.
+Without it, rows end at the last participating group. Columns always cover every
+declared group. Boxed outputs use the same values and a two-element indexed
+array for an offset pair. Traditional helpers validate the flags against the
+exact native output type before writing. The two fixed-order helpers infer
+the capture modifiers from that output type and retain the optional byte offset.
+
 The split flags are PREG_SPLIT_NO_EMPTY and PREG_SPLIT_DELIM_CAPTURE.
 
 PHP preg_split directly exposes regex_split and returns result_or_false<vector<string>>.
@@ -80,5 +100,5 @@ Replacement limits are per subject and per pattern. The optional limit is a
 value argument even when the caller supplies a writable integer. Minus one
 means unlimited. Zero replacements still validates the pattern. A negative
 limit below minus one raises ValueError. Split also accepts zero for unlimited.
-Count-output replacement overloads and offset-capture flags are outside this
+Count-output replacement overloads and PREG_SPLIT_OFFSET_CAPTURE are outside this
 publication.

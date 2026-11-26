@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <type_traits>
 
 namespace {
 using namespace std::literals;
@@ -437,6 +438,15 @@ result_or_false_vector_string split(const string& pattern, const string& subject
 }
 }
 
+namespace scpp::regex {
+namespace {
+constexpr int capture_offsets = 256;
+constexpr int unmatched_as_null = 512;
+constexpr int capture_modifiers = capture_offsets | unmatched_as_null;
+result_or_false_int64 flagged_mixed_matches(const string&, const string&, mixed&, int64, int64, bool);
+}
+}
+
 namespace {
 template<class Field>
 void capture_fields(const capture_pattern& pattern, std::string_view subject, int count, Field field) {
@@ -462,6 +472,7 @@ void validate_match_flags(int64 flags, bool all) {
 
 result_or_false_int64 php_matches(const string& pattern, const string& subject, mixed* matches,
                                   int64 flags, int64 offset, bool all) {
+    if (flags & scpp::regex::capture_modifiers) return scpp::regex::flagged_mixed_matches(pattern, subject, *matches, flags, offset, all);
     validate_match_flags(flags, all);
     auto output = mixed::container();
     capture_pattern compiled(pattern);
@@ -677,6 +688,8 @@ std::vector<string> names_by_group(const capture_pattern& compiled) {
     }
     return result;
 }
+
+#include "capture_modes.hpp"
 
 template<class Output, class Store>
 result_or_false_int64 php_named_rows(const string& pattern, const string& subject, Output& matches,
@@ -895,3 +908,5 @@ result_or_false_string replace_callback(const string& pattern, const void* conte
     });
 }
 }
+
+#include "regex_capture_bindings.hpp"

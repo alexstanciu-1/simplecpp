@@ -823,7 +823,23 @@
       "preg_replace_callback": {"surface": "php", "input": "mixed", "table": false},
       "preg_replace_callback_array": {"surface": "php", "input": "mixed", "table": true}
     },
-    "php_constants": {"PREG_PATTERN_ORDER": 1, "PREG_SET_ORDER": 2, "PREG_SPLIT_NO_EMPTY": 1, "PREG_SPLIT_DELIM_CAPTURE": 2},
+    "capture_modes": {
+      "offset": {"cell": "regex_offset_capture", "offset": true, "nullable": false},
+      "nullable": {"cell": "nullable_string", "offset": false, "nullable": true},
+      "nullable_offset": {"cell": "regex_nullable_offset_capture", "offset": true, "nullable": true}
+    },
+    "capture_operations": {
+      "preg_match_numbered": ["single", "numbered"],
+      "preg_match_named": ["single", "named"],
+      "preg_match_all_numbered": ["both", "numbered"],
+      "preg_match_all_named_rows": ["rows", "named"],
+      "preg_match_all_named_columns": ["columns", "named"],
+      "preg_match_all_set_order_numbered": ["fixed_rows", "numbered"],
+      "preg_match_all_set_order_named": ["fixed_rows", "named"],
+      "preg_match_all_pattern_order_numbered": ["fixed_columns", "numbered"],
+      "preg_match_all_pattern_order_named": ["fixed_columns", "named"]
+    },
+    "php_constants": {"PREG_OFFSET_CAPTURE": 256, "PREG_UNMATCHED_AS_NULL": 512, "PREG_PATTERN_ORDER": 1, "PREG_SET_ORDER": 2, "PREG_SPLIT_NO_EMPTY": 1, "PREG_SPLIT_DELIM_CAPTURE": 2},
     "surface": "general",
     "php_overloads": {
       "preg_match_all_pattern_order": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["offset", "exact"]]},

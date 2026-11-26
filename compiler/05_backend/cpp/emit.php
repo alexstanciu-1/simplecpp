@@ -2566,7 +2566,8 @@ CPP;
 				}
 			}
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
-			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
+			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field)
+				. ($value->receiver->type_def() instanceof runtime_field_getters ? '()' : '');
 		}
 		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression) && $value->record_call !== null) {
 			$record = $value_type instanceof shared_record_type_definition ? $value_type->payload : $value_type;
@@ -2735,7 +2736,7 @@ CPP;
 			if (($entry = $value->hash_entry) !== null) {
 				$hash = $entry->receiver->type_def();
 				if ($hash instanceof application_collection_type) $this->concrete_collections->request_hash_isset($hash);
-				else $required_headers['scpp/php/hash_isset.hpp'] = true;
+				else $required_headers[$hash->php_isset_header()] = true;
 				$receiver = $this->value($entry->receiver, $global_references, $declarations, $required_headers);
 				$key = $this->value($entry->index, $global_references, $declarations, $required_headers);
 				$key = $hash->lower_cpp_key($entry->index, $key);
