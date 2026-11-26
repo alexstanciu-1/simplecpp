@@ -114,13 +114,15 @@ public:
 	void begin_array() { checked([&] { begin(false); }); }
 	bool next_property() { return checked([&] { return next(true); }); }
 	bool next_element() { return checked([&] { return next(false); }); }
-	std::string property_name() {
-		return checked([&] {
+	// Valid until this reader advances to another property.
+	std::string_view property_view() {
+		return checked([&]() -> std::string_view {
 			if (!pending_ || frames_.empty() || !frames_.back().object)
 				reader_detail::fail_json_parse("no selected object property", pos_, "protocol");
 			return key_;
 		});
 	}
+	std::string property_name() { return std::string(property_view()); }
 	std::string read_string() {
 		return checked([&] { require_kind("string"); auto value = parse_string(); pending_ = false; return value; });
 	}

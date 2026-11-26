@@ -229,9 +229,18 @@ final class Cpp_Emitter
 			$name = Cpp_Identifier::source($node->short_name);
 			$params = $this->data_parameters($data, $includes);
 			$base_arguments = [];
+			$members = [];
 			$initializers = [];
 			$args = [];
 			foreach ($data->parameters as $i => $field) {
+				$type = $field->storage_type();
+				$default = 'nullptr';
+				if (!$field->required_data_input()) {
+					$initial = $field->initializer === null ? '{}' : $this->declaration_initialization($type, $field->initializer, $field->conversion, $includes);
+					$default = '[]() -> ' . $this->member_type($type) . " { return $initial; }";
+				}
+				$member = $this->member_type($field->parent->definition) . '::' . Cpp_Identifier::source($field->short_name);
+				$members[] = 'field(' . Cpp_String_Literals::bytes($field->short_name) . ", &$member, $default)";
 				$argument = $this->data_argument($field, $i);
 				$args[] = $argument;
 				if ($field->parent !== $node) $base_arguments[] = $argument;
@@ -242,6 +251,9 @@ final class Cpp_Emitter
 				array_unshift($base_arguments, $base_name . '::scpp_escape_data_tag{}');
 				array_unshift($initializers, $base_name . '(' . implode(', ', $base_arguments) . ')');
 			}
+			$layout[] = "\tusing scpp_escape_schema_owner = $name;";
+			$layout[] = "\ttemplate<class scpp_escape_Field, class scpp_escape_Apply> static decltype(auto) scpp_escape_data_schema(scpp_escape_Field field, scpp_escape_Apply apply) { return apply("
+				. implode(', ', $members) . '); }';
 			$layout[] = "\tstruct scpp_escape_data_tag {};";
 			$layout[] = "\t$name(scpp_escape_data_tag" . ($params === '' ? '' : ', ' . $this->data_parameters($data, $includes, true)) . ')'
 				. ($initializers === [] ? '' : ' : ' . implode(', ', $initializers)) . ' {}';
