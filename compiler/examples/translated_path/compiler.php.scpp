@@ -73,25 +73,6 @@ function prepare_literal(Translation_Scope $scope): int {
 	return $value;
 }
 
-// The collected definition owns the source generation and its completed function.
-final class Translation_Scope {
-	public readonly Translation_Source $source;
-	public readonly Function_Declaration $declaration;
-
-	public function __construct(Translation_Source $source, Function_Declaration $declaration) {
-		$declaration->body();
-		$this->source = $source;
-		$this->declaration = $declaration;
-	}
-
-	public function resolve(string $key): ?Function_Declaration {
-		if ($this->declaration->symbol_key() === $key) {
-			return $this->declaration;
-		}
-		return null;
-	}
-}
-
 function emit_translation(Prepared_Call $entry): string {
 	$target = $entry->target();
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
@@ -121,7 +102,7 @@ final class Translation {
 		} elseif ($definition === null || $definition_text !== $definition->scope->source->text) {
 			$source = new Translation_Source("definition.php", $definition_text);
 			$parser = new Translation_Parser($source);
-			$scope = new Translation_Scope($source, $parser->parse_declaration());
+			$scope = $parser->parse_scope();
 			$definition = new Prepared_Declaration($scope, prepare_literal($scope));
 		}
 

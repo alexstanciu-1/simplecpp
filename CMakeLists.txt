@@ -876,6 +876,10 @@ if(BUILD_TESTING)
   add_test(NAME compiler_translated_construction COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_construction.py)
   add_test(NAME compiler_translated_blocking_wait COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_blocking_wait.py)
   add_test(NAME compiler_translated_closure_dependencies COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_closure_dependencies.py)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_IO)
+    add_test(NAME compiler_translated_retained_frontend COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_FILESYSTEM
      AND SCPP_ENABLE_JSON AND SCPP_ENABLE_IO AND SCPP_ENABLE_DATETIME)
     add_test(NAME compiler_translated_native_ninja COMMAND ${Python3_EXECUTABLE} -B
