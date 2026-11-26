@@ -84,6 +84,12 @@ forward_reader = """
 function innerVector(vector<int> $items):int {return $items[0];}
 function innerHash(hash<int,int> $items,int $key):int {return $items[$key];}
 """
+scalar_reader = """
+function flagAt(vector<bool> $items):bool {return $items[0];}
+function floatAt(vector<float> $items,int $key=1):float {return $items[$key];}
+function convertedAt(vector<int> $items):float {return $items[0];}
+function convertedKeyAt(vector<float> $items,int $pos=1.75):float {return $items[$pos];}
+"""
 forward_calls = """
 function fromRef(vector<int> &$refItems):int {return innerVector($refItems);}
 function fromReadonly(const vector<int> &$readItems):int {return innerVector($readItems);}
@@ -99,6 +105,15 @@ function outerVector(vector<int> $items):int {
 }
 function outerHash(hash<int,int> $items):int {
     $items[0]=8;$read=innerHash(key:0,items:$items);return 10*$read+$items[0];
+}
+function convertedKeyReads():int {
+    $v vector<float> = [0.5,2.5];
+    return (int)(convertedKeyAt($v) === 2.5) + (int)(convertedKeyAt(pos:true,items:$v) === 2.5);
+}
+function scalarReads():int {
+    $flags vector<bool> = [true];$values vector<float> = [0.5,2.5];$k=1;
+    $flag=flagAt($flags);$value=floatAt(key:$k,items:$values);
+    return 1000*(int)$flag+100*(int)($value === 2.5)+10*(int)$flags[0]+(int)($values[1] === 2.5);
 }
 function forwardReads():int {
     $v vector<int> = [5];$h hash<int,int> = [];$h[0]=7;
@@ -141,25 +156,29 @@ function orderedReads():int {
     echo byKey(key:changeHash($h),items:$h);
     return 8;
 }
-echo readonlyForwardReads(),"|",positionalKeyProbe(),"/",reversedKeyProbe(),"|",forwardReads(),":",namedReads(),":",defaultReads(),":";return orderedReads();
+echo scalarReads(),"|",readonlyForwardReads(),"|",positionalKeyProbe(),"/",reversedKeyProbe(),"|",forwardReads(),":",namedReads(),":",defaultReads(),":";return orderedReads();
 """
 with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     work = Path(directory)
-    expected = b'5757|680/680|668857:24:5577:V5V9H7H9'
+    expected = b'1111|5757|680/680|668857:24:5577:V5V9H7H9'
     forward_writer = forward_reader.replace('return $items[', '$items[0]=9;return $items[')
+    forward_writer += scalar_reader.replace('return $items[0];}', '$items[0]=false;return $items[0];}', 1).replace(
+        'return $items[$key];}', '$items[$key]=-4.5;return $items[$key];}')
     edits = [(None, None, expected),
-             ('forward_reader', forward_writer, b'9957|680/680|969857:24:5577:V5V9H7H9'),
-             ('forward_reader', forward_reader, expected),
+             ('forward_reader', forward_writer, b'11|9957|680/680|969857:24:5577:V5V9H7H9'),
+             ('forward_reader', forward_reader + scalar_reader, expected),
              ('main', named_calls.replace('int $which', 'int &$which'), expected.replace(b'680/680', b'681/681')),
              ('main', named_calls, expected),
-             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'5757|680/680|668857:24:6688:V5V9H7H9'),
+             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'1111|5757|680/680|668857:24:6688:V5V9H7H9'),
              ('reader', keyed_reader.replace('$key=0', '$key'), 'Argument count mismatch'),
              ('reader', keyed_reader, expected),
              ('reader', keyed_reader.replace('$key', '$offset'), 'Unknown named argument: key'),
              ('main', named_calls.replace('key:', 'offset:'), expected)]
-    revisions(work, 'php', dict(main=named_calls, reader=keyed_reader, forward=forward_calls, forward_reader=forward_reader, driver=key_driver), edits[:1] if quick else edits)
+    revisions(work, 'php', dict(main=named_calls, reader=keyed_reader, forward=forward_calls, forward_reader=forward_reader + scalar_reader, driver=key_driver), edits[:1] if quick else edits)
     out = work/'php-out'
     units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
+    assert 'convertedKeyAt_collection_reader(var_' not in units
+    assert re.search(r'convertedAt_collection_reader\(const [^;{]+\)\s*\{\s*return convertedAt_\(', units)
     for parameter in ('refItems', 'packItems'):
         assert 'innerVector_(var_' + parameter in units
     for symbol in ('element', 'byKey'):
@@ -175,6 +194,7 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
                             *(bundle/unit for unit in sources if unit != 'entry.cpp'),
                             root/'compiler/tests/fixtures/named_reader_copies.cpp', root/'build/clang/libscpp_runtime.a',
                             '-Wl,--wrap=_ZN4scpp12vector_int64C1ERKS0_,--wrap=_ZN4scpp16hash_int64_int64C1ERKS0_',
+                            '-Wl,--wrap=_ZN4scpp13vector_bool_tC1ERKS0_,--wrap=_ZN4scpp14vector_float64C1ERKS0_',
                             '-o', probe], check=True)
             subprocess.run([probe, state], check=True, stdout=subprocess.DEVNULL)
 
@@ -211,4 +231,17 @@ if not quick:
                 ('reader', read, b'5523535333'),
                 ('reader', read.replace('key', 'offset'), 'Unknown named argument: key'),
                 ('main', app.replace('key:', 'offset:'), b'5523535333'),
+            ])
+
+
+        flags = forms['function']('flag', 'bool', [('items', 'vector<bool>')], 'return items[0];')
+        numbers = forms['function']('number', 'float', [('items', 'vector<float>')], 'return items[0];')
+        locals_ = ('vector<bool> flags=[true];vector<float> nums=[2.5];' if flavor == 'cpp'
+                   else 'let flags:vector<bool> = [true];let nums:vector<float> = [2.5];')
+        app = locals_ + 'if(flag(flags)){echo "B";}if(number(nums) === 2.5){echo "F";}if(flags[0] && nums[0] === 2.5){echo "S";}return 8;'
+        writers = flags.replace('return items[0]', 'items[0]=false;return items[0]') + numbers.replace(
+            'return items[0]', 'items[0]=0.0;return items[0]')
+        with TemporaryDirectory(prefix='scpp-scalar-reader-') as directory:
+            revisions(Path(directory), flavor, dict(main=app, reader=flags + numbers), [
+                (None, None, b'BFS'), ('reader', writers, b'S'), ('reader', flags + numbers, b'BFS'),
             ])

@@ -132,7 +132,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
 \t}
 ";
         }
-        if ($definition['strategy'] === 'integer' && $definition['copy_semantics'] === 'trivial') {
+        if (isset($compiler->value_types->$identity) && $definition['copy_semantics'] === 'trivial') {
             $methods .= "\n\tpublic function copy_has_no_observable_effects(): bool { return true; }\n";
         }
         if ($definition['literal_family'] === 'integer') {

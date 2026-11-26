@@ -4,6 +4,8 @@
 #include <string_view>
 
 namespace App {
+scpp::int64 scalarReads_();
+scpp::int64 convertedKeyReads_();
 scpp::int64 namedReads_();
 scpp::int64 defaultReads_();
 scpp::int64 orderedReads_();
@@ -15,6 +17,19 @@ scpp::int64 reversedKeyProbe_();
 
 static int vector_copies;
 static int hash_copies;
+static int bool_vector_copies;
+static int float_vector_copies;
+
+extern "C" void __real__ZN4scpp13vector_bool_tC1ERKS0_(void*, const void*);
+extern "C" void __wrap__ZN4scpp13vector_bool_tC1ERKS0_(void* dest, const void* source) {
+    ++bool_vector_copies;
+    __real__ZN4scpp13vector_bool_tC1ERKS0_(dest, source);
+}
+extern "C" void __real__ZN4scpp14vector_float64C1ERKS0_(void*, const void*);
+extern "C" void __wrap__ZN4scpp14vector_float64C1ERKS0_(void* dest, const void* source) {
+    ++float_vector_copies;
+    __real__ZN4scpp14vector_float64C1ERKS0_(dest, source);
+}
 
 extern "C" void __real__ZN4scpp12vector_int64C1ERKS0_(void*, const void*);
 extern "C" void __wrap__ZN4scpp12vector_int64C1ERKS0_(void* dest, const void* source) {
@@ -30,6 +45,12 @@ extern "C" void __wrap__ZN4scpp16hash_int64_int64C1ERKS0_(void* dest, const void
 int main(int argc, char** argv) {
     assert(argc == 2);
     const bool writer = std::string_view(argv[1]) == "writer";
+    assert(App::scalarReads_() == (writer ? 11 : 1111));
+    assert(bool_vector_copies == (writer ? 1 : 0));
+    assert(float_vector_copies == (writer ? 1 : 0));
+    float_vector_copies = 0;
+    assert(App::convertedKeyReads_() == 2);
+    assert(float_vector_copies == 2);
     assert(App::namedReads_() == 24);
     assert(vector_copies == 0 && hash_copies == 0);
     assert(App::defaultReads_() == 5577);
