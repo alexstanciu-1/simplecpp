@@ -3,6 +3,8 @@
 #include <scpp/string.hpp>
 
 namespace App {
+scpp::string host_sha256_bytes_(scpp::string bytes);
+scpp::string host_sha256_file_(scpp::string path);
 void host_directory_();
 void host_listen_();
 scpp::string host_request_();

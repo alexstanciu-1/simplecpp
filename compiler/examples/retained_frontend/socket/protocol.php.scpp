@@ -51,6 +51,12 @@ function report(Frontend_Session $session, string $root, string $line, bool &$st
 
 $cli = cli_arguments();
 if (count($cli) > 1) {
+    if ($cli[1] === "inventory") {
+        if (count($cli) < 3 || count($cli) > 4) return 2;
+        if (count($cli) === 4 && $cli[3] !== "--from-bytes") return 2;
+        echo source_inventory($cli[2], count($cli) === 4);
+        return 0;
+    }
     if (count($cli) < 3 || count($cli) > 4 || $cli[1] !== "frontend") return 2;
     $cmd = count($cli) === 4 ? $cli[3] : "frontend";
     if ($cmd !== "frontend" && $cmd !== "status" && $cmd !== "stop") return 2;

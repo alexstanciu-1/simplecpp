@@ -6,13 +6,15 @@ foreach(source IN ITEMS translated_path/frontend translated_path/function_ast re
   get_filename_component(name ${source} NAME)
   configure_file(${examples}/${source}.php.scpp ${app}/${name}.php COPYONLY)
 endforeach()
+configure_file(inventory.php.scpp ${app}/inventory.php COPYONLY)
 configure_file(protocol.php.scpp ${app}/main.php COPYONLY)
 configure_file(module.json ${app}/module.json COPYONLY)
 
-add_library(scpp_frontend_host STATIC host.cpp client.cpp)
-target_link_libraries(scpp_frontend_host PRIVATE scpp_runtime)
+find_package(OpenSSL REQUIRED COMPONENTS Crypto)
+add_library(scpp_frontend_host STATIC host.cpp client.cpp sha256.cpp)
+target_link_libraries(scpp_frontend_host PRIVATE scpp_runtime OpenSSL::Crypto)
 file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/adapter/module.json" CONTENT
-  "{\"name\":\"compiler-private-frontend\",\"type\":\"c++\",\"artifacts\":[\"$<TARGET_FILE:scpp_frontend_host>\"]}\n")
+  "{\"name\":\"compiler-private-frontend\",\"type\":\"c++\",\"artifacts\":[\"$<TARGET_FILE:scpp_frontend_host>\",\"$<TARGET_FILE:OpenSSL::Crypto>\"]}\n")
 configure_file(toolchain.json.in toolchain.json @ONLY)
 
 add_custom_target(scpp_native_frontend ALL
