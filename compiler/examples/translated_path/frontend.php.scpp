@@ -221,8 +221,12 @@ final class Translation_Parser {
 		$kind = $this->source->tokens[$this->index]->kind;
 		if ($kind !== Token_Kind::T_rparen) {
 			$argument = $this->index;
-			if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
-			$this->expect(Token_Kind::T_integer, "Expected decimal integer argument");
+			if ($kind === Token_Kind::T_variable) {
+				$this->index++;
+			} else {
+				if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
+				$this->expect(Token_Kind::T_integer, "Expected integer literal or parameter argument");
+			}
 		}
 		$this->expect(Token_Kind::T_rparen, "Expected )");
 		return $argument;

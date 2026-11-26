@@ -82,13 +82,18 @@ final class Translation_Symbols {
 final class Prepared_Call {
 	public readonly Call_Syntax $syntax;
 	public readonly Translation_Symbol $symbol;
-	private readonly bool $is_entry;
+	private readonly ?Function_Declaration $caller;
+	private Parameter_Type $forwarded = Parameter_Type::absent;
 	private bool $callee_float = false;
 	private Parameter_Type $parameter_type = Parameter_Type::absent;
 	private int $argument = 0;
 
 	public function parameter(): Parameter_Type {
 		return $this->parameter_type;
+	}
+
+	public function forwarded_parameter(): Parameter_Type {
+		return $this->forwarded;
 	}
 
 	public function argument(): int {
@@ -116,16 +121,24 @@ final class Prepared_Call {
 		}
 		if ($index >= 0) {
 			$first = $source->tokens[$index];
-			if ($first->kind !== Token_Kind::T_integer) $index++;
-			$this->argument = prepare_integer_literal($source, $first, $source->tokens[$index]);
+			if ($first->kind === Token_Kind::T_variable) {
+				$caller = $this->caller;
+				if ($caller === null || substr($source->text, $first->offset, $first->length) !== $caller->parameter_name) {
+					throw new Translation_Diagnostic($source->path, $first->offset, "Unknown parameter", $source->text);
+				}
+				$this->forwarded = $caller->parameter_type;
+			} else {
+				if ($first->kind !== Token_Kind::T_integer) $index++;
+				$this->argument = prepare_integer_literal($source, $first, $source->tokens[$index]);
+			}
 		}
 		$this->parameter_type = $function->parameter_type;
 		$this->callee_float = $function->returns_float;
 		$this->checked_revision = $this->revision;
 	}
 
-	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol, bool $is_entry = true) {
-		$this->is_entry = $is_entry;
+	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol, ?Function_Declaration $caller = null) {
+		$this->caller = $caller;
 		$this->syntax = $syntax;
 		$this->symbol = $symbol;
 	}
@@ -139,7 +152,7 @@ final class Prepared_Call {
 		if ($target === null) {
 			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name, $this->syntax->source->text);
 		}
-		if ($this->is_entry && $target->scope->declaration->returns_float) {
+		if ($this->caller === null && $target->scope->declaration->returns_float) {
 			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Expected int return from " . $this->syntax->name, $this->syntax->source->text);
 		}
 		return $target;
@@ -174,10 +187,18 @@ function cpp_integer_constant(int $value): string {
 	return $value === (-9223372036854775807 - 1) ? "(-9223372036854775807LL - 1LL)" : (string)$value . "LL";
 }
 
-function cpp_call_argument(Prepared_Call $call): string {
+function cpp_numeric_conversion(string $value, bool $source_float, bool $target_float, bool &$checked): string {
+	if ($source_float === $target_float) return $value;
+	if ($target_float) return "static_cast<scpp::float64>(" . $value . ")";
+	$checked = true;
+	return "scpp::checked_float64_to_int64(" . $value . ")";
+}
+
+function cpp_call_argument(Prepared_Call $call, bool &$checked): string {
 	if ($call->parameter() === Parameter_Type::absent) return "";
-	$value = cpp_integer_constant($call->argument());
-	return $call->parameter() === Parameter_Type::floating ? "static_cast<scpp::float64>(" . $value . ")" : $value;
+	$source = $call->forwarded_parameter();
+	$value = $source === Parameter_Type::absent ? cpp_integer_constant($call->argument()) : "arg";
+	return cpp_numeric_conversion($value, $source === Parameter_Type::floating, $call->parameter() === Parameter_Type::floating, $checked);
 }
 
 function emit_definition_unit(Prepared_Declaration $target): string {
@@ -191,12 +212,13 @@ function emit_definition_unit(Prepared_Declaration $target): string {
 	if ($parameter !== "") $parameter .= " arg";
 	$operand_float = $floating;
 	$prototype = "";
+	$checked = false;
 	if ($call !== null) {
 		$callee = "source_" . bin2hex($call->syntax->name);
 		$operand_float = $call->callee_returns_float();
 		$callee_type = $operand_float ? "scpp::float64 " : "scpp::int64 ";
 		$prototype = $callee_type . $callee . "(" . cpp_parameter_type($call->parameter()) . ");\n";
-		$value = $callee . "(" . cpp_call_argument($call) . ")";
+		$value = $callee . "(" . cpp_call_argument($call, $checked) . ")";
 	} elseif ($target->returns_parameter) {
 		$value = "arg";
 		$operand_float = $target->scope->declaration->parameter_type === Parameter_Type::floating;
@@ -205,19 +227,16 @@ function emit_definition_unit(Prepared_Declaration $target): string {
 	} else {
 		$value = cpp_integer_constant($target->value);
 	}
-	if ($floating && !$operand_float) {
-		$value = "static_cast<scpp::float64>(" . $value . ")";
-	} elseif (!$floating && $operand_float) {
-		$text .= "#include <scpp/conversions.hpp>\n";
-		$value = "scpp::checked_float64_to_int64(" . $value . ")";
-	}
+	$value = cpp_numeric_conversion($value, $operand_float, $floating, $checked);
+	if ($checked) $text .= "#include <scpp/conversions.hpp>\n";
 	return $text . $prototype . $result_type . $name . "(" . $parameter . ") { return " . $value . "; }\n";
 }
 
 function emit_call_unit(Prepared_Call $call): string {
+	$checked = false;
 	$name = "source_" . bin2hex($call->syntax->name);
 	return "#include <scpp/entry.hpp>\n#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "(" . cpp_parameter_type($call->parameter()) . ");\n"
-		. "int entry() { return scpp::entry_exit_checked(" . $name . "(" . cpp_call_argument($call) . ")); }\n";
+		. "int entry() { return scpp::entry_exit_checked(" . $name . "(" . cpp_call_argument($call, $checked) . ")); }\n";
 }
 
 function emit_entry_adapter(): string {
@@ -370,7 +389,7 @@ final class Translation {
 			$token = $scope->source->tokens[$result->literal_token];
 			$name = substr($scope->source->text, $token->offset, $token->length);
 			$syntax = new Call_Syntax($scope->source, $name, $token->offset, $result->argument_token);
-			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name), false);
+			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name), $scope->declaration);
 			return new Prepared_Declaration($scope, 0, $binding);
 		}
 		$work .= $scope->source->path . ",";
