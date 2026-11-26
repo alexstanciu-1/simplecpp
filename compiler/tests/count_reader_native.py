@@ -85,9 +85,45 @@ function innerCount(vector<int> $items):int {return count($items);}
 function innerVector(vector<int> $items):int {return $items[0];}
 function innerHash(hash<int,int> $items,int $key):int {return $items[$key];}
 """
+query_reader = """
+function vecEmpty(vector<int> $items):bool {return empty($items);}
+function hashEmpty(hash<int,int> $items):bool {return empty($items);}
+function hasKey(hash<int,int> $items,int $key):bool {return hash_contains($items,$key);}
+function localAt(vector<int> $items):int {$result=$items[0];return $result;}
+function localLookup(hash<int,int> $items,int $key):int {$result=$items[$key];return $result;}
+"""
+query_writer = query_reader.replace('return empty', 'clean($items);return empty').replace(
+    'return hash_contains', 'clean($items);return hash_contains').replace(
+    '$result=$items', '$items[0]=8;$result=$items')
+query_calls = """
+function emptyReads():int {
+    $v vector<int> = [];$h hash<int,int> = [];
+    $both=10*(int)vecEmpty($v)+(int)hashEmpty($h);$v[]=4;$h[0]=6;
+    $populated=10*(int)vecEmpty($v)+(int)hashEmpty($h);
+    return 10000*$both+100*$populated+10*$v[0]+$h[0];
+}
+function presenceReads():int {
+    $h hash<int,int> = [];$h[0]=6;$key=0;
+    return 100*(int)hasKey(key:$key,items:$h)+10*(int)hasKey($h,1)+count($h);
+}
+function insertKey(hash<int,int> &$items):int {$items[1]=7;return 1;}
+function presenceOrder():int {
+    $h hash<int,int> = [];
+    $first=hasKey(items:$h,key:insertKey($h));clean($h);
+    $second=hasKey(key:insertKey($h),items:$h);
+    return 100*(int)$first+10*(int)$second+$h[1];
+}
+function localReads():int {
+    $v vector<int> = [4];$h hash<int,int> = [];$h[0]=6;
+    return 1000*localAt($v)+100*localLookup($h,0)+10*$v[0]+$h[0];
+}
+"""
 scalar_reader = """
 function flagAt(vector<bool> $items):bool {return $items[0];}
 function floatAt(vector<float> $items,int $key=1):float {return $items[$key];}
+function convertedLocal(vector<int> $items):float {$result float=$items[0];return $result;}
+function otherLocal(hash<int,int> $items,int $key):int {$result=$items[$key];return $key;}
+function indirectLocal(hash<int,int> $items,int $key):bool {$result=hasKey($items,$key);return $result;}
 function convertedAt(vector<int> $items):float {return $items[0];}
 function convertedKeyAt(vector<float> $items,int $pos=1.75):float {return $items[$pos];}
 """
@@ -201,11 +237,12 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     work = Path(directory)
     expected = b'1111|5757|680/680|668857:24:5577:V5V9H7H9V5V9H7H9'
     forward_writer = forward_reader.replace('return $items[', '$items[0]=9;return $items[')
+    forward_writer += query_writer
     forward_writer += scalar_reader.replace('return $items[0];}', '$items[0]=false;return $items[0];}', 1).replace(
         'return $items[$key];}', '$items[$key]=-4.5;return $items[$key];}')
     edits = [(None, None, expected),
              ('forward_reader', forward_writer, b'11|9957|680/680|969857:24:5577:V5V9H7H9V5V9H7H9'),
-             ('forward_reader', forward_reader + scalar_reader, expected),
+             ('forward_reader', forward_reader + query_reader + scalar_reader, expected),
              ('main', named_calls.replace('int $which', 'int &$which'), expected.replace(b'680/680', b'681/681')),
              ('main', named_calls, expected),
              ('reader', keyed_reader.replace('$key=0', '$key=1'), b'1111|5757|680/680|668857:24:6688:V5V9H7H9V5V9H7H9'),
@@ -216,10 +253,14 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
              ('forward', forward_calls.replace('$observed=innerVector($readPack);',
                                                '$readPack[0]=7;$observed=innerVector($readPack);'), 'read-only variadic pack'),
              ('forward', forward_calls, expected)]
-    revisions(work, 'php', dict(main=named_calls, reader=keyed_reader, forward=forward_calls, forward_reader=forward_reader + scalar_reader, driver=key_driver), edits[:1] if quick else edits)
+    sources = dict(main=named_calls, reader=keyed_reader, forward=forward_calls, queries=query_calls,
+                   forward_reader=forward_reader + query_reader + scalar_reader, driver=key_driver)
+    revisions(work, 'php', sources, edits[:1] if quick else edits)
     out = work/'php-out'
     units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
     assert 'convertedKeyAt_collection_reader(var_' not in units
+    for symbol in ('convertedLocal', 'otherLocal', 'indirectLocal'):
+        assert re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return ' + symbol + r'_\(', units)
     assert re.search(r'convertedAt_collection_reader\(const [^;{]+\)\s*\{\s*return convertedAt_\(', units)
     assert 'innerVector_collection_reader(var_refItems' in units
     assert 'innerHash_collection_reader(var_refItems' in units
@@ -227,6 +268,9 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     assert 'innerCount_collection_reader(var_items' in units
     assert 'innerCount_collection_reader(var_readPack' in units
     assert 'innerVector_collection_reader(var_readPack' in units
+    for symbol in ('vecEmpty', 'hashEmpty', 'hasKey', 'localAt', 'localLookup'):
+        assert not re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return ' + symbol + r'_\(', units)
+        assert symbol + '_collection_reader(var_' in units
     for symbol in ('element', 'byKey'):
         assert units.count(symbol + '_collection_reader(var_') == 6, units
     if not quick:
@@ -253,6 +297,10 @@ if not quick:
         for function, collection, error in [('element', 'vector<int>', 'sequence_index_out_of_range'),
                                             ('byKey', 'hash<int,int>', 'hash_missing_key')]:
             guard(Path(directory), 'php', function, keyed_reader + f'$v {collection} = [];$key=1;return {function}($v,$key);',
+                  error, exception_type='std::out_of_range')
+        for function, collection, error, args in [('localAt', 'vector<int>', 'sequence_index_out_of_range', '$v'),
+                                                   ('localLookup', 'hash<int,int>', 'hash_missing_key', '$v,0')]:
+            guard(Path(directory), 'php', function, query_reader + f'$v {collection} = [];return {function}({args});',
                   error, exception_type='std::out_of_range')
     from classes_native import fixture
     for flavor in ('cpp', 'js'):
@@ -292,4 +340,17 @@ if not quick:
         with TemporaryDirectory(prefix='scpp-scalar-reader-') as directory:
             revisions(Path(directory), flavor, dict(main=app, reader=flags + numbers), [
                 (None, None, b'BFS'), ('reader', writers, b'S'), ('reader', flags + numbers, b'BFS'),
+            ])
+
+        local_decl = 'auto found=' if flavor == 'cpp' else 'let found='
+        table = 'hash<int,int> table=[];' if flavor == 'cpp' else 'let table:hash<int,int> = [];'
+        presence = forms['function']('present', 'bool', [('items', 'hash<int,int>'), ('key', 'int')],
+                                     local_decl + 'hash_contains(items,key);return found;')
+        vacant = forms['function']('vacant', 'bool', [('items', 'hash<int,int>')], 'return empty(items);')
+        provider = presence + vacant
+        writer = provider.replace(local_decl, 'items[1]=8;' + local_decl).replace('return empty', 'items[1]=8;return empty')
+        app = table + 'if(vacant(table)){echo "E";}table[0]=6;if(present(table,1)){echo "P";}echo count(table);return 8;'
+        with TemporaryDirectory(prefix='scpp-query-readers-') as directory:
+            revisions(Path(directory), flavor, dict(main=app, reader=provider), [
+                (None, None, b'E1'), ('reader', writer, b'P1'), ('reader', None, None), ('reader', provider, b'E1'),
             ])

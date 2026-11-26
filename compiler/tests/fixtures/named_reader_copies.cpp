@@ -4,6 +4,10 @@
 #include <string_view>
 
 namespace App {
+scpp::int64 emptyReads_();
+scpp::int64 presenceReads_();
+scpp::int64 presenceOrder_();
+scpp::int64 localReads_();
 scpp::int64 explicitPackReads_();
 scpp::int64 unpackedPackReads_();
 scpp::int64 emptyPackReads_();
@@ -52,6 +56,18 @@ extern "C" void __wrap__ZN4scpp16hash_int64_int64C1ERKS0_(void* dest, const void
 int main(int argc, char** argv) {
     assert(argc == 2);
     const bool writer = std::string_view(argv[1]) == "writer";
+    assert(App::emptyReads_() == (writer ? 111146 : 110046));
+    assert(vector_copies == (writer ? 2 : 0) && hash_copies == (writer ? 2 : 0));
+    hash_copies = 0;
+    assert(App::presenceReads_() == (writer ? 1 : 101));
+    assert(hash_copies == (writer ? 2 : 0));
+    hash_copies = 0;
+    assert(App::presenceOrder_() == (writer ? 7 : 17));
+    assert(hash_copies == 2);
+    vector_copies = hash_copies = 0;
+    assert(App::localReads_() == (writer ? 8846 : 4646));
+    assert(vector_copies == (writer ? 1 : 0) && hash_copies == (writer ? 1 : 0));
+    vector_copies = hash_copies = 0;
     assert(App::scalarReads_() == (writer ? 11 : 1111));
     assert(bool_vector_copies == (writer ? 1 : 0));
     assert(float_vector_copies == (writer ? 1 : 0));

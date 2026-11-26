@@ -727,23 +727,36 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	/** Query the prepared operation only when lowering this body's private collection-reader entry. */
 	public function reads_parameter_without_copy(ast_parameter_declaration $parameter, ?ast_parameter_declaration $key): bool
 	{
-		if (count($this->statements) !== 1 || !($this->statements[0] instanceof ast_return_statement)) return false;
-		$return = $this->statements[0];
+		$count = count($this->statements);
+		if ($count < 1 || $count > 2) return false;
+		$return = $this->statements[$count - 1];
+		if (!($return instanceof ast_return_statement) || $return->value === null || $return->conversion() !== value_conversion::identity) return false;
 		$value = $return->value;
-		if ($value === null || $value->type_def() !== $this->parent->return_type_def()
-			|| $return->conversion() !== value_conversion::identity) return false;
-		if ($key !== null) {
-			if (!($value instanceof ast_index_expression) || !($value->index instanceof ast_name_expression)
-				|| !$value->index->refers_to($key)) return false;
+		if ($value->type_def() !== $this->parent->return_type_def()) return false;
+		if ($count === 2) {
+			$local = $this->statements[0];
+			if ($local::class !== ast_local_declaration::class || !($value instanceof ast_name_expression) || !$value->refers_to($local)
+				|| $local->initialization() !== value_conversion::identity || $local->initializer->type_def() !== $local->type_def()) return false;
+			$value = $local->initializer;
+		}
+
+		$index = null;
+		if ($value instanceof ast_index_expression) {
 			$receiver = $value->receiver;
-		} elseif ($value instanceof ast_index_expression && $value->index->is_effect_free_literal()) {
-			$receiver = $value->receiver;
-		} elseif ($value instanceof ast_call_expression && $value->cardinality === collection_cardinality::count) {
+			$index = $value->index;
+		} elseif ($value instanceof ast_call_expression && $value->cardinality !== null) {
 			$receiver = $value->arguments[0];
+		} elseif ($value instanceof ast_call_expression && $value->receiver === null && count($value->arguments) === 2
+			&& ($binding = $value->runtime_binding()) !== null && ($type = $parameter->type_def()) instanceof key_presence_type
+			&& $binding === $type->presence_function() && $value->conversion(0) === value_conversion::identity
+			&& $value->conversion(1) === value_conversion::identity) {
+			[$receiver, $index] = $value->arguments;
 		} else {
 			return false;
 		}
-		return $receiver instanceof ast_name_expression && $receiver->refers_to($parameter);
+		if (!($receiver instanceof ast_name_expression) || !$receiver->refers_to($parameter)) return false;
+		if ($key !== null) return $index instanceof ast_name_expression && $index->refers_to($key);
+		return $index === null || $index->is_effect_free_literal();
 	}
 
 	public function require_prepared(): void
