@@ -287,19 +287,25 @@ final class Prepared_Call {
 
 function prepare_integer_literal(Translation_Source $source, Token_Span $first, Token_Span $token): int {
 	$negative = $first->kind === Token_Kind::T_minus;
-	if ($token->length > 1 && $source->text[$token->offset] == 48) {
-		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer", $source->text);
+	$start = $token->offset;
+	$radix = 10;
+	if ($token->length > 1 && $source->text[$start] == 48) {
+		$radix = integer_radix($source->text[$start + 1]);
+		if ($radix === 10) throw new Translation_Diagnostic($source->path, $start, "Expected an unpadded decimal integer", $source->text);
+		$start += 2;
 	}
 	$value = 0;
 	// Accumulate negatively so the int64 minimum fits at every step.
-	$last_digit = $negative ? 8 : 7;
+	$limit = $negative ? (-9223372036854775807 - 1) : -9223372036854775807;
+	$cutoff = $limit / $radix;
+	$last_digit = -($limit % $radix);
 	$end = $token->offset + $token->length;
-	for ($offset = $token->offset; $offset < $end; $offset++) {
-		$digit = (int)$source->text[$offset] - 48;
-		if ($value < -922337203685477580 || ($value === -922337203685477580 && $digit > $last_digit)) {
+	for ($offset = $start; $offset < $end; $offset++) {
+		$digit = integer_digit($source->text[$offset]);
+		if ($value < $cutoff || ($value === $cutoff && $digit > $last_digit)) {
 			throw new Translation_Diagnostic($source->path, $first->offset, "Integer literal is outside int64 range", $source->text);
 		}
-		$value = $value * 10 - $digit;
+		$value = $value * $radix - $digit;
 	}
 	return $negative ? $value : -$value;
 }

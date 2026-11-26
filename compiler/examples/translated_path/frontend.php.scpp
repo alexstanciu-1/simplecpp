@@ -33,6 +33,21 @@ function decimal_byte(byte $value): bool {
 	return $value >= 48 && $value <= 57;
 }
 
+// Returns decimal for an ordinary digit following the initial zero.
+function integer_radix(byte $marker): int {
+	if ($marker == 120 || $marker == 88) return 16;
+	if ($marker == 111 || $marker == 79) return 8;
+	return 10;
+}
+
+// A non-digit sorts beyond every supported radix.
+function integer_digit(byte $value): int {
+	if (decimal_byte($value)) return (int)$value - 48;
+	if ($value >= 65 && $value <= 70) return (int)$value - 65 + 10;
+	if ($value >= 97 && $value <= 102) return (int)$value - 97 + 10;
+	return 16;
+}
+
 function identifier_byte(byte $value): bool {
 	return ($value >= 65 && $value <= 90) || ($value >= 97 && $value <= 122) || $value === (byte)95;
 }
@@ -109,22 +124,30 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 			}
 		} else if (decimal_byte($value) || ($value == 46 && $offset < $length && decimal_byte($text[$offset]))) {
 			$kind = $value == 46 ? Token_Kind::T_floating : Token_Kind::T_integer;
-			while ($offset < $length && decimal_byte($text[$offset])) {
+			$radix = ($value == 48 && $offset < $length) ? integer_radix($text[$offset]) : 10;
+			if ($radix !== 10) {
 				$offset++;
+				$digits = $offset;
+				while ($offset < $length && integer_digit($text[$offset]) < $radix) { $offset++; }
+				if ($offset === $digits) throw new Translation_Diagnostic($path, $start, "Expected integer digits after radix prefix", $text);
+			} else {
+				while ($offset < $length && decimal_byte($text[$offset])) {
+					$offset++;
+				}
+				if ($value != 46 && $offset < $length && $text[$offset] == 46 && !string_byte_slice_equals($text, $offset, 2, "..")) {
+					$kind = Token_Kind::T_floating;
+					$offset++;
+					while ($offset < $length && decimal_byte($text[$offset])) { $offset++; }
+				}
+				if ($offset < $length && ($text[$offset] == 69 || $text[$offset] == 101)) {
+					$kind = Token_Kind::T_floating;
+					$offset++;
+					if ($offset < $length && ($text[$offset] == 43 || $text[$offset] == 45)) $offset++;
+					if ($offset === $length || !decimal_byte($text[$offset])) throw new Translation_Diagnostic($path, $start, "Expected exponent digits", $text);
+					while ($offset < $length && decimal_byte($text[$offset])) { $offset++; }
+				}
 			}
-			if ($value != 46 && $offset < $length && $text[$offset] == 46 && !string_byte_slice_equals($text, $offset, 2, "..")) {
-				$kind = Token_Kind::T_floating;
-				$offset++;
-				while ($offset < $length && decimal_byte($text[$offset])) { $offset++; }
-			}
-			if ($offset < $length && ($text[$offset] == 69 || $text[$offset] == 101)) {
-				$kind = Token_Kind::T_floating;
-				$offset++;
-				if ($offset < $length && ($text[$offset] == 43 || $text[$offset] == 45)) $offset++;
-				if ($offset === $length || !decimal_byte($text[$offset])) throw new Translation_Diagnostic($path, $start, "Expected exponent digits", $text);
-				while ($offset < $length && decimal_byte($text[$offset])) { $offset++; }
-			}
-			if ($offset < $length && (identifier_byte($text[$offset]) || ($text[$offset] == 46 && !string_byte_slice_equals($text, $offset, 3, "..<")))) {
+			if ($offset < $length && (identifier_byte($text[$offset]) || ($radix !== 10 && decimal_byte($text[$offset])) || ($text[$offset] == 46 && !string_byte_slice_equals($text, $offset, 3, "..<")))) {
 				throw new Translation_Diagnostic($path, $start, "Unsupported numeric literal", $text);
 			}
 		} else if ($value == 34 || $value == 39) {
@@ -283,7 +306,7 @@ final class Translation_Parser {
 		if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
 		$kind = $this->source->tokens[$this->index]->kind;
 		if ($kind !== Token_Kind::T_integer && $kind !== Token_Kind::T_floating) {
-			throw new Translation_Diagnostic($this->source->path, $this->source->tokens[$this->index]->offset, "Expected decimal numeric literal", $this->source->text);
+			throw new Translation_Diagnostic($this->source->path, $this->source->tokens[$this->index]->offset, "Expected numeric literal", $this->source->text);
 		}
 		$this->index++;
 	}

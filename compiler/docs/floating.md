@@ -133,8 +133,8 @@ decimal floating token and prints its exact C++ spelling. Conversion uses the C
 numeric locale and nearest-even rounding, then restores the calling thread's
 floating environment. Underflow can produce a subnormal or signed zero. Overflow
 that rounds to infinity produces the same range diagnostic as PHP preparation.
-A nullary PHP-flavor function in the retained frontend can return a signed decimal
-integer or floating literal. Preparation first checks the literal in its source
+A nullary PHP-flavor function in the retained frontend can return a signed integer literal
+(unpadded decimal, hexadecimal, or explicit octal) or a decimal floating literal. Preparation first checks the literal in its source
 type, then converts it to the declared return type. An integer returned as
 `float` rounds to binary64. A floating literal returned as `int` truncates toward
 zero and must fit int64. The declaration retains the converted constant.
