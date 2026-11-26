@@ -702,3 +702,19 @@ itself is unchanged. Same-width unsigned operations and admitted signed/unsigned
 pairs below 64 bits keep that table. Explicit conversions, strict canonical identity
 and shifts (whose count is checked independently) retain their separate contracts.
 This is a temporary bootstrap restriction, not a change to uint64's eventual semantics.
+
+## PHP carrier operands and writes
+
+Project one participating carrier layer to select the scalar operation. For a
+value-only operation, extract a present payload at execution. PHP concatenation
+accepts two strings, including present string payloads. Null, either sentinel and
+a structured failure raise the checked extraction error for both `.` and `.=`.
+
+A checked compound write evaluates its writable destination once and extracts the
+old payload before running the RHS. Apply the existing scalar operation and
+destination conversion, then wrap the new payload in the destination's original
+family. If extraction, conversion or computation fails, skip the final store.
+Effects already performed by the RHS remain observable, including changes it
+made to that same slot. Numeric updates follow the scalar update domain. A consumed
+update of an admitted integer carrier local produces the old carrier value for
+postfix and the new carrier value for prefix.

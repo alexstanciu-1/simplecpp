@@ -20,6 +20,7 @@ int test_result_equality() {
         return App::ordinary_(a, b) == equal && App::different_(a, b) == !equal
             && App::identical_(a, b) == identical && App::distinct_(a, b) == !identical;
     };
+    scpp::result_string text_failure{scpp::error_t{string{"m\0a", 3}, int64{7}, string{"f\0a", 3}}};
     const auto before = allocations.load();
     if (!check(zero, zero, true, true) || !check(zero, one, false, false)) return 81;
     if (!check(zero, empty, false, false) || !check(empty, zero, false, false)) return 82;
@@ -27,6 +28,8 @@ int test_result_equality() {
     if (!check(first, message, true, false) || !check(first, file, true, false)
         || !check(first, line, true, false)) return 84;
     if (App::error_peers_(empty)) return 87;
+    if (!App::cross_error_(first, text_failure) || App::cross_error_(file, text_failure)
+        || App::cross_error_(zero, text_failure)) return 88;
     if (allocations.load() != before) return 86;
     if (App::before_replace_(first) || first.value() != 9) return 85;
     return App::scpp_entry_body();

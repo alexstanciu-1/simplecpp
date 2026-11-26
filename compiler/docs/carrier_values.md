@@ -33,10 +33,9 @@ Both operands are evaluated once, and a left carrier's presence is observed befo
 any effects from the right operand. This comparison uses the existing presence
 binding without extracting or copying the payload.
 
-Other nonlogical binary operators and unary signs/bitwise negation select the
-existing payload type handlers. Both operand orders and two-carrier operations
-produce the ordinary payload operation result. There is no carrier promotion,
-recursive carrier peeling or general state-aware comparison path.
+PHP equality compares the two states before consulting the scalar payload comparator.
+Arithmetic, ordering, unary signs and bitwise operations use checked one-layer
+extraction and the scalar type handlers in both operand orders.
 
 `isset(carrier)` is true for a successful value or true sentinel. A successful false
 payload is present. Conditions and logical operators preserve alternate-state behavior:
@@ -108,7 +107,7 @@ Two accepted departures from the donor are explicit:
 
 Source construction/inspection of structured errors (including error::make), take and
 automatic error propagation remain deferred. Existing runtime result error storage and
-checked extraction are unchanged. Carrier compound/update writes, delegated members,
+checked extraction are unchanged. PHP numeric carrier writes and string concatenation writes follow the checked write contract. Delegated members,
 carrier text conversions/direct echo, nested carriers and further specializations are
 also deferred. Vector payload copies through a carrier are supported; this does not enable
 arbitrary ordinary vector copying/arguments or new vector operations.

@@ -504,6 +504,12 @@ function renderCarriers(array $plan, array &$groups): array {
         if ($provider === $plan['carrier_publication']['provider']) $h .= $class;
         else $groups[] = ['provider' => $provider, 'system' => [], 'declarations' => "namespace scpp {\n$class}\n"];
     }
+    // Define cross-type comparisons after both private storage definitions are complete.
+    foreach ($plan['carriers'] as $c) {
+        foreach ($c['error_identity_peers'] ?? [] as $peer) {
+            $d .= template('carriers/carrier_error_identity', ['n' => $c['name'], 'peer' => $peer]);
+        }
+    }
     return [$h . "}\n", $d];
 }
 
@@ -531,7 +537,11 @@ function renderCarrier(array $plan, array $c): array {
     }
     if($result) {
         $class .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n    bool_t same_error_identity(const $n& other) const;\n";
-        $d .= template('carriers/carrier_error_definition', $vars);
+        $d .= template('carriers/carrier_error_definition', $vars)
+            . template('carriers/carrier_error_identity', $vars + ['peer' => $n]);
+        foreach ($c['error_identity_peers'] ?? [] as $peer) {
+            $class .= "    friend class $peer;\n    bool_t same_error_identity(const class $peer& other) const;\n";
+        }
     }
     else {
         $class .= "    void reset() noexcept;\n";

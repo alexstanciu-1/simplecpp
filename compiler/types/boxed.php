@@ -138,9 +138,9 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 	abstract protected function boxed_result(binary_operator $operator): ?type_definition;
 	abstract protected function flavor_mask(ast_node $site): int /** uint8 */;
 
-	public function prepare_compound(ast_assignment_statement $value): void
+	public function prepare_compound(ast_assignment_statement $value, type_definition $right): void
 	{
-		if (!$this->supports_compound($value->operator) || $this->binary_result($value->operator, $value->value->type_def()) !== $this) {
+		if (!$this->supports_compound($value->operator) || $this->binary_result($value->operator, $right) !== $this) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported compound operands or write-back type');
 		}
 		$conversion = $this->prepare_scalar_conversion($value->value, conversion_context::typed_destination);

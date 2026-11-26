@@ -1791,7 +1791,7 @@ CPP;
 		if ($destination instanceof ast_qualified_data) {
 			$steps[] = $this->discard_qualifier($destination->receiver, $global_references, $declarations, $headers) . ';';
 			$name = $this->name_value($destination, $global_references, $declarations, $headers);
-		} elseif ($destination instanceof ast_field_expression && !$simple_rhs) {
+		} elseif ($destination instanceof ast_field_expression && (!$simple_rhs || $type instanceof carrier_type_definition)) {
 			$place = $this->retained_place($destination, $global_references, $declarations, $headers, $steps);
 			$steps[] = 'auto& compound_target = ' . $place . ';';
 			$name = 'compound_target';
@@ -1821,6 +1821,17 @@ CPP;
 				&& self::constant_compound_operand($statement->value)))) {
 				return $name . ' ' . $operator . ' ' . $right;
 			}
+		}
+		if (($statement->left_conversion() & value_conversion::EXTRACT) !== 0) {
+			$old = $this->compound_left($statement, $type, $name, $headers);
+			$result = $this->compound_result($statement, $type, $snapshot_name, $right, $headers);
+			if ($steps !== []) {
+				$steps[] = "const auto $snapshot_name = $old;";
+				$steps[] = "$name = $result;";
+				return "{\n\t\t" . implode("\n\t\t", $steps) . "\n\t}";
+			}
+			$snapshot = "$snapshot_name = $old";
+			return "$name = $result";
 		}
 		$direct_read = $simple_rhs && ($destination instanceof ast_field_expression
 			|| ($destination instanceof ast_local_binding && $type->cpp_trivial_value()));
@@ -2189,15 +2200,22 @@ CPP;
 	}
 
 	/** Preserve prefix or postfix results while writing through a selected element. */
-	private function local_update(ast_update_statement $update): string
+	private function local_update(ast_update_statement $update, bool $snapshot = false): string
 	{
 		$local = $update->local_def();
 		if ($local instanceof ast_writable_element) {
-			$operation = $local->type_def()->lower_cpp_update($update->operator, 'element', $update->postfix);
+			$type = $local->type_def();
+			$operation = $type instanceof carrier_type_definition
+				? $type->lower_cpp_update($update->operator, 'element', $update->postfix, true)
+				: $type->lower_cpp_update($update->operator, 'element', $update->postfix);
 			return '([&]() { auto element = ' . $this->name($local) . '; auto result = ' . $operation . '; '
 				. $this->iteration_store($local, 'element') . '; return result; }())';
 		}
-		return $local->type_def()->lower_cpp_update($update->operator, $this->name($local), $update->postfix);
+		$type = $local->type_def();
+		if ($type instanceof carrier_type_definition) {
+			return $type->lower_cpp_update($update->operator, $this->name($local), $update->postfix, $snapshot);
+		}
+		return $type->lower_cpp_update($update->operator, $this->name($local), $update->postfix);
 	}
 
 	/** A suspended declaration starts its lifetime only after its checked initializer succeeds. */
@@ -2358,7 +2376,7 @@ CPP;
 			return $suspends ? '(co_await ' . $call . ')' : $call;
 		}
 		if ($value instanceof ast_update_expression) {
-			return $this->local_update($value->update);
+			return $this->local_update($value->update, true);
 		}
 		if ($value instanceof ast_condition_assignment) {
 			$local = $value->target->local_def();

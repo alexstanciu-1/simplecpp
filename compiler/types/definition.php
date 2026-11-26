@@ -526,9 +526,9 @@ abstract class type_definition
 	}
 
 	/** Attach same-type compound facts without creating synthetic binary syntax. */
-	public function prepare_compound(ast_assignment_statement $value): void
+	public function prepare_compound(ast_assignment_statement $value, type_definition $right): void
 	{
-		if (!$this->supports_compound($value->operator) || !$this->binary_syntax_allowed($value->operator, $value) || ($this->binary_result($value->operator, $value->value->type_def()) !== $this)) {
+		if (!$this->supports_compound($value->operator) || !$this->binary_syntax_allowed($value->operator, $value) || ($this->binary_result($value->operator, $right) !== $this)) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported compound operands or write-back type');
 		}
 		$value->settle_compound($this, value_conversion::identity, value_conversion::identity, value_conversion::identity);

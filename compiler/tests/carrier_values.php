@@ -176,6 +176,7 @@ SCPP;
 		rejects(fn() => $prepare('$a result_or_bool<vector<string>> = true_sentinel; return (int)($a == $a);'),
 			'Unsupported binary operands');
 		$result_source = <<<'SCPP'
+function cross_error(result<int> &$a, result<string> &$b): bool { return $a === $b && $b === $a; }
 function error_peers(result<int> &$a): bool {
     $empty ?int = null;
     $floating ?float = null;
@@ -305,7 +306,7 @@ SCPP;
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
 		$library = $directory . '/library.' . $flavor->name;
-		$pair_check = $flavor === flavor::php ? 'echo (int)(provide() === provide()), (int)(provide() == provide()), (int)(provide() === 0);' : '';
+		$pair_check = $flavor === flavor::php ? '$sink ?float = 1.0; $sink += provide(); echo (int)(provide() === provide()), (int)(provide() == provide()), (int)(provide() === 0);' : '';
 		$sum = $flavor === flavor::php ? '(int)(provide() + 5)' : 'provide() + 5';
 		file_put_contents($main, $pair_check . 'echo (int)isset(provide()), ' . $sum . '; return 8;');
 		$compiler = new Project_Compiler();

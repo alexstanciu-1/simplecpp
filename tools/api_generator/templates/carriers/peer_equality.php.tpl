@@ -9,6 +9,12 @@ function carrier_operand_payload(type_definition $type): ?type_definition
 	};
 }
 
+/** Project a carrier storage operand for a checked update or compound write. */
+function carrier_write_payload(carrier_type_definition $type, flavor $flavor): ?type_definition
+{
+@writes@
+}
+
 /** Resolve the positive comparator for the first consumer of operand participation. */
 function peer_equality_binding(type_definition $left, type_definition $right, flavor $flavor, binary_operator $operator): ?prepared_peer_equality
 {

@@ -55,8 +55,7 @@ next test. The local retains its existing lexical scope.
 
 In PHP flavor, `strpos` returns `result_or_false<int>`. Use
 `while (isset(($pos = strpos($text, $needle, $offset))))` to accept offset zero
-and stop on a miss. The existing carrier comparison rules still apply:
-`!== false` compares the extracted payload and can throw on a miss.
+and stop on a miss. The literal guard `$pos !== false` also accepts offset zero and returns false on a miss.
 
 Declarations, parameter/global writes, field and index writes, chained assignments,
 compound assignments and using an assignment as a general expression remain deferred

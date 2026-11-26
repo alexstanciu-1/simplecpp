@@ -271,7 +271,7 @@ final class Preparation
 				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment);
 				$type = $statement->target->type_def();
 				$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
-				if ($statement instanceof ast_property_compound) $type->prepare_compound($statement);
+				if ($statement instanceof ast_property_compound) $statement->prepare_storage_compound($type);
 				else {
 					if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
 					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
@@ -287,7 +287,7 @@ final class Preparation
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
 				}
 				$this->value($statement->value);
-				$statement->target->type_def()->prepare_compound($statement);
+				$statement->prepare_storage_compound($statement->target->type_def());
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$binding = null;
@@ -1218,7 +1218,8 @@ final class Preparation
 		}
 		$type = $local->type_def();
 		if ($statement instanceof ast_update_statement) {
-			if ($consumes_result && ($local instanceof ast_parameter_declaration || $type !== type_registry::integer())) {
+			$payload = $type instanceof carrier_type_definition ? carrier_write_payload($type, $statement->source()->flavor) : $type;
+			if ($consumes_result && ($local instanceof ast_parameter_declaration || $payload !== type_registry::integer())) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Update RHS requires an initialized int64 local');
 			}
 			$statement->require_update_type($type);
@@ -1566,7 +1567,7 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->operand->byte_start(), 'Unsupported unary operand: Python bitwise operators require integer scalars');
 			}
 			if ($syntax->operand->type_def() instanceof carrier_type_definition) {
-				$syntax->operand->type_def()->require_extraction($syntax->operand, conversion_context::assignment);
+				$syntax->operand->type_def()->require_operator_payload($syntax->operand);
 			}
 			$syntax->operand->value_type()->prepare_unary($syntax);
 			return;
@@ -1704,10 +1705,10 @@ final class Preparation
 				return;
 			}
 			if ($left instanceof carrier_type_definition) {
-				$left->require_extraction($syntax->left, conversion_context::assignment);
+				$left->require_operator_payload($syntax->left);
 			}
 			if ($right instanceof carrier_type_definition) {
-				$right->require_extraction($syntax->right, conversion_context::assignment);
+				$right->require_operator_payload($syntax->right);
 			}
 			$syntax->left->value_type()->prepare_binary($syntax);
 			return;

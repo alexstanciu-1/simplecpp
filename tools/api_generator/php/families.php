@@ -619,7 +619,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     if($m === null) {
         return;
     }
-    fields($m, ['provider', 'specialization_providers', 'extraction', 'payload_access', 'presence', 'operand_participation', 'peer_equality', 'sentinels', 'construction', 'families', 'error']);
+    fields($m, ['provider', 'specialization_providers', 'extraction', 'payload_access', 'presence', 'operand_participation', 'payload_writes', 'peer_equality', 'sentinels', 'construction', 'families', 'error']);
     $extraction = textValue(at($m, 'extraction'));
     $payloadAccess = textValue(at($m, 'payload_access'));
     requireThat($payloadAccess === 'value', 'Unsupported carrier payload access binding');
@@ -700,6 +700,16 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     }
     requireThat($carriers !== [], 'Empty carrier publication');
     ksort($carriers, SORT_STRING);
+    // Only concrete result types published together need cross-payload error inspection.
+    $identityTypes = $metadata->compiler->strict_identity->types ?? [];
+    $results = array_filter($carriers, static fn($c) => $c['family'] === 'result' && in_array($c['payload'], $identityTypes, true));
+    if (isset($m->peer_equality->operators->identical)
+        && in_array('result', $m->operand_participation->families ?? [], true)) {
+        foreach ($results as $name => $c) {
+            $peers = array_values(array_diff(array_keys($results), [$name]));
+            if ($peers !== []) $carriers[$name]['error_identity_peers'] = $peers;
+        }
+    }
     $plan['carriers'] = array_values($carriers);
     $plan['carriers_header'] = $header;
     $exports = array_keys($carriers);

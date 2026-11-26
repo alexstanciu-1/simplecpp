@@ -115,8 +115,31 @@ abstract class carrier_type_definition extends type_definition implements presen
 				&& self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right));
 	}
 
+	/** Capture the writable slot once. Replace it only after successful extraction and arithmetic. */
+	public function lower_cpp_update(update_operator $operator, string $target, bool $postfix, bool $snapshot = false): string
+	{
+		$read = $this->lower_cpp_extract('slot');
+		$update = $this->payload_type->lower_cpp_update($operator, 'payload', false);
+		$save = $snapshot && $postfix ? 'const auto previous = payload; ' : '';
+		$type = $this->cpp_type();
+		$value = $postfix ? 'previous' : 'payload';
+		$result = $snapshot ? "auto result = {$type}{{$value}}; " : '';
+		$return = $snapshot ? ' return result;' : '';
+		return "([]({$type}& slot) { auto payload = $read; $save$update; {$result}slot = "
+			. "{$type}{payload};$return }($target))";
+	}
+
+	/** Ordinary PHP operators require one participating payload before scalar admission. */
+	public function require_operator_payload(ast_expression $site): void
+	{
+		if ($site->source()->flavor === flavor::php && carrier_operand_payload($this) === null) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Carrier does not participate in payload operators');
+		}
+		$this->require_extraction($site, conversion_context::assignment);
+	}
+
 	/** Enforce the metadata extraction policy before selecting a payload operation. */
-	public function require_extraction(ast_expression $site, conversion_context $context): void
+	public function require_extraction(ast_node $site, conversion_context $context): void
 	{
 		if (!$this->implicit_extraction() && ($context !== conversion_context::explicit_cast)) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Carrier requires explicit payload extraction');

@@ -405,6 +405,14 @@ if(BUILD_TESTING)
   scpp_fixture_test(carrier_values php php-false-guards php-false-pairs php-nullable-pairs php-false-equality php-nullable-equality php-peer-failure)
   add_test(NAME compiler_bool_sentinel_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture carrier_values.php --cases php-bool-sentinel-peers)
+  add_test(NAME compiler_php_carrier_operators_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_operators.php --cases php arithmetic bitwise)
+  add_test(NAME compiler_php_carrier_operator_failures_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_operators.php --cases ordering spaceship concat)
+  add_test(NAME compiler_php_carrier_writes_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_writes.php --cases php)
+  add_test(NAME compiler_php_carrier_write_failures_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_writes.php --cases missing-0 missing-1 missing-2)
   add_test(NAME compiler_mixed_carrier_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture mixed_carrier_equality.php --cases php)
   add_test(NAME compiler_carrier_participation_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
