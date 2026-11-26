@@ -1,5 +1,6 @@
 // The generated Packet header is supplied by the test runner.
 #include SCPP_PACKET_HEADER
+#include <scpp/json/encode_fields.hpp>
 #include <cstdlib>
 #include <string>
 #include <string_view>
@@ -48,11 +49,11 @@ public:
     void field(std::string_view name) override { events += name; events += ' '; }
     void begin_array() override { events += "array "; }
     void end_array() override { events += "end "; }
-    void write(const scpp::int64& value) override { events += std::to_string(value) + ' '; }
+    void write(scpp::int64 value) override { events += std::to_string(value) + ' '; }
     void write_null() override { std::abort(); }
-    void write(const scpp::bool_t&) override { std::abort(); }
+    void write(scpp::bool_t) override { std::abort(); }
     void write(const scpp::dynamic&) override { std::abort(); }
-    void write(const scpp::float64&) override { std::abort(); }
+    void write(scpp::float64) override { std::abort(); }
     void write(const scpp::mixed&) override { std::abort(); }
     void write(const scpp::nullable_bool_t&) override { std::abort(); }
     void write(const scpp::nullable_float64&) override { std::abort(); }
@@ -61,8 +62,36 @@ public:
     void write(const scpp::string&) override { std::abort(); }
 };
 
+// Count allocations only from the last emitted value until encode_fields returns.
+static bool counting;
+static std::size_t allocations;
+extern "C" void* __real__Znwm(std::size_t);
+extern "C" void* __wrap__Znwm(std::size_t size) {
+    if (counting) ++allocations;
+    return __real__Znwm(size);
+}
+
+static bool check_publication(std::size_t bytes) {
+    std::string expected(bytes - 2, 'x');
+    scpp::string input(expected.data(), static_cast<scpp::int64>(expected.size()));
+    expected = '"' + expected + '"';
+    allocations = 0;
+    auto encoded = scpp::json::encode_fields(&input, [](const void* value, scpp::Encoder& out) {
+        out.write(*static_cast<const scpp::string*>(value));
+        counting = true;
+    });
+    counting = false;
+    const bool small = bytes <= scpp::string::inline_capacity;
+    // One result carrier, plus the runtime string storage object for long output.
+    if (allocations != (small ? 1u : 2u) || !encoded.has_value()) return false;
+    auto value = encoded.value();
+    return value.is_inline() == small && std::string_view(value.data(), value.size()) == expected;
+}
+
 int main() {
     if (const auto status = App::scpp_entry_body()) return status;
+    for (auto bytes : {21u, 22u, 23u, 65536u})
+        if (!check_publication(bytes)) return 47;
     VersionReader reader;
     if (App::scpp_records::Packet::decode(reader).version != 6) return 38;
     auto bad = App::readPacket_(scpp::string{R"({"data":[10,false,30]})"});

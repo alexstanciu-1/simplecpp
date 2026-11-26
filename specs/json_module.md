@@ -142,12 +142,17 @@ For a field-derived data record, `json_encode($packet)` borrows the value and
 calls its concrete `encode(Encoder&) const` method. Preparation checks the
 reachable field schemas against the published scalar and vector-element
 encoders. Each generated method sends object, field, array and typed value
-operations to the same synchronous encoder. Field names are declared
+operations to the same synchronous encoder. Native providers receive plain numeric
+and boolean scalars by value and borrow strings, boxes and nullable carriers for
+the duration of the write. Field names are declared
 identifiers in schema order. Embedded records and shared owners can nest;
 an absent owner writes JSON null. Repeated references on independent branches
 encode independently. An active ownership cycle or nonfinite float yields a
 failed `result<string>`, even after earlier fields have been written. Only a
-successful operation publishes the output string. See [data record
+successful operation publishes the output string. The runtime stores short results
+inline and transfers the completed writer buffer into long results. Extracting a
+string with the ordinary result value accessor retains its value-copy semantics.
+See [data record
 construction and codecs](data_initialization.md#native-codec-adapters-for-field-derived-signatures).
 
 With the decode operation selected, PHP and the general API expose

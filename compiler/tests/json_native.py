@@ -145,7 +145,7 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
         with ThreadPoolExecutor(max_workers=4) as pool:
             objects = list(pool.map(compile_unit, sources))
         subprocess.run([sys.argv[1], '-stdlib=libc++', '--ld-path='+sys.argv[2], *objects,
-                        '-Wl,--wrap=_ZN4scpp12vector_int64C1ERKS0_,--wrap=_ZN4scpp12vector_int64aSERKS0_',
+                        '-Wl,--wrap=_Znwm,--wrap=_ZN4scpp12vector_int64C1ERKS0_,--wrap=_ZN4scpp12vector_int64aSERKS0_',
                         *bundle['link_inputs'], '-o', work/'run'], check=True)
         run = subprocess.run([work/'run'], check=True, capture_output=True)
         # Only the valid root reaches construction. Both documents contain a valid nested packet.
