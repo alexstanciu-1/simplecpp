@@ -113,6 +113,15 @@ completed inside it. A pattern compilation error leaves the count at zero.
 Successful empty collections retain the value state. PHP callbacks take a
 mixed collection of numbered captures. A callback exception propagates.
 
+The PHP callback helpers accept an optional exact writable integer count after
+the by-value limit (argument five for preg_replace_callback and four for
+preg_replace_callback_array). preg_replace_callback publishes the number of
+invocations on return, including a false regex result, and includes the throwing
+invocation when a callback raises. The running count is private during callbacks.
+preg_replace_callback_array applies the limit independently per pattern and
+publishes the sum only on success, including zero for an empty table. On failure
+or exception the table helper leaves any callback writes to the count slot intact.
+
 Replacement limits are per subject and per pattern. The optional limit is a
 value argument even when the caller supplies a writable integer. Minus one
 means unlimited. Zero replacements still validates the pattern. A negative

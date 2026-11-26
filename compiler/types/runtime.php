@@ -161,7 +161,7 @@ final readonly class regex_callback_function extends runtime_function
 	private owned_callable_type $callback;
 
 	/** Resolve the canonical capture callback and the ordered hash used by the array form. */
-	public function __construct(string $name, type_definition $input, private bool $table, string $header)
+	public function __construct(string $name, type_definition $input, private bool $table, string $header, bool $count_output = false)
 	{
 		$string = type_string::instance();
 		$this->callback = callable_signature_index::element(new callback_type_definition($string, [$input]));
@@ -170,20 +170,28 @@ final readonly class regex_callback_function extends runtime_function
 			: [$string, $this->callback, $string];
 		$required = count($parameters);
 		$parameters[] = type_int64::instance();
+		$count_mask = $count_output ? 1 << count($parameters) : 0;
+		if ($count_output) $parameters[] = type_int64::instance();
 		parent::__construct($name, $parameters, type_result_or_false_string::instance(), '::scpp::regex::replace_callback', $header,
-			required_parameters: $required, const_reference_mask: (1 << $required) - 1, required_module: 'runtime-regex');
+			required_parameters: $required, reference_mask: $count_mask, const_reference_mask: (1 << $required) - 1, required_module: 'runtime-regex');
 	}
 
 	/** Borrow a callable for the duration of replacement, walking table entries in insertion order. */
 	public function adapter(int $arity): cpp_inline_adapter
 	{
-		$names = $this->table ? ['table', 'subject', 'limit'] : ['pattern', 'callback', 'subject', 'limit'];
+		$names = $this->table ? ['table', 'subject', 'limit', 'count'] : ['pattern', 'callback', 'subject', 'limit', 'count'];
 		$params = [];
 		for ($i = 0; $i < $arity; ++$i) {
 			$params[] = new cpp_adapter_parameter($this->parameters[$i], $names[$i],
-				$this->is_const_reference($i) ? cpp_adapter_mode::const_reference : cpp_adapter_mode::value);
+				match (true) {
+					$this->is_reference($i) => cpp_adapter_mode::reference,
+					$this->is_const_reference($i) => cpp_adapter_mode::const_reference,
+					default => cpp_adapter_mode::value,
+				});
 		}
 		$limit = $arity === $this->required_parameters ? '-1' : 'limit';
+		$counted = $this->is_reference($arity - 1);
+		$count_argument = $counted ? ($this->table ? ', pattern_count' : ', count') : '';
 		$input = $this->callback->signature->inputs[0]->cpp_type();
 		$body = "\tauto invoke = [](const void* ctx, $input input) -> scpp::string {\n"
 			. "\t\treturn (*static_cast<const " . $this->callback->cpp_type() . "*>(ctx))(static_cast<$input&&>(input));\n\t};\n";
@@ -193,12 +201,16 @@ final readonly class regex_callback_function extends runtime_function
 			$body .= ($limit === 'limit' ? "\tif (limit < -1) throw scpp::ValueError(\"regex limit must be -1 or nonnegative\");\n" : '')
 				. "\tauto current = subject;\n\tscpp::int64 pos = 0;\n\tauto stop = table.iteration_limit();\n\tscpp::string pattern;\n"
 				. "\t" . $this->parameters[0]->cpp_type() . "::iteration_output callback;\n"
+				. ($counted ? "\tscpp::int64 total = 0, pattern_count;\n" : '')
 				. "\twhile (table.iteration_next(pos, stop, pattern, callback)) {\n"
-				. "\t\tauto replaced = {$this->symbol}(pattern, &callback.value, invoke, current, $limit);\n"
-				. "\t\tif (!replaced.has_value()) return replaced;\n\t\tcurrent = replaced.value();\n\t}\n"
-				. "\treturn scpp::result_or_false_string{static_cast<scpp::string&&>(current)};\n";
+				. "\t\tauto replaced = {$this->symbol}(pattern, &callback.value, invoke, current, $limit$count_argument);\n"
+				. "\t\tif (!replaced.has_value()) return replaced;\n"
+				. ($counted ? "\t\ttotal += pattern_count;\n" : '')
+				. "\t\tcurrent = replaced.value();\n\t}\n"
+				. ($counted ? "\tauto result = scpp::result_or_false_string{static_cast<scpp::string&&>(current)};\n\tcount = total;\n\treturn result;\n"
+					: "\treturn scpp::result_or_false_string{static_cast<scpp::string&&>(current)};\n");
 		} else {
-			$body .= "\treturn {$this->symbol}(pattern, &callback, invoke, subject, $limit);\n";
+			$body .= "\treturn {$this->symbol}(pattern, &callback, invoke, subject, $limit$count_argument);\n";
 		}
 		return new cpp_inline_adapter($this->name(), $params, $this->return_type_def(), $body, false,
 			headers: $headers, body_types: [$this->callback]);

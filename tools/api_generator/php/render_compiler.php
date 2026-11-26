@@ -310,7 +310,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $key = $binding['callbackSurface'] . ':func:' . $name;
         $input = 'type_' . $runtimeTypes[$binding['input']] . '::instance()';
         $table = $binding['table'] ? 'true' : 'false';
-        $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}'),";
+        $countOutput = $binding['countOutput'] ? 'true' : 'false';
+        $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}', $countOutput),";
     }
     foreach ($runtime['collection_transforms'] ?? [] as $name) {
         $runtimeCases[] = "\t\t\t'general:func:$name' => runtime_factory::$name,";

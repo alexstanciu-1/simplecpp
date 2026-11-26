@@ -112,11 +112,14 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $plan[$family] = compact('provider', 'header', 'module', 'namespace', 'requires', 'functions');
     foreach (names($publication->{$family}->callbacks ?? [], 'Duplicate regex callback') as $name) {
         $item = at(at($catalog, 'callbacks'), $name);
-        fields($item, ['input', 'surface', 'table']);
+        fields($item, ['input', 'surface', 'table', 'optional_output']);
         $input = textValue(at($item, 'input'));
         $callbackSurface = textValue(at($item, 'surface'));
         requireThat($family === 'regex' && in_array($input, ['mixed', 'vector_string'], true)
             && in_array($callbackSurface, ['general', 'php'], true), 'Unsupported regex callback signature');
+        $countOutput = isset($item->optional_output);
+        requireThat(!$countOutput || ($callbackSurface === 'php' && $input === 'mixed' && $item->optional_output === 'int64'),
+            'Unsupported callback count output');
         $table = boolean(at($item, 'table'));
         $callbackHeader = moduleOperationHeader($header, 'callback_' . $input);
         $includes = [];
@@ -124,7 +127,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             $export = moduleFunctionTypeExport($plan, $type);
             $includes[] = providerHeader($plan['submodules'], $export['provider']);
         }
-        $plan[$family]['callbacks'][$name] = compact('input', 'table', 'callbackSurface', 'callbackHeader', 'includes');
+        $plan[$family]['callbacks'][$name] = compact('input', 'table', 'callbackSurface', 'callbackHeader', 'includes', 'countOutput');
     }
     foreach (object($catalog->php_constants ?? (object)[]) as $constant => $value) {
         requireThat(preg_match('/^[A-Z][A-Z_0-9]*$/D', $constant) === 1 && is_int($value), 'Invalid module integer constant');
@@ -256,12 +259,15 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         $carrier = typeExport($plan['submodules'], 'result_vector_string');
         $bridge .= includeHeader(providerHeader($plan['submodules'], $carrier['provider']));
     }
+    $countedInputs = array_column(array_filter($module['callbacks'] ?? [], fn($cb) => $cb['countOutput']), 'input');
     foreach ($module['callbacks'] ?? [] as $callback) {
         $input = $callback['input'];
         $header = $callback['callbackHeader'];
         if (isset($files['public/' . $header])) continue;
         $declaration = "using render_$input = string (*)(const void*, $input);\n"
             . "result_or_false_string replace_callback(const string&, const void*, render_$input, const string&, int64);\n";
+        if (in_array($input, $countedInputs, true))
+            $declaration .= "result_or_false_string replace_callback(const string&, const void*, render_$input, const string&, int64, int64&);\n";
         $files['public/' . $header] = moduleHeaderBody($callback['includes'], $module['namespace'], $declaration);
         $bridge .= includeHeader($header);
     }

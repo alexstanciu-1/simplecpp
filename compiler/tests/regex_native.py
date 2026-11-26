@@ -79,6 +79,49 @@ try { regex_replace_callback("/a/", $throwing, "a"); } catch (Exception $failure
     $caught = $failure->get_message() === "callback";
 }
 if (!$caught) { return 41; }
+$identity function<string(mixed)> = fn($row) => (string)$row[0];
+$stopOnB function<string(mixed)> = function(mixed $row):string {
+    if ((string)$row[0] === "b") { throw new Exception("stop"); }
+    return (string)$row[0];
+};
+$nCalls int = 1;
+$rewritten = preg_replace_callback("/a/", $identity, "aaa", $nCalls, $nCalls);
+if ($rewritten !== "aaa" || $nCalls !== 1) { return 137; }
+$nCalls = 99;
+$rewritten = preg_replace_callback("/z/", $identity, "aaa", -1, $nCalls);
+if ($rewritten !== "aaa" || $nCalls !== 0) { return 138; }
+$nCalls = 99;
+$callbackResult = preg_replace_callback("/[/", $identity, "aaa", -1, $nCalls);
+if ($callbackResult !== false || $nCalls !== 0) { return 139; }
+$hardPattern string = "/(*LIMIT_MATCH=20)a|(?:b+)+c/";
+$hardSubject string = "abbbbbbbbbbbbbbbbd";
+$nCalls = 99;
+$callbackResult = preg_replace_callback($hardPattern, $identity, $hardSubject, -1, $nCalls);
+if ($callbackResult !== false || $nCalls !== 1) { return 140; }
+$nCalls = 99;
+$caught = false;
+try { preg_replace_callback("/./", $stopOnB, "ab", -1, $nCalls); }
+catch (Exception $failure) { $caught = $failure->get_message() === "stop"; }
+if (!$caught || $nCalls !== 2) { return 141; }
+$steps hash<function<string(mixed)>,string> = ["/a/" => $identity, "/./" => $stopOnB];
+$nCalls = 99;
+$caught = false;
+try { preg_replace_callback_array($steps, "ab", -1, $nCalls); }
+catch (Exception $failure) { $caught = $failure->get_message() === "stop"; }
+if (!$caught || $nCalls !== 99) { return 142; }
+$nCalls = 1;
+$rewritten = preg_replace_callback_array($steps, "aaa", $nCalls, $nCalls);
+if ($rewritten !== "aaa" || $nCalls !== 2) { return 143; }
+$steps = ["/a/" => $identity, $hardPattern => $identity];
+$nCalls = 99;
+$callbackResult = preg_replace_callback_array($steps, $hardSubject, -1, $nCalls);
+if ($callbackResult !== false || $nCalls !== 99) { return 144; }
+$steps = ["/a/" => $identity, "/[/" => $identity];
+$callbackResult = preg_replace_callback_array($steps, "a", -1, $nCalls);
+if ($callbackResult !== false || $nCalls !== 99) { return 145; }
+$steps = [];
+$rewritten = preg_replace_callback_array($steps, "abc", -1, $nCalls);
+if ($rewritten !== "abc" || $nCalls !== 0) { return 146; }
 $named hash<string,string> = regex_match_named("/(?<tag>a)/", "a");
 if ($named["0"] !== "a" || $named["tag"] !== "a") { return 31; }
 $rows vector<vector<string>> = regex_match_all("/(a)?b/", "bab");
@@ -518,6 +561,9 @@ def prove(work, runtime, flavor):
                            'preg_match_all_set_order_numbered', 'preg_match_all_pattern_order_numbered'):
                 assert f'::scpp::regex::{target}('.encode() in lowered, target
             for bad_source, diagnostic in [
+                ('preg_replace_callback("/a/", fn($row) => "!", "a", 1, 99);', 'Reference argument requires stable'),
+                ('$rules hash<function<string(mixed)>,string> = []; $s string = ""; preg_replace_callback_array($rules, "a", 1, $s);',
+                 'Reference argument requires exact storage type'),
                 ('preg_filter("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
                 ('$n string = ""; preg_filter("/a/", "!", ["a"], -1, $n);', 'argument 5 (count) requires writable'),
                 ('preg_replace("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
@@ -589,7 +635,7 @@ def prove(work, runtime, flavor):
 
     first_build = build()
     if flavor == 'php':
-        for name in ('regex_named_order', 'regex_capture_allocations', 'regex_filter_count'):
+        for name in ('regex_named_order', 'regex_capture_allocations', 'regex_filter_count', 'regex_callback_count'):
             executable = work / name
             subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', '-O2', '--ld-path=' + mold,
                             '-I', root/'runtime/generated/public', root/'compiler/tests'/f'{name}.cpp',
