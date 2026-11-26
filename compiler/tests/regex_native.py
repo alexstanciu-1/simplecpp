@@ -183,6 +183,36 @@ $n = preg_match("/(?<letter>a)/", "a", $values);
 if ($n !== 1 || (string)$values[0] !== "a" || (string)$values["letter"] !== "a") { return 28; }
 $status result_or_false<int> = preg_match("/[/", "", $values);
 if (isset($status) || count($values) !== 0) { return 29; }
+$numbered vector<string> = ["stale"];
+$n = preg_match("/^$/", "", $numbered);
+if ($n !== 1 || count($numbered) !== 1 || $numbered[0] !== "") { return 73; }
+$n = preg_match("/(?<first>a)?(b)(c)?/", "xb", $numbered, 0, -1);
+if ($n !== 1 || count($numbered) !== 3 || $numbered[0] !== "b" || $numbered[1] !== "" || $numbered[2] !== "b") { return 74; }
+$n = preg_match("/x/", "", $numbered, 0);
+if ($n !== 0 || count($numbered) !== 0) { return 75; }
+$numbered = ["stale"];
+$status = preg_match("/[/", "", $numbered);
+if ($status !== false || count($numbered) !== 0) { return 76; }
+$matrix vector<vector<string>> = [];
+$n = preg_match_all("/(a)?(b)(c)?/", "bab", $matrix);
+if ($n !== 2 || count($matrix) !== 4) { return 77; }
+$columnText vector<string> = $matrix[1];
+if (count($columnText) !== 2 || $columnText[0] !== "" || $columnText[1] !== "a") { return 78; }
+$columnText = $matrix[3];
+if (count($columnText) !== 2 || $columnText[0] !== "" || $columnText[1] !== "") { return 79; }
+$n = preg_match_all("/(a)?(b)(c)?/", "", $matrix, PREG_PATTERN_ORDER);
+if ($n !== 0 || count($matrix) !== 4 || count($matrix[0]) !== 0 || count($matrix[3]) !== 0) { return 80; }
+$orientation int = PREG_SET_ORDER;
+$n = preg_match_all("/(a)?(b)(c)?/", "xb", $matrix, $orientation, -1);
+if ($n !== 1 || count($matrix) !== 1) { return 81; }
+$columnText = $matrix[0];
+if (count($columnText) !== 3 || $columnText[1] !== "" || $columnText[2] !== "b") { return 82; }
+$n = preg_match_all("/x/", "", $matrix, $orientation);
+if ($n !== 0 || count($matrix) !== 0) { return 83; }
+$n = preg_match_all("/^$/", "", $matrix);
+if ($n !== 1 || count($matrix) !== 1 || $matrix[0][0] !== "") { return 84; }
+$status = preg_match_all("/./u", string_byte_from_int(255), $matrix);
+if ($status !== false || count($matrix) !== 0) { return 85; }
 $row result_or_false<vector<string>> = regex_match("/(a)?(b)(z)?/", "xxb", -1);
 $v vector<string> = $row;
 if (count($v) !== 3 || $v[0] !== "b" || $v[1] !== "" || $v[2] !== "b") { return 11; }
@@ -273,8 +303,18 @@ def prove(work, runtime, flavor):
         if flavor == 'php':
             lowered = b'\n'.join(artifacts(output).values())
             for target in ('preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
-                           'preg_filter_string_keys', 'preg_filter'):
+                           'preg_filter_string_keys', 'preg_filter', 'preg_match_numbered', 'preg_match_all_numbered'):
                 assert f'::scpp::regex::{target}('.encode() in lowered, target
+            for bad_source, diagnostic in [
+                ('$m = preg_split("/,/", "a"); preg_match("/a/", "a", $m);', 'Unsupported argument type'),
+                ('$m vector<string> = []; preg_match_all("/a/", "a", $m);', 'Unsupported argument type'),
+                ('function inspect(const vector<string> &$m): void { preg_match("/./", "x", $m); }',
+                 'Cannot write through read-only reference'),
+                ('function fresh(): vector<string> { return []; } preg_match("/a/", "a", fresh());', 'requires a writable'),
+            ]:
+                source_edit(source, bad_source + ' return 0;')
+                error = invoke(resident).get('error', '')
+                assert diagnostic in error, error
             source_edit(source, '$items vector<int> = [1]; preg_filter("/./", "", $items); return 0;')
             assert 'Unsupported argument type for preg_filter' in invoke(resident).get('error', '')
             source_edit(source, '$items vector<int> = [1]; preg_grep("/./", $items); return 0;')

@@ -75,14 +75,14 @@ readonly class runtime_function implements callable_signature
 /** Published runtime signatures selected by arity and one exact operand type: number_format or boxed has/remove. */
 readonly class runtime_overloads
 {
-	/** @var array<int,array<class-string<type_definition>,runtime_function>> */
-	public array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */;
+	/** @var array<int,runtime_function|array<class-string<type_definition>,runtime_function>> */
+	public array $by_arity /** array<uint32,runtime_function|array<class-string<type_definition>,runtime_function>> */;
 	/** Operand selecting the overload; receiver methods count the receiver as operand zero. */
 	public int $argument_index /** uint32 */;
 	public bool $receiver_method;
 
-	/** @param array<int,array<class-string<type_definition>,runtime_function>> $by_arity */
-	public function __construct(array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */, int $argument_index /** uint32 */ = 0, bool $receiver_method = false, public ?type_definition $list_context = null, public ?string $required_module = null, public bool $project_selector = false)
+	/** @param array<int,runtime_function|array<class-string<type_definition>,runtime_function>> $by_arity */
+	public function __construct(array $by_arity /** array<uint32,runtime_function|array<class-string<type_definition>,runtime_function>> */, int $argument_index /** uint32 */ = 0, bool $receiver_method = false, public ?type_definition $list_context = null, public ?string $required_module = null, public bool $project_selector = false)
 	{
 		$this->by_arity = $by_arity;
 		$this->argument_index = $argument_index;

@@ -23,6 +23,16 @@ preg_grep, preg_filter, preg_split, preg_replace, preg_replace_callback and
 preg_replace_callback_array. Match status is a falseable integer. A mutable mixed
 matches argument receives the captures and becomes an empty collection on regex
 failure. Match-all defaults to pattern order and also accepts PREG_SET_ORDER.
+Numbered output overloads require an exact writable variable. For preg_match,
+a vector<string> receives the full match at index zero and numbered captures in
+order. Interior unmatched groups are empty strings; trailing unmatched groups
+are omitted. A miss writes an empty vector. For preg_match_all, a
+vector<vector<string>> receives columns by default (or PREG_PATTERN_ORDER),
+including the full-match column and every declared group even on a miss.
+Unmatched cells are empty strings. PREG_SET_ORDER writes one numbered row per
+hit using the single-match rules. Named groups retain their numeric position.
+Both typed overloads clear the destination on regex failure and return false.
+An empty full match counts as a hit. Unsupported flags raise ValueError.
 The split flags are PREG_SPLIT_NO_EMPTY and PREG_SPLIT_DELIM_CAPTURE.
 
 PHP preg_split directly exposes regex_split and returns result_or_false<vector<string>>.

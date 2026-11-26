@@ -455,10 +455,14 @@ void capture_fields(const capture_pattern& pattern, std::string_view subject, in
     }
 }
 
-result_or_false_int64 php_matches(const string& pattern, const string& subject, mixed* matches,
-                                  int64 flags, int64 offset, bool all) {
+void validate_match_flags(int64 flags, bool all) {
     if ((!all && flags != 0) || (all && flags != 0 && flags != 1 && flags != 2))
         throw ValueError("unsupported match flags");
+}
+
+result_or_false_int64 php_matches(const string& pattern, const string& subject, mixed* matches,
+                                  int64 flags, int64 offset, bool all) {
+    validate_match_flags(flags, all);
     auto output = mixed::container();
     capture_pattern compiled(pattern);
     int64 hits = 0;
@@ -594,6 +598,62 @@ Result collect_matches(const string& pattern, const string& subject, int64 offse
 }
 
 namespace scpp::regex {
+result_or_false_int64 preg_match_numbered(const string& pattern, const string& subject, vector_string& matches,
+                                          int64 flags, int64 offset) {
+    validate_match_flags(flags, false);
+    capture_pattern compiled(pattern);
+    auto text = bytes(subject);
+    vector_string row;
+    bool hit = false;
+    const bool ok = compiled.data && compiled.each(text, capture_offset(offset, subject.size()), [&](int count, size_t, size_t) {
+        hit = true;
+        row = numbered_row(compiled, text, count);
+        return false;
+    });
+    matches = std::move(row);
+    return ok ? result_or_false_int64{int64{hit}} : result_or_false_int64::from_false();
+}
+
+result_or_false_int64 preg_match_all_numbered(const string& pattern, const string& subject, vector_vector_string& matches,
+                                              int64 flags, int64 offset) {
+    validate_match_flags(flags, true);
+    capture_pattern compiled(pattern);
+    vector_vector_string output;
+    const bool columns = flags != 2;
+    if (compiled.data && columns) {
+        uint32_t groups = 0;
+        pcre2_pattern_info(compiled.code.get(), PCRE2_INFO_CAPTURECOUNT, &groups);
+        for (uint32_t i = 0; i <= groups; ++i) output.append(vector_string{});
+    }
+    auto text = bytes(subject);
+    int64 hits = 0;
+    const bool ok = compiled.data && compiled.each(text, capture_offset(offset, subject.size()), [&](int count, size_t, size_t) {
+        ++hits;
+        if (columns) {
+            for (int64 i = 0; i < output.size(); ++i) {
+                output.iteration_reference(i).append(i < count ? owned(compiled.capture(text, static_cast<int>(i))) : string{});
+            }
+        } else output.append(numbered_row(compiled, text, count));
+        return true;
+    });
+    matches = ok ? std::move(output) : vector_vector_string{};
+    return ok ? result_or_false_int64{hits} : result_or_false_int64::from_false();
+}
+
+result_or_false_int64 preg_match_numbered(const string& pattern, const string& subject, vector_string& matches, int64 flags) {
+    return preg_match_numbered(pattern, subject, matches, flags, 0);
+}
+result_or_false_int64 preg_match_numbered(const string& pattern, const string& subject, vector_string& matches) {
+    return preg_match_numbered(pattern, subject, matches, 0, 0);
+}
+
+result_or_false_int64 preg_match_all_numbered(const string& pattern, const string& subject, vector_vector_string& matches, int64 flags) {
+    return preg_match_all_numbered(pattern, subject, matches, flags, 0);
+}
+result_or_false_int64 preg_match_all_numbered(const string& pattern, const string& subject, vector_vector_string& matches) {
+    return preg_match_all_numbered(pattern, subject, matches, 0, 0);
+}
+
 result_or_false_hash_string_string match_named(const string& pattern, const string& subject, int64 offset) {
     return collect_matches<result_or_false_hash_string_string, hash_string_string>(pattern, subject, offset,
         [](auto& row, const auto& compiled, auto text, int count) {

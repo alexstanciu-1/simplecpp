@@ -77,11 +77,11 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             $policy = at(at($catalog, 'php_overloads'), $group);
             fields($policy, ['selector', 'list_context', 'arguments']);
             $selector = at($policy, 'selector');
-            requireThat(is_int($selector) && $selector < $required && isset($parameters[$selector])
-                && !($reference_mask & (1 << $selector)), 'Invalid module overload selector');
+            requireThat(is_int($selector) && isset($parameters[$selector])
+                && (isset($policy->list_context) === !(bool)($reference_mask & (1 << $selector))), 'Invalid module overload selector');
             $functions[$name]['overload'] = $group;
             $functions[$name]['selector'] = $selector;
-            $functions[$name]['list_context'] = textValue(at($policy, 'list_context'));
+            $functions[$name]['list_context'] = isset($policy->list_context) ? textValue($policy->list_context) : null;
             $functions[$name]['arguments'] = listValue(at($policy, 'arguments'));
         }
         if ($surface === 'general') {
@@ -163,6 +163,7 @@ function moduleFunctionTypeExport(array $plan, string $type): array {
         || (isset($plan['boxed_dispatch']) && in_array($identity, array_column($plan['boxed']['families'], 'name'), true))
         || in_array($identity, array_column($plan['vectors'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['hashes']['specializations'] ?? [], 'name'), true)
+        || in_array($identity, array_column($plan['regex_vectors'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['regex_carriers'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['carriers'] ?? [], 'name'), true),
         'Module function requires a published type: ' . $type);
@@ -270,6 +271,11 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
                 $index = $binding['selector'];
                 $type = $types[$index];
                 for ($arity = $binding['required_parameters']; $arity <= count($types); ++$arity) {
+                    if ($index >= $arity) {
+                        requireThat(!isset($overloads[$key]['fixed'][$arity]), "Ambiguous overload arity for $key");
+                        $overloads[$key]['fixed'][$arity] = "$arity => $call";
+                        continue;
+                    }
                     requireThat(!isset($overloads[$key]['variants'][$arity][$type]), "Duplicate overload selector for $key");
                     $overloads[$key]['variants'][$arity][$type] = 'type_' . $runtimeTypes[$type] . "::class => $call";
                 }
@@ -278,14 +284,15 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
             } else $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= $call,";
         }
         foreach ($overloads as $key => $group) {
-            $rows = [];
+            $rows = $group['fixed'] ?? [];
             $context = $group['context'];
             foreach ($group['variants'] as $arity => $variants) {
-                requireThat(isset($variants[$context]), "List context has no matching overload for $key");
+                requireThat($context === null || isset($variants[$context]), "List context has no matching overload for $key");
                 $rows[] = "$arity => [" . implode(', ', $variants) . ']';
             }
+            $selection = $context === null ? '' : ", list_context: type_{$runtimeTypes[$context]}::instance(), project_selector: true";
             $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_overloads([" . implode(', ', $rows)
-                . "], argument_index: {$group['index']}, list_context: type_{$runtimeTypes[$context]}::instance(), required_module: $module, project_selector: true),";
+                . "], argument_index: {$group['index']}$selection, required_module: $module),";
         }
     }
     return $runtimeCases;

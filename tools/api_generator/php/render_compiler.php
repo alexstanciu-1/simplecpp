@@ -295,6 +295,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $runtimeTypes[$vector['name']] = $runtimeTypes[$vector['source_type']] = $vector['name'];
         }
     }
+    foreach ($runtime['regex_vectors'] ?? [] as $vector) $runtimeTypes[$vector['name']] = $vector['name'];
     $runtimeTypes += $carrierTypes;
     foreach ($runtime['hashes']['specializations'] ?? [] as $hash) {
         if (isset($definitions[$hash['key']], $definitions[$hash['value']])) $runtimeTypes[$hash['name']] = $hash['name'];

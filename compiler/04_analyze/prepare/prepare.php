@@ -1986,17 +1986,21 @@ final class Preparation
 			if ($variants === null) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 			}
-			$selection_index = $runtime->argument_index;
-			$selected = $operands[$selection_index];
-			if ($selected !== $prepared) {
-				$this->value($selected, destination: $selected instanceof ast_collection_expression ? $runtime->list_context : null);
-				$prepared = $selected;
-			}
-			$selector = $runtime->project_selector ? $selected->value_type() : $selected->type_def();
-			$runtime = $variants[$selector::class] ?? ($runtime instanceof json_encoder_overloads
-				? $this->record_encoder($runtime, $selector, $selected) : null);
-			if ($runtime === null) {
-				throw new diagnostic($selected->source(), $selected->byte_start(), ($selection_index === 0 ? 'Unsupported first argument type for ' : 'Unsupported argument type for ') . $call->name);
+			if ($variants instanceof runtime_function) {
+				$runtime = $variants;
+			} else {
+				$selection_index = $runtime->argument_index;
+				$selected = $operands[$selection_index];
+				if ($selected !== $prepared) {
+					$this->value($selected, destination: $selected instanceof ast_collection_expression ? $runtime->list_context : null);
+					$prepared = $selected;
+				}
+				$selector = $runtime->project_selector ? $selected->value_type() : $selected->type_def();
+				$runtime = $variants[$selector::class] ?? ($runtime instanceof json_encoder_overloads
+					? $this->record_encoder($runtime, $selector, $selected) : null);
+				if ($runtime === null) {
+					throw new diagnostic($selected->source(), $selected->byte_start(), ($selection_index === 0 ? 'Unsupported first argument type for ' : 'Unsupported argument type for ') . $call->name);
+				}
 			}
 		}
 		elseif (count($operands) < $runtime->required_parameters || count($operands) > count($runtime->parameters)) {
