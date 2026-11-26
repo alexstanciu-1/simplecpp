@@ -207,3 +207,40 @@ with TemporaryDirectory(prefix='scpp-nested-element-borrow-') as work:
         ('record', record, expected),
     ]
     revisions(Path(work), 'php', dict(main=nested_loop, record=record), edits)
+
+consumer = 'function applyTwice(callback_view<void> $op):void {$op();$op();}'
+view_loop = """
+function &keep(int &$n):int {
+    $f=function() use (&$n):void {$n+=1;};applyTwice($f);return $n;
+}
+$counter=0;$ref =& keep($counter);echo $ref,";";
+function update(vector<int> &$rows,vector<int> &$alias):void {
+    $clear=function() use (&$alias):void {clean($alias);};
+    foreach ($rows as $key => &$n) {
+        $step=function() use (&$n):void {$n+=2;};
+        $key=1;applyTwice($step);break;
+    }
+}
+$v vector<int> = [4,3];update($v,$v);echo $v[0],",",$v[1],";";
+$h hash<int,int> = [];$h[2]=5;$h[8]=1;
+try {
+    foreach ($h as $key => &$n) {
+        $step=function() use (&$n):void {$n+=1;if ($n===7) {throw new Exception("stop");}};
+        $key=8;applyTwice(op:$step);
+    }
+} catch (Exception $e) {echo "caught:";}
+echo $h[2],",",$h[8];return 8;
+"""
+with TemporaryDirectory(prefix='scpp-borrowed-callback-consumer-') as work:
+    expected = b'2;8,3;caught:7,1'
+    edits = [(None, None, expected),
+             ('consumer', consumer.replace('$op();$op();', '$saved function<void()> = $op;'), 'only direct invocation'),
+             ('consumer', consumer.replace('$op();$op();', 'applyTwice($op);'), 'only direct invocation'),
+             ('consumer', consumer, expected),
+             ('main', view_loop.replace('applyTwice($step)', 'applyTwice($clear)'), 'during writable foreach'),
+             ('main', view_loop.replace('applyTwice($step)', 'applyTwice(function() use (&$n):void {})'), 'named local closure'),
+             ('main', view_loop, expected),
+             ('consumer', consumer.replace('callback_view<void>', 'callback<void>'), 'direct local invocation'),
+             ('consumer', None, None),
+             ('consumer', consumer, expected)]
+    revisions(Path(work), 'php', dict(main=view_loop, consumer=consumer), edits)

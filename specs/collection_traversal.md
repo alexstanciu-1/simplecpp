@@ -105,9 +105,20 @@ local during the iteration read and write the live element under the same access
 rules as the loop body. The borrow ends with its lexical scope, including on
 continue, break, return or exception. A nested inferred local closure may recapture that binding by reference. It binds
 the reference held by its enclosing closure, including after the visible loop key
-changes. Each borrowing closure can only be invoked directly within its lexical
-scope. Passing, storing or returning either closure is rejected. Nested by-value
+changes. Each borrowing closure may be called within its lexical scope or passed as a
+named local to a direct synchronous callback-view consumer. Storing or returning
+either closure is rejected. Nested by-value
 recapture of a borrowed binding remains deferred.
+
+A consumer declares one required by-value parameter, for example
+`function applyTwice(callback_view<void> $op):void {$op();$op();}`. Its body
+may contain only direct zero-argument calls of that parameter. Preparation checks
+the consumer in its defining file and rejects storage, forwarding, scheduling and
+suspension. The caller supplies an inferred local closure with the exact nullary
+void signature. Its possible writes are checked as for a direct invocation.
+The view passes a pointer to the existing closure and a typed invocation function
+for the duration of the synchronous call. Each invocation observes the live slot,
+and a throw unwinds through the consumer with earlier writes visible.
 
 For a borrowed source, the loop also protects other mutable reference parameters
 and by-reference lexical captures of the same canonical collection type. Distinct

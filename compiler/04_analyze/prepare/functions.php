@@ -278,6 +278,13 @@ final class Function_Preparation
 				if ($hash && $key !== type_int64::instance() && $key !== type_string::instance())
 					throw new diagnostic($key_syntax->source(), $key_syntax->byte_start(), 'Hash segment keys must be int or string');
 				$parameter_type = new segment_type($element, str_starts_with($parameter->type_reference->name, 'read_'), $key);
+			} elseif ($parameter->type_reference->name === 'callback_view' && $parameter->type_reference->first_child !== null) {
+				if ($parameter->type_reference->spelling() !== 'callback_view<void>' || count($declaration->parameters) !== 1
+					|| $declaration->is_async || $declaration->returns_reference || $type !== type_void::instance()
+					|| $declaration->parent instanceof ast_method_owner || $parameter->mode !== passing_mode::value || $parameter->default_value !== null) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'A callback view requires a synchronous void free function with one required callback_view<void> parameter');
+				}
+				$parameter_type = new callback_view_type();
 			} else $parameter_type = $parameter->type_reference->name === 'callback' && $parameter->type_reference->first_child !== null
 				? Type_Resolution::callback($parameter, $symbols, $declaration, $watcher, $dependencies)
 				: Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);

@@ -104,6 +104,43 @@ final class callback_type_definition extends type_definition
 	}
 }
 
+/** Non-owning context and invocation function for a synchronous nullary consumer. */
+final class callback_view_type extends type_definition
+{
+	/** PROPERTIES */
+	public readonly callback_type_definition $signature;
+
+	/** CONSTRUCTOR */
+	public function __construct()
+	{
+		parent::__construct('callback_view<void>');
+		$this->signature = new callback_type_definition(type_void::instance(), []);
+	}
+
+	/** METHODS */
+	public function cpp_type(): string
+	{
+		return 'std::pair<const void*, void (*)(const void*)>';
+	}
+
+	public function lower_cpp_invoke(string $view): string
+	{
+		return $view . '.second(' . $view . '.first)';
+	}
+
+	/** @return string[] */
+	public function cpp_headers(): array /** list<string> */
+	{
+		return ['utility'];
+	}
+
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
+	{
+		// Preparation requires a named lambda. Its address and type describe the existing environment.
+		return $this->cpp_type() . '{&' . $value . ', [](const void* context) { (*static_cast<const decltype(' . $value . ')*>(context))(); }}';
+	}
+}
+
 /** Intern collection element contracts by ordered component identity, without retaining retired declarations. */
 final class callable_signature_index
 {

@@ -2812,6 +2812,7 @@ CPP;
 			$callback = $value->callable_binding();
 			if ($callback !== null) {
 				$type = $callback->type_def();
+				if ($type instanceof callback_view_type) return $type->lower_cpp_invoke($this->name($callback));
 				$target = $type instanceof lambda_type_definition ? $callback->initializer : ($type instanceof owned_callable_type ? $type->signature : $type);
 				$call = $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 				$reference = $target instanceof ast_lambda_expression ? $target->returns_reference : $target->reference_origin !== null;

@@ -153,6 +153,15 @@ final class Preparation
 				$this->dependencies?->watch($this->symbols->entry($parameter->type_def()->declaration->symbol_key()), $owner);
 				$this->reserve_array_bytes($parameter->type_def()->array_bytes(), $parameter);
 			}
+			if ($parameter->type_def() instanceof callback_view_type) {
+				foreach ($syntax as $statement) {
+					$call = $statement instanceof ast_call_statement ? $statement->value : null;
+					if ($call === null || $call->name !== $parameter->declaration_key() || $call->arguments !== [] || $call->receiver !== null
+						|| $call->member_separator !== null || $call->qualifier !== ($source->flavor === flavor::php ? call_qualifier::local : call_qualifier::ordinary)) {
+						throw new diagnostic($statement->source(), $statement->byte_start(), 'A callback view consumer permits only direct invocation of its parameter');
+					}
+				}
+			}
 			$this->local_frames[0][$parameter->declaration_key()] = $parameter;
 		}
 		$this->statement_visits = 0;
@@ -2257,14 +2266,14 @@ final class Preparation
 				? $this->find_local($call->name) : ($this->local_frames[0][$call->name] ?? null);
 		}
 		$type = $binding?->type_def();
-		$signature = $type instanceof lambda_type_definition || $type instanceof owned_callable_type ? $type->signature : $type;
+		$signature = $type instanceof lambda_type_definition || $type instanceof owned_callable_type || $type instanceof callback_view_type ? $type->signature : $type;
 		if ($signature instanceof callback_type_definition && $this->find_local($call->name) === $binding) {
 			if ($class !== null) $this->ambiguous_construction($call);
 			$this->name_lookups++;
 			$target = $type instanceof lambda_type_definition ? $binding->initializer : $signature;
 			$call->settle_callable_call($binding, $signature, $this->bind_arguments($call, $target, $initializing));
 			if ($target instanceof ast_lambda_expression) $this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $target);
-			else $this->dependencies?->callable_site($this->owner, $call);
+			elseif (!($type instanceof callback_view_type)) $this->dependencies?->callable_site($this->owner, $call);
 			if ($target instanceof ast_lambda_expression && $target->borrowed_writes !== []) {
 				$this->invalidate_references($call, $target->borrowed_writes);
 			}
@@ -2842,6 +2851,22 @@ final class Preparation
 			$parameter = $callback ? null : $function->parameters[$slot];
 			$type = $parameter === null ? $function->inputs[$slot] : $parameter->type_def();
 			if ($slot === $variadic && !$unpacked) $type = $type->element_type;
+			if ($type instanceof callback_view_type) {
+				// Borrow exactly the inferred local that a direct closure call would invoke.
+				$local = $argument::class === ast_name_expression::class && !$argument->constant_only && $argument->name !== $initializing
+					? $this->find_local($argument->name) : null;
+				if (!($local instanceof ast_local_declaration) || $local->type_reference !== null || !($local->type_def() instanceof lambda_type_definition)
+					|| !($local->initializer instanceof ast_lambda_expression) || !$type->signature->matches($local->type_def()->signature)) {
+					throw new diagnostic($argument->source(), $argument->byte_start(), 'A callback view requires a named local closure with the exact void() signature');
+				}
+				$this->expression_visits++;
+				$this->name_lookups++;
+				$argument->settle_local($local, unknown: true);
+				$this->dependencies?->closure_call($this->enclosing_lambda ?? $this->owner, $local->initializer);
+				array_push($writes, ...$local->initializer->borrowed_writes);
+				$conversions[] = value_conversion::identity;
+				continue;
+			}
 			$this->value($argument, $initializing, allow_callback: $type instanceof callback_type_definition, destination: $type);
 			if ($unpacked && $slot === $variadic && $argument->type_def() !== $type) {
 				throw new diagnostic($argument->source(), $argument->byte_start(), 'Unpacked argument requires ' . $type->name);
