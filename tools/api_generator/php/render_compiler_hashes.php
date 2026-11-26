@@ -9,6 +9,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
     $applicationCases = [];
     $family = isset($metadata->hash) ? textValue(at($metadata->hash, 'source_type')) : null;
     $transfer = ($runtime['hashes']['transfer_assignment'] ?? false) ? ', private_value_transfer_type' : '';
+    foreach ($runtime['vectors'] ?? [] as $vector) $definitions[$vector['name']] = ['class' => $vector['name']];
     foreach ($runtime['hashes']['specializations'] ?? [] as $hash) {
         if (!isset($definitions[$hash['value']], $definitions[$hash['key']])) continue;
         $value = 'type_' . $definitions[$hash['value']]['class'];

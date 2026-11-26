@@ -8,7 +8,7 @@ function prepareRegexCaptureTypes(array $names, object $functions, string $modul
     foreach ($names as $name) {
         $function = at($functions, $name);
         foreach ($function->parameters as $parameter) {
-            if ($parameter->type === 'vector_vector_string') $payloads[$parameter->type] ??= false;
+            if (in_array($parameter->type, ['vector_vector_string', 'vector_hash_string_string'], true)) $payloads[$parameter->type] ??= false;
         }
         $result = textValue(at($function, 'result'));
         if (!str_starts_with($result, 'result_or_false_')) continue;

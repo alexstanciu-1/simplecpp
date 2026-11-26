@@ -766,9 +766,11 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization', 'transfer_assignment']);
     $transfer = privateValueTransfer($m);
     literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
-    foreach(['key_types', 'value_types'] as $key) {
-        requireThat(names(at($m, $key), 'Duplicate hash type policy') === ['int64', 'string'], 'Unsupported hash type policy');
-    }
+    $keys = names(at($m, 'key_types'), 'Duplicate hash key type');
+    $values = names(at($m, 'value_types'), 'Duplicate hash value type');
+    requireThat($keys === ['int64', 'string'] && in_array($values, [
+        ['int64', 'string'], ['int64', 'string', 'vector_string'],
+    ], true), 'Unsupported hash type policy');
     $initialization = $m->initialization ?? null;
     $callables = [];
     if ($initialization !== null) {
@@ -814,8 +816,8 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
         fields($item, ['key', 'value']);
         $key = textValue(at($item, 'key'));
         $value = textValue(at($item, 'value'));
+        requireThat(in_array($key, $keys, true) && in_array($value, $values, true), 'Unsupported hash key or value type');
         foreach([$key, $value] as $type) {
-            requireThat(in_array($type, ['int64', 'string'], true), 'Hash supports only int64/string keys and values');
             requireThat($type !== 'string' || isset($plan['string']), 'Hash requires published string');
         }
         $nullable = 'nullable_' . $value;

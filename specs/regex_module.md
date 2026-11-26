@@ -33,6 +33,16 @@ Unmatched cells are empty strings. PREG_SET_ORDER writes one numbered row per
 hit using the single-match rules. Named groups retain their numeric position.
 Both typed overloads clear the destination on regex failure and return false.
 An empty full match counts as a hit. Unsupported flags raise ValueError.
+Named native outputs use string keys. Group zero has key "0"; each named group
+inserts its name before its decimal group number in capture order. A single
+match writes hash<string,string>. Match-all with PREG_SET_ORDER writes
+vector<hash<string,string>>. Rows omit trailing unmatched groups; for duplicate
+names the last participating group supplies the value. Pattern order (including
+the default) writes hash<vector<string>,string>, with a column for every group
+even on a miss. A duplicate name selects its rightmost declared column and keeps
+its original insertion position. An order incompatible with the output slot
+raises ValueError before regex evaluation or mutation. Regex failure clears
+the typed output and returns false.
 The split flags are PREG_SPLIT_NO_EMPTY and PREG_SPLIT_DELIM_CAPTURE.
 
 PHP preg_split directly exposes regex_split and returns result_or_false<vector<string>>.

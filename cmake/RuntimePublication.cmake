@@ -65,6 +65,9 @@ if(SCPP_ENABLE_JSON)
   endforeach()
 endif()
 if(SCPP_ENABLE_REGEX)
+  string(JSON count LENGTH "${runtime_profile}" hashes specializations)
+  string(JSON runtime_profile SET "${runtime_profile}" hashes specializations ${count}
+    "{\"value\":\"vector_string\",\"key\":\"string\"}")
   string(JSON count LENGTH "${runtime_profile}" carriers specializations)
   string(JSON runtime_profile SET "${runtime_profile}" carriers specializations ${count}
     "{\"family\":\"result_or_false\",\"payload\":\"mixed\"}")

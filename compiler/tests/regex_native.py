@@ -213,6 +213,42 @@ $n = preg_match_all("/^$/", "", $matrix);
 if ($n !== 1 || count($matrix) !== 1 || $matrix[0][0] !== "") { return 84; }
 $status = preg_match_all("/./u", string_byte_from_int(255), $matrix);
 if ($status !== false || count($matrix) !== 0) { return 85; }
+$namedPattern string = "/(?<z>a)?(?<b>b)(?<tail>c)?/";
+$n = preg_match($namedPattern, "b", $named);
+$order = "";
+foreach ($named as $key => $value) { $order .= $key; }
+if ($n !== 1 || $order !== "0z1b2" || $named["0"] !== "b" || $named["z"] !== "" || $named["2"] !== "b") { return 86; }
+$n = preg_match("/^$/", "", $named, 0);
+if ($n !== 1 || count($named) !== 1 || $named["0"] !== "") { return 87; }
+$n = preg_match($namedPattern, "", $named);
+if ($n !== 0 || count($named) !== 0) { return 88; }
+$dupes string = "/(?J)(?<x>a)|(?<x>b)/";
+$n = preg_match_all($dupes, "ab", $namedRows, $orientation);
+if ($n !== 2) { return 89; }
+$named = $namedRows[0];
+if ($named["x"] !== "a" || $named->has("2")) { return 90; }
+$named = $namedRows[1];
+if ($named["x"] !== "b" || $named["1"] !== "" || $named["2"] !== "b") { return 91; }
+$n = preg_match("/(?J)(?<x>a)(?<x>b)?(c)/", "ac", $named, 0, 0);
+if ($n !== 1 || $named["x"] !== "a" || $named["2"] !== "") { return 92; }
+$columns hash<vector<string>,string> = [];
+$n = preg_match_all($dupes, "ab", $columns);
+$order = "";
+foreach ($columns as $key => $texts) { $order .= $key; }
+if ($n !== 2 || $order !== "0x12" || $columns["x"][0] !== "" || $columns["x"][1] !== "b" || $columns["1"][0] !== "a") { return 93; }
+$n = preg_match_all($namedPattern, "", $columns, PREG_PATTERN_ORDER, 0);
+$order = "";
+foreach ($columns as $key => $texts) { $order .= $key; }
+if ($n !== 0 || $order !== "0z1b2tail3" || count($columns["tail"]) !== 0) { return 94; }
+$n = preg_match_all($dupes, "", $namedRows, PREG_SET_ORDER, 0);
+if ($n !== 0 || count($namedRows) !== 0) { return 95; }
+$status = preg_match("/[/", "a", $named);
+if ($status !== false || count($named) !== 0) { return 96; }
+$status = preg_match_all("/./u", string_byte_from_int(255), $columns);
+if ($status !== false || count($columns) !== 0) { return 97; }
+$n = preg_match_all($dupes, "b", $namedRows, PREG_SET_ORDER);
+$status = preg_match_all("/[/", "b", $namedRows, PREG_SET_ORDER);
+if ($status !== false || count($namedRows) !== 0) { return 98; }
 $row result_or_false<vector<string>> = regex_match("/(a)?(b)(z)?/", "xxb", -1);
 $v vector<string> = $row;
 if (count($v) !== 3 || $v[0] !== "b" || $v[1] !== "" || $v[2] !== "b") { return 11; }
@@ -303,7 +339,8 @@ def prove(work, runtime, flavor):
         if flavor == 'php':
             lowered = b'\n'.join(artifacts(output).values())
             for target in ('preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
-                           'preg_filter_string_keys', 'preg_filter', 'preg_match_numbered', 'preg_match_all_numbered'):
+                           'preg_filter_string_keys', 'preg_filter', 'preg_match_numbered', 'preg_match_all_numbered',
+                           'preg_match_named', 'preg_match_all_named_rows', 'preg_match_all_named_columns'):
                 assert f'::scpp::regex::{target}('.encode() in lowered, target
             for bad_source, diagnostic in [
                 ('$m = preg_split("/,/", "a"); preg_match("/a/", "a", $m);', 'Unsupported argument type'),
@@ -368,6 +405,11 @@ def prove(work, runtime, flavor):
 
     first_build = build()
     if flavor == 'php':
+        mismatch = work / 'named-order'
+        subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', '--ld-path=' + mold,
+                        '-I', root/'runtime/generated/public', root/'compiler/tests/regex_named_order.cpp',
+                        *links(), '-o', mismatch], check=True)
+        subprocess.run([mismatch], check=True)
         failed = subprocess.run([first_build['executable'], 'failed-split'], capture_output=True, text=True)
         assert failed.returncode == 1 and failed.stderr.strip() == 'carrier_no_value', failed
         for args, message in [(['invalid', 'pattern'], 'preg_filter: invalid pattern'),

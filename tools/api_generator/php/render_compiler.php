@@ -298,7 +298,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach ($runtime['regex_vectors'] ?? [] as $vector) $runtimeTypes[$vector['name']] = $vector['name'];
     $runtimeTypes += $carrierTypes;
     foreach ($runtime['hashes']['specializations'] ?? [] as $hash) {
-        if (isset($definitions[$hash['key']], $definitions[$hash['value']])) $runtimeTypes[$hash['name']] = $hash['name'];
+        if (isset($runtimeTypes[$hash['key']], $runtimeTypes[$hash['value']])) $runtimeTypes[$hash['name']] = $hash['name'];
     }
     if (isset($runtime['boxed_dispatch'])) {
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
@@ -319,7 +319,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     // Published aliases delegate to the same canonical type-owned signatures as application concrete types.
     foreach (array_merge($runtime['vectors'] ?? [], $runtime['hashes']['specializations'] ?? []) as $collection) {
         $elements = isset($collection['element']) ? [$collection['element']] : [$collection['value'], $collection['key']];
-        foreach ($elements as $element) if (!isset($definitions[$element])) continue 2;
+        foreach ($elements as $element) if (!isset($runtimeTypes[$element])) continue 2;
         $source = $collection['source_type'] ?? ($collection['source_family'] . '<' . implode(',', $elements) . '>');
         foreach ($collection['methods'] as $method) {
             $name = $method['name'];

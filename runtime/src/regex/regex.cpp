@@ -654,6 +654,121 @@ result_or_false_int64 preg_match_all_numbered(const string& pattern, const strin
     return preg_match_all_numbered(pattern, subject, matches, 0, 0);
 }
 
+namespace {
+// PCRE2 lists names alphabetically. PHP visits each name immediately before its group number.
+std::vector<string> names_by_group(const capture_pattern& compiled) {
+    uint32_t groups = 0, names = 0, stride = 0;
+    PCRE2_SPTR table = nullptr;
+    pcre2_pattern_info(compiled.code.get(), PCRE2_INFO_CAPTURECOUNT, &groups);
+    pcre2_pattern_info(compiled.code.get(), PCRE2_INFO_NAMECOUNT, &names);
+    pcre2_pattern_info(compiled.code.get(), PCRE2_INFO_NAMEENTRYSIZE, &stride);
+    pcre2_pattern_info(compiled.code.get(), PCRE2_INFO_NAMETABLE, &table);
+    std::vector<string> result(groups + 1);
+    for (uint32_t i = 0; i < names; ++i) {
+        const auto* entry = table + i * stride;
+        result[entry[0] * 256 + entry[1]] = string{reinterpret_cast<const char*>(entry + 2)};
+    }
+    return result;
+}
+
+template<class Output, class Store>
+result_or_false_int64 php_named_rows(const string& pattern, const string& subject, Output& matches,
+                                     int64 offset, bool all, Store store) {
+    capture_pattern compiled(pattern);
+    Output output;
+    int64 hits = 0;
+    if (compiled.data) {
+        const auto names = names_by_group(compiled);
+        const auto text = bytes(subject);
+        const bool ok = compiled.each(text, capture_offset(offset, subject.size()), [&](int count, size_t, size_t) {
+            const auto* bounds = pcre2_get_ovector_pointer(compiled.data.get());
+            hash_string_string row;
+            for (int i = 0; i < count; ++i) {
+                auto value = owned(compiled.capture(text, i));
+                const auto& name = names[i];
+                // An unmatched duplicate does not displace a participating group in a row.
+                if (name.size() && (bounds[2 * i] != PCRE2_UNSET || !row.has(name))) row.set(name, value);
+                row.set(capture_key(i), std::move(value));
+            }
+            store(output, std::move(row));
+            ++hits;
+            return all;
+        });
+        if (ok) {
+            matches = std::move(output);
+            return result_or_false_int64{hits};
+        }
+    }
+    matches = Output{};
+    return result_or_false_int64::from_false();
+}
+}
+
+result_or_false_int64 preg_match_named(const string& pattern, const string& subject, hash_string_string& matches,
+                                       int64 flags, int64 offset) {
+    validate_match_flags(flags, false);
+    return php_named_rows(pattern, subject, matches, offset, false,
+        [](auto& output, auto row) { output = std::move(row); });
+}
+
+result_or_false_int64 preg_match_all_named_rows(const string& pattern, const string& subject, vector_hash_string_string& matches,
+                                                int64 flags, int64 offset) {
+    if (flags != 2) throw ValueError("preg_match_all named rows require PREG_SET_ORDER");
+    return php_named_rows(pattern, subject, matches, offset, true,
+        [](auto& output, auto row) { output.append(std::move(row)); });
+}
+
+result_or_false_int64 preg_match_all_named_columns(const string& pattern, const string& subject, hash_vector_string_string& matches,
+                                                   int64 flags, int64 offset) {
+    if (flags != 0 && flags != 1) throw ValueError("preg_match_all named columns require PREG_PATTERN_ORDER");
+    capture_pattern compiled(pattern);
+    if (compiled.data) {
+        const auto names = names_by_group(compiled);
+        std::vector<vector_string> columns(names.size());
+        const auto text = bytes(subject);
+        int64 hits = 0;
+        const bool ok = compiled.each(text, capture_offset(offset, subject.size()), [&](int count, size_t, size_t) {
+            for (size_t i = 0; i < columns.size(); ++i)
+                columns[i].append(i < static_cast<size_t>(count) ? owned(compiled.capture(text, static_cast<int>(i))) : string{});
+            ++hits;
+            return true;
+        });
+        if (ok) {
+            hash_vector_string_string output;
+            for (size_t i = 0; i < columns.size(); ++i) {
+                // Replacing a duplicate name selects the rightmost column at the first name's position.
+                if (names[i].size()) output.set(names[i], columns[i]);
+                output.set(capture_key(i), std::move(columns[i]));
+            }
+            matches = std::move(output);
+            return result_or_false_int64{hits};
+        }
+    }
+    matches = hash_vector_string_string{};
+    return result_or_false_int64::from_false();
+}
+
+result_or_false_int64 preg_match_named(const string& pattern, const string& subject, hash_string_string& matches, int64 flags) {
+    return preg_match_named(pattern, subject, matches, flags, 0);
+}
+result_or_false_int64 preg_match_named(const string& pattern, const string& subject, hash_string_string& matches) {
+    return preg_match_named(pattern, subject, matches, 0, 0);
+}
+
+result_or_false_int64 preg_match_all_named_rows(const string& pattern, const string& subject, vector_hash_string_string& matches, int64 flags) {
+    return preg_match_all_named_rows(pattern, subject, matches, flags, 0);
+}
+result_or_false_int64 preg_match_all_named_rows(const string& pattern, const string& subject, vector_hash_string_string& matches) {
+    return preg_match_all_named_rows(pattern, subject, matches, 0, 0);
+}
+
+result_or_false_int64 preg_match_all_named_columns(const string& pattern, const string& subject, hash_vector_string_string& matches, int64 flags) {
+    return preg_match_all_named_columns(pattern, subject, matches, flags, 0);
+}
+result_or_false_int64 preg_match_all_named_columns(const string& pattern, const string& subject, hash_vector_string_string& matches) {
+    return preg_match_all_named_columns(pattern, subject, matches, 0, 0);
+}
+
 result_or_false_hash_string_string match_named(const string& pattern, const string& subject, int64 offset) {
     return collect_matches<result_or_false_hash_string_string, hash_string_string>(pattern, subject, offset,
         [](auto& row, const auto& compiled, auto text, int count) {

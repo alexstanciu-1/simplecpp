@@ -793,7 +793,8 @@
     ],
     "value_types": [
       "int64",
-      "string"
+      "string",
+      "vector_string"
     ],
     "count_type": "int64",
     "key_contracts": {
@@ -905,6 +906,11 @@
         "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
         "result": "result_or_false<int64>"
       },
+      "preg_match_named": {
+        "native_name": "preg_match_named", "flavor": "php", "overload": "preg_match", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "hash_string_string", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false<int64>"
+      },
       "preg_match_numbered": {
         "native_name": "preg_match_numbered", "flavor": "php", "overload": "preg_match", "required_parameters": 3,
         "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "vector_string", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
@@ -948,6 +954,16 @@
       "preg_match_all": {
         "native_name": "preg_match_all", "flavor": "php", "overload": "preg_match_all", "required_parameters": 2,
         "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "mixed", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false<int64>"
+      },
+      "preg_match_all_named_rows": {
+        "native_name": "preg_match_all_named_rows", "flavor": "php", "overload": "preg_match_all", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "vector_hash_string_string", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
+        "result": "result_or_false<int64>"
+      },
+      "preg_match_all_named_columns": {
+        "native_name": "preg_match_all_named_columns", "flavor": "php", "overload": "preg_match_all", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "hash_vector_string_string", "native_passing": "reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}],
         "result": "result_or_false<int64>"
       },
       "preg_match_all_numbered": {
