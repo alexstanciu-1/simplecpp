@@ -179,21 +179,22 @@ final readonly class regex_callback_overloads extends runtime_overloads
 {
 	/** @param array<string,array{type_definition,array<class-string,string>,int}> $rows
 	 * @param array<class-string,type_definition> $subjects Subject class to falseable result.
+	 * @param array<class-string,type_definition> $pattern_inputs
 	 */
-	public function __construct(private string $name, public bool $table, private int $allowed_flags, private array $rows, private array $subjects)
+	public function __construct(private string $name, public bool $table, private int $allowed_flags, private array $rows, private array $subjects, public array $pattern_inputs)
 	{
 		parent::__construct([], argument_index: $table ? 0 : 1,
 			list_context: isset($subjects[type_vector_string::class]) ? type_vector_string::instance() : null, required_module: 'runtime-regex');
 	}
 
 	/** Resolve a concrete adapter from the row type of its single string-producing callback. */
-	public function binding(?type_definition $row, ast_expression $site, ?type_definition $subject = null): regex_callback_function
+	public function binding(?type_definition $row, ast_expression $site, ?type_definition $subject = null, ?type_definition $pattern = null): regex_callback_function
 	{
 		$variant = $this->rows[$row?->name ?? ''] ?? null;
 		if ($variant === null) throw new diagnostic($site->source(), $site->byte_start(), 'Unsupported callback row for ' . $this->name);
 		$subject ??= type_string::instance();
 		$result = $this->subjects[$subject::class] ?? throw new diagnostic($site->source(), $site->byte_start(), 'Unsupported subject type for ' . $this->name);
-		return new regex_callback_function($this->name, $variant[0], $this->table, $variant[1][$subject::class], true, $variant[2], $this->allowed_flags, $subject, $result);
+		return new regex_callback_function($this->name, $variant[0], $this->table, $variant[1][$subject::class], true, $variant[2], $this->allowed_flags, $subject, $result, $pattern);
 	}
 }
 
@@ -203,14 +204,14 @@ final readonly class regex_callback_function extends runtime_function
 	public owned_callable_type $callback;
 
 	/** Resolve the canonical capture callback and the ordered hash used by the array form. */
-	public function __construct(string $name, type_definition $input, private bool $table, string $header, bool $count_output = false, private ?int $capture_flags = null, private int $allowed_flags = 0, ?type_definition $subject = null, ?type_definition $result = null)
+	public function __construct(string $name, type_definition $input, private bool $table, string $header, bool $count_output = false, private ?int $capture_flags = null, private int $allowed_flags = 0, ?type_definition $subject = null, ?type_definition $result = null, ?type_definition $pattern = null)
 	{
 		$string = type_string::instance();
 		$this->callback = callable_signature_index::element(new callback_type_definition($string, [$input]));
 		$subject ??= $string;
 		$parameters = $table
 			? [Type_Resolution::collection('hash', $this->callback, $string), $subject]
-			: [$string, $this->callback, $subject];
+			: [$pattern ?? $string, $this->callback, $subject];
 		$required = count($parameters);
 		$parameters[] = type_int64::instance();
 		$count_mask = $count_output ? 1 << count($parameters) : 0;

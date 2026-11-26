@@ -148,6 +148,17 @@ the collection and returns false. A throwing invocation propagates immediately.
 The single helper counts invocations across rows through failure or throw.
 The table publishes count only after every pass succeeds.
 
+PHP `preg_replace_callback` accepts an ordered vector of patterns or an integer-
+or string-keyed hash of patterns. For each subject row it visits the pattern
+values in iteration order, passing each successive result to the next pattern.
+One callback receives the selected capture type throughout. Group names, widths
+and byte offsets belong to the current pattern and its current input. The limit
+resets for each pattern on each row. Regex failure discards partial output and
+publishes the number of callback invocations so far. An exception publishes the
+count including the throwing invocation and propagates immediately. Empty rules
+preserve the subject and write zero. Empty subject collections still validate
+each pattern. Flag and limit validation precede callbacks and count writes.
+
 Replacement limits are per subject and per pattern. The optional limit is a
 value argument even when the caller supplies a writable integer. Minus one
 means unlimited. Zero replacements still validates the pattern. A negative

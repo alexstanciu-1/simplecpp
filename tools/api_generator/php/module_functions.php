@@ -104,7 +104,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $plan[$family] = compact('provider', 'header', 'module', 'namespace', 'requires', 'functions');
     foreach (names($publication->{$family}->callbacks ?? [], 'Duplicate regex callback') as $name) {
         $item = at(at($catalog, 'callbacks'), $name);
-        fields($item, ['input', 'surface', 'table', 'optional_output', 'capture_rows', 'subjects']);
+        fields($item, ['input', 'surface', 'table', 'optional_output', 'capture_rows', 'subjects', 'pattern_inputs']);
         $input = textValue(at($item, 'input'));
         $callbackSurface = textValue(at($item, 'surface'));
         requireThat($family === 'regex' && in_array($input, ['mixed', 'vector_string'], true)
@@ -120,6 +120,15 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             $includes[] = providerHeader($plan['submodules'], $export['provider']);
         }
         $plan[$family]['callbacks'][$name] = compact('input', 'table', 'callbackSurface', 'callbackHeader', 'includes', 'countOutput');
+        $patterns = names($item->pattern_inputs ?? []);
+        if ($patterns !== []) {
+            requireThat(!$table && isset($item->capture_rows), 'Pattern collections require a single PHP capture callback');
+            foreach ($patterns as $type) {
+                requireThat(in_array($type, ['vector_string', 'hash_string_int64', 'hash_string_string'], true), 'Invalid callback pattern collection');
+                moduleFunctionTypeExport($plan, $type);
+            }
+            $plan[$family]['callbacks'][$name]['pattern_inputs'] = $patterns;
+        }
         if (isset($item->capture_rows)) {
             requireThat($countOutput, 'PHP capture flags follow the count output');
             foreach (regexCallbackRows($catalog, $publication->regex, $item) as $row => $shape) {
@@ -131,6 +140,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
                     moduleFunctionTypeExport($plan, $result);
                     $subjectHeader = $subject === 'string' ? $rowHeader : moduleOperationHeader($header, "callback_row_{$row}_$subject");
                     $plan[$family]['callback_rows'][$row]['subjects'][$subject] = $subjectHeader;
+                    foreach ($patterns as $type) $plan[$family]['callback_rows'][$row]['pattern_inputs'][$subject][$type] = true;
                     $plan[$family]['callbacks'][$name]['subjects'][$subject] = $result;
                 }
                 $plan[$family]['callbacks'][$name]['rows'][$row] = $rowHeader;
@@ -305,18 +315,18 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         $includes = [providerHeader($plan['submodules'], $export['provider'])];
         foreach (['string', 'int64', 'result_or_false_string'] as $type)
             $includes[] = providerHeader($plan['submodules'], moduleFunctionTypeExport($plan, $type)['provider']);
-        $declaration = "using callback_row_$row = string (*)(const void*, $row);\n"
-            . "result_or_false_string replace_capture_callback(const string&, const void*, callback_row_$row, const string&, int64, int64*, int64);\n";
-        $files['public/' . $shape['header']] = moduleHeaderBody($includes, $module['namespace'], $declaration);
-        $bridge .= includeHeader($shape['header']);
         foreach ($shape['subjects'] as $subject => $subjectHeader) {
-            if ($subject === 'string') continue;
             $result = 'result_or_false_' . $subject;
-            $providers = [$shape['header']];
+            $providers = $subject === 'string' ? $includes : [$shape['header']];
             foreach ([$subject, $result] as $type)
                 $providers[] = providerHeader($plan['submodules'], moduleFunctionTypeExport($plan, $type)['provider']);
-            $declaration = "$result replace_capture_callback(const string&, const void*, callback_row_$row, const $subject&, int64, int64*, int64);\n";
-            $files['public/' . $subjectHeader] = moduleHeaderBody($providers, $module['namespace'], $declaration);
+            $declaration = $subject === 'string' ? "using callback_row_$row = string (*)(const void*, $row);\n" : '';
+            $forward = '';
+            foreach (['string', ...array_keys($shape['pattern_inputs'][$subject] ?? [])] as $pattern) {
+                if ($pattern !== 'string') $forward .= "namespace scpp { class $pattern; }\n";
+                $declaration .= "$result replace_capture_callback(const $pattern&, const void*, callback_row_$row, const $subject&, int64, int64*, int64);\n";
+            }
+            $files['public/' . $subjectHeader] = moduleHeaderBody($providers, $module['namespace'], $declaration, $forward);
             $bridge .= includeHeader($subjectHeader);
         }
     }

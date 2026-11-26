@@ -153,12 +153,13 @@ $fields vector<string> = $parts;
 if (count($fields) !== 0) { return 24; }
 $parts = preg_split("/[/", "");
 if ($parts !== false) { return 25; }
-if (cli_argc() >= 5 && cli_argc() <= 9) {
+if ((cli_argc() >= 5 && cli_argc() <= 9) || cli_argc() === 12) {
     $n int = 99;
     $never function<string(vector<regex_offset_capture>)> = function(vector<regex_offset_capture> $r):string {
         echo "invoked"; return "wrong";
     };
     try {
+        if (cli_argc() === 12) { preg_replace_callback([], $never, "", -1, $n, 0); }
         if (cli_argc() === 5) { preg_replace_callback("/a/", $never, "a", -1, $n, PREG_UNMATCHED_AS_NULL); }
         if (cli_argc() === 6) {
             $emptyTable hash<function<string(vector<regex_offset_capture>)>,string> = [];
@@ -477,6 +478,8 @@ if (isset($bad)) { return 20; }
                                f'$flags int = {flags}; $outCount int = 99;',
                                '$once string = preg_replace_callback($p, $f, "αé", -1, $outCount, $flags);',
                                'if ($once !== "α!" || $outCount !== 1) { return 147; }',
+                               '$once = preg_replace_callback([$p], $f, "αé", -1, $outCount, $flags);',
+                               'if ($once !== "α!" || $outCount !== 1) { return 200; }',
                                '$once = preg_replace_callback_array($t, "αé", -1, $outCount, $flags);',
                                'if ($once !== "α!" || $outCount !== 1) { return 148; }', '}']
         statements.append('''{
@@ -533,6 +536,12 @@ class CallbackTrace {
     public static string $log = "";
     public static int $n = 0;
 }
+function orderedCapture(hash<string,string> $r):string {
+    CallbackTrace::$log .= $r["0"];
+    if ($r->has("first")) { return "X" . $r["2"]; }
+    if ($r->has("second")) { return "Y" . $r["2"]; }
+    return "wrong";
+}
 function firstRule(vector<string> $r):string {
     CallbackTrace::$log .= $r[0];
     return "X" . $r[1];
@@ -564,6 +573,30 @@ function checkedRule(vector<string> $r):string {
                            'if ($order !== "' + ''.join(key.strip('"') for key in keys) + '") { return 182; }',
                            '$out = preg_replace_callback("/a(.)/", firstRule(...), $items, 1);',
                            f'if ($out[{keys[0]}] !== "X1a1" || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "X2") {{ return 183; }}']
+            for patterns in ('["/(?<first>a)(.)/", "/(?<second>X)(.)/"]',
+                             '[8 => "/(?<first>a)(.)/", 2 => "/(?<second>X)(.)/"]',
+                             '["z" => "/(?<first>a)(.)/", "b" => "/(?<second>X)(.)/"]'):
+                statements += ['CallbackTrace::$log = ""; $n = 1;',
+                               f'$out = preg_replace_callback({patterns}, orderedCapture(...), $items, $n, $n);',
+                               'if (CallbackTrace::$log !== "a1X1a2X2" || $n !== 4 || count($out) !== 3) { return 201; }',
+                               f'if ($out[{keys[0]}] !== "Y1a1" || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "Y2") {{ return 202; }}']
+            statements += ['$items = ' + rows(['"aa"', '$hardSubject', '"a"']) + ';',
+                           'CallbackTrace::$log = ""; $n = 99;',
+                           '$failedPatterns = preg_replace_callback(["/a/", $hardPattern], checkedRule(...), $items, -1, $n);',
+                           'if (isset($failedPatterns) || CallbackTrace::$log !== "aaaaaa" || $n !== 6) { return 203; }',
+                           'CallbackTrace::$log = ""; $n = 99;',
+                           '$failedPatterns = preg_replace_callback(["/a/", "/[/"], checkedRule(...), $items, -1, $n);',
+                           'if (isset($failedPatterns) || CallbackTrace::$log !== "aa" || $n !== 2) { return 204; }',
+                           '$items = ' + rows(['"aa"', '"ab"', '"later"']) + ';',
+                           'CallbackTrace::$log = ""; $n = 99; $caught = false;',
+                           'try { $out = preg_replace_callback(["/a/", "/b/"], checkedRule(...), $items, -1, $n); }',
+                           'catch (Exception $failure) { $caught = $failure->get_message() === "later row"; }',
+                           'if (!$caught || CallbackTrace::$log !== "aaab" || $n !== 4) { return 205; }',
+                           '$out = preg_replace_callback([], checkedRule(...), $items, -1, $n);',
+                           f'if ($out[{keys[1]}] !== "ab" || $n !== 0) {{ return 206; }}',
+                           '$items = []; $n = 99;',
+                           '$failedPatterns = preg_replace_callback(["/a/", "/[/"], checkedRule(...), $items, 0, $n);',
+                           'if (isset($failedPatterns) || $n !== 0) { return 207; }']
             for table in (False, True):
                 call = ('preg_replace_callback_array([$p => checkedRule(...)], $items' if table else
                         'preg_replace_callback($p, checkedRule(...), $items') + ', -1, $n)'
@@ -584,6 +617,12 @@ $cbCount int = 99;
 $cbNamed function<string(hash<regex_offset_capture,string>)> = fn($r) => (string)$r["tag"]->byte_offset;
 $cbOut vector<string> = preg_replace_callback("/(?<tag>b)/", $cbNamed, $cbSubjects, -1, $cbCount, PREG_OFFSET_CAPTURE);
 if ($cbCount !== 2 || $cbOut[0] !== "a1" || $cbOut[1] !== "ca2") { return 187; }
+$capturePass function<string(hash<regex_offset_capture,string>)> = function(hash<regex_offset_capture,string> $r):string {
+    if ($r->has("first")) { return "éé"; }
+    return (string)$r["second"]->byte_offset;
+};
+$passText string = preg_replace_callback(["/^(?<first>x)/", "/(?<second>b)/"], $capturePass, "xab", -1, $cbCount, PREG_OFFSET_CAPTURE);
+if ($passText !== "ééa5" || $cbCount !== 2) { return 208; }
 $cbOut = preg_replace_callback_array(["/b/" => fn($r) => "!"], ["ab", "cab"]);
 if ($cbOut[0] !== "a!" || $cbOut[1] !== "ca!") { return 188; }
 CallbackTrace::$log = ""; $cbCount = 99;
@@ -890,7 +929,7 @@ def prove(work, runtime, flavor):
             subprocess.run([executable], check=True)
         failed = subprocess.run([first_build['executable'], 'failed-split'], capture_output=True, text=True)
         assert failed.returncode == 1 and failed.stderr.strip() == 'carrier_no_value', failed
-        for argc in (5, 6, 7, 8, 9):
+        for argc in (5, 6, 7, 8, 9, 12):
             failed = subprocess.run([first_build['executable'], *(['flags'] * (argc - 1))], capture_output=True, text=True)
             assert failed.returncode == 1 and 'flags' in failed.stderr and failed.stdout.strip() == '99', failed
         for argc, message in [(10, 'invalid pattern'), (11, 'matching failed')]:

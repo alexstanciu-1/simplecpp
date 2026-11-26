@@ -2010,24 +2010,24 @@ final class Preparation
 		}
 	}
 
-	/** Resolve a literal from its key or list shape before choosing an ordered rewrite overload. */
-	private function rewrite_input(rewrite_rule_overloads $group, ast_expression $argument, bool $typed): type_definition
+	/** Resolve a literal from its key or list shape before choosing an ordered rewrite overload. @param array<class-string,type_definition> $rule_types */
+	private function rewrite_input(array $rule_types, ast_expression $argument, bool $typed): type_definition
 	{
 		if ($argument instanceof ast_keyed_collection_expression) {
 			$key = $argument->entries[0]->key;
 			$this->value($key);
 			$hash = Type_Resolution::collection('hash', type_string::instance(), $key->type_def());
-			if ($hash === null || !isset($group->rule_types[$hash::class])) {
+			if ($hash === null || !isset($rule_types[$hash::class])) {
 				throw new diagnostic($key->source(), $key->byte_start(), 'Rewrite rule keys must be int or string');
 			}
 			$this->literal($argument, $hash, null, $key);
 		} else {
-			$context = $argument instanceof ast_collection_expression ? ($group->rule_types[type_vector_string::class] ?? null)
+			$context = $argument instanceof ast_collection_expression ? ($rule_types[type_vector_string::class] ?? null)
 				: ($typed ? type_string::instance() : null);
 			$this->value($argument, destination: $context);
 		}
 		$type = $typed ? $argument->value_type() : $argument->type_def();
-		return $group->rule_types[$type::class] ?? type_string::instance();
+		return $rule_types[$type::class] ?? type_string::instance();
 	}
 
 	/** Validate supplied runtime arguments against their generated signature. */
@@ -2091,19 +2091,23 @@ final class Preparation
 		}
 		$writes = [];
 		$conversions = [];
+		$pattern_type = null;
 		$labels = $runtime->php_argument_labels !== [] && $call->source()->flavor === flavor::php ? $runtime->php_argument_labels : [];
 		foreach ($operands as $index => $argument) {
 			$slot = $slots[$index] ?? $index;
 			if ($callback_group !== null && $index === $callback_group->argument_index + 1) {
 				$this->value($argument, destination: $argument instanceof ast_collection_expression ? $callback_group->list_context : null);
-				$runtime = $callback_group->binding($runtime->callback->signature->inputs[0], $argument, $argument->type_def());
+				$runtime = $callback_group->binding($runtime->callback->signature->inputs[0], $argument, $argument->type_def(), $pattern_type);
 				$prepared = $argument;
 			}
 			$type = $runtime->parameters[$slot];
 			$typed = $labels !== [] && ($runtime->php_typed_inputs & (1 << $slot)) !== 0;
 			$label = $labels === [] ? '' : $call->name . ' argument ' . ($slot + 1) . ' (' . $labels[$slot] . ') ';
-			if ($rule_group !== null && $slot < 2) {
-				$type = $this->rewrite_input($rule_group, $argument, $typed);
+			if ($slot === 0 && $callback_group !== null && $callback_group->pattern_inputs !== []) {
+				$type = $pattern_type = $this->rewrite_input($callback_group->pattern_inputs, $argument, false);
+			}
+			elseif ($rule_group !== null && $slot < 2) {
+				$type = $this->rewrite_input($rule_group->rule_types, $argument, $typed);
 				if ($type !== $runtime->parameters[$slot]) {
 					if ($slot === 1 && $runtime->parameters[0] === type_string::instance()) {
 						throw new diagnostic($argument->source(), $argument->byte_start(), 'A replacement collection requires a pattern collection');

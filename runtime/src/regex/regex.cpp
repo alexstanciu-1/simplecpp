@@ -1004,42 +1004,64 @@ result_or_false_string replace_with_callback(const string& pattern, const string
     })) return result_or_false_string::from_false();
     return result_or_false_string{owned(output)};
 }
-template<int Flags, bool Named, class Cell, class Row, class Result, class Subject, class Invoke>
-Result capture_callback(const string& pattern, const void* context, Invoke invoke,
-                        const Subject& subject, int64 limit, int64* count) {
-    validate_limit(limit);
-    capture_pattern compiled(pattern);
-    if (!compiled.data) {
-        if (count) *count = 0;
-        return Result::from_false();
-    }
-    const auto names = Named ? names_by_group(compiled) : std::vector<string>{};
-    const auto groups = pcre2_get_ovector_count(compiled.data.get());
-    int64 total = 0;
-    auto rewrite_one = [&](string& value) {
-        const auto text = bytes(value);
-        int64 changed = 0;
-        std::string output;
-        const bool ok = rewrite(compiled, text, limit, output, changed, [&](std::string& out, int matched) {
-            auto row = capture_container<Row>();
-            const auto* pairs = pcre2_get_ovector_pointer(compiled.data.get());
-            const size_t width = Flags & unmatched_as_null ? groups : matched;
-            for (size_t i = 0; i < width; ++i) {
-                const auto* bounds = i < static_cast<size_t>(matched) ? pairs + i * 2 : nullptr;
-                write_capture<Named>(row, i, names, bounds && bounds[0] != PCRE2_UNSET, capture_value<Flags, Cell>(text, bounds));
-            }
-            ++total;
-            try {
-                out.append(bytes(invoke(context, std::move(row))));
-            } catch (...) {
-                if (count) *count = total;
-                throw;
-            }
-        });
-        if (ok && changed) value = owned(output);
-        return ok;
-    };
+struct prepared_callback_pattern {
+    capture_pattern compiled;
+    std::vector<string> names;
+    size_t groups;
+    prepared_callback_pattern(const string& text, bool named)
+        : compiled(text), names(named && compiled.data ? names_by_group(compiled) : std::vector<string>{}),
+          groups(compiled.data ? pcre2_get_ovector_count(compiled.data.get()) : 0) {}
+};
 
+struct callback_pattern_entry {
+    string text;
+    std::optional<prepared_callback_pattern> prepared;
+
+    bool prepare(bool named) {
+        if (!prepared) prepared.emplace(text, named);
+        return prepared->compiled.data != nullptr;
+    }
+};
+
+template<class Input>
+std::vector<callback_pattern_entry> snapshot_callback_patterns(const Input& input) {
+    std::vector<callback_pattern_entry> patterns;
+    patterns.reserve(input.size());
+    int64 position = 0;
+    const auto stop = input.iteration_limit();
+    string text;
+    while (input.iteration_next(position, stop, text)) patterns.push_back({std::move(text), std::nullopt});
+    return patterns;
+}
+
+template<int Flags, bool Named, class Cell, class Row, class Invoke>
+bool rewrite_callback_pass(const prepared_callback_pattern& pattern, const void* context, Invoke invoke,
+                           string& value, int64 limit, int64& total, int64* count) {
+    const auto text = bytes(value);
+    int64 changed = 0;
+    std::string output;
+    const bool ok = rewrite(pattern.compiled, text, limit, output, changed, [&](std::string& out, int matched) {
+        auto row = capture_container<Row>();
+        const auto* pairs = pcre2_get_ovector_pointer(pattern.compiled.data.get());
+        const size_t width = Flags & unmatched_as_null ? pattern.groups : matched;
+        for (size_t i = 0; i < width; ++i) {
+            const auto* bounds = i < static_cast<size_t>(matched) ? pairs + i * 2 : nullptr;
+            write_capture<Named>(row, i, pattern.names, bounds && bounds[0] != PCRE2_UNSET, capture_value<Flags, Cell>(text, bounds));
+        }
+        ++total;
+        try {
+            out.append(bytes(invoke(context, std::move(row))));
+        } catch (...) {
+            if (count) *count = total;
+            throw;
+        }
+    });
+    if (ok && changed) value = owned(output);
+    return ok;
+}
+
+template<class Result, class Subject, class Rewrite>
+Result rewrite_callback_rows(const Subject& subject, int64& total, int64* count, Rewrite rewrite_one) {
     // A callback may mutate the caller's subject. Each pass owns its working value.
     Subject output = subject;
     bool ok = true;
@@ -1064,8 +1086,39 @@ Result capture_callback(const string& pattern, const void* context, Invoke invok
     return Result{std::move(output)};
 }
 
-template<class Result = result_or_false_string, class Subject>
-Result mixed_callback(const string& pattern, const void* context, render_mixed invoke,
+template<int Flags, bool Named, class Cell, class Row, class Result, class Subject, class Invoke, class Patterns>
+Result capture_callback(Patterns& patterns, const void* context, Invoke invoke,
+                        const Subject& subject, int64 limit, int64* count) {
+    validate_limit(limit);
+    int64 total = 0;
+    auto invalid = [&] {
+        if (count) *count = total;
+        return Result::from_false();
+    };
+    auto apply = [&](const prepared_callback_pattern& pattern, string& value) {
+        return rewrite_callback_pass<Flags, Named, Cell, Row>(pattern, context, invoke, value, limit, total, count);
+    };
+    if constexpr (std::is_same_v<std::remove_cv_t<Patterns>, string>) {
+        prepared_callback_pattern pattern(patterns, Named);
+        if (!pattern.compiled.data) return invalid();
+        return rewrite_callback_rows<Result>(subject, total, count, [&](string& value) { return apply(pattern, value); });
+    } else {
+        if constexpr (!std::is_same_v<Subject, string>) {
+            if (subject.empty()) {
+                for (auto& rule : patterns) if (!rule.prepare(Named)) return invalid();
+            }
+        }
+        return rewrite_callback_rows<Result>(subject, total, count, [&](string& value) {
+            for (auto& rule : patterns) {
+                if (!rule.prepare(Named) || !apply(*rule.prepared, value)) return false;
+            }
+            return true;
+        });
+    }
+}
+
+template<class Result = result_or_false_string, class Subject, class Patterns>
+Result mixed_callback(Patterns& pattern, const void* context, render_mixed invoke,
                       const Subject& subject, int64 limit, int64* count, int64 flags) {
     switch (flags) {
         case 0: return capture_callback<0, true, mixed, mixed, Result>(pattern, context, invoke, subject, limit, count);

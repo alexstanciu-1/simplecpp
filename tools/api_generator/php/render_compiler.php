@@ -333,7 +333,12 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 $type = $runtimeTypes[$subject];
                 $subjects[] = "type_$type::class => type_{$runtimeTypes[$result]}::instance()";
             }
-            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_overloads('$name', $table, $allowed, [" . implode(', ', $rows) . "], [" . implode(', ', $subjects) . "]),";
+            $patterns = [];
+            foreach ($binding['pattern_inputs'] ?? [] as $pattern) {
+                $type = $runtimeTypes[$pattern];
+                $patterns[] = "type_$type::class => type_$type::instance()";
+            }
+            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_overloads('$name', $table, $allowed, [" . implode(', ', $rows) . "], [" . implode(', ', $subjects) . "], [" . implode(', ', $patterns) . "]),";
             continue;
         }
         $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}', $countOutput),";
