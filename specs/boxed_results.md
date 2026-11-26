@@ -29,8 +29,8 @@ Publication adds the ordinary carrier requests to a boxed publication:
 }
 ```
 
-The regex publication additionally selects `result_or_false<mixed>`. The mixed-input PHP grep overload
-and PHP filter return a successful mixed collection, including an empty collection,
+The regex publication additionally selects `result_or_false<mixed>`. The mixed-input PHP grep and filter
+overloads return a successful mixed collection, including an empty collection,
 or the false sentinel on regex failure. Mixed payloads retain their usual COW semantics.
 The carrier follows the ordinary result_or_false default and move-reset rules.
 

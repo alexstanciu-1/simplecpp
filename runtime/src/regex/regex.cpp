@@ -253,6 +253,14 @@ bool rewrite(const capture_pattern& pattern, std::string_view text, int64 limit,
     return true;
 }
 
+bool rewrite_string(const capture_pattern& compiled, const string& replacement, const string& subject,
+                    int64 limit, std::string& output, int64& changed) {
+    const auto text = bytes(subject);
+    return rewrite(compiled, text, limit, output, changed, [&](std::string& out, int count) {
+        expand(out, bytes(replacement), compiled, text, count);
+    });
+}
+
 size_t capture_offset(int64 offset, int64 size) {
     return offset < 0 ? static_cast<size_t>(std::max(int64{0}, size + offset)) : static_cast<size_t>(offset);
 }
@@ -311,9 +319,7 @@ result_or_false_string replace(const string& pattern, const string& replacement,
     if (!compiled.data) return result_or_false_string::from_false();
     std::string output;
     int64 changed = 0;
-    if (!rewrite(compiled, bytes(subject), limit, output, changed, [&](std::string& out, int count) {
-        expand(out, bytes(replacement), compiled, bytes(subject), count);
-    })) return result_or_false_string::from_false();
+    if (!rewrite_string(compiled, replacement, subject, limit, output, changed)) return result_or_false_string::from_false();
     return result_or_false_string{owned(output)};
 }
 
@@ -321,25 +327,84 @@ result_or_false_string replace(const string& pattern, const string& replacement,
     return replace(pattern, replacement, subject, -1);
 }
 
-result_or_false_vector_string filter(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
+nullable_string preg_filter_string(const string& pattern, const string& replacement, const string& subject, int64 limit) {
     validate_limit(limit);
     capture_pattern compiled(pattern);
-    if (!compiled.data) return result_or_false_vector_string::from_false();
-    vector_string output;
-    for (int64 i = 0; i < input.size(); ++i) {
-        auto value = input.at(i);
+    if (!compiled.data) throw ValueError("preg_filter: invalid pattern");
+    int64 changed = 0;
+    std::string output;
+    if (!rewrite_string(compiled, replacement, subject, limit, output, changed))
+        throw ValueError("preg_filter: matching failed");
+    return changed ? nullable_string{owned(output)} : nullable_string{};
+}
+
+nullable_string preg_filter_string(const string& pattern, const string& replacement, const string& subject) {
+    return preg_filter_string(pattern, replacement, subject, -1);
+}
+
+namespace {
+template<class Key, class Input, class Keep>
+bool filter_rows(const string& pattern, const string& replacement, const Input& input, int64 limit, Keep keep) {
+    validate_limit(limit);
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return false;
+    int64 position = 0;
+    const auto stop = input.iteration_limit();
+    Key key{};
+    string subject;
+    while (input.iteration_next(position, stop, key, subject)) {
         int64 changed = 0;
         std::string row;
-        if (!rewrite(compiled, bytes(value), limit, row, changed, [&](std::string& out, int count) {
-            expand(out, bytes(replacement), compiled, bytes(value), count);
-        })) return result_or_false_vector_string::from_false();
-        if (changed) output.append(owned(row));
+        if (!rewrite_string(compiled, replacement, subject, limit, row, changed)) return false;
+        if (changed) keep(key, owned(row));
     }
+    return true;
+}
+
+template<class Key, class Hash, class Result, class Input>
+Result filter_keyed(const string& pattern, const string& replacement, const Input& input, int64 limit) {
+    Hash output;
+    if (!filter_rows<Key>(pattern, replacement, input, limit, [&](const Key& key, string value) {
+        output.set(key, std::move(value));
+    })) return Result::from_false();
+    return Result{std::move(output)};
+}
+}
+
+result_or_false_vector_string filter(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
+    vector_string output;
+    if (!filter_rows<int64>(pattern, replacement, input, limit, [&](int64, string value) {
+        output.append(std::move(value));
+    })) return result_or_false_vector_string::from_false();
     return result_or_false_vector_string{std::move(output)};
 }
 
 result_or_false_vector_string filter(const string& pattern, const string& replacement, const vector_string& input) {
     return filter(pattern, replacement, input, -1);
+}
+
+result_or_false_hash_string_int64 preg_filter_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
+    return filter_keyed<int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit);
+}
+
+result_or_false_hash_string_int64 preg_filter_vector(const string& pattern, const string& replacement, const vector_string& input) {
+    return preg_filter_vector(pattern, replacement, input, -1);
+}
+
+result_or_false_hash_string_int64 preg_filter_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit) {
+    return filter_keyed<int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit);
+}
+
+result_or_false_hash_string_int64 preg_filter_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input) {
+    return preg_filter_int_keys(pattern, replacement, input, -1);
+}
+
+result_or_false_hash_string_string preg_filter_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit) {
+    return filter_keyed<string, hash_string_string, result_or_false_hash_string_string>(pattern, replacement, input, limit);
+}
+
+result_or_false_hash_string_string preg_filter_string_keys(const string& pattern, const string& replacement, const hash_string_string& input) {
+    return preg_filter_string_keys(pattern, replacement, input, -1);
 }
 
 result_or_false_vector_string split(const string& pattern, const string& subject, int64 limit, int64 flags) {
@@ -471,9 +536,7 @@ result_or_false_mixed select_rows(const string& pattern, const mixed& input, con
         if (replacement) {
             int64 changed = 0;
             std::string rewritten;
-            if (!rewrite(compiled, bytes(subject), limit, rewritten, changed, [&](std::string& out, int count) {
-                expand(out, bytes(*replacement), compiled, bytes(subject), count);
-            })) return result_or_false_mixed::from_false();
+            if (!rewrite_string(compiled, *replacement, subject, limit, rewritten, changed)) return result_or_false_mixed::from_false();
             if (!changed) continue;
             entry = mixed::from_string(owned(rewritten));
         } else {

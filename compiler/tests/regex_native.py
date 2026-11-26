@@ -110,6 +110,8 @@ $fields vector<string> = $parts;
 if (count($fields) !== 0) { return 24; }
 $parts = preg_split("/[/", "");
 if ($parts !== false) { return 25; }
+if (cli_argc() === 3) { preg_filter("/[/", "", "", 0); return 55; }
+if (cli_argc() === 4) { preg_filter("/./u", "", string_byte_from_int(255)); return 56; }
 if (cli_argc() > 1) { preg_grep("/./", $parts); return 45; }
 $rowsByIndex = preg_grep("/^keep/", preg_split("/,/", "drop,keepA,drop,keepB"));
 $selected hash<string,int> = $rowsByIndex;
@@ -127,6 +129,43 @@ if ($rowsByIndex !== false) { return 51; }
 $badUtfRows vector<string> = ["ok", string_byte_from_int(255)];
 $rowsByIndex = preg_grep("/./u", $badUtfRows);
 if ($rowsByIndex !== false) { return 54; }
+$filtered ?string = preg_filter("/x/", "", "x");
+if (!isset($filtered) || $filtered !== "") { return 57; }
+$filtered = preg_filter("/x/", "x", "x", 1);
+if ($filtered !== "x") { return 58; }
+$filtered = preg_filter("/x/", "", "other");
+if ($filtered !== null) { return 59; }
+$filtered = preg_filter("/x/", "!", "x", 0);
+if ($filtered !== null) { return 60; }
+$rowsByIndex = preg_filter("/x/", "", preg_split("/,/", "drop,x,skip,xx"));
+$selected = $rowsByIndex;
+if (count($selected) !== 2 || $selected[1] !== "" || $selected[3] !== "") { return 61; }
+$rowsByIndex = preg_filter("/x/", "!", $badUtfRows, 1);
+$selected = $rowsByIndex;
+if (count($selected) !== 0) { return 62; }
+$rowsByIndex = preg_filter("/./u", "", $badUtfRows);
+if ($rowsByIndex !== false) { return 63; }
+$selected = preg_filter("/x/", "!", preg_grep("/x/", preg_split("/,/", "skip,xx")), 1);
+if (count($selected) !== 1 || $selected[1] !== "!x") { return 64; }
+$rowsByIndex = preg_filter("/[/", "", $selected);
+if ($rowsByIndex !== false) { return 65; }
+$words hash<string,string> = ["z" => "xx", "skip" => "a", "b" => "x"];
+$byName hash<string,string> = preg_filter("/x/", "", $words, 1);
+if (count($byName) !== 2 || $byName["z"] !== "x" || $byName["b"] !== "") { return 66; }
+$order string = "";
+foreach ($byName as $key => $word) { $order .= $key; }
+if ($order !== "zb") { return 67; }
+$byName = preg_filter("/missing/", "", $words);
+if (count($byName) !== 0) { return 68; }
+$failedNames result_or_false<hash<string,string>> = preg_filter("/[/", "", $byName);
+if ($failedNames !== false) { return 69; }
+$boxedFilter mixed = preg_filter("/x/", "", ["skip", "x"]);
+if (count($boxedFilter) !== 1 || (string)$boxedFilter[1] !== "") { return 70; }
+$boxedScalar mixed = "x";
+$boxedFilter = preg_filter("/x/", "", $boxedScalar);
+if (count($boxedFilter) !== 0) { return 71; }
+$badBox result_or_false<mixed> = preg_filter("/[/", "", $boxes);
+if ($badBox !== false) { return 72; }
 $boxedAgain mixed = preg_grep("/x/", $kept);
 if ((string)$boxedAgain["p"] !== "ax") { return 52; }
 $literalBox mixed = preg_grep("/keep/", ["drop", "keep"]);
@@ -232,6 +271,12 @@ def prove(work, runtime, flavor):
         source_edit(manifest, enabled)
         ok()
         if flavor == 'php':
+            lowered = b'\n'.join(artifacts(output).values())
+            for target in ('preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
+                           'preg_filter_string_keys', 'preg_filter'):
+                assert f'::scpp::regex::{target}('.encode() in lowered, target
+            source_edit(source, '$items vector<int> = [1]; preg_filter("/./", "", $items); return 0;')
+            assert 'Unsupported argument type for preg_filter' in invoke(resident).get('error', '')
             source_edit(source, '$items vector<int> = [1]; preg_grep("/./", $items); return 0;')
             assert 'Unsupported argument type for preg_grep' in invoke(resident).get('error', '')
             source_edit(source, '$boxed mixed = preg_split("/,/", "a"); return 0;')
@@ -285,6 +330,10 @@ def prove(work, runtime, flavor):
     if flavor == 'php':
         failed = subprocess.run([first_build['executable'], 'failed-split'], capture_output=True, text=True)
         assert failed.returncode == 1 and failed.stderr.strip() == 'carrier_no_value', failed
+        for args, message in [(['invalid', 'pattern'], 'preg_filter: invalid pattern'),
+                              (['invalid', 'utf', 'subject'], 'preg_filter: matching failed')]:
+            failed = subprocess.run([first_build['executable'], *args], capture_output=True, text=True)
+            assert failed.returncode == 1 and message in failed.stderr, failed
     # Recompile the complete fixture with the toolchain already qualified.
     for obj in native.glob('unit-*.o'):
         obj.unlink()

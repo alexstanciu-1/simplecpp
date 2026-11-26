@@ -31,8 +31,19 @@ result_or_false<hash<string,int>>, keyed by the original vector indices in encou
 order. A mixed input yields result_or_false<mixed> and preserves its selected keys.
 A bare collection literal uses mixed. A carrier of either input type supplies its
 payload under the implicit extraction policy; a missing payload raises before grep
-runs. Invalid grep patterns yield false even for an empty input. PHP preg_filter
-returns result_or_false<mixed> and preserves the selected input keys.
+runs. Invalid grep patterns yield false even for an empty input.
+
+PHP preg_filter selects its overload from the subject for both supported arities
+(pattern, replacement, subject and optional limit). A string subject returns
+?string. Any replacement yields a present string, including empty output and
+identity replacements. Zero replacements yields null. Invalid patterns and
+matching failures throw ValueError. A vector<string> subject returns
+result_or_false<hash<string,int>> with original indices. A hash of strings keyed
+by int or string returns a falseable hash of the same type. Collection overloads
+retain selected keys in encounter order and return false on regex failure,
+discarding any partial output. A mixed subject retains its result_or_false<mixed>
+contract. A non-container mixed subject yields an empty container for a valid
+pattern. Bare PHP list literals select the mixed overload.
 Successful empty collections retain the value state. PHP callbacks take a
 mixed collection of numbered captures. A callback exception propagates.
 

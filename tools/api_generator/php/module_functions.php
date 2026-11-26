@@ -77,7 +77,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             $policy = at(at($catalog, 'php_overloads'), $group);
             fields($policy, ['selector', 'list_context', 'arguments']);
             $selector = at($policy, 'selector');
-            requireThat($required === count($inputs) && is_int($selector) && isset($parameters[$selector])
+            requireThat(is_int($selector) && $selector < $required && isset($parameters[$selector])
                 && !($reference_mask & (1 << $selector)), 'Invalid module overload selector');
             $functions[$name]['overload'] = $group;
             $functions[$name]['selector'] = $selector;
@@ -162,6 +162,7 @@ function moduleFunctionTypeExport(array $plan, string $type): array {
         || (isset($plan['string']) && $identity === 'string')
         || (isset($plan['boxed_dispatch']) && in_array($identity, array_column($plan['boxed']['families'], 'name'), true))
         || in_array($identity, array_column($plan['vectors'] ?? [], 'name'), true)
+        || in_array($identity, array_column($plan['hashes']['specializations'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['regex_carriers'] ?? [], 'name'), true)
         || in_array($identity, array_column($plan['carriers'] ?? [], 'name'), true),
         'Module function requires a published type: ' . $type);
@@ -268,9 +269,10 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
             if (isset($binding['overload'])) {
                 $index = $binding['selector'];
                 $type = $types[$index];
-                $arity = count($types);
-                requireThat(!isset($overloads[$key]['variants'][$arity][$type]), "Duplicate overload selector for $key");
-                $overloads[$key]['variants'][$arity][$type] = 'type_' . $runtimeTypes[$type] . "::class => $call";
+                for ($arity = $binding['required_parameters']; $arity <= count($types); ++$arity) {
+                    requireThat(!isset($overloads[$key]['variants'][$arity][$type]), "Duplicate overload selector for $key");
+                    $overloads[$key]['variants'][$arity][$type] = 'type_' . $runtimeTypes[$type] . "::class => $call";
+                }
                 $overloads[$key]['index'] = $index;
                 $overloads[$key]['context'] = $binding['list_context'];
             } else $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= $call,";
