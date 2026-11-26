@@ -1,6 +1,7 @@
 // Linux host boundaries for the native toolchain probe.
 #include "frontend_host.hpp"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -57,6 +58,28 @@ scpp::string host_stat_tuple_(scpp::string path) {
     auto ns = [](timespec t) { return std::to_string(t.tv_sec * 1000000000LL + t.tv_nsec); };
     return bytes("[" + std::to_string(s.st_dev) + "," + std::to_string(s.st_ino) + "," +
                  std::to_string(s.st_size) + "," + ns(s.st_mtim) + "," + ns(s.st_ctim) + "]");
+}
+
+// Track candidate names without duplicating the compiler's header search rules.
+scpp::string host_include_tree_(scpp::string path) {
+    namespace fs = std::filesystem;
+    const fs::path root(path.size() ? native(path) : ".");
+    std::error_code error;
+    if (std::find(root.begin(), root.end(), "..") != root.end() || fs::is_symlink(root, error) || error) return {};
+    std::vector<std::string> names;
+    fs::recursive_directory_iterator entry(root, error), end;
+    while (!error && entry != end) {
+        const auto type = entry->symlink_status(error).type();
+        if (error || names.size() >= 4096 || (type != fs::file_type::regular && type != fs::file_type::directory))
+            return {};
+        names.push_back((type == fs::file_type::directory ? "D" : "F") + entry->path().lexically_relative(root).native());
+        entry.increment(error);
+    }
+    if (error) return {};
+    std::sort(names.begin(), names.end());
+    std::string inventory;
+    for (const auto& name : names) { inventory += name; inventory += '\0'; }
+    return host_sha256_bytes_(bytes(inventory));
 }
 
 // Keep argv literal. Separate anonymous files allow either child stream to grow without a pipe deadlock.

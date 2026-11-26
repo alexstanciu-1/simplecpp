@@ -132,8 +132,9 @@ def cache_proof(work, compiler):
         include.rmdir()
         assert lookup() is None
         index['inputs'][str(include)] = None
-        key, record_path = publish_fixture(cache, index, record)
-        assert lookup() == key
+        publish_fixture(cache, index, record)
+        # An absent include tree requires preprocessing even with a matching null stat.
+        assert lookup() is None
         include.mkdir()
         assert lookup() is None
     # Relative inputs are keyed by the build cwd; environment and symlink spellings survive cross-language hashing.
@@ -164,9 +165,11 @@ def protocol_parity(work, compiler):
                 'LIBRARY_PATH', 'LD_LIBRARY_PATH', 'LD_PRELOAD', 'SDKROOT', 'CCC_OVERRIDE_OPTIONS']
     cases = [(flags+[option], [], {}, True) for option in
              ['-O0','-O1','-O2','-O3','-Os','-Oz','-g','-g0','-DNDEBUG','-Wall','-Wextra','-Wpedantic','-Werror','-stdlib=libc++']]
+    for name in ('-relative', 'relative', 'include é $'):
+        (work/name).mkdir()
     cases += [(flags+['-I', '-relative'], [], {}, True),
               (flags+['-include-pch', '-relative.pch'], [], {}, True),
-              (flags+['-I', 'relative'], [], {}, True), (flags+['-I', str(work)], [], {}, True),
+              (flags+['-I', 'relative'], [], {}, True), (flags+['-I', str(work/'relative')], [], {}, True),
               (flags+['-include-pch', 'relative.pch'], [], {}, True),
               (flags+['-Xclang','-fno-validate-pch'], [], {}, True),
               (flags, ['--ld-path=relative-linker'], {}, True), (flags, ['--ld-path=/usr/bin/ld'], {}, True),
@@ -249,6 +252,7 @@ def native_proof(work, compiler, flavor, runtime=None, *, quick=False):
     first = invoke()
     assert first.returncode == 0, (first.stdout[-2500:], first.stderr)
     report = json.loads(first.stdout)
+    assert report['native']['exit_code'] == 0, report['native']
     assert report['native']['qualification'] == 'probe-gate', report
     executed = run([native/'program'])
     assert (executed.returncode, executed.stdout) == (8, 'host'), executed
@@ -451,7 +455,9 @@ def main():
             runtime = None
             if name == 'g++':
                 from extends_native import runtime as build_runtime
-                library = build_runtime(root/name, name)
+                library = build_runtime(root/name, name, [ROOT/'runtime'/path for path in (
+                    'generated/src/hash.cpp', 'generated/src/boxed.cpp',
+                    'src/boxed/boxed_value.cpp', 'src/boxed/boxed_conversion.cpp', 'src/hash/packed_key.cpp')])
                 runtime = root/name/'runtime-module'
                 runtime.mkdir()
                 (runtime/'module.json').write_text(json.dumps({'name':'runtime', 'type':'c++',

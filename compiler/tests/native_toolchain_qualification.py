@@ -19,8 +19,12 @@ def verify(root, native, compiler, full):
     include = root/'include files'
     include.mkdir()
     header = include/'cstdio'
-    header.write_text('#include_next <cstdio>\n')
-    flags = ['-std=c++23', '-I', str(include)]
+    header.write_text('#include <nested/marker.h>\n#include_next <cstdio>\n')
+    fallback = root/'fallback'
+    (fallback/'nested').mkdir(parents=True)
+    (include/'nested').mkdir()
+    (fallback/'nested/marker.h').touch()
+    flags = ['-std=c++23', '-I', str(include), '-I', str(fallback)]
     if 'clang' in Path(compiler).name:
         flags += ['-stdlib=libc++']
     native_cache, oracle_cache = root/'native', root/'python'
@@ -51,9 +55,21 @@ def verify(root, native, compiler, full):
     times = [path.stat().st_mtime_ns for path in stamps]
     assert pair('cached')[0] == cold
     assert [path.stat().st_mtime_ns for path in stamps] == times
+    from native_build import host
+    lookup = dict(action='lookup', cwd=str(root), cxx=str(Path(shutil.which(compiler)).absolute()),
+                  flags=flags, cache=str(oracle_cache))
+    with host(cache_only=True) as php:
+        assert php(lookup)['result'] == cold[1]
+        shadow = include/'nested/marker.h'
+        shadow.write_text('#error bad_header shadow selected\n')
+        assert php(lookup)['result'] is None
+        assert pair(None, fail=True) == cold
+        shadow.unlink()
+        assert pair('cached')[0] == cold
+        assert php(lookup)['result'] == cold[1]
     # Same size and mtime. The depfile snapshot's nanosecond ctime must catch it.
     old = header.stat()
-    header.write_text('#include_next "cstdio"\n')
+    header.write_text('#include <nested/marker.h>\n#include_next "cstdio"\n')
     os.utime(header, ns=(old.st_atime_ns, old.st_mtime_ns))
     edited, _ = pair('qualified')
     assert all(a != b for a, b in zip(cold, edited))

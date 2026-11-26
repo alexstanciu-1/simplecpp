@@ -34,7 +34,8 @@ function probe_request(string $cxx, string $source, vector<string> $flags, vecto
                        hash<string,string> &$paths, bool &$fast): string {
     $args = $flags;
     foreach ($links as $flag) { $args[] = $flag; }
-    $identity vector<string> = ["native-qualification-v1", $cxx, $source, host_self(), (string)count($flags), (string)count($links)];
+    $identity vector<string> = ["native-qualification-v2", $cxx, $source, host_self(), (string)count($flags), (string)count($links)];
+    $roots vector<string> = [];
     $relative = false;
     foreach ($args as $arg) {
         $identity[] = $arg;
@@ -46,6 +47,7 @@ function probe_request(string $cxx, string $source, vector<string> $flags, vecto
         if ($option === "-I" || $option === "-include-pch") {
             $i++;
             if ($i < count($args)) $path = $args[$i];
+            if ($option === "-I") $roots[] = $path;
         } elseif (str_starts_with($option, "--ld-path=")) $path = substr($option, 10);
         elseif ($option === "-Xclang") {
             $i++;
@@ -72,8 +74,16 @@ function probe_request(string $cxx, string $source, vector<string> $flags, vecto
         }
         foreach (explode(":", $value) as $item) {
             if (!str_starts_with($item, "/")) $relative = true;
+            if (probe_word_in($key, "|CPATH|CPLUS_INCLUDE_PATH|C_INCLUDE_PATH|")) $roots[] = $item;
             if ($item !== "" && probe_word_in($key, "|CPATH|CPLUS_INCLUDE_PATH|C_INCLUDE_PATH|LD_LIBRARY_PATH|LIBRARY_PATH|"))
                 $paths[host_abspath($item)] = "";
+        }
+    }
+    if ($fast) {
+        foreach ($roots as $root) {
+            $tree = host_include_tree($root);
+            if ($tree === "") $fast = false;
+            $identity[] = $tree;
         }
     }
     if ($relative) $identity[] = host_abspath(".");
