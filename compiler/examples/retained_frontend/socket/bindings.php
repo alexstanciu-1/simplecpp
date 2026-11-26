@@ -20,6 +20,11 @@ function private_frontend_binding(string $key): ?runtime_function
 			'host_sha256_bytes' => [[$string], $string],
 			'host_sha256_file' => [[$string], $string],
 			'host_executable' => [[$string], type_bool::instance()],
+			'host_self' => [[], $string],
+			'host_abspath' => [[$string], $string],
+			'host_stat_tuple' => [[$string], $string],
+			'host_probe_command' => [[$string, type_bool::instance()], $string],
+			'host_probe_words' => [[$string], $string],
 			'host_pid' => [[], type_registry::integer()],
 			'host_exchange' => [[$string, $string], $string],
 		] as $name => [$parameters, $result]) {

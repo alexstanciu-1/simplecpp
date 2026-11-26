@@ -36,7 +36,11 @@ def verify(work, publisher, cxx, linker):
                                          input=json.dumps(request)+'\n', text=True)
         assert 'result' in json.loads(result), result
         subprocess.run(command, check=True)
-        assert (nativedir/'build.ninja').read_bytes() == (phpdir/'build.ninja').read_bytes()
+        graph = (nativedir/'build.ninja').read_text()
+        native_gate = f"'{publisher}' 'qualify'"
+        python_gate = f"'python3' '-B' '{ROOT}/tools/layout_probe/qualification.py'"
+        assert graph.count(native_gate) == 1 and python_gate not in graph
+        assert graph.replace(native_gate, python_gate) == (phpdir/'build.ninja').read_text()
 
     def build(directory, outputs, value):
         log = directory/'.ninja_log'

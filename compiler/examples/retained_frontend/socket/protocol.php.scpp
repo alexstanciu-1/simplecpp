@@ -51,6 +51,7 @@ function report(Frontend_Session $session, string $root, string $line, bool &$st
 
 $cli = cli_arguments();
 if (count($cli) > 1) {
+    if ($cli[1] === "qualify") return qualification_cli($cli);
     if ($cli[1] === "publish-ninja") {
         if (count($cli) !== 6 && count($cli) !== 8) return 2;
         $runtime = inventory_default_runtime();

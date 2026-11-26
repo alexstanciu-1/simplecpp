@@ -58,5 +58,13 @@ the PHP native build configuration.
 
 Publication takes a shared bundle lock and the native directory's exclusive lock.
 A changed graph replaces `build.ninja` via a staged rename. Identical graph bytes
-preserve its timestamp. Ninja invokes the existing Python toolchain qualification
-probe and tracks header dependencies through compiler depfiles.
+preserve its timestamp. Ninja invokes the native executable's `qualify` command and tracks header
+dependencies through compiler depfiles. Qualification compiles and runs the
+shared C++ argument-order probe with the selected compiler and flags. Admitted
+requests reuse a successful result for up to seven days while tracked input
+metadata matches. Other flags require fingerprinting before reuse. A successful
+run writes the context stamp only when its key changes.
+
+The native qualifier stores a separately locked `native-<request>.json` in the
+configured cache and fingerprints its own executable. Python qualification keeps
+its existing cache format and serves as the differential reference.
