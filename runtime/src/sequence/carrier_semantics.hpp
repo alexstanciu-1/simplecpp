@@ -30,7 +30,7 @@ public:
         if (!has_value()) throw std::runtime_error("carrier_no_value");
         return std::get<1>(content_);
     }
-    Error error() const {
+    const Error& error() const {
         if (!has_error()) throw std::runtime_error("result_no_error");
         return std::get<2>(content_);
     }

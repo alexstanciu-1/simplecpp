@@ -175,6 +175,34 @@ SCPP;
 		$fixtures['php-bool-sentinel-peers'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected . 'R01')];
 		rejects(fn() => $prepare('$a result_or_bool<vector<string>> = true_sentinel; return (int)($a == $a);'),
 			'Unsupported binary operands');
+		$result_source = <<<'SCPP'
+function ordinary(result<int> &$a, result<int> &$b): bool { return $a == $b; }
+function different(result<int> &$a, result<int> &$b): bool { return $a != $b; }
+function identical(result<int> &$a, result<int> &$b): bool { return $a === $b; }
+function distinct(result<int> &$a, result<int> &$b): bool { return $a !== $b; }
+function replace_result(result<int> &$a): result<int> { $a = 9; return $a; }
+function before_replace(result<int> &$a): bool { return $a === replace_result($a); }
+function fail_result(): result<int> { throw new Exception("left"); }
+function right_result(): result<int> { echo "R"; return 1; }
+try { echo (int)(fail_result() === right_result()); } catch (Exception $e) { echo $e->get_message(); }
+return 8;
+SCPP;
+		$cpp = (new Cpp_Emitter())->emit($prepare($result_source));
+		verify(str_contains($cpp, ': !(var_b_1).has_value()') && str_contains($cpp, ': (var_a_0).same_error_identity(var_b_1)'),
+			'Stable result peers must compare directly through the selected error policy');
+		verify(str_contains($cpp, 'const auto binary_left = var_a_0; const auto binary_right = replace_result_(var_a_0);'),
+			'Snapshot the left result before its slot is replaced');
+		// Native callers supply independent structured errors to the source-defined comparators.
+		$cpp = "int test_result_equality();\n" . str_replace('::App::scpp_entry_body,', '::test_result_equality,', $cpp)
+			. "\n" . '#include "result_equality_driver.hpp"';
+		$fixtures['php-result-peers'] = ['files' => [
+			'program.cpp' => $cpp,
+			'result_equality_driver.hpp' => file_get_contents(__DIR__ . '/result_equality_driver.hpp'),
+			'allocation_probe.hpp' => file_get_contents(__DIR__ . '/../../tests/ownership/allocation_probe.hpp'),
+		], 'stdout_hex' => bin2hex('left')];
+		rejects(fn() => $prepare('function invalid(result<vector<string>> &$a): bool { return $a == $a; } return 8;'),
+			'Unsupported binary operands');
+
 		$throws = <<<'SCPP'
 function fail_left(): ?int { throw new Exception("left"); }
 function right(): ?int { echo "R"; return null; }

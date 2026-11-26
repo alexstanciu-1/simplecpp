@@ -48,13 +48,19 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
         $presenceExpression = $hasTrueState
             ? "'([&]() { const auto &carrier = ' . \$value . '; return carrier.{$valuePresence}() || {$truePresence}; }())'"
             : "'(' . \$value . ').{$valuePresence}()'";
+        $peerEquality = '';
+        if ($hasTrueState) {
+            $peerEquality = strtr(readFile(__DIR__ . '/../templates/carriers/boolean_sentinel_equality.php.tpl'), [
+                '@payload@' => $valuePresence, '@true@' => $carrier['presence']['true'],
+            ]);
+        } elseif (isset($carrier['states']['error'])) {
+            $peerEquality = readFile(__DIR__ . '/../templates/carriers/error_equality.php.tpl');
+        }
         $code .= strtr(readFile(__DIR__ . '/../templates/carriers/carrier_type.php.tpl'), [
             '@instance_field@' => $carrier['instance_field'] ? 'true' : 'false',
             '@sentinel_cases@' => implode("\n", $sentinelCases),
             '@presence_expression@' => $presenceExpression,
-            '@peer_equality@' => $hasTrueState ? strtr(readFile(__DIR__ . '/../templates/carriers/boolean_sentinel_equality.php.tpl'), [
-                '@payload@' => $valuePresence, '@true@' => $carrier['presence']['true'],
-            ]) : '',
+            '@peer_equality@' => $peerEquality,
             '@presence@' => $valuePresence,
             '@true_presence@' => $truePresence,
             '@dispatch_label_type@' => in_array($carrier['family'], ['nullable', 'result'], true) ? '$this->payload_type' : '$this',
@@ -84,9 +90,10 @@ function compilerPeerEquality(mixed $rule, mixed $families): string {
         $states = object(at(at($families, $name), 'states'));
         $alternates = array_diff_key($states, ['value' => true]);
         requireThat(($states['value'] ?? null) === 'payload' && $alternates !== []
-            && ($alternates === ['empty' => null] || array_diff_key($alternates, ['false' => null, 'true' => null]) === [])
-            && array_filter($alternates, static fn($data) => $data !== null) === [],
-            'Peer equality requires empty or sentinel alternate states');
+            && ($alternates === ['error' => 'error_t'] || $alternates === ['empty' => null]
+                || (array_diff_key($alternates, ['false' => null, 'true' => null]) === []
+                    && array_filter($alternates, static fn($data) => $data !== null) === [])),
+            'Unsupported peer equality alternate states');
         $tests[] = '$family !== ' . var_export($name, true);
     }
     $arms = [];

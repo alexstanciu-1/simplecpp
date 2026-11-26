@@ -96,6 +96,11 @@ Constructing a failed result from no_error throws std::invalid_argument with
 result_requires_real_error before publishing a new state. Reading error() from a
 successful result throws std::runtime_error with result_no_error. Error inspection
 returns value copies, so a caller cannot mutate a failure into no_error through it.
+For two results of the same specialization, `same_error_identity(other)` is true
+when both contain errors with matching identity fields. The runtime borrows both
+stored errors and compares string fields as byte views. The public `error()`
+accessor continues to return an owned value.
+
 error_t has explicit native-bool condition conversion and has_error(); message/line/
 file do not determine presence. The type stays namespaced by default because this
 platform's C headers also define a global error_t typedef.

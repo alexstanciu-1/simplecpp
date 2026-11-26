@@ -626,8 +626,16 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     requireThat(in_array($extraction, ['implicit_checked_one_layer_value_copy', 'explicit_checked_one_layer_value_copy'], true), 'Unsupported carrier extraction policy');
     literals($m, ['construction' => 'explicit']);
     $error = at($m, 'error');
-    fields($error, ['type', 'message', 'line', 'file', 'state']);
+    fields($error, ['type', 'message', 'line', 'file', 'state', 'peer_equality']);
     literals($error, ['type' => 'error_t', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'state' => 'explicit_present']);
+    $errorEquality = at($error, 'peer_equality');
+    fields($errorEquality, ['equal', 'identical']);
+    literals($errorEquality, ['equal' => 'same_state']);
+    $identity = at($errorEquality, 'identical');
+    fields($identity, ['fields']);
+    $identityFields = names(at($identity, 'fields'));
+    requireThat($identityFields !== [] && array_diff($identityFields, ['message', 'file', 'line']) === [],
+        'Invalid error identity fields');
     $families = at($m, 'families');
     fields($families, array_keys(CARRIER_DEFAULTS));
     $familyPlans = [];
@@ -687,7 +695,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         }
         $plan['source_types']->{"$family<$payload>"} = $name;
         if($family === 'result') {
-            $plan['error'] = ['type' => 'error_t', 'state' => 'explicit_present', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'inspection' => 'value_copy', 'global_short_name' => false];
+            $plan['error'] = ['type' => 'error_t', 'state' => 'explicit_present', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'identity_fields' => $identityFields, 'inspection' => 'value_copy', 'global_short_name' => false];
         }
     }
     requireThat($carriers !== [], 'Empty carrier publication');

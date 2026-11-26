@@ -5,3 +5,4 @@ error_t::operator bool() const noexcept { return present_; }
 string error_t::get_message() const { return message_; }
 int64 error_t::get_line() const noexcept { return line_; }
 string error_t::get_file() const { return file_; }
+bool_t error_t::same_identity(const error_t& other) const { return bool_t{present_ == other.present_ && @identity@}; }
