@@ -1,8 +1,6 @@
 """Exercise a compiled retained frontend over a real, app-local Linux Unix socket."""
 from concurrent.futures import ThreadPoolExecutor
-import json
 from pathlib import Path
-import shutil
 import signal
 import socket
 import stat
@@ -17,18 +15,13 @@ from translated_retained_frontend import frontend_project
 from translated_vector_recipe import ROOT, fresh
 
 
-def build_service(work, cxx, linker, *, protocol=False):
+def build_service(work, cxx, linker):
     tool = frontend_project(work, socket_service=True)
     transport = ROOT/'compiler/examples/retained_frontend/socket'
     declarations = [
         ('host_directory()', 'void'), ('host_listen()', 'void'), ('host_request()', 'string'),
         ('host_reply(string $response)', 'void'), ('host_close()', 'void'),
     ]
-    if protocol:
-        shutil.copyfile(transport/'protocol.php.scpp', tool/'main.php')
-        (tool/'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {
-            'runtime': {'modules': ['filesystem', 'json', 'datetime']}}}))
-        declarations += [('host_pid()', 'int'), ('host_exchange(string $app, string $command)', 'string')]
     (tool/'host.php').write_text('\n'.join(
         f'function {signature}: {result} {{ throw Exception::make("Native adapter required"); }}'
         for signature, result in declarations))
@@ -42,11 +35,10 @@ def build_service(work, cxx, linker, *, protocol=False):
                         '-c', transport/f'{name}.cpp', '-o', obj], check=True)
         return obj
 
-    with ThreadPoolExecutor(2) as pool:
-        objects = list(pool.map(compile_adapter, ['host', 'client'] if protocol else ['host']))
+    host_object = compile_adapter('host')
     executable = work/'service'
     units = [bundle/unit for unit in manifest['translation_units'] if unit != host]
-    subprocess.run([*flags, f'--ld-path={linker}', *units, *objects, *manifest['link_inputs'], '-o', executable],
+    subprocess.run([*flags, f'--ld-path={linker}', *units, host_object, *manifest['link_inputs'], '-o', executable],
                    check=True)
     return executable
 

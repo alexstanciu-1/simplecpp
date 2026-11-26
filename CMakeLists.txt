@@ -289,6 +289,10 @@ endif()
 add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
 target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND TARGET scpp_compiler_publication AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_JSON AND SCPP_ENABLE_DATETIME)
+  add_subdirectory(compiler/examples/retained_frontend/socket native-frontend)
+endif()
+
 include(CTest)
 if(BUILD_TESTING)
   function(scpp_fixture_test feature)
@@ -890,7 +894,7 @@ if(BUILD_TESTING)
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_JSON AND SCPP_ENABLE_DATETIME)
     add_test(NAME compiler_native_frontend_protocol COMMAND ${Python3_EXECUTABLE} -B
-      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_protocol.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_protocol.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_IO)
     add_test(NAME compiler_translated_retained_frontend COMMAND ${Python3_EXECUTABLE} -B

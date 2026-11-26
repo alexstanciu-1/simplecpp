@@ -1,0 +1,26 @@
+# Assemble the bounded frontend from its canonical sources. Only the adapter is native C++.
+set(app ${CMAKE_CURRENT_BINARY_DIR}/app)
+set(examples ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+foreach(source IN ITEMS translated_path/frontend translated_path/function_ast retained_frontend/session
+    retained_frontend/frontend_requests tokenizer/utf8)
+  get_filename_component(name ${source} NAME)
+  configure_file(${examples}/${source}.php.scpp ${app}/${name}.php COPYONLY)
+endforeach()
+configure_file(protocol.php.scpp ${app}/main.php COPYONLY)
+configure_file(module.json ${app}/module.json COPYONLY)
+
+add_library(scpp_frontend_host STATIC host.cpp client.cpp)
+target_link_libraries(scpp_frontend_host PRIVATE scpp_runtime)
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/adapter/module.json" CONTENT
+  "{\"name\":\"compiler-private-frontend\",\"type\":\"c++\",\"artifacts\":[\"$<TARGET_FILE:scpp_frontend_host>\"]}\n")
+configure_file(toolchain.json.in toolchain.json @ONLY)
+
+add_custom_target(scpp_native_frontend ALL
+  COMMAND ${CMAKE_COMMAND} -DPHP=${PHP_EXECUTABLE} -DEMIT=${examples}/tokenizer/emit_punctuation.php
+    -DOUT=${app}/punctuation.php -P ${CMAKE_CURRENT_SOURCE_DIR}/punctuation.cmake
+  COMMAND ${PHP_EXECUTABLE} ${PROJECT_SOURCE_DIR}/compiler/main.php build
+    ${app} ${native_facts} ${CMAKE_CURRENT_BINARY_DIR}/bundle ${CMAKE_CURRENT_BINARY_DIR}/native
+    ${CMAKE_CURRENT_BINARY_DIR}/toolchain.json
+  DEPENDS scpp_frontend_host scpp_filesystem scpp_json scpp_datetime
+  BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/native/program
+  VERBATIM)

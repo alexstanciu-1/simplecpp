@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 
-from native_frontend_socket import ROOT, build_service
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def raw_errors(app):
@@ -123,4 +123,4 @@ def invoke_status(report):
 if __name__ == '__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-wire-') as tmp:
         work = Path(tmp)
-        exercise(work, build_service(work, *sys.argv[1:], protocol=True))
+        exercise(work, Path(sys.argv[1]).resolve(strict=True))

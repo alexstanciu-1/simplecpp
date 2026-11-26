@@ -328,8 +328,10 @@ the native owner. The native CLI used the unmodified PHP server and restarted
 its own server cold after SIGKILL. Both endpoints agreed on the tested error
 envelopes and the multiline source diagnostic. Status and stop on an absent
 service left its directory absent. This proof uses the native bootstrap's
-two-source grammar and a C++ Unix transport/launch adapter; a published raw
-socket API remains open. [Protocol comparison](../../compiler/tests/native_frontend_protocol.py)
+two-source grammar. The Linux `scpp_native_frontend` target builds the private
+adapter archive and invokes the normal project build. The PHP interoperability
+test drives its executable at `build/clang/native-frontend/native/program`.
+A public Unix-socket API is deferred beyond v0.2. [Protocol comparison](../../compiler/tests/native_frontend_protocol.py)
 [Lifecycle test](../../compiler/tests/native_frontend_socket.py)
 
 Acceptance checks:
