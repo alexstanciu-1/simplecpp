@@ -51,6 +51,11 @@ function report(Frontend_Session $session, string $root, string $line, bool &$st
 
 $cli = cli_arguments();
 if (count($cli) > 1) {
+    if ($cli[1] === "decimal-literal") {
+        if (count($cli) !== 3) return 2;
+        echo host_decimal_literal($cli[2]), "\n";
+        return 0;
+    }
     if ($cli[1] === "qualify") return qualification_cli($cli);
     if ($cli[1] === "publish-ninja") {
         if (count($cli) !== 6 && count($cli) !== 8) return 2;

@@ -12,6 +12,7 @@ function private_frontend_binding(string $key): ?runtime_function
 		$void = type_void::instance();
 		$bindings = [];
 		foreach ([
+			'host_decimal_literal' => [[$string], $string],
 			'host_directory' => [[], $void],
 			'host_listen' => [[], $void],
 			'host_request' => [[], $string],

@@ -158,3 +158,7 @@ if(TARGET scpp_native_frontend)
     ${PROJECT_SOURCE_DIR}/compiler/tests/native_toolchain_qualification.py ${PROJECT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER} --full)
   set_tests_properties(compiler_native_toolchain_qualification_full PROPERTIES LABELS on_demand)
 endif()
+
+add_test(NAME compiler_binary64_spelling_native COMMAND ${Python3_EXECUTABLE} -B
+  ${CMAKE_CURRENT_SOURCE_DIR}/binary64_spelling.py ${CMAKE_CXX_COMPILER} ${PHP_EXECUTABLE} -stdlib=libc++)
+set_tests_properties(compiler_binary64_spelling_native PROPERTIES LABELS on_demand)
