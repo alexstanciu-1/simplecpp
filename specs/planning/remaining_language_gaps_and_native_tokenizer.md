@@ -295,6 +295,16 @@ definition rechecks that body and reuses the caller's binding. A valid literal
 outside int64 advances the frontend alone. Retrying attempts preparation again
 without reparsing. Repair matched a fresh process on the resolved key, value
 and emitted C++ bytes. Renaming the function also rechecks its caller.
+The native `lower` request publishes three C++ files in the application's
+`generated/` directory. It retains the prepared identity and emitted text per
+source, with a separate entry adapter. The response lists emitter invocations
+and committed file replacements independently. Body-only repair re-emitted
+and replaced the definition alone; a comment edit invoked the same emitter
+with no replacement. A failed second installation restored the first file's
+original bytes, inode and timestamp. An identical-input retry reused preparation
+and published both pending units. The final file set matched a fresh session and
+compiled and ran on dev002.
+[Native unit lowering](../../compiler/examples/retained_frontend/lowering.php.scpp) ·
 [Session](../../compiler/examples/retained_frontend/session.php.scpp) ·
 [Five-case comparison](../../compiler/tests/translated_retained_frontend.py)
 [Driver](../../compiler/examples/native_driver/main.php.scpp) ·

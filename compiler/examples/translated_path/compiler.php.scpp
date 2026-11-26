@@ -73,15 +73,24 @@ function prepare_literal(Translation_Scope $scope): int {
 	return $value;
 }
 
-function emit_translation(Prepared_Call $entry): string {
-	$target = $entry->target();
+function emit_definition_unit(Prepared_Declaration $target): string {
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
-	$value = (string)$target->value;
-	return "#include <scpp/core/scalars.hpp>\n#include <scpp/entry.hpp>\n"
-		. "SCPP_REQUIRE_ENTRY_TARGET(31);\n"
-		. "scpp::int64 " . $name . "() { return " . $value . "LL; }\n"
-		. "int entry() { return scpp::entry_exit_checked(" . $name . "()); }\n"
+	return "#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "() { return " . (string)$target->value . "LL; }\n";
+}
+
+function emit_call_unit(Prepared_Call $call): string {
+	$name = "source_" . bin2hex($call->syntax->name);
+	return "#include <scpp/entry.hpp>\n#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "();\n"
+		. "int entry() { return scpp::entry_exit_checked(" . $name . "()); }\n";
+}
+
+function emit_entry_adapter(): string {
+	return "#include <scpp/entry.hpp>\nSCPP_REQUIRE_ENTRY_TARGET(31);\nint entry();\n"
 		. "int main() { return scpp::run_entry_with_exceptions(entry); }\n";
+}
+
+function emit_translation(Prepared_Call $entry): string {
+	return emit_definition_unit($entry->target()) . emit_call_unit($entry) . emit_entry_adapter();
 }
 
 // Retains the current definition, the caller binding, and the last successful emission.
@@ -90,6 +99,7 @@ final class Translation {
 	private ?Prepared_Declaration $definition = null;
 	private ?Prepared_Call $entry = null;
 	private string $output = "";
+	private bool $output_current = false;
 
 	public function __construct() {
 		$this->symbols = new Translation_Symbols();
@@ -112,11 +122,24 @@ final class Translation {
 			$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
 			$call = $parser->parse_entry();
 		}
-		return $this->finish_preparation($definition, $call, $work);
+		$entry = $this->finish_preparation($definition, $call, $work);
+		return $this->render_output($entry);
+	}
+
+	private function render_output(Prepared_Call $entry): string {
+		if (!$this->output_current) {
+			$this->output = emit_translation($entry);
+			$this->output_current = true;
+		}
+		return $this->output;
 	}
 
 	// The resident frontend already owns these immutable syntax objects.
 	public function prepare_syntax(Translation_Scope $scope, Call_Syntax $call, string &$work): string {
+		return $this->render_output($this->prepare_units($scope, $call, $work));
+	}
+
+	public function prepare_units(Translation_Scope $scope, Call_Syntax $call, string &$work): Prepared_Call {
 		$definition = $this->prepare_definition($scope, $work);
 		return $this->finish_preparation($definition, $call, $work);
 	}
@@ -128,11 +151,11 @@ final class Translation {
 		return new Prepared_Declaration($scope, prepare_literal($scope));
 	}
 
-	private function finish_preparation(?Prepared_Declaration $definition, Call_Syntax $call, string &$work): string {
+	private function finish_preparation(?Prepared_Declaration $definition, Call_Syntax $call, string &$work): Prepared_Call {
 		$entry = $this->entry;
 		$previous = $this->definition;
 		if ($definition !== null && $definition === $previous && $entry !== null && $entry->syntax === $call) {
-			return $this->output;
+			return $entry;
 		}
 		$key = "func:" . $call->name;
 		// In this grammar a function's name determines its entire public signature () : int.
@@ -147,10 +170,10 @@ final class Translation {
 			}
 		}
 		$this->publish_definition($definition);
-		$output = emit_translation($entry);
+		$entry->target();
 		$this->entry = $entry;
-		$this->output = $output;
-		return $output;
+		$this->output_current = false;
+		return $entry;
 	}
 
 	private function publish_definition(?Prepared_Declaration $definition): void {

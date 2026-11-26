@@ -2925,9 +2925,10 @@ CPP;
 				&& ($input = $function->private_reader_input()) !== null && $argument->type_def() === $input->type_def()) {
 				if (count($function->parameters) === 1) {
 					$name .= 'collection_reader';
-				} elseif (isset($reader_arguments[1])) {
-					$key = $reader_arguments[1];
-					if ($key->type_def() === type_int64::instance() && ($key instanceof ast_integer_expression || self::plain_local_read($key))) {
+				} else {
+					$key = $reader_arguments[1] ?? $function->parameters[1]->default_value;
+					if ($key instanceof ast_integer_expression || (isset($reader_arguments[1]) && self::plain_local_read($key)
+						&& $key->type_def() === type_int64::instance())) {
 						// Both operands are inert. Binding the collection directly avoids a by-value staging temporary.
 						return $name . 'collection_reader(' . $this->name($argument->local_def()) . ', '
 							. $this->value($key, $global_references, $declarations, $required_headers) . ')';
