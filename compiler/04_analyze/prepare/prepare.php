@@ -1324,6 +1324,12 @@ final class Preparation
 	private function literal(ast_collection_expression|ast_keyed_collection_expression $syntax, ?type_definition $type, ?string $initializing): void
 	{
 		$syntax->suspends = false;
+		$syntax->record_call = null;
+		$record = $type instanceof shared_record_type_definition ? $type->payload : $type;
+		if ($record instanceof record_type_definition && $record->declaration->is_data) {
+			$this->record_literal($syntax, $record, $type, $initializing);
+			return;
+		}
 		$flavor = $syntax->source()->flavor;
 		if ($type === null && ($flavor === flavor::php || $flavor === flavor::js)) {
 			$dynamic = $syntax instanceof ast_keyed_collection_expression
@@ -1352,6 +1358,27 @@ final class Preparation
 			$entry->conversion = $type->write_type()->prepare_conversion($entry->value, conversion_context::typed_destination);
 		}
 		$syntax->settle_collection($type);
+	}
+
+	/** Bind a keyed literal against the same typed inputs used by constructor invocation. */
+	private function record_literal(ast_collection_expression|ast_keyed_collection_expression $literal, record_type_definition $record, type_definition $type, ?string $initializing): void
+	{
+		if ($literal instanceof ast_collection_expression && $literal->elements !== []) {
+			throw new diagnostic($literal->source(), $literal->byte_start(), 'Data construction requires named inputs');
+		}
+		$labels = [];
+		$values = [];
+		foreach ($literal->entries ?? [] as $entry) {
+			if (!($entry->key instanceof ast_string_expression)) throw new diagnostic($entry->source(), $entry->byte_start(), 'Data construction requires literal string keys');
+			$this->value($entry->key);
+			$labels[] = $entry->key->bytes();
+			$values[] = $entry->value;
+		}
+		$call = new ast_data_construction($literal->start, $literal->end, $values, new Named_Arguments($labels));
+		$call->attach($literal);
+		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner);
+		$this->construction($call, $type, $initializing);
+		$literal->settle_record($call);
 	}
 
 	/** Statement and fallback throws use the same admission and settled root conversion. */
@@ -2695,10 +2722,17 @@ final class Preparation
 	private function construction(ast_construction_expression|ast_call_expression $site, type_definition $type, ?string $initializing,
 		?symbol_entry $target = null): void
 	{
-		$shared = $site instanceof ast_new_expression || $site instanceof ast_call_expression;
+		$shared = $site instanceof ast_new_expression || $site instanceof ast_call_expression || ($site instanceof ast_data_construction && $type instanceof shared_record_type_definition);
 		$payload = $type instanceof shared_record_type_definition && $shared ? $type->payload : $type;
 		if ($payload instanceof record_type_definition && !($site instanceof ast_base_initialization)) $payload->require_complete_value($site, $shared);
 		$constructor = $payload instanceof record_type_definition ? $payload->constructor() : null;
+		if ($constructor === null && $site instanceof ast_data_construction) {
+			$site->settle_construction($type, $this->bind_arguments($site, $payload->declaration->data_constructor, $initializing));
+			return;
+		}
+		if ($constructor === null && $payload instanceof record_type_definition && $payload->requires_constructor_inputs()) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Record requires named data inputs: ' . $payload->name);
+		}
 		if ($constructor === null && $site->arguments !== []) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Only zero-argument initialization is available for ' . $type->name);
 		}
@@ -2861,12 +2895,12 @@ final class Preparation
 	}
 
 	/** Share arity, conversions and reference effects between functions and constructors. @return int[] */
-	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration|ast_lambda_expression|callback_type_definition $function,
+	private function bind_arguments(ast_call_expression|ast_construction_expression $call, ast_function_declaration|ast_lambda_expression|callback_type_definition|data_constructor_signature $function,
 		?string $initializing): array /** list<uint16> */
 	{
 		$supplied = count($call->arguments);
 		$callback = $function instanceof callback_type_definition;
-		$variadic = $callback ? $function->variadic_slot : $function->variadic_slot();
+		$variadic = $callback ? $function->variadic_slot : ($function instanceof data_constructor_signature ? null : $function->variadic_slot());
 		$unpacked = $call->unpacked ?? false;
 		if ($unpacked && ($variadic === null || $supplied !== $variadic + 1)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires one vector after all fixed arguments of a variadic target');
@@ -2879,7 +2913,7 @@ final class Preparation
 		}
 		$accepted = $callback
 			? ($variadic === null ? $supplied === count($function->inputs) : $supplied >= $variadic)
-			: $function->accepts_argument_count($supplied);
+			: ($function instanceof data_constructor_signature || $function->accepts_argument_count($supplied));
 		if (!$accepted) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . ($function instanceof ast_function_declaration ? $function->name() : $call->name));
 		}
@@ -2912,7 +2946,7 @@ final class Preparation
 			if ($unpacked && $slot === $variadic && $argument->type_def() !== $type) {
 				throw new diagnostic($argument->source(), $argument->byte_start(), 'Unpacked argument requires ' . $type->name);
 			}
-			$mode = $parameter?->mode ?? $function->input_mode($slot);
+			$mode = $parameter instanceof ast_instance_field ? passing_mode::value : ($parameter?->mode ?? $function->input_mode($slot));
 			if ($mode !== passing_mode::value) {
 				$this->bind_reference($argument, $type, $writes, $mode === passing_mode::readonly_reference, $function);
 				$conversions[] = value_conversion::identity;

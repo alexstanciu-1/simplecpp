@@ -83,10 +83,13 @@ final class Parser
 		$imports = [];
 		while (!$this->cursor->at_end() && (!$braced || !$this->cursor->is(token_kind::rbrace)))
 		{
-			if ($this->cursor->keyword('trait') || $this->cursor->keyword('interface') || (!($grammar instanceof Python_Grammar) && $this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
+			$data_record = $this->cursor->tokens->text_at($this->cursor->position()) === 'data'
+				&& isset($this->cursor->tokens->tokens[$this->cursor->position() + 1])
+				&& in_array($this->cursor->tokens->text_at($this->cursor->position() + 1), ['class', 'struct', 'abstract', 'final'], true);
+			if ($data_record || $this->cursor->keyword('trait') || $this->cursor->keyword('interface') || (!($grammar instanceof Python_Grammar) && $this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
-					'trait', 'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
+					'data', 'trait', 'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
 					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this, namespace_constant: true),
 					'global' => Global_Syntax::read($this),
@@ -1035,10 +1038,10 @@ final class Parser
 		$this->cursor->take(token_kind::lparen, '(');
 		$arguments = [];
 		while (!$this->cursor->is(token_kind::rparen)) {
-			if ($this->cursor->is(token_kind::identifier) && ($this->cursor->next_is(token_kind::colon)
+			if (($this->cursor->is(token_kind::identifier) || $this->cursor->keyword('data')) && ($this->cursor->next_is(token_kind::colon)
 				|| ($this->cursor->tokens->source->flavor === flavor::python && $this->cursor->next_is(token_kind::assign)))) {
 				if ($labels === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), ast_named_call::UNSUPPORTED_TARGET);
-				$labels[count($arguments)] = $this->cursor->name(token_kind::identifier);
+				$labels[count($arguments)] = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
 				$this->cursor->take($this->cursor->tokens->source->flavor === flavor::python ? token_kind::assign : token_kind::colon, 'argument label separator');
 			} elseif ($labels && !$this->cursor->is(token_kind::ellipsis)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Positional argument after named argument');
@@ -1587,7 +1590,7 @@ final class Parser
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				$this->cursor->take(token_kind::member, '->');
-				$name = $this->cursor->name(token_kind::identifier);
+				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
 				$value = $this->cursor->is(token_kind::lparen) ? $this->call_arguments($value->start, $name, token_kind::member, $value)
 					: new ast_field_expression($value, $name, $this->cursor->position());
 				continue;
@@ -1595,7 +1598,7 @@ final class Parser
 			if ($this->cursor->tokens->source->flavor !== flavor::php && $this->cursor->is(token_kind::dot)) {
 				if ($stop_before_items && $this->python_items_suffix_ahead()) break;
 				$this->cursor->take(token_kind::dot, '.');
-				$name = $this->cursor->name(token_kind::identifier);
+				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
 				$value = ($flavor === flavor::js || $flavor === flavor::python) && !$this->cursor->is(token_kind::lparen)
 					? new ast_field_expression($value, $name, $this->cursor->position())
 					: $this->call_arguments($value->start, $name, token_kind::dot, $value);

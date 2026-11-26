@@ -216,6 +216,16 @@ final class record_type_definition extends type_definition implements dependency
 			if (!$type?->supports_static_property()) throw new diagnostic($property->source(), $property->byte_start(), 'Unsupported static property type');
 			$property->settle_type($type);
 		}
+		$data = $this->constructor() === null ? $this->declaration->data_constructor : null;
+		if ($data !== null) {
+			$base = $this->base();
+			if ($this->exception_base() !== null || ($base !== null && !$base->declaration->is_data)) {
+				throw new diagnostic($this->declaration->source(), $this->declaration->byte_start(), 'Synthesized data construction requires a data base or an authored constructor');
+			}
+			$data->prepare($base?->declaration->data_constructor);
+		} elseif ($this->constructor() === null && $this->base()?->requires_constructor_inputs()) {
+			throw new diagnostic($this->declaration->source(), $this->declaration->byte_start(), 'Base requires named data inputs');
+		}
 		$bytes = $this->base()?->array_bytes() ?? 0;
 		$state = record_layout_state::ready;
 		foreach ($this->declaration->fields as $field) {
@@ -225,7 +235,8 @@ final class record_type_definition extends type_definition implements dependency
 			if (($duplicate = $field->duplicate_element()) !== null) {
 				throw new diagnostic($field->source(), $duplicate->byte_start(), 'Duplicate struct field: ' . $field->short_name);
 			}
-			if ($field->is_readonly && $field->initializer === null && !isset($this->declaration->methods['__construct'])) {
+			$data_input = $data !== null && !$field->is_private && !$field->is_protected;
+			if (!$data_input && $field->is_readonly && $field->initializer === null && !isset($this->declaration->methods['__construct'])) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Readonly property requires a default or constructor: ' . $field->short_name);
 			}
 			if ($field->type_reference instanceof ast_compound_type_reference) {
@@ -238,7 +249,7 @@ final class record_type_definition extends type_definition implements dependency
 				if ($this->declaration->kind === record_kind::structure) {
 					// Struct storage retains the bootstrap exception.
 					$type = $type->payload->shared;
-				} elseif ($field->initializer === null && !isset($this->declaration->methods['__construct'])) {
+				} elseif (!$data_input && $field->initializer === null && !isset($this->declaration->methods['__construct'])) {
 					throw new diagnostic($field->source(), $field->byte_start(), 'Required property needs a constructor: ' . $field->short_name);
 				}
 			}
@@ -247,7 +258,7 @@ final class record_type_definition extends type_definition implements dependency
 				$type->prepare_layout($symbols, $active, $work);
 				$constructor = $type->constructor();
 				$constructor?->require_access($this->declaration, $field->type_reference);
-				if ($constructor !== null && !$constructor->accepts_argument_count(0)) {
+				if (!$data_input && $type->requires_constructor_inputs()) {
 					throw new diagnostic($field->source(), $field->type_reference->byte_start(),
 						'Inline field requires a zero-argument constructor: ' . $type->name);
 				}
@@ -258,7 +269,10 @@ final class record_type_definition extends type_definition implements dependency
 			if ($type instanceof application_collection_type) {
 				self::prepare_collection_records($type, $symbols, $active, $work);
 			}
-			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression) && !$field->is_readonly) {
+			if ($data_input && $type instanceof fixed_array_type) {
+				throw new diagnostic($field->source(), $field->byte_start(), 'An inline fixed array cannot be passed as a data constructor input');
+			}
+			if ($type instanceof enum_type_definition && !($field->initializer instanceof ast_name_expression) && !$field->is_readonly && !($data_input && $field->initializer === null)) {
 				throw new diagnostic($field->source(), $field->byte_start(), 'Enum field requires an explicit case default');
 			}
 			if ($field->initializer !== null) {
@@ -416,6 +430,17 @@ final class record_type_definition extends type_definition implements dependency
 	public function exception_descendant(): bool
 	{
 		return $this->base_type instanceof type_exception || ($this->base()?->exception_descendant() ?? false);
+	}
+
+	/** Default construction must satisfy the effective authored or synthesized contract. */
+	public function requires_constructor_inputs(): bool
+	{
+		$constructor = $this->constructor();
+		if ($constructor !== null) return !$constructor->accepts_argument_count(0);
+		foreach ($this->declaration->data_constructor?->parameters ?? [] as $field) {
+			if ($field->required_data_input()) return true;
+		}
+		return false;
 	}
 
 	/** The effective constructor remains owned by its original declaration. */

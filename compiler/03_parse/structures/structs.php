@@ -62,6 +62,14 @@ final class ast_instance_field extends ast_node implements ast_declaration_inter
 		return $this->type_def ?? throw new \LogicException('Struct field type is not prepared');
 	}
 
+	/** Data construction must supply fields whose storage has no ordinary source default. */
+	public function required_data_input(): bool
+	{
+		return $this->initializer === null && ($this->is_readonly || $this->type_def() instanceof enum_type_definition
+			|| ($this->type_def() instanceof shared_record_type_definition && $this->type_def()->required)
+			|| ($this->type_def() instanceof record_type_definition && $this->type_def()->requires_constructor_inputs()));
+	}
+
 	/** Native field representation for record layout and header dependencies. */
 	public function storage_type(): type_definition
 	{
@@ -111,6 +119,10 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 	public readonly record_kind $kind;
 	public readonly bool $is_abstract;
 	public readonly bool $is_final;
+	public readonly bool $is_data;
+	private readonly int $name_at /** uint32 */;
+	/** Public typed inputs for synthesized keyed construction, in declaration order. */
+	public readonly ?data_constructor_signature $data_constructor;
 	/** Native owning optional written base, independent of resolution success. */
 	public readonly ?ast_type_reference $base_reference;
 	/** Native owning written interface edges; valid multiplicity, independent of the single record base. @var ast_type_reference[] */
@@ -125,7 +137,7 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 	 */
 	public function __construct(string $name, ?string $namespace, array $fields /** array<string,ast_instance_field> */,
 		int $start /** uint32 */, int $end /** uint32 */, array $members /** list<ast_function_declaration|ast_constant_declaration|ast_global_declaration> */ = [],
-		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure, bool $abstract = false, array $interface_references /** list<ast_type_reference> */ = [], bool $final = false, array $hooks /** array<string,list<ast_function_declaration>> */ = [])
+		?ast_type_reference $base_reference = null, record_kind $kind = record_kind::structure, bool $abstract = false, array $interface_references /** list<ast_type_reference> */ = [], bool $final = false, array $hooks /** array<string,list<ast_function_declaration>> */ = [], bool $data = false, ?int $name_at = null)
 	{
 		parent::__construct($start, $end);
 		$this->short_name = $name;
@@ -155,6 +167,9 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 		$this->kind = $kind;
 		$this->is_abstract = $abstract;
 		$this->is_final = $final;
+		$this->is_data = $data;
+		$this->name_at = $name_at ?? $start + 1;
+		$this->data_constructor = $data && !isset($methods['__construct']) ? new data_constructor_signature($this) : null;
 		$this->definition = new record_type_definition($this);
 	}
 
@@ -176,7 +191,7 @@ final class ast_record_declaration extends ast_node implements ast_method_owner
 
 	public function name_position(): int /** uint32 */
 	{
-		return $this->start + 1;
+		return $this->name_at;
 	}
 }
 
@@ -198,7 +213,7 @@ abstract class ast_construction_expression extends ast_expression
 	{
 		parent::__construct($start, $end);
 		$this->arguments = $arguments;
-		foreach ($arguments as $argument) $argument->attach($this);
+		if (!($this instanceof ast_data_construction)) foreach ($arguments as $argument) $argument->attach($this);
 	}
 
 	/** METHODS */
@@ -219,6 +234,38 @@ abstract class ast_construction_expression extends ast_expression
 		parent::reset_preparation();
 		$this->conversions = [];
 		$this->named?->reset_preparation();
+	}
+}
+
+/** Prepared invocation view over the values owned by a contextual record literal. */
+final class ast_data_construction extends ast_construction_expression
+{
+}
+
+/** Internal named signature over public instance fields; ordinary positional construction stays independent. */
+final class data_constructor_signature
+{
+	/** @var ast_instance_field[] */
+	public private(set) array $parameters /** list<ast_instance_field> */ = [];
+
+	private readonly ast_record_declaration $record;
+
+	public function __construct(ast_record_declaration $record)
+	{
+		$this->record = $record;
+	}
+
+	public function prepare(?self $base): void
+	{
+		$this->parameters = $base?->parameters ?? [];
+		foreach ($this->record->fields as $field) {
+			if (!$field->is_private && !$field->is_protected) $this->parameters[] = $field;
+		}
+	}
+
+	public function name(): string
+	{
+		return $this->record->name();
 	}
 }
 

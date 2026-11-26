@@ -63,6 +63,8 @@ The [count-reader feasibility study](benchmarks/inferred_collection_borrows/repo
 
 Doc Status: planning
 
+Typed keyed literals now use the [named constructor of a data record](../data_initialization.md#named-construction-of-data-records). Runtime structure import, streaming export and JSON integration remain open.
+
 Explore an opt-in interface or capability for converting between a typed value and an in-memory structure. The working names are `::to_structure` for exposing ordered elements or key/value entries, and `::from_structure` for constructing a typed value from structured input. The two directions could be supported independently. The motivating case is a typed vector used as a child of a `mixed` or `dynamic` literal (ARR-VALUE-001).
 
 Explore sharing the part of [initialization](../data_initialization.md#construction-targets) that consumes ordered inputs. For example, a vector could expose its integers in order once, and the selected family's list initializer could box them and construct the child. In the reverse direction, a typed target could adapt structured input to its existing list or keyed initializer, reusing entry conversion, key validation and construction failure handling. The literal parser would still own source notation.

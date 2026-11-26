@@ -165,6 +165,7 @@ final class Function_Preparation
 			return;
 		}
 		if ($value instanceof ast_keyed_collection_expression) {
+			$value->record_call = null;
 			foreach ($value->entries as $entry) {
 				$entry->conversion = null;
 				self::expression($entry->key);
@@ -173,6 +174,7 @@ final class Function_Preparation
 			return;
 		}
 		if ($value instanceof ast_collection_expression) {
+			$value->record_call = null;
 			foreach ($value->elements as $element) self::expression($element);
 			return;
 		}

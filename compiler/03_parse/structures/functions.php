@@ -523,7 +523,7 @@ final class Named_Arguments
 
 	/** METHODS */
 	/** Resolve against the current published signature. Only explicit operands can consume a slot. */
-	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function|ast_lambda_expression $function,
+	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function|ast_lambda_expression|data_constructor_signature $function,
 		?int $variadic = null): void
 	{
 		$names = [];
@@ -548,7 +548,8 @@ final class Named_Arguments
 		}
 		foreach ($names as $name => $slot) {
 			if ($slot === $variadic || isset($used[$slot])) continue;
-			if ($function instanceof runtime_function || $function->parameters[$slot]->default_value === null) {
+			if ($function instanceof runtime_function || ($function instanceof data_constructor_signature
+				? $function->parameters[$slot]->required_data_input() : $function->parameters[$slot]->default_value === null)) {
 				throw new diagnostic($site->source(), $site->byte_start(), 'Missing required argument: ' . $name);
 			}
 			$slots[] = $slot;

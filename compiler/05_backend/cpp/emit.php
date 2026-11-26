@@ -212,6 +212,7 @@ final class Cpp_Emitter
 			$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
 			$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
 				$type, $field->initializer, $field->conversion, $includes);
+			if ($type instanceof record_type_definition && $type->requires_constructor_inputs()) $default = '';
 			if ($type instanceof fixed_array_type) {
 				$layout[] = "\t" . $type->declarator(Cpp_Identifier::source($field->short_name)) . '{};';
 				continue;
@@ -223,12 +224,37 @@ final class Cpp_Emitter
 			foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 			$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
 		}
+		$data = $node->definition->constructor() === null ? $node->data_constructor : null;
+		if ($data !== null) {
+			$name = Cpp_Identifier::source($node->short_name);
+			$params = $this->data_parameters($data, $includes);
+			$base_arguments = [];
+			$initializers = [];
+			$args = [];
+			foreach ($data->parameters as $i => $field) {
+				$argument = $this->data_argument($field, $i);
+				$args[] = $argument;
+				if ($field->parent !== $node) $base_arguments[] = $argument;
+				else $initializers[] = Cpp_Identifier::source($field->short_name) . '(' . $argument . ')';
+			}
+			if ($base !== null) {
+				$base_name = $this->member_type($base);
+				array_unshift($base_arguments, $base_name . '::scpp_escape_data_tag{}');
+				array_unshift($initializers, $base_name . '(' . implode(', ', $base_arguments) . ')');
+			}
+			$layout[] = "\tstruct scpp_escape_data_tag {};";
+			$layout[] = "\t$name(scpp_escape_data_tag" . ($params === '' ? '' : ', ' . $this->data_parameters($data, $includes, true)) . ')'
+				. ($initializers === [] ? '' : ' : ' . implode(', ', $initializers)) . ' {}';
+			$layout[] = "\tstatic $name scpp_escape_from_data($params) { return $name(scpp_escape_data_tag{}"
+				. ($args === [] ? '' : ', ' . implode(', ', $args)) . '); }';
+			if (!$node->definition->requires_constructor_inputs() && !$node->definition->polymorphic() && !isset($node->methods['__destruct'])) $layout[] = "\t$name() = default;";
+		}
 		$virtual = $node->definition->polymorphic();
 		$authored = isset($node->methods['__destruct']);
 		if ($virtual || $authored) {
 			$name = Cpp_Identifier::source($node->short_name);
 			$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
-			if (!$has_local_constructor && ($inherited_constructor?->accepts_argument_count(0) ?? true)) {
+			if (!$has_local_constructor && !$node->definition->requires_constructor_inputs()) {
 				$layout[] = "\t$name() = default;";
 			}
 			$layout[] = "\t$name(const $name&) = default;";
@@ -430,7 +456,12 @@ final class Cpp_Emitter
 		$record = $payload->cpp_type();
 		$guard = $this->owner_guard($type) . '_DECL';
 		$params = $this->constructor_parameters($payload->constructor(), $includes);
-		$factory_declaration = $payload->declaration->is_abstract ? '' : "\tstatic $owner make($params);\n";
+		$default_unavailable = $payload->constructor() === null && $payload->requires_constructor_inputs();
+		$factory_declaration = $payload->declaration->is_abstract || $default_unavailable ? '' : "\tstatic $owner make($params);\n";
+		if ($payload->constructor() === null && ($data = $payload->declaration->data_constructor) !== null && !$payload->declaration->is_abstract) {
+			$data_params = $this->data_parameters($data, $includes);
+			$factory_declaration .= "\tstatic $owner scpp_escape_from_data($data_params);\n";
+		}
 		$presence = $payload->declaration->kind !== record_kind::structure ? "\tstatic $owner require($owner value);\n" : '';
 		return <<<CPP
 #ifndef $guard
@@ -491,7 +522,17 @@ CPP;
 		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $includes);
 		$allocation_ctor = $constructor === null ? 'allocation() : ::scpp::application_control(destroy_value, dispose_allocation), value{} {}' : "allocation($params);";
-		$factory = $constructor === null && !$type->payload->declaration->is_abstract ? $this->allocation_factory($type, $includes) : '';
+		if ($constructor === null && $type->payload->requires_constructor_inputs()) $allocation_ctor = '';
+		$factory = $constructor === null && $allocation_ctor !== '' && !$type->payload->declaration->is_abstract ? $this->allocation_factory($type, $includes) : '';
+		if ($constructor === null && ($data = $type->payload->declaration->data_constructor) !== null && !$type->payload->declaration->is_abstract) {
+			$params = $this->data_parameters($data, $includes);
+			$args = [];
+			foreach ($data->parameters as $i => $field) $args[] = $this->data_argument($field, $i);
+			$tail = $args === [] ? '' : ', ' . implode(', ', $args);
+			$allocation_ctor .= "\n\tallocation(payload_type::scpp_escape_data_tag tag" . ($params === '' ? '' : ', ' . $this->data_parameters($data, $includes, true))
+				. ") : ::scpp::application_control(destroy_value, dispose_allocation), value(tag$tail) {}";
+			$factory .= $this->owner_factory("inline $owner {$owner}::scpp_escape_from_data($params)", $owner, "$payload::scpp_escape_data_tag{}$tail");
+		}
 		$presence = $type->payload->declaration->kind !== record_kind::structure
 			? "inline $owner {$owner}::require($owner value) { if (!value.ptr) ::scpp::throw_empty_owner(); return value; }\n" : '';
 
@@ -549,7 +590,30 @@ CPP;
 		$forward = implode(', ', array_map($this->forward_argument(...), $constructor?->parameters ?? []));
 		$payload_args = $constructor !== null && self::self_value_constructor($constructor) ? '0, ' . $forward : $forward;
 		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : ::scpp::application_control(destroy_value, dispose_allocation), value($payload_args) {}\n";
-		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tauto* storage = new allocation($forward);\n\tresult.ptr = storage;\n\tresult.view = &storage->value;\n\treturn result;\n}\n";
+		return $this->owner_factory("{$prefix}$owner {$owner}::make($params)", $owner, $forward);
+	}
+
+	/** Install the initial strong owner after successful payload construction. */
+	private function owner_factory(string $signature, string $owner, string $arguments): string
+	{
+		return "$signature {\n\t$owner result;\n\tauto* storage = new allocation($arguments);\n\tresult.ptr = storage;\n\tresult.view = &storage->value;\n\treturn result;\n}\n";
+	}
+
+	/** Spell the typed field inputs on the payload and shared allocation entry points. @param bool[] $headers */
+	private function data_parameters(data_constructor_signature $signature, array &$headers /** array<string,bool> */, bool $forwarding = false): string
+	{
+		$params = [];
+		foreach ($signature->parameters as $i => $field) {
+			$type = $field->storage_type();
+			foreach ($type->cpp_headers() as $header) $headers[$header] = true;
+			$params[] = $this->member_type($type) . ($forwarding ? '&& input_' : ' input_') . $i;
+		}
+		return implode(', ', $params);
+	}
+
+	private function data_argument(ast_instance_field $field, int $index /** uint32 */): string
+	{
+		return 'static_cast<' . $this->member_type($field->storage_type()) . '&&>(input_' . $index . ')';
 	}
 
 	/** Public layouts and unit-local uses can independently request the same concrete owner. */
@@ -2483,6 +2547,21 @@ CPP;
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
 		}
+		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression) && $value->record_call !== null) {
+			$record = $value_type instanceof shared_record_type_definition ? $value_type->payload : $value_type;
+			if ($value_type instanceof shared_record_type_definition) $declarations[$value_type->name] = $value_type;
+			else $declarations[$record->declaration->symbol_key()] = $record->declaration;
+			$constructor = $record->constructor();
+			$name = $value_type->cpp_type();
+			if ($constructor !== null) {
+				$this->collect_signature_types($constructor, $declarations);
+				if ($value_type instanceof shared_record_type_definition) $name .= '::make';
+			} else {
+				$name .= '::scpp_escape_from_data';
+			}
+			return $this->invocation($value->record_call, $constructor ?? $record->declaration->data_constructor, $name, $value_type,
+				$global_references, $declarations, $required_headers);
+		}
 		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression)
 			&& $value_type instanceof boxed_type_definition && $value->source()->flavor === flavor::python) {
 			$list = $value instanceof ast_collection_expression;
@@ -3174,7 +3253,7 @@ CPP;
 	 * @param bool[] $required_headers
 	 * @param list<string>|null $statement_setup
 	 */
-	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|ast_lambda_expression|callback_type_definition|runtime_function $function,
+	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|ast_lambda_expression|callback_type_definition|runtime_function|data_constructor_signature $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null, ?array &$statement_setup = null): string
 	{
@@ -3184,7 +3263,7 @@ CPP;
 		$runtime = $function instanceof runtime_function;
 		$operands = $runtime && $value instanceof ast_call_expression ? $value->runtime_operands() : $value->arguments;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
-		$variadic = $callback ? $function->variadic_slot : ($runtime ? null : $function->variadic_slot());
+		$variadic = $callback ? $function->variadic_slot : ($runtime || $function instanceof data_constructor_signature ? null : $function->variadic_slot());
 		// An unpacked operand already supplies the native by-value vector parameter.
 		if ($value->unpacked ?? false) $variadic = null;
 		if ($variadic !== null) {
@@ -3195,7 +3274,7 @@ CPP;
 			$parameters = $value->named->evaluation_parameters($parameters);
 		}
 		$before = $this->suspensions;
-		$suspending = $value instanceof ast_call_expression && $value->suspending_operands;
+		$suspending = $value instanceof ast_data_construction ? $value->parent->suspends : ($value instanceof ast_call_expression && $value->suspending_operands);
 		$suffix = $suspending ? '_' . $value->start . '_' . $value->end : '';
 		$receiver_reorderable = true;
 		$method = $runtime ? $function->receiver_method : $function instanceof ast_function_declaration && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
@@ -3250,10 +3329,21 @@ CPP;
 		$argument_steps = [];
 		$constructed_arguments = [];
 		foreach ($parameters as $index => $parameter) {
+			if ($parameter instanceof ast_instance_field && !isset($operands[$index])) {
+				$type = $parameter->type_def();
+				$default = $parameter->initializer === null ? '{}' : $this->declaration_initialization($type, $parameter->initializer, $parameter->conversion, $required_headers);
+				$temp = 'data_default_' . $value->start . '_' . $index;
+				$argument_steps[$index][] = $type->cpp_type() . " $temp = $default;";
+				$constructed_arguments[$index] = true;
+				$direct_arguments[$index] = 'static_cast<' . $type->cpp_type() . "&&>($temp)";
+				$inline_index = null;
+				$direct = false;
+				continue;
+			}
 			$argument = $operands[$index] ?? $parameter->default_value;
 			$conversion = isset($operands[$index]) ? $value->conversion($index) : $parameter->default_conversion();
 			$type = $callback || $runtime ? $parameter : $parameter->type_def();
-			$by_value = $runtime ? !$function->is_reference($value->named->slots[$index] ?? $index) : ($callback ? $function->input_mode($index) : $parameter->mode) === passing_mode::value;
+			$by_value = $parameter instanceof ast_instance_field || ($runtime ? !$function->is_reference($value->named->slots[$index] ?? $index) : ($callback ? $function->input_mode($index) : $parameter->mode) === passing_mode::value);
 			$operand_safe = false;
 			$records_before = $this->record_expressions;
 			$step_start = count($this->async_steps);
@@ -3280,7 +3370,7 @@ CPP;
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
 			if ($variadic === null && !$method && $steps === [] && count($parameters) === 1) {
-				$tag = $value instanceof ast_struct_default && self::self_value_constructor($function) ? '0, ' : '';
+				$tag = ($value instanceof ast_struct_default || ($value instanceof ast_data_construction && $result instanceof record_type_definition && $function instanceof ast_function_declaration)) && self::self_value_constructor($function) ? '0, ' : '';
 				return $name . '(' . $tag . $operand . ')';
 			}
 			$direct_arguments[$index] = $operand;
@@ -3711,7 +3801,7 @@ CPP;
 		$collect = self::signature_forward_collector($forwards);
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
-			if ($type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
+			if ($record->is_data || $type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
 		}
 		foreach ($record->static_properties as $property) {
 			$type = $property->type_def();
