@@ -56,7 +56,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     updated = b'function answer_2() : int {\n  return 9;\n}\n'
     overflow = b'function answer_2() : int {\n  return 9223372036854775808;\n}\n'
     initial = b'return answer_2();\n'
-    bad = b'\n  return missing_2();\n'
+    bad = '/* first line */\r\n/* é */ return missing_2();\n'.encode()
     fixed = b'\n  return answer_2();\n'
     incomplete = b'\n  return answer_2()'
     unclosed = updated[:updated.index(b'}')]
@@ -123,9 +123,9 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
         ('unclosed', unclosed, fixed, 'definition.php', len(unclosed)),
         ('removed', None, fixed, 'main.php', fixed.index(b'answer_2')),
     ]
-    assert len(diagnostics) == 3 * len(errors), translated.stdout
+    assert len(diagnostics) == 4 * len(errors), translated.stdout
     for index, (name, current_definition, entry, expected_path, expected_offset) in enumerate(errors):
-        path, offset, message = diagnostics[index * 3:index * 3 + 3]
+        path, offset, location, message = diagnostics[index * 4:index * 4 + 4]
         assert (path, int(offset)) == (expected_path, expected_offset), (path, offset, message)
         definition_path = oracle / 'definition.php'
         if current_definition is None:
@@ -137,10 +137,7 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
         text = (diagnostic.stdout + diagnostic.stderr).decode()
         match = re.search(rf'{re.escape(path)}:(\d+):(\d+): ([^\n]+)', text)
         assert match is not None, text
-        source = entry if path == 'main.php' else current_definition
-        line = source.count(b'\n', 0, expected_offset) + 1
-        column = expected_offset - source.rfind(b'\n', 0, expected_offset)
-        assert (line, column, message) == (int(match[1]), int(match[2]), match[3]), text
+        assert (location, message) == (f'{match[1]}:{match[2]}', match[3]), (name, location, text)
 
     assert (work / 'initial.cpp').read_bytes() == (work / 'recovered.cpp').read_bytes()
     # Building the translator and linking both native implementations of each distinct output

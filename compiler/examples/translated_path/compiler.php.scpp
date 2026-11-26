@@ -103,7 +103,7 @@ final class Prepared_Call {
 	public function target(): Prepared_Declaration {
 		$target = $this->symbol->declaration();
 		if ($target === null) {
-			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name);
+			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name, $this->syntax->source->text);
 		}
 		return $target;
 	}
@@ -113,14 +113,14 @@ function prepare_literal(Translation_Scope $scope): int {
 	$source = $scope->source;
 	$token = $source->tokens[$scope->declaration->body()->statement->literal_token];
 	if ($token->length > 1 && $source->text[$token->offset] == 48) {
-		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer");
+		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer", $source->text);
 	}
 	$value = 0;
 	$end = $token->offset + $token->length;
 	for ($offset = $token->offset; $offset < $end; $offset++) {
 		$digit = (int)$source->text[$offset] - 48;
 		if ($value > 922337203685477580 || ($value === 922337203685477580 && $digit > 7)) {
-			throw new Translation_Diagnostic($source->path, $token->offset, "Integer literal is outside int64 range");
+			throw new Translation_Diagnostic($source->path, $token->offset, "Integer literal is outside int64 range", $source->text);
 		}
 		$value = $value * 10 + $digit;
 	}
@@ -224,7 +224,7 @@ final class Translation {
 		}
 		if ($definition === null && count($scopes) !== 0) {
 			$work .= $call->source->path . ",";
-			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
 		}
 		if (count($scopes) === 0) $this->syntax = [];
 		$this->publish_sources($prepared_sources);
@@ -309,14 +309,14 @@ final class Translation {
 		// This slice publishes one definition. Check the candidate before changing the last good head.
 		if ($definition !== null && $definition->scope->declaration->short_name !== $call->name) {
 			$work .= $call->source->path . ",";
-			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
 		}
 		$this->definition = $definition;
 		if ($entry === null || $entry->syntax !== $call) {
 			$symbol = $this->symbols->find("func:" . $call->name);
 			if ($symbol === null) {
 				$work .= $call->source->path . ",";
-				throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
+				throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
 			}
 			$candidate = new Prepared_Call($call, $symbol);
 			$candidate->check_binding($work);

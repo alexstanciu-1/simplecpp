@@ -16,7 +16,7 @@ final class Frontend_Session {
 
 	private function read_source(string $directory, string $path): string {
 		$result = fs_get($directory . "/" . $path);
-		if (!isset($result)) throw new Translation_Diagnostic($path, 0, "Cannot read source");
+		if (!isset($result)) throw new Translation_Diagnostic($path, 0, "Cannot read source", "");
 		return $result;
 	}
 

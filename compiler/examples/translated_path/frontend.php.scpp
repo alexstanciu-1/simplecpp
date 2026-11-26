@@ -12,7 +12,7 @@ final class Translation_Diagnostic extends Exception {
 	public readonly string $detail;
 	public readonly string $location;
 
-	public function __construct(string $path, int $offset, string $detail, string $bytes = "") {
+	public function __construct(string $path, int $offset, string $detail, string $bytes) {
 		$this->path = $path;
 		$this->offset = $offset;
 		$this->detail = $detail;

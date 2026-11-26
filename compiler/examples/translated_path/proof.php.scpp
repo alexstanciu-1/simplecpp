@@ -24,7 +24,7 @@ function check_failed_edit(Translation $compiler, string $definition, string $en
 		$compiler->compile($definition, $entry);
 	} catch (Translation_Diagnostic $error) {
 		$failed = true;
-		echo $error->path, "\n", $error->offset, "\n", $error->detail, "\n";
+		echo $error->path, "\n", $error->offset, "\n", $error->location, "\n", $error->detail, "\n";
 	}
 	assert_translation($failed, "Expected translated diagnostic");
 	assert_translation($compiler->declaration() === $old_declaration, "Failure replaced the declaration");
@@ -180,7 +180,7 @@ try {
 	$compiler->compile(null, $fixed);
 	throw Exception::make("Removed declaration still binds");
 } catch (Translation_Diagnostic $error) {
-	echo $error->path, "\n", $error->offset, "\n", $error->detail, "\n";
+	echo $error->path, "\n", $error->offset, "\n", $error->location, "\n", $error->detail, "\n";
 }
 assert_translation($compiler->entry_binding() === $recovered_entry && $recovered_entry->symbol === $symbol,
 	"Deletion replaced the retained entry");
