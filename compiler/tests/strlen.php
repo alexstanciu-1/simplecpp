@@ -242,9 +242,9 @@ CPP;
 		$fixtures['php-replace-count-range'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
 			'catch_out_of_range' => true, 'stdout_hex' => ''];
 		foreach ([
-			['', '$missing', 'Unknown or not-yet-initialized'], ['', '0', 'stable variable storage'],
-			['$x = 1;', '$x + 1', 'stable variable storage'], ['', 'STR_PAD_LEFT', 'Constant cannot bind'],
-			['$b byte = 1;', '$b', 'exact storage type'],
+			['', '$missing', 'Unknown or not-yet-initialized'], ['', '0', 'count) requires a writable int64 variable'],
+			['$x = 1;', '$x + 1', 'named local or parameter'], ['', 'STR_PAD_LEFT', 'Constant cannot bind'],
+			['$b byte = 1;', '$b', 'requires writable int64 storage, received uint8'],
 			['global $g int = 55;', '$g', 'named local or parameter'],
 		] as [$setup, $output, $message]) {
 			rejects(fn() => $prepare($setup . "echo str_replace(\"a\",\"b\",\"a\",$output); return 8;"), $message);

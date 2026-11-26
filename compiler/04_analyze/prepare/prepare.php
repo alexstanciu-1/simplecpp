@@ -1879,7 +1879,7 @@ final class Preparation
 		if (!($storage instanceof ast_local_binding)) {
 			throw new diagnostic($argument->source(), $argument->byte_start(),
 				($label === '' ? 'Reference argument requires stable variable storage: a named local or parameter'
-				: $label . 'requires a writable ' . $type->name . ' variable, received ' . $argument->type_def()->name));
+				: $label . 'requires a writable ' . $type->name . ' variable (named local or parameter), received ' . $argument->type_def()->name));
 		}
 		if (ast_writable_element::origin($storage) !== null && (!($target instanceof ast_function_declaration)
 			|| $target->parent instanceof ast_method_owner || $target->is_async || $target->returns_reference)) {
