@@ -124,7 +124,7 @@ paths record provenance only: builds use v0.2 sources exclusively. The private
 `boxed_inspection` adapter exposes no public cursor, mutable reference or subscription.
 Public traversal/liveness remains RT-DEBT-01.
 
-Typed `from_json`, typed vector/hash encoding,
+Typed `from_json`, standalone typed vector/hash encoding,
 PHP compatibility wrappers and persistent `{}`/`[]` identity remain separate work.
 The donor's recursive parser/writer has no explicit nesting-depth budget; this slice
 does not establish a hostile-input resource-limit contract or a throughput claim.
@@ -137,6 +137,12 @@ and json_encode(value) → result<string>. The general surface adds
 json_decode_mixed(string) → result<mixed> and publishes the same decode and
 encode contracts. Exact argument type selects each of the ten encode overloads,
 including nullable scalars. General names follow project visibility.
+
+A field-derived data record also selects an encoder when every field or vector
+element has an exact published value encoder. The schema supplies the field
+order and the writer borrows the record for the call. Module failures such as a
+nonfinite float return a failed `result<string>`. See [data record
+construction and codecs](data_initialization.md#native-codec-adapters-for-field-derived-signatures).
 
 ## Document and node publication
 

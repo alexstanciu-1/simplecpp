@@ -80,8 +80,8 @@ function compilerJsonCases(?array $runtime, array $types): array {
         }
     }
     if ($encoders !== []) {
-        $cases[] = "\t\t\t'php:func:json_encode', 'general:func:json_encode' => \$bindings[\$key] ??= new runtime_overloads([1 => ["
-            . implode(', ', $encoders) . "]], required_module: 'runtime-json'),";
+        $cases[] = "\t\t\t'php:func:json_encode', 'general:func:json_encode' => \$bindings[\$key] ??= new json_encoder_overloads(["
+            . implode(', ', $encoders) . "], '" . moduleOperationHeader($runtime['json']['header'], 'encode_record') . "'),";
     }
     return array_merge($cases, compilerJsonDocumentCases($runtime, $types), compilerJsonReaderCases($runtime, $types));
 }

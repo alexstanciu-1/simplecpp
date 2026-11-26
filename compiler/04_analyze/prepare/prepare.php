@@ -1993,7 +1993,8 @@ final class Preparation
 				$prepared = $selected;
 			}
 			$selector = $runtime->project_selector ? $selected->value_type() : $selected->type_def();
-			$runtime = $variants[$selector::class] ?? null;
+			$runtime = $variants[$selector::class] ?? ($runtime instanceof json_encoder_overloads
+				? $this->record_encoder($runtime, $selector, $selected) : null);
 			if ($runtime === null) {
 				throw new diagnostic($selected->source(), $selected->byte_start(), ($selection_index === 0 ? 'Unsupported first argument type for ' : 'Unsupported argument type for ') . $call->name);
 			}
@@ -2047,6 +2048,30 @@ final class Preparation
 		}
 		if ($writes !== []) $this->invalidate_references($call, $writes);
 		$call->settle_runtime($runtime, $conversions);
+	}
+
+	/** Resolve field encoders using the active module's published overloads. */
+	private function record_encoder(json_encoder_overloads $encoders, type_definition $input, ast_expression $site): ?runtime_function
+	{
+		$record = $input instanceof shared_record_type_definition ? $input->payload : $input;
+		if (!($record instanceof record_type_definition)) return null;
+		for ($base = $record; $base !== null; $base = $base->base()) {
+			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
+		}
+		$signature = $record->declaration->data_constructor;
+		if ($signature === null || $record->constructor() !== null) return null;
+		$variants = $encoders->by_arity[1];
+		foreach ($signature->parameters as $field) {
+			$type = $field->type_def();
+			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
+			if (!isset($variants[$leaf::class])) {
+				throw new diagnostic($site->source(), $site->byte_start(), 'No JSON encoder for ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ')');
+			}
+		}
+		$published = reset($variants);
+		$symbol = $input instanceof shared_record_type_definition ? 'encode_owned_record' : 'encode_record';
+		return new runtime_function($published->name(), [$input], $published->return_type_def(), '::scpp::json::' . $symbol,
+			$encoders->record_header, const_reference_mask: 1, required_module: $encoders->required_module);
 	}
 
 	/** Check each JS namespace prefix until a visible value owns the rest of the dotted path. */

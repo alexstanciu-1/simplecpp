@@ -73,7 +73,7 @@ readonly class runtime_function implements callable_signature
 }
 
 /** Published runtime signatures selected by arity and one exact operand type: number_format or boxed has/remove. */
-final readonly class runtime_overloads
+readonly class runtime_overloads
 {
 	/** @var array<int,array<class-string<type_definition>,runtime_function>> */
 	public array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */;
@@ -87,6 +87,16 @@ final readonly class runtime_overloads
 		$this->by_arity = $by_arity;
 		$this->argument_index = $argument_index;
 		$this->receiver_method = $receiver_method;
+	}
+}
+
+/** Published leaf encoders also define the admissible fields of a data record. */
+final readonly class json_encoder_overloads extends runtime_overloads
+{
+	/** @param array<class-string<type_definition>,runtime_function> $encoders */
+	public function __construct(array $encoders, public string $record_header)
+	{
+		parent::__construct([1 => $encoders], required_module: 'runtime-json');
 	}
 }
 
