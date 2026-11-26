@@ -1,0 +1,124 @@
+// The default application accepts these four case-sensitive source extensions.
+function source_flavor(string $path): string {
+    if (str_ends_with($path, ".php")) return "php";
+    if (str_ends_with($path, ".cpp")) return "cpp";
+    if (str_ends_with($path, ".js")) return "js";
+    if (str_ends_with($path, ".py")) return "py";
+    return "";
+}
+
+function manifest_location(string $base, string $location): string {
+    if (!str_starts_with($location, "/")) $location = $base . "/" . $location;
+    if (fs_is_dir($location)) $location .= "/module.json";
+    return fs_realpath($location);
+}
+
+// Collect the roots of active dependencies, including submodules with custom manifest names.
+function dependency_roots(string $manifest, string $alias, hash<string,string> &$visited,
+                          hash<string,string> &$excluded): void {
+    $key = $manifest . "\0" . $alias;
+    if (isset($visited[$key])) return;
+    $visited[$key] = $manifest;
+    $base = fs_dirname($manifest);
+    $bytes string = fs_get($manifest);
+    $doc = document($bytes);
+    $node json_node = json_document_root($doc);
+    if ($alias !== "") {
+        $modules json_node = json_node_member($node, "modules");
+        $child = manifest_location($base, member_text($modules, $alias));
+        $excluded[fs_dirname($child)] = $child;
+        dependency_roots($child, "", $visited, $excluded);
+        return;
+    }
+    if (json_node_has($node, "defaults")) {
+        $defaults json_node = json_node_member($node, "defaults");
+        $count int = json_node_size($defaults);
+        for ($i = 0; $i < $count; $i++) {
+            $item json_node = json_node_at($defaults, $i);
+            $name string = json_node_string($item);
+            dependency_roots($manifest, $name, $visited, $excluded);
+        }
+    }
+    if (!json_node_has($node, "dependencies")) return;
+    $deps json_node = json_node_member($node, "dependencies");
+    $size int = json_node_size($deps);
+    for ($j = 0; $j < $size; $j++) {
+        $name string = json_node_key($deps, $j);
+        $opts json_node = json_node_member($deps, $name);
+        if ($name === "runtime" && !json_node_has($opts, "path")) continue;
+        $target = manifest_location($base, member_text($opts, "path"));
+        $excluded[fs_dirname($target)] = $target;
+        dependency_roots($target, "", $visited, $excluded);
+        if (json_node_has($opts, "modules")) {
+            $requests json_node = json_node_member($opts, "modules");
+            $n int = json_node_size($requests);
+            for ($k = 0; $k < $n; $k++) {
+                $request json_node = json_node_at($requests, $k);
+                $sub string = json_node_string($request);
+                dependency_roots($target, $sub, $visited, $excluded);
+            }
+        }
+    }
+}
+
+function discover_sources(string $root, string $prefix, hash<string,string> &$excluded,
+                          hash<string,string> &$sources): void {
+    $names vector<string> = fs_scan($root . "/" . $prefix);
+    foreach ($names as $name) {
+        if (str_starts_with($name, ".")) continue;
+        $path = $prefix . $name;
+        $disk = $root . "/" . $path;
+        if (fs_is_link($disk)) continue;
+        if (fs_is_dir($disk)) {
+            $lower = strtolower($name);
+            if ($lower === "build" || $lower === "generated" || $lower === "vendor" || $lower === "node_modules"
+                || fs_is_file($disk . "/module.json") || isset($excluded[$disk])) continue;
+            discover_sources($root, $path . "/", $excluded, $sources);
+        } elseif (fs_is_file($disk)) {
+            $label = source_flavor($path);
+            if ($label !== "") $sources[$path] = $label;
+        }
+    }
+}
+
+function explicit_sources(json_node $selection, hash<string,string> &$sources): void {
+    $kind = json_node_kind($selection);
+    if ($kind !== "object" && $kind !== "array") throw Exception::make("Invalid sources selection");
+    $count int = json_node_size($selection);
+    for ($i = 0; $i < $count; $i++) {
+        $path = "";
+        $label = "";
+        if ($kind === "object") {
+            $path = json_node_key($selection, $i);
+            $label = member_text($selection, $path);
+        } else {
+            $item json_node = json_node_at($selection, $i);
+            $path = json_node_string($item);
+            $label = source_flavor($path);
+        }
+        if ($label !== "php" && $label !== "cpp" && $label !== "js" && $label !== "py")
+            throw Exception::make("Unsupported source flavor: " . $path);
+        if (isset($sources[$path])) throw Exception::make("Duplicate source: " . $path);
+        $sources[$path] = $label;
+    }
+}
+
+// Merge bytewise-sorted halves to reproduce the project loader's ksort(SORT_STRING).
+function order_paths(vector<string> &$paths, vector<string> &$scratch, int $begin, int $end): void {
+    if ($end - $begin < 2) return;
+    $mid = $begin + (($end - $begin) >> 1);
+    order_paths($paths, $scratch, $begin, $mid);
+    order_paths($paths, $scratch, $mid, $end);
+    $a = $begin;
+    $b = $mid;
+    for ($i = $begin; $i < $end; $i++) {
+        if ($b === $end || ($a < $mid && strcmp($paths[$a], $paths[$b]) <= 0)) {
+            $scratch[$i] = $paths[$a];
+            $a++;
+        } else {
+            $scratch[$i] = $paths[$b];
+            $b++;
+        }
+    }
+    for ($i = $begin; $i < $end; $i++) { $paths[$i] = $scratch[$i]; }
+}
