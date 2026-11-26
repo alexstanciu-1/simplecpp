@@ -139,16 +139,16 @@ final class Translation_Source {
 	}
 }
 
-// A call owns its optional argument token in the same retained source.
+// A call owns its ordered argument tokens in the same retained source.
 final class Call_Syntax {
 	public readonly Translation_Source $source;
 	public readonly string $name;
 	public readonly int $offset;
 
-	public readonly int $argument_token;
+	public readonly vector<int> $argument_tokens;
 
-	public function __construct(Translation_Source $source, string $name, int $offset, int $argument_token) {
-		$this->argument_token = $argument_token;
+	public function __construct(Translation_Source $source, string $name, int $offset, vector<int> $argument_tokens) {
+		$this->argument_tokens = $argument_tokens;
 		$this->source = $source;
 		$this->name = $name;
 		$this->offset = $offset;
@@ -215,21 +215,32 @@ final class Translation_Parser {
 		return $token;
 	}
 
-	private function call_argument(): int {
+	private function next_list_item(string $role): bool {
+		if ($this->source->tokens[$this->index]->kind !== Token_Kind::T_comma) return false;
+		$this->index++;
+		$next = $this->source->tokens[$this->index];
+		if ($next->kind === Token_Kind::T_rparen) {
+			throw new Translation_Diagnostic($this->source->path, $next->offset, "Trailing " . $role . " comma is deferred", $this->source->text);
+		}
+		return true;
+	}
+
+	private function call_arguments(): vector<int> {
 		$this->expect(Token_Kind::T_lparen, "Expected (");
-		$argument = -1;
-		$kind = $this->source->tokens[$this->index]->kind;
-		if ($kind !== Token_Kind::T_rparen) {
-			$argument = $this->index;
+		$arguments vector<int> = [];
+		while ($this->source->tokens[$this->index]->kind !== Token_Kind::T_rparen) {
+			$arguments[] = $this->index;
+			$kind = $this->source->tokens[$this->index]->kind;
 			if ($kind === Token_Kind::T_variable) {
 				$this->index++;
 			} else {
 				if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
 				$this->expect(Token_Kind::T_integer, "Expected integer literal or parameter argument");
 			}
+			if (!$this->next_list_item("argument")) break;
 		}
 		$this->expect(Token_Kind::T_rparen, "Expected )");
-		return $argument;
+		return $arguments;
 	}
 
 	private function function_header(): Function_Declaration {
@@ -237,15 +248,22 @@ final class Translation_Parser {
 		$this->keyword("function");
 		$name = $this->spelling($this->name_token());
 		$this->expect(Token_Kind::T_lparen, "Expected (");
-		$parameter = Parameter_Type::absent;
-		$variable = "";
-		if ($this->source->tokens[$this->index]->kind !== Token_Kind::T_rparen) {
+		$parameters vector<Numeric_Parameter> = [];
+		$names hash<Numeric_Parameter,string> = [];
+		while ($this->source->tokens[$this->index]->kind !== Token_Kind::T_rparen) {
 			$param_token = $this->expect(Token_Kind::T_identifier, "Expected parameter type");
 			$param_word = $this->spelling($param_token);
-			if ($param_word === "int" || $param_word === "int64") $parameter = Parameter_Type::integer;
-			elseif ($param_word === "float" || $param_word === "float64") $parameter = Parameter_Type::floating;
-			else throw new Translation_Diagnostic($this->source->path, $param_token->offset, "Expected numeric parameter type", $this->source->text);
-			$variable = $this->spelling($this->expect(Token_Kind::T_variable, "Expected parameter name"));
+			$is_float = $param_word === "float" || $param_word === "float64";
+			if (!$is_float && $param_word !== "int" && $param_word !== "int64") {
+				throw new Translation_Diagnostic($this->source->path, $param_token->offset, "Expected numeric parameter type", $this->source->text);
+			}
+			$variable = $this->expect(Token_Kind::T_variable, "Expected parameter name");
+			$param_name = $this->spelling($variable);
+			if (isset($names[$param_name])) throw new Translation_Diagnostic($this->source->path, $variable->offset, "Duplicate parameter: " . $param_name, $this->source->text);
+			$parameter = new Numeric_Parameter($param_name, $is_float, count($parameters));
+			$parameters[] = $parameter;
+			$names[$param_name] = $parameter;
+			if (!$this->next_list_item("parameter")) break;
 		}
 		$this->expect(Token_Kind::T_rparen, "Expected )");
 		$this->expect(Token_Kind::T_colon, "Expected :");
@@ -253,7 +271,7 @@ final class Translation_Parser {
 		$word = $this->spelling($type);
 		$floating = $word === "float" || $word === "float64";
 		if (!$floating && $word !== "int") throw new Translation_Diagnostic($this->source->path, $type->offset, "Expected int or float", $this->source->text);
-		return new Function_Declaration($name, $start, $this->index, $floating, $parameter, $variable);
+		return new Function_Declaration($name, $start, $this->index, new Function_Signature($floating, $parameters, $names));
 	}
 
 	private function read_body(): Function_Body {
@@ -263,10 +281,10 @@ final class Translation_Parser {
 		$this->keyword("return");
 		$literal = $this->index;
 		$calls_function = $this->source->tokens[$literal]->kind === Token_Kind::T_identifier;
-		$argument = -1;
+		$arguments vector<int> = [];
 		if ($calls_function) {
 			$this->name_token();
-			$argument = $this->call_argument();
+			$arguments = $this->call_arguments();
 		} elseif ($this->source->tokens[$literal]->kind === Token_Kind::T_variable) {
 			$this->index++;
 		} else {
@@ -279,7 +297,7 @@ final class Translation_Parser {
 			$this->index++;
 		}
 		$this->expect(Token_Kind::T_semicolon, "Expected ;");
-		$statement = new Function_Return($return_start, $this->index, $literal, $calls_function, $argument);
+		$statement = new Function_Return($return_start, $this->index, $literal, $calls_function, $arguments);
 		$this->expect(Token_Kind::T_rbrace, "Expected }");
 		return new Function_Body($body_start, $this->index, $statement);
 	}
@@ -298,10 +316,10 @@ final class Translation_Parser {
 	public function parse_entry(): Call_Syntax {
 		$this->keyword("return");
 		$name = $this->name_token();
-		$argument = $this->call_argument();
+		$arguments = $this->call_arguments();
 		$this->expect(Token_Kind::T_semicolon, "Expected ;");
 		$this->expect(Token_Kind::End, "Expected end of source");
-		return new Call_Syntax($this->source, $this->spelling($name), $name->offset, $argument);
+		return new Call_Syntax($this->source, $this->spelling($name), $name->offset, $arguments);
 	}
 }
 

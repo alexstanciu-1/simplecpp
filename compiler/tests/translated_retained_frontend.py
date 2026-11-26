@@ -395,6 +395,10 @@ def verify(work, cxx, linker, adapter, selection=None):
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, ['-I', ROOT/'compiler/examples/retained_frontend/socket', *manifest['link_inputs']])
 
+    if selection == "--multiple-parameters":
+        from retained_parameter_incremental import verify_multiple
+        verify_multiple(work, exe, cxx, linker, adapter, service)
+        return
     if selection in ("--parameter-incremental", "--parameter-forwarding"):
         from retained_parameter_incremental import verify as verify_parameter
         verify_parameter(work, exe, cxx, linker, adapter, service, forwarding=selection == "--parameter-forwarding")
