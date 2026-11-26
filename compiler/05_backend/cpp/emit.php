@@ -208,9 +208,10 @@ final class Cpp_Emitter
 		$result_declaration = '';
 		if ($node->kind === record_kind::structure && $this->record_demand($node, dependency_use::record_result)) {
 			$result_declaration = $this->result_declaration($node->definition, $includes);
-			if ($this->record_demand($node, dependency_use::record_decode)) {
-				$layout[] = "\tstatic " . Cpp_Identifier::source($node->short_name) . ' ' . self::decode_method($node->definition) . '(::scpp::Decoder&);';
-			}
+		}
+		if ($node->kind === record_kind::structure && $this->record_demand($node, dependency_use::record_decode)) {
+			$includes['scpp/decoder.hpp'] = true;
+			$layout[] = "\tstatic " . Cpp_Identifier::source($node->short_name) . ' ' . self::decode_method($node->definition) . '(::scpp::Decoder&);';
 		}
 		if ($this->record_demand($node, dependency_use::record_encode)) {
 			$includes['scpp/encoder.hpp'] = true;
@@ -507,9 +508,10 @@ final class Cpp_Emitter
 		$result = '';
 		if ($payload->default_type() instanceof shared_record_type_definition && $this->record_demand($payload->declaration, dependency_use::record_result)) {
 			$result = $this->result_declaration($payload, $includes);
-			if ($this->record_demand($payload->declaration, dependency_use::record_decode)) {
-				$factory_declaration .= "\tstatic $owner " . self::decode_method($payload) . "(::scpp::Decoder&);\n";
-			}
+		}
+		if ($payload->default_type() instanceof shared_record_type_definition && $this->record_demand($payload->declaration, dependency_use::record_decode)) {
+			$includes['scpp/decoder.hpp'] = true;
+			$factory_declaration .= "\tstatic $owner " . self::decode_method($payload) . "(::scpp::Decoder&);\n";
 		}
 		if ($this->record_demand($payload->declaration, dependency_use::record_json_encode)) {
 			$includes['scpp/encoder.hpp'] = true;

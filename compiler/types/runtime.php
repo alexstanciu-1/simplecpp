@@ -113,11 +113,8 @@ final readonly class record_encode_function extends runtime_function
 /** Published scalar and sequence readers for a typed record destination. */
 final readonly class json_decoder_contract extends runtime_overloads
 {
-	/**
-	 * @param array<class-string<type_definition>,string> $leaves
-	 * @param array<class-string<type_definition>,string> $sequences
-	 */
-	public function __construct(public array $leaves, public string $header, public array $sequences = [])
+	/** @param array<class-string<type_definition>,string> $sequences */
+	public function __construct(public string $header, public array $sequences = [])
 	{
 		parent::__construct([], required_module: 'runtime-json');
 	}

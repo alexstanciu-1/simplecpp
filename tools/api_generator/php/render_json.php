@@ -61,25 +61,17 @@ function renderJson(array $plan, array &$files): void {
     }
     if (in_array('decode', array_column($module['operations'], 'id'), true)) {
         $recordHeader = moduleOperationHeader($module['header'], 'decode_record');
-        $declarations = $definitions = '';
-        foreach (JSON_RECORD_READERS as $type => $method) {
-            if ($type !== 'string' && !hasType($plan, $type) && !hasValue($plan, $type)) continue;
-            $declarations .= "    virtual $type $method() = 0;\n";
+        $definitions = '';
+        foreach ($plan['structural_decoder'] as $type => $method) {
             $body = $type === 'string'
                 ? "auto value = cursor.$method(); return string{value.data(), detail::checked_integer_cast<$count>(value.size())};"
                 : "return cursor.$method();";
             $definitions .= "    $type $method() override { $body }\n";
         }
-        $includes = includeHeader($plan['string']['header']);
         if (($vector = jsonIntegerVector($plan)) !== null) {
-            $export = typeExport($plan['submodules'], $vector);
-            $includes .= includeHeader(providerHeader($plan['submodules'], $export['provider']));
-            $declarations .= "    virtual void read_integers($vector& values) {\n"
-                . "        begin_array();\n        while (next_element()) values.append(read_integer());\n    }\n";
             $definitions .= "    void read_integers($vector& values) override {\n"
                 . "        cursor.read_integers([&](int64 value) { values.append(value); });\n    }\n";
         }
-        $files['public/scpp/decoder.hpp'] = BANNER . template('json/decoder', compact('includes', 'declarations'));
         $files['public/' . $recordHeader] = BANNER . template('json/record_decoder', ['includes' => includeHeader($plan['carriers_header'])]);
         $implementationHeaders .= includeHeader($recordHeader) . includeHeader('structural_reader.hpp');
         $d .= template('json/record_reader_impl', compact('definitions', 'count'));

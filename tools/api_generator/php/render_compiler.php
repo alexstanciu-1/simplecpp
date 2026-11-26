@@ -133,6 +133,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $keyContract = $runtime['hashes']['key_contracts'][$identity] ?? null;
         $typeTraits = $keyContract === null ? '' : "\tuse hash_key_specializations;\n\tuse concrete_value_storage;\n\n";
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($output[$identity] ?? null) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
+        if (isset($runtime['structural_decoder'][$identity])) {
+            $reader = $runtime['structural_decoder'][$identity];
+            $methods .= "\n\tpublic function structural_reader(): ?string { return '$reader'; }\n";
+        }
         if (isset($definition['constant_dispatch'])) {
             $methods .= "\n\tpublic function constant_dispatch(): constant_dispatch { return constant_dispatch::" . $definition['constant_dispatch'] . "; }\n";
         }
@@ -543,6 +547,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
     }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
+        '@record_result_header@' => isset($runtime['structural_decoder'])
+            ? 'public const ?string RECORD_RESULT_HEADER = ' . var_export($runtime['carriers_header'] ?? null, true) . ";\n\t" : '',
         '@mt_available@' => ($runtime['mt_segments'] ?? false) ? 'true' : 'false',
         '@async_available@' => ($runtime['async_frames'] ?? false) ? 'true' : 'false',
         '@async_value_types@' => implode(', ', [...$asyncTypes, 'type_void::class']),

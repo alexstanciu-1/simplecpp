@@ -256,6 +256,12 @@ function needsStructuralEncoder(mixed $publication): bool {
     return $requested || array_filter(names($publication->json->operations ?? []), fn($id) => str_starts_with($id, 'encode_')) !== [];
 }
 
+function needsStructuralDecoder(mixed $publication): bool {
+    $requested = $publication->structural_decoder ?? false;
+    requireThat(is_bool($requested), 'Invalid structural Decoder selection');
+    return $requested || in_array('decode', names($publication->json->operations ?? []), true);
+}
+
 /** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
 function publicationProviderHeaders(mixed $metadata, mixed $publication): array {
     $plan = submodulePlan($metadata);
@@ -290,6 +296,7 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         $headers[] = textHelperHeader($name);
         if ($name === 'string_byte_find') $headers[] = 'scpp/value_error.hpp';
     }
+    if (needsStructuralDecoder($publication)) $headers[] = 'scpp/decoder.hpp';
     if (needsStructuralEncoder($publication)) $headers[] = 'scpp/encoder.hpp';
     if (isset($publication->json)) {
         foreach (['document', 'pull_reader'] as $feature) {
@@ -297,7 +304,6 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         }
         if (in_array('decode', names($publication->json->operations), true)) {
             $headers[] = moduleOperationHeader($publication->json->header, 'decode_record');
-            $headers[] = 'scpp/decoder.hpp';
         }
         if (array_filter(names($publication->json->operations), fn($id) => str_starts_with($id, 'encode_'))) {
             $headers[] = moduleOperationHeader($publication->json->header, 'encode_record');

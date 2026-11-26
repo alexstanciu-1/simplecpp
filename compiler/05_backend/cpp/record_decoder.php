@@ -26,7 +26,7 @@ trait Cpp_Record_Decoder
 		$includes['scpp/decoder.hpp'] = $includes['new'] = $includes['stdexcept'] = $includes['utility'] = true;
 		$name = $result->cpp_type();
 		$value = $record->default_type()->cpp_type();
-		$decode = $this->record_demand($record->declaration, dependency_use::record_decode);
+		$decode = $this->record_demand($record->declaration, dependency_use::record_json_decode);
 		$text = $decode ? "    static $name from_text(const ::scpp::string&);\n" : '';
 		$cursor = !$decode || type_registry::resolve('json_pull_reader') === null ? '' : "    static Value from_cursor(const ::scpp::json_pull_reader&);\n";
 		if ($cursor !== '') foreach (type_json_pull_reader::instance()->cpp_headers() as $header) $includes[$header] = true;
@@ -72,12 +72,10 @@ CPP;
 	/** Emit one definition in the schema's owning unit. @param mixed[] $declarations @param bool[] $headers */
 	private function decode_definition(record_type_definition $record, array &$declarations, array &$headers): string
 	{
-		$contract = runtime_functions::resolve('php:func:json_decode_as');
-		$headers[$contract->header] = true;
 		$value = $record->default_type();
 		if ($value instanceof shared_record_type_definition) $declarations[$value->name] = $value;
 		$name = $value->cpp_type();
-		$result = $record->record_result()->cpp_type();
+		$contract = runtime_functions::resolve('php:func:json_decode_as');
 		$locals = $lookup = $cases = $finish = $arguments = [];
 		foreach ($record->declaration->data_constructor->parameters as $i => $field) {
 			$type = $field->storage_type();
@@ -91,7 +89,7 @@ CPP;
 				$declarations[$nested->declaration->symbol_key()] = $nested->declaration;
 				if ($leaf instanceof shared_record_type_definition) $declarations[$leaf->name] = $leaf;
 				$read = $leaf->cpp_type() . '::' . self::decode_method($nested) . '(d)';
-			} else $read = 'd.' . $contract->leaves[$leaf::class] . '()';
+			} else $read = 'd.' . $leaf->structural_reader() . '()';
 			if ($nested instanceof record_type_definition && $type === $leaf) {
 				$storage = $nested->record_result()->cpp_type();
 				$locals[] = "$storage $slot;";
@@ -136,6 +134,9 @@ CPP;
 			'return scpp_escape_from_data(' . implode(', ', $arguments) . ');'];
 		$method = self::decode_method($record);
 		$code = "$name {$name}::{$method}(::scpp::Decoder& d) {\n    " . implode("\n    ", $lines) . "\n}\n";
+		if (!$this->record_demand($record->declaration, dependency_use::record_json_decode)) return $code;
+		$result = $record->record_result()->cpp_type();
+		$headers[runtime_functions::resolve('php:func:json_decode_as')->header] = true;
 		$consume = "[](void* out, ::scpp::Decoder& d) { auto& slot = *static_cast<$result*>(out); "
 			. "new (&slot.payload) Value($name::{$method}(d)); slot.present = true; }";
 		$code .= "$result {$result}::from_text(const ::scpp::string& text) {\n    $result result;\n"

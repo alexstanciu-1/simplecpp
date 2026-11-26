@@ -75,6 +75,14 @@ Before adopting a contract, decide how a type publishes each capability, when a 
 
 The default runtime now publishes the structural Encoder with JSON disabled. Run the `boxed_vector_export` CTest to exercise the native probe against that runtime. The JSON writer separately selects its published encoders. Explicit casts now export typed vectors and [field-derived data structs](../data_initialization.md#explicit-boxed-export) with scalar leaves into the selected boxed family. Implicit export and shared boxed subtrees remain open.
 
+**Native boxed import probe.** A native consumer can request the generated
+`Packet::decode(Decoder&)` field loop and pass it a mixed or dynamic cursor.
+The [round-trip test](../../compiler/tests/fixtures/boxed_record_decode.cpp)
+checks named fields in reversed order, omitted defaults, an independently
+owned vector, and rejection at `$.data[1]` before root construction. It links
+only the application runtime. Source-level import syntax and error delivery
+remain open.
+
 ### Call-target storage and conversion follow-up
 
 Defer byte-to-int widening in the translated constant evaluator until a bootstrap consumer needs a known byte to remain known. Decimal token decoding already exercises the runtime conversion.

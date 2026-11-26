@@ -9,6 +9,8 @@ require_once __DIR__ . '/text_helpers.php';
 require_once __DIR__ . '/cli_helpers.php';
 require_once __DIR__ . '/text_builders.php';
 
+const STRUCTURAL_READERS = ['int64' => 'read_integer', 'bool_t' => 'read_boolean', 'string' => 'read_string'];
+
 /** Internal native traversal ABI shared by the supported concrete collection families. */
 function collectionTraversalPlan(): array {
     return ['limit_method' => 'iteration_limit', 'next_method' => 'iteration_next',
@@ -18,6 +20,7 @@ function collectionTraversalPlan(): array {
 
 function checkHeader(array $plan, string $header): void {
     $paths = array_values($plan['headers']);
+    if (isset($plan['structural_decoder'])) $paths[] = 'scpp/decoder.hpp';
     if (isset($plan['structural_encoder'])) $paths[] = 'scpp/encoder.hpp';
     foreach (['scalar_core', 'scalar_numeric'] as $group) {
         $paths[] = providerHeader($plan['submodules'], $plan['submodules']['groups'][$group]['provider']);
@@ -46,7 +49,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'cli_helpers', 'text_helpers', 'text_builders', 'resource_modules', 'structural_encoder']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'cli_helpers', 'text_helpers', 'text_builders', 'resource_modules', 'structural_encoder', 'structural_decoder']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -91,6 +94,12 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     if (needsStructuralEncoder($publication)) {
         checkHeader($plan, 'scpp/encoder.hpp');
         $plan['structural_encoder'] = structuralEncoderInputs($plan);
+    }
+    if (needsStructuralDecoder($publication)) {
+        checkHeader($plan, 'scpp/decoder.hpp');
+        requireThat(isset($plan['string']), 'Structural Decoder requires published string');
+        $plan['structural_decoder'] = array_filter(STRUCTURAL_READERS,
+            fn(string $id): bool => $id === 'string' || hasType($plan, $id) || hasValue($plan, $id), ARRAY_FILTER_USE_KEY);
     }
     prepareJson($metadata, $publication, $plan);
     foreach (FUNCTION_MODULES as $family) prepareModuleFunctions($family, $metadata, $publication, $plan);

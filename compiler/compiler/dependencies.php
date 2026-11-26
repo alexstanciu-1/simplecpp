@@ -21,6 +21,7 @@ enum dependency_use: int
 	case async_wait = 16;
 	case async_task = 32;
 	case record_decode = 256;
+	case record_json_decode = 2048;
 	case record_encode = 512;
 	case record_json_encode = 1024;
 	case record_result = 128;
