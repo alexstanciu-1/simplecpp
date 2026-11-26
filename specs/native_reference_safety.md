@@ -20,6 +20,8 @@ destructors and user-code failures must remain observable. Allocation failures f
 operations that still execute propagate under their ordinary contracts. An unknown
 effect requires a private copy.
 
+Typed vectors and hashes publish a read-only indexed lookup capability. Once the receiver and key have been evaluated, lookup preserves the collection, including its size and key set. Collections with the same snapshot contents yield the corresponding stored value or the same checked failure. Preparation selects the indexed operation from the receiver type. A borrowing proof checks its lookup capability separately from operand evaluation, copying the result, and destruction. For example, evaluating the key in `$snapshot[changeKey($writer)]` can still mutate the source through an alias.
+
 ## Private local collection snapshots
 
 A local initialized by value from a vector or hash observes the contents at initialization through its last use, including when another alias changes the source. The compiler may omit the local’s private allocation under the same copy, destruction and failure rules as a by-value collection parameter. The source must stay alive and the compiler must prove that all uses observe the snapshot.

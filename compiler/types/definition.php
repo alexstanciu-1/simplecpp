@@ -206,6 +206,15 @@ interface index_read_type
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string;
 }
 
+/**
+ * After operand evaluation, locating an element preserves the receiver and selects the
+ * same value or checked failure on an equal snapshot. Materializing the result has
+ * the element type's own copy and destruction effects.
+ */
+interface readonly_index_lookup_type extends index_read_type
+{
+}
+
 /** An immutable descriptor can reuse this provider's checked read while the owner is stable. */
 interface scoped_byte_read_type extends index_read_type
 {

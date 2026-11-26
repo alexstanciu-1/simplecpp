@@ -778,6 +778,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	{
 		$index = null;
 		if ($value instanceof ast_index_expression) {
+			if (!($value->receiver->type_def() instanceof readonly_index_lookup_type)) return false;
 			$receiver = $value->receiver;
 			$index = $value->index;
 		} elseif ($value instanceof ast_call_expression && $value->cardinality !== null) {
