@@ -45,7 +45,7 @@ function print_function_ast(Function_Declaration $function): void {
 
 function check_reused_body(Function_Declaration $function): void {
 	$body = $function->body();
-	$other = new Function_Declaration($function->short_name, $function->start, $function->header_end, $function->returns_float, $function->parameter_type, $function->parameter_name);
+	$other = new Function_Declaration($function->short_name, $function->start, $function->header_end, $function->signature);
 	try {
 		Function_Declaration::complete_body($other, $body);
 		throw Exception::make("Completed a declaration with an attached body");

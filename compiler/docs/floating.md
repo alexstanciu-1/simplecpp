@@ -150,10 +150,11 @@ Changing only the callee's body reuses the forwarding unit. Changing its return
 type rechecks and emits the direct forwarder. On literal overflow the diagnostic
 points to the return operand and the previous published files remain available for retry.
 
-The retained PHP-flavor slice also accepts one positional numeric parameter by
-value. A function may return that parameter, and a call may supply its enclosing function’s parameter or a signed
-decimal integer literal. Preparation resolves a forwarded argument in the caller’s
-scope and checks it against the callee’s current parameter type. Both the return type and the parameter type (including
-absence) belong to the watched signature. A type change rechecks direct callers
-and updates their C++ prototypes and conversions. Renaming a positional parameter
-only requires preparing its declaring body.
+The retained PHP-flavor slice accepts positional numeric parameters by value.
+A function may return any of its parameters. Each call argument may be a signed
+decimal integer literal or a parameter from the enclosing function. Preparation
+resolves names in that function, checks arity, and pairs arguments with the
+callee's parameter types in declaration order. The watched signature includes
+the return type and the complete ordered parameter-type list. A change in any
+slot rechecks direct callers. Renaming a positional parameter only requires
+preparing its declaring body.

@@ -54,28 +54,27 @@ final class Unit_Replacement {
 // A published unit depends on its own declaration and the ABI of any called function.
 final class Published_Function_Unit {
 	public readonly Prepared_Declaration $source;
-	private readonly bool $callee_float;
-	private readonly Parameter_Type $parameter;
+	private readonly ?Function_Signature $signature;
 	public readonly string $text;
 
 	public function __construct(Prepared_Declaration $source, string $text) {
 		$this->source = $source;
 		$binding = $source->call;
-		$this->parameter = $binding === null ? Parameter_Type::absent : $binding->parameter();
-		$this->callee_float = $binding !== null && $binding->callee_returns_float();
+		if ($binding === null) $this->signature = null;
+		else $this->signature = $binding->signature();
 		$this->text = $text;
 	}
 
 	public function matches(Prepared_Declaration $source): bool {
 		$binding = $source->call;
-		return $this->source === $source && ($binding === null || $binding->parameter() === $this->parameter) && $this->callee_float === ($binding !== null && $binding->callee_returns_float());
+		return $this->source === $source && ($binding === null || Function_Signature::matches($binding->signature(), $this->signature));
 	}
 }
 
 final class Unit_Lowering {
 	private ?Published_Function_Unit $definition = null;
 	private ?Prepared_Call $caller = null;
-	private Parameter_Type $entry_parameter = Parameter_Type::absent;
+	private ?Function_Signature $entry_signature = null;
 	private string $caller_text = "";
 	private string $adapter = "";
 	private hash<Published_Function_Unit,string> $other_definitions;
@@ -89,7 +88,7 @@ final class Unit_Lowering {
 			$emitted .= $target->scope->source->path . ",";
 			$definition = new Published_Function_Unit($target, emit_definition_unit($target));
 		}
-		if ($entry !== $this->caller || $entry->parameter() !== $this->entry_parameter) {
+		if ($entry !== $this->caller || !Function_Signature::matches($entry->signature(), $this->entry_signature)) {
 			$emitted .= "main.php,";
 			$caller = emit_call_unit($entry);
 		}
@@ -164,7 +163,7 @@ final class Unit_Lowering {
 		// A failed attempt leaves the published syntax identities and text unchanged.
 		$this->definition = $definition;
 		$this->caller = $entry;
-		$this->entry_parameter = $entry->parameter();
+		$this->entry_signature = $entry->signature();
 		$this->caller_text = $caller;
 		$this->adapter = $adapter;
 		$this->other_definitions = $other;
