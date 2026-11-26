@@ -2921,7 +2921,7 @@ CPP;
 				$reader_arguments = $value->named->parameter_order($reader_arguments);
 			}
 			$argument = $reader_arguments[0] ?? null;
-			if (self::plain_local_read($argument)
+			if (self::plain_local_read($argument, allow_value_parameter: true)
 				&& ($input = $function->private_reader_input()) !== null && $argument->type_def() === $input->type_def()) {
 				if (count($function->parameters) === 1) {
 					$name .= 'collection_reader';
@@ -3960,11 +3960,14 @@ CPP;
 			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
 	}
 
-	/** Exclude reference aliases, iteration bindings, parameters and qualified accesses. */
-	private static function plain_local_read(?ast_expression $argument): bool
+	/** A collection may also borrow storage owned by an ordinary by-value parameter. */
+	private static function plain_local_read(?ast_expression $argument, bool $allow_value_parameter = false): bool
 	{
 		if (!$argument instanceof ast_name_expression) return false;
 		$binding = $argument->local_binding();
+		if ($binding instanceof ast_parameter_declaration) {
+			return $allow_value_parameter && $binding->mode === passing_mode::value && !($binding->type_reference instanceof ast_variadic_type_reference);
+		}
 		return $binding !== null && $binding::class === ast_local_declaration::class;
 	}
 
