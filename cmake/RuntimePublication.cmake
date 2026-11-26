@@ -63,9 +63,6 @@ if(SCPP_ENABLE_JSON)
       "{\"family\":\"result\",\"payload\":\"${family}\"}")
     math(EXPR count "${count} + 1")
   endforeach()
-  # The base profile already has the other three nullable scalar payloads.
-  string(JSON runtime_profile SET "${runtime_profile}" carriers specializations ${count}
-    "{\"family\":\"nullable\",\"payload\":\"float64\"}")
 endif()
 if(SCPP_ENABLE_REGEX)
   string(JSON count LENGTH "${runtime_profile}" carriers specializations)
