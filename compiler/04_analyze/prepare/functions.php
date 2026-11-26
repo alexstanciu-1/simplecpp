@@ -279,10 +279,14 @@ final class Function_Preparation
 					throw new diagnostic($key_syntax->source(), $key_syntax->byte_start(), 'Hash segment keys must be int or string');
 				$parameter_type = new segment_type($element, str_starts_with($parameter->type_reference->name, 'read_'), $key);
 			} elseif ($parameter->type_reference->name === 'callback_view' && $parameter->type_reference->first_child !== null) {
-				if ($parameter->type_reference->spelling() !== 'callback_view<void>' || count($declaration->parameters) !== 1
+				$flag = $declaration->parameters[0];
+				$conditional = count($declaration->parameters) === 2 && $declaration->parameters[1] === $parameter
+					&& $flag->type_def() === type_bool::instance() && $flag->mode === passing_mode::value && $flag->default_value === null;
+				if ($parameter->type_reference->spelling() !== 'callback_view<void>' || (count($declaration->parameters) !== 1 && !$conditional)
+					|| $parameter->type_reference instanceof ast_variadic_type_reference
 					|| $declaration->is_async || $declaration->returns_reference || $type !== type_void::instance()
 					|| $declaration->parent instanceof ast_method_owner || $parameter->mode !== passing_mode::value || $parameter->default_value !== null) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'A callback view requires a synchronous void free function with one required callback_view<void> parameter');
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'A callback view requires a synchronous void free function with a required callback_view<void> parameter optionally preceded by a required by-value bool');
 				}
 				$parameter_type = new callback_view_type();
 			} else $parameter_type = $parameter->type_reference->name === 'callback' && $parameter->type_reference->first_child !== null

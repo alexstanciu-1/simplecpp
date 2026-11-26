@@ -171,6 +171,12 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$emit('borrowed_callback', $twice . $setup . $view . 'echo $items[0],$items[2];return 8;', '35');
 		rejects(fn() => $prepare(str_replace('$op();', '$save function<void()> = $op;', $twice) . 'return 8;'), 'only direct invocation');
 		rejects(fn() => $prepare('function other():void {}' . str_replace('$op();', 'other();', $twice) . 'return 8;'), 'only direct invocation');
+		$conditional = 'function applyIf(bool $enabled,callback_view<void> $op):void {if ($enabled) {applyOnce($op);} else {}}';
+		$emit('conditional_view', $twice . $conditional . $setup . str_replace('applyTwice($f);', 'applyIf(false,$f);applyIf(op:$f,enabled:true);', $view)
+			. 'echo $items[0],$items[2];return 8;', '24');
+		rejects(fn() => $prepare($twice . str_replace('else {}', 'else {$saved function<void()> = $op;}', $conditional) . 'return 8;'), 'only direct invocation');
+		rejects(fn() => $prepare($twice . str_replace('if ($enabled)', 'if (!$enabled)', $conditional) . 'return 8;'), 'by-value bool parameter');
+		rejects(fn() => $prepare($twice . str_replace('bool $enabled', 'bool &$enabled', $conditional) . 'return 8;'), 'required by-value bool');
 		$emit('nested_reference_capture', $setup . $nested . 'echo $items[0],$items[2];return 8;', '35');
 		$emit('writable', $setup . 'foreach ($items as $key => &$value) {$value+=2;echo $items[$key];}return 8;', '345');
 	} else rejects(fn() => $prepare($setup . 'foreach (' . $v('items') . ' as &' . $v('value') . ') {} return 8;'), 'Expected');
