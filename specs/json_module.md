@@ -138,10 +138,16 @@ json_decode_mixed(string) → result<mixed> and publishes the same decode and
 encode contracts. Exact argument type selects each of the ten encode overloads,
 including nullable scalars. General names follow project visibility.
 
-A field-derived data record also selects an encoder when every field or vector
-element has an exact published value encoder. The schema supplies the field
-order and the writer borrows the record for the call. Module failures such as a
-nonfinite float return a failed `result<string>`. See [data record
+For a field-derived data record, `json_encode($packet)` borrows the value and
+calls its concrete `encode(Encoder&) const` method. Preparation checks the
+reachable field schemas against the published scalar and vector-element
+encoders. Each generated method sends object, field, array and typed value
+operations to the same synchronous encoder. Field names are declared
+identifiers in schema order. Embedded records and shared owners can nest;
+an absent owner writes JSON null. Repeated references on independent branches
+encode independently. An active ownership cycle or nonfinite float yields a
+failed `result<string>`, even after earlier fields have been written. Only a
+successful operation publishes the output string. See [data record
 construction and codecs](data_initialization.md#native-codec-adapters-for-field-derived-signatures).
 
 With the decode operation selected, PHP and the general API expose

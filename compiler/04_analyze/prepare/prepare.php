@@ -2107,23 +2107,34 @@ final class Preparation
 	{
 		$record = $input instanceof shared_record_type_definition ? $input->payload : $input;
 		if (!($record instanceof record_type_definition)) return null;
-		for ($base = $record; $base !== null; $base = $base->base()) {
+		if ($record->declaration->data_constructor === null || $record->constructor() !== null) return null;
+		$seen = [];
+		$this->check_encode_schema($record, $encoders, $site, $seen);
+		$variants = $encoders->by_arity[1];
+		$published = reset($variants);
+		return new record_encode_function($record, $input, $published, $encoders);
+	}
+
+	/** Check the declared fields of every reachable schema and subscribe the call to layout changes. @param bool[] $seen */
+	private function check_encode_schema(record_type_definition $record, json_encoder_overloads $encoders, ast_expression $site, array &$seen): void
+	{
+		if (isset($seen[$record->name])) return;
+		$seen[$record->name] = true;
+		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_encode->value);
+		for ($base = $record->base(); $base !== null; $base = $base->base()) {
 			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
 		}
-		$signature = $record->declaration->data_constructor;
-		if ($signature === null || $record->constructor() !== null) return null;
-		$variants = $encoders->by_arity[1];
-		foreach ($signature->parameters as $field) {
+		foreach ($record->declaration->data_constructor->parameters as $field) {
 			$type = $field->type_def();
 			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
-			if (!isset($variants[$leaf::class])) {
-				throw new diagnostic($site->source(), $site->byte_start(), 'No JSON encoder for ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ')');
+			if (isset($encoders->by_arity[1][$leaf::class])) continue;
+			$nested = $leaf instanceof shared_record_type_definition ? $leaf->payload : $leaf;
+			if ($nested instanceof record_type_definition && $nested->declaration->data_constructor !== null && $nested->constructor() === null) {
+				$this->check_encode_schema($nested, $encoders, $site, $seen);
+				continue;
 			}
+			throw new diagnostic($site->source(), $site->byte_start(), 'No JSON encoder for ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ')');
 		}
-		$published = reset($variants);
-		$symbol = $input instanceof shared_record_type_definition ? 'encode_owned_record' : 'encode_record';
-		return new runtime_function($published->name(), [$input], $published->return_type_def(), '::scpp::json::' . $symbol,
-			$encoders->record_header, const_reference_mask: 1, required_module: $encoders->required_module);
 	}
 
 	/** Check each JS namespace prefix until a visible value owns the rest of the dotted path. */

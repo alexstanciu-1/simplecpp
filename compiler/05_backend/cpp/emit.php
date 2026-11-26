@@ -22,6 +22,7 @@ final class Cpp_Exit
 final class Cpp_Emitter
 {
 	use Cpp_Record_Decoder;
+	use Cpp_Record_Encoder;
 	use Cpp_Generator;
 
 	/** PROPERTIES */
@@ -210,6 +211,13 @@ final class Cpp_Emitter
 			if ($this->record_demand($node, dependency_use::record_decode)) {
 				$layout[] = "\tstatic " . Cpp_Identifier::source($node->short_name) . ' ' . self::decode_method($node->definition) . '(::scpp::Decoder&);';
 			}
+		}
+		if ($this->record_demand($node, dependency_use::record_encode)) {
+			$includes['scpp/encoder.hpp'] = true;
+			$name = Cpp_Identifier::source($node->short_name);
+			$layout[] = "\tvoid " . self::encode_method($node->definition) . "(::scpp::Encoder&) const;";
+			$layout[] = "\tstatic void scpp_escape_encode_fields(const void*, ::scpp::Encoder&);";
+			$layout[] = "\tstatic ::scpp::result_string scpp_escape_json_encode(const $name&);";
 		}
 		$base = $node->definition->base();
 		$has_local_constructor = isset($node->methods['__construct']);
@@ -500,6 +508,10 @@ final class Cpp_Emitter
 				$factory_declaration .= "\tstatic $owner " . self::decode_method($payload) . "(::scpp::Decoder&);\n";
 			}
 		}
+		if ($this->record_demand($payload->declaration, dependency_use::record_encode)) {
+			$includes['scpp/encoder.hpp'] = true;
+			$factory_declaration .= "\tstatic ::scpp::result_string scpp_escape_json_encode(const $owner&);\n";
+		}
 		$presence = $payload->declaration->kind !== record_kind::structure ? "\tstatic $owner require($owner value);\n" : '';
 		return <<<CPP
 #ifndef $guard
@@ -572,6 +584,13 @@ CPP;
 				. ") : ::scpp::application_control(destroy_value, dispose_allocation), value(tag$tail) {}";
 			$factory .= $this->owner_factory("inline $owner {$owner}::scpp_escape_from_data($params)", $owner, "$payload::scpp_escape_data_tag{}$tail");
 		}
+		$encode = '';
+		if ($this->record_demand($type->payload->declaration, dependency_use::record_encode)) {
+			$contract = runtime_functions::resolve('php:func:json_encode');
+			$includes[$contract->record_header] = true;
+			$encode = "inline ::scpp::result_string {$owner}::scpp_escape_json_encode(const $owner& value) {\n"
+				. "\treturn ::scpp::json::encode_fields(value.view, &$payload::scpp_escape_encode_fields);\n}\n";
+		}
 		$presence = $type->payload->declaration->kind !== record_kind::structure
 			? "inline $owner {$owner}::require($owner value) { if (!value.ptr) ::scpp::throw_empty_owner(); return value; }\n" : '';
 
@@ -595,6 +614,7 @@ CPP;
 #ifndef $guard
 #define $guard
 $allocation
+$encode
 inline $payload* {$owner}::operator->() const {
 	if (!ptr) ::scpp::throw_empty_owner();
 	return view;
@@ -723,6 +743,9 @@ CPP;
 			if (!($node instanceof ast_type_declaration)) continue;
 			$declarations[$node->symbol_key()] = $node;
 			if (!($node instanceof ast_record_declaration)) continue;
+			if ($this->record_demand($node, dependency_use::record_encode)) {
+				$definitions[] = $this->encode_definition($node->definition, $declarations, $required_headers);
+			}
 			if ($this->record_demand($node, dependency_use::record_decode)) {
 				$definitions[] = $this->decode_definition($node->definition, $declarations, $required_headers);
 			}
@@ -2958,10 +2981,10 @@ CPP;
 			$function = $value->implementation();
 			if ($function instanceof runtime_function) {
 				if ($value_type instanceof application_collection_type) $this->concrete_collections->request($value_type);
-				if ($function instanceof record_decode_function) {
+				if ($function instanceof record_decode_function || $function instanceof record_encode_function) {
 					$target = $function->target;
 					$declarations[$target->declaration->symbol_key()] = $target->declaration;
-					$owner = $target->default_type();
+					$owner = $function instanceof record_encode_function ? $function->parameters[0] : $target->default_type();
 					if ($owner instanceof shared_record_type_definition) $declarations[$owner->name] = $owner;
 				}
 				if ($function instanceof collection_transform_function) {
