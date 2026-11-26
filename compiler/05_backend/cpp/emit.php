@@ -204,9 +204,9 @@ final class Cpp_Emitter
 	public function record_declaration(ast_record_declaration $node, array &$includes /** array<string,bool> */): string
 	{
 		$layout = [];
-		$result = '';
+		$result_declaration = '';
 		if ($node->kind === record_kind::structure && $this->record_demand($node, dependency_use::record_result)) {
-			$result = $this->result_declaration($node->definition, $includes);
+			$result_declaration = $this->result_declaration($node->definition, $includes);
 			if ($this->record_demand($node, dependency_use::record_decode)) {
 				$layout[] = "\tstatic " . Cpp_Identifier::source($node->short_name) . ' ' . self::decode_method($node->definition) . '(::scpp::Decoder&);';
 			}
@@ -369,7 +369,7 @@ final class Cpp_Emitter
 		}
 		array_push($bases, ...$interface_bases);
 		return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
-			. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n") . $result;
+			. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n") . $result_declaration;
 	}
 
 	/** Spell a free prototype, including a generator layout when needed. @param bool[] $includes */
