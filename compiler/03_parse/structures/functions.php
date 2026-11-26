@@ -743,20 +743,34 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		return $this->reads_collection($value, $parameter, $key);
 	}
 
-	/** A private collection local can borrow its named parameter up to the immediate scalar return. */
+	/** Inspect only the final snapshot, optional first scalar read and return. */
 	public function borrowed_snapshot(): ?ast_local_declaration
 	{
 		$count = count($this->statements);
 		$local = $this->statements[$count - 2] ?? null;
-		if ($local === null || $local::class !== ast_local_declaration::class || !$local->type_def()->private_copy_allocation_only()
-			|| $this->parent->is_async || $this->parent->returns_reference || !$this->parent->return_type_def()->copy_has_no_observable_effects()) return null;
-		$source = $local->initializer;
-		if (!($source instanceof ast_name_expression) || !(($input = $source->local_binding()) instanceof ast_parameter_declaration)
-			|| $input->type_def() !== $local->type_def() || $source->type_def() !== $local->type_def() || $local->initialization() !== value_conversion::identity) return null;
+		if ($local === null || $local::class !== ast_local_declaration::class || $this->parent->is_async || $this->parent->returns_reference
+			|| !$this->parent->return_type_def()->copy_has_no_observable_effects()) return null;
 		$return = $this->statements[$count - 1];
 		if (!($return instanceof ast_return_statement) || $return->value === null || $return->conversion() !== value_conversion::identity
 			|| $return->value->type_def() !== $this->parent->return_type_def()) return null;
-		return $this->reads_collection($return->value, $local) ? $local : null;
+		$value = $return->value;
+		if (!$local->type_def()->private_copy_allocation_only()) {
+			$first = $local;
+			$local = $this->statements[$count - 3] ?? null;
+			if ($local === null || $local::class !== ast_local_declaration::class || !$local->type_def()->private_copy_allocation_only()
+				|| !$first->type_def()->copy_has_no_observable_effects() || $first->initialization() !== value_conversion::identity
+				|| $first->initializer->type_def() !== $first->type_def() || !$this->reads_collection($first->initializer, $local)) return null;
+			// The only operand before the second read is the saved first scalar.
+			if ($value::class === ast_binary_expression::class && $value->operator === binary_operator::add
+				&& $value->left::class === ast_name_expression::class && $value->left->refers_to($first)
+				&& $value->left_conversion === value_conversion::identity && $value->right_conversion === value_conversion::identity) {
+				$value = $value->right;
+			}
+		}
+		$source = $local->initializer;
+		if (!($source instanceof ast_name_expression) || !(($input = $source->local_binding()) instanceof ast_parameter_declaration)
+			|| $input->type_def() !== $local->type_def() || $source->type_def() !== $local->type_def() || $local->initialization() !== value_conversion::identity) return null;
+		return $this->reads_collection($value, $local) ? $local : null;
 	}
 
 	/** A prepared scalar read from the named collection; a local snapshot can use an inert value parameter as its key. */
