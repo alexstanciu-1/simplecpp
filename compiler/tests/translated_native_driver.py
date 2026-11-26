@@ -73,7 +73,7 @@ def verify_publication(work, driver, cxx, flags):
     assert subprocess.check_output([*args, cxx, *flags], timeout=10) == b'2'
 
 
-def verify(work, cxx, linker):
+def build_driver(work, cxx, linker):
     tool = work/'driver'
     tool.mkdir()
     modules = ['filesystem', 'io', 'json', 'process', 'datetime']
@@ -84,6 +84,11 @@ def verify(work, cxx, linker):
     driver = work/'driver-executable'
     build(bundle, driver, cxx, linker, manifest['link_inputs'])
 
+    return driver
+
+
+def verify(work, cxx, linker):
+    driver = build_driver(work, cxx, linker)
     project = work/'vector with spaces'
     project.mkdir()
     with closing(vector_bundles(project, cxx, linker)) as snapshots:

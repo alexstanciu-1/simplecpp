@@ -325,10 +325,16 @@ final class Cpp_Emitter
 			. $this->signature($node, $includes) . ';';
 	}
 
+	/** The private entry borrows the collection and receives any caller-supplied key by value. */
 	private function collection_reader_signature(ast_function_declaration $function, ast_parameter_declaration $input): string
 	{
+		$parameters = 'const ' . $this->signature_type($input->type_def(), false) . '& ' . $this->name($input);
+		if (isset($function->parameters[1])) {
+			$key = $function->parameters[1];
+			$parameters .= ', ' . $this->signature_type($key->type_def(), false) . ' ' . $this->name($key);
+		}
 		return $this->signature_type($function->return_type_def(), false) . ' ' . self::function_name($function)
-			. 'collection_reader(const ' . $this->signature_type($input->type_def(), false) . '& ' . $this->name($input) . ')';
+			. 'collection_reader(' . $parameters . ')';
 	}
 
 	/** An ordinary blocking entry shares the producer's prepared parameter declarations. @param bool[] $headers */
@@ -691,10 +697,9 @@ CPP;
 			$definitions[] = $signature . $base_initializer . "\n{\n" . $body_text . "\n}\n";
 			$reader_input = $function->private_reader_input();
 			if ($reader_input !== null) {
-				$arg = $this->name($reader_input);
 				// A body edit that loses the proof resumes ordinary by-value parameter construction.
-				$body = $function->body()->reads_parameter_without_copy($reader_input)
-					? $body_text : "\treturn " . $name . '(' . $arg . ');';
+				$body = $function->body()->reads_parameter_without_copy($reader_input, $function->parameters[1] ?? null)
+					? $body_text : "\treturn " . $name . '(' . implode(', ', array_map($this->name(...), $function->parameters)) . ');';
 				$definitions[] = $this->collection_reader_signature($function, $reader_input) . "\n{\n" . $body . "\n}\n";
 			}
 			if ($function->is_async && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
@@ -2912,10 +2917,18 @@ CPP;
 			$declarations[$name] = $function;
 			$result = $function->return_type_def();
 			$argument = $value->arguments[0] ?? null;
-			if ($argument instanceof ast_name_expression && $argument->local_binding() !== null
-				&& $argument->local_binding()::class === ast_local_declaration::class
+			if (self::plain_local_read($argument)
 				&& ($input = $function->private_reader_input()) !== null && $argument->type_def() === $input->type_def()) {
-				$name .= 'collection_reader';
+				if (count($function->parameters) === 1) {
+					$name .= 'collection_reader';
+				} elseif (!isset($value->named) && isset($value->arguments[1])) {
+					$key = $value->arguments[1];
+					if ($key->type_def() === type_int64::instance() && ($key instanceof ast_integer_expression || self::plain_local_read($key))) {
+						// Both operands are inert. Binding the collection directly avoids a by-value staging temporary.
+						return $name . 'collection_reader(' . $this->name($argument->local_def()) . ', '
+							. $this->value($key, $global_references, $declarations, $required_headers) . ')';
+					}
+				}
 			}
 			// The value read through a returned reference follows argument cleanup.
 			if ($function->returns_reference) $statement_setup = null;
@@ -3940,6 +3953,14 @@ CPP;
 		if ($type instanceof owned_callable_type) return false;
 		return $argument instanceof ast_callable_reference || $argument instanceof ast_lambda_expression || (($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
 			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
+	}
+
+	/** Exclude reference aliases, iteration bindings, parameters and qualified accesses. */
+	private static function plain_local_read(?ast_expression $argument): bool
+	{
+		if (!$argument instanceof ast_name_expression) return false;
+		$binding = $argument->local_binding();
+		return $binding !== null && $binding::class === ast_local_declaration::class;
 	}
 
 	/** Only plain, nonthrowing scalar conversions can move across an old-value read. */

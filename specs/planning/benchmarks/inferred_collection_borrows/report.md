@@ -74,3 +74,19 @@ percentage uses each pair's ratio before taking the median.
 | Single hash indexed read | 14.794 | 14.730 | −3.69% |
 | Unrelated scalar return | 14.310 | 14.198 | −0.66% |
 | Unrelated 100-assignment body | 387.721 | 387.544 | +0.06% |
+
+## Caller-supplied integer keys
+
+On dev002 the copy-constructor probe ran 100 calls to each generated entry with
+4,096-element collections and key zero. For both collection families, the
+ordinary by-value entry made one copy per call. The inferred reader and explicit
+read-only entry each made zero. Failing the next allocation raised
+`std::bad_alloc` on both by-value entries. The native source fixture checks that
+literal and plain local keys pass the collection directly to the inferred entry,
+and that evaluating a mutating key preserves the earlier collection snapshot.
+
+With the same 16-pair pinned preparation method, the vector parameter-index
+reader measured 7.283 µs baseline and 7.359 µs candidate (paired median +1.37%).
+The hash reader measured 7.187 and 7.183 µs (−0.35%). The unrelated scalar and
+100-assignment controls changed by −0.60% and +0.30%. These measurements cover
+body preparation only. The signature and expression checks run during lowering.
