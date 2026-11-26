@@ -318,8 +318,18 @@ preserved the generation; disconnecting after a complete request advanced it
 once and the server continued serving. Stop removed the socket under the lock.
 After SIGKILL a new starter recovered the stale endpoint, reused the lock inode
 and parsed the edited application cold. The test launcher supplies the working
-directory and starts processes. Production PHP client compatibility, automatic
-daemon startup from the native client and a published raw socket API remain open.
+directory and starts processes.
+
+A separate Linux client now auto-starts the native executable and exchanges
+newline-framed JSON with either service. Four concurrent cold invocations
+converged on one detached native PID and generations 1–4. The production PHP
+CLI read native reports and diagnostics, drove an edit and repair, and stopped
+the native owner. The native CLI used the unmodified PHP server and restarted
+its own server cold after SIGKILL. Both endpoints agreed on the tested error
+envelopes and the multiline source diagnostic. Status and stop on an absent
+service left its directory absent. This proof uses the native bootstrap's
+two-source grammar and a C++ Unix transport/launch adapter; a published raw
+socket API remains open. [Protocol comparison](../../compiler/tests/native_frontend_protocol.py)
 [Lifecycle test](../../compiler/tests/native_frontend_socket.py)
 
 Acceptance checks:

@@ -886,6 +886,10 @@ if(BUILD_TESTING)
     add_test(NAME compiler_native_frontend_socket COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_socket.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
   endif()
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_JSON AND SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_native_frontend_protocol COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_protocol.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_IO)
     add_test(NAME compiler_translated_retained_frontend COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})

@@ -82,7 +82,8 @@ scpp::string host_request_() {
             auto end = request.find('\n');
             if (end < 4096) return scpp::string(request.data(), static_cast<scpp::int64>(end + 1));
         }
-        close_fd(client);
+        constexpr char incomplete[] = "{\"error\":\"Incomplete service request\"}\n";
+        host_reply_(scpp::string(incomplete, sizeof(incomplete) - 1));
     }
     return {};
 }
