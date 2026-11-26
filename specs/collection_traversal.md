@@ -112,8 +112,10 @@ recapture of a borrowed binding remains deferred.
 
 A consumer declares one required by-value parameter, for example
 `function applyTwice(callback_view<void> $op):void {$op();$op();}`. Its body
-may contain only direct zero-argument calls of that parameter. Preparation checks
-the consumer in its defining file and rejects storage, forwarding, scheduling and
+may invoke its parameter directly or pass it as the sole argument to another direct
+synchronous free function declaring the same view contract. Forwarding passes the
+existing pointer and invocation function. Preparation checks each consumer in its
+defining file and rejects storage, scheduling and
 suspension. The caller supplies an inferred local closure with the exact nullary
 void signature. Its possible writes are checked as for a direct invocation.
 The view passes a pointer to the existing closure and a typed invocation function

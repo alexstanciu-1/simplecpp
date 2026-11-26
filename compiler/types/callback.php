@@ -136,7 +136,8 @@ final class callback_view_type extends type_definition
 
 	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
 	{
-		// Preparation requires a named lambda. Its address and type describe the existing environment.
+		if ($source_type instanceof self) return $value;
+		// The first consumer borrows the existing named lambda environment.
 		return $this->cpp_type() . '{&' . $value . ', [](const void* context) { (*static_cast<const decltype(' . $value . ')*>(context))(); }}';
 	}
 }
