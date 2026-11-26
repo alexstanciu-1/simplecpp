@@ -47,6 +47,14 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-results-') as tmp:
         compile(out, f'scpp::result_{family} r; scpp::{family} v = r', False)
         pub['carriers']['specializations'][0]['payload'] = other
         generate(metadata, pub, False)
+    pub = copy.deepcopy(publication)
+    pub['boxed']['families'] = ['mixed']
+    pub['boxed']['scalar_conversions'] = False
+    pub['carriers']['specializations'] = [{'family': 'result_or_false', 'payload': 'mixed'}]
+    out, plan = generate(metadata, pub)
+    assert plan['carriers'][0]['payload_copy'] == 'cow'
+    compile(out, 'auto r = scpp::result_or_false_mixed::from_false(); auto empty = r.is_false()')
+    compile(out, 'scpp::result_or_false_dynamic r', False)
     for family in ['nullable', 'result_or_false', 'result_or_bool']:
         pub = copy.deepcopy(publication); pub['carriers']['specializations'] = [{'family':family, 'payload':'dynamic'}]
         generate(metadata, pub, False)

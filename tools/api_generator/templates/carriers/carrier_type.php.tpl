@@ -6,7 +6,7 @@ final class @class@ extends carrier_type_definition
 
 	private function __construct()
 	{
-		parent::__construct(@family@ . '<' . @payload@::instance()->name . '>', @payload@::instance());
+		parent::__construct(@family@, @payload@::instance());
 	}
 
 	public function dispatch_label_type(): type_definition
@@ -51,7 +51,7 @@ final class @class@ extends carrier_type_definition
 	{
 		return @presence_expression@;
 	}
-
+@peer_equality@
 	public function lower_cpp_condition(string $value, bool $negated = false): string
 	{
 		return '([&]() { const auto &carrier = ' . $value . '; return carrier.@presence@() ? '

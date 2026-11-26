@@ -145,23 +145,41 @@ final class Type_Resolution
 	{
 		$types = [];
 		$modes = [];
+		$variadic = null;
 		for ($part = $syntax->first_child; $part !== null; $part = $part->next_sibling) {
 			$type = self::named($part, $symbols, $namespace, $watcher, $dependencies, $types === []);
+			if ($part instanceof ast_variadic_type_reference) {
+				if ($types === [] || !($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
+					throw new diagnostic($part->source(), $part->byte_start(), 'Variadic marker requires a trailing input with a supported vector element');
+				}
+				$variadic = count($types) - 1;
+			}
 			if (!self::callback_component($type)) {
 				throw new diagnostic($part->source(), $part->byte_start(), 'Unsupported callback signature component: ' . $part->spelling());
 			}
-			if ($types !== [] && $part instanceof ast_callable_reference_component) $modes[count($types) - 1] = passing_mode::reference;
+			if ($part instanceof ast_callable_reference_component) {
+				if ($part->mode === passing_mode::readonly_reference && ($types === [] || !self::readonly_collection_input($type))) {
+					throw new diagnostic($part->source(), $part->byte_start(), 'Read-only callable references require a vector or hash input');
+				}
+				if ($types !== []) $modes[count($types) - 1] = $part->mode;
+			}
 			$types[] = $type;
 		}
 		$result = array_shift($types);
 		$origin = null;
 		if ($syntax->first_child instanceof ast_callable_reference_component) {
-			$origin = array_key_first($modes);
-			if (count($modes) !== 1 || $types[$origin] !== $result) {
+			$writable = array_keys($modes, passing_mode::reference, true);
+			$origin = $writable[0] ?? null;
+			if (count($writable) !== 1 || $types[$origin] !== $result) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Reference return requires exactly one writable parameter of the return type');
 			}
 		}
-		return new callback_type_definition($result, $types, $modes, $origin);
+		return new callback_type_definition($result, $types, $modes, $origin, $variadic);
+	}
+
+	public static function readonly_collection_input(?type_definition $type): bool
+	{
+		return $type instanceof vector_type_definition || $type instanceof hash_type_definition;
 	}
 
 	/** Inline values and intersection projection are outside the fixed by-value callback ABI. */
@@ -270,16 +288,27 @@ final class Type_Resolution
 			? callable_signature_index::element(self::callback_signature($child, $symbols, $namespace, $watcher, $dependencies))
 			: self::argument($child, $symbols, $namespace, $watcher, $dependencies);
 		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
-		$published = type_registry::specialize($syntax->name, $element, $key);
-		if ($published !== null) return $published;
-		if ($key !== null) {
-			$type = $key->keyed_collection_type($syntax->name, $element);
-		} else {
-			$owner = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
-			$type = $owner->collection_type($syntax->name, $key);
+		if ($syntax->name === 'result') {
+			$record = $element instanceof shared_record_type_definition ? $element->payload : $element;
+			if ($record instanceof record_type_definition && $record->default_type() === $element && $record->declaration->is_data
+				&& $syntax->root()->type_availability->allows('runtime-json') && runtime_functions::resolve('php:func:json_decode_as') !== null) {
+				$record->require_destruction($syntax, true);
+				if ($watcher !== null) $dependencies?->watch($symbols->entry($record->declaration->symbol_key()), $watcher, dependency_use::record_result->value);
+				return $record->record_result();
+			}
 		}
-		if ($type !== null) return $type;
-		return self::specialize($syntax, $element, $key);
+		return self::collection($syntax->name, $element, $key)
+			?? throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unavailable runtime specialization: ' . $syntax->spelling());
+	}
+
+	/** Resolve a canonical vector or keyed collection from already prepared element types. */
+	public static function collection(string $family, type_definition $element, ?type_definition $key): ?type_definition
+	{
+		$published = type_registry::specialize($family, $element, $key);
+		if ($published !== null) return $published;
+		if ($key !== null) return $key->keyed_collection_type($family, $element);
+		$owner = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
+		return $owner->collection_type($family, null);
 	}
 
 	/** Select a published specialization from already resolved arguments. */

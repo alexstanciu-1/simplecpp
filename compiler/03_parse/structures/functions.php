@@ -152,14 +152,22 @@ interface statement_return_target
 	public function return_type_def(): type_definition;
 }
 
-/** Arity of a source parameter list with trailing defaults. */
-trait ast_fixed_parameter_list
+/** Arity of a source parameter list with trailing defaults or a typed tail. */
+trait ast_parameter_list
 {
+	public function variadic_slot(): ?int
+	{
+		$last = count($this->parameters) - 1;
+		return ($this->parameters[$last]->type_reference ?? null) instanceof ast_variadic_type_reference ? $last : null;
+	}
+
 	/** Defaults form a trailing suffix; only the first omitted parameter needs inspection. */
 	public function accepts_argument_count(int $supplied /** uint32 */): bool
 	{
-		return $supplied <= count($this->parameters)
-			&& (!isset($this->parameters[$supplied]) || $this->parameters[$supplied]->default_value !== null);
+		$count = count($this->parameters);
+		if ($supplied >= $count) return $supplied === $count || $this->variadic_slot() !== null;
+		$omitted = $this->parameters[$supplied];
+		return $omitted->default_value !== null || $omitted->type_reference instanceof ast_variadic_type_reference;
 	}
 }
 
@@ -178,7 +186,7 @@ final class ast_closure_capture extends ast_local_declaration
 /** Owns the signature and body while its enclosing function owns incremental preparation. */
 final class ast_lambda_expression extends ast_expression implements statement_return_target
 {
-	use ast_fixed_parameter_list;
+	use ast_parameter_list;
 
 	/** PROPERTIES */
 	/** Prepared result conversion. */
@@ -214,6 +222,15 @@ final class ast_lambda_expression extends ast_expression implements statement_re
 	public function return_type_def(): type_definition
 	{
 		return $this->type_def()->signature->result;
+	}
+
+	/** Only direct calls of the inferred local may consume this lexical borrow. */
+	public function borrows_selected_element(): bool
+	{
+		foreach ($this->captures as $capture) {
+			if ($capture->by_reference && ast_writable_element::origin($capture->initializer->local_def()) !== null) return true;
+		}
+		return false;
 	}
 
 	/** Publish the signature, result conversion and effects together. @param int[] $borrowed_writes */
@@ -301,10 +318,10 @@ class ast_call_expression extends ast_expression
 		$this->settle_value($type, null);
 	}
 
-	public function settle_cardinality(collection_cardinality $operation, counted_collection_type $receiver): void
+	public function settle_cardinality(collection_cardinality $operation, type_definition $result): void
 	{
 		$this->cardinality = $operation;
-		$this->settle_value($receiver->cardinality_result($operation), null);
+		$this->settle_value($result, null);
 	}
 
 	/** The explicit bridge reuses its existing operand and its checked argument conversions. */
@@ -370,6 +387,7 @@ class ast_call_expression extends ast_expression
 	public function runtime_operands(?runtime_function $binding = null): array /** list<ast_expression> */
 	{
 		$binding ??= $this->function_symbol instanceof runtime_function ? $this->function_symbol : null;
+		if ($binding instanceof record_decode_function && $binding->name() === 'json_decode_as') return [$this->arguments[0]];
 		if (($this->arguments[0] ?? null) instanceof ast_type_marker
 			&& ($binding?->name() === 'enum_from_value' || $binding?->name() === 'enum_try_from_value')) {
 			return array_slice($this->arguments, 1);
@@ -453,6 +471,14 @@ class ast_call_expression extends ast_expression
 	}
 }
 
+/** The final positional operand supplies the whole variadic vector. */
+final class ast_unpacked_call extends ast_call_expression
+{
+	public bool $unpacked {
+		get => true;
+	}
+}
+
 /** Caller-side repetition settings share ordinary operand traversal and reset. */
 final class ast_job_repetition extends ast_call_expression
 {
@@ -498,7 +524,8 @@ final class Named_Arguments
 
 	/** METHODS */
 	/** Resolve against the current published signature. Only explicit operands can consume a slot. */
-	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function|ast_lambda_expression $function): void
+	public function bind_slots(ast_call_expression|ast_construction_expression $site, ast_function_declaration|runtime_function|ast_lambda_expression|data_constructor_signature $function,
+		?int $variadic = null): void
 	{
 		$names = [];
 		if ($function instanceof runtime_function) $names = array_flip($function->parameter_names);
@@ -514,14 +541,16 @@ final class Named_Arguments
 				$target = $function instanceof ast_lambda_expression ? $site->name : $function->name();
 				throw new diagnostic($site->source(), $argument->byte_start(), 'Unknown named argument: ' . $label . ' on ' . $target);
 			}
+			if ($slot === $variadic && ($label !== null || !($site->unpacked ?? false))) throw new diagnostic($site->source(), $argument->byte_start(), 'Named arguments may only bind fixed parameters');
 			if (!isset($function->parameters[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Too many positional arguments');
 			if (isset($used[$slot])) throw new diagnostic($site->source(), $argument->byte_start(), 'Parameter supplied twice: ' . $label);
 			$used[$slot] = true;
 			$slots[] = $slot;
 		}
 		foreach ($names as $name => $slot) {
-			if (isset($used[$slot])) continue;
-			if ($function instanceof runtime_function || $function->parameters[$slot]->default_value === null) {
+			if ($slot === $variadic || isset($used[$slot])) continue;
+			if ($function instanceof runtime_function || ($function instanceof data_constructor_signature
+				? $function->parameters[$slot]->required_data_input() : $function->parameters[$slot]->default_value === null)) {
 				throw new diagnostic($site->source(), $site->byte_start(), 'Missing required argument: ' . $name);
 			}
 			$slots[] = $slot;
@@ -549,8 +578,9 @@ final class Named_Arguments
 	}
 
 	/**
-	 * @param string[] $operands
-	 * @return string[]
+	 * @template T
+	 * @param T[] $operands
+	 * @return T[]
 	 */
 	public function parameter_order(array $operands): array
 	{
@@ -574,7 +604,8 @@ final class ast_named_call extends ast_call_expression
 
 	/** @param ast_expression[] $arguments @param string[] $labels */
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, string $name, ?token_kind $separator,
-		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */, call_qualifier $qualifier)
+		array $arguments /** list<ast_expression> */, ?ast_expression $receiver, array $labels /** array<uint32,string> */, call_qualifier $qualifier,
+		public readonly bool $unpacked = false)
 	{
 		parent::__construct($start, $end, $name, $separator, $arguments, $receiver, $qualifier);
 		$this->named = new Named_Arguments($labels);
@@ -695,6 +726,81 @@ final class ast_function_body extends ast_statement_block implements dependency_
 		$this->preparation_work?->complete($this->dependency_source_key(), $this);
 	}
 
+	/** Query the prepared operation only when lowering this body's private collection-reader entry. */
+	public function reads_parameter_without_copy(ast_parameter_declaration $parameter, ?ast_parameter_declaration $key): bool
+	{
+		$count = count($this->statements);
+		if ($count < 1 || $count > 2) return false;
+		$return = $this->statements[$count - 1];
+		if (!($return instanceof ast_return_statement) || $return->value === null || $return->conversion() !== value_conversion::identity) return false;
+		$value = $return->value;
+		if ($value->type_def() !== $this->parent->return_type_def()) return false;
+		if ($count === 2) {
+			$local = $this->statements[0];
+			if ($local::class !== ast_local_declaration::class || !($value instanceof ast_name_expression) || !$value->refers_to($local)
+				|| $local->initialization() !== value_conversion::identity || $local->initializer->type_def() !== $local->type_def()) return false;
+			$value = $local->initializer;
+		}
+
+		return $this->reads_collection($value, $parameter, $key);
+	}
+
+	/** Inspect only the final snapshot, optional first scalar read and return. */
+	public function borrowed_snapshot(): ?ast_local_declaration
+	{
+		$count = count($this->statements);
+		$local = $this->statements[$count - 2] ?? null;
+		if ($local === null || $local::class !== ast_local_declaration::class || $this->parent->is_async || $this->parent->returns_reference
+			|| !$this->parent->return_type_def()->copy_has_no_observable_effects()) return null;
+		$return = $this->statements[$count - 1];
+		if (!($return instanceof ast_return_statement) || $return->value === null || $return->conversion() !== value_conversion::identity
+			|| $return->value->type_def() !== $this->parent->return_type_def()) return null;
+		$value = $return->value;
+		if (!$local->type_def()->private_copy_allocation_only()) {
+			$first = $local;
+			$local = $this->statements[$count - 3] ?? null;
+			if ($local === null || $local::class !== ast_local_declaration::class || !$local->type_def()->private_copy_allocation_only()
+				|| !$first->type_def()->copy_has_no_observable_effects() || $first->initialization() !== value_conversion::identity
+				|| $first->initializer->type_def() !== $first->type_def() || !$this->reads_collection($first->initializer, $local)) return null;
+			// The only operand before the second read is the saved first scalar.
+			if ($value::class === ast_binary_expression::class && $value->operator === binary_operator::add
+				&& $value->left::class === ast_name_expression::class && $value->left->refers_to($first)
+				&& $value->left_conversion === value_conversion::identity && $value->right_conversion === value_conversion::identity) {
+				$value = $value->right;
+			}
+		}
+		$source = $local->initializer;
+		if (!($source instanceof ast_name_expression) || !(($input = $source->local_binding()) instanceof ast_parameter_declaration)
+			|| $input->type_def() !== $local->type_def() || $source->type_def() !== $local->type_def() || $local->initialization() !== value_conversion::identity) return null;
+		return $this->reads_collection($value, $local) ? $local : null;
+	}
+
+	/** A prepared scalar read from the named collection; a local snapshot can use an inert value parameter as its key. */
+	private function reads_collection(ast_expression $value, ast_local_binding $collection, ?ast_parameter_declaration $key = null): bool
+	{
+		$index = null;
+		if ($value instanceof ast_index_expression) {
+			if (!($value->receiver->type_def() instanceof readonly_index_lookup_type)) return false;
+			$receiver = $value->receiver;
+			$index = $value->index;
+		} elseif ($value instanceof ast_call_expression && $value->cardinality !== null) {
+			$receiver = $value->arguments[0];
+		} elseif ($value instanceof ast_call_expression && $value->receiver === null && count($value->arguments) === 2
+			&& ($binding = $value->runtime_binding()) !== null && ($type = $collection->type_def()) instanceof key_presence_type
+			&& $binding === $type->presence_function() && $value->conversion(0) === value_conversion::identity
+			&& $value->conversion(1) === value_conversion::identity) {
+			[$receiver, $index] = $value->arguments;
+		} else {
+			return false;
+		}
+		if (!($receiver instanceof ast_name_expression) || !$receiver->refers_to($collection)) return false;
+		if ($key !== null) return $index instanceof ast_name_expression && $index->refers_to($key);
+		if ($index === null || $index->is_effect_free_literal()) return true;
+		return $collection instanceof ast_local_declaration && $index instanceof ast_name_expression
+			&& ($input = $index->local_binding()) instanceof ast_parameter_declaration && $input->mode === passing_mode::value
+			&& $input->type_def()->copy_has_no_observable_effects();
+	}
+
 	public function require_prepared(): void
 	{
 		if (!$this->prepared) {
@@ -716,7 +822,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 final class ast_function_declaration extends ast_node implements ast_declaration_interface, ast_declaration_site, dependency_watcher, callable_signature, statement_return_target
 {
 	use ast_declaration { name as private namespace_name; }
-	use ast_fixed_parameter_list;
+	use ast_parameter_list;
 
 	/** PROPERTIES */
 	/** Native non-owning authored trait; null for an ordinary member. */
@@ -808,6 +914,18 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	{
 		if (($this->parent ?? null) instanceof ast_method_owner) return 'method:' . $this->name();
 		return 'func:' . ($this->is_implicit_entry ? 'main' : $this->name());
+	}
+
+	/** Signature-only eligibility keeps cross-unit declarations stable across reader/writer edits. */
+	public function private_reader_input(): ?ast_parameter_declaration
+	{
+		if ($this->parameters === [] || count($this->parameters) > 2 || $this->parent instanceof ast_method_owner || $this->is_async || $this->returns_reference
+			|| !$this->return_type_def()->copy_has_no_observable_effects()) return null;
+		$key = $this->parameters[1] ?? null;
+		if ($key !== null && ($key->mode !== passing_mode::value || !$key->type_def()->copy_has_no_observable_effects())) return null;
+		$input = $this->parameters[0];
+		return $input->mode === passing_mode::value && !($input->type_reference instanceof ast_variadic_type_reference)
+			&& $input->type_def()->private_copy_allocation_only() ? $input : null;
 	}
 
 	/** Written virtual intent is validated before emission; inherited overrides stay virtual. */

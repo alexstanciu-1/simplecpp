@@ -28,7 +28,7 @@ declaring struct, including accesses on another instance. Default initialization
 memberwise copying and native layout follow the ordinary field rules.
 
 Both inline and shared receivers select the same method by the record's nominal
-type. Methods can read and assign fields through `this`. A call checks the receiver before evaluating any explicit argument. When the receiver is shared, or is an inline field within a shared allocation, the call retains the selected allocation through argument evaluation and body execution. An inline receiver is updated in place. Defaults follow ordinary function conversion and omission rules. Writable reference parameters use the ordinary function binder. Each requires a named local or parameter of the exact storage type, and writes update that storage directly. Constructors also accept trailing literal defaults. All constructor parameters are by value.
+type. Methods can read and assign fields through `this`. A call checks the receiver before evaluating any explicit argument. When the receiver is shared, or is an inline field within a shared allocation, the call retains the selected allocation through argument evaluation and body execution. An inline receiver is updated in place. Defaults follow ordinary function conversion and omission rules. Writable reference parameters use the ordinary function binder. Each requires a named local or parameter of the exact storage type, and writes update that storage directly. Constructors also accept trailing literal defaults. PHP class and struct constructors can also borrow a typed vector or hash using a fixed read-only reference parameter.
 
 An instance method can initialize or assign an inline local from its receiver, pass it to a by-value parameter of its own record type, or return it by value. The spelling is `$this` (PHP) or `this` (C++/JS). Both inline and shared receivers produce an inline memberwise copy. Scalar fields copy independently and shared fields retain the same allocation.
 
@@ -142,15 +142,20 @@ under [the existing reference rules](native_reference_safety.md).
 
 A typed variadic tail is an owned `vector<T>`, may be empty and may follow fixed
 parameters (including references or supported by-value defaults). It must be last;
-true reference variadics, explicit pack defaults and call-site unpacking remain excluded.
+true reference variadics and explicit pack defaults remain excluded.
+For an ordinary PHP class or struct instance method, `$receiver->sum($base, ...$items)`
+evaluates the receiver once before the fixed arguments and final vector. The selected
+object stays alive through invocation even if evaluating the arguments replaces its
+owner. The matching vector supplies the whole by-value pack. Mutating the pack
+preserves the caller’s vector storage. Base overrides and interface implementations
+must preserve the variadic marker as well as the pack type.
 The bounded `T &...$values` compatibility spelling below denotes read-only owned values.
 Element admission/conversion and copy capability are the same as for free functions.
 Explicit arguments are evaluated once in source order; value snapshots and reference
 bindings retain their distinct semantics. Two references may alias the same storage;
 read-only access does not promise that another alias cannot change it.
 
-This extends parameter admission only: constructor parameters, receiver lifetime
-restrictions and reference-return restrictions remain unchanged. No method-specific
+PHP constructor collection borrows follow the [read-only reference contract](native_reference_safety.md#constructor-collection-borrows). No method-specific
 packing or borrowing implementation is defined.
 
 ## Same-origin method reference returns — 2026-10-07
@@ -218,8 +223,8 @@ silently accept an unsupported lifetime.
 ## Read-only owned compatibility packs — 2026-10-22
 
 Named source free functions and static/instance methods accept `T &...$values`
-for canonical `int`, `float`, `bool` and `string`. This is a compatibility spelling
-for a read-only owned value pack, not caller-element references. It is distinct
+for every element type supported by an ordinary owned variadic pack. The callee
+receives a read-only owned value pack. This spelling is distinct
 from fixed `T &$value`, which retains its live alias and write-back contract.
 
 Tail arguments use ordinary value-pack admission, conversion and copy restrictions.
@@ -229,22 +234,35 @@ completed pack is owned storage whose lifetime covers invocation and cleanup. Em
 packs are permitted. Fixed parameters, including their admitted defaults, may precede
 the tail. The tail must remain last and cannot have an explicit default.
 
+A caller may supply the whole tail as one trailing unpacked `vector<T>` of the
+exact pack type after all fixed arguments. The vector expression runs once and
+the callee receives an owned snapshot. In `inspect($items, ...$items)`, clearing
+`$items` through a writable fixed parameter leaves that snapshot intact.
+
 The callee may read, index, iterate, bind read-only local aliases and forward the
 whole pack to an eligible read-only parameter. Mutation, append, replacement,
 cleanup/removal and writable-reference forwarding through the pack or its aliases
 reject during shared preparation. An ordinary copy creates independent mutable
 value storage; returning an ordinary value copy preserves it after pack cleanup.
-Borrowed references to pack storage may not escape the call. Existing escape and
-capture restrictions apply without new lifetime inference.
+Reading an inline record yields a value copy. A copied shared handle retains
+object identity and can mutate the referenced object. The pack slot remains
+read-only. Borrowed references to pack storage may not escape the call. Existing
+escape and capture restrictions apply without new lifetime inference.
 
 The backend may borrow call-owned storage when safe, or pass owned values; it must
 preserve these semantics. No caller aliasing, pack-of-references representation or
 copy-back is implied by the compatibility marker. Ordinary `T ...$values` remains
 a mutable owned value pack in v0.2.
 
+A free function or static method with a read-only pack can supply an ordinary
+variadic typed callback or owned callable of the same signature. The caller
+supplies an owned vector and the target enforces read-only access in its body.
+
+PHP class and struct constructors also accept read-only packs, including empty
+packs during default construction and packs forwarded to a parent constructor.
+
 This scope does not introduce explicit `const T &...$values` spelling, general
-read-only value parameters, wider element types, constructor/anonymous-callable/
-provider/callback variadic bridges, call-site unpacking or asynchronous retention.
+read-only value parameters, provider variadic bridges or asynchronous retention.
 Those contracts remain separate. Pinned v0.1 evidence executes tested free/static
 scalar read-only packs and rejects direct element writes. Its instance-method
 packing probes fail native compilation; current method support follows the v0.2

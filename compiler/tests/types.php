@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{type_definition, type_registry, type_int64, type_void, Source_Frontend, source_file, flavor,
-	entry_target, ast_integer_expression};
+	entry_target, ast_integer_expression, index_read_type, readonly_index_lookup_type};
 
 function verify(bool $condition, string $message): void
 {
@@ -18,6 +18,10 @@ verify(($integer instanceof type_definition) && ($integer === type_int64::instan
 verify($integer->accepts_name('int') && $integer->accepts_name('int64') && !$integer->accepts_name('byte'), 'Alias admission');
 verify(type_registry::resolve('int') === $integer && type_registry::resolve('int64') === $integer, 'Registry lost identity');
 verify(type_registry::resolve('vector') === null, 'Registry enabled an unsupported type');
+verify(type_registry::specialize('vector', $integer) instanceof readonly_index_lookup_type, 'Vector lookup contract missing');
+verify(type_registry::specialize('hash', $integer, $integer) instanceof readonly_index_lookup_type, 'Hash lookup contract missing');
+$boxed = type_registry::resolve('mixed');
+verify($boxed instanceof index_read_type && !($boxed instanceof readonly_index_lookup_type), 'Indexing alone cannot certify a readonly lookup');
 verify($integer::MINIMUM === PHP_INT_MIN && $integer::MAXIMUM === PHP_INT_MAX, 'Generated limits');
 verify(type_void::instance() === type_void::instance(), 'Noncanonical void');
 verify(type_void::instance()->name === 'void', 'Void identity changed');

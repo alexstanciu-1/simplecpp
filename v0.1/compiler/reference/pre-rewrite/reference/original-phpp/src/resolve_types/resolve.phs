@@ -1,3 +1,0 @@
-namespace resolve_types;
-
-// Own canonical types, constant evaluation, and constrained family materialization.

@@ -1,3 +1,0 @@
-namespace CompilerFixture;
-
-function fresh_list(int $capacity): Storage<Row> { return new Storage<Row>($capacity); }

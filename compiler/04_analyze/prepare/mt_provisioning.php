@@ -79,10 +79,11 @@ final class Mt_Provisioning
 			|| $range->qualifier === call_qualifier::local || $range->member_separator !== null || $range->receiver !== null || !in_array(count($range->arguments), [2, 3], true))
 			self::reject($range, 'Expected segment(collection, offset, length) or segment(collection, range)');
 		$owner = $range->arguments[0];
-		$prepare($owner);
+		$prepare($owner, writable_segment: !($expected instanceof segment_type ? $expected->read_only : $read_only));
 		$container = $owner->type_def();
 		if ($owner::class !== ast_name_expression::class || $owner->local_binding() === null || !($container instanceof vector_type_definition || $container instanceof hash_type_definition))
 			self::reject($owner, 'Segment requires a matching local vector or hash');
+		if (ast_writable_element::origin($owner->local_binding()) !== null) self::reject($range, 'Writable foreach element cannot supply segment storage');
 		$key = $container instanceof hash_type_definition ? $container->key_type : null;
 		if ($key !== null && $key !== type_int64::instance() && $key !== type_string::instance())
 			self::reject($range, 'Hash segment keys must be int or string');

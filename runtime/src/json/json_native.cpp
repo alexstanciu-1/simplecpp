@@ -176,9 +176,12 @@ public:
 	}
 };
 
-void json_escape_string(const std::string_view value, std::string &out) {
+void json_escape_string(std::string_view value, std::string &out) {
 	out.push_back('"');
-	for (const unsigned char byte : value) {
+	const auto prefix = reader_detail::plain_string_prefix(value);
+	out.append(value.substr(0, prefix));
+	for (std::size_t i = prefix; i < value.size(); ++i) {
+		const auto byte = static_cast<unsigned char>(value[i]);
 		switch (byte) {
 			case '"': out += "\\\""; break;
 			case '\\': out += "\\\\"; break;
@@ -187,75 +190,81 @@ void json_escape_string(const std::string_view value, std::string &out) {
 			case '\n': out += "\\n"; break;
 			case '\r': out += "\\r"; break;
 			case '\t': out += "\\t"; break;
-			default:
-				if (byte < 0x20u) {
-                    constexpr char hex[] = "0123456789ABCDEF";
-                    out += "\\u00";
-                    out.push_back(hex[byte >> 4]);
-                    out.push_back(hex[byte & 15]);
-				} else {
-					out.push_back(static_cast<char>(byte));
+			default: {
+				if (byte >= 0x20) {
+					const auto run = 1 + reader_detail::plain_string_prefix(value.substr(i + 1));
+					if (run == 1) out.push_back(value[i]);
+					else out.append(value.substr(i, run));
+					i += run - 1;
+					break;
 				}
+				constexpr char hex[] = "0123456789ABCDEF";
+				out += "\\u00";
+				out.push_back(hex[byte >> 4]);
+				out.push_back(hex[byte & 15]);
+			}
 		}
 	}
 	out.push_back('"');
 }
 
 struct encode_failure { const char* message; };
-class writer {
-    std::string output_;
-    std::unordered_set<const void*> active_;
-    template<class Value> void table(const Value& value) {
-        const auto& table = boxed_inspection::table(value);
-        if (!active_.insert(&table).second) throw encode_failure{"json_encode: cyclic container is not supported"};
-        struct guard {
-            std::unordered_set<const void*>& active;
-            const void* identity;
-            ~guard() { active.erase(identity); }
-        } path{active_, &table};
-        const bool array = table.is_packed();
-        output_.push_back(array ? '[' : '{');
-        bool first = true;
-        table.visit_entries([&](std::uint32_t code, const Value& entry) {
-            if (!first) output_.push_back(',');
-            first = false;
-            if (!array) {
-                if (packed_key::is_string(code)) json_escape_string(packed_string_pool::instance().resolve(code), output_);
-                else json_escape_string(std::to_string(code), output_);
-                output_.push_back(':');
-            }
-            write(entry);
-        });
-        output_.push_back(array ? ']' : '}');
-    }
-public:
-    writer() { output_.reserve(64); }
-    void write(std::nullptr_t) { output_ += "null"; }
-    void write(bool value) { output_ += value ? "true" : "false"; }
-    void write(std::int64_t value) { output_ += std::to_string(value); }
-    void write(double value) {
-        if (!std::isfinite(value)) throw encode_failure{"json_encode: non-finite float is not supported"};
-        std::ostringstream stream;
-        stream.exceptions(std::ios::badbit | std::ios::failbit);
-        stream.imbue(std::locale::classic());
-        stream << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
-        output_ += stream.str();
-    }
-    void write(std::string_view value) { json_escape_string(value, output_); }
-    template<boxed_family Family> void write(const boxed_value<Family>& value) {
-        using kind = typename boxed_value<Family>::kind;
-        switch (value.type()) {
-            case kind::null: write(nullptr); break;
-            case kind::boolean: write(value.get_boolean()); break;
-            case kind::integer: write(value.get_integer()); break;
-            case kind::floating: write(value.get_floating()); break;
-            case kind::string: write(std::string_view{value.get_string()}); break;
-            case kind::tuple: throw encode_failure{"json_encode: tuple is unsupported"};
-            case kind::container: table(value); break;
+} // namespace
+template<class Value> void writer::table(const Value& value) {
+    const auto& table = boxed_inspection::table(value);
+    if (!active_.insert(&table).second) throw encode_failure{"json_encode: cyclic container is not supported"};
+    struct guard {
+        std::unordered_set<const void*>& active;
+        const void* identity;
+        ~guard() { active.erase(identity); }
+    } path{active_, &table};
+    const bool array = table.is_packed();
+    output_.push_back(array ? '[' : '{');
+    bool first = true;
+    table.visit_entries([&](std::uint32_t code, const Value& entry) {
+        if (!first) output_.push_back(',');
+        first = false;
+        if (!array) {
+            if (packed_key::is_string(code)) json_escape_string(packed_string_pool::instance().resolve(code), output_);
+            else json_escape_string(std::to_string(code), output_);
+            output_.push_back(':');
         }
+        write(entry);
+    });
+    output_.push_back(array ? ']' : '}');
+}
+void writer::write(std::nullptr_t) { output_ += "null"; }
+void writer::write(bool value) { output_ += value ? "true" : "false"; }
+void writer::write(std::int64_t value) { output_ += std::to_string(value); }
+void writer::write(double value) {
+    if (!std::isfinite(value)) throw encode_failure{"json_encode: non-finite float is not supported"};
+    std::ostringstream stream;
+    stream.exceptions(std::ios::badbit | std::ios::failbit);
+    stream.imbue(std::locale::classic());
+    stream << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
+    output_ += stream.str();
+}
+void writer::write(std::string_view value) { json_escape_string(value, output_); }
+template<boxed_family Family> void writer::write(const boxed_value<Family>& value) {
+    using kind = typename boxed_value<Family>::kind;
+    switch (value.type()) {
+        case kind::null: write(nullptr); break;
+        case kind::boolean: write(value.get_boolean()); break;
+        case kind::integer: write(value.get_integer()); break;
+        case kind::floating: write(value.get_floating()); break;
+        case kind::string: write(std::string_view{value.get_string()}); break;
+        case kind::tuple: throw encode_failure{"json_encode: tuple is unsupported"};
+        case kind::container: table(value); break;
     }
-    std::string finish() && { return std::move(output_); }
-};
+}
+template void writer::write(const mixed_value&);
+template void writer::write(const dynamic_value&);
+
+namespace {
+template<class Write> outcome<std::string> encode_with(Write write) {
+    try { writer output; write(output); return {std::move(output).finish(), {}}; }
+    catch (const encode_failure& failure) { return {{}, failure.message}; }
+}
 template<class Value> outcome<Value> decode_family(std::string_view input) {
     try { return {json_parser<Value>(input).parse_document(), {}}; }
     catch (const json_parse_failure& failure) {
@@ -263,10 +272,12 @@ template<class Value> outcome<Value> decode_family(std::string_view input) {
     }
 }
 template<class Value> outcome<std::string> encode_value(const Value& value) {
-    try { writer output; output.write(value); return {std::move(output).finish(), {}}; }
-    catch (const encode_failure& failure) { return {{}, failure.message}; }
+    return encode_with([&](writer& output) { output.write(value); });
 }
 } // namespace
+outcome<std::string> encode_record(const void* value, void (*visit)(const void*, writer&)) {
+    return encode_with([&](writer& output) { visit(value, output); });
+}
 outcome<dynamic_value> decode(std::string_view input) { return decode_family<dynamic_value>(input); }
 outcome<mixed_value> decode_mixed(std::string_view input) { return decode_family<mixed_value>(input); }
 outcome<std::string> encode(const mixed_value& value) { return encode_value(value); }

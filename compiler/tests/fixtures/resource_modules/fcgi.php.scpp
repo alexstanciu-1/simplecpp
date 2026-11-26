@@ -1,0 +1,39 @@
+function handle(fcgi_exchange $exchange, fcgi_request $request): void {
+    if ($request->path === "/app/fail") { throw new Exception("application error"); }
+    fcgi_response_header($exchange, "Content-Type", "application/octet-stream");
+    fcgi_response_header($exchange, "Set-Cookie", "first=1");
+    fcgi_response_header($exchange, "Set-Cookie", "second=2");
+    $names = $request->header_names;
+    $values = $request->header_values;
+    $probe = "";
+    foreach ($names as $i => $name) {
+        if ($name === "x-probe") { $probe = $values[$i]; }
+    }
+    $body = $request->method."|".$request->path."|".$request->query_string."|".$probe."|".$request->body;
+    fcgi_reply($exchange, 201, $body);
+}
+$arguments = cli_arguments();
+$listener = fcgi_listen($arguments[1], 32);
+$stopping=false;
+$previous="";
+while (true) {
+    $pending = fcgi_accept($listener, 100);
+    if (!isset($pending)) {
+        if ($stopping) { break; }
+        continue;
+    }
+    $exchange fcgi_exchange = $pending;
+    $snapshot = fcgi_request_read($exchange);
+    if ($snapshot->path === "/app/previous") {
+        fcgi_reply($exchange, 200, $previous);
+        continue;
+    }
+    $alias = $exchange;
+    try { handle($exchange, $snapshot); }
+    catch (Exception $error) { fcgi_abandon($exchange); }
+    $previous = $snapshot->body;
+    $stopping = $snapshot->path === "/app/stop";
+    if ($snapshot->path === "/app/double") { fcgi_reply($alias, 200, "again"); }
+}
+fcgi_close($listener);
+return 0;

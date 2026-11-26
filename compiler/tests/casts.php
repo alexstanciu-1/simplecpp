@@ -83,7 +83,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 				}
 			}
 			else {
-				rejects(fn() => $prepare($code), 'Unsupported explicit conversion');
+				rejects(fn() => $prepare($code), $flavor === flavor::php && $destination === 'int' && $source === 'string'
+					? 'Invalid decimal integer text' : 'Unsupported explicit conversion');
 			}
 		}
 	}
@@ -159,7 +160,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		Incremental_Preparation::prepare($session, $target);
 		$caller = $session->entry->entry->ast;
 		$tokens = $caller->tokens;
-		$write('string', '"invalid"');
+		$write('null', '(null) null');
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Unsupported explicit conversion');
 		verify($session->entry->entry->ast === $caller, 'Caller reparsed after signature change');

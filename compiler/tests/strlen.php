@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/../host/compilation.php';
 
@@ -121,7 +122,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		flavor::php => '$ints vector<int> = [];', flavor::cpp => 'vector<int> ints = [];', flavor::js => 'let ints: vector<int> = [];',
 	};
 	$bad_join = $join($flavor === flavor::php ? '$ints' : 'ints', '","');
-	rejects(fn() => $prepare($integers . "echo $bad_join; return 8;"), $flavor === flavor::js ? 'unknown method' : 'requires vector<string>');
+	rejects(fn() => $prepare($integers . "echo $bad_join; return 8;"), match ($flavor) {
+		flavor::php => 'Unsupported argument type for implode', flavor::js => 'unknown method', flavor::cpp => 'requires vector<string>',
+	});
 	if ($flavor === flavor::php) {
 		$code = 'function subject(int &$calls, string &$sep): string { $calls++; $sep = ":"; return "a,b"; }'
 			. '$sep = ","; $calls = 0; $parts vector<string> = explode($sep, subject($calls, $sep));'
@@ -221,7 +224,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		verify(preg_match('/return str_replace\(argument_\d+_0, argument_\d+_1, subject_\(\), var_n_0\);/', $cpp) === 1,
 			'Expected direct forwarding of the writable count parameter');
 		// Observe caller storage after unwinding out of the generated wrapper.
-		$cpp = str_replace('int main()', 'int unused_entry()', $cpp) . <<<'CPP'
+		$cpp = rename_fixture_main('unused_entry', $cpp) . <<<'CPP'
 
 #include <stdexcept>
 #include <string_view>
@@ -239,9 +242,9 @@ CPP;
 		$fixtures['php-replace-count-range'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($source)),
 			'catch_out_of_range' => true, 'stdout_hex' => ''];
 		foreach ([
-			['', '$missing', 'Unknown or not-yet-initialized'], ['', '0', 'stable variable storage'],
-			['$x = 1;', '$x + 1', 'stable variable storage'], ['', 'STR_PAD_LEFT', 'Constant cannot bind'],
-			['$b byte = 1;', '$b', 'exact storage type'],
+			['', '$missing', 'Unknown or not-yet-initialized'], ['', '0', 'count) requires a writable int64 variable'],
+			['$x = 1;', '$x + 1', 'named local or parameter'], ['', 'STR_PAD_LEFT', 'Constant cannot bind'],
+			['$b byte = 1;', '$b', 'requires writable int64 storage, received uint8'],
 			['global $g int = 55;', '$g', 'named local or parameter'],
 		] as [$setup, $output, $message]) {
 			rejects(fn() => $prepare($setup . "echo str_replace(\"a\",\"b\",\"a\",$output); return 8;"), $message);
@@ -508,11 +511,9 @@ SCPP;
 			rejects(fn() => $prepare("echo number_format($arg); return 8;"), 'Unsupported first argument type');
 		}
 		foreach (['1,"two"', '1,2,0,","', '1,2,".",false'] as $args) {
-			rejects(fn() => $prepare("echo number_format($args); return 8;"), 'number_format requires');
+			rejects(fn() => $prepare("echo number_format($args); return 8;"), 'number_format argument');
 		}
-		foreach (['mixed', 'dynamic', 'byte'] as $type) {
-			rejects(fn() => $prepare('$v ' . $type . ' = 1; echo number_format($v); return 8;'), 'Unsupported first argument type');
-		}
+		rejects(fn() => $prepare('$v byte = 1; echo number_format($v); return 8;'), 'Unsupported first argument type');
 	} else {
 		foreach (['strcmp', 'strcasecmp'] as $name) {
 			rejects(fn() => $prepare("echo $name(\"a\",\"b\"); return 8;"), 'Unknown function');
@@ -576,8 +577,8 @@ SCPP;
 	}
 	$search_cpp = (new Cpp_Emitter())->emit($search);
 	verify(str_contains($search_cpp, '#include <scpp/' . $flavor->name . '/string.hpp>')
-		&& str_contains($search_cpp, $first . '(') && str_contains($search_cpp, $last . '(')
-		&& !str_contains($search_cpp, 'scpp::str::'), 'Byte search did not lower through the flavor adapter');
+		&& str_contains($search_cpp, $flavor === flavor::php ? '::scpp::php::strpos(' : '::scpp::str::find(')
+		&& str_contains($search_cpp, $last . '('), 'Byte search selected the wrong binding');
 	$fixtures[$flavor->name . '-search'] = ['cpp' => $search_cpp, 'stdout_hex' => bin2hex($expected)];
 	if ($flavor === flavor::php) {
 		$source = 'function show_position(result_or_false<int> $p): void { if (isset($p)) { echo $p + 0; } else { echo "F"; } echo ","; }';
@@ -740,11 +741,13 @@ SCPP;
 	try {
 		$lib = "$dir/lib." . $flavor->name;
 		file_put_contents("$dir/module.json", '{}');
-		file_put_contents("$dir/main." . $flavor->name, 'echo string_byte_from_int(strlen(word())), (int)' . $method('contains', 'word()', '"中"')
+		$word_length = $flavor === flavor::php ? 'strlen(strlen_source())' : 'strlen(word())';
+		file_put_contents("$dir/main." . $flavor->name, 'echo string_byte_from_int(' . $word_length . '), (int)' . $method('contains', 'word()', '"中"')
 			. ', (int)' . $method('ends_with', 'word()', '"😀"') . '; return 8;');
 		$function = static fn(string $type, string $name, string $body) => ($flavor === flavor::cpp
 			? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 		$valid = $function('string', 'word', 'echo "X"; return "é中😀";');
+		$producer = $flavor === flavor::php ? $function('string', 'strlen_source', 'return word();') : '';
 		$compiler = new Project_Compiler();
 		$session = null;
 		$root = null;
@@ -763,7 +766,10 @@ SCPP;
 					unlink($lib);
 				}
 				else {
-					file_put_contents($lib, $body);
+					$input = $producer;
+					if ($step === 1 && $flavor === flavor::php) $input = $function('int', 'strlen_source', 'return word();');
+					if ($step === 5 && $flavor === flavor::php) $input = $function('mixed', 'strlen_source', 'return word();');
+					file_put_contents($lib, $body . $input);
 					touch($lib, ++$revision);
 				}
 				$session = $compiler->frontend($dir, $session);

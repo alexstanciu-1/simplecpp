@@ -1,1 +1,0 @@
-namespace B; function f(): int { return 2; }

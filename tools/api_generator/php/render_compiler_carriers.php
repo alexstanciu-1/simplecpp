@@ -12,6 +12,12 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
     foreach ($runtime['vectors'] ?? [] as $vector) {
         if (isset($definitions[$vector['element']])) $payloads[$vector['name']] = ['class' => 'type_' . $vector['name']];
     }
+    if (isset($runtime['boxed_dispatch'])) {
+        foreach ($runtime['boxed']['families'] as $box) $payloads[$box['name']] = ['class' => 'type_' . $box['name']];
+    }
+    foreach ($runtime['regex_carriers'] ?? [] as $carrier) {
+        $payloads[$carrier['payload']] = ['class' => 'type_' . $carrier['payload']];
+    }
     $cases = [];
     $literals = [];
     $typeNames = [];
@@ -24,10 +30,10 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             . "\tpublic static function instance(): self { return self::\$instance ??= new self(); }\n}\n";
         $literals[] = "\t\t\t$name => $class::instance(),";
     }
-    foreach ($runtime['carriers'] ?? [] as $carrier) {
+    foreach ([...($runtime['carriers'] ?? []), ...($runtime['json_carriers'] ?? []), ...($runtime['regex_carriers'] ?? []), ...($runtime['resource_carriers'] ?? [])] as $carrier) {
         $payload = $payloads[$carrier['payload']] ?? null;
         if ($payload === null) continue;
-        $export = typeExport($runtime['submodules'], $carrier['name']);
+        $export = isset($carrier['header']) ? ['symbol' => 'scpp::' . $carrier['name']] : typeExport($runtime['submodules'], $carrier['name']);
         $class = 'type_' . $carrier['name'];
         $typeNames[$carrier['family'] . '<' . $carrier['payload'] . '>'] = $typeNames[$carrier['name']] = $carrier['name'];
         $sentinelCases = [];
@@ -42,10 +48,19 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
         $presenceExpression = $hasTrueState
             ? "'([&]() { const auto &carrier = ' . \$value . '; return carrier.{$valuePresence}() || {$truePresence}; }())'"
             : "'(' . \$value . ').{$valuePresence}()'";
+        $peerEquality = '';
+        if ($hasTrueState) {
+            $peerEquality = strtr(readFile(__DIR__ . '/../templates/carriers/boolean_sentinel_equality.php.tpl'), [
+                '@payload@' => $valuePresence, '@true@' => $carrier['presence']['true'],
+            ]);
+        } elseif (isset($carrier['states']['error'])) {
+            $peerEquality = readFile(__DIR__ . '/../templates/carriers/error_equality.php.tpl');
+        }
         $code .= strtr(readFile(__DIR__ . '/../templates/carriers/carrier_type.php.tpl'), [
             '@instance_field@' => $carrier['instance_field'] ? 'true' : 'false',
             '@sentinel_cases@' => implode("\n", $sentinelCases),
             '@presence_expression@' => $presenceExpression,
+            '@peer_equality@' => $peerEquality,
             '@presence@' => $valuePresence,
             '@true_presence@' => $truePresence,
             '@dispatch_label_type@' => in_array($carrier['family'], ['nullable', 'result'], true) ? '$this->payload_type' : '$this',
@@ -55,9 +70,111 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             '@access@' => $carrier['payload_access'],
             '@class@' => $class, '@family@' => var_export($carrier['family'], true),
             '@payload@' => $payload['class'], '@cpp@' => var_export($export['symbol'], true),
-            '@header@' => var_export(providerHeader($runtime['submodules'], $export['provider']), true),
+            '@header@' => var_export($carrier['header'] ?? providerHeader($runtime['submodules'], $export['provider']), true),
         ]);
         $cases[$carrier['family']][] = "\t\t\t" . $payload['class'] . "::instance() => $class::instance(),";
     }
     return [$code, $cases, $literals, $typeNames];
+}
+
+/** Publish shared operand participation and the equality group that consumes it. */
+function compilerPeerEquality(mixed $carriers, array $definitions, array $promotions, array $binary): string {
+    $template = readFile(__DIR__ . '/../templates/carriers/peer_equality.php.tpl');
+    $rule = $carriers->peer_equality ?? null;
+    $participation = $carriers->operand_participation ?? null;
+    $published = [];
+    $stateCounts = [];
+    if ($participation !== null) {
+        fields($participation, ['families', 'carrier', 'plain']);
+        literals($participation, ['carrier' => 'payload_type', 'plain' => 'own_type']);
+        foreach (names(at($participation, 'families')) as $name) {
+            $states = object(at(at($carriers->families, $name), 'states'));
+            foreach (array_keys($states) as $state) {
+                if ($state !== 'value') $stateCounts[$state] = ($stateCounts[$state] ?? 0) + 1;
+            }
+            $published[] = var_export($name, true);
+        }
+    }
+    $familyArm = $published === [] ? '' : "\t\t" . implode(', ', $published) . ' => $type->payload_type,';
+    $shared = [];
+    foreach ($stateCounts as $state => $count) {
+        if ($count < 2) continue;
+        requireThat(in_array($state, ['false', 'true'], true), 'Unsupported shared carrier sentinel');
+        at($carriers->sentinels, $state);
+        $shared[] = "\tif (\$left_type->sentinel_factory('$state') !== null && \$right_type->sentinel_factory('$state') !== null) {\n"
+            . "\t\t\$matches[] = \"((\$left).is_$state() && (\$right).is_$state())\";\n\t}";
+    }
+    $writes = "\treturn null;";
+    if (isset($carriers->payload_writes)) {
+        $policy = $carriers->payload_writes;
+        fields($policy, ['flavor', 'operands', 'payloads', 'alternate', 'write_back']);
+        literals($policy, ['flavor' => 'php', 'operands' => 'operand_participation',
+            'alternate' => 'checked_extraction', 'write_back' => 'wrap_after_scalar_operation']);
+        $types = array_intersect(names(at($policy, 'payloads')), array_keys($definitions));
+        $names = implode(', ', array_map(static fn($name) => var_export($name, true), $types));
+        $writes = "\tif (\$flavor !== flavor::php) return null;\n\t\$payload = carrier_operand_payload(\$type);\n"
+            . "\treturn \$payload !== null && in_array(\$payload->name, [$names], true) ? \$payload : null;";
+    }
+    $template = strtr($template, ['@families@' => $familyArm, '@writes@' => $writes, '@shared_states@' => implode("\n", $shared)]);
+    if ($rule === null) return str_replace('@dispatch@', "\treturn null;", $template);
+    requireThat($published !== [], 'Equality requires published carrier operands');
+    fields($rule, ['flavor', 'operands', 'payloads', 'evaluation', 'states', 'operators']);
+    literals($rule, ['operands' => 'operand_participation',
+        'evaluation' => 'snapshot_left_then_right', 'states' => 'match_alternate_state']);
+    $flavor = textValue(at($rule, 'flavor'));
+    requireThat(in_array($flavor, ['php', 'cpp', 'js', 'python'], true), 'Unknown peer equality flavor');
+    $arms = [];
+    $operators = fields(at($rule, 'operators'), ['equal', 'identical']);
+    foreach ($operators as $positive => $inverse) {
+        requireThat($inverse === 'not_' . $positive, 'Invalid inverse equality operator');
+        $arms[$positive] = "\t\tbinary_operator::$positive, binary_operator::$inverse => binary_operator::$positive,";
+    }
+    requireThat($arms !== [], 'Empty peer equality rule');
+    ksort($arms, SORT_STRING);
+    $mixed = compilerMixedPeerBindings(at($rule, 'payloads'), $operators, $definitions, $promotions, $binary);
+    $dispatch = "\tif (\$flavor !== flavor::$flavor) return null;\n"
+        . "\t\$comparator = match (\$operator) {\n" . implode("\n", $arms) . "\n\t\tdefault => null,\n\t};\n"
+        . "\tif (\$comparator === null) return null;\n"
+        . "\t\$left = carrier_operand_payload(\$left);\n\t\$right = carrier_operand_payload(\$right);\n"
+        . "\tif (\$left !== null && \$left === \$right) return new prepared_peer_equality(\$comparator, \$left);\n"
+        . implode("\n", $mixed) . "\n\treturn null;";
+    return str_replace('@dispatch@', $dispatch, $template);
+}
+
+/** Emit carrier payload recipes from the same normalized scalar plans used by plain comparisons. */
+function compilerMixedPeerBindings(mixed $payloads, array $operators, array $definitions, array $promotions, array $binary): array {
+    fields($payloads, ['matching_types', 'scalar_pairs']);
+    literals($payloads, ['matching_types' => true]);
+    literals($payloads, ['scalar_pairs' => 'admitted_scalar_comparisons']);
+    $mixed = [];
+    if (isset($operators['identical'])) {
+        $peers = [];
+        foreach ($binary as $name => $bindings) {
+            if (!isset($bindings['identical']['identity_peers'])) continue;
+            requireThat($bindings['identical']['different_result'] === false, 'Unsupported scalar identity policy');
+            $peers[] = var_export($name, true);
+        }
+        if ($peers !== []) {
+            $mixed[] = "\tif (\$comparator === binary_operator::identical && \$left !== null && \$right !== null\n"
+                . "\t\t&& in_array(\$left->name, [" . implode(', ', $peers) . "], true)\n"
+                . "\t\t&& \$left->binary_result(\$operator, \$right) === type_bool::instance()) return new prepared_peer_equality(\$comparator, null);";
+        }
+    }
+    $selected = array_merge(array_keys($operators), array_values($operators));
+    foreach ($promotions as $left => $rows) {
+        $arms = [];
+        foreach ($rows as $row) {
+            foreach (array_intersect($row['operators'], $selected) as $operator) {
+                requireThat($row['result'] === 'bool_t', 'Peer comparison must return bool');
+                $exec = 'type_' . $definitions[$row['execution']]['class'] . '::instance()';
+                $arms[$row['right']][] = "\t\t\tbinary_operator::$operator => new prepared_peer_equality(\$comparator, $exec, "
+                    . "value_conversion::{$row['left_conversion']}, value_conversion::{$row['right_conversion']}),";
+            }
+        }
+        foreach ($arms as $right => $bindings) {
+            $mixed[] = "\tif (\$left === type_{$definitions[$left]['class']}::instance() && \$right === type_{$definitions[$right]['class']}::instance()) {\n"
+                . "\t\treturn match (\$operator) {\n" . implode("\n", $bindings) . "\n\t\t\tdefault => null,\n\t\t};\n\t}";
+        }
+    }
+    return $mixed;
 }

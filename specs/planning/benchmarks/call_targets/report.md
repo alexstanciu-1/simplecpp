@@ -51,3 +51,51 @@ The fixture has 16 PHP workers and a Python entry using call-shaped construction
 Each cell covers 88 samples from eight warmed PHP processes per implementation, ordered in alternating ABBA blocks. Measurements exclude frontend work, publishing files and native compilation. The overlapping ranges give no clear throughput advantage. In the final weak variant, fresh preparation made 115 signature queries; lowering made 100 weak-target reads, 66 operand projections and 17 signature queries. The edited worker made 7, then 6/4/1 respectively. These are PHP host measurements. The native size and allocation results above belong to the earlier representation benchmark.
 
 **Compatibility decision.** Both copies passed the incremental-preparation and Python-frontend tests. The unmodified functions test passed on baseline and stopped on the weak copy at its pre-emission purity snapshot: PHP rejects serialization of a WeakReference. Byte-identical C++ output alone cannot verify that emission leaves preparation facts unchanged. Keep production storage pending a purity snapshot that represents weak edges by target identity and detects rebinding, expiry and mutation during lowering. The pilot retains this regression as an explicit finding.
+
+## Freeze checkpoint on develop at 16d3c9e25
+
+Run `python3 -B specs/planning/benchmarks/call_targets/check_slot.py` after the default build. The earlier interface patch and its timings describe the older compiler. This correctness probe copies the current compiler and changes only the storage and reads of the actual prepared-call slot. Both copies use the production signature and lowering consumers. The current slot also carries the direct producer expression for blocking waits.
+
+On dev002 the strong and weak PHP variants agreed across 15 edit states on diagnostics, prepared and reused bodies, emitted units and generated code. Successful repairs matched fresh compilation and both repaired native programs exited with status 16. The async check exercised the blocking producer. The purity checks can observe live weak targets and detect rebinding, mutation and expiry without retaining those targets between captures.
+
+An initial retirement check failed even with production storage. The captured PHP diagnostic still owned the old source through its exception trace. Releasing the diagnostic after recording its text and the last published bundle allowed the replaced method instance to expire. The probe continues to require expiry.
+
+The translated preparation fixture now keeps a weak reference to the stable source entry on the prepared body. Native lowering follows the entry to its current declaration. The same caller sees a replacement, an empty entry after deletion, and the restored declaration. The PHP, C++ and JS input fixtures compare recovered output with the PHP host. Writing the entry through a local class reference preserves its identity in the symbol table.
+
+This closes the native source-function case for the fixture's integer-return subset. Native runtime descriptors, specialized methods, lexical and stored callables, construction and blocking producers still need their production consumer paths translated before selecting a production representation. The PHP comparison exercises more paths than the native translation.
+
+## Specialized-method checkpoint on develop at 3d092a14c
+
+The translated zero-argument integer-call fixture now uses one weak interface slot for source functions and specialized methods. Preparation asks the selected target for the current authored signature. Lowering asks it for its implementation. A stable function entry supplies its current head for both queries. A specialized pair follows the authored entry for validation and supplies its own private body for lowering.
+
+On dev002, callers for Left and Right inherited the same authored method and emitted distinct calls. Both caller definitions matched the production PHP compiler output byte for byte. Replacing the authored signature with one requiring an argument rejected a new zero-argument call. Repair allowed it to bind to the existing pair. Replacing a private body released its predecessor while both prepared callers of that pair could still observe the replacement. Removing the Left demand expired its observers and preserved Right. Reintroducing Left required a fresh binding.
+
+Run `ctest --preset default -R '^compiler_translated_preparation_recovery$'`. All three frontend recovery fixtures and the two sibling callers share one compiled test driver (2.54 seconds in isolation on dev002). The proof supplies the two demands explicitly. Automatic reachability, invalidation and method interning remain with the production coordinator. Runtime descriptors, lexical callables, construction and blocking producers remain outside this native translation.
+
+## Lexical callable checkpoint on develop with d96d6c7a1
+
+The native translation now exercises two body-local PHP lambdas named `$g`. Their bodies own distinct bindings and can share signature information. Preparation checks the selected binding’s signature. Lowering reads its local storage name through the locked target. The two zero-argument call statements matched the production compiler byte for byte, including different storage ordinals.
+
+Replacing the left enclosing body expired its previously prepared call while the sibling still lowered successfully. Lowering the retired call failed. A replacement signature requiring an argument rejected a new zero-argument call at the original source offset. Repair let that call bind to the new declaration; the retired observer stayed empty.
+
+The direct PHP idiom of returning an owning `$this` from a lexical binding is deferred for classes. The caller already holds a live reference after locking the slot and can obtain the operand interface with `object_cast`. The lexical binding keeps only the signature information needed for validation. An intermediate fixture that made it own another function body produced an incomplete allocation type in generated C++; this checkpoint does not establish support for that recursive ownership shape.
+
+Run the translated preparation recovery test for this native proof and `check_slot.py` for the production PHP incremental comparison. The native slice covers local lambda identity and zero-argument invocation. Callable parameter modes, captures, reference returns and calls whose arguments can reassign an owned callable have separate semantics.
+
+## Published runtime descriptor checkpoint after ac8b05663
+
+Run `ctest --preset default -j1 -R '^compiler_translated_runtime_descriptor$'`. The proof reads the published PHP binding for `strlen` (name, arity, parameter/result type, C++ symbol and header). Its native translation keeps the descriptor in a runtime registry. Application source declarations take precedence during preparation; an already-prepared caller observes its target through the same weak slot used by the other translated cases.
+
+On dev002 the caller bound to the builtin, rebound to a one-argument source declaration, rejected a two-argument replacement at the original call, and recovered after deleting the declaration. The failed edit preserved every previously published body. Recovery selected the identical runtime descriptor and matched a fresh compilation. The unrelated body retained its identity and stayed out of the preparation batch. The test compiles and runs the three caller outputs from the translated executable; the results are 3, 9 and 3 for the same input string.
+
+This slice accepts one already-lowered string operand and a published integer result. It scans source names in the small fixture to select affected callers. Production dependency watches, descriptor generation, overload selection and argument-expression lowering remain outside the translation.
+
+## Construction and blocking waits
+
+Two focused native translations exercise the remaining production call-target roles on the development line based on d96d6c7a1. Run `ctest --preset default -j1 -R '^compiler_translated_(construction|blocking_wait)$'` after building the default preset.
+
+For Python call-shaped construction, the slot observes the stable class entry. Validation consults the current record’s optional constructor signature, and lowering selects the record’s owner factory. The probe replaces an explicit constructor with an implicit one, rejects the old one-argument call, accepts zero arguments, deletes the class, and restores the explicit declaration. Deletion and implicit construction produce distinct diagnostics. The old record expires while its class entry remains live. The translated factory expressions match production C++ byte for byte; native applications produce exit values 7, 5 and 7. Failed host edits preserve the successful bundle and repaired output matches fresh compilation.
+
+For `async_wait`, the prepared bridge observes the nested call expression. Two calls to the same authored async function carry different checked operands. Reset clears the producer; removing its syntax owner permits expiry. Both hosts reject a non-async function and a non-call operand. The translated helper calls match the PHP compiler output before and after repair. The production bundles run natively and return the selected values through the blocking helper.
+
+The fixture converts each live owner to the common target interface before taking its weak reference. This avoids requiring implicit conversions between weak handles of different types. These checks cover the slot’s lifetime and the selected signature, operand or result expression in bounded cases. They do not translate the complete argument binder, async executor, or incremental watcher graph.

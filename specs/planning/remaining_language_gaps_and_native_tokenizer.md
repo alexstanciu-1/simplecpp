@@ -208,6 +208,132 @@ The selected native design is a direct byte scanner. Use the existing PHP bootst
 
 Proposed ownership is the immutable source snapshot and its token list. Validate the full snapshot for UTF-8, recognize token spans using a byte cursor, and publish the finished token buffer after a successful scan. Tokens carry byte offset, length, and kind. Spelling comes from the retained source. Keep Python indentation and layout behavior in view. The earlier comparison covered only PHP, C++, and JS. Review the Python layout stage and add its own parity coverage before claiming native support for that flavor.
 
+The default test `compiler_translated_source_utf8` verifies the native snapshot
+validator on 33 byte strings against the production tokenizer in all four flavors.
+It covers boundary code points, truncated and overlong sequences, surrogates,
+and an invalid continuation after an earlier lexical error. The runtime helper
+accepts valid input directly. On invalid input the native fixture locates the
+first malformed sequence. [Native fixture](../../compiler/examples/tokenizer/utf8.php.scpp)
+
+The bounded PHP-flavor compiler now validates each changed source before
+recognizing its first token. The filesystem-enabled `compiler_translated_path`
+test edits the entry and declaration separately, checks diagnostic precedence
+against the production frontend, and verifies that failures preserve the last
+published binding, declaration and output. After repair, the old token still
+addresses its original spelling, and every new token's kind, offset and length
+agrees with a fresh compilation. Full flavor-specific token streams and Python
+layout remain open. [Translated scanner](../../compiler/examples/translated_path/frontend.php.scpp)
+
+**Freeze checkpoint for punctuation.** The build-time emitter reads production
+token IDs, spellings, flavor membership and Python admission rules. The native
+scanner selects the longest matching punctuation and keeps comment openers ahead
+of that selection. On dev002 the default test compared 70 inputs in each of the
+four flavors. All 280 comparisons matched, including the offset and message of
+47 rejections. Accepted inputs agreed on token kind, byte offset and byte length.
+The comparison excludes synthetic Python layout tokens and the native end
+marker. [Emitter](../../compiler/examples/tokenizer/emit_punctuation.php) ·
+[Differential test](../../compiler/tests/translated_punctuation.py)
+
+This slice required no new v0.2 language or runtime capability. Further
+tokenizer expansion is parked for the freeze review.
+
+**Generated types and lowering, application-vector checkpoint.** On dev002 at
+`173165972` the existing full application-vector regression passed in 54 seconds.
+The focused `compiler_translated_vector_recipe` check passed in 1.44 seconds.
+PHP publishes the configured production recipe and buffer support into Simple C++
+before loading the application. Its native executable then renders the header
+from prepared element and specialization facts. The executable replays source
+requests and releases; each publication reports the complete set of live files.
+
+Two independent source files resolved the same canonical vector of an inline
+record. The native output matched the PHP header path and bytes with two users
+and with one. Releasing the last user produced an empty file set. Fresh and
+incremental outputs agreed at each step. Compiling PHP-emitted callers with the
+native header and the vector-free application's link inputs produced `77`,
+`07`, and `00` respectively. No additional runtime archive was needed.
+
+The bridge still supplies prepared names, the SHA-256 artifact key and include
+dependencies. File installation, caller lowering and base link planning remain
+host responsibilities. This qualifies native rendering for the selected vector
+recipe; the production backend continues to use PHP for rendering.
+[Native renderer](../../compiler/examples/concrete_vector/render.php.scpp) ·
+[Build-time publisher](../../compiler/examples/concrete_vector/publish.php) ·
+[Differential test](../../compiler/tests/translated_vector_recipe.py)
+
+**Native command-line build driver checkpoint.** The Linux proof builds and
+runs the two-source vector application with the native-rendered header. It
+reads translation units, native sources when present, and ordered link inputs
+from the published manifest. It invokes Clang with literal arguments and stages
+the executable beside its destination. After a successful link it renames the
+executable into place, runs it, forwards the captured streams and returns its
+exit status. The driver uses the filesystem, JSON, I/O, process and datetime
+modules. Polling sleeps between attempts.
+
+On dev002 the application printed `77` and exited with status 8 through both
+the driver and the direct control. With a generated unit containing a deliberate
+`#error`, the driver returned Clang's failure status and reproduced its stderr
+byte for byte. The previous executable survived and no staging file remained.
+The driver now holds the publisher's shared bundle lock from before the manifest
+read through Clang exit and executable publication. It releases the lock before
+running the application. On dev002 a real publisher queued for the exclusive
+lock while Clang was paused. The first build printed `1`, publication completed
+while its application was held open, and the next build printed `2` using the
+new translation unit. The combined focused check took 1.92 seconds. The native driver also invokes the PHP host's saved Ninja graph. Across three
+short-lived invocations on dev002, the two-source application plus generated entry
+required three compiles and one link initially, zero compiles and links unchanged,
+and one compile and one link after a function-body edit. The Linux native frontend now retains the two-source bootstrap parser's
+last successful source snapshots, token spans, declaration scope and entry syntax
+across sequential requests over stdin/stdout. Each request rereads both files.
+A byte-identical source reuses its parsed object. Failed requests leave the
+successful generation intact. On dev002 the cold, unchanged, body edit, syntax
+error and repair attempted 2, 0, 1, 1 and 1 parses. The repaired snapshot matched
+a separate cold process, including source bytes, tokens, AST ranges and symbol key.
+The production PHP service continues to own its full grammar and socket lifecycle.
+The native `prepare` request consumes the published scope and call syntax by
+identity. In the two-source grammar, changing only the integer returned by the
+definition rechecks that body and reuses the caller's binding. A valid literal
+outside int64 advances the frontend alone. Retrying attempts preparation again
+without reparsing. Repair matched a fresh process on the resolved key, value
+and emitted C++ bytes. Renaming the function also rechecks its caller.
+The native `lower` request publishes three C++ files in the application's
+`generated/` directory. It retains the prepared identity and emitted text per
+source, with a separate entry adapter. The response lists emitter invocations
+and committed file replacements independently. Body-only repair re-emitted
+and replaced the definition alone; a comment edit invoked the same emitter
+with no replacement. A failed second installation restored the first file's
+original bytes, inode and timestamp. An identical-input retry reused preparation
+and published both pending units. The final file set matched a fresh session and
+compiled and ran on dev002.
+[Native unit lowering](../../compiler/examples/retained_frontend/lowering.php.scpp) ·
+[Session](../../compiler/examples/retained_frontend/session.php.scpp) ·
+[Five-case comparison](../../compiler/tests/translated_retained_frontend.py)
+[Driver](../../compiler/examples/native_driver/main.php.scpp) ·
+[Native comparison](../../compiler/tests/translated_native_driver.py)
+
+**Native Unix-socket lifecycle on Linux.** A compiled frontend serves its
+retained session over a line protocol using the published filesystem lock and
+a proof-only C++ Unix-stream adapter linked against generated declarations.
+Eight simultaneous starters converged on one owner. Disconnecting mid-command
+preserved the generation; disconnecting after a complete request advanced it
+once and the server continued serving. Stop removed the socket under the lock.
+After SIGKILL a new starter recovered the stale endpoint, reused the lock inode
+and parsed the edited application cold. The test launcher supplies the working
+directory and starts processes.
+
+A separate Linux client now auto-starts the native executable and exchanges
+newline-framed JSON with either service. Four concurrent cold invocations
+converged on one detached native PID and generations 1–4. The production PHP
+CLI read native reports and diagnostics, drove an edit and repair, and stopped
+the native owner. The native CLI used the unmodified PHP server and restarted
+its own server cold after SIGKILL. Both endpoints agreed on the tested error
+envelopes and the multiline source diagnostic. Status and stop on an absent
+service left its directory absent. This proof uses the native bootstrap's
+two-source grammar. The Linux `scpp_native_frontend` target builds the private
+adapter archive and invokes the normal project build. The PHP interoperability
+test drives its executable at `build/clang/native-frontend/native/program`.
+A public Unix-socket API is deferred beyond v0.2. [Protocol comparison](../../compiler/tests/native_frontend_protocol.py)
+[Lifecycle test](../../compiler/tests/native_frontend_socket.py)
+
 Acceptance checks:
 
 1. Compare offset, length, kind, and spelling with the oracle on real inputs, including longest punctuation, flavor keywords, comments, quotes, and token-length limits.
@@ -318,19 +444,17 @@ See [G05 verification](#g05-verification) for the typed migration paths.
 
 ### G06 · Collection traversal
 
-Defer general writable `foreach` (`CTRL-FOREACH-003`, `CTRL-FOREACH-004`).
+PHP supports scoped writable iteration over a typed vector or hash owned by a local or a by-value parameter (including an owned variadic pack), and through a mutable reference parameter in synchronous code.
+See the [traversal contract](../collection_traversal.md) and [native tests](../../compiler/tests/writable_foreach_native.py).
 In `settle_preparation()`, the compiler sorts each stored group by called-type
 name while preserving its identity keys. The [lifetime fixture](../../compiler/tests/called_method_lifetime.php)
 demands Right before Left, checks publication in Left–Right order, then removes
 the Left caller and checks that the original Right key still selects the same body.
 
-**Missing (2)**
+**Partial (4)**
 
-- `CTRL-FOREACH-003` — Reference foreach
-- `CTRL-FOREACH-004` — Keyed reference foreach
-
-**Partial (2)**
-
+- `CTRL-FOREACH-003` — Reference foreach over typed vectors and hashes
+- `CTRL-FOREACH-004` — Keyed reference foreach over typed vectors and hashes
 - `CTRL-FOREACH-001` — Value foreach
 - `CTRL-FOREACH-002` — Keyed foreach
 

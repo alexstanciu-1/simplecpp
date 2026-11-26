@@ -1,7 +1,0 @@
-{
-  "stage": "emitted",
-  "compile": "failed",
-  "compile_logs": [
-    "LOW-01-source-compile-0.stderr"
-  ]
-}

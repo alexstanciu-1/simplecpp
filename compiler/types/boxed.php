@@ -123,6 +123,11 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 				$this->prepare_scalar_conversion($value->right, conversion_context::typed_destination));
 			return;
 		}
+		if ($peer === type_null::instance() && ($value->operator === binary_operator::identical || $value->operator === binary_operator::not_identical)
+			&& ($box_left ? $value->right : $value->left) instanceof ast_keyword_expression) {
+			$value->settle_binary(type_bool::instance(), $this);
+			return;
+		}
 		if (!$this->admits_pair($value->operator, $peer, $box_left)) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported boxed binary operands or operator');
 		}
@@ -141,6 +146,13 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		if ($this->python_equality($expr)) {
 			return ($expr->operator === binary_operator::not_equal ? '!' : '') . '(' . $left . ').python_equal(' . $right . ')';
 		}
+		if ($expr->operator === binary_operator::identical || $expr->operator === binary_operator::not_identical) {
+			$other = $expr->left->type_def() === $this ? $expr->right : $expr->left;
+			if ($other->type_def() === type_null::instance() && $other instanceof ast_keyword_expression) {
+				$operand = $expr->left->type_def() === $this ? $left : $right;
+				return '((' . $operand . ').kind() ' . ($expr->operator === binary_operator::identical ? '==' : '!=') . ' scpp::boxed_kind::null)';
+			}
+		}
 		return 'scpp::boxed_' . $expr->operator->name . '_' . $expr->left->type_def()->name . '_'
 			. $expr->right->type_def()->name . '(' . $left . ', ' . $right . ', ' . $this->flavor_mask($expr) . ')';
 	}
@@ -148,9 +160,9 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 	abstract protected function boxed_result(binary_operator $operator): ?type_definition;
 	abstract protected function flavor_mask(ast_node $site): int /** uint8 */;
 
-	public function prepare_compound(ast_assignment_statement $value): void
+	public function prepare_compound(ast_assignment_statement $value, type_definition $right): void
 	{
-		if (!$this->supports_compound($value->operator) || $this->binary_result($value->operator, $value->value->type_def()) !== $this) {
+		if (!$this->supports_compound($value->operator) || $this->binary_result($value->operator, $right) !== $this) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported compound operands or write-back type');
 		}
 		$conversion = $this->prepare_scalar_conversion($value->value, conversion_context::typed_destination);

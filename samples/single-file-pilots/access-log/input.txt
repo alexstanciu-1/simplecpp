@@ -1,0 +1,9 @@
+# service method target status bytes elapsed-ms cache
+web GET /assets/app.js?v=7 200 1200 10 HIT
+api POST /api/orders?token=private 201 350 240 MISS
+api GET /api/orders 503 64 1200 BYPASS
+web HEAD /ready 200 0 2 BYPASS
+web GET /old 301 30 50 HIT
+api DELETE /api/orders/4 404 80 100 MISS
+api GET /bad#fragment 200 0 1 HIT
+malformed row

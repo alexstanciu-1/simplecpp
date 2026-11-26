@@ -1,7 +1,0 @@
-#include <scpp/lang/php.hpp>
-#pragma once
-namespace scpp {
-struct ResidentReverseDependencyLookupRow;
-struct ResidentSymbolDefinitionChangeRow;
-ResidentReverseDependencyLookupRow __latency_fn_resident_reverse_dependencies_no_dependent_lookup_row(ResidentSymbolDefinitionChangeRow change);
-}

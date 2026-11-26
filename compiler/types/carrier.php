@@ -9,11 +9,13 @@ abstract class carrier_type_definition extends type_definition implements presen
 	/** PROPERTIES */
 	/** Native non-owning canonical payload definition, shared by all occurrences. */
 	public readonly type_definition $payload_type;
+	public readonly string $family;
 
 	/** CONSTRUCTOR */
-	protected function __construct(string $name, type_definition $payload)
+	protected function __construct(string $family, type_definition $payload)
 	{
-		parent::__construct($name);
+		parent::__construct($family . '<' . $payload->name . '>');
+		$this->family = $family;
 		$this->payload_type = $payload;
 	}
 
@@ -27,29 +29,117 @@ abstract class carrier_type_definition extends type_definition implements presen
 	abstract public function lower_cpp_extract(string $value): string;
 	abstract public function lower_cpp_presence(string $value): string;
 
+	/** A false-only alternate state is published by result_or_false specializations. */
+	final public function false_only_sentinel(): bool
+	{
+		return $this->sentinel_factory('false') !== null && $this->sentinel_factory('true') === null;
+	}
+
 	/** Instance-field publication does not grant static carrier storage. */
 	final public function supports_static_property(): bool
 	{
 		return false;
 	}
 
-	/** A strict null comparison operates on the carrier itself and reads only presence. */
+	/** Two-state peers have one alternate state. Multi-sentinel providers specialize this observation. */
+	protected function lower_cpp_peer_equality(string $left, string $right, string $payloads_equal, binary_operator $comparator): string
+	{
+		$left_present = $this->lower_cpp_presence($left);
+		$right_present = $this->lower_cpp_presence($right);
+		if ($payloads_equal === 'false') return "(!$left_present && !$right_present)";
+		return "($left_present ? ($right_present && $payloads_equal) : !$right_present)";
+	}
+
+	/** Payload presence excludes every alternate state, including a true sentinel. */
+	protected function lower_cpp_payload_presence(string $value): string
+	{
+		return $this->lower_cpp_presence($value);
+	}
+
+	/** Match shared alternate states and compare present payloads using the prepared scalar conversions. */
+	private function lower_peer_equality(ast_binary_expression $expr, string $left, string $right): string
+	{
+		$left_type = $expr->left->type_def();
+		$right_type = $expr->right->type_def();
+		$left_carried = $left_type instanceof self;
+		$right_carried = $right_type instanceof self;
+		$comparison = $expr->peer_equality;
+		$execution = $comparison->execution;
+		$payloads_equal = 'false';
+		if ($execution !== null) {
+			$left_value = $left_carried ? $left_type->lower_cpp_extract($left) : $left;
+			$right_value = $right_carried ? $right_type->lower_cpp_extract($right) : $right;
+			$payloads_equal = $execution->lower_cpp_binary($comparison->operator,
+				$execution->lower_scalar_conversion($comparison->left_conversion, $left_value),
+				$execution->lower_scalar_conversion($comparison->right_conversion, $right_value), $execution);
+		}
+		if ($left_carried && $right_carried && $left_type->family === $right_type->family) {
+			return $this->lower_cpp_peer_equality($left, $right, $payloads_equal, $comparison->operator);
+		}
+		$alternate = $left_carried && $right_carried ? shared_peer_alternate($left_type, $right_type, $left, $right) : null;
+		if ($execution === null) {
+			// Disjoint states still evaluate both source operands, including staged plain scalars.
+			return $alternate ?? "(static_cast<void>($left), static_cast<void>($right), false)";
+		}
+		if (!$left_carried || !$right_carried) {
+			$present = $this->lower_cpp_payload_presence($left_carried ? $left : $right);
+			return "($present && $payloads_equal)";
+		}
+		$both_values = $left_type->lower_cpp_payload_presence($left) . ' && ' . $right_type->lower_cpp_payload_presence($right);
+		return $alternate === null ? "($both_values && $payloads_equal)" : "(($both_values && $payloads_equal) || $alternate)";
+	}
+
+	/** Compare prepared carrier states before reading any payload. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{
+		if ($expr->peer_equality !== null) {
+			$equal = $this->lower_peer_equality($expr, $left, $right);
+			return $expr->operator !== $expr->peer_equality->operator ? '!' . $equal : $equal;
+		}
 		$carrier_first = $expr->left->type_def() === $this;
+		$literal = $carrier_first ? $expr->right : $expr->left;
+		if ($literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)) {
+			$test = '(' . ($carrier_first ? $left : $right) . ').is_' . $literal->word . '()';
+			return $expr->operator === binary_operator::not_identical ? '!' . $test : $test;
+		}
 		return $this->lower_null_presence_comparison($expr, $this->lower_cpp_presence($carrier_first ? $left : $right),
 			$carrier_first ? $right : $left);
 	}
 
-	/** The presence lowering sequences both original operands without copying the carrier. */
+	/** Two local reads need no snapshots. Stage effectful pairs before inspecting either state. */
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
 	{
-		return true;
+		return $expr->peer_equality === null
+			|| (!($expr->left instanceof ast_string_expression) && !($expr->right instanceof ast_string_expression)
+				&& self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right));
+	}
+
+	/** Capture the writable slot once. Replace it only after successful extraction and arithmetic. */
+	public function lower_cpp_update(update_operator $operator, string $target, bool $postfix, bool $snapshot = false): string
+	{
+		$read = $this->lower_cpp_extract('slot');
+		$update = $this->payload_type->lower_cpp_update($operator, 'payload', false);
+		$save = $snapshot && $postfix ? 'const auto previous = payload; ' : '';
+		$type = $this->cpp_type();
+		$value = $postfix ? 'previous' : 'payload';
+		$result = $snapshot ? "auto result = {$type}{{$value}}; " : '';
+		$return = $snapshot ? ' return result;' : '';
+		return "([]({$type}& slot) { auto payload = $read; $save$update; {$result}slot = "
+			. "{$type}{payload};$return }($target))";
+	}
+
+	/** Ordinary PHP operators require one participating payload before scalar admission. */
+	public function require_operator_payload(ast_expression $site): void
+	{
+		if ($site->source()->flavor === flavor::php && carrier_operand_payload($this) === null) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Carrier does not participate in payload operators');
+		}
+		$this->require_extraction($site, conversion_context::assignment);
 	}
 
 	/** Enforce the metadata extraction policy before selecting a payload operation. */
-	public function require_extraction(ast_expression $site, conversion_context $context): void
+	public function require_extraction(ast_node $site, conversion_context $context): void
 	{
 		if (!$this->implicit_extraction() && ($context !== conversion_context::explicit_cast)) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Carrier requires explicit payload extraction');
@@ -71,6 +161,16 @@ abstract class carrier_type_definition extends type_definition implements presen
 	public function supports_inferred_local(): bool
 	{
 		return true;
+	}
+
+	/** Borrow the box once so temporaries and effectful arguments have the same kind check and conversion. */
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		if ($conversion !== value_conversion::boxed_nullable_argument) return null;
+		$payload = $this->payload_type->lower_cpp_conversion(value_conversion::unbox_typed, 'box', source_type: $source);
+		$body = "\tif (box.kind() == scpp::boxed_kind::null) return {};\n\treturn " . $this->cpp_type() . '{' . $payload . "};\n";
+		return new cpp_inline_adapter('boxed_nullable_argument', [new cpp_adapter_parameter($source, 'box', cpp_adapter_mode::const_reference)],
+			$this, $body, false);
 	}
 
 	/** Wrap only an admitted payload conversion, or the metadata-authorized empty state. */
@@ -102,7 +202,7 @@ final class nullable_enum_type_definition extends carrier_type_definition
 {
 	public function __construct(enum_type_definition $payload)
 	{
-		parent::__construct('nullable<' . $payload->name . '>', $payload);
+		parent::__construct('nullable', $payload);
 	}
 
 	public function dispatch_label_type(): type_definition
@@ -150,6 +250,57 @@ final class nullable_enum_type_definition extends carrier_type_definition
 	public function cpp_headers(): array /** list<string> */
 	{
 		return ['optional', ...$this->payload_type->cpp_headers()];
+	}
+}
+
+/** Owned result of decoding a nominal data record. */
+final class record_result_type_definition extends carrier_type_definition
+{
+	public function __construct(type_definition $payload)
+	{
+		parent::__construct('result', $payload);
+	}
+
+	public function accepts_empty(): bool
+	{
+		return false;
+	}
+
+	public function supports_coalescing(): bool
+	{
+		return false;
+	}
+
+	public function implicit_extraction(): bool
+	{
+		return true;
+	}
+
+	public function sentinel_factory(string $state): ?string
+	{
+		return null;
+	}
+
+	public function lower_cpp_extract(string $value): string
+	{
+		return '(' . $value . ').value()';
+	}
+
+	public function lower_cpp_presence(string $value): string
+	{
+		return '(' . $value . ').has_value()';
+	}
+
+	public function cpp_type(): string
+	{
+		$record = $this->payload_type instanceof shared_record_type_definition ? $this->payload_type->payload : $this->payload_type;
+		return 'record_result_' . Cpp_Emitter::qualified_name($record->declaration);
+	}
+
+	/** @return string[] */
+	public function cpp_headers(): array /** list<string> */
+	{
+		return type_result_dynamic::instance()->cpp_headers();
 	}
 }
 

@@ -4,7 +4,7 @@ namespace Scpp\Api;
 require_once __DIR__ . '/checked_conversions.php';
 require_once __DIR__ . '/submodules.php';
 
-const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'compiler', 'integer_aliases', 'core_integers', 'deferred_text_casts', 'checked_conversions', 'submodules', 'output', 'type_exports', 'scalar_providers'];
+const METADATA_FIELDS = ['version', 'types', 'representation', 'construction', 'promotion_policies', 'operations', 'values', 'source_types', 'aliases', 'floating', 'scalar_casts', 'string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'compiler', 'integer_aliases', 'core_integers', 'deferred_text_casts', 'checked_conversions', 'submodules', 'output', 'type_exports', 'scalar_providers', 'text_helpers', 'text_builders'];
 const SCALAR_FIELDS = ['version', 'namespace', 'types', 'operators', 'headers', 'values', 'short_aliases', 'modules'];
 const SYMBOLS = ['add' => '+', 'subtract' => '-', 'multiply' => '*', 'divide' => '/', 'remainder' => '%', 'bit_and' => '&', 'bit_or' => '|', 'bit_xor' => '^', 'equal' => '==', 'not_equal' => '!=', 'less' => '<', 'less_equal' => '<=', 'greater' => '>', 'greater_equal' => '>=', 'positive' => '+', 'negate' => '-', 'bit_not' => '~', 'shift_left' => '<<', 'shift_right' => '>>', 'increment' => '++', 'decrement' => '--'];
 const COMPARISONS = ['equal', 'not_equal', 'less', 'less_equal', 'greater', 'greater_equal'];

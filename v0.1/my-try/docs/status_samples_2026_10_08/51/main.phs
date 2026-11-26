@@ -1,5 +1,0 @@
-enum Mode { case Ready; case Busy; }
-enum Code: uint16 { case Ok = 0; case Failed = 1; }
-$mode = Mode::Ready;
-$code = Code::Ok;
-return $mode === Mode::Ready && $code === Code::Ok ? 0 : 1;

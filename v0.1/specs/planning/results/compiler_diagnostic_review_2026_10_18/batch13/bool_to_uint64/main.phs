@@ -1,1 +1,0 @@
-$x = true; $y uint64 = $x; return 0;

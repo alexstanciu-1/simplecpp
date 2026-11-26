@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "S2S whole-storage cleanup requires a local or parameter variable\n"
-}

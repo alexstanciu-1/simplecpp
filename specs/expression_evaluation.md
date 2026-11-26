@@ -541,6 +541,31 @@ pairs admitted by both operators, strict identity implies ordinary equality.
 strict normalization. Literal null/sentinel routes must preserve the same invariant
 under their separately admitted comparison rules.
 
+In PHP flavor, strict comparison of a published `result_or_false<T>` with the
+literal `false` tests the false sentinel in either operand order. Evaluate the
+carrier expression once. `===` succeeds only for the sentinel; `!==` succeeds
+for every payload, including integer zero, an empty string and a boolean false.
+This literal rule does not extend to a variable holding false or to loose equality.
+
+In PHP, operand participation projects a published carrier to its payload type and a
+plain operand to its own type. Equality consumes this rule when at least one operand
+is a carrier and the scalar comparison metadata admits the projected types. The four carrier families can compare
+across families or with a plain payload in either order, using `==`, `!=`, `===`
+and `!==` when the corresponding payload comparator is admitted. Explicit literal
+state guards take precedence. A plain boolean variable always contributes a payload.
+The catalog selects ordinary or strict payload comparison and its inverse.
+Capture the left state before evaluating the right. Matching absent states compare
+equal. A payload differs from absence, including a successful boolean false.
+Two matching payload types use the selected comparator for `T`. Mixed numeric pairs use the published scalar promotion. For int/float,
+ordinary equality applies the scalar int-to-float conversion inside the two-value
+branch. Strict identity returns false in that branch without extracting either
+payload. Two empty nullables still compare equal under both operators. For `result_or_bool<T>`, matching
+boolean sentinels compare equal. Opposite sentinels differ, and a successful
+boolean payload differs from either sentinel, including one of the same polarity.
+Two failures of `result<T>` compare equal under `==`. Under `===`, compare their
+message and file byte-for-byte and their integer line numbers, borrowing the stored
+fields. Independently constructed failures with the same fields are identical.
+
 Ordering uses checked one-layer extraction instead of state sorting, followed by
 the payload ordering contract. A non-value state throws. Left extraction/conversion
 precedes right evaluation, as for arithmetic; equality snapshots both operands

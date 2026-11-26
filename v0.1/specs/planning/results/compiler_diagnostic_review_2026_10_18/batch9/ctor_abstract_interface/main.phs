@@ -1,1 +1,0 @@
-interface I { function f(): int; } class C { function __construct(value<I> $i) {} } return 0;

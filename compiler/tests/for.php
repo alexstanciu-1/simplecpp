@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/../host/syntax.php';
 require_once __DIR__ . '/../host/compilation.php';
@@ -197,7 +198,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 				. ($in_initializer ? $v . '+=1' : $failure . ',later()') . ') { continue; } return;') . 'return 8;';
 		$prepared = $prepare($source);
 		$name = '::App::' . Cpp_Emitter::function_name($prepared->file->declarations['func:update']);
-		$cpp = "#include <stdexcept>\n" . str_replace('int main()', 'int unused_entry()', (new Cpp_Emitter())->emit($prepared));
+		$cpp = "#include <stdexcept>\n" . rename_fixture_main('unused_entry', (new Cpp_Emitter())->emit($prepared));
 		$cpp .= "\nint main() { " . scpp\compiler\type_int64::instance()->cpp_type() . ' value=10; try { ' . $name . '(value); }'
 			. ' catch (const std::domain_error&) { return value == 100 ? 8 : 91; } return 90; }';
 		$fixtures[$flavor->name . ($in_initializer ? '_init_failure' : '_update_failure')] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R')];

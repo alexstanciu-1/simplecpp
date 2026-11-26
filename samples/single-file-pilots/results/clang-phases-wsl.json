@@ -1,0 +1,245 @@
+{
+  "unit": "microseconds",
+  "samples": [
+    {
+      "round": 0,
+      "name": "route-table",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 112386,
+          "Backend": 394288
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 5919,
+          "Backend": 4586
+        }
+      ]
+    },
+    {
+      "round": 0,
+      "name": "access-log",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 66936,
+          "Backend": 174016
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 6225,
+          "Backend": 4840
+        }
+      ]
+    },
+    {
+      "round": 0,
+      "name": "stock-ledger",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 93432,
+          "Backend": 246040
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 6343,
+          "Backend": 5400
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "name": "access-log",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 74308,
+          "Backend": 195267
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 7304,
+          "Backend": 6757
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "name": "stock-ledger",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 104659,
+          "Backend": 243608
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 6559,
+          "Backend": 4950
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "name": "route-table",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 125825,
+          "Backend": 397920
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 6198,
+          "Backend": 5336
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "name": "stock-ledger",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 98444,
+          "Backend": 267480
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 5932,
+          "Backend": 4713
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "name": "route-table",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 120241,
+          "Backend": 402178
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 5429,
+          "Backend": 4912
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "name": "access-log",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 84686,
+          "Backend": 157952
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 5949,
+          "Backend": 4806
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "name": "route-table",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 130711,
+          "Backend": 407214
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 10153,
+          "Backend": 5622
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "name": "stock-ledger",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 85402,
+          "Backend": 264272
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 8301,
+          "Backend": 6832
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "name": "access-log",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 65505,
+          "Backend": 153001
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 5376,
+          "Backend": 4458
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "name": "route-table",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 145307,
+          "Backend": 413475
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 6068,
+          "Backend": 5207
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "name": "stock-ledger",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 94934,
+          "Backend": 269927
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 6212,
+          "Backend": 4915
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "name": "access-log",
+      "units": [
+        {
+          "unit": "units/b7a0c3c0d08f1cac1906f113e83d8593c00245765fbad9369e8d25055a5c7b6b.cpp",
+          "Frontend": 74341,
+          "Backend": 161279
+        },
+        {
+          "unit": "entry.cpp",
+          "Frontend": 6032,
+          "Backend": 4966
+        }
+      ]
+    }
+  ]
+}

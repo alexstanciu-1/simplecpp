@@ -17,6 +17,16 @@ enum passing_mode: int
 	case value = 0;
 	case reference = 1;
 	case readonly_reference = 2;
+
+	/** Spell a callable input with its reference qualification in source or native type syntax. */
+	public function qualify(string $type): string
+	{
+		return match ($this) {
+			self::value => $type,
+			self::reference => $type . '&',
+			self::readonly_reference => 'const ' . $type . '&',
+		};
+	}
 }
 
 /**
@@ -267,6 +277,14 @@ abstract class ast_expression extends ast_node
 	public function type_def(): type_definition
 	{
 		return $this->type_def ?? throw new \LogicException('Expression type is not settled');
+	}
+
+	/** A literal of a type whose plain value can be copied and destroyed without effects. */
+	public function is_effect_free_literal(): bool
+	{
+		return ($this instanceof ast_integer_expression || $this instanceof ast_float_expression
+			|| $this instanceof ast_keyword_expression || $this instanceof ast_string_expression)
+			&& $this->type_def()->copy_has_no_observable_effects();
 	}
 
 	/** Operator/conversion view of one payload layer; the stored expression type remains unchanged. */

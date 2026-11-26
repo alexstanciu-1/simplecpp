@@ -1,1 +1,0 @@
-$s unique<callable():void>; return 0;

@@ -14,13 +14,17 @@ final class Record_Syntax
 		$start = $c->position();
 		$abstract = false;
 		$final = false;
-		while (!$c->at_end() && ($c->keyword('abstract') || $c->tokens->text_at($c->position()) === 'final')) {
-			$modifier = $c->keyword('abstract') ? 'abstract' : 'final';
-			if ($modifier === 'abstract' ? $abstract : $final) throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate class modifier: ' . $modifier);
+		$data = false;
+		while (!$c->at_end() && in_array($modifier = $c->tokens->text_at($c->position()), ['abstract', 'final', 'data'], true)) {
+			if (($modifier === 'abstract' && $abstract) || ($modifier === 'final' && $final) || ($modifier === 'data' && $data)) {
+				throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate class modifier: ' . $modifier);
+			}
 			if ($modifier === 'abstract') $abstract = true;
-			else $final = true;
+			elseif ($modifier === 'final') $final = true;
+			else $data = true;
 			$c->take($c->tokens->tokens[$c->position()]->kind, $modifier);
 		}
+		if ($data && !($c->keyword('class') || $c->keyword('struct'))) throw new diagnostic($c->tokens->source, $c->offset(), 'Data requires a class or struct');
 		$trait = $c->keyword('trait');
 		$kind = $c->keyword('interface') ? record_kind::interface_type
 			: ($c->keyword('class') ? record_kind::class_type : record_kind::structure);
@@ -30,6 +34,7 @@ final class Record_Syntax
 			default => 'struct',
 		});
 		if ($kind === record_kind::interface_type) $abstract = true;
+		$name_at = $c->position();
 		$name = $c->name(token_kind::identifier);
 		if ($flavor === flavor::cpp && !$c->at_end() && $c->tokens->text_at($c->position()) === 'final') {
 			if ($final) throw new diagnostic($c->tokens->source, $c->offset(), 'Duplicate class modifier: final');
@@ -82,7 +87,7 @@ final class Record_Syntax
 		if ($flavor === flavor::python) {
 			while ($c->tokens->tokens[$end - 1]->kind === token_kind::dedent) --$end;
 		}
-		$record = new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $end, $members, $base, $kind, $abstract, $interfaces, $final, $hooks);
+		$record = new ast_record_declaration($name, $parser->source_namespace(), $fields, $start, $end, $members, $base, $kind, $abstract, $interfaces, $final, $hooks, $data, $name_at);
 		foreach ($uses as $use) $use->attach($record);
 		return $record;
 	}
@@ -216,8 +221,8 @@ final class Record_Syntax
 				$c->name(token_kind::identifier);
 				$parameters = $parser->parameters($python);
 				foreach ($parameters as $parameter) {
-					if ($parameter->mode !== passing_mode::value) {
-						throw new diagnostic($c->tokens->source, $c->offset(), 'Constructors require by-value parameters');
+					if ($parameter->mode === passing_mode::reference) {
+						throw new diagnostic($c->tokens->source, $c->offset(), 'Constructors cannot take writable reference parameters');
 					}
 				}
 				$void = new ast_type_reference($at, $at, 'void');

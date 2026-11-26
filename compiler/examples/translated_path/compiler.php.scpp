@@ -1,20 +1,122 @@
-// Holds the collected function syntax and the checked integer from preparation.
+// A numeric literal after the declaration's conversion and bounds checks.
+final class Numeric_Value {
+	public readonly int $integer;
+	public readonly float $floating;
+
+	public function __construct(int $integer, float $floating) {
+		$this->integer = $integer;
+		$this->floating = $floating;
+	}
+}
+
+function prepare_numeric_value(Translation_Source $source, Token_Span $first, Token_Span $number, bool $as_float): Numeric_Value {
+	if ($number->kind === Token_Kind::T_integer) {
+		$integer = prepare_integer_literal($source, $first, $number);
+		if ($as_float) return new Numeric_Value(0, (float)$integer);
+		return new Numeric_Value($integer, 0.0);
+	}
+	$text = substr($source->text, $number->offset, $number->length);
+	if ($first->kind === Token_Kind::T_minus) $text = "-" . $text;
+	$floating float = 0.0;
+	try {
+		$floating = host_parse_decimal($text);
+	} catch (Exception $error) {
+		throw new Translation_Diagnostic($source->path, $first->offset, $error->get_message(), $source->text);
+	}
+	if ($as_float) return new Numeric_Value(0, $floating);
+	if ($floating < -9223372036854775808.0 || $floating >= 9223372036854775808.0) {
+		throw new Translation_Diagnostic($source->path, $first->offset, "Floating conversion is outside int64 range", $source->text);
+	}
+	return new Numeric_Value((int)$floating, 0.0);
+}
+
+// Retain callable facts without retaining the callee's body or its outgoing call.
+final class Numeric_Call_Contract {
+	public readonly Function_Signature $signature;
+	public readonly hash<Numeric_Value,int> $defaults;
+
+	public function __construct(Translation_Scope $scope) {
+		$this->signature = $scope->declaration->signature;
+		$source = $scope->source;
+		$defaults hash<Numeric_Value,int> = [];
+		foreach ($this->signature->parameters as $parameter) {
+			$index = $parameter->default_token;
+			if ($index === 0) continue;
+			$first = $source->tokens[$index];
+			if ($first->kind === Token_Kind::T_minus || $first->kind === Token_Kind::T_plus) $index++;
+			$defaults[$parameter->slot] = prepare_numeric_value($source, $first, $source->tokens[$index], $parameter->floating);
+		}
+		$this->defaults = $defaults;
+	}
+}
+
+// Holds the collected function syntax and its checked return operand from preparation.
 final class Prepared_Declaration {
 	public readonly Translation_Scope $scope;
+	public readonly Numeric_Call_Contract $contract;
 	public readonly int $value;
+	public readonly float $floating_value;
+	public readonly ?Prepared_Call $call;
+	public readonly ?Numeric_Parameter $returned_parameter;
 
-	public function __construct(Translation_Scope $scope, int $value) {
+	public function __construct(Translation_Scope $scope, int $value, ?Prepared_Call $call = null, float $floating_value = 0.0, ?Numeric_Parameter $returned_parameter = null) {
+		$this->returned_parameter = $returned_parameter;
+		$this->floating_value = $floating_value;
 		$this->scope = $scope;
+		$this->contract = new Numeric_Call_Contract($scope);
 		$this->value = $value;
+		$this->call = $call;
 	}
+}
+
+// The symbol observes its live callers without retaining retired preparation generations.
+struct Translation_Watch {
+	public weak<Prepared_Call> $caller;
 }
 
 // Stable identity from the compilation scope. The current generation owns the head.
 final class Translation_Symbol {
 	private weak<Prepared_Declaration> $head;
+	private vector<Translation_Watch> $watchers;
+
+	public function watch(Prepared_Call $caller): void {
+		foreach ($this->watchers as $watch) {
+			if (lock($watch->caller) === $caller) return;
+		}
+		$watch Translation_Watch;
+		$watch->caller = weak($caller);
+		$this->watchers[] = $watch;
+	}
+
+	public function forget(Prepared_Call $caller): void {
+		$keep vector<Translation_Watch> = [];
+		foreach ($this->watchers as $watch) {
+			$live = lock($watch->caller);
+			if ($live !== null && $live !== $caller) $keep[] = $watch;
+		}
+		$this->watchers = $keep;
+	}
 
 	public function publish(?Prepared_Declaration $declaration): void {
+		$previous = lock($this->head);
 		$this->head = weak($declaration);
+		if ($previous === null && $declaration === null) return;
+		if ($previous !== null && $declaration !== null) {
+			$old = $previous->scope->declaration->signature;
+			$new = $declaration->scope->declaration->signature;
+			if ($old === $new) return;
+			if (Function_Signature::matches($old, $new)) {
+				foreach ($this->watchers as $watch) {
+					$caller = lock($watch->caller);
+					if ($caller !== null && !$caller->same_inputs($previous->contract, $declaration->contract)) $caller->invalidate_binding();
+				}
+				return;
+			}
+		}
+		foreach ($this->watchers as $watch) {
+			$caller = lock($watch->caller);
+			if ($caller !== null) $caller->invalidate_binding();
+		}
 	}
 
 	public function declaration(): ?Prepared_Declaration {
@@ -26,8 +128,12 @@ final class Translation_Symbol {
 final class Translation_Symbols {
 	private hash<Translation_Symbol, string> $entries;
 
+	public function find(string $key): ?Translation_Symbol {
+		return hash_get_or_null($this->entries, $key);
+	}
+
 	public function entry(string $key): Translation_Symbol {
-		$entry = hash_get_or_null($this->entries, $key);
+		$entry = $this->find($key);
 		if ($entry === null) {
 			$entry = new Translation_Symbol();
 			$this->entries[$key] = $entry;
@@ -36,12 +142,133 @@ final class Translation_Symbols {
 	}
 }
 
+// A checked argument is either an int64 literal or a parameter of the enclosing function.
+struct Numeric_Argument {
+	public ?Numeric_Parameter $forwarded;
+	public int $literal;
+	public ?Numeric_Value $default_value;
+}
+
 // Preparation retains a stable symbol rather than a snapshot of its declaration.
 final class Prepared_Call {
 	public readonly Call_Syntax $syntax;
 	public readonly Translation_Symbol $symbol;
+	private readonly ?Function_Declaration $caller;
+	private ?Numeric_Call_Contract $checked_contract = null;
+	public vector<Numeric_Argument> $arguments;
 
-	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol) {
+	public function signature(): Function_Signature {
+		return $this->contract()->signature;
+	}
+
+	public function contract(): Numeric_Call_Contract {
+		$signature = $this->checked_contract;
+		if ($signature === null) throw Exception::make("Call has no checked signature");
+		return $signature;
+	}
+
+	private int $revision = 0;
+	private int $checked_revision = -1;
+
+	public function invalidate_binding(): void {
+		$this->revision++;
+	}
+
+	public function binding_revision(): int {
+		return $this->revision;
+	}
+
+	// Only written labels observe parameter names. Positional operands observe the ABI.
+	public function same_inputs(Numeric_Call_Contract $old, Numeric_Call_Contract $new): bool {
+		foreach ($this->arguments as $slot => $argument) {
+			if ($argument->default_value === null) continue;
+			$left = hash_get_or_null($old->defaults, $slot);
+			$right = hash_get_or_null($new->defaults, $slot);
+			if ($left === null || $right === null || $left->integer !== $right->integer) return false;
+			// Exact binary64 spelling distinguishes positive and negative zero.
+			if ($old->signature->parameters[$slot]->floating && host_cpp_binary64($left->floating) !== host_cpp_binary64($right->floating)) return false;
+		}
+		$source = $this->syntax->source;
+		foreach ($this->syntax->argument_tokens as $index) {
+			$token = $source->tokens[$index];
+			if ($token->kind !== Token_Kind::T_identifier) continue;
+			$name = "$" . substr($source->text, $token->offset, $token->length);
+			$before = $old->signature->find($name);
+			$after = $new->signature->find($name);
+			if ($before === null || $after === null || $before->slot !== $after->slot) return false;
+		}
+		return true;
+	}
+
+	public function matches_published(?Numeric_Call_Contract $published): bool {
+		$current = $this->contract();
+		if ($current === $published) return true;
+		return $published !== null && Function_Signature::matches($current->signature, $published->signature) && $this->same_inputs($current, $published);
+	}
+
+	public function check_binding(string &$work): void {
+		if ($this->checked_revision === $this->revision) return;
+		$work .= $this->syntax->source->path . ",";
+		$contract = $this->target()->contract;
+		$signature = $contract->signature;
+		$source = $this->syntax->source;
+		if (count($this->syntax->argument_tokens) > count($signature->parameters)) {
+			throw new Translation_Diagnostic($source->path, $this->syntax->offset, "Wrong argument count for " . $this->syntax->name, $source->text);
+		}
+		$arguments vector<Numeric_Argument> = [];
+		$slots hash<int,int> = [];
+		$named = false;
+		foreach ($this->syntax->argument_tokens as $position => $start) {
+			$index = $start;
+			$token = $source->tokens[$index];
+			$slot = $position;
+			if ($token->kind === Token_Kind::T_identifier) {
+				$named = true;
+				$label = substr($source->text, $token->offset, $token->length);
+				$parameter = $signature->find("$" . $label);
+				if ($parameter === null) throw new Translation_Diagnostic($source->path, $token->offset, "Unknown named argument: " . $label . " on " . $this->syntax->name, $source->text);
+				$slot = $parameter->slot;
+				if (isset($slots[$slot])) throw new Translation_Diagnostic($source->path, $token->offset, "Parameter supplied twice: " . $label, $source->text);
+				$index += 2;
+			} else if ($named) {
+				throw new Translation_Diagnostic($source->path, $token->offset, "Positional argument after named argument", $source->text);
+			}
+			$slots[$slot] = $position;
+			$first = $source->tokens[$index];
+			$argument Numeric_Argument;
+			if ($first->kind === Token_Kind::T_variable) {
+				$caller = $this->caller;
+				if ($caller !== null) $argument->forwarded = $caller->signature->find(substr($source->text, $first->offset, $first->length));
+				if ($argument->forwarded === null) throw new Translation_Diagnostic($source->path, $first->offset, "Unknown parameter", $source->text);
+			} else {
+				$digits = $first->kind === Token_Kind::T_integer ? $index : $index + 1;
+				$argument->literal = prepare_integer_literal($source, $first, $source->tokens[$digits]);
+			}
+			$arguments[] = $argument;
+		}
+		$ordered vector<Numeric_Argument> = [];
+		if ($named || count($arguments) < count($signature->parameters)) {
+			foreach ($signature->parameters as $parameter) {
+				if (isset($slots[$parameter->slot])) {
+					$ordered[] = $arguments[$slots[$parameter->slot]];
+				} else {
+					$default = hash_get_or_null($contract->defaults, $parameter->slot);
+					if ($default === null) throw new Translation_Diagnostic($source->path, $this->syntax->offset, "Wrong argument count for " . $this->syntax->name, $source->text);
+					$omitted Numeric_Argument;
+					$omitted->default_value = $default;
+					$ordered[] = $omitted;
+				}
+			}
+			$this->arguments = $ordered;
+		} else {
+			$this->arguments = $arguments;
+		}
+		$this->checked_contract = $contract;
+		$this->checked_revision = $this->revision;
+	}
+
+	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol, ?Function_Declaration $caller = null) {
+		$this->caller = $caller;
 		$this->syntax = $syntax;
 		$this->symbol = $symbol;
 	}
@@ -49,118 +276,333 @@ final class Prepared_Call {
 	public function target(): Prepared_Declaration {
 		$target = $this->symbol->declaration();
 		if ($target === null) {
-			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name);
+			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name, $this->syntax->source->text);
+		}
+		if ($this->caller === null && $target->scope->declaration->signature->returns_float) {
+			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Expected int return from " . $this->syntax->name, $this->syntax->source->text);
 		}
 		return $target;
 	}
 }
 
-function prepare_literal(Translation_Scope $scope): int {
-	$source = $scope->source;
-	$token = $source->tokens[$scope->declaration->body()->statement->literal_token];
+function prepare_integer_literal(Translation_Source $source, Token_Span $first, Token_Span $token): int {
+	$negative = $first->kind === Token_Kind::T_minus;
 	if ($token->length > 1 && $source->text[$token->offset] == 48) {
-		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer");
+		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer", $source->text);
 	}
 	$value = 0;
+	// Accumulate negatively so the int64 minimum fits at every step.
+	$last_digit = $negative ? 8 : 7;
 	$end = $token->offset + $token->length;
 	for ($offset = $token->offset; $offset < $end; $offset++) {
 		$digit = (int)$source->text[$offset] - 48;
-		if ($value > 922337203685477580 || ($value === 922337203685477580 && $digit > 7)) {
-			throw new Translation_Diagnostic($source->path, $token->offset, "Integer literal is outside int64 range");
+		if ($value < -922337203685477580 || ($value === -922337203685477580 && $digit > $last_digit)) {
+			throw new Translation_Diagnostic($source->path, $first->offset, "Integer literal is outside int64 range", $source->text);
 		}
-		$value = $value * 10 + $digit;
+		$value = $value * 10 - $digit;
 	}
-	return $value;
+	return $negative ? $value : -$value;
 }
 
-// The collected definition owns the source generation and its completed function.
-final class Translation_Scope {
-	public readonly Translation_Source $source;
-	public readonly Function_Declaration $declaration;
-
-	public function __construct(Translation_Source $source, Function_Declaration $declaration) {
-		$declaration->body();
-		$this->source = $source;
-		$this->declaration = $declaration;
+function cpp_parameters(Function_Signature $signature, bool $with_names): string {
+	$text = "";
+	foreach ($signature->parameters as $parameter) {
+		if ($text !== "") $text .= ", ";
+		$text .= $parameter->floating ? "scpp::float64" : "scpp::int64";
+		if ($with_names) $text .= " arg" . (string)$parameter->slot;
 	}
-
-	public function resolve(string $key): ?Function_Declaration {
-		if ($this->declaration->symbol_key() === $key) {
-			return $this->declaration;
-		}
-		return null;
-	}
+	return $text;
 }
 
-function emit_translation(Prepared_Call $entry): string {
-	$target = $entry->target();
+function cpp_integer_constant(int $value): string {
+	return $value === (-9223372036854775807 - 1) ? "(-9223372036854775807LL - 1LL)" : (string)$value . "LL";
+}
+
+function cpp_numeric_conversion(string $value, bool $source_float, bool $target_float, bool &$checked): string {
+	if ($source_float === $target_float) return $value;
+	if ($target_float) return "static_cast<scpp::float64>(" . $value . ")";
+	$checked = true;
+	return "scpp::checked_float64_to_int64(" . $value . ")";
+}
+
+function cpp_call_arguments(Prepared_Call $call, bool &$checked): string {
+	$text = "";
+	$signature = $call->signature();
+	foreach ($call->arguments as $index => $argument) {
+		if ($index !== 0) $text .= ", ";
+		$default = $argument->default_value;
+		if ($default !== null) {
+			$text .= $signature->parameters[$index]->floating ? host_cpp_binary64($default->floating) : cpp_integer_constant($default->integer);
+			continue;
+		}
+		$parameter = $argument->forwarded;
+		$value = $parameter === null ? cpp_integer_constant($argument->literal) : "arg" . (string)$parameter->slot;
+		$text .= cpp_numeric_conversion($value, $parameter !== null && $parameter->floating, $signature->parameters[$index]->floating, $checked);
+	}
+	return $text;
+}
+
+function emit_definition_unit(Prepared_Declaration $target): string {
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
-	$value = (string)$target->value;
-	return "#include <scpp/core/scalars.hpp>\n#include <scpp/entry.hpp>\n"
-		. "SCPP_REQUIRE_ENTRY_TARGET(31);\n"
-		. "scpp::int64 " . $name . "() { return " . $value . "LL; }\n"
-		. "int entry() { return scpp::entry_exit_checked(" . $name . "()); }\n"
+	$floating = $target->scope->declaration->signature->returns_float;
+	$result_type = $floating ? "scpp::float64 " : "scpp::int64 ";
+	$text = "#include <scpp/core/scalars.hpp>\n";
+	$call = $target->call;
+	$value = "";
+	$parameters = cpp_parameters($target->scope->declaration->signature, true);
+	$returned = $target->returned_parameter;
+	$operand_float = $floating;
+	$prototype = "";
+	$checked = false;
+	if ($call !== null) {
+		$callee = "source_" . bin2hex($call->syntax->name);
+		$operand_float = $call->signature()->returns_float;
+		$callee_type = $operand_float ? "scpp::float64 " : "scpp::int64 ";
+		$prototype = $callee_type . $callee . "(" . cpp_parameters($call->signature(), false) . ");\n";
+		$value = $callee . "(" . cpp_call_arguments($call, $checked) . ")";
+	} elseif ($returned !== null) {
+		$value = "arg" . (string)$returned->slot;
+		$operand_float = $returned->floating;
+	} elseif ($floating) {
+		$value = host_cpp_binary64($target->floating_value);
+	} else {
+		$value = cpp_integer_constant($target->value);
+	}
+	$value = cpp_numeric_conversion($value, $operand_float, $floating, $checked);
+	if ($checked) $text .= "#include <scpp/conversions.hpp>\n";
+	return $text . $prototype . $result_type . $name . "(" . $parameters . ") { return " . $value . "; }\n";
+}
+
+function emit_call_unit(Prepared_Call $call): string {
+	$checked = false;
+	$name = "source_" . bin2hex($call->syntax->name);
+	return "#include <scpp/entry.hpp>\n#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "(" . cpp_parameters($call->signature(), false) . ");\n"
+		. "int entry() { return scpp::entry_exit_checked(" . $name . "(" . cpp_call_arguments($call, $checked) . ")); }\n";
+}
+
+function emit_entry_adapter(): string {
+	return "#include <scpp/entry.hpp>\nSCPP_REQUIRE_ENTRY_TARGET(31);\nint entry();\n"
 		. "int main() { return scpp::run_entry_with_exceptions(entry); }\n";
+}
+
+function emit_translation(Prepared_Call $entry, hash<Prepared_Declaration,string> $sources): string {
+	$text = "";
+	foreach ($sources as $source) { $text .= emit_definition_unit($source); }
+	return $text . emit_call_unit($entry) . emit_entry_adapter();
+}
+
+// Each collection attempt owns its links. Retained syntax and the last good symbols stay immutable here.
+final class Translation_Definition_Site {
+	public readonly Translation_Scope $scope;
+	public ?Translation_Definition_Site $duplicate_element = null;
+
+	public function __construct(Translation_Scope $scope) {
+		$this->scope = $scope;
+	}
+
+	public function name_offset(): int {
+		return $this->scope->source->tokens[$this->scope->declaration->start + 1]->offset;
+	}
 }
 
 // Retains the current definition, the caller binding, and the last successful emission.
 final class Translation {
 	private readonly Translation_Symbols $symbols;
+	private hash<Translation_Scope,string> $syntax;
+	private hash<Prepared_Declaration,string> $prepared_sources;
 	private ?Prepared_Declaration $definition = null;
 	private ?Prepared_Call $entry = null;
 	private string $output = "";
+	private bool $output_current = false;
 
 	public function __construct() {
 		$this->symbols = new Translation_Symbols();
 	}
 
 	public function compile(?string $definition_text, string $entry_text): string {
-		$definition = $this->definition;
-		if ($definition_text === null) {
-			$definition = null;
-		} elseif ($definition === null || $definition_text !== $definition->scope->source->text) {
-			$source = new Translation_Source("definition.php", $definition_text);
-			$parser = new Translation_Parser($source);
-			$scope = new Translation_Scope($source, $parser->parse_declaration());
-			$definition = new Prepared_Declaration($scope, prepare_literal($scope));
-		}
+		$sources hash<string,string> = [];
+		if ($definition_text !== null) $sources["definition.php"] = $definition_text;
+		return $this->compile_sources($sources, $entry_text);
+	}
 
+	// Each definition source has one function; main contains the call.
+	public function compile_sources(hash<string,string> $sources, string $entry_text): string {
+		$scopes hash<Translation_Scope,string> = [];
+		foreach ($sources as $path => $text) {
+			$scope = hash_get_or_null($this->syntax, $path);
+			if ($scope === null || $scope->source->text !== $text) {
+				$parser = new Translation_Parser(new Translation_Source($path, $text));
+				$scope = $parser->parse_scope();
+			}
+			$scopes[$path] = $scope;
+		}
 		$call = $this->entry_syntax();
 		if ($call === null || $entry_text !== $call->source->text) {
 			$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
 			$call = $parser->parse_entry();
 		}
-		$key = "func:" . $call->name;
-		if ($definition !== null && $definition->scope->resolve($key) === null) {
-			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
-		}
-
-		$entry = $this->entry;
-		if ($entry === null || $entry->syntax !== $call) {
-			$entry = new Prepared_Call($call, $this->symbols->entry($key));
-		}
-		$this->publish_definition($definition);
-		$output = emit_translation($entry);
-		$this->entry = $entry;
-		$this->output = $output;
-		return $output;
+		$work = "";
+		$entry = $this->prepare_scopes($scopes, $call, $work);
+		$this->syntax = $scopes;
+		return $this->render_output($entry);
 	}
 
-	private function publish_definition(?Prepared_Declaration $definition): void {
-		$previous = $this->definition;
-		if ($definition === $previous) {
-			return;
+	public function prepare_scopes(hash<Translation_Scope,string> $scopes, Call_Syntax $call, string &$work): Prepared_Call {
+		$paths vector<string> = [];
+		foreach ($scopes as $path => $scope) { $paths[] = $path; }
+		if (count($paths) > 1) $this->check_duplicates($paths, $scopes);
+		$prepared_sources hash<Prepared_Declaration,string> = [];
+		$definition ?Prepared_Declaration = null;
+		foreach ($paths as $path) {
+			$scope = $scopes[$path];
+			$prepared = $this->prepare_definition($scope, $work);
+			$prepared_sources[$path] = $prepared;
+			if ($scope->declaration->short_name === $call->name) $definition = $prepared;
 		}
-		if ($previous !== null) {
-			$old_key = $previous->scope->declaration->symbol_key();
-			if ($definition === null || $definition->scope->declaration->symbol_key() !== $old_key) {
-				$this->symbols->entry($old_key)->publish(null);
+		if ($definition === null && count($scopes) !== 0) {
+			$work .= $call->source->path . ",";
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
+		}
+		if (count($scopes) === 0) $this->syntax = [];
+		$this->publish_sources($prepared_sources);
+		foreach ($prepared_sources as $prepared) {
+			$binding = $prepared->call;
+			if ($binding !== null) $binding->check_binding($work);
+		}
+		$entry = $this->finish_preparation($definition, $call, $work);
+		return $entry;
+	}
+
+	private function check_duplicates(vector<string> &$paths, hash<Translation_Scope,string> $scopes): void {
+		$scratch = $paths;
+		order_paths($paths, $scratch, 0, count($paths));
+		$heads hash<Translation_Definition_Site,string> = [];
+		// Prepending in reverse source order builds each duplicate chain in linear time.
+		for ($i = count($paths); $i > 0; $i--) {
+			$scope = $scopes[$paths[$i - 1]];
+			$key = $scope->declaration->symbol_key();
+			$site = new Translation_Definition_Site($scope);
+			$site->duplicate_element = hash_get_or_null($heads, $key);
+			$heads[$key] = $site;
+		}
+		foreach ($paths as $path) {
+			$scope = $scopes[$path];
+			$head = $heads[$scope->declaration->symbol_key()];
+			$extra = $head->duplicate_element;
+			if ($extra !== null && $extra->scope === $scope) {
+				$original = $head->scope->source;
+				$source = $scope->source;
+				throw new Translation_Diagnostic($source->path, $extra->name_offset(),
+					"Duplicate function: " . $scope->declaration->short_name . "; first declaration at " .
+					$original->path . ":" . translation_location($original->text, $head->name_offset()), $source->text);
 			}
 		}
-		if ($definition !== null) {
-			$this->symbols->entry($definition->scope->declaration->symbol_key())->publish($definition);
+	}
+
+	public function definitions(): hash<Prepared_Declaration,string> {
+		return $this->prepared_sources;
+	}
+
+	private function render_output(Prepared_Call $entry): string {
+		if (!$this->output_current) {
+			$this->output = emit_translation($entry, $this->prepared_sources);
+			$this->output_current = true;
+		}
+		return $this->output;
+	}
+
+	// The resident frontend already owns these immutable syntax objects.
+	public function prepare_syntax(Translation_Scope $scope, Call_Syntax $call, string &$work): string {
+		return $this->render_output($this->prepare_units($scope, $call, $work));
+	}
+
+	public function prepare_units(Translation_Scope $scope, Call_Syntax $call, string &$work): Prepared_Call {
+		$scopes hash<Translation_Scope,string> = [];
+		$scopes[$scope->source->path] = $scope;
+		return $this->prepare_scopes($scopes, $call, $work);
+	}
+
+	private function prepare_definition(Translation_Scope $scope, string &$work): Prepared_Declaration {
+		$previous = hash_get_or_null($this->prepared_sources, $scope->source->path);
+		if ($previous !== null && $previous->scope === $scope) return $previous;
+		$result = $scope->declaration->body()->statement;
+		if ($result->calls_function) {
+			$token = $scope->source->tokens[$result->literal_token];
+			$name = substr($scope->source->text, $token->offset, $token->length);
+			$syntax = new Call_Syntax($scope->source, $name, $token->offset, $result->argument_tokens);
+			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name), $scope->declaration);
+			return new Prepared_Declaration($scope, 0, $binding);
+		}
+		$work .= $scope->source->path . ",";
+		$source = $scope->source;
+		$first = $source->tokens[$result->literal_token];
+		if ($first->kind === Token_Kind::T_variable) {
+			$returned = $scope->declaration->signature->find(substr($source->text, $first->offset, $first->length));
+			if ($returned === null) {
+				throw new Translation_Diagnostic($source->path, $first->offset, "Unknown parameter", $source->text);
+			}
+			return new Prepared_Declaration($scope, 0, null, 0.0, $returned);
+		}
+		$number = $source->tokens[$result->end - 2];
+		$value = prepare_numeric_value($source, $first, $number, $scope->declaration->signature->returns_float);
+		return new Prepared_Declaration($scope, $value->integer, null, $value->floating);
+	}
+
+	private function finish_preparation(?Prepared_Declaration $definition, Call_Syntax $call, string &$work): Prepared_Call {
+		$entry = $this->entry;
+		$previous = $this->definition;
+		if ($definition !== null && $definition === $previous && $entry !== null && $entry->syntax === $call) {
+			$entry->check_binding($work);
+			return $entry;
+		}
+		// This slice publishes one definition. Check the candidate before changing the last good head.
+		if ($definition !== null && $definition->scope->declaration->short_name !== $call->name) {
+			$work .= $call->source->path . ",";
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
 		}
 		$this->definition = $definition;
+		if ($entry === null || $entry->syntax !== $call) {
+			$symbol = $this->symbols->find("func:" . $call->name);
+			if ($symbol === null) {
+				$work .= $call->source->path . ",";
+				throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
+			}
+			$candidate = new Prepared_Call($call, $symbol);
+			$candidate->check_binding($work);
+			if ($entry !== null) $entry->symbol->forget($entry);
+			$candidate->symbol->watch($candidate);
+			$entry = $candidate;
+		} else {
+			$entry->check_binding($work);
+		}
+		$this->entry = $entry;
+		$this->output_current = false;
+		return $entry;
+	}
+
+	// Publish all heads before checking caller bodies, including callers of a withdrawn name.
+	private function publish_sources(hash<Prepared_Declaration,string> $next): void {
+		$heads hash<Prepared_Declaration,string> = [];
+		foreach ($next as $source) { $heads[$source->scope->declaration->symbol_key()] = $source; }
+		foreach ($this->prepared_sources as $path => $old) {
+			$key = $old->scope->declaration->symbol_key();
+			if (!isset($heads[$key])) {
+				$this->symbols->entry($key)->publish(null);
+				$this->output_current = false;
+			}
+			$binding = $old->call;
+			if ($binding !== null && hash_get_or_null($next, $path) !== $old) $binding->symbol->forget($binding);
+		}
+		foreach ($next as $path => $source) {
+			if (hash_get_or_null($this->prepared_sources, $path) === $source) continue;
+			$this->symbols->entry($source->scope->declaration->symbol_key())->publish($source);
+			$this->output_current = false;
+		}
+		foreach ($next as $path => $source) {
+			$binding = $source->call;
+			if ($binding !== null && hash_get_or_null($this->prepared_sources, $path) !== $source) $binding->symbol->watch($binding);
+		}
+		$this->prepared_sources = $next;
 	}
 
 	public function declaration(): ?Prepared_Declaration {

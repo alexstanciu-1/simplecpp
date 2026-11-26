@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 require_once __DIR__ . '/../host/syntax.php';
 require_once __DIR__ . '/../host/compilation.php';
@@ -192,7 +193,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$entry = $prepare($source);
 		$name = '::App::' . Cpp_Emitter::function_name($entry->file->declarations['func:update']);
 		$cpp = '#include <stdexcept>' . "\n#include <string_view>\n"
-			. str_replace('int main()', 'int unused_entry()', (new Cpp_Emitter())->emit($entry));
+			. rename_fixture_main('unused_entry', (new Cpp_Emitter())->emit($entry));
 		$cpp .= "\nint main() { " . type_int64::instance()->cpp_type() . ' value = 10; try { ' . $name . '(value); }'
 			. ' catch (const std::domain_error& e) { return value == ' . $expected
 			. ' && std::string_view(e.what()) == "' . $error . '" ? 8 : 91; } return 90; }';

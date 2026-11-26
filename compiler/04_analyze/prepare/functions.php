@@ -165,6 +165,7 @@ final class Function_Preparation
 			return;
 		}
 		if ($value instanceof ast_keyed_collection_expression) {
+			$value->record_call = null;
 			foreach ($value->entries as $entry) {
 				$entry->conversion = null;
 				self::expression($entry->key);
@@ -173,6 +174,7 @@ final class Function_Preparation
 			return;
 		}
 		if ($value instanceof ast_collection_expression) {
+			$value->record_call = null;
 			foreach ($value->elements as $element) self::expression($element);
 			return;
 		}
@@ -278,6 +280,17 @@ final class Function_Preparation
 				if ($hash && $key !== type_int64::instance() && $key !== type_string::instance())
 					throw new diagnostic($key_syntax->source(), $key_syntax->byte_start(), 'Hash segment keys must be int or string');
 				$parameter_type = new segment_type($element, str_starts_with($parameter->type_reference->name, 'read_'), $key);
+			} elseif ($parameter->type_reference->name === 'callback_view' && $parameter->type_reference->first_child !== null) {
+				$flag = $declaration->parameters[0];
+				$conditional = count($declaration->parameters) === 2 && $declaration->parameters[1] === $parameter
+					&& $flag->type_def() === type_bool::instance() && $flag->mode === passing_mode::value && $flag->default_value === null;
+				if ($parameter->type_reference->spelling() !== 'callback_view<void>' || (count($declaration->parameters) !== 1 && !$conditional)
+					|| $parameter->type_reference instanceof ast_variadic_type_reference
+					|| $declaration->is_async || $declaration->returns_reference || $type !== type_void::instance()
+					|| $declaration->parent instanceof ast_method_owner || $parameter->mode !== passing_mode::value || $parameter->default_value !== null) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'A callback view requires a synchronous void free function with a required callback_view<void> parameter optionally preceded by a required by-value bool');
+				}
+				$parameter_type = new callback_view_type();
 			} else $parameter_type = $parameter->type_reference->name === 'callback' && $parameter->type_reference->first_child !== null
 				? Type_Resolution::callback($parameter, $symbols, $declaration, $watcher, $dependencies)
 				: Type_Resolution::signature($parameter->type_reference, $symbols, $declaration, $dependencies, watcher: $watcher);
@@ -296,18 +309,40 @@ final class Function_Preparation
 			if ($parameter_type instanceof record_type_definition && $parameter->mode === passing_mode::reference) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Writable inline struct parameters are deferred');
 			}
-			if ($parameter->mode === passing_mode::readonly_reference && ($declaration->parent instanceof ast_method_owner
-				|| !($parameter_type instanceof vector_type_definition || $parameter_type instanceof hash_type_definition))) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector or hash parameter of a free function');
+			if ($parameter->mode === passing_mode::readonly_reference) {
+				$collection = Type_Resolution::readonly_collection_input($parameter_type);
+				if ($declaration->parent instanceof ast_method_owner) {
+					if (!$collection || !($declaration->parent instanceof ast_record_declaration)
+						|| $declaration->is_destructor()) {
+						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const method references require a vector or hash on an ordinary class, struct or interface method');
+					}
+				} elseif (!$collection && !($parameter_type instanceof text_builder_type)) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector, hash or text builder parameter');
+				}
+			}
+			if ($parameter->type_reference instanceof ast_variadic_type_reference) {
+				if (($declaration->parent instanceof ast_enum_declaration && !$declaration->is_static)
+					|| $declaration->is_destructor() || $declaration->is_async || $type instanceof generator_type_definition) {
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameters require a synchronous function or ordinary method with a supported vector element');
+				}
+				self::require_pack_type($parameter, $parameter_type);
 			}
 			$parameter->settle_type($parameter_type);
-			if ($optional || $parameter->default_value !== null) {
+			if (($optional || $parameter->default_value !== null) && !($parameter->type_reference instanceof ast_variadic_type_reference)) {
 				self::parameter_default($parameter, $symbols, $watcher, $dependencies);
 				$optional = true;
 			}
 		}
 		$reference_origin = $declaration->returns_reference ? self::reference_return_origin($declaration, $type) : null;
 		$declaration->settle_return_type($type, $reference_origin);
+	}
+
+	/** Named and contextual variadics share the same owned vector storage contract. */
+	public static function require_pack_type(ast_parameter_declaration $parameter, ?type_definition $type): void
+	{
+		if (!($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
+			throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameter requires a supported vector element');
+		}
 	}
 
 	/** Validate the optional suffix and prepare a default once against its declared type. */

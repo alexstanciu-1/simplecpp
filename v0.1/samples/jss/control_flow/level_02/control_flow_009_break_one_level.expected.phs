@@ -1,5 +1,0 @@
-$i int = 0;
-while (true) {
-	echo $i, "\n";
-	break;
-}

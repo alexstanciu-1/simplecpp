@@ -1,0 +1,172 @@
+// Keep each original inode until all replacements have been installed under the bundle lock.
+final class Unit_Replacement {
+	public readonly string $path;
+	private string $backup = "";
+	private bool $saved = false;
+	private bool $installed = false;
+
+	public function __construct(string $path) {
+		$this->path = $path;
+	}
+
+	public function install(string $directory, string $text): bool {
+		if (fs_is_link($this->path)) throw Exception::make("Invalid output file");
+		$exists = fs_exists($this->path);
+		if ($exists) {
+			if (!fs_is_file($this->path)) throw Exception::make("Invalid output file");
+			$previous string = fs_get($this->path);
+			if ($previous === $text) return false;
+		}
+		$stage string = fs_stage($directory);
+		try {
+			$count int = fs_put($stage, $text);
+			if ($count !== strlen($text)) throw Exception::make("Incomplete staged unit");
+			if ($exists) {
+				$this->backup = fs_stage($directory);
+				if (!fs_rename($this->path, $this->backup)) throw Exception::make("Cannot save output file");
+				$this->saved = true;
+			}
+			if (!fs_rename($stage, $this->path)) throw Exception::make("Cannot install output file");
+			$this->installed = true;
+		} finally {
+			if (fs_exists($stage)) fs_remove($stage);
+		}
+		return true;
+	}
+
+	public function withdraw(string $directory): void {
+		if (fs_is_link($this->path) || !fs_is_file($this->path)) throw Exception::make("Invalid output file");
+		$this->backup = fs_stage($directory);
+		if (!fs_rename($this->path, $this->backup)) throw Exception::make("Cannot withdraw " . $this->path);
+		$this->saved = true;
+	}
+
+	public function finish(bool $committed): void {
+		if (!$committed && $this->saved) {
+			if (!fs_rename($this->backup, $this->path)) throw Exception::make("Restore failed: " . $this->backup);
+		} elseif (!$committed && $this->installed) {
+			if (!fs_remove($this->path)) throw Exception::make("Cannot withdraw " . $this->path);
+		}
+		if ($this->backup !== "" && fs_exists($this->backup)) fs_remove($this->backup);
+	}
+}
+
+// A published unit depends on its own declaration and the ABI of any called function.
+final class Published_Function_Unit {
+	public readonly Prepared_Declaration $source;
+	private readonly ?Numeric_Call_Contract $signature;
+	public readonly string $text;
+
+	public function __construct(Prepared_Declaration $source, string $text) {
+		$this->source = $source;
+		$binding = $source->call;
+		if ($binding === null) $this->signature = null;
+		else $this->signature = $binding->contract();
+		$this->text = $text;
+	}
+
+	public function matches(Prepared_Declaration $source): bool {
+		$binding = $source->call;
+		return $this->source === $source && ($binding === null || $binding->matches_published($this->signature));
+	}
+}
+
+final class Unit_Lowering {
+	private ?Published_Function_Unit $definition = null;
+	private ?Prepared_Call $caller = null;
+	private ?Numeric_Call_Contract $entry_signature = null;
+	private string $caller_text = "";
+	private string $adapter = "";
+	private hash<Published_Function_Unit,string> $other_definitions;
+
+	public function publish(string $directory, Prepared_Call $entry, hash<Prepared_Declaration,string> $sources, string &$emitted, string &$changed): void {
+		$target = $entry->target();
+		$definition = $this->definition;
+		$caller = $this->caller_text;
+		$adapter = $this->adapter;
+		if ($definition === null || !$definition->matches($target)) {
+			$emitted .= $target->scope->source->path . ",";
+			$definition = new Published_Function_Unit($target, emit_definition_unit($target));
+		}
+		if ($entry !== $this->caller || !$entry->matches_published($this->entry_signature)) {
+			$emitted .= "main.php,";
+			$caller = emit_call_unit($entry);
+		}
+		if ($adapter === "") $adapter = emit_entry_adapter();
+
+		if (fs_is_link($directory) || (!fs_is_dir($directory) && !fs_mkdir($directory) && !fs_is_dir($directory))) {
+			throw Exception::make("Cannot open output directory");
+		}
+		$lock_path = $directory . "/.scpp-bundle.lock";
+		if (fs_is_link($lock_path)) throw Exception::make("Invalid bundle lock");
+		$lock = fs_lock_empty();
+		$held bool = fs_lock_try($lock, $lock_path);
+		if (!$held) throw Exception::make("Output bundle busy");
+		$names vector<string> = ["definition.cpp", "main.cpp", "entry.cpp"];
+		$texts vector<string> = [$definition->text, $caller, $adapter];
+		$marker = "// Simple C++ retained function unit\n";
+		$other hash<Published_Function_Unit,string> = [];
+		foreach ($sources as $path => $source) {
+			if ($source === $target) continue;
+			$name = "unit-" . fs_basename($path) . ".cpp";
+			if (!$this->other_definitions->has($name) && fs_is_file($directory . "/" . $name)) {
+				$old string = fs_get($directory . "/" . $name);
+				if (!str_starts_with($old, $marker)) throw Exception::make("Unowned output file: " . $name);
+			}
+			$text = "";
+			$unit = hash_get_or_null($this->other_definitions, $name);
+			if ($unit !== null && $unit->matches($source)) {
+				$text = $unit->text;
+				$other[$name] = $unit;
+			} else {
+				$text = $marker . emit_definition_unit($source);
+				$emitted .= $path . ",";
+				$other[$name] = new Published_Function_Unit($source, $text);
+			}
+			$names[] = $name;
+			$texts[] = $text;
+		}
+		$files vector<Unit_Replacement> = [];
+		$committed = false;
+		$writes = "";
+		try {
+			foreach ($names as $i => $name) {
+				$file = new Unit_Replacement($directory . "/" . $name);
+				$files[] = $file;
+				if ($file->install($directory, $texts[$i])) $writes .= $name . ",";
+			}
+			// Recover the owned unit set even if a fresh process opens an existing bundle.
+			$existing vector<string> = fs_scan($directory);
+			foreach ($existing as $name) {
+				if (!str_starts_with($name, "unit-") || !str_ends_with($name, ".php.cpp") || isset($other[$name])) continue;
+				$path = $directory . "/" . $name;
+				if (fs_is_link($path) || !fs_is_file($path)) continue;
+				$old string = fs_get($path);
+				if (!str_starts_with($old, $marker)) continue;
+				$file = new Unit_Replacement($path);
+				$files[] = $file;
+				$file->withdraw($directory);
+				$writes .= $name . ",";
+			}
+			$committed = true;
+		} finally {
+			$cleanup_error = "";
+			foreach ($files as $file) {
+				try {
+					$file->finish($committed);
+				} catch (Exception $failure) {
+					$cleanup_error .= $failure->get_message() . "\n";
+				}
+			}
+			if ($cleanup_error !== "") throw Exception::make($cleanup_error);
+		}
+		// A failed attempt leaves the published syntax identities and text unchanged.
+		$this->definition = $definition;
+		$this->caller = $entry;
+		$this->entry_signature = $entry->contract();
+		$this->caller_text = $caller;
+		$this->adapter = $adapter;
+		$this->other_definitions = $other;
+		$changed = $writes;
+	}
+}

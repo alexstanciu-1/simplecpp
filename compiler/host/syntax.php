@@ -112,12 +112,14 @@ final class Syntax_Inspection
 			$row = ['kind' => 'base_initialization', 'explicit' => $expression->explicit, 'target' => $expression->target?->spelling(),
 				'arguments' => array_map(self::expression(...), $expression->arguments)];
 			if ($expression->named !== null) $row['labels'] = $expression->named->labels;
+			if ($expression->unpacked) $row['arguments'][array_key_last($expression->arguments)]['unpacked'] = true;
 			return $row;
 		}
 		if ($expression instanceof ast_construction_expression) {
 			$row = $expression instanceof ast_new_expression ? ['kind' => 'new', 'target' => $expression->target->name] : ['kind' => 'struct_default'];
 			if ($expression->named !== null) $row['labels'] = $expression->named->labels;
 			if ($expression->arguments !== []) $row['arguments'] = array_map(self::expression(...), $expression->arguments);
+			if ($expression->unpacked) $row['arguments'][array_key_last($expression->arguments)]['unpacked'] = true;
 			return $row;
 		}
 		if ($expression instanceof ast_called_type_name) {
@@ -216,30 +218,32 @@ final class Syntax_Inspection
 		if ($expression instanceof ast_callable_reference) {
 			return ['kind' => 'callable_reference', 'name' => $expression->name, 'span' => self::span($expression)];
 		}
-		if ($expression instanceof ast_named_call) {
-			return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->named->labels,
-				'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
-		}
 		if ($expression instanceof ast_call_expression) {
+			$arguments = array_map(self::expression(...), $expression->arguments);
+			if ($expression->unpacked ?? false) $arguments[array_key_last($arguments)]['unpacked'] = true;
+			if ($expression instanceof ast_named_call) {
+				return ['kind' => 'named_call', 'name' => $expression->name, 'labels' => $expression->named->labels,
+					'arguments' => $arguments, 'span' => self::span($expression)];
+			}
 			if ($expression->qualifier === call_qualifier::local) {
-				return ['kind' => 'local_call', 'name' => $expression->name, 'arguments' => array_map(self::expression(...), $expression->arguments),
+				return ['kind' => 'local_call', 'name' => $expression->name, 'arguments' => $arguments,
 					'span' => self::span($expression)];
 			}
 			if ($expression->qualifier === call_qualifier::lexical_parent || $expression->qualifier === call_qualifier::called_type) {
 				return ['kind' => $expression->qualifier === call_qualifier::called_type ? 'late_static_call' : 'parent_call', 'name' => $expression->name,
-					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
+					'arguments' => $arguments, 'span' => self::span($expression)];
 			}
 			if ($expression->receiver !== null) {
 				return ['kind' => 'member_or_qualified_call', 'name' => $expression->name,
 					'receiver' => self::expression($expression->receiver),
-					'arguments' => array_map(self::expression(...), $expression->arguments), 'span' => self::span($expression)];
+					'arguments' => $arguments, 'span' => self::span($expression)];
 			}
 			$name_end = $expression->start;
 			while ($expression->lexical_root()->tokens->tokens[$name_end]->kind !== token_kind::lparen) {
 				$name_end++;
 			}
 			return ['kind' => 'call', 'name' => self::name($expression, $expression->name, $expression->start,
-				$name_end), 'arguments' => array_map(self::expression(...), $expression->arguments),
+				$name_end), 'arguments' => $arguments,
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_string_expression) {

@@ -6,7 +6,7 @@ require_once __DIR__ . '/vectors.php';
 require_once __DIR__ . '/interfaces.php';
 require_once __DIR__ . '/carriers.php';
 require_once __DIR__ . '/hashes.php';
-@boxed_require@
+@optional_requires@
 // Generated from runtime compiler module metadata. Do not edit.
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry
@@ -121,12 +121,12 @@ final class type_registry
 /** Published fixed-arity runtime call signatures, shared across source units. */
 final class runtime_functions
 {
-	public static function free(string $key, flavor $flavor): runtime_function|runtime_overloads|null
+	public static function free(string $key, flavor $flavor): runtime_function|runtime_overloads|runtime_factory|null
 	{
 		return self::resolve($key) ?? self::resolve($flavor->name . ':' . $key);
 	}
 
-	public static function resolve(string $key): runtime_function|runtime_overloads|null
+	public static function resolve(string $key): runtime_function|runtime_overloads|runtime_factory|null
 	{
 		static $bindings = [];
 		return match ($key) {

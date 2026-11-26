@@ -2,6 +2,9 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
+require_once __DIR__ . '/json_handles.php';
+
+const JSON_RECORD_READERS = ['int64' => 'read_integer', 'bool_t' => 'read_boolean', 'string' => 'read_string'];
 const JSON_OPERATIONS = [
     'decode' => ['decode', 'dynamic', 'result_dynamic', 'string'],
     'decode_mixed' => ['decode_mixed', 'mixed', 'result_mixed', 'string'],
@@ -26,7 +29,7 @@ function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
     foreach ($registered as $id) requireThat(isset(JSON_OPERATIONS[$id]), 'Unsupported JSON operation');
     if (!property_exists($publication, 'json')) return;
     $p = $publication->json;
-    fields($p, ['header', 'operations']);
+    fields($p, ['header', 'operations', 'document', 'pull_reader']);
     $header = headerPath(at($p, 'header'));
     checkHeader($plan, $header);
     requireThat(!property_exists($plan['aliases'], 'json'), 'Conflicting JSON namespace');
@@ -50,10 +53,44 @@ function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
         requireThat(in_array($result, array_column($plan['carriers'], 'name'), true), 'JSON requires published result carrier');
         $operations[] = compact('id', 'name', 'family', 'result', 'argument', 'transport', 'nullablePayload');
     }
-    requireThat($operations !== [], 'Empty JSON publication');
+    prepareJsonHandles($p, $header, $plan);
+    requireThat($operations !== [] || isset($plan['json_handles']), 'Empty JSON publication');
     $plan['json'] = ['module' => 'json', 'namespace' => 'scpp::json', 'header' => $header,
         'key_limit' => 'checked_decode_error', 'operations' => $operations,
         'build' => ['target' => 'scpp_json', 'requires' => 'scpp_runtime',
             'generated_sources' => ['src/json.cpp'], 'private_sources' => ['runtime/src/json/json_native.cpp'],
             'private_includes' => ['runtime/src/json', 'runtime/src/boxed', 'runtime/src/hash', 'runtime/src/ownership', 'runtime/src/numeric']]];
+}
+
+/** Select source signatures only when the active compiler also publishes their types. */
+function compilerJsonCases(?array $runtime, array $types): array {
+    $cases = [];
+    $encoders = [];
+    foreach ($runtime['json']['operations'] ?? [] as $op) {
+        if (!isset($types[$op['argument']], $types[$op['result']])) continue;
+        $argument = 'type_' . $types[$op['argument']];
+        $result = 'type_' . $types[$op['result']];
+        $name = 'json_' . $op['name'];
+        $header = moduleOperationHeader($runtime['json']['header'], $op['id']);
+        $binding = "new runtime_function('$name', [$argument::instance()], $result::instance(), '::scpp::json::{$op['name']}', '$header', const_reference_mask: 1, required_module: 'runtime-json', exact_arguments: true)";
+        if ($op['id'] === 'decode') {
+            $leaves = [];
+            foreach (JSON_RECORD_READERS as $id => $method) {
+                if (isset($types[$id])) $leaves[] = 'type_' . $types[$id] . "::class => '$method'";
+            }
+            $cases[] = "\t\t\t'php:func:json_decode_as', 'general:func:json_decode_as' => \$bindings[\$key] ??= new json_decoder_contract(["
+                . implode(', ', $leaves) . "], '" . moduleOperationHeader($runtime['json']['header'], 'decode_record') . "'),";
+        }
+        if ($name === 'json_encode') {
+            $encoders[] = "$argument::class => $binding";
+        } else {
+            $keys = $name === 'json_decode' ? "'php:func:$name', " : '';
+            $cases[] = "\t\t\t$keys'general:func:$name' => \$bindings[\$key] ??= $binding,";
+        }
+    }
+    if ($encoders !== []) {
+        $cases[] = "\t\t\t'php:func:json_encode', 'general:func:json_encode' => \$bindings[\$key] ??= new json_encoder_overloads(["
+            . implode(', ', $encoders) . "], '" . moduleOperationHeader($runtime['json']['header'], 'encode_fields') . "'),";
+    }
+    return array_merge($cases, compilerJsonDocumentCases($runtime, $types), compilerJsonReaderCases($runtime, $types));
 }

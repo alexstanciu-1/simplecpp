@@ -5,6 +5,7 @@ public:
     static const error_t no_error;
     bool_t has_error() const noexcept;
     explicit operator bool() const noexcept;
+    bool_t same_identity(const error_t& other) const;
     string get_message() const;
     int64 get_line() const noexcept;
     string get_file() const;

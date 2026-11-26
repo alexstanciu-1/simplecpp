@@ -1,1 +1,0 @@
-$d dynamic = {}; $m mixed = $d; return 0;

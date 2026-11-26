@@ -3,6 +3,10 @@
 Doc Status: normative
 Scope: the bounded PHP compiler rebuild under `compiler/`.
 
+## Executable arguments
+
+When the runtime publication selects an argument reader, generated main accepts native argc and argv and passes them through the entry exception boundary. The authored entry body keeps its parameterless signature. A publication without argument readers uses the original parameterless adapter. The [runtime API summary](runtime_api_summary.md#executable-arguments-and-environment) defines the visible readers and snapshot types.
+
 ## Source contract
 
 The first executable slice admits a single file containing explicitly typed integer
@@ -240,7 +244,49 @@ parameter names. Those names are part of its public API. Renaming one breaks cal
 that use the old label. The first binding is PHP `str_repeat(string, times)`.
 For example, `str_repeat(times: repetitions(), string: fragment())` evaluates
 `repetitions()` first and passes its result as the second argument.
-Typed callback calls require positional arguments. Variadic signatures remain deferred.
+Typed callback calls require positional arguments.
+
+A synchronous PHP free function, ordinary class or struct method (static or instance), arrow, or block closure can end its parameter list with one by-value
+`T ...$values`. Inside the body, `$values` is an owned `vector<T>`. Positional
+calls bind the fixed prefix (including its ordinary defaults), then evaluate and
+convert each remaining argument once in source order using the vector element
+contract. Zero trailing arguments produce an empty vector.
+
+The corresponding last input is written `T...` in `callback<R,T...>` and
+`function<R(T...)>`. Named and anonymous targets must match the marker exactly. A fixed
+`vector<T>` input and a variadic `T...` input have distinct source signatures.
+A closure may write `...$values` when its callable destination supplies the element type.
+PHP arrows and block closures may declare the pack read-only with `T &...$values`,
+or `&...$values` when a callable destination supplies the element type. The same
+element eligibility and write checks apply as for a named read-only pack. Direct
+and adapted invocations both supply the ordinary owned vector.
+The ellipsis is always explicit. A positional call can supply its entire tail
+as one final unpacked vector, for example `score($base, ...$items)` or
+`$op(...$items)` for a pack-only signature. Supply every fixed argument
+before the vector. The vector must match the pack storage type exactly.
+It is evaluated once, after the fixed arguments, and passed with ordinary
+vector value semantics. Mutating the pack leaves the caller’s vector storage
+independent. An empty vector supplies zero elements.
+
+When a call selects a source declaration, labels may bind its fixed parameters.
+For example, `score(bonus: first(), base: second())` evaluates `first()` before
+`second()`, applies defaults to omitted optional fixed parameters, and supplies
+an empty pack. To supply the pack, write every fixed argument before one final
+unlabeled vector, as in `score(bonus: first(), base: second(), ...items())`.
+The vector expression runs once after both fixed expressions, and the callee owns
+its pack. Missing fixed arguments (including defaulted ones), labels on the pack,
+and additional operands after the vector are errors in this form. Typed callbacks
+and owned callables retain positional invocation.
+Reference packs remain deferred.
+
+PHP class and struct constructors accept the same trailing by-value pack. Both
+shared construction (`new Scores(1, ...$items)`) and inline struct construction
+(`$cell Cell(1, ...$items);`) evaluate explicit inputs once in source order.
+When all fixed inputs can be omitted, default construction, including that of an
+embedded struct field, applies their defaults and passes an empty vector.
+A derived constructor can forward a matching vector to `parent::__construct`
+or pass individual elements. Its base subobject is initialized before the
+derived fields and constructor body.
 Duplicate same-name functions remain errors, even if their parameter types differ.
 
 ### Named callbacks
@@ -255,7 +301,11 @@ Pass a source function as `name(...)`. A type-qualified reference such as
 `Math::twice(...)` (PHP and C++) or `Math.twice(...)` (JS) can select a
 static method using normal name lookup and access checks. The ellipsis forms
 a reference without invoking its target. The expected types and arity must
-match the target's required signature exactly, including each input's passing mode. Inside the accepting
+match the full declared signature, including each input's passing mode and the
+variadic marker. A named free function or static method with trailing defaults
+can supply either a typed callback or an owned callable. Direct calls may omit
+defaulted arguments. Calls through either callable supply every fixed argument.
+Inside the accepting
 function, invoke the parameter with ordinary call syntax (`$op(value)` in PHP,
 `op(value)` in C++ and JS), or forward it to another matching callback
 parameter. A trailing `&` marks a mutable reference input, as in
@@ -463,7 +513,7 @@ exclusive borrowing claim or general alias graph is required by this bounded sli
 
 Passing mode participates in signature-change invalidation. Read-only references,
 reference parameter defaults, reference returns, local aliases, interior references,
-variadics and escaping captures remain deferred. Value-parameter defaults continue
+reference variadics and escaping borrowed captures remain deferred. Value-parameter defaults continue
 to work after required reference parameters. Global assignment syntax remains deferred.
 
 ### Braced conditional bodies

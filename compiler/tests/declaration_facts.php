@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
+require_once __DIR__ . '/preparation_snapshot.php';
 
 use scpp\compiler\{Source_Frontend, Symbol_Publication, Function_Preparation, Preparation,
 		Program_Preparation, Cpp_Emitter, ast_node, ast_call_statement, diagnostic, entry_target, flavor, ast_file_node, ast_function_body, ast_function_declaration, scope,
@@ -55,9 +56,10 @@ Function_Preparation::reset($main);
 unresolved(fn() => $first->type_def());
 unresolved(fn() => $call->function_def());
 $program = Program_Preparation::prepare('facts', ['facts' => $file], new entry_target(31));
-$before = serialize($program);
+$snapshot = new Preparation_Snapshot();
+$before = $snapshot->capture($program);
 (new Cpp_Emitter())->emit($program->entry);
-verify(serialize($program) === $before, 'Lowering changed declaration facts');
+verify($snapshot->capture($program) === $before, 'Lowering changed declaration facts');
 foreach ([['auto x = 3; return 8;', flavor::cpp], ['let x = 3; return 8;', flavor::js]] as [$text, $flavor])
 {
 	$missing = $frontend->collect(new source_file('missing', $text, $flavor));

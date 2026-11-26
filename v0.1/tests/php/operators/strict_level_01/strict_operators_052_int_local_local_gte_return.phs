@@ -1,5 +1,0 @@
-function run(): bool {
-	$left int = 5;
-	$right int = 5;
-	return $left >= $right;
-}

@@ -10,7 +10,9 @@ PHP uses `foreach ($items as $key => $value) { ... }`; C++ and JS use
 Python uses an indented for name in source suite for typed vector elements or typed hash keys.
 JS also supports for (name in source) with a braced body for typed hash keys.
 Both key-only forms share the existing destination and loop scope rules and materialize only the key.
-Reference bindings, destructuring and nullable unwrapping are deferred.
+PHP writable vector and hash bindings use the [indexed write-through contract](../../specs/collection_traversal.md#php-writable-vector-and-hash-foreach).
+Preparation tracks active collection storage IDs while visiting the body and checks mutable call effects against those IDs.
+Vector lowering uses a private index. Hash lowering advances the generated live-key cursor, reads the current slot, and writes through the private selected key. Destructuring and nullable unwrapping are deferred.
 Concrete [yield producers](yield.md) reuse this traversal path.
 [Iterator<T> and Iterator<T,K> structs](iterator.md) support custom traversal. Scalar/null
 boxed sources throw, including on a later advance after replacement. Statically noniterable sources are preparation errors.
@@ -121,7 +123,7 @@ value/key outputs, copies, shared identity, receiver replacement, growth and sus
 in all flavors. Sixteen revisions per flavor cover edits, deletion, retry, recovery, namespace
 changes and fresh-build equivalence. Additional probes check cursor moves, early close and
 exception cleanup. The concrete recipe probes cover throwing copies, aligned values, hash
-holes and leaks under ASan/UBSan. Cross-thread mutation and by-reference foreach remain deferred.
+holes and leaks under ASan/UBSan. Cross-thread structural mutation remains deferred.
 
 Application traversal fixture measurements (2026-11-18): four source units plus entry,
 required constructors, hash/vector loops and suspended producers. Native columns are medians

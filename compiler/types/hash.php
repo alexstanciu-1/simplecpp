@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements indexed_mutation_type, counted_collection_type, membership_type
+abstract class hash_type_definition extends type_definition implements readonly_index_lookup_type, writable_iteration_type, indexed_mutation_type, counted_collection_type, membership_type
 {
 	use checked_indexed_mutation;
 	use collection_specializations;
@@ -25,6 +25,22 @@ abstract class hash_type_definition extends type_definition implements indexed_m
 	}
 
 	/** METHODS */
+	/** A keyed probe of a nullable shared value inspects the stored owner after lookup. */
+	public function probes_stored_owner(): bool
+	{
+		return $this->value_type instanceof shared_record_type_definition && !$this->value_type->required;
+	}
+
+	public function private_copy_allocation_only(): bool
+	{
+		return $this->key_type->copy_has_no_observable_effects() && $this->value_type->copy_has_no_observable_effects();
+	}
+
+	public function lower_cpp_iteration_reference(string $receiver, int $loop_start): string
+	{
+		return "$receiver.iteration_reference(loop_{$loop_start}_iteration_position)";
+	}
+
 	public function supports_inferred_local(): bool
 	{
 		return true;
@@ -43,6 +59,16 @@ abstract class hash_type_definition extends type_definition implements indexed_m
 	public function lower_cpp_key(ast_expression $syntax, string $key): string
 	{
 		return $this->key_type->lower_cpp_exact_argument($syntax, value_conversion::identity, $key);
+	}
+
+	public function publishes_entry_isset(): bool
+	{
+		return false;
+	}
+
+	public function php_isset_header(): string
+	{
+		return 'scpp/php/hash_isset.hpp';
 	}
 
 	abstract public function presence_function(): runtime_function;

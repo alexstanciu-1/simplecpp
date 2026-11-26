@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
@@ -104,7 +105,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	foreach (array_merge(array_map(static fn(string $name): string => $name . '_write', array_keys($arithmetic)), ['failed_write']) as $name) {
 		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
-	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()', (new Cpp_Emitter())->emit($prepare($code . 'return 8;'))) . $observer, 'stdout_hex' => ''];
+	$fixtures[$flavor->name . '_boundary'] = ['cpp' => rename_fixture_main('tested_entry', (new Cpp_Emitter())->emit($prepare($code . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 	$main = $decl('float', '8.0') . $x . '+=(byte)2;' . $x . '-=(uint8)4;' . $x . '*=(byte)3;' . $x . '/=(byte)2;'
 		. 'if (' . $x . '==9.0 && (byte)7/2.0==3.5 && 7.0/(byte)2==3.5) { echo "Y"; }'
 		. 'if ((byte)255<255.5 && 255.5>(byte)255 && (byte)0==-0.0 && -0.0==(byte)0) { echo "Y"; }'

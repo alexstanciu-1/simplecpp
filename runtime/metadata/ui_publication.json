@@ -1,0 +1,18 @@
+{
+  "types": {"ui_app": {"carriers": ["result"]}, "ui_window": {"carriers": ["result", "nullable"]}, "ui_event": {"carriers": ["nullable"]}},
+  "operations": [
+    {"native": "ui_app_create", "general": ["ui_app_create"], "parameters": [], "result": "result_ui_app"},
+    {"native": "ui_window_create", "general": ["ui_window_create"], "parameters": ["ui_app", "string", "int64", "int64"], "result": "result_ui_window"},
+    {"native": "ui_window_show", "general": ["ui_window_show"], "parameters": ["ui_window"], "result": "result_bool_t"},
+    {"native": "ui_window_close", "general": ["ui_window_close"], "parameters": ["ui_window"], "result": "result_bool_t"},
+    {"native": "ui_app_poll", "general": ["ui_app_poll"], "parameters": ["ui_app"], "result": "bool_t"},
+    {"native": "ui_app_next_event", "general": ["ui_app_next_event"], "parameters": ["ui_app"], "result": "nullable_ui_event"},
+    {"native": "ui_app_exit", "general": ["ui_app_exit"], "parameters": ["ui_app"], "result": "void"},
+    {"native": "ui_event_type", "general": ["ui_event_type"], "parameters": ["ui_event"], "result": "string"},
+    {"native": "ui_event_window", "general": ["ui_event_window"], "parameters": ["ui_event"], "result": "nullable_ui_window"},
+    {"native": "ui_event_text", "general": ["ui_event_text"], "parameters": ["ui_event"], "result": "string"},
+    {"native": "ui_event_message", "general": ["ui_event_message"], "parameters": ["ui_event"], "result": "string"},
+    {"native": "ui_event_url", "general": ["ui_event_url"], "parameters": ["ui_event"], "result": "string"}
+  ],
+  "constants": {}
+}

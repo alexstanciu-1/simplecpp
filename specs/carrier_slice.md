@@ -13,7 +13,7 @@ family/payload pairs. Defaults publish nullable, result, result_or_false and
 result_or_bool for int64, bool_t, string and vector_string: sixteen concrete classes
 in scpp/carriers.hpp, with short names available through short_names.hpp.
 Other published integers, float64 and concrete vectors can be requested.
-The [boxed-result extension](boxed_results.md) additionally admits result_mixed and
+The [boxed-result extension](boxed_results.md) additionally admits result_mixed, result_or_false_mixed and
 result_dynamic when their boxed family is published. Other boxed carrier families
 remain unadmitted. Bare `null_t` payloads,
 nested carriers, errors as payloads, arbitrary user classes and move-only payloads
@@ -96,6 +96,11 @@ Constructing a failed result from no_error throws std::invalid_argument with
 result_requires_real_error before publishing a new state. Reading error() from a
 successful result throws std::runtime_error with result_no_error. Error inspection
 returns value copies, so a caller cannot mutate a failure into no_error through it.
+For two results of the same specialization, `same_error_identity(other)` is true
+when both contain errors with matching identity fields. The runtime borrows both
+stored errors and compares string fields as byte views. The public `error()`
+accessor continues to return an owned value.
+
 error_t has explicit native-bool condition conversion and has_error(); message/line/
 file do not determine presence. The type stays namespaced by default because this
 platform's C headers also define a global error_t typedef.

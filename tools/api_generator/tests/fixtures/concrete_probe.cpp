@@ -75,6 +75,27 @@ int main() {
     }
     assert(Probe::live == 0);
     {
+        Probe seed{3};
+        auto values = ProbeVector::filled(2, seed);
+        auto moved = static_cast<ProbeVector&&>(values);
+        assert(values.capacity() == 0 && moved.size() == 2);
+        const auto capacity = moved.capacity();
+        try { moved.resize(-1, seed); assert(false); } catch (const scpp::ValueError&) {}
+        try { moved.compact(-1); assert(false); } catch (const scpp::ValueError&) {}
+        try { (void)ProbeVector::filled(-1, seed); assert(false); } catch (const scpp::ValueError&) {}
+        assert(moved.capacity() == capacity && moved.size() == 2);
+        Probe::copy_budget = 1;
+        try { moved.resize(100, seed); assert(false); } catch (int code) { assert(code == 42); }
+        assert(moved.size() == 2 && Probe::live == 3);
+        Probe::copy_budget = 1;
+        try { (void)ProbeVector::filled(100, seed); assert(false); } catch (int code) { assert(code == 42); }
+        assert(Probe::live == 3);
+        Probe::copy_budget = -1;
+        moved.compact(0);
+        assert(moved.at(1).value == 3);
+    }
+    assert(Probe::live == 0);
+    {
         scpp::ProbeHash::storage values;
         const auto authored = Probe::authored;
         for (int i = 0; i < 300; ++i) values.set(i, Probe{i});
@@ -109,7 +130,10 @@ int main() {
         scpp::int64 position = 0, key = -1;
         assert(!output.active && !values.iteration_next(position, 0, output));
         assert(Probe::authored == authored);
+        try { (void)values.iteration_reference(0); assert(false); } catch (const std::out_of_range&) {}
         values.append(Probe{5}); values.append(Probe{6});
+        assert(values.iteration_reference(0).value == 5);
+        try { (void)values.iteration_reference(2); assert(false); } catch (const std::out_of_range&) {}
         Probe::copy_budget = 0;
         try { values.iteration_next(position, 2, output); assert(false); } catch (int code) { assert(code == 42); }
         assert(position == 0 && !output.active && Probe::live == 2);
@@ -139,6 +163,11 @@ int main() {
         assert(values.iteration_next_key(position, 3, key) && position == 2 && key == 1);
         try { (void)values.iteration_current_value(position); assert(false); } catch (int code) { assert(code == 42); }
         assert(position == 2 && key == 1 && !output.active && Probe::live == 2);
+        assert(values.iteration_reference(position).value == 11);
+        // Cursor 1 names the erased entry and cursor 4 is past the physical end.
+        for (int invalid : {0, 1, 4}) {
+            try { (void)values.iteration_reference(invalid); assert(false); } catch (const std::out_of_range&) {}
+        }
         Probe::copy_budget = 1;
         {
             auto selected = values.iteration_current_value(position);

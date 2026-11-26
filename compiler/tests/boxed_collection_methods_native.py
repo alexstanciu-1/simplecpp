@@ -63,7 +63,7 @@ def prove(work,flavor):
     finally:proc.stdin.close();proc.wait()
     for family in ['mixed','dynamic']:
         for label,expr,error in [('count-null',f'count({v}x)','boxed_expected_container'),
-                                 ('empty-null',f'empty({v}x)','boxed_expected_container'),
+                                 ('empty-null',f'empty({v}x)','invalid_empty_operand'),
                                  ('has-scalar',f'{v}x{a}has(0)','boxed_expected_container'),
                                  ('remove-scalar',f'{v}x{a}remove("0")','boxed_expected_container'),
                                  ('negative',f'{v}x{a}has(-1)','packed_integer_key_limit'),

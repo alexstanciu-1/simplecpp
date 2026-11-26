@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
@@ -111,7 +112,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	rejects(fn() => $prepare($decl('1.0') . $x . '=1; return 8;'), 'implicit conversion');
 	$literal = $prepare('return 1;')->body()->statements[0]->value;
 	foreach (\scpp\compiler\conversion_context::cases() as $context) {
-		if (in_array($context, [\scpp\compiler\conversion_context::explicit_cast, \scpp\compiler\conversion_context::typed_destination], true)) {
+		if (in_array($context, [\scpp\compiler\conversion_context::explicit_cast, \scpp\compiler\conversion_context::typed_destination,
+			\scpp\compiler\conversion_context::value_argument], true)) {
 			verify(\scpp\compiler\type_float64::instance()->prepare_conversion($literal, $context)
 				=== \scpp\compiler\value_conversion::numeric_floating, 'Allowed boundary rejected');
 		}
@@ -136,7 +138,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 			$observer = str_replace('@' . $name . '_' . $order . '@', '::App::' . $name . '_' . $order . '_', $observer);
 		}
 	}
-	$fixtures[$flavor->name . '_boundary'] = ['cpp' => str_replace('int main()', 'int tested_entry()',
+	$fixtures[$flavor->name . '_boundary'] = ['cpp' => rename_fixture_main('tested_entry',
 		(new Cpp_Emitter())->emit($prepare($source . 'return 8;'))) . $observer, 'stdout_hex' => ''];
 	$directory = sys_get_temp_dir() . '/scpp-mixed-ordering-' . bin2hex(random_bytes(8));
 	mkdir($directory);

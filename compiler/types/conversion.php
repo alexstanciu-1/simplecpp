@@ -17,6 +17,7 @@ enum conversion_context: int
 	case assignment = 3;
 	case inference = 4;
 	case compound_write_back = 5;
+	case value_argument = 6;
 }
 
 /** Packed prepared conversion: low byte is the scalar operation; high bits describe carrier transport. */
@@ -58,11 +59,18 @@ final class value_conversion
 	public const int intersection_capability /** uint16 */ = 26;
 	public const int guarded_intersection /** uint16 */ = 27;
 
+	public const int decimal_text /** uint16 */ = 29;
+	public const int decimal_literal /** uint16 */ = 30;
+	public const int boxed_nullable_argument /** uint16 */ = 28;
+
 	/** Inspection only; preparation and lowering use numeric operations directly. */
 	public static function name(int $code /** uint16 */): string
 	{
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
+			self::decimal_text => 'decimal_text',
+			self::decimal_literal => 'decimal_literal',
+			self::boxed_nullable_argument => 'boxed_nullable_argument',
 			self::guarded_intersection => 'guarded_intersection',
 			self::intersection_base => 'intersection_base',
 			self::intersection_capability => 'intersection_capability',

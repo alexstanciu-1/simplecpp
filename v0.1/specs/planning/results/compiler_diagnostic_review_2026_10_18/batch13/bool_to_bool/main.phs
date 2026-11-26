@@ -1,1 +1,0 @@
-$x = true; $y bool = $x; return 0;

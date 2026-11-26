@@ -3,7 +3,11 @@ declare(strict_types=1);
 namespace Scpp\Api;
 require_once __DIR__ . '/boxed.php';
 require_once __DIR__ . '/json.php';
+require_once __DIR__ . '/resource_modules.php';
 require_once __DIR__ . '/module_functions.php';
+require_once __DIR__ . '/text_helpers.php';
+require_once __DIR__ . '/cli_helpers.php';
+require_once __DIR__ . '/text_builders.php';
 
 /** Internal native traversal ABI shared by the supported concrete collection families. */
 function collectionTraversalPlan(): array {
@@ -17,6 +21,7 @@ function checkHeader(array $plan, string $header): void {
     foreach (['scalar_core', 'scalar_numeric'] as $group) {
         $paths[] = providerHeader($plan['submodules'], $plan['submodules']['groups'][$group]['provider']);
     }
+    if (isset($plan['string_library'])) $paths[] = providerHeader($plan['submodules'], $plan['string_library']['provider']);
     if (isset($plan['checked_conversions'])) $paths[] = $plan['checked_conversions']['header'];
     foreach (['string', 'hashes', 'datetime', 'boxed', 'json'] as $key) {
         if (isset($plan[$key])) {
@@ -40,7 +45,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json', 'filesystem', 'regex', 'async_frames', 'mt_segments', 'collection_transforms', 'cli_helpers', 'text_helpers', 'text_builders', 'resource_modules']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalarPlan($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -71,9 +76,20 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
         }
     }
     prepareHashes($metadata, $publication, $plan);
+    foreach (names(property_exists($publication, 'collection_transforms') ? $publication->collection_transforms : [], 'Duplicate collection transform') as $name) {
+        requireThat(preg_match('/^(collection|sequence|keyed)_(map|filter)$/D', $name, $match) === 1, 'Unknown collection transform');
+        if (($match[1] !== 'keyed' && $plan['vectors'] !== []) || ($match[1] !== 'sequence' && isset($plan['hashes']))
+            || ($match[1] === 'collection' && isset($plan['boxed_dispatch']))) {
+            $plan['collection_transforms'][] = $name;
+        }
+    }
+    prepareTextBuilders($metadata, $publication, $plan);
+    prepareCliHelpers($publication, $plan);
+    prepareTextHelpers($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
     prepareJson($metadata, $publication, $plan);
     foreach (FUNCTION_MODULES as $family) prepareModuleFunctions($family, $metadata, $publication, $plan);
+    prepareResourceModules($publication, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     finalizePublicationProviders($plan);
@@ -116,7 +132,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($m === null) {
         return;
     }
-    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'functions', 'trim_defaults', 'search_offsets', 'explicit_formatters', 'index_read', 'index_write', 'transfer_assignment']);
+    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'library_provider', 'functions', 'trim_defaults', 'search_policy_provider', 'search_offsets', 'explicit_formatters', 'index_read', 'index_write', 'transfer_assignment']);
     $transfer = privateValueTransfer($m);
     literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'inline_22_private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
@@ -136,7 +152,9 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     fields($p, ['header', 'operations', 'casts', 'functions', 'explicit_formatters', 'index_read', 'index_write']);
     $provider = textValue(at($m, 'provider'));
     $header = providerHeader($plan['submodules'], $provider);
-    if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'String publication header conflicts with provider');
+    $libraryProvider = textValue($m->library_provider ?? $provider);
+    $libraryHeader = providerHeader($plan['submodules'], $libraryProvider);
+    if (isset($p->header)) requireThat(in_array(headerPath($p->header), [$header, $libraryHeader], true), 'String publication header conflicts with provider');
     checkHeader($plan, $header);
     requireThat(hasValue($plan, 'bool_t'), 'String requires published boolean type');
     $operations = [];
@@ -160,11 +178,12 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $methods[] = ['name' => $name, 'result' => $result, 'receiver' => in_array($name, ['append', 'clear'], true) ? 'mutable_reference':'const_reference', 'arguments' => $name === 'append' ? ['const string&']:[], 'result_category' => $name === 'data' ? 'borrowed_bytes_until_mutation_or_destruction':'value', 'can_fail' => in_array($name, ['size', 'append'], true)];
     }
     $requires = array_merge(['bool_t'], names(at($p, 'casts')));
+    $libraryTypes = [];
     $symbols = [];
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'numeric_inputs', 'arities', 'ascii_fold']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'direct_provider', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'numeric_inputs', 'selector', 'arities', 'ascii_fold']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
@@ -196,7 +215,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         foreach ([...$signature['parameters'], $signature['result']] as $type) {
             if ($type === 'string' || $type === 'vector<string>' || $type === 'result_or_false<string>') continue;
             requireThat(hasType($plan, $type) || hasValue($plan, $type), 'String function requires a published parameter/result type');
-            $requires[] = $type;
+            $libraryTypes[] = $type;
         }
         $members = isset($function->members) ? fields($function->members, ['cpp', 'js']) : [];
         $freeNames = isset($function->free_names) ? fields($function->free_names, ['cpp', 'js']) : [];
@@ -235,6 +254,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         }
         $search = in_array($implementation, ['find', 'rfind'], true);
         if ($search) {
+            $policyProvider = textValue($m->search_policy_provider ?? $libraryProvider);
+            $plan['search_policy'] = ['provider' => $policyProvider, 'requires' => []];
             $offsets = fields(at($m, 'search_offsets'), ['php', 'js', 'cpp']);
             requireThat(($function->flavor_adapters ?? false) === true, 'Search requires flavor adapters');
         }
@@ -266,16 +287,28 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         requireThat(!isset($symbols[$symbol]) || (($trim || $replace || $padding || $compare) && $symbols[$symbol] === $implementation), 'Duplicate string function binding');
         $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
-            'symbol' => $symbol, 'implementation' => $implementation, 'header' => $header, 'members' => $members];
+            'symbol' => $symbol, 'implementation' => $implementation, 'header' => $libraryHeader, 'members' => $members];
+        if (isset($function->direct_provider)) {
+            requireThat(in_array($implementation, ['starts_with', 'find'], true) && ($function->flavor_adapters ?? false) === true, 'Unsupported direct string binding');
+            $direct = textValue($function->direct_provider);
+            requireExportDependencies($plan['submodules'], $direct, [$signature['result']]);
+            if ($search) requireThat(isset($plan['submodules']['closures'][$direct][$policyProvider]), 'Search provider requires offset policy');
+            $plan['string_functions'][$name]['direct_provider'] = $direct;
+            $plan['string_functions'][$name]['direct_header'] = providerHeader($plan['submodules'], $direct);
+        }
         if ($search && boolean($function->ascii_fold ?? false)) $plan['string_functions'][$name]['ascii_fold'] = true;
         $formatted = $implementation === 'format_number';
         requireThat($formatted === isset($function->numeric_inputs) && $formatted === isset($function->arities),
             'Numeric input overloads require explicit arities');
+        if (isset($function->selector)) {
+            requireThat($formatted && $function->selector === 'payload_or_box_kind', 'Unsupported overload selector');
+            $plan['string_functions'][$name]['project_selector'] = true;
+        }
         if ($formatted) {
             literals($function, ['numeric_inputs' => ['int64', 'float64'], 'arities' => [1, 2, 4]]);
             foreach ($function->numeric_inputs as $input) {
                 requireThat(hasType($plan, $input) || hasValue($plan, $input), "Number formatting requires $input");
-                $requires[] = $input;
+                $libraryTypes[] = $input;
                 $params = $signature['parameters'];
                 $params[0] = $input;
                 foreach ($function->arities as $arity) {
@@ -332,9 +365,14 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                         literals($signatures[$flavor], ['parameters' => ['string', 'string', 'string', 'int64'],
                             'required_parameters' => 3, 'reference_parameters' => [3]]);
                         requireThat(hasType($plan, 'int64'), 'Replacement count requires int64');
-                        $requires[] = 'int64';
+                        $libraryTypes[] = 'int64';
                     } else {
-                        $options += fields($signatures[$flavor], ['result', 'body']);
+                        $options += fields($signatures[$flavor], ['result', 'body', 'header']);
+                        if (isset($options['header'])) {
+                            requireThat($flavor === 'php', 'Dedicated search result adapter requires PHP');
+                            $options['header'] = headerPath($options['header']);
+                            checkHeader($plan, $options['header']);
+                        }
                         literals($signatures[$flavor], ['result' => 'result_or_false<int64>', 'body' => 'search_offset_or_false']);
                         requireThat(in_array($implementation, ['find', 'rfind'], true), 'Offset body requires byte search');
                     }
@@ -348,19 +386,23 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                 if ($flavor === 'php' && in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true)) $options['swap_first_two'] = true;
                 checkHeader($plan, stringAdapterHeader($flavor, $implementation));
                 $plan['string_functions'][$name]['adapters'][$flavor] = [
-                    'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => stringAdapterHeader($flavor, $implementation)] + $options;
+                    'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => $options['header'] ?? stringAdapterHeader($flavor, $implementation)] + $options;
             }
         }
     }
     foreach (['index_read' => 'result', 'index_write' => 'value'] as $operation => $element) {
         if (!boolean($p->$operation ?? false)) continue;
         $row = at($m, $operation);
-        fields($row, ['method', 'key', $element, 'policy']);
+        fields($row, $operation === 'index_read' ? ['method', 'key', $element, 'policy', 'view_provider'] : ['method', 'key', $element, 'policy']);
         literals($row, ['policy' => 'checked_byte_offset', 'key' => $count, $element => 'uint8']);
         $method = textValue(at($row, 'method'));
         requireThat(preg_match('/^[a-z][a-z0-9_]*$/D', $method) === 1 && !in_array($method, array_column($methods, 'name'), true), 'Invalid string index method');
         requireThat(hasType($plan, $row->key) && hasType($plan, $row->$element), 'String indexing requires published key and byte types');
         $plan['string_' . $operation] = ['name' => $method, 'key' => $row->key, $element => $row->$element];
+        if ($operation === 'index_read') {
+            $view = textValue($row->view_provider ?? $provider);
+            $plan['string_view'] = ['provider' => $view, 'requires' => [$provider], 'header' => providerHeader($plan['submodules'], $view)];
+        }
         $writes = $operation === 'index_write';
         $methods[] = ['name' => $method, 'receiver' => $writes ? 'mutable_reference' : 'const_reference',
             'arguments' => $writes ? [$row->key, $row->$element] : [$row->key],
@@ -381,11 +423,16 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $symbol = "scpp::str::$name";
         requireThat(!isset($symbols[$symbol]), 'Duplicate string binding');
         $symbols[$symbol] = true;
-        $plan['explicit_formatters'][$source] = ['policy' => $policy, 'name' => $name, 'symbol' => $symbol, 'header' => $header];
-        $requires[] = $source;
+        $plan['explicit_formatters'][$source] = ['policy' => $policy, 'name' => $name, 'symbol' => $symbol, 'header' => $libraryHeader];
+        $libraryTypes[] = $source;
     }
     $requirements = exportProviders($plan['submodules'], $requires);
     $plan['source_types']->string = 'string';
+    $libraryRequires = exportProviders($plan['submodules'], $libraryTypes);
+    $libraryRequires[] = $provider;
+    if (isset($plan['search_policy'])) $libraryRequires[] = $plan['search_policy']['provider'];
+    if (isset($plan['string_view'])) $libraryRequires[] = $plan['string_view']['provider'];
+    $plan['string_library'] = ['provider' => $libraryProvider, 'requires' => $libraryRequires];
     $plan['string'] = ['provider' => $provider, 'requires' => $requirements, 'name' => 'string', 'count_type' => $count, 'count_representation' => $countRepresentation, 'header' => $header, 'storage' => 'inline_22_private_std_string', 'lifecycle' => 'owned_copy_noexcept_move', 'inline_capacity' => 22, 'empty_state' => 'inline', 'operations' => $operations, 'methods' => $methods, 'construction' => [['arguments' => ['const char*'], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true], ['arguments' => ['const char*', $countRepresentation], 'explicit' => true, 'null_pointer' => 'reject', 'can_fail' => true]]];
     if ($transfer) $plan['string']['transfer_assignment'] = true;
 }
@@ -441,7 +488,9 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         return;
     }
     $p = $publication->vectors;
-    fields($p, ['header', 'specializations']);
+    fields($p, ['header', 'specializations', 'capacity_helpers']);
+    $capacity = property_exists($p, 'capacity_helpers') ? $p->capacity_helpers : false;
+    requireThat(is_bool($capacity) && (!$capacity || $reserve), 'Vector capacity helpers require checked reserve');
     $provider = $plan['submodules']['groups']['vectors']['provider'];
     $header = providerHeader($plan['submodules'], $provider);
     if (isset($p->header)) requireThat(headerPath($p->header) === $header, 'Vector publication header conflicts with provider');
@@ -505,6 +554,11 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         $add('empty', 'bool_t', [], false, 'none');
         $add('clear', 'void', [], true, 'none');
         if ($reserve) $add('reserve', 'void', [$count], true, $m->reserve);
+        if ($capacity) {
+            $add('capacity', $count, [], false, 'observe_capacity');
+            $add('resize', 'void', [$count, scalarInput($element)], true, 'resize_copy_fill');
+            $add('compact', 'void', [$count], true, 'optional_capacity');
+        }
         $add('remove', 'bool_t', [$count], true, 'erase_shift_missing_false');
         $add('has', 'bool_t', [$count], false, 'index_presence');
         $indices = $nativeIndex ? [$count, 'int']:[$count];
@@ -525,8 +579,13 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
             $initialization = ['bulk' => listInitializationPlan($m->initialization->bulk ?? null, $family, $element, $name, $count)];
         }
         $bulk = $initialization['bulk'] ?? null;
+        if ($bulk !== null) requireThat(!in_array('iteration_reference', [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null], true), 'Vector initializer name conflicts with iteration reference');
         if ($reserve && $bulk !== null) requireThat(!in_array('reserve', [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null], true), 'Vector initializer name conflicts with reserve');
-        $vectors[$name] = ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'transfer_assignment' => $transfer, 'enable_reserve' => $reserve ? '1' : '', 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
+        if ($capacity && $bulk !== null) {
+            requireThat(!array_intersect(['capacity', 'compact', 'filled', 'resize'], [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null]),
+                'Vector initializer name conflicts with capacity helper');
+        }
+        $vectors[$name] = ($capacity ? ['capacity_helpers' => true] : []) + ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'transfer_assignment' => $transfer, 'enable_reserve' => $reserve ? '1' : '', 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
     }
     requireThat($vectors !== [], 'Empty vector publication');
     ksort($vectors, SORT_STRING);
@@ -564,15 +623,23 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     if($m === null) {
         return;
     }
-    fields($m, ['provider', 'extraction', 'payload_access', 'presence', 'sentinels', 'construction', 'families', 'error']);
+    fields($m, ['provider', 'specialization_providers', 'extraction', 'payload_access', 'presence', 'operand_participation', 'payload_writes', 'peer_equality', 'sentinels', 'construction', 'families', 'error']);
     $extraction = textValue(at($m, 'extraction'));
     $payloadAccess = textValue(at($m, 'payload_access'));
     requireThat($payloadAccess === 'value', 'Unsupported carrier payload access binding');
     requireThat(in_array($extraction, ['implicit_checked_one_layer_value_copy', 'explicit_checked_one_layer_value_copy'], true), 'Unsupported carrier extraction policy');
     literals($m, ['construction' => 'explicit']);
     $error = at($m, 'error');
-    fields($error, ['type', 'message', 'line', 'file', 'state']);
+    fields($error, ['type', 'message', 'line', 'file', 'state', 'peer_equality']);
     literals($error, ['type' => 'error_t', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'state' => 'explicit_present']);
+    $errorEquality = at($error, 'peer_equality');
+    fields($errorEquality, ['equal', 'identical']);
+    literals($errorEquality, ['equal' => 'same_state']);
+    $identity = at($errorEquality, 'identical');
+    fields($identity, ['fields']);
+    $identityFields = names(at($identity, 'fields'));
+    requireThat($identityFields !== [] && array_diff($identityFields, ['message', 'file', 'line']) === [],
+        'Invalid error identity fields');
     $families = at($m, 'families');
     fields($families, array_keys(CARRIER_DEFAULTS));
     $familyPlans = [];
@@ -620,7 +687,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         requireThat($family !== 'nullable' || hasValue($plan, 'null_t'), 'Nullable requires published null_t');
         $payloadInfo = carrierPayload($plan, $payload);
         requireThat($payloadInfo !== null, 'Carrier payload must be a published scalar, string, vector or supported boxed family');
-        requireThat($payloadInfo['kind'] !== 'boxed' || $family === 'result', 'Boxed payloads currently require the result family');
+        requireThat($payloadInfo['kind'] !== 'boxed' || $family === 'result' || ($family === 'result_or_false' && $payload === 'mixed'), 'Unsupported carrier family for boxed payload');
         requireThat($family !== 'result' || (isset($plan['string']) && hasType($plan, 'int64')), 'Result error payload requires string and int64');
         $name = $family . '_' . $payload;
         requireThat(!isset($carriers[$name]), 'Duplicate carrier specialization');
@@ -632,16 +699,31 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         }
         $plan['source_types']->{"$family<$payload>"} = $name;
         if($family === 'result') {
-            $plan['error'] = ['type' => 'error_t', 'state' => 'explicit_present', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'inspection' => 'value_copy', 'global_short_name' => false];
+            $plan['error'] = ['type' => 'error_t', 'state' => 'explicit_present', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'identity_fields' => $identityFields, 'inspection' => 'value_copy', 'global_short_name' => false];
         }
     }
     requireThat($carriers !== [], 'Empty carrier publication');
     ksort($carriers, SORT_STRING);
+    // Only concrete result types published together need cross-payload error inspection.
+    $identityTypes = $metadata->compiler->strict_identity->types ?? [];
+    $results = array_filter($carriers, static fn($c) => $c['family'] === 'result' && in_array($c['payload'], $identityTypes, true));
+    if (isset($m->peer_equality->operators->identical)
+        && in_array('result', $m->operand_participation->families ?? [], true)) {
+        foreach ($results as $name => $c) {
+            $peers = array_values(array_diff(array_keys($results), [$name]));
+            if ($peers !== []) $carriers[$name]['error_identity_peers'] = $peers;
+        }
+    }
     $plan['carriers'] = array_values($carriers);
     $plan['carriers_header'] = $header;
     $exports = array_keys($carriers);
     if (isset($plan['error'])) $exports[] = 'error_t';
-    publishTypeExports($plan['submodules'], 'carriers', $exports);
+    $placements = fields($m->specialization_providers ?? (object)[], ['result_or_false_int64']);
+    $placements = array_intersect_key($placements, $carriers);
+    publishTypeExports($plan['submodules'], 'carriers', $exports, $placements);
+    foreach ($placements as $identity => $id) {
+        requireExportDependencies($plan['submodules'], $id, ['bool_t', $carriers[$identity]['payload']]);
+    }
     $dependencies = ['bool_t'];
     foreach ($carriers as $carrier) {
         if (!isset($carrier['payload_header'])) $dependencies[] = $carrier['payload'];
@@ -649,7 +731,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         if ($carrier['family'] === 'result') $dependencies = array_merge($dependencies, ['string', 'int64']);
     }
     $plan['carrier_publication'] = ['provider' => $provider,
-        'requires' => exportProviders($plan['submodules'], array_values(array_unique($dependencies)))];
+        'requires' => array_merge(array_values($placements), exportProviders($plan['submodules'], array_values(array_unique($dependencies))))];
 }
 
 /** Concrete storage selection shared by runtime publication and future application specialization. */
@@ -672,7 +754,7 @@ function hashConcreteArguments(array $hash, string $count): array {
     return [
         'index' => '::scpp::detail::concrete_hash_index', 'candidate' => '::scpp::detail::hash_candidate',
         'count' => '::scpp::' . $count,
-        'enable_keyed_input' => '', 'enable_shared_lookup' => '', 'enable_append' => $hash['key'] === 'int64' ? '1' : '',
+        'enable_keyed_input' => '', 'enable_shared_lookup' => '', 'enable_owner_presence' => '', 'enable_append' => $hash['key'] === 'int64' ? '1' : '',
         'append' => $hash['key'] === 'int64' ? template('collections/hash_append', []) : '',
     ];
 }
@@ -684,9 +766,11 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization', 'transfer_assignment']);
     $transfer = privateValueTransfer($m);
     literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
-    foreach(['key_types', 'value_types'] as $key) {
-        requireThat(names(at($m, $key), 'Duplicate hash type policy') === ['int64', 'string'], 'Unsupported hash type policy');
-    }
+    $keys = names(at($m, 'key_types'), 'Duplicate hash key type');
+    $values = names(at($m, 'value_types'), 'Duplicate hash value type');
+    requireThat($keys === ['int64', 'string'] && in_array($values, [
+        ['int64', 'string'], ['int64', 'string', 'vector_string'],
+    ], true), 'Unsupported hash type policy');
     $initialization = $m->initialization ?? null;
     $callables = [];
     if ($initialization !== null) {
@@ -732,8 +816,8 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
         fields($item, ['key', 'value']);
         $key = textValue(at($item, 'key'));
         $value = textValue(at($item, 'value'));
+        requireThat(in_array($key, $keys, true) && in_array($value, $values, true), 'Unsupported hash key or value type');
         foreach([$key, $value] as $type) {
-            requireThat(in_array($type, ['int64', 'string'], true), 'Hash supports only int64/string keys and values');
             requireThat($type !== 'string' || isset($plan['string']), 'Hash requires published string');
         }
         $nullable = 'nullable_' . $value;
@@ -756,7 +840,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
             $methods[] = ['name' => 'append', 'arguments' => [$value], 'result' => $key, 'mutates' => true, 'policy' => 'max_live_nonnegative_plus_one', 'overflow' => 'throw_overflow_error'];
         }
         $traversal = collectionTraversalPlan() + ['next_key_method' => 'iteration_next_key', 'current_value_method' => 'iteration_current_value'];
-        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method'], $traversal['next_key_method'], $traversal['current_value_method']]);
+        $occupied = array_merge(array_column($methods, 'name'), [$name, 'storage', 'storage_', 'iteration_output', 'iteration_reference', 'get_or_null', $key, $value, $nullable, 'int64', 'bool_t', $traversal['limit_method'], $traversal['next_method'], $traversal['next_key_method'], $traversal['current_value_method']]);
         requireThat(array_intersect($callables, $occupied) === [], 'Keyed initialization name conflicts with a published member');
         $hashes[$name] = compact('name', 'key', 'value', 'methods', 'initialization') + ['source_family' => textValue($m->source_type), 'construction' => textValue($m->construction), 'key_policy' => 'strict', 'read' => 'value_copy', 'copy' => 'independent', 'move' => 'transfer_source_empty', 'storage' => 'private_ordered_concrete_swiss', 'mutation_failure' => 'logical_contents_unchanged', 'traversal' => $traversal];
     }
@@ -774,11 +858,15 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
     if($m === null) {
         return;
     }
-    fields($m, ['binding', 'utc_years', 'parse_failure', 'format_failure', 'operations', 'local_dst']);
+    fields($m, ['binding', 'utc_years', 'parse_failure', 'format_failure', 'operations', 'local_dst', 'general_names']);
     literals($m, ['binding' => 'native_datetime', 'utc_years' => '0000_9999', 'local_dst' => 'host_normalize_and_select', 'parse_failure' => 'result_error', 'format_failure' => 'throw_runtime_error']);
     $registered = names(at($m, 'operations'), 'Duplicate datetime operation policy');
     requireThat($registered !== [], 'Empty datetime policy');
+    $generalNames = object($m->general_names ?? new \stdClass());
+    requireThat(array_diff(array_keys($generalNames), $registered) === [], 'Unregistered datetime source mapping');
+    names(array_values($generalNames), 'Duplicate datetime source name');
     foreach($registered as $name) {
+        if (isset($generalNames[$name])) requireThat(preg_match('/^dt_[a-z_0-9]+$/D', $generalNames[$name]) === 1, 'Invalid datetime source name');
         requireThat(isset(DATETIME_SIGNATURES[$name]), "Unsupported datetime operation: $name");
     }
     if(!property_exists($publication, 'datetime')) {
@@ -803,7 +891,11 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
         if($result === 'result_int64') {
             requireThat(in_array('result_int64', array_column($plan['carriers'], 'name'), true), 'Datetime parse requires published result_int64');
         }
-        $operations[] = ['name' => $name, 'result' => $result, 'arguments' => array_map(fn(string $a):string => "const $a&", $args)];
+        $identities = array_diff(array_unique([...$args, $result]), ['void']);
+        $includes = array_map(fn(string $id): string => providerHeader($plan['submodules'], $id),
+            exportProviders($plan['submodules'], $identities));
+        $operations[] = ['name' => $name, 'source_name' => $generalNames[$name] ?? null, 'parameters' => $args,
+            'header' => moduleOperationHeader($header, $name), 'includes' => $includes, 'result' => $result, 'arguments' => array_map(fn(string $a):string => "const $a&", $args)];
     }
     requireThat($operations !== [], 'Empty datetime publication');
     $plan['datetime'] = ['module' => 'datetime', 'namespace' => 'scpp::dt', 'header' => $header, 'utc_years' => [0, 9999], 'local_dst' => 'host_normalize_and_select', 'parse_failure' => 'result_error', 'format_failure' => 'throw_runtime_error', 'operations' => $operations, 'build' => ['target' => 'scpp_datetime', 'requires' => 'scpp_runtime', 'generated_sources' => ['src/datetime.cpp'], 'private_sources' => ['runtime/src/datetime/datetime.cpp'], 'private_includes' => ['runtime/src/datetime', 'runtime/src/numeric']]];

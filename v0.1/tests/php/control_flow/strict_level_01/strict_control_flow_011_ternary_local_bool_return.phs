@@ -1,5 +1,0 @@
-function run(): int
-{
-	$ok bool = true;
-	return $ok ? 1 : 2;
-}

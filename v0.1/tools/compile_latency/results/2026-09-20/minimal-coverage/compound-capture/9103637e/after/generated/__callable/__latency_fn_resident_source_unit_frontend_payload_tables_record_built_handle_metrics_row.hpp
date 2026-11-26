@@ -1,7 +1,0 @@
-#include <scpp/lang/php.hpp>
-#pragma once
-namespace scpp {
-class CompilerProjectRunReport;
-struct ResidentSourceUnitFrontendPayloadTableRow;
-ResidentSourceUnitFrontendPayloadTableRow __latency_fn_resident_source_unit_frontend_payload_tables_record_built_handle_metrics_row(shared_p<CompilerProjectRunReport>& report, ResidentSourceUnitFrontendPayloadTableRow row);
-}

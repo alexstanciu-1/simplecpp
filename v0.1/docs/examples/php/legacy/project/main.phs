@@ -1,3 +1,0 @@
-require_once "lib/ExampleRegistry.phs";
-
-run_all_examples();

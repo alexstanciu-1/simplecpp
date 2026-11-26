@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "A type cannot be both abstract and final\n"
-}

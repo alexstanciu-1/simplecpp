@@ -1,4 +1,0 @@
-function run(): int64 {
-	$x int64 = 40;
-	return $x - 2;
-}

@@ -3,9 +3,23 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Contextual keyed record invocation is discarded whenever its literal is prepared again. */
+trait record_literal_preparation
+{
+	public ?ast_data_construction $record_call = null;
+
+	public function settle_record(ast_data_construction $call): void
+	{
+		$this->record_call = $call;
+		$this->settle_value($call->type_def(), null);
+	}
+}
+
 /** Typed [] or [a, b] initializer; owns ordered syntax and uses the destination's collection contract. */
 class ast_collection_expression extends ast_expression
 {
+	use record_literal_preparation;
+
 	/** PROPERTIES */
 	/** @var ast_expression[] Native owning elements, in source order. */
 	public readonly array $elements /** list<ast_expression> */;
@@ -71,6 +85,8 @@ final class ast_keyed_entry extends ast_node
 /** Nonempty bracket-keyed input; duplicates remain ordered syntax, never a PHP map. */
 final class ast_keyed_collection_expression extends ast_expression
 {
+	use record_literal_preparation;
+
 
 	/** @var ast_keyed_entry[] Native owning entries. */
 	public readonly array $entries /** list<ast_keyed_entry> */;

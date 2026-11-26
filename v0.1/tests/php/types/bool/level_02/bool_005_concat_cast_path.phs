@@ -1,5 +1,0 @@
-// Bool to string cast path via concatenation.
-$flag = true;
-
-echo "flag=" . $flag, "
-";

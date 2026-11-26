@@ -1,4 +1,0 @@
-// Basic concat operator.
-$result = "a" . "b";
-
-echo $result, "\n";

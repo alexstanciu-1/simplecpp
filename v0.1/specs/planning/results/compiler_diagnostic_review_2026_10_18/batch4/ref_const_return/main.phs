@@ -1,1 +1,0 @@
-function &f(const int &$x): int { return $x; } return 0;

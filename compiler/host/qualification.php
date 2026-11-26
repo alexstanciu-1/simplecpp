@@ -22,7 +22,8 @@ final class Qualification_Cache
 		array $link_flags /** list<string> */, string $cache): ?string
 	{
 		$options = array_merge($flags, $link_flags);
-		$relative = self::relative_options($options);
+		$roots = [];
+		$relative = self::relative_options($options, $roots);
 		if ($relative === null) {
 			return null;
 		}
@@ -34,6 +35,9 @@ final class Qualification_Cache
 				continue;
 			}
 			$environment->$name = $value;
+			if (in_array($name, ['CPATH', 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH'], true)) {
+				array_push($roots, ...explode(':', $value));
+			}
 			if (!in_array($name, ['CCC_OVERRIDE_OPTIONS', 'LD_PRELOAD'], true)) {
 				foreach (explode(':', $value) as $path) {
 					$relative = $relative || !str_starts_with($path, '/');
@@ -44,7 +48,16 @@ final class Qualification_Cache
 			return null;
 		}
 		$source = dirname(__DIR__, 2) . '/tools/layout_probe/argument_order.cpp';
-		$request = [$compiler, $source, $options, count($flags), $environment, $relative ? getcwd() : null];
+		clearstatcache(true);
+		$trees = [];
+		foreach ($roots as $root) {
+			$digest = self::include_tree($root);
+			if ($digest === null) {
+				return null;
+			}
+			$trees[] = $digest;
+		}
+		$request = [$compiler, $source, $options, count($flags), $environment, $trees, $relative ? getcwd() : null];
 		$slot = hash('sha256', self::canonical($request));
 		// Nonblocking: another refresher owns the record; Ninja will wait at the protected gate.
 		$lock = @fopen($cache . '/' . $slot . '.lock', 'c');
@@ -89,9 +102,10 @@ final class Qualification_Cache
 
 	/**
 	 * Recognized options share one admission/path scan; null requires full fingerprinting, bool records cwd dependence.
+	 * @param string[] $roots
 	 * @param string[] $options
 	 */
-	private static function relative_options(array $options /** list<string> */): ?bool
+	private static function relative_options(array $options /** list<string> */, array &$roots /** list<string> */): ?bool
 	{
 		$relative = false;
 		for ($i = 0; $i < count($options); ++$i)
@@ -99,6 +113,9 @@ final class Qualification_Cache
 			$option = $options[$i];
 			if (in_array($option, ['-I', '-include-pch'], true)) {
 				$path = $options[++$i] ?? '';
+				if ($option === '-I') {
+					$roots[] = $path;
+				}
 			}
 			elseif (str_starts_with($option, '--ld-path=')) {
 				$path = substr($option, 10);
@@ -122,6 +139,52 @@ final class Qualification_Cache
 			$relative = $relative || !str_starts_with($path, '/');
 		}
 		return $relative;
+	}
+
+	/** Match the Python request digest for directory entries that could change include selection. */
+	private static function include_tree(string $root): ?string
+	{
+		$root = $root === '' ? '.' : $root;
+		if (in_array('..', explode('/', $root), true) || is_link($root)) {
+			return null;
+		}
+		$pending = [''];
+		$names = [];
+		while ($pending !== []) {
+			$prefix = array_pop($pending);
+			$directory = @opendir($root . '/' . $prefix);
+			if ($directory === false) {
+				return null;
+			}
+			try {
+				while (($entry = readdir($directory)) !== false) {
+					if (($entry === '.') || ($entry === '..')) {
+						continue;
+					}
+					$name = $prefix . $entry;
+					$path = $root . '/' . $name;
+					if ((count($names) >= 4096) || is_link($path)) {
+						return null;
+					}
+					if (is_dir($path)) {
+						$pending[] = $name . '/';
+						$kind = 'D';
+					}
+					elseif (is_file($path)) {
+						$kind = 'F';
+					}
+					else {
+						return null;
+					}
+					$names[] = $kind . $name . "\0";
+				}
+			}
+			finally {
+				closedir($directory);
+			}
+		}
+		sort($names, SORT_STRING);
+		return hash('sha256', implode('', $names));
 	}
 
 	/** Clear PHP's stat/realpath caches for retained callers; second-resolution timestamps are accepted bootstrap debt. */

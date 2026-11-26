@@ -3,19 +3,26 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** A fixed-arity signature owned by its declaring parameter, with canonical component types. */
+/** A callable signature owned by its declaring parameter, with canonical component types. */
 final class callback_type_definition extends type_definition
 {
 	/**
 	 * @param type_definition[] $inputs
-	 * @param passing_mode[] $modes Mutable reference positions in ascending input order.
+	 * @param passing_mode[] $modes Reference positions in ascending input order.
 	 */
 	public function __construct(public readonly type_definition $result, public readonly array $inputs /** list<type_definition> */,
-		private readonly array $modes /** array<uint32,passing_mode> */ = [], public readonly ?int $reference_origin /** uint32|null */ = null)
+		private readonly array $modes /** array<uint32,passing_mode> */ = [], public readonly ?int $reference_origin /** uint32|null */ = null,
+		public readonly ?int $variadic_slot = null)
 	{
 		$name = $result->name . ($reference_origin === null ? '' : '&');
-		foreach ($inputs as $i => $input) $name .= ',' . $input->name . $this->input_suffix($i);
+		foreach ($inputs as $i => $input) $name .= ',' . $this->input_spelling($i);
 		parent::__construct('callback<' . $name . '>');
+	}
+
+	public function input_spelling(int $index): string
+	{
+		$type = $this->inputs[$index];
+		return $index === $this->variadic_slot ? $type->element_type->name . '...' : $this->input_mode($index)->qualify($type->name);
 	}
 
 	public function result_suffix(): string
@@ -28,11 +35,6 @@ final class callback_type_definition extends type_definition
 		return $this->modes[$index] ?? passing_mode::value;
 	}
 
-	public function input_suffix(int $index /** uint32 */): string
-	{
-		return isset($this->modes[$index]) ? '&' : '';
-	}
-
 	/** Spell the concrete native function pointer and its parameter types. */
 	public function cpp_declarator(string $name = ''): string
 	{
@@ -41,7 +43,7 @@ final class callback_type_definition extends type_definition
 			return str_starts_with($native, 'scpp::') ? '::' . $native : $native;
 		};
 		$inputs = [];
-		foreach ($this->inputs as $i => $input) $inputs[] = $result($input) . $this->input_suffix($i);
+		foreach ($this->inputs as $i => $input) $inputs[] = $this->input_mode($i)->qualify($result($input));
 		return $result($this->result) . $this->result_suffix() . ' (*' . $name . ')(' . implode(', ', $inputs) . ')';
 	}
 
@@ -65,7 +67,7 @@ final class callback_type_definition extends type_definition
 
 	public function matches(type_definition $other): bool
 	{
-		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs && $other->modes === $this->modes && $other->reference_origin === $this->reference_origin;
+		return $other instanceof self && $other->result === $this->result && $other->inputs === $this->inputs && $other->variadic_slot === $this->variadic_slot && $other->modes === $this->modes && $other->reference_origin === $this->reference_origin;
 	}
 
 	/** Only capture-free closures can cross the native function-pointer boundary. */
@@ -87,10 +89,10 @@ final class callback_type_definition extends type_definition
 	/** Validate the callable target against its prepared signature. */
 	public function require_target(ast_callable_reference $site, ast_function_declaration $target): void
 	{
-		$matches = $target->reference_return_origin === $this->reference_origin && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
+		$matches = $target->variadic_slot() === $this->variadic_slot && $target->reference_return_origin === $this->reference_origin && $target->return_type_def() === $this->result && count($target->parameters) === count($this->inputs);
 		if ($matches) {
 			foreach ($target->parameters as $index => $parameter) {
-				if ($parameter->mode !== $this->input_mode($index) || $parameter->default_value !== null || $parameter->type_def() !== $this->inputs[$index]) {
+				if ($parameter->mode !== $this->input_mode($index) || $parameter->type_def() !== $this->inputs[$index]) {
 					$matches = false;
 					break;
 				}
@@ -102,12 +104,52 @@ final class callback_type_definition extends type_definition
 	}
 }
 
+/** Non-owning context and invocation function for a synchronous nullary consumer. */
+final class callback_view_type extends type_definition
+{
+	/** PROPERTIES */
+	public readonly callback_type_definition $signature;
+
+	/** CONSTRUCTOR */
+	public function __construct()
+	{
+		parent::__construct('callback_view<void>');
+		$this->signature = new callback_type_definition(type_void::instance(), []);
+	}
+
+	/** METHODS */
+	public function cpp_type(): string
+	{
+		return 'std::pair<const void*, void (*)(const void*)>';
+	}
+
+	public function lower_cpp_invoke(string $view): string
+	{
+		return $view . '.second(' . $view . '.first)';
+	}
+
+	/** @return string[] */
+	public function cpp_headers(): array /** list<string> */
+	{
+		return ['utility'];
+	}
+
+	public function lower_scalar_conversion(int $conversion /** uint16 */, string $value, ?ast_expression $syntax = null, ?type_definition $source_type = null): string
+	{
+		if ($source_type instanceof self) return $value;
+		// The first consumer borrows the existing named lambda environment.
+		return $this->cpp_type() . '{&' . $value . ', [](const void* context) { (*static_cast<const decltype(' . $value . ')*>(context))(); }}';
+	}
+}
+
 /** Intern collection element contracts by ordered component identity, without retaining retired declarations. */
 final class callable_signature_index
 {
 	/** @var \WeakMap<type_definition,callable_signature_index>|null */
 	private ?\WeakMap $children = null;
 	private ?self $reference_inputs = null;
+	private ?self $readonly_inputs = null;
+	private ?self $variadic = null;
 	/** @var \WeakReference<owned_callable_type>|null */
 	private ?\WeakReference $element = null;
 
@@ -116,8 +158,15 @@ final class callable_signature_index
 	{
 		static $root = new self();
 		$node = $signature->reference_origin === null ? $root : ($root->reference_inputs ??= new self());
+		if ($signature->variadic_slot !== null) $node = $node->variadic ??= new self();
 		foreach ([$signature->result, ...$signature->inputs] as $i => $component) {
-			if ($i > 0 && $signature->input_mode($i - 1) === passing_mode::reference) $node = $node->reference_inputs ??= new self();
+			if ($i > 0) {
+				$node = match ($signature->input_mode($i - 1)) {
+					passing_mode::value => $node,
+					passing_mode::reference => $node->reference_inputs ??= new self(),
+					passing_mode::readonly_reference => $node->readonly_inputs ??= new self(),
+				};
+			}
 			$node->children ??= new \WeakMap();
 			$node = $node->children[$component] ??= new self();
 		}
@@ -138,7 +187,7 @@ final class owned_callable_type extends type_definition implements presence_test
 	public function __construct(public readonly callback_type_definition $signature)
 	{
 		$inputs = [];
-		foreach ($signature->inputs as $i => $input) $inputs[] = $input->name . $signature->input_suffix($i);
+		foreach ($signature->inputs as $i => $input) $inputs[] = $signature->input_spelling($i);
 		parent::__construct('function<' . $signature->result->name . $signature->result_suffix() . '(' . implode(',', $inputs) . ')>');
 	}
 
@@ -150,7 +199,7 @@ final class owned_callable_type extends type_definition implements presence_test
 	public function cpp_type(): string
 	{
 		$inputs = [];
-		foreach ($this->signature->inputs as $i => $input) $inputs[] = $input->cpp_type() . $this->signature->input_suffix($i);
+		foreach ($this->signature->inputs as $i => $input) $inputs[] = $this->signature->input_mode($i)->qualify($input->cpp_type());
 		return 'std::function<' . $this->signature->result->cpp_type() . $this->signature->result_suffix() . '(' . implode(', ', $inputs) . ')>';
 	}
 

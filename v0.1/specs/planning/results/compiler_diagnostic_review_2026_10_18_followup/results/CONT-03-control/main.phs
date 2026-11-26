@@ -1,1 +1,0 @@
-struct S {} $s = new S(); return isset($s) ? 1 : 0;

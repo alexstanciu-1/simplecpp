@@ -1,0 +1,56 @@
+// The caller already resolved the Python call name to this class entry.
+function assert_construction(bool $condition, string $detail): void {
+    if (!$condition) throw Exception::make($detail);
+}
+
+function rejected(Function_Body $call, Class_Entry $entry, string $detail): void {
+    try {
+        $call->settle_preparation($entry);
+    } catch (Preparation_Diagnostic $error) {
+        assert_construction($error->detail === $detail && $error->source === "main.py" && $error->offset === 7,
+            "wrong construction diagnostic");
+        assert_construction(!$call->prepared() && $call->selected_operand() === null, "failed call published facts");
+        return;
+    }
+    throw Exception::make("invalid construction accepted");
+}
+
+function check_construction(): void {
+    $name = "Box";
+    $entry = new Class_Entry();
+    $constructor = new Return_Syntax("box.py", "__init__", "", "", 0);
+    $constructor->required_parameters = 1;
+    $constructor->parameter_type = "int64";
+    $entry->head = new Constructed_Record("owner_Box", $constructor);
+    $syntax = new Return_Syntax("main.py", "main", "", $name, 7);
+    $syntax->argument_type = "int64";
+    $syntax->argument_cpp = "7LL";
+    $call = new Function_Body($syntax);
+    $call->settle_preparation($entry);
+    assert_construction($call->selected_operand() === $entry->head, "construction selected the wrong record");
+    echo $call->lower_expression(), "\n";
+
+    $retired = $entry->head;
+    if ($retired === null) throw Exception::make("missing record");
+    $observer = weak($retired);
+    $retired = null;
+    $entry->head = new Constructed_Record("owner_Box", null);
+    assert_construction(lock($observer) === null && $call->selected_operand() === $entry->head,
+        "caller retained the retired record or lost the class entry");
+    $call->invalidate();
+    rejected($call, $entry, "Only zero-argument initialization is available for Box");
+
+    $empty = new Function_Body(new Return_Syntax("main.py", "main", "", $name, 7));
+    $empty->settle_preparation($entry);
+    echo $empty->lower_expression(), "\n";
+    $entry->head = null;
+    assert_construction($empty->selected_operand() === null, "deleted class is still visible");
+    $empty->invalidate();
+    rejected($empty, $entry, "Unknown function: Box");
+
+    $entry->head = new Constructed_Record("owner_Box", $constructor);
+    rejected($empty, $entry, "Argument count mismatch");
+    $call->settle_preparation($entry);
+    assert_construction($call->selected_operand() === $entry->head, "repair selected retired declaration");
+    echo $call->lower_expression(), "\n";
+}

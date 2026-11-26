@@ -53,16 +53,16 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$before = serialize($entry);
 	$cpp = (new Cpp_Emitter())->emit($entry);
 	verify(serialize($entry) === $before, 'Lowering mutated facts');
-	verify(str_contains($cpp, '#include <scpp/string.hpp>'), 'Missing public string API');
+	verify(str_contains($cpp, '#include <scpp/string/type.hpp>'), 'Missing public string API');
 	verify(str_contains($cpp, 'scpp::string var_copy_1 = var_first_0;'), 'Copy is not owning storage');
 	$argument = '"A\0000\0007\08?\?/", 10';
 	verify(str_contains($cpp, 'scpp::string{' . $argument . '}') && str_contains($cpp, 'scpp::echo_bytes(' . $argument . ')'),
 		'Expected byte-exact C++ spelling for both string construction and echo');
 	$direct = (new Cpp_Emitter())->emit($prepare('echo "direct"; return 8;'));
-	verify(!str_contains($direct, 'scpp::string') && !str_contains($direct, '<scpp/string.hpp>'), 'Direct echo allocated storage');
+	verify(!str_contains($direct, 'scpp::string') && !str_contains($direct, '<scpp/string/type.hpp>'), 'Direct echo allocated storage');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("héllo\0world\nhéllo\0world\na\\nb!" . $boundary . $boundary . $escape_output)];
 	foreach ([
-		$decl('string', 'bad', '8'), $decl('int', 'bad', '"8"'),
+		$decl('string', 'bad', '8'), $decl('int', 'bad', $flavor === flavor::php ? '"8x"' : '"8"'),
 		$decl('bool', 'bad', '"true"'), $decl('float', 'bad', '"8.5"'),
 		'global ' . $decl('string', 'bad', '"x"'), 'global ' . $decl('string', 'bad', '1'),
 		'return "x";', $decl('string', 'bad', match ($flavor) {

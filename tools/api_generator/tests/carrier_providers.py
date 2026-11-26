@@ -43,12 +43,15 @@ def proof(work):
             return json.loads((runtime / 'prepared.json').read_text())
 
     default = emit(metadata, publication)
-    assert len(default['carriers']) == 16
+    requested = publication['carriers']['specializations']
+    assert sorted(c['name'] for c in default['carriers']) == sorted(
+        f"{c['family']}_{c['payload']}" for c in requested)
     assert [c['name'] for c in default['carriers'] if c['instance_field']] == ['nullable_string']
     assert default['carrier_families']['result']['default_state'] == 'value'
     assert default['carrier_families']['result_or_bool']['states'] == {'value': 'payload', 'false': None, 'true': None}
     for carrier in default['carriers']:
-        assert default['submodules']['type_exports'][carrier['name']]['provider'] == 'core.carriers'
+        expected = metadata['carriers']['specialization_providers'].get(carrier['name'], 'core.carriers')
+        assert default['submodules']['type_exports'][carrier['name']]['provider'] == expected
     assert default['submodules']['type_exports']['error_t']['symbol'] == 'scpp::error_t'
     capability = work / 'capability.php'
     capability.write_text(runner.read_text().split('echo json_encode')[0]
@@ -81,6 +84,13 @@ def proof(work):
     assert 'function implicit_extraction(): bool\n\t{\n\t\treturn false;' in explicit_code
     assert 'function implicit_extraction(): bool\n\t{\n\t\treturn true;' not in explicit_code
 
+    # Run the same four source contexts with the explicit-only compiler publication.
+    alternate_boot = work / 'explicit_boot.php'
+    alternate_boot.write_text((compiler_root / 'boot.php').read_text()
+        .replace("__DIR__ . '/generated/", repr(str(compiler)) + " . '/")
+        .replace('__DIR__', repr(str(compiler_root))))
+    run(['php', compiler_root / 'tests/php_carrier_implicit_matrix.php', alternate_boot])
+
     emit(metadata, publication)
     for invalid in ('states', 'default', 'provider', 'legacy_header', 'access', 'presence', 'sentinel'):
         m, p = copy.deepcopy(metadata), copy.deepcopy(publication)
@@ -99,6 +109,8 @@ def proof(work):
     # Retire functions whose core or PHP adapter result needs a carrier as well.
     absent['string']['functions'] = [name for name in absent['string']['functions']
         if name not in ('hex2bin', 'strpos', 'stripos', 'strrpos', 'strripos')]
+    del absent['cli_helpers']['environment']
+    absent['text_helpers'].remove('string_byte_find')
     removed = emit(metadata, absent)
     assert 'nullable_int64' not in removed['submodules']['type_exports']
     assert not (runtime / 'public/scpp/carriers.hpp').exists()

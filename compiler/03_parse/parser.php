@@ -83,10 +83,13 @@ final class Parser
 		$imports = [];
 		while (!$this->cursor->at_end() && (!$braced || !$this->cursor->is(token_kind::rbrace)))
 		{
-			if ($this->cursor->keyword('trait') || $this->cursor->keyword('interface') || (!($grammar instanceof Python_Grammar) && $this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
+			$data_record = $this->cursor->tokens->text_at($this->cursor->position()) === 'data'
+				&& isset($this->cursor->tokens->tokens[$this->cursor->position() + 1])
+				&& in_array($this->cursor->tokens->text_at($this->cursor->position() + 1), ['class', 'struct', 'abstract', 'final'], true);
+			if ($data_record || $this->cursor->keyword('trait') || $this->cursor->keyword('interface') || (!($grammar instanceof Python_Grammar) && $this->cursor->tokens->text_at($this->cursor->position()) === 'final') || $this->cursor->keyword('abstract') || $this->cursor->keyword('global') || $this->cursor->keyword('const') || $this->cursor->keyword('struct') || $this->cursor->keyword('class') || $this->cursor->keyword('enum')) {
 				$members = [];
 				$node = match ($this->cursor->tokens->text_at($this->cursor->position())) {
-					'trait', 'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
+					'data', 'trait', 'abstract', 'final', 'struct', 'class', 'interface' => Record_Syntax::read($this, $grammar, $members),
 					'enum' => Enum_Syntax::read($this, $grammar, $members),
 					'const' => Constant_Syntax::read($this, namespace_constant: true),
 					'global' => Global_Syntax::read($this),
@@ -612,6 +615,7 @@ final class Parser
 		$start = $c->position();
 		$python = $grammar instanceof Python_Grammar;
 		$requires_key = !$python && $c->keyword('for');
+		$writable = false;
 		$key = null;
 		$header = $collector->child();
 		if ($python || $requires_key) {
@@ -637,18 +641,22 @@ final class Parser
 			$source = $this->value();
 			$c->take_keyword('as');
 			$kind = $c->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+			$writable = $kind === token_kind::variable && $c->is(token_kind::ampersand);
+			if ($writable) $c->take(token_kind::ampersand, '&');
 			$value_pos = $c->position();
 			$name = $c->binding_name($kind);
-			if ($c->is(token_kind::arrow)) {
+			if (!$writable && $c->is(token_kind::arrow)) {
 				$c->take(token_kind::arrow, '=>');
 				$key = $header->produced_binding($name, $value_pos, true);
+				$writable = $kind === token_kind::variable && $c->is(token_kind::ampersand);
+				if ($writable) $c->take(token_kind::ampersand, '&');
 				$value_pos = $c->position();
 				$name = $c->binding_name($kind);
 				if ($name === $key->short_name) throw new diagnostic($c->tokens->source, $c->offset(), 'Foreach key and value must have different names');
 			}
 			$c->take(token_kind::rparen, ')');
 		}
-		$value = $header->produced_binding($name, $value_pos, !$collector->has_local($name));
+		$value = $header->produced_binding($name, $value_pos, !$collector->has_local($name), $writable);
 		$body = $this->lexical_block($grammar, $header, '{ (braced foreach body)');
 		$this->lexical = $collector;
 		return new ast_foreach_statement($start, $source, $key, $value, $body, $header->publish_scope(), $requires_key);
@@ -780,8 +788,8 @@ final class Parser
 		if ($derived_constructor && $source->flavor === flavor::cpp && $this->cursor->is(token_kind::colon)) {
 			$start = $this->cursor->take(token_kind::colon, ':');
 			$target = $this->named_type();
-			$arguments = $this->constructor_arguments($named);
-			$base = new ast_base_initialization($start, $this->cursor->position(), $arguments, true, $target, $named);
+			$arguments = $this->constructor_arguments($named, $unpacked);
+			$base = new ast_base_initialization($start, $this->cursor->position(), $arguments, true, $target, $named, $unpacked);
 		}
 		$body_start = $this->open_suite($grammar, '{');
 		$close = $grammar instanceof Python_Grammar ? token_kind::dedent : token_kind::rbrace;
@@ -796,9 +804,9 @@ final class Parser
 			if ($source->flavor === flavor::python && $c->keyword('super')
 				&& isset($c->tokens->tokens[$start + 4]) && $c->tokens->text_at($start + 4) === '__init__') {
 				$this->python_super_member();
-				$args = $this->constructor_arguments($named);
+				$args = $this->constructor_arguments($named, $unpacked);
 				$end = $c->take(token_kind::newline, 'NEWLINE') + 1;
-				$base = new ast_base_initialization($start, $end, $args, true, named: $named);
+				$base = new ast_base_initialization($start, $end, $args, true, named: $named, unpacked: $unpacked);
 			} elseif (($source->flavor === flavor::php && $spelling === 'parent'
 					&& $c->tokens->text_at($start + 2) === '__construct')
 				|| ($source->flavor === flavor::js && $spelling === 'super' && $c->next_is(token_kind::lparen))) {
@@ -807,9 +815,9 @@ final class Parser
 					$c->take(token_kind::scope, '::');
 					if ($c->name(token_kind::identifier) !== '__construct') throw new diagnostic($source, $c->offset(), 'Expected parent constructor');
 				}
-				$args = $this->constructor_arguments($named);
+				$args = $this->constructor_arguments($named, $unpacked);
 				$end = $c->take(token_kind::semicolon, ';') + 1;
-				$base = new ast_base_initialization($start, $end, $args, true, named: $named);
+				$base = new ast_base_initialization($start, $end, $args, true, named: $named, unpacked: $unpacked);
 			}
 			$base ??= new ast_base_initialization($start, $start, [], false);
 			$statement = new ast_base_statement($base);
@@ -876,11 +884,23 @@ final class Parser
 					$type = $this->type_reference(allow_void: true, parameter: true);
 				}
 			}
+			elseif ($lambda && $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->keyword('const') && $this->cursor->next_is(token_kind::ampersand)) {
+				$this->cursor->take_keyword('const');
+				$this->cursor->take(token_kind::ampersand, '&');
+				$type = null;
+				$mode = passing_mode::readonly_reference;
+				$name = $this->cursor->binding_name(token_kind::variable);
+			}
 			elseif ($lambda && ($this->cursor->is(token_kind::ampersand) || $this->cursor->is(token_kind::variable)
+				|| ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ellipsis))
 				|| ($this->cursor->tokens->source->flavor === flavor::cpp && $this->cursor->is(token_kind::identifier)
 					&& ($this->cursor->next_is(token_kind::rparen) || $this->cursor->next_is(token_kind::comma) || $this->cursor->next_is(token_kind::assign))))) {
 				$type = null;
 				$mode = $this->parameter_mode();
+				if ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::ellipsis)) {
+					$type = new ast_variadic_type_reference(null, $this->cursor->take(token_kind::ellipsis, '...') + 1, $mode === passing_mode::reference);
+					$mode = passing_mode::value;
+				}
 				$name = $this->cursor->binding_name($this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier);
 			}
 			else {
@@ -896,8 +916,16 @@ final class Parser
 					$this->cursor->take(token_kind::ampersand, '& after const parameter type');
 					$mode = passing_mode::readonly_reference;
 				} else $mode = $this->parameter_mode();
+				if ($mode !== passing_mode::readonly_reference && $this->cursor->tokens->source->flavor === flavor::php
+					&& $this->cursor->is(token_kind::ellipsis)) {
+					$type = new ast_variadic_type_reference($type, $this->cursor->take(token_kind::ellipsis, '...') + 1, $mode === passing_mode::reference);
+					$mode = passing_mode::value;
+				}
 				$name = $this->cursor->binding_name($this->cursor->tokens->source->flavor === flavor::php
 					? token_kind::variable : token_kind::identifier);
+			}
+			if ($type instanceof ast_variadic_type_reference && !$this->cursor->is(token_kind::rparen)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Variadic parameter must be last and has no default');
 			}
 			$default = null;
 			if ($this->cursor->is(token_kind::assign)) {
@@ -971,7 +999,8 @@ final class Parser
 	/** Parse the common argument list after a function path or member name. */
 	private function call_arguments(int $start /** uint32 */, string $name, ?token_kind $separator, ?ast_expression $receiver, call_qualifier $qualifier = call_qualifier::ordinary): ast_expression
 	{
-		if ($this->cursor->next_is(token_kind::ellipsis)) {
+		if ($this->cursor->next_is(token_kind::ellipsis)
+			&& ($this->cursor->tokens->tokens[$this->cursor->position() + 2]->kind ?? null) === token_kind::rparen) {
 			$this->cursor->take(token_kind::lparen, '(');
 			$this->cursor->take(token_kind::ellipsis, '...');
 			$end = $this->cursor->take(token_kind::rparen, ')') + 1;
@@ -982,16 +1011,19 @@ final class Parser
 			return new ast_callable_reference($name, $start, $end);
 		}
 		$labels = [];
-		$arguments = $this->arguments($labels);
-		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels, $qualifier);
+		$unpacked = false;
+		$arguments = $this->arguments($labels, $unpacked);
+		if ($labels) return new ast_named_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $labels, $qualifier, $unpacked);
+		if ($unpacked) return new ast_unpacked_call($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 		return new ast_call_expression($start, $this->cursor->position(), $name, $separator, $arguments, $receiver, $qualifier);
 	}
 
 	/** @return ast_expression[] Only a constructor with labels owns a named binding. */
-	private function constructor_arguments(?Named_Arguments &$named): array /** list<ast_expression> */
+	private function constructor_arguments(?Named_Arguments &$named, ?bool &$unpacked): array /** list<ast_expression> */
 	{
 		$labels = [];
-		$arguments = $this->arguments($labels);
+		$unpacked = false;
+		$arguments = $this->arguments($labels, $unpacked);
 		$named = $labels ? new Named_Arguments($labels) : null;
 		return $arguments;
 	}
@@ -1001,20 +1033,28 @@ final class Parser
 	 * @param string[]|null $labels
 	 * @return ast_expression[]
 	 */
-	private function arguments(?array &$labels = null): array /** list<ast_expression> */
+	private function arguments(?array &$labels = null, ?bool &$unpacked = null): array /** list<ast_expression> */
 	{
 		$this->cursor->take(token_kind::lparen, '(');
 		$arguments = [];
 		while (!$this->cursor->is(token_kind::rparen)) {
-			if ($this->cursor->is(token_kind::identifier) && ($this->cursor->next_is(token_kind::colon)
+			if (($this->cursor->is(token_kind::identifier) || $this->cursor->keyword('data')) && ($this->cursor->next_is(token_kind::colon)
 				|| ($this->cursor->tokens->source->flavor === flavor::python && $this->cursor->next_is(token_kind::assign)))) {
 				if ($labels === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), ast_named_call::UNSUPPORTED_TARGET);
-				$labels[count($arguments)] = $this->cursor->name(token_kind::identifier);
+				$labels[count($arguments)] = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
 				$this->cursor->take($this->cursor->tokens->source->flavor === flavor::python ? token_kind::assign : token_kind::colon, 'argument label separator');
-			} elseif ($labels) {
+			} elseif ($labels && !$this->cursor->is(token_kind::ellipsis)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Positional argument after named argument');
 			}
+			if ($this->cursor->is(token_kind::ellipsis)) {
+				if ($unpacked === null || isset($labels[count($arguments)])) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'An unpacked vector cannot have an argument label');
+				$this->cursor->take(token_kind::ellipsis, '...');
+				$unpacked = true;
+			}
 			$arguments[] = $this->value(argument_operand: true);
+			if ($unpacked && !$this->cursor->is(token_kind::rparen)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Unpacked vector must be the final argument');
+			}
 			if (!$this->cursor->is(token_kind::comma)) {
 				break;
 			}
@@ -1068,13 +1108,15 @@ final class Parser
 	private function type_reference(string $argument_of = '', bool $allow_void = false, bool $parameter = false, bool $allow_union = false): ast_type_reference
 	{
 		$start = $this->cursor->position();
+		$readonly = $argument_of === 'callback' && $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->keyword('const');
+		if ($readonly) $this->cursor->take_keyword('const');
 		$child = null;
 		if ($this->cursor->is(token_kind::question)) {
 			$this->cursor->take(token_kind::question, '?');
 			$word = 'nullable';
 			$child = $this->type_reference();
 		} else {
-			$word = $this->cursor->tokens->text_at($start);
+			$word = $this->cursor->tokens->text_at($this->cursor->position());
 			if ($this->cursor->is(token_kind::keyword)
 				&& (($word === 'weak') || ($word === 'function' && $this->cursor->tokens->source->flavor === flavor::php) || (type_registry::resolve($word) !== null) || ($allow_void && $word === 'void'))) {
 				$this->cursor->take_keyword($word);
@@ -1097,7 +1139,11 @@ final class Parser
 			$first = new ast_type_reference($start, $end, $word, $child, $next);
 			return new ast_compound_type_reference($start, $next->end, $separator, $first);
 		}
-		$reference = ($argument_of === 'callback' || $argument_of === 'function') && $this->cursor->is(token_kind::ampersand);
+		if (!$readonly && $argument_of === 'callback' && $this->cursor->is(token_kind::ellipsis)) {
+			$element = new ast_type_reference($start, $end, $word, $child);
+			return new ast_variadic_type_reference($element, $this->cursor->take(token_kind::ellipsis, '...') + 1);
+		}
+		$reference = $readonly || (($argument_of === 'callback' || $argument_of === 'function') && $this->cursor->is(token_kind::ampersand));
 		if ($reference) $end = $this->cursor->take(token_kind::ampersand, '&') + 1;
 		$next = null;
 		if ($argument_of === 'function') {
@@ -1119,7 +1165,11 @@ final class Parser
 			$this->cursor->take(token_kind::comma, ',');
 			$next = $this->type_reference($argument_of, true);
 		}
-		return $reference ? new ast_callable_reference_component($start, $end, $word, $child, $next) : new ast_type_reference($start, $end, $word, $child, $next);
+		if ($reference) {
+			$mode = $readonly ? passing_mode::readonly_reference : passing_mode::reference;
+			return new ast_callable_reference_component($start, $end, $word, $child, $next, $mode);
+		}
+		return new ast_type_reference($start, $end, $word, $child, $next);
 	}
 
 	/** Parse ordered comma-separated echo operands. */
@@ -1540,7 +1590,7 @@ final class Parser
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				$this->cursor->take(token_kind::member, '->');
-				$name = $this->cursor->name(token_kind::identifier);
+				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
 				$value = $this->cursor->is(token_kind::lparen) ? $this->call_arguments($value->start, $name, token_kind::member, $value)
 					: new ast_field_expression($value, $name, $this->cursor->position());
 				continue;
@@ -1548,7 +1598,7 @@ final class Parser
 			if ($this->cursor->tokens->source->flavor !== flavor::php && $this->cursor->is(token_kind::dot)) {
 				if ($stop_before_items && $this->python_items_suffix_ahead()) break;
 				$this->cursor->take(token_kind::dot, '.');
-				$name = $this->cursor->name(token_kind::identifier);
+				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
 				$value = ($flavor === flavor::js || $flavor === flavor::python) && !$this->cursor->is(token_kind::lparen)
 					? new ast_field_expression($value, $name, $this->cursor->position())
 					: $this->call_arguments($value->start, $name, token_kind::dot, $value);
@@ -1937,9 +1987,10 @@ final class Parser
 			}
 			$arguments = [];
 			$named = null;
-			if ($this->cursor->is(token_kind::lparen)) $arguments = $this->constructor_arguments($named);
+			$unpacked = false;
+			if ($this->cursor->is(token_kind::lparen)) $arguments = $this->constructor_arguments($named, $unpacked);
 			elseif ($this->cursor->tokens->source->flavor !== flavor::php) $this->cursor->take(token_kind::lparen, '( after the constructed type');
-			return new ast_new_expression($start, $this->cursor->position(), $target, $arguments, $named);
+			return new ast_new_expression($start, $this->cursor->position(), $target, $arguments, $named, $unpacked);
 		}
 		if ($this->cursor->keyword('object_cast')) {
 			$start = $this->cursor->position();
@@ -2115,9 +2166,9 @@ final class Parser
 	{
 		if ($type_reference !== null && $this->cursor->is(token_kind::lparen)) {
 			$at = $this->cursor->position();
-			$arguments = $this->constructor_arguments($named);
+			$arguments = $this->constructor_arguments($named, $unpacked);
 			if ($arguments === []) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Use a typed declaration without () for default initialization');
-			$value = new ast_struct_default($at, $this->cursor->position(), $arguments, $named);
+			$value = new ast_struct_default($at, $this->cursor->position(), $arguments, $named, $unpacked);
 			return new ast_local_declaration($start, $this->statement_end($terminator), $name, $type_reference, $value);
 		}
 		if ($type_reference !== null && ($this->cursor->is(token_kind::semicolon) || ($terminator === null && $this->cursor->is(token_kind::comma)))) {

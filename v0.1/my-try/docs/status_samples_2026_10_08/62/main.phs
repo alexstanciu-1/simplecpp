@@ -1,4 +1,0 @@
-trait Has_Value { public function value(): int { return 7; } }
-trait Nested { use Has_Value; }
-class Item { use Nested; }
-return (new Item())->value();

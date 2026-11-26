@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
+require_once __DIR__ . '/preparation_snapshot.php';
 
 use scpp\compiler\{Cpp_Emitter, Cpp_Program, Function_Preparation, Preparation, Program_Frontend,
 		Source_Frontend, Symbol_Publication, ast_function_declaration, declaration_sink, diagnostic,
@@ -155,9 +156,23 @@ $sources = [
 $program = (new Program_Frontend())->prepare_sources('main', $sources, $target);
 verify($program->entry->body()->statements[0]->function_def() === $program->files['mid']->functions()[0],
 	'Cross-source identity lost');
-$facts_before = serialize($program);
+$snapshot = new Preparation_Snapshot();
+$facts_before = $snapshot->capture($program);
 $output = Cpp_Program::emit($program);
-verify(serialize($program) === $facts_before, 'Lowering mutated semantic facts');
+verify($snapshot->capture($program) === $facts_before, 'Lowering mutated semantic facts');
+// Equal fields must not hide a rebound target, and observation must permit retirement.
+$first = (object)['value' => 1];
+$second = clone $first;
+$slot = (object)['target' => WeakReference::create($first)];
+$before = $snapshot->capture($slot);
+$slot->target = WeakReference::create($second);
+$rebound = $snapshot->capture($slot);
+verify($rebound !== $before, 'Purity snapshot missed rebinding');
+$second->value = 2;
+$mutated = $snapshot->capture($slot);
+verify($mutated !== $rebound, 'Purity snapshot missed target mutation');
+unset($second);
+verify($slot->target->get() === null && $snapshot->capture($slot) !== $mutated, 'Purity snapshot missed expiry');
 $reordered = (new Program_Frontend())->prepare_sources('main', array_reverse($sources, true), $target);
 verify(Cpp_Program::emit($reordered)->files === $output->files, 'Input order changes function emission');
 $messages = [];

@@ -1,0 +1,4260 @@
+{
+ "sample": "stock-ledger",
+ "host": "tf-dev002",
+ "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+ "flags": [
+  "clang++",
+  "-O2",
+  "-g0",
+  "-std=c++23",
+  "-stdlib=libc++",
+  "-I/tmp/scpp-o1.6hOBV0/v02/runtime/generated/public"
+ ],
+ "work": "/tmp/scpp-o1.6hOBV0/owner-slot-uuuhq11m",
+ "builds": [
+  {
+   "mode": "forward-all",
+   "round": 0,
+   "php": 95.560264,
+   "prep": 79.5244088682518,
+   "native": 1818.2070776820183,
+   "entry": 23.03953468799591,
+   "link": 27.038991451263428,
+   "total": 2043.3702766895294
+  },
+  {
+   "mode": "blocks",
+   "round": 0,
+   "php": 95.572137,
+   "prep": 71.98136234101105,
+   "native": 1751.5950873494148,
+   "entry": 23.170597851276398,
+   "link": 26.27241611480713,
+   "total": 1968.5916006565094
+  },
+  {
+   "mode": "forward-loop",
+   "round": 0,
+   "php": 92.938206,
+   "prep": 67.19934304270173,
+   "native": 1781.576193869114,
+   "entry": 24.995073676109314,
+   "link": 29.30084615945816,
+   "total": 1996.0096627473831
+  },
+  {
+   "mode": "blocks",
+   "round": 1,
+   "php": 93.746322,
+   "prep": 66.2541661620407,
+   "native": 1810.4726374149323,
+   "entry": 27.56933867931366,
+   "link": 26.619546115398407,
+   "total": 2024.662010371685
+  },
+  {
+   "mode": "forward-all",
+   "round": 1,
+   "php": 94.106808,
+   "prep": 67.90170849045944,
+   "native": 1813.9807879924774,
+   "entry": 24.45882558822632,
+   "link": 29.950372874736786,
+   "total": 2030.3985029459
+  },
+  {
+   "mode": "forward-loop",
+   "round": 1,
+   "php": 93.12692,
+   "prep": 66.26975075872421,
+   "native": 1777.0418971776962,
+   "entry": 26.681184768676758,
+   "link": 35.432055592536926,
+   "total": 1998.5518082976341
+  },
+  {
+   "mode": "forward-all",
+   "round": 2,
+   "php": 92.635808,
+   "prep": 67.47114895877075,
+   "native": 1810.848705470562,
+   "entry": 28.16987782716751,
+   "link": 32.557301223278046,
+   "total": 2031.6828414797783
+  },
+  {
+   "mode": "forward-loop",
+   "round": 2,
+   "php": 94.016489,
+   "prep": 66.73644074710464,
+   "native": 1746.0974678397179,
+   "entry": 23.05743098258972,
+   "link": 33.756934106349945,
+   "total": 1963.6647626757622
+  },
+  {
+   "mode": "blocks",
+   "round": 2,
+   "php": 98.861567,
+   "prep": 71.30144604101945,
+   "native": 1779.353328049183,
+   "entry": 23.29608052968979,
+   "link": 28.069444000720978,
+   "total": 2000.881865620613
+  },
+  {
+   "mode": "blocks",
+   "round": 3,
+   "php": 94.369831,
+   "prep": 66.67471447166824,
+   "native": 1812.9540011286736,
+   "entry": 29.680825769901276,
+   "link": 29.161572456359863,
+   "total": 2032.840944826603
+  },
+  {
+   "mode": "forward-loop",
+   "round": 3,
+   "php": 93.165943,
+   "prep": 64.69314399035645,
+   "native": 1794.0988838672638,
+   "entry": 32.227061688899994,
+   "link": 30.846640467643738,
+   "total": 2015.031673014164
+  },
+  {
+   "mode": "forward-all",
+   "round": 3,
+   "php": 93.813778,
+   "prep": 66.31210343348694,
+   "native": 1841.1713317036629,
+   "entry": 32.636404037475586,
+   "link": 27.819983661174774,
+   "total": 2061.7536008358
+  },
+  {
+   "mode": "blocks",
+   "round": 4,
+   "php": 94.265696,
+   "prep": 72.52924482927703,
+   "native": 1763.6508122086525,
+   "entry": 28.961189091205597,
+   "link": 31.515054404735565,
+   "total": 1990.9219965338707
+  },
+  {
+   "mode": "forward-all",
+   "round": 4,
+   "php": 93.015952,
+   "prep": 75.47484528126526,
+   "native": 1826.2967765331268,
+   "entry": 26.975594460964203,
+   "link": 28.084762394428253,
+   "total": 2049.8479306697845
+  },
+  {
+   "mode": "forward-loop",
+   "round": 4,
+   "php": 94.032609,
+   "prep": 67.03063742896653,
+   "native": 1804.482601583004,
+   "entry": 30.61699867248535,
+   "link": 31.898505985736847,
+   "total": 2028.0613526701927
+  }
+ ],
+ "traces": [
+  {
+   "mode": "forward-all",
+   "round": 0,
+   "Total CodeGenPasses": 898.437,
+   "Total Optimizer": 744.122,
+   "Total Frontend": 204.507
+  },
+  {
+   "mode": "blocks",
+   "round": 0,
+   "Total CodeGenPasses": 911.366,
+   "Total Optimizer": 711.07,
+   "Total Frontend": 196.259
+  },
+  {
+   "mode": "forward-loop",
+   "round": 0,
+   "Total CodeGenPasses": 888.996,
+   "Total Optimizer": 700.421,
+   "Total Frontend": 197.302
+  },
+  {
+   "mode": "forward-all",
+   "round": 2,
+   "Total CodeGenPasses": 892.951,
+   "Total Optimizer": 744.341,
+   "Total Frontend": 196.313
+  },
+  {
+   "mode": "forward-loop",
+   "round": 2,
+   "Total CodeGenPasses": 896.328,
+   "Total Optimizer": 701.937,
+   "Total Frontend": 194.127
+  },
+  {
+   "mode": "blocks",
+   "round": 2,
+   "Total CodeGenPasses": 903.744,
+   "Total Optimizer": 710.624,
+   "Total Frontend": 194.294
+  },
+  {
+   "mode": "blocks",
+   "round": 4,
+   "Total CodeGenPasses": 876.464,
+   "Total Optimizer": 705.392,
+   "Total Frontend": 210.719
+  },
+  {
+   "mode": "forward-all",
+   "round": 4,
+   "Total CodeGenPasses": 890.135,
+   "Total Optimizer": 729.201,
+   "Total Frontend": 207.175
+  },
+  {
+   "mode": "forward-loop",
+   "round": 4,
+   "Total CodeGenPasses": 853.534,
+   "Total Optimizer": 665.55,
+   "Total Frontend": 184.681
+  }
+ ],
+ "facts": {
+  "forward-all": {
+   "functions": {
+    "process_input_": {
+     "frame": 328,
+     "bytes": 3337,
+     "helper_calls": 0,
+     "sites": {
+      "record_movement_": {
+       "owner_positions": [
+        0,
+        1,
+        2
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%4",
+         "marked": true
+        },
+        {
+         "ptr": "%5",
+         "marked": true
+        },
+        {
+         "ptr": "%6",
+         "marked": true
+        }
+       ]
+      }
+     }
+    },
+    "record_movement_": {
+     "frame": 40,
+     "bytes": 668,
+     "helper_calls": 0,
+     "sites": {
+      "track_sequence_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%7",
+         "marked": true
+        },
+        {
+         "ptr": "%8",
+         "marked": true
+        }
+       ]
+      },
+      "update_dashboard_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%5",
+         "marked": true
+        },
+        {
+         "ptr": "%6",
+         "marked": true
+        }
+       ]
+      }
+     }
+    },
+    "update_dashboard_": {
+     "frame": 40,
+     "bytes": 4484,
+     "helper_calls": 0,
+     "sites": {
+      "quantity_by_movement_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%67",
+         "marked": true
+        },
+        {
+         "ptr": "%68",
+         "marked": true
+        }
+       ]
+      },
+      "available_by_decision_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%65",
+         "marked": true
+        },
+        {
+         "ptr": "%66",
+         "marked": true
+        }
+       ]
+      },
+      "reserved_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%63",
+         "marked": true
+        },
+        {
+         "ptr": "%64",
+         "marked": true
+        }
+       ]
+      },
+      "on_hand_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%61",
+         "marked": true
+        },
+        {
+         "ptr": "%62",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%59",
+         "marked": true
+        },
+        {
+         "ptr": "%60",
+         "marked": true
+        }
+       ]
+      },
+      "available_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%57",
+         "marked": true
+        },
+        {
+         "ptr": "%58",
+         "marked": true
+        }
+       ]
+      },
+      "reserved_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%55",
+         "marked": true
+        },
+        {
+         "ptr": "%56",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%53",
+         "marked": true
+        },
+        {
+         "ptr": "%54",
+         "marked": true
+        }
+       ]
+      },
+      "available_by_movement_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%51",
+         "marked": true
+        },
+        {
+         "ptr": "%52",
+         "marked": true
+        }
+       ]
+      },
+      "reserved_by_movement_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%49",
+         "marked": true
+        },
+        {
+         "ptr": "%50",
+         "marked": true
+        }
+       ]
+      },
+      "on_hand_by_movement_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%47",
+         "marked": true
+        },
+        {
+         "ptr": "%48",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_movement_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%45",
+         "marked": true
+        },
+        {
+         "ptr": "%46",
+         "marked": true
+        }
+       ]
+      },
+      "available_by_movement_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%43",
+         "marked": true
+        },
+        {
+         "ptr": "%44",
+         "marked": true
+        }
+       ]
+      },
+      "reserved_by_decision_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%41",
+         "marked": true
+        },
+        {
+         "ptr": "%42",
+         "marked": true
+        }
+       ]
+      },
+      "on_hand_by_decision_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%39",
+         "marked": true
+        },
+        {
+         "ptr": "%40",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_decision_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%37",
+         "marked": true
+        },
+        {
+         "ptr": "%38",
+         "marked": true
+        }
+       ]
+      },
+      "available_by_decision_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%35",
+         "marked": true
+        },
+        {
+         "ptr": "%36",
+         "marked": true
+        }
+       ]
+      },
+      "reserved_by_decision_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%33",
+         "marked": true
+        },
+        {
+         "ptr": "%34",
+         "marked": true
+        }
+       ]
+      },
+      "on_hand_by_order_size_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%31",
+         "marked": true
+        },
+        {
+         "ptr": "%32",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_order_size_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%29",
+         "marked": true
+        },
+        {
+         "ptr": "%30",
+         "marked": true
+        }
+       ]
+      },
+      "available_by_order_size_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%27",
+         "marked": true
+        },
+        {
+         "ptr": "%28",
+         "marked": true
+        }
+       ]
+      },
+      "reserved_by_order_size_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%25",
+         "marked": true
+        },
+        {
+         "ptr": "%26",
+         "marked": true
+        }
+       ]
+      },
+      "on_hand_by_availability_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%23",
+         "marked": true
+        },
+        {
+         "ptr": "%24",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_availability_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%21",
+         "marked": true
+        },
+        {
+         "ptr": "%22",
+         "marked": true
+        }
+       ]
+      },
+      "available_by_availability_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%19",
+         "marked": true
+        },
+        {
+         "ptr": "%20",
+         "marked": true
+        }
+       ]
+      },
+      "reserved_by_balance_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%17",
+         "marked": true
+        },
+        {
+         "ptr": "%18",
+         "marked": true
+        }
+       ]
+      },
+      "on_hand_by_balance_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%15",
+         "marked": true
+        },
+        {
+         "ptr": "%16",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_reservation_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%13",
+         "marked": true
+        },
+        {
+         "ptr": "%14",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%11",
+         "marked": true
+        },
+        {
+         "ptr": "%12",
+         "marked": true
+        }
+       ]
+      },
+      "available_by_movement_by_decision_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%9",
+         "marked": true
+        },
+        {
+         "ptr": "%10",
+         "marked": true
+        }
+       ]
+      },
+      "reserved_by_movement_by_decision_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%7",
+         "marked": true
+        },
+        {
+         "ptr": "%8",
+         "marked": true
+        }
+       ]
+      },
+      "on_hand_by_movement_by_decision_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%5",
+         "marked": true
+        },
+        {
+         "ptr": "%6",
+         "marked": true
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%3",
+         "marked": true
+        },
+        {
+         "ptr": "%4",
+         "marked": true
+        }
+       ]
+      }
+     }
+    },
+    "analyze_": {
+     "frame": 56,
+     "bytes": 399,
+     "helper_calls": 0,
+     "sites": {
+      "process_input_": {
+       "owner_positions": [
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%2",
+         "marked": true
+        }
+       ]
+      }
+     }
+    }
+   },
+   "cpp_bytes": 296861,
+   "sha256": "c53652f8771e1376d089d8820ac325c26fed83b7bdc037951aa20f71c8311c55"
+  },
+  "blocks": {
+   "functions": {
+    "process_input_": {
+     "frame": 376,
+     "bytes": 3353,
+     "helper_calls": 0,
+     "sites": {
+      "record_movement_": {
+       "owner_positions": [
+        0,
+        1,
+        2
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%25",
+         "marked": false
+        },
+        {
+         "ptr": "%26",
+         "marked": false
+        },
+        {
+         "ptr": "%27",
+         "marked": false
+        }
+       ]
+      }
+     }
+    },
+    "record_movement_": {
+     "frame": 88,
+     "bytes": 684,
+     "helper_calls": 0,
+     "sites": {
+      "track_sequence_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%7",
+         "marked": false
+        },
+        {
+         "ptr": "%8",
+         "marked": false
+        }
+       ]
+      },
+      "update_dashboard_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%9",
+         "marked": false
+        },
+        {
+         "ptr": "%10",
+         "marked": false
+        }
+       ]
+      }
+     }
+    },
+    "update_dashboard_": {
+     "frame": 1064,
+     "bytes": 5055,
+     "helper_calls": 0,
+     "sites": {
+      "quantity_by_movement_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%3",
+         "marked": false
+        },
+        {
+         "ptr": "%4",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_decision_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%5",
+         "marked": false
+        },
+        {
+         "ptr": "%6",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%7",
+         "marked": false
+        },
+        {
+         "ptr": "%8",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%9",
+         "marked": false
+        },
+        {
+         "ptr": "%10",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%11",
+         "marked": false
+        },
+        {
+         "ptr": "%12",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%13",
+         "marked": false
+        },
+        {
+         "ptr": "%14",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%15",
+         "marked": false
+        },
+        {
+         "ptr": "%16",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%17",
+         "marked": false
+        },
+        {
+         "ptr": "%18",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_movement_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%19",
+         "marked": false
+        },
+        {
+         "ptr": "%20",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_movement_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%21",
+         "marked": false
+        },
+        {
+         "ptr": "%22",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_movement_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%23",
+         "marked": false
+        },
+        {
+         "ptr": "%24",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_movement_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%25",
+         "marked": false
+        },
+        {
+         "ptr": "%26",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_movement_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%27",
+         "marked": false
+        },
+        {
+         "ptr": "%28",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_decision_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%29",
+         "marked": false
+        },
+        {
+         "ptr": "%30",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_decision_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%31",
+         "marked": false
+        },
+        {
+         "ptr": "%32",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_decision_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%33",
+         "marked": false
+        },
+        {
+         "ptr": "%34",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_decision_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%35",
+         "marked": false
+        },
+        {
+         "ptr": "%36",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_decision_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%37",
+         "marked": false
+        },
+        {
+         "ptr": "%38",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_order_size_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%39",
+         "marked": false
+        },
+        {
+         "ptr": "%40",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_order_size_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%41",
+         "marked": false
+        },
+        {
+         "ptr": "%42",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_order_size_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%43",
+         "marked": false
+        },
+        {
+         "ptr": "%44",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_order_size_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%45",
+         "marked": false
+        },
+        {
+         "ptr": "%46",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_availability_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%47",
+         "marked": false
+        },
+        {
+         "ptr": "%48",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_availability_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%49",
+         "marked": false
+        },
+        {
+         "ptr": "%50",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_availability_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%51",
+         "marked": false
+        },
+        {
+         "ptr": "%52",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_balance_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%53",
+         "marked": false
+        },
+        {
+         "ptr": "%54",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_balance_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%55",
+         "marked": false
+        },
+        {
+         "ptr": "%56",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_reservation_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%57",
+         "marked": false
+        },
+        {
+         "ptr": "%58",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%59",
+         "marked": false
+        },
+        {
+         "ptr": "%60",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_movement_by_decision_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%61",
+         "marked": false
+        },
+        {
+         "ptr": "%62",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_movement_by_decision_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%63",
+         "marked": false
+        },
+        {
+         "ptr": "%64",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_movement_by_decision_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%65",
+         "marked": false
+        },
+        {
+         "ptr": "%66",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%67",
+         "marked": false
+        },
+        {
+         "ptr": "%68",
+         "marked": false
+        }
+       ]
+      }
+     }
+    },
+    "analyze_": {
+     "frame": 72,
+     "bytes": 407,
+     "helper_calls": 0,
+     "sites": {
+      "process_input_": {
+       "owner_positions": [
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%3",
+         "marked": false
+        }
+       ]
+      }
+     }
+    }
+   },
+   "cpp_bytes": 295983,
+   "sha256": "69f4c245779de3a5bdb88be864a901bd2306845354d1e04214e34bc0eee9a13b"
+  },
+  "forward-loop": {
+   "functions": {
+    "process_input_": {
+     "frame": 328,
+     "bytes": 3337,
+     "helper_calls": 0,
+     "sites": {
+      "record_movement_": {
+       "owner_positions": [
+        0,
+        1,
+        2
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%4",
+         "marked": true
+        },
+        {
+         "ptr": "%5",
+         "marked": true
+        },
+        {
+         "ptr": "%6",
+         "marked": true
+        }
+       ]
+      }
+     }
+    },
+    "record_movement_": {
+     "frame": 88,
+     "bytes": 684,
+     "helper_calls": 0,
+     "sites": {
+      "track_sequence_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%7",
+         "marked": false
+        },
+        {
+         "ptr": "%8",
+         "marked": false
+        }
+       ]
+      },
+      "update_dashboard_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%9",
+         "marked": false
+        },
+        {
+         "ptr": "%10",
+         "marked": false
+        }
+       ]
+      }
+     }
+    },
+    "update_dashboard_": {
+     "frame": 1064,
+     "bytes": 5055,
+     "helper_calls": 0,
+     "sites": {
+      "quantity_by_movement_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%3",
+         "marked": false
+        },
+        {
+         "ptr": "%4",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_decision_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%5",
+         "marked": false
+        },
+        {
+         "ptr": "%6",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%7",
+         "marked": false
+        },
+        {
+         "ptr": "%8",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%9",
+         "marked": false
+        },
+        {
+         "ptr": "%10",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%11",
+         "marked": false
+        },
+        {
+         "ptr": "%12",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%13",
+         "marked": false
+        },
+        {
+         "ptr": "%14",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%15",
+         "marked": false
+        },
+        {
+         "ptr": "%16",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%17",
+         "marked": false
+        },
+        {
+         "ptr": "%18",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_movement_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%19",
+         "marked": false
+        },
+        {
+         "ptr": "%20",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_movement_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%21",
+         "marked": false
+        },
+        {
+         "ptr": "%22",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_movement_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%23",
+         "marked": false
+        },
+        {
+         "ptr": "%24",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_movement_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%25",
+         "marked": false
+        },
+        {
+         "ptr": "%26",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_movement_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%27",
+         "marked": false
+        },
+        {
+         "ptr": "%28",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_decision_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%29",
+         "marked": false
+        },
+        {
+         "ptr": "%30",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_decision_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%31",
+         "marked": false
+        },
+        {
+         "ptr": "%32",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_decision_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%33",
+         "marked": false
+        },
+        {
+         "ptr": "%34",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_decision_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%35",
+         "marked": false
+        },
+        {
+         "ptr": "%36",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_decision_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%37",
+         "marked": false
+        },
+        {
+         "ptr": "%38",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_order_size_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%39",
+         "marked": false
+        },
+        {
+         "ptr": "%40",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_order_size_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%41",
+         "marked": false
+        },
+        {
+         "ptr": "%42",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_order_size_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%43",
+         "marked": false
+        },
+        {
+         "ptr": "%44",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_order_size_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%45",
+         "marked": false
+        },
+        {
+         "ptr": "%46",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_availability_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%47",
+         "marked": false
+        },
+        {
+         "ptr": "%48",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_availability_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%49",
+         "marked": false
+        },
+        {
+         "ptr": "%50",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_availability_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%51",
+         "marked": false
+        },
+        {
+         "ptr": "%52",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_balance_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%53",
+         "marked": false
+        },
+        {
+         "ptr": "%54",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_balance_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%55",
+         "marked": false
+        },
+        {
+         "ptr": "%56",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_reservation_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%57",
+         "marked": false
+        },
+        {
+         "ptr": "%58",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_by_order_size_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%59",
+         "marked": false
+        },
+        {
+         "ptr": "%60",
+         "marked": false
+        }
+       ]
+      },
+      "available_by_movement_by_decision_by_availability_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%61",
+         "marked": false
+        },
+        {
+         "ptr": "%62",
+         "marked": false
+        }
+       ]
+      },
+      "reserved_by_movement_by_decision_by_balance_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%63",
+         "marked": false
+        },
+        {
+         "ptr": "%64",
+         "marked": false
+        }
+       ]
+      },
+      "on_hand_by_movement_by_decision_by_reservation_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%65",
+         "marked": false
+        },
+        {
+         "ptr": "%66",
+         "marked": false
+        }
+       ]
+      },
+      "quantity_by_movement_by_decision_by_unit_price_": {
+       "owner_positions": [
+        0,
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%67",
+         "marked": false
+        },
+        {
+         "ptr": "%68",
+         "marked": false
+        }
+       ]
+      }
+     }
+    },
+    "analyze_": {
+     "frame": 72,
+     "bytes": 407,
+     "helper_calls": 0,
+     "sites": {
+      "process_input_": {
+       "owner_positions": [
+        1
+       ],
+       "visible_calls": 1,
+       "slots": [
+        {
+         "ptr": "%3",
+         "marked": false
+        }
+       ]
+      }
+     }
+    }
+   },
+   "cpp_bytes": 296141,
+   "sha256": "d1425103dd718423d8a57c4ee71431cb27b549f574d925ef81cee5739ad34614"
+  }
+ },
+ "addresses": {
+  "forward-all": {
+   "0": "000000000001bfc0",
+   "32": "000000000001bfe0",
+   "128": "000000000001c040",
+   "224": "000000000001c0a0"
+  },
+  "blocks": {
+   "0": "000000000001bfc0",
+   "32": "000000000001bfe0",
+   "128": "000000000001c040",
+   "224": "000000000001c0a0"
+  },
+  "forward-loop": {
+   "0": "000000000001bfc0",
+   "32": "000000000001bfe0",
+   "128": "000000000001c040",
+   "224": "000000000001c0a0"
+  }
+ },
+ "cpu": [
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 0,
+   "ms": 5.20531175
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 0,
+   "ms": 5.1286106875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 0,
+   "ms": 7.212900625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.9775905625
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.8565562312499999
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 0,
+   "ms": 6.14223184375
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 0,
+   "ms": 4.7214633125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.7361316125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 0,
+   "ms": 4.5211510625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 0,
+   "ms": 4.3956600625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.58225049375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 0,
+   "ms": 4.5658574375
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.6140769375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 0,
+   "ms": 4.4592095625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 0,
+   "ms": 4.531583125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.574859825
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 0,
+   "ms": 4.533163
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.5793777437500001
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.58806409375
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.5955999125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.58697060625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.5947265875000001
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 0,
+   "ms": 4.54518865625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 0,
+   "ms": 0.5835570124999999
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.5899384875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 1,
+   "ms": 4.61508225
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 1,
+   "ms": 4.560755375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 1,
+   "ms": 4.4457076875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.5655709
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 1,
+   "ms": 4.5592234375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 1,
+   "ms": 4.52897921875
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.57348486875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 1,
+   "ms": 4.438641
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.5827039125
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.5942093625
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 1,
+   "ms": 4.53488934375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 1,
+   "ms": 4.58353934375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.5870320375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.5872724250000001
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 1,
+   "ms": 4.52032234375
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.60430530625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.5982754875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.580819
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 1,
+   "ms": 4.54686146875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.597089275
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 1,
+   "ms": 4.540704
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 1,
+   "ms": 0.58802470625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 1,
+   "ms": 4.47012190625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 2,
+   "ms": 4.6406849375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 2,
+   "ms": 4.49431196875
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 2,
+   "ms": 4.62398553125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 2,
+   "ms": 4.45656584375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 2,
+   "ms": 4.4460514375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.5781252
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.60581463125
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 2,
+   "ms": 4.54986959375
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.5740986437500001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.5843738625
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 2,
+   "ms": 4.55011321875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.5858356687499999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.58046928125
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.59131080625
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.59842114375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.60169785
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.600101725
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.58727248125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 2,
+   "ms": 4.60414675
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 2,
+   "ms": 0.5816399812499999
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 2,
+   "ms": 4.599255
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 2,
+   "ms": 4.43472115625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 2,
+   "ms": 4.55943190625
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 2,
+   "ms": 4.52838871875
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 3,
+   "ms": 4.52097446875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.57467804375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 3,
+   "ms": 4.5739779375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 3,
+   "ms": 4.72553190625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 3,
+   "ms": 4.40888675
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 3,
+   "ms": 4.4602268125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.57788788125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 3,
+   "ms": 4.56282078125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.5821919499999999
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.59912815625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.5857263312500001
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 3,
+   "ms": 4.53772840625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 3,
+   "ms": 4.3990235625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 3,
+   "ms": 4.5710349375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.59586941875
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 3,
+   "ms": 4.4988583125
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.5989735500000001
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.5738790500000001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 3,
+   "ms": 4.40147975
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.5836196875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.59270980625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.5781821875
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 3,
+   "ms": 0.5764106687499999
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 3,
+   "ms": 4.5225189375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 4,
+   "ms": 4.58287375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.58103609375
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 4,
+   "ms": 4.48388428125
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.5967934
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 4,
+   "ms": 4.43111971875
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.5817568249999999
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 4,
+   "ms": 4.58418053125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 4,
+   "ms": 4.46517325
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.57910365625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 4,
+   "ms": 4.62156440625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.5935566437500001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.57708775
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 4,
+   "ms": 4.5128830625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 4,
+   "ms": 4.53040903125
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 4,
+   "ms": 4.51840559375
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.57603015
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 4,
+   "ms": 4.532707125
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.5993225875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.58294755625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 4,
+   "ms": 4.63388096875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.5998722375000001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 4,
+   "ms": 4.4001916875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.57250465625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 4,
+   "ms": 0.58756903125
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 5,
+   "ms": 4.504575625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.58240748125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 5,
+   "ms": 4.46506525
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 5,
+   "ms": 4.46985046875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 5,
+   "ms": 4.6300243125
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.6064678
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.6043358625
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 5,
+   "ms": 4.504057125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.5898015999999999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.5754948937500001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.589227775
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 5,
+   "ms": 4.52328884375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 5,
+   "ms": 4.40866228125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.5743288875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.58713103125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 5,
+   "ms": 4.54914421875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.5954704125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 5,
+   "ms": 4.514640125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 5,
+   "ms": 4.49206715625
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.5809726062499999
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.5807165
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 5,
+   "ms": 4.6063455625
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 5,
+   "ms": 4.5308793125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 5,
+   "ms": 0.5832719749999999
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.5898532624999999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 6,
+   "ms": 4.42855959375
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 6,
+   "ms": 4.567898125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.5956053625000001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.57565061875
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 6,
+   "ms": 4.57105184375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 6,
+   "ms": 4.448873
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 6,
+   "ms": 4.587833
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 6,
+   "ms": 4.6312159375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.5843229437499999
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.5929890124999999
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 6,
+   "ms": 4.54306465625
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.60612715625
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.5779592625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.58705419375
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 6,
+   "ms": 4.5487991875
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.5777295812500001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 6,
+   "ms": 4.44203925
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.5833046625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.583063525
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 6,
+   "ms": 0.5903356625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 6,
+   "ms": 4.49618109375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 6,
+   "ms": 4.5354331875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 6,
+   "ms": 4.55771621875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.5990877625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 7,
+   "ms": 4.46677846875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.5863605187500001
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 7,
+   "ms": 4.50581825
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 7,
+   "ms": 4.44016353125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 7,
+   "ms": 4.40714534375
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.57716665625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.5808237562499999
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 7,
+   "ms": 4.5376106875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.58879721875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 7,
+   "ms": 4.57972528125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 7,
+   "ms": 4.57040628125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 7,
+   "ms": 4.5282850625
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 7,
+   "ms": 4.557924375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.6012374875000001
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.59272921875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.5792997125
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.62235039375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 7,
+   "ms": 4.55621215625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.5897775500000001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.58711475
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 7,
+   "ms": 0.60293304375
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 7,
+   "ms": 4.5767650625
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 7,
+   "ms": 4.44260875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 8,
+   "ms": 4.53449203125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 8,
+   "ms": 4.56244321875
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.5908882
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 8,
+   "ms": 4.60854025
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 8,
+   "ms": 4.50995884375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 8,
+   "ms": 4.569641375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 8,
+   "ms": 4.64673725
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.594150125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.58853335
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 8,
+   "ms": 4.77077396875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.5966180124999999
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.5803786750000001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 8,
+   "ms": 4.472245625
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.668724125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.576846175
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.5789034125
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 8,
+   "ms": 4.459657625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.592258025
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.56692644375
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 8,
+   "ms": 4.5446194375
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.5934680375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 8,
+   "ms": 4.41896159375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 8,
+   "ms": 0.5740638874999999
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 8,
+   "ms": 4.5442490625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.5989860124999999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 9,
+   "ms": 4.474526125
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 9,
+   "ms": 4.6079213125
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.5754027125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 9,
+   "ms": 4.65096921875
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.59532915625
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.5833756125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 9,
+   "ms": 4.47845534375
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.6128205250000001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.5869675999999999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.5807478
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.57508994375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.57990253125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 9,
+   "ms": 4.58312575
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 9,
+   "ms": 4.572133875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 9,
+   "ms": 4.45819546875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.5767581374999999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.5771691
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 9,
+   "ms": 4.5388805625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 9,
+   "ms": 4.518048375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 9,
+   "ms": 4.46636803125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 9,
+   "ms": 0.5930987875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 9,
+   "ms": 4.5321516875
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 9,
+   "ms": 4.50215353125
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 10,
+   "ms": 4.53995634375
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 10,
+   "ms": 4.521490125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.5918910749999999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 10,
+   "ms": 4.41629878125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 10,
+   "ms": 4.554787625
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 10,
+   "ms": 4.51621740625
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.58921906875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 10,
+   "ms": 4.510997
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 10,
+   "ms": 4.56818615625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 10,
+   "ms": 4.56758725
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 10,
+   "ms": 4.45498975
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 10,
+   "ms": 4.5382008125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 10,
+   "ms": 4.41890240625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.5933214499999999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.578204975
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.585401725
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.6142087562499999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.59943435625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.5810644625
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.6101126312499999
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.5844448000000001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.58289515
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 10,
+   "ms": 0.57466565
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 10,
+   "ms": 4.42487428125
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.5852376
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "full",
+   "round": 11,
+   "ms": 4.594952
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.5849516312499999
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.6156957937499999
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "full",
+   "round": 11,
+   "ms": 4.49464509375
+  },
+  {
+   "mode": "blocks",
+   "pad": 128,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.59143121875
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "full",
+   "round": 11,
+   "ms": 4.62743665625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.61790819375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.62702229375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 0,
+   "case": "full",
+   "round": 11,
+   "ms": 4.57551771875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 0,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.580189125
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "full",
+   "round": 11,
+   "ms": 4.61207190625
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "full",
+   "round": 11,
+   "ms": 4.5706069375
+  },
+  {
+   "mode": "blocks",
+   "pad": 224,
+   "case": "full",
+   "round": 11,
+   "ms": 4.5612521875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 128,
+   "case": "full",
+   "round": 11,
+   "ms": 4.586267875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 32,
+   "case": "full",
+   "round": 11,
+   "ms": 4.4950915625
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.58622456875
+  },
+  {
+   "mode": "forward-all",
+   "pad": 224,
+   "case": "full",
+   "round": 11,
+   "ms": 4.62418709375
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "full",
+   "round": 11,
+   "ms": 4.4553714375
+  },
+  {
+   "mode": "forward-all",
+   "pad": 32,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.59519101875
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 128,
+   "case": "full",
+   "round": 11,
+   "ms": 4.5144415625
+  },
+  {
+   "mode": "blocks",
+   "pad": 32,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.6845967687500001
+  },
+  {
+   "mode": "forward-loop",
+   "pad": 224,
+   "case": "shared",
+   "round": 11,
+   "ms": 0.935310125
+  },
+  {
+   "mode": "blocks",
+   "pad": 0,
+   "case": "shared",
+   "round": 11,
+   "ms": 1.01065758125
+  }
+ ]
+}

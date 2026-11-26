@@ -410,7 +410,7 @@ final class ast_unset_statement extends ast_reset_statement
 	public function prepare_reset(ast_local_binding $local): void
 	{
 		// Aliases always introduce a new name and resolve to their original slot.
-		if (($local instanceof ast_closure_capture && $local->by_reference) || $this->name !== $local->declaration_key()
+		if (($local instanceof ast_closure_capture && $local->by_reference && ast_writable_element::origin($local) === null) || $this->name !== $local->declaration_key()
 			|| ($local instanceof ast_parameter_declaration && $local->mode === passing_mode::reference)) {
 			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot unset a native alias or reference parameter');
 		}
@@ -486,8 +486,29 @@ class ast_assignment_statement extends ast_storage_write
 	/** Settle the calculation before publishing the local binding. */
 	public function prepare_local_compound(ast_local_binding $local): void
 	{
-		$local->type_def()->prepare_compound($this);
+		$this->prepare_storage_compound($local->type_def());
 		$this->settle_binding($local);
+	}
+
+	/** Resolve a scalar compound using the payloads, then attach checked reads and the final rebox. */
+	public function prepare_storage_compound(type_definition $storage): void
+	{
+		$right = $this->value->type_def();
+		$left_payload = $storage instanceof carrier_type_definition ? carrier_write_payload($storage, $this->source()->flavor) : $storage;
+		$right_payload = $right instanceof carrier_type_definition ? carrier_write_payload($right, $this->source()->flavor) : $right;
+		if ($left_payload === null || $right_payload === null || $storage instanceof boxed_type_definition
+			|| ($storage instanceof carrier_type_definition && $this instanceof ast_index_compound)) {
+			$storage->prepare_compound($this, $right);
+			return;
+		}
+		if ($left_payload !== $storage) $storage->require_extraction($this, conversion_context::assignment);
+		if ($right_payload !== $right) $right->require_operator_payload($this->value);
+		$left_payload->prepare_compound($this, $right_payload);
+		if ($left_payload !== $storage) {
+			$this->left_conversion |= value_conversion::EXTRACT;
+			$this->write_back |= value_conversion::WRAP;
+		}
+		if ($right_payload !== $right) $this->conversion |= value_conversion::EXTRACT;
 	}
 
 	/** Attach calculation and write-back decisions without constructing synthetic expression nodes. */
@@ -579,8 +600,16 @@ class ast_update_statement extends ast_storage_write
 		$this->postfix = $postfix;
 	}
 
+	/** Check writable PHP carrier updates against their scalar payload capability. */
 	public function require_update_type(type_definition $type): void
 	{
+		if ($type instanceof carrier_type_definition && !($this instanceof ast_index_update)) {
+			$payload = carrier_write_payload($type, $this->source()->flavor);
+			if ($payload !== null) {
+				$type->require_extraction($this, conversion_context::assignment);
+				$type = $payload;
+			}
+		}
 		if (!$type->supports_update($this->operator)) {
 			throw new diagnostic($this->source(), $this->byte_start(), 'Unsupported update type: ' . $type->name);
 		}

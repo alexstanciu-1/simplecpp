@@ -1,0 +1,14 @@
+{
+    "name": "runtime-fcgi",
+    "type": "c++",
+    "sources": [
+        "src/fcgi/fcgi.cpp"
+    ],
+    "dependencies": {
+        "runtime": {}
+    },
+    "artifacts": [
+        "../build/clang/libscpp_fcgi.a",
+        "../build/clang/fcgi-deps/libfcgi.so"
+    ]
+}

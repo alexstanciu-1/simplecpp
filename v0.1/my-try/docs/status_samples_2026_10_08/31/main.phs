@@ -1,4 +1,0 @@
-$values vector<int> = [3, 4];
-$sum int = 0;
-foreach ($values as $key => $value) { $sum += $key + $value; }
-return $sum;

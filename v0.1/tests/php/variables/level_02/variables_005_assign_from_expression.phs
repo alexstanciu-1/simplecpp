@@ -1,6 +1,0 @@
-// Assignment from an expression.
-$a = 2;
-$b = $a + 5;
-
-echo $b, "
-";

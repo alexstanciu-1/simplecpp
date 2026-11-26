@@ -1,4 +1,0 @@
-// Echo numeric cast path.
-$n = 123;
-echo $n, "
-";

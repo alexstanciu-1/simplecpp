@@ -1,2 +1,0 @@
-require_once "helper.phs";
-return helper();

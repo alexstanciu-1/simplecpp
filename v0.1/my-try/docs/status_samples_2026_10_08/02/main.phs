@@ -1,5 +1,0 @@
-$value int;
-$value = 4;
-$optional ?int = null;
-$optional = $value;
-return $optional ?? 0;

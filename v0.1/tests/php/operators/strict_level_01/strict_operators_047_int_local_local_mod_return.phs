@@ -1,5 +1,0 @@
-function run(): int {
-	$left int = 85;
-	$right int = 43;
-	return $left % $right;
-}

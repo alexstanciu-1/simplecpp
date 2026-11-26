@@ -1,2 +1,0 @@
-$child = new \diagnostics\Child();
-echo $child->value, "\n";

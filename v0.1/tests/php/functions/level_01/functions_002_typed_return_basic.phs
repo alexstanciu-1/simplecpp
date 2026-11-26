@@ -1,7 +1,0 @@
-// Basic typed return.
-function make_value(): int
-{
-	return 8;
-}
-
-echo make_value(), "\n";

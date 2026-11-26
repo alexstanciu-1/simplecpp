@@ -71,6 +71,157 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	verify(str_contains($cpp, '.value()'), 'Missing checked extraction');
 	verify(!str_contains($cpp, 'std::optional') && !str_contains($cpp, 'std::variant'), 'Application templates leaked');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("17|-12|24|1|12|4|12|1|a\0b|0|8|13|24")];
+	if ($flavor === flavor::php) {
+		$guard = <<<'SCPP'
+function missing():result_or_false<bool> { echo "once"; return false_sentinel; }
+$flag result_or_false<bool> = false;
+$zero result_or_false<int> = 0;
+$miss result_or_false<int> = false_sentinel;
+echo (int)($flag === false), (int)(false !== $flag), (int)($zero !== false),
+    (int)(false === $miss), (int)(missing() === false);
+return 8;
+SCPP;
+		$cpp = (new Cpp_Emitter())->emit($prepare($guard));
+		verify(substr_count($cpp, '.is_false()') === 5 && !str_contains($cpp, '.value()'),
+			'Strict PHP false guards must inspect the sentinel directly');
+		$fixtures['php-false-guards'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('0111once1')];
+		$pairs = <<<'SCPP'
+function lookup(string $tag, string $needle): result_or_false<int> {
+    echo $tag; return strpos("abc", $needle);
+}
+function replace_hit(result_or_false<int> &$slot): result_or_false<int> {
+    $slot = false_sentinel; return $slot;
+}
+$miss = strpos("abc", "x");
+$zero = strpos("abc", "a");
+$two = strpos("abc", "c");
+echo (int)($miss === $miss), (int)($zero === $miss), (int)($miss !== $zero),
+     (int)($zero === $zero), (int)($two !== $zero), "|";
+$flag result_or_false<bool> = false;
+$absent result_or_false<bool> = false_sentinel;
+echo (int)($flag === $absent), (int)($absent !== $flag), (int)($flag === $flag), "|";
+$a result_or_false<string> = "";
+$b result_or_false<string> = "0";
+echo (int)($a === $a), (int)($a === $b), "|";
+echo (int)(lookup("L","x") === lookup("R","z")), "|";
+echo (int)($zero === replace_hit($zero)), (int)($zero === $miss);
+return 8;
+SCPP;
+		$fixtures['php-false-pairs'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($pairs)),
+			'stdout_hex' => bin2hex('10111|011|10|LR1|01')];
+		rejects(fn() => $prepare('$a result_or_false<vector<string>> = false_sentinel; return (int)($a === $a);'),
+			'Unsupported binary operands');
+
+		$nullable_pairs = <<<'SCPP'
+enum Status { case Ready=0; case Busy=1; }
+function replace_absent(?int &$slot, int &$calls): ?int {
+    $calls += 1; $slot = 0; return $slot;
+}
+function observe(string $tag, ?int $slot): ?int { echo $tag; return $slot; }
+$a ?int=null; $b ?int=null; $zero ?int=0; $two ?int=2;
+echo (int)($a === $b), (int)($a !== $b), (int)($a === $zero), (int)($zero !== $a),
+     (int)($zero === $zero), (int)($two !== $zero), "|";
+$calls=0;
+echo (int)($a === replace_absent($a,$calls)), $calls, (int)($a === $zero), "|";
+echo (int)(observe("L",$b) !== observe("R",$a)), "|";
+$f ?bool=false; $no_flag ?bool=null;
+$s ?string=""; $other ?string="0"; $no_text ?string=null;
+echo (int)($f === $f), (int)($f === $no_flag), (int)($s === $s), (int)($s !== $other), (int)($no_text === $s), "|";
+$x ?float=0.0; $y ?float=-0.0;
+$ready ?Status=Status::Ready; $busy ?Status=Status::Busy; $none ?Status=null;
+echo (int)($x === $y), (int)($ready === $ready), (int)($ready !== $busy), (int)($none === $ready);
+return 8;
+SCPP;
+		$fixtures['php-nullable-pairs'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($nullable_pairs)),
+			'stdout_hex' => bin2hex('100111|011|LR1|10110|1110')];
+		foreach (['==', '!=', '===', '!=='] as $operator) {
+			rejects(fn() => $prepare('$a nullable<vector<string>> = null; return (int)($a ' . $operator . ' $a);'),
+				'Unsupported binary operands');
+		}
+		foreach (['false' => $pairs, 'nullable' => $nullable_pairs] as $family => $strict_source) {
+			$source = str_replace(['===', '!=='], ['==', '!='], $strict_source);
+			$cpp = (new Cpp_Emitter())->emit($prepare($source));
+			$fixtures["php-$family-equality"] = ['cpp' => $cpp, 'stdout_hex' => $fixtures["php-$family-pairs"]['stdout_hex']];
+		}
+		$cpp = $fixtures['php-nullable-equality']['cpp'];
+		verify(str_contains($cpp, '(var_a_0).has_value() ? ((var_b_1).has_value()'),
+			'Stable nullable locals must compare directly');
+		verify(str_contains($cpp, 'const auto binary_left = var_a_0; const auto binary_right = replace_absent_(var_a_0, var_calls_4);'),
+			'Snapshot the entire left carrier before the mutating RHS');
+		$states = ['p_false' => 'false', 'p_true' => 'true', 's_false' => 'false_sentinel', 's_true' => 'true_sentinel'];
+		$table = '';
+		foreach ($states as $name => $initial) $table .= '$' . $name . " result_or_bool<bool> = $initial;";
+		$expected = '';
+		foreach (['==', '!=', '===', '!=='] as $op) {
+			foreach (array_keys($states) as $left) {
+				foreach (array_keys($states) as $right) {
+					$table .= 'echo (int)($' . $left . " $op " . '$' . $right . ');';
+					$expected .= (string)(int)(($left === $right) !== str_starts_with($op, '!'));
+				}
+			}
+		}
+		$mutation = <<<'SCPP'
+function change(result_or_bool<bool> &$slot): result_or_bool<bool> {
+    echo "R"; $slot=true_sentinel; return $slot;
+}
+echo (int)($p_true === change($p_true)), (int)($p_true == $s_true);
+return 8;
+SCPP;
+		$cpp = (new Cpp_Emitter())->emit($prepare($table . $mutation));
+		verify(str_contains($cpp, '!(var_s_true_3).has_value() && (var_p_true_1).is_true() == (var_s_true_3).is_true()'),
+			'Stable operands must compare the stored sentinel only after excluding a payload');
+		verify(str_contains($cpp, 'const auto binary_left = var_p_true_1; const auto binary_right = change_(var_p_true_1);'),
+			'Save the whole boolean-sentinel carrier before changing its slot');
+		$fixtures['php-bool-sentinel-peers'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected . 'R01')];
+		rejects(fn() => $prepare('$a result_or_bool<vector<string>> = true_sentinel; return (int)($a == $a);'),
+			'Unsupported binary operands');
+		$result_source = <<<'SCPP'
+function cross_error(result<int> &$a, result<string> &$b): bool { return $a === $b && $b === $a; }
+function error_peers(result<int> &$a): bool {
+    $empty ?int = null;
+    $floating ?float = null;
+    return $a == $empty || $empty === $a || $a === 0 || 0 == $a
+        || $a == $floating || $floating === $a || 0.0 == $a || $a === 0.0;
+}
+function ordinary(result<int> &$a, result<int> &$b): bool { return $a == $b; }
+function different(result<int> &$a, result<int> &$b): bool { return $a != $b; }
+function identical(result<int> &$a, result<int> &$b): bool { return $a === $b; }
+function distinct(result<int> &$a, result<int> &$b): bool { return $a !== $b; }
+function replace_result(result<int> &$a): result<int> { $a = 9; return $a; }
+function before_replace(result<int> &$a): bool { return $a === replace_result($a); }
+function fail_result(): result<int> { throw new Exception("left"); }
+function right_result(): result<int> { echo "R"; return 1; }
+try { echo (int)(fail_result() === right_result()); } catch (Exception $e) { echo $e->get_message(); }
+return 8;
+SCPP;
+		$cpp = (new Cpp_Emitter())->emit($prepare($result_source));
+		verify(str_contains($cpp, ': !(var_b_1).has_value()') && str_contains($cpp, ': (var_a_0).same_error_identity(var_b_1)'),
+			'Stable result peers must compare directly through the selected error policy');
+		verify(str_contains($cpp, 'const auto binary_left = var_a_0; const auto binary_right = replace_result_(var_a_0);'),
+			'Snapshot the left result before its slot is replaced');
+		// Native callers supply independent structured errors to the source-defined comparators.
+		$cpp = "int test_result_equality();\n" . str_replace('::App::scpp_entry_body,', '::test_result_equality,', $cpp)
+			. "\n" . '#include "result_equality_driver.hpp"';
+		$fixtures['php-result-peers'] = ['files' => [
+			'program.cpp' => $cpp,
+			'result_equality_driver.hpp' => file_get_contents(__DIR__ . '/result_equality_driver.hpp'),
+			'allocation_probe.hpp' => file_get_contents(__DIR__ . '/../../tests/ownership/allocation_probe.hpp'),
+		], 'stdout_hex' => bin2hex('left')];
+		rejects(fn() => $prepare('function invalid(result<vector<string>> &$a): bool { return $a == $a; } return 8;'),
+			'Unsupported binary operands');
+
+		rejects(fn() => $prepare('function invalid(result<vector<string>> &$a, vector<string> &$b): bool { return $b == $a; } return 8;'),
+			'Unsupported binary operands');
+		$throws = <<<'SCPP'
+function fail_left(): ?int { throw new Exception("left"); }
+function right(): ?int { echo "R"; return null; }
+try { echo (int)(fail_left() == right()); } catch (Exception $e) { echo $e->get_message(); }
+return 8;
+SCPP;
+		$fixtures['php-peer-failure'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($throws)),
+			'stdout_hex' => bin2hex('left')];
+
+	}
 	$presence = $decl('nullable<int>', 'none', 'null')
 		. $decl('result_or_false<bool>', 'successful', 'false')
 		. $decl('result_or_false<bool>', 'absent', 'false_sentinel')
@@ -155,7 +306,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
 		$library = $directory . '/library.' . $flavor->name;
-		file_put_contents($main, 'echo (int)isset(provide()), provide() + 5; return 8;');
+		$pair_check = $flavor === flavor::php ? '$box mixed = provide(); $sink ?float = 1.0; $sink += provide(); echo (int)(provide() === provide()), (int)(provide() == provide()), (int)(provide() === 0);' : '';
+		$sum = $flavor === flavor::php ? '(int)(provide() + 5)' : 'provide() + 5';
+		file_put_contents($main, $pair_check . 'echo (int)isset(provide()), ' . $sum . '; return 8;');
 		$compiler = new Project_Compiler();
 		$session = null;
 		$root = null;
@@ -164,6 +317,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$revision = time();
 		$steps = [['nullable<int>', '12'], ['result<int>', '13.75'], ['nullable<string>', '"wrong"'],
 			['retry', ''], ['result_or_false<int>', '14'], ['delete', ''], ['nullable<int64>', '15']];
+		if ($flavor === flavor::php) {
+			$steps[] = ['nullable<float>', '16.0'];
+			$steps[] = ['result_or_bool<int>', '16'];
+		}
 		foreach ($steps as $step => [$type, $value]) {
 			if ($type !== 'retry') {
 				if ($type === 'delete') {
@@ -193,7 +350,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 			}
 			$fresh = Cpp_Program::emit((new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target))->files;
 			verify($incremental === $fresh, 'Incremental differs from fresh');
-			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex('1' . (string)((int)(float)$value + 5))];
+			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex(($pair_check === '' ? '1' : '1101') . (string)((int)(float)$value + 5))];
 		}
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op failed to reuse bodies');

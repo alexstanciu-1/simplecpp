@@ -131,12 +131,88 @@ $multi = (new Program_Frontend())->prepare_sources('main', [
 ], new entry_target(31));
 $bundle = Cpp_Program::emit($multi);
 $fixtures['multifile'] = ['files' => $bundle->files, 'stdout_hex' => bin2hex('cross')];
+// A PHP-declared variadic target accepts an unpacked vector across source flavors.
+$unpack = (new Program_Frontend())->prepare_sources('main', [
+	'main' => new source_file('main', 'function n(int ...$xs):int {$xs[]=9;return count($xs);}'
+		. '$xs vector<int> = [1,2];echo forward($xs),count($xs);return 8;', flavor::php),
+	'cpp' => new source_file('cpp', 'int forward(vector<int> xs) {return n(...xs)+via(n(...),xs);}', flavor::cpp),
+	'js' => new source_file('js', 'function via(op:callback<int,int...>,xs:vector<int>):int {return op(...xs);}', flavor::js),
+], new entry_target(31));
+$fixtures['unpack'] = ['files' => Cpp_Program::emit($unpack)->files, 'stdout_hex' => bin2hex('62')];
+// Each caller uses its own label syntax against the same published PHP parameter names.
+$named_variadic = (new Program_Frontend())->prepare_sources('main', [
+	'main' => new source_file('main', 'function score(int $base,int $bonus=4,int ...$items):int {return $base*10+$bonus+count($items);}'
+		. '$xs vector<int> = [1,2];echo from_cpp(),from_js(),from_py(),cpp_pack($xs),js_pack($xs);return 8;', flavor::php),
+	'cpp' => new source_file('cpp', 'int from_cpp() {return score(bonus:2,base:1);} int cpp_pack(vector<int> xs) {return score(bonus:2,base:1,...xs);}', flavor::cpp),
+	'js' => new source_file('js', 'function from_js():int {return score(base:3);} function js_pack(xs:vector<int>):int {return score(base:3,bonus:4,...xs);}', flavor::js),
+	'py' => new source_file('py', "def from_py() -> int:\n    return score(bonus=6,base=5)\n", flavor::python),
+], new entry_target(31));
+$fixtures['named_variadic'] = ['files' => Cpp_Program::emit($named_variadic)->files, 'stdout_hex' => bin2hex('1234561436')];
 // PHP follows the normative type-before-name signature; shorthand and deferred features reject.
 $php = static fn(string $code) => (new Source_Frontend())->prepare(new source_file('php', $code, flavor::php), new entry_target(31));
-foreach (['function f($x int): void {}', 'function f(int ...$x): void {}',
+foreach (['function f($x int): void {}', 'function f(const int &...$x): void {}',
 	'function f(int $x, int $x): void {}'] as $invalid) {
 	rejects(fn() => $php($invalid . 'return 8;'), str_contains($invalid, 'int $x,') ? 'Duplicate local' : 'Expected');
 }
+
+$readonly = 'function mutate(vector<int> &$v):void {} function check(int &...$xs):void {';
+foreach (['$xs[]=1;', '$xs[0]=1;', '$xs=$xs;', 'mutate($xs);', 'clean($xs);', 'unset($xs);',
+	'$alias =& $xs;$alias[]=1;', '$alias =& $xs;mutate($alias);'] as $write) {
+	rejects(fn() => $php($readonly . $write . '}return 8;'), 'read-only variadic pack');
+}
+$php('function f(int &...$xs):void {} $xs vector<int> = [];f(...$xs);return 8;');
+$php('function f(int &...$xs):int {return 0;} $op function<int(int...)> = f(...);return 8;');
+
+rejects(fn() => $php('function &f(int &...$xs):vector<int> {return $xs;}return 8;'), 'exactly one writable parameter');
+$php('struct Item {public int $n=0;} function f(Item &...$xs):void {}return 8;');
+rejects(fn() => $php('class Item {public function __construct(int &...$xs) {$xs[]=1;}}return 8;'), 'read-only variadic pack');
+$php('$f=fn(int &...$xs):int => count($xs);return 8;');
+rejects(fn() => $php('$f=fn(&...$xs):int => count($xs);return 8;'), 'explicit parameter type');
+rejects(fn() => $php('function mutate(vector<int> &$v):int {return 1;} $f=fn(int &...$xs):int => mutate($xs);return 8;'), 'read-only variadic pack');
+$php('struct Item {public int $n=0;} $f function<int(Item...)> = fn(&...$xs)=>count($xs);return 8;');
+
+$variadic = 'function gather(int $base=2,int ...$xs):int {echo $base;foreach ($xs as $x) {echo $x;}return count($xs);}';
+$php($variadic . 'echo gather(),gather(1,3,5);return 8;');
+$php('function run(callback<int,int...> $op):int {return $op();}'
+	. 'function use_owned(function<int(int...)> $op):int {return $op(1,2);}'
+	. 'function n(int ...$xs):int {return count($xs);} echo use_owned(n(...)),run(n(...));return 8;');
+$static = 'class S {public static function n(int ...$xs):int {return count($xs);}}';
+$php($static . '$v vector<int> = [1,2];$op function<int(int...)> = S::n(...);echo $op(),S::n(...$v);return 8;');
+rejects(fn() => $php($static . 'class D extends S {public static function n(vector<int> $xs):int {return 1;}}return 8;'),
+	'Static redeclaration signature must match exactly');
+$php(str_replace('public static function', 'public function', $static) . '$s=new S();return $s->n(1,2);');
+$php('class C {public function __construct(int ...$xs) {}} $c=new C();$xs vector<int> = [1];$c=new C(...$xs);return 8;');
+rejects(fn() => $php(str_replace('public static function', 'public function', $static)
+	. '$s=new S();$op function<int(int...)> = $s->n(...);return 8;'), 'Callback reference requires a named free function');
+rejects(fn() => $php('function f(int ...$xs,int $y):int {return 0;}return 8;'), 'Variadic parameter must be last');
+rejects(fn() => $php('function f(int ...$xs=1):int {return 0;}return 8;'), 'Variadic parameter must be last');
+$php($variadic . 'return gather(base: 1);');
+rejects(fn() => $php($variadic . 'return gather(xs: 1);'), 'only bind fixed parameters');
+rejects(fn() => $php($variadic . 'return gather(1,base:2);'), 'Parameter supplied twice');
+rejects(fn() => $php('function call_it(callback<int,int,int...> $op):int {return $op(base:1);}return 8;'),
+	'Typed callback calls require positional arguments');
+rejects(fn() => $php('function call_it(function<int(int,int...)> $op):int {return $op(base:1);}return 8;'),
+	'Typed callback calls require positional arguments');
+
+$prefix = $variadic . '$xs vector<int> = [];';
+foreach (['gather(...$xs)', 'gather(1,2,...$xs)'] as $call) {
+	rejects(fn() => $php($prefix . 'return ' . $call . ';'), 'after all fixed arguments');
+}
+foreach (['gather(1,...$xs,2)', 'gather(1,...$xs,...$xs)'] as $call) {
+	rejects(fn() => $php($prefix . 'return ' . $call . ';'), 'final argument');
+}
+$php($prefix . 'return gather(base:1,...$xs);');
+rejects(fn() => $php($prefix . 'return gather(base:1,xs:...$xs);'), 'cannot have an argument label');
+rejects(fn() => $php($prefix . 'return gather(base:1,2,...$xs);'), 'Positional argument after named');
+rejects(fn() => $php($prefix . 'return gather(base:1,...$xs,2);'), 'final argument');
+rejects(fn() => $php($prefix . 'return count(...$xs);'), 'Unpacking requires');
+rejects(fn() => $php($prefix . '$ss vector<string> = [];return gather(1,...$ss);'), 'Unpacked argument requires');
+$php('$f = fn(int ...$xs):int => count($xs); echo $f(),$f(1,2);return 8;');
+$php('$f function<int(int...)> = function(...$xs) {return count($xs);};return 8;');
+rejects(fn() => $php('$f = fn(...$xs):int => count($xs);return 8;'), 'explicit parameter type');
+rejects(fn() => $php('$f function<int(int...)> = fn($xs) => count($xs);return 8;'), 'Expected exact callback signature');
+rejects(fn() => $php('$f function<int(int...)> = fn(string ...$xs) => count($xs);return 8;'), 'Expected exact callable signature');
+rejects(fn() => $php('$f = fn(int ...$xs=1):int => count($xs);return 8;'), 'Variadic parameter must be last');
 
 $directory = sys_get_temp_dir() . '/scpp-typed-functions-' . bin2hex(random_bytes(8));
 mkdir($directory);

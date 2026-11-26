@@ -124,8 +124,81 @@ paths record provenance only: builds use v0.2 sources exclusively. The private
 `boxed_inspection` adapter exposes no public cursor, mutable reference or subscription.
 Public traversal/liveness remains RT-DEBT-01.
 
-Typed `from_json`, typed vector/hash encoding, source compiler registration,
+Standalone typed vector/hash encoding,
 PHP compatibility wrappers and persistent `{}`/`[]` identity remain separate work.
 The donor's recursive parser/writer has no explicit nesting-depth budget; this slice
 does not establish a hostile-input resource-limit contract or a throughput claim.
 See [validation](json_validation.md).
+
+## Source bindings
+
+With the JSON module selected, PHP exposes json_decode(string) → result<dynamic>
+and json_encode(value) → result<string>. The general surface adds
+json_decode_mixed(string) → result<mixed> and publishes the same decode and
+encode contracts. Exact argument type selects each of the ten encode overloads,
+including nullable scalars. General names follow project visibility.
+
+For a field-derived data record, `json_encode($packet)` borrows the value and
+calls its concrete `encode(Encoder&) const` method. Preparation checks the
+reachable field schemas against the published scalar and vector-element
+encoders. Each generated method sends object, field, array and typed value
+operations to the same synchronous encoder. Native providers receive plain numeric
+and boolean scalars by value and borrow strings, boxes and nullable carriers for
+the duration of the write. Field names are declared
+identifiers in schema order. Embedded records and shared owners can nest;
+an absent owner writes JSON null. Repeated references on independent branches
+encode independently. An active ownership cycle or nonfinite float yields a
+failed `result<string>`, even after earlier fields have been written. Only a
+successful operation publishes the output string. The runtime stores short results
+inline and transfers the completed writer buffer into long results. Extracting a
+string with the ordinary result value accessor retains its value-copy semantics.
+See [data record
+construction and codecs](data_initialization.md#native-codec-adapters-for-field-derived-signatures).
+
+With the decode operation selected, PHP and the general API expose
+`json_decode_as($text, Packet::class)` returning `result<Packet>`. The marker
+must resolve to a concrete data class or struct with a generated data constructor.
+Supported leaves are published signed int64, boolean and string values, including
+vector elements. The root must be one complete JSON object. Members may arrive
+in any order. Unknown members, duplicates, missing required inputs, malformed
+elements and trailing non-whitespace produce a failed result. The error message
+includes the byte offset and the reader path.
+
+A nested field may be an embedded data struct or a required data class with
+a supported schema. Each record consumes exactly one object on the same
+decoder. The native `Decoder` interface exposes object and array entry,
+field and element advancement, a borrowed field name, typed leaf reads and
+schema rejection. A false result from `next_field()` closes the object.
+At the root it also guarantees document completion. A source call such as
+`Packet::decode($reader)` takes a started JSON pull reader and returns the
+record directly. An authored static method with that name takes precedence.
+Use the text entry point for a checked result.
+
+A successful result owns the struct or the class owner. Extracting a temporary
+moves its payload; extracting a retained struct result into another value copies
+the struct and preserves the saved result. Use `isset($result)` to test success.
+
+## Document and node publication
+
+The document selection publishes immutable document and node values. A copied
+node retains the document arena, including after replacement of the originating
+document. Parsing validates complete UTF-8, unique decoded object member names,
+and a caller-supplied container depth from 1 to 256 (default 128). A nullable
+diagnostic receives category, byte offset and message on failure and resets on
+success. The returned result carries either a complete document or an error.
+Node accessors preserve shape, source member order and exact number tokens.
+Integer extraction accepts lexical signed int64 integers. All access failures
+are checked results.
+
+## Pull reader publication
+
+The pull_reader selection publishes json_pull_reader_create and fourteen checked
+methods. Copies share one cursor. start(text,file,limit) owns the input, uses
+file for diagnostics and accepts depths 1–256. Use kind, begin_object,
+begin_array, next_property, next_element and property_name to navigate. Read
+the current scalar with read_number (original spelling), read_integer (int64),
+read_string, read_boolean or read_null. A successful false from advancement
+closes that container. Finish with finish_document after consuming the root,
+or fail the cursor explicitly through reject(message). A failed read is
+terminal; restart requires a fresh handle. Documents use the same private
+structural reader, with independent public feature selection.

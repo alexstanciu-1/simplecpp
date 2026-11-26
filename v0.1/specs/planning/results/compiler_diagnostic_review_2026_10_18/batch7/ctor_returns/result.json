@@ -1,4 +1,0 @@
-{
-  "stage": "prepare",
-  "error": "Void return forwarding requires a void expression; values are not discarded\n"
-}

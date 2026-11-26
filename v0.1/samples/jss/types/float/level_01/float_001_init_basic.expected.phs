@@ -1,2 +1,0 @@
-$f float = 1.5;
-echo $f, "\n";

@@ -1,5 +1,0 @@
-$value int = 1;
-$before = $value++;
-$after = ++$value;
-$assigned = ($value = 8);
-return $before + $after + $assigned;

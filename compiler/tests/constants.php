@@ -146,7 +146,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	], new entry_target(31));
 	verify(Cpp_Program::emit($plain_program)->files === Cpp_Program::emit($program)->files, 'Plain symbol imports differ');
 	rejects(fn() => $prepare('echo UNKNOWN; return 8;'), 'Unknown');
-	rejects(fn() => $prepare($const('VALUE', 'int', '"bad"') . 'return 8;'), 'conversion');
+	rejects(fn() => $prepare($const('VALUE', 'int', '"bad"') . 'return 8;'), $flavor === flavor::php ? 'Invalid decimal integer text' : 'conversion');
 	$duplicates = (new Source_Frontend())->collect(new source_file('duplicates',
 		$const('VALUE', 'int', '1') . $const('VALUE', 'int', '2') . $const('VALUE', 'int', '3') . 'return 8;', $flavor));
 	verify(count($duplicates->diagnostics) === 2, 'All duplicate diagnostics must be retained');

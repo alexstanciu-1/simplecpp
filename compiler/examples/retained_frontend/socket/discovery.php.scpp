@@ -1,0 +1,57 @@
+// The default application accepts these four case-sensitive source extensions.
+function source_flavor(string $path): string {
+    if (str_ends_with($path, ".php")) return "php";
+    if (str_ends_with($path, ".cpp")) return "cpp";
+    if (str_ends_with($path, ".js")) return "js";
+    if (str_ends_with($path, ".py")) return "py";
+    return "";
+}
+
+function manifest_location(string $base, string $location): string {
+    if ($base !== "" && !str_starts_with($location, "/")) $location = $base . "/" . $location;
+    if (fs_is_dir($location)) $location = rtrim($location, "/") . "/module.json";
+    if (!fs_is_file($location)) throw Exception::make("Missing module manifest: " . $location);
+    return fs_realpath($location);
+}
+
+function discover_sources(string $root, string $prefix, hash<string,string> &$excluded,
+                          hash<string,string> &$sources): void {
+    $names vector<string> = fs_scan($root . "/" . $prefix);
+    foreach ($names as $name) {
+        if (str_starts_with($name, ".")) continue;
+        $path = $prefix . $name;
+        $disk = $root . "/" . $path;
+        if (fs_is_link($disk)) continue;
+        if (fs_is_dir($disk)) {
+            $lower = strtolower($name);
+            if ($lower === "build" || $lower === "generated" || $lower === "vendor" || $lower === "node_modules"
+                || fs_is_file($disk . "/module.json") || isset($excluded[$disk])) continue;
+            discover_sources($root, $path . "/", $excluded, $sources);
+        } elseif (fs_is_file($disk)) {
+            $label = source_flavor($path);
+            if ($label !== "") $sources[$path] = $label;
+        }
+    }
+}
+
+function explicit_sources(json_node $selection, hash<string,string> &$sources): void {
+    $kind = json_node_kind($selection);
+    if ($kind !== "object" && $kind !== "array") throw Exception::make("Invalid sources selection");
+    $count int = json_node_size($selection);
+    for ($i = 0; $i < $count; $i++) {
+        $path = "";
+        $label = "";
+        if ($kind === "object") {
+            $path = json_node_key($selection, $i);
+            $label = member_text($selection, $path);
+        } else {
+            $item json_node = json_node_at($selection, $i);
+            $path = json_node_string($item);
+            $label = source_flavor($path);
+        }
+        if ($label !== "php" && $label !== "cpp" && $label !== "js" && $label !== "py")
+            throw Exception::make("Unsupported source flavor: " . $path);
+        if (isset($sources[$path])) throw Exception::make("Duplicate source: " . $path);
+        $sources[$path] = $label;
+    }
+}

@@ -2,7 +2,7 @@
 set(proofs
   static_callable_properties erased_reference_returns owned_callable_fields
   static_owned_callables instance_owned_callables
-  boxed_scalars callable_collections callable_reference_inputs
+  boxed_scalars callable_collections callable_reference_inputs readonly_callable_inputs variadic_callables variadic_closures variadic_unpack variadic_static_methods variadic_instance_methods variadic_constructors named_variadic readonly_variadic writable_foreach scoped_element_borrows
   staged_ownership source_loader_callbacks
   runtime_operand_projection undefined_key collection_bootstrap
   input_records incremental_executable weak shared_references reference_parameters
@@ -10,7 +10,7 @@ set(proofs
   fixed_array ternary
   switch required_fields integer_radix
   bootstrap_runtime_lookup finally exceptions
-  collection_references collection_append named_construction struct_constants shared_lookup
+  collection_references readonly_collection_methods readonly_constructors count_reader collection_append named_construction struct_constants shared_lookup
   coalesce coalesce_assignment
   hash_find match match_conditions
   inline_adapters named_arguments app_namespace
@@ -146,3 +146,19 @@ add_test(NAME runtime_family_contract_full COMMAND ${Python3_EXECUTABLE} -B
 add_test(NAME vector_provider_exports_full COMMAND ${Python3_EXECUTABLE} -B
   ${PROJECT_SOURCE_DIR}/tools/api_generator/tests/vector_providers.py)
 set_tests_properties(runtime_family_contract_full vector_provider_exports_full PROPERTIES LABELS on_demand)
+
+if(SCPP_ENABLE_DATETIME)
+  add_test(NAME compiler_callable_signature_churn COMMAND ${Python3_EXECUTABLE} -B
+    ${PROJECT_SOURCE_DIR}/compiler/tests/callable_signature_churn.py ${CMAKE_CXX_COMPILER} ${CMAKE_BINARY_DIR})
+  set_tests_properties(compiler_callable_signature_churn PROPERTIES LABELS on_demand ENVIRONMENT "XDEBUG_MODE=off")
+endif()
+
+if(TARGET scpp_native_frontend)
+  add_test(NAME compiler_native_toolchain_qualification_full COMMAND ${Python3_EXECUTABLE} -B
+    ${PROJECT_SOURCE_DIR}/compiler/tests/native_toolchain_qualification.py ${PROJECT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER} --full)
+  set_tests_properties(compiler_native_toolchain_qualification_full PROPERTIES LABELS on_demand)
+endif()
+
+add_test(NAME compiler_binary64_spelling_native COMMAND ${Python3_EXECUTABLE} -B
+  ${CMAKE_CURRENT_SOURCE_DIR}/binary64_spelling.py ${CMAKE_CXX_COMPILER} ${PHP_EXECUTABLE} -stdlib=libc++)
+set_tests_properties(compiler_binary64_spelling_native PROPERTIES LABELS on_demand)

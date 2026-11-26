@@ -60,6 +60,8 @@ template<class Value> void grammar() {
     require(bytes(json::encode(keys.value()).value()) == R"({"0":1,"00":2,"-1":3,"2147483647":4,"4294967296":5,"99999999999999999999999":6})");
     auto escaped = Value::from_string(string{"\0\x01\b\f\n\r\t\"\\/", 10LL});
     require(bytes(json::encode(escaped).value()) == R"("\u0000\u0001\b\f\n\r\t\"\\/")");
+    const char* runs = R"("prefix\n\tX\u0001abcdefgh\r0123456789abcdef\\tail")";
+    require(bytes(json::encode(decode<Value>(runs).value()).value()) == runs);
     // Raw non-ASCII bytes remain donor-compatible; escaped Unicode is validated above.
     auto raw = Value::from_string(string{"\xff", 1LL});
     require(bytes(json::encode(raw).value()) == std::string("\"\xff\"", 3));

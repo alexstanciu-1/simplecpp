@@ -36,9 +36,10 @@ The existing numeric headers remain the public include surface; module selection
 controls their contents rather than introducing a second scalar implementation.
 
 `SCPP_ENABLE_NUMERIC=ON` composes the checked-in `numeric_publication.json` demand
-with core. That sample demand adds int32 and its reviewed operations/conversions;
-other widths can be requested explicitly through publication metadata. Datetime
-selects numeric as a dependency and requests uint64 only. JSON alone needs no
+with core. That sample demand adds reviewed operations/conversions for the base publication’s int32;
+other widths can be requested explicitly through publication metadata. The base publication requests uint64 transport for the general numeric string
+fingerprint. Its source callers select numeric. Datetime also selects numeric and
+uses that same uint64 type for its unsigned clocks. JSON alone needs no
 additional integer widths. All three options compose with tests disabled.
 
 ## Distinct byte

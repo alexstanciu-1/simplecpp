@@ -1,0 +1,42 @@
+function source_snapshot(Translation_Source $source): string {
+	$row = $source->path . ":" . bin2hex($source->text);
+	foreach ($source->tokens as $t) {
+		$row .= "|" . (string)enum_value($t->kind) . "," . (string)$t->offset . "," . (string)$t->length;
+	}
+	return $row;
+}
+
+function frontend_snapshot(Frontend_Session $session): string {
+	$scope = $session->scope;
+	$entry = $session->entry;
+	if ($scope === null || $entry === null) return "empty";
+	$function = $scope->declaration;
+	$body = $function->body();
+	$stmt = $body->statement;
+	if ($scope->resolve($function->symbol_key()) !== $function || $body->function_declaration() !== $function) {
+		throw Exception::make("Invalid published declaration");
+	}
+	return source_snapshot($scope->source) . ";" . source_snapshot($entry->source)
+		. ";" . $function->symbol_key() . "," . (string)$function->start . "," . (string)$function->header_end
+		. "," . (string)$function->end() . "," . (string)$body->start . "," . (string)$body->end
+		. "," . (string)$stmt->start . "," . (string)$stmt->end . "," . (string)$stmt->literal_token
+		. ";" . $entry->name . "," . (string)$entry->offset;
+}
+
+function handle_request(Frontend_Session $session, string $directory, string $command): string {
+	if ($command === "snapshot\n") return frontend_snapshot($session);
+	if ($command !== "run\n") return "unknown request";
+	$previous_scope = $session->scope;
+	$previous_entry = $session->entry;
+	$status = "ok";
+	try {
+		$session->refresh($directory);
+	} catch (Translation_Diagnostic $error) {
+		$status = $error->path . ":" . (string)$error->offset . ": " . $error->detail;
+	}
+	$reused = "";
+	if ($previous_scope !== null && $session->scope === $previous_scope) $reused .= "definition.php,";
+	if ($previous_entry !== null && $session->entry === $previous_entry) $reused .= "main.php,";
+	return $status . "|" . (string)$session->generation . "|" . $session->tokenized
+		. "|" . $session->parsed . "|" . $reused;
+}

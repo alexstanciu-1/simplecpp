@@ -27,7 +27,7 @@ conversion requires both. Duplicate/unknown/empty requests, missing policy, head
 or name collisions, and missing dependencies reject before any output is written.
 The complete bounded API requires published int64, bool_t, float64 and string,
 including explicit native long-long/double transport. The default publication selects both families independently. Boxed values are not admitted as typed vector/hash payloads. The subsequent
-[boxed-result extension](boxed_results.md) admits result_mixed/result_dynamic only;
+[boxed-result extension](boxed_results.md) admits result_mixed, result_dynamic and result_or_false_mixed;
 other boxed carrier families remain deferred.
 
 The probe measures the actual private mixed/dynamic layouts. Target facts carry an
@@ -124,9 +124,9 @@ Native traversal follows the [common protocol](collection_traversal.md); the [co
 
 All three flavors support `count(box)`, `empty(box)`, and receiver methods `has(key)`
 and `remove(key)` for mixed/dynamic. PHP/C++ spell receiver access `->`; JS uses `.`.
-Count returns int64; empty is the same checked container count compared with zero,
-not general scalar truthiness. Both throw `boxed_expected_container` for null or scalar
-receivers. Has/remove return bool; null and missing keys return false, while other
+Count returns int64 and requires a container, throwing `boxed_expected_container` otherwise.
+Empty tests byte length for a string or entry count for a container. Other kinds throw
+`invalid_empty_operand`. Has/remove return bool; null and missing keys return false, while other
 scalar receivers throw `boxed_expected_container`. A stored null value is present.
 
 Key arguments must have exact static int64 or string type. They use the same source
@@ -135,7 +135,7 @@ Invalid keys fail before removal. Removal preserves mixed copy independence and 
 all aliases of a dynamic container; a missing removal does not create a container.
 Expression receivers are supported without new ownership rules.
 
-Metadata `boxed.source_collection` declares the count binding, source key domains and
+Metadata `boxed.source_collection` declares the count and empty bindings, source key domains and
 normalized method bindings. Generated source_has/source_remove adapt keys before invoking
 the existing classified-key API; the native has/remove contracts remain unchanged. The
 compiler consumes generated signatures and existing cardinality/argument protocols.
@@ -160,3 +160,17 @@ Arithmetic results retain the boxed family; ordering returns bool. String compou
 PHP `.=` versus C++/JS `+=`; PHP numeric `+=` rejects string payloads. Scalar division,
 shift and power guards remain in effect. Nested indexing remains deferred. These additions
 introduce no public object layout or additional boxed kinds.
+
+## Exact mixed type predicates
+
+The general API and PHP flavor publish `is_bool(mixed): bool`,
+`is_int(mixed): bool`, and `is_float(mixed): bool`. Each observes its single
+argument once, by const reference, and tests its stored kind. False has boolean
+kind, zero has integer kind, and an integral-valued float has floating kind.
+Null, strings (including numeric strings), and containers return false for all
+three. The operation only reads the tag, including for a temporary mixed value.
+
+The argument must already have source type mixed. Passing a plain scalar,
+dynamic or a nullable scalar is a type error. The returned bool is a snapshot
+and introduces no flow-sensitive narrowing. Each predicate lowers to the same
+native function for both its PHP and general spelling.

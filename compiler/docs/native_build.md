@@ -37,7 +37,7 @@ pipe characters in native graph input paths reject in this slice; the current
 Ninja/Make depfile grammar does not reliably round-trip those spellings.
 
 The bundle manifest supplies generated translation units, external native sources and
-prebuilt dependency link inputs. This command does not rebuild dependencies. Use
+prebuilt dependency link inputs. The build command checks that selected dependency archives exist before compiling source. Build those dependencies separately. Use
 native facts and prebuilt runtime artifacts compatible with the chosen target,
 compiler and standard library. The default runtime manifest selects the existing
 Clang/libc++ archive; it does not automatically substitute a GCC archive.
@@ -54,6 +54,19 @@ $report = $project->run(); // Do not build if source preparation/publication thr
 $native = \scpp\compiler\Native_Build::run($generated, $native_directory, $config);
 // Reuse $project; call run() and Native_Build::run() after subsequent source edits.
 ```
+
+## Standalone native driver
+
+On Linux, a caller can use `Native_Build::run($bundle, $directory, $config, publish_only: true)`
+to publish the saved graph under the normal locks. The result contains its `graph` path.
+Invoke the compiled example as `driver --ninja BUNDLE BUILD_DIR ABSOLUTE_NINJA`.
+It acquires the shared bundle lock followed by the exclusive build-directory lock,
+checks the graph's ordered source and library paths against the current manifest,
+and runs Ninja's `program` target with the saved qualification gate. Republish
+the graph after a membership or toolchain configuration change. A body edit can
+reuse the same graph. On success the driver starts the linked application while
+its executable is protected, releases both locks, then forwards the application's
+streams and exit status. A Ninja failure returns its status immediately.
 
 ## Cache and invocation ownership
 

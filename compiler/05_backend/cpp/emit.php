@@ -21,6 +21,8 @@ final class Cpp_Exit
  */
 final class Cpp_Emitter
 {
+	use Cpp_Record_Decoder;
+	use Cpp_Record_Encoder;
 	use Cpp_Generator;
 
 	/** PROPERTIES */
@@ -113,7 +115,15 @@ final class Cpp_Emitter
 				$required_headers[$header] = true;
 			}
 		}
-		foreach ($type->binary_headers($value->operator) as $header) {
+		$comparison = $value->peer_equality;
+		if ($comparison !== null) {
+			$type = $comparison->execution;
+			if ($type === null) return;
+			foreach ([$comparison->left_conversion, $comparison->right_conversion] as $conversion) {
+				foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+			}
+		}
+		foreach ($type->binary_headers($comparison?->operator ?? $value->operator) as $header) {
 			$required_headers[$header] = true;
 		}
 	}
@@ -158,7 +168,7 @@ final class Cpp_Emitter
 	/** Concrete headers requested by the last source emission; no AST links escape into the output bundle. @return string[] */
 	public function adapter_files(): array /** array<string,string> */
 	{
-		$files = $this->inline_adapters->files() + $this->concrete_collections->files();
+		$files = $this->concrete_collections->files() + $this->inline_adapters->files();
 		foreach ($this->async_results as $task => $type) {
 			$path = async_task_binding::header_path($task);
 			$files[$path] = $this->headers?->grouped_declaration($path) ?? \Scpp\Api\asyncTaskHeader(
@@ -195,6 +205,20 @@ final class Cpp_Emitter
 	public function record_declaration(ast_record_declaration $node, array &$includes /** array<string,bool> */): string
 	{
 		$layout = [];
+		$result_declaration = '';
+		if ($node->kind === record_kind::structure && $this->record_demand($node, dependency_use::record_result)) {
+			$result_declaration = $this->result_declaration($node->definition, $includes);
+			if ($this->record_demand($node, dependency_use::record_decode)) {
+				$layout[] = "\tstatic " . Cpp_Identifier::source($node->short_name) . ' ' . self::decode_method($node->definition) . '(::scpp::Decoder&);';
+			}
+		}
+		if ($this->record_demand($node, dependency_use::record_encode)) {
+			$includes['scpp/encoder.hpp'] = true;
+			$name = Cpp_Identifier::source($node->short_name);
+			$layout[] = "\tvoid " . self::encode_method($node->definition) . "(::scpp::Encoder&) const;";
+			$layout[] = "\tstatic void scpp_escape_encode_fields(const void*, ::scpp::Encoder&);";
+			$layout[] = "\tstatic ::scpp::result_string scpp_escape_json_encode(const $name&);";
+		}
 		$base = $node->definition->base();
 		$has_local_constructor = isset($node->methods['__construct']);
 		$inherited_constructor = $has_local_constructor ? null : $base?->constructor();
@@ -204,6 +228,7 @@ final class Cpp_Emitter
 			$qualifier = ($type instanceof record_type_definition || $type instanceof record_handle_definition || $type instanceof enum_type_definition || $type instanceof application_collection_type) && $this->root !== '' ? '::' . $this->root : '';
 			$default = $field->initializer === null ? '{}' : ' = ' . $this->declaration_initialization(
 				$type, $field->initializer, $field->conversion, $includes);
+			if ($type instanceof record_type_definition && $type->requires_constructor_inputs()) $default = '';
 			if ($type instanceof fixed_array_type) {
 				$layout[] = "\t" . $type->declarator(Cpp_Identifier::source($field->short_name)) . '{};';
 				continue;
@@ -215,12 +240,60 @@ final class Cpp_Emitter
 			foreach ($type->cpp_headers() as $header) $includes[$header] = true;
 			$layout[] = "\tstatic " . $type->cpp_type() . ' ' . self::property_name($property) . ';';
 		}
+		$data = $node->definition->constructor() === null ? $node->data_constructor : null;
+		if ($data !== null) {
+			$name = Cpp_Identifier::source($node->short_name);
+			$params = $this->data_parameters($data, $includes);
+			$base_arguments = [];
+			$members = [];
+			$initializers = [];
+			$args = [];
+			foreach ($data->parameters as $i => $field) {
+				$type = $field->storage_type();
+				$default = 'nullptr';
+				if (!$field->required_data_input()) {
+					$initial = $field->initializer === null ? '{}' : $this->declaration_initialization($type, $field->initializer, $field->conversion, $includes);
+					$default = '[]() -> ' . $this->member_type($type) . " { return $initial; }";
+				}
+				$member = $this->member_type($field->parent->definition) . '::' . Cpp_Identifier::source($field->short_name);
+				$sequence = '';
+				if ($type instanceof native_sequence_type) {
+					$count = $type->lower_cpp_cardinality(collection_cardinality::count, 'items');
+					$read = $type->lower_cpp_element_read('items', 'index');
+					$vector = $this->member_type($type);
+					$element = $this->member_type($type->write_type());
+					$append = $type->lower_cpp_append_value('items', 'std::move(value)');
+					$sequence = ", [](const $vector& items) { return $count; }, "
+						. "[](const $vector& items, ::scpp::int64 index) -> decltype(auto) { return $read; }, "
+						. "[]($vector& items, $element value) { $append; }";
+				}
+				$members[] = 'std::make_tuple(' . Cpp_String_Literals::bytes($field->short_name) . ", &$member, $default$sequence)";
+				$argument = $this->data_argument($field, $i);
+				$args[] = $argument;
+				if ($field->parent !== $node) $base_arguments[] = $argument;
+				else $initializers[] = Cpp_Identifier::source($field->short_name) . '(' . $argument . ')';
+			}
+			if ($base !== null) {
+				$base_name = $this->member_type($base);
+				array_unshift($base_arguments, $base_name . '::scpp_escape_data_tag{}');
+				array_unshift($initializers, $base_name . '(' . implode(', ', $base_arguments) . ')');
+			}
+			$layout[] = "\tusing scpp_escape_schema_owner = $name;";
+			$includes['tuple'] = true;
+			$layout[] = "\tstatic auto scpp_escape_data_schema() { return std::make_tuple(" . implode(', ', $members) . '); }';
+			$layout[] = "\tstruct scpp_escape_data_tag {};";
+			$layout[] = "\t$name(scpp_escape_data_tag" . ($params === '' ? '' : ', ' . $this->data_parameters($data, $includes, true)) . ')'
+				. ($initializers === [] ? '' : ' : ' . implode(', ', $initializers)) . ' {}';
+			$layout[] = "\tstatic $name scpp_escape_from_data($params) { return $name(scpp_escape_data_tag{}"
+				. ($args === [] ? '' : ', ' . implode(', ', $args)) . '); }';
+			if (!$node->definition->requires_constructor_inputs() && !$node->definition->polymorphic() && !isset($node->methods['__destruct'])) $layout[] = "\t$name() = default;";
+		}
 		$virtual = $node->definition->polymorphic();
 		$authored = isset($node->methods['__destruct']);
 		if ($virtual || $authored) {
 			$name = Cpp_Identifier::source($node->short_name);
 			$layout[] = "\t" . ($virtual ? 'virtual ' : '') . "~$name() noexcept" . ($authored ? ';' : ' = default;');
-			if (!$has_local_constructor && ($inherited_constructor?->accepts_argument_count(0) ?? true)) {
+			if (!$has_local_constructor && !$node->definition->requires_constructor_inputs()) {
 				$layout[] = "\t$name() = default;";
 			}
 			$layout[] = "\t$name(const $name&) = default;";
@@ -304,7 +377,7 @@ final class Cpp_Emitter
 		}
 		array_push($bases, ...$interface_bases);
 		return $this->record_signature_forwards($node) . $view . self::namespace_body($node->definition->cpp_namespace(), 'struct ' . Cpp_Identifier::source($node->short_name)
-			. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n");
+			. ($node->is_final ? ' final' : '') . ($bases === [] ? '' : ' : ' . implode(', ', $bases)) . " {\n" . implode("\n", $layout) . "\n};\n") . $result_declaration;
 	}
 
 	/** Spell a free prototype, including a generator layout when needed. @param bool[] $includes */
@@ -317,8 +390,22 @@ final class Cpp_Emitter
 			if ($this->headers === null || $this->headers->uses_helper($node, dependency_use::async_wait)) $lines[] = $this->wait_signature($node, $includes) . ';';
 			return implode("\n", $lines);
 		}
+		$input = $node->private_reader_input();
+		if ($input !== null) return $this->signature($node, $includes) . ";\n" . $this->collection_reader_signature($node, $input) . ';';
 		return ($node->return_type_def() instanceof generator_type_definition ? $this->generator_layout($node->return_type_def(), $includes) : '')
 			. $this->signature($node, $includes) . ';';
+	}
+
+	/** The private entry borrows the collection and receives any caller-supplied key by value. */
+	private function collection_reader_signature(ast_function_declaration $function, ast_parameter_declaration $input): string
+	{
+		$parameters = 'const ' . $this->signature_type($input->type_def(), false) . '& ' . $this->name($input);
+		if (isset($function->parameters[1])) {
+			$key = $function->parameters[1];
+			$parameters .= ', ' . $this->signature_type($key->type_def(), false) . ' ' . $this->name($key);
+		}
+		return $this->signature_type($function->return_type_def(), false) . ' ' . self::function_name($function)
+			. 'collection_reader(' . $parameters . ')';
 	}
 
 	/** An ordinary blocking entry shares the producer's prepared parameter declarations. @param bool[] $headers */
@@ -408,7 +495,23 @@ final class Cpp_Emitter
 		$record = $payload->cpp_type();
 		$guard = $this->owner_guard($type) . '_DECL';
 		$params = $this->constructor_parameters($payload->constructor(), $includes);
-		$factory_declaration = $payload->declaration->is_abstract ? '' : "\tstatic $owner make($params);\n";
+		$default_unavailable = $payload->constructor() === null && $payload->requires_constructor_inputs();
+		$factory_declaration = $payload->declaration->is_abstract || $default_unavailable ? '' : "\tstatic $owner make($params);\n";
+		if ($payload->constructor() === null && ($data = $payload->declaration->data_constructor) !== null && !$payload->declaration->is_abstract) {
+			$data_params = $this->data_parameters($data, $includes);
+			$factory_declaration .= "\tstatic $owner scpp_escape_from_data($data_params);\n";
+		}
+		$result = '';
+		if ($payload->default_type() instanceof shared_record_type_definition && $this->record_demand($payload->declaration, dependency_use::record_result)) {
+			$result = $this->result_declaration($payload, $includes);
+			if ($this->record_demand($payload->declaration, dependency_use::record_decode)) {
+				$factory_declaration .= "\tstatic $owner " . self::decode_method($payload) . "(::scpp::Decoder&);\n";
+			}
+		}
+		if ($this->record_demand($payload->declaration, dependency_use::record_encode)) {
+			$includes['scpp/encoder.hpp'] = true;
+			$factory_declaration .= "\tstatic ::scpp::result_string scpp_escape_json_encode(const $owner&);\n";
+		}
 		$presence = $payload->declaration->kind !== record_kind::structure ? "\tstatic $owner require($owner value);\n" : '';
 		return <<<CPP
 #ifndef $guard
@@ -454,6 +557,7 @@ struct $weak {
 	$owner lock() const noexcept;
 	~$weak();
 };
+$result
 #endif
 
 CPP;
@@ -469,7 +573,24 @@ CPP;
 		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $includes);
 		$allocation_ctor = $constructor === null ? 'allocation() : ::scpp::application_control(destroy_value, dispose_allocation), value{} {}' : "allocation($params);";
-		$factory = $constructor === null && !$type->payload->declaration->is_abstract ? $this->allocation_factory($type, $includes) : '';
+		if ($constructor === null && $type->payload->requires_constructor_inputs()) $allocation_ctor = '';
+		$factory = $constructor === null && $allocation_ctor !== '' && !$type->payload->declaration->is_abstract ? $this->allocation_factory($type, $includes) : '';
+		if ($constructor === null && ($data = $type->payload->declaration->data_constructor) !== null && !$type->payload->declaration->is_abstract) {
+			$params = $this->data_parameters($data, $includes);
+			$args = [];
+			foreach ($data->parameters as $i => $field) $args[] = $this->data_argument($field, $i);
+			$tail = $args === [] ? '' : ', ' . implode(', ', $args);
+			$allocation_ctor .= "\n\tallocation(payload_type::scpp_escape_data_tag tag" . ($params === '' ? '' : ', ' . $this->data_parameters($data, $includes, true))
+				. ") : ::scpp::application_control(destroy_value, dispose_allocation), value(tag$tail) {}";
+			$factory .= $this->owner_factory("inline $owner {$owner}::scpp_escape_from_data($params)", $owner, "$payload::scpp_escape_data_tag{}$tail");
+		}
+		$encode = '';
+		if ($this->record_demand($type->payload->declaration, dependency_use::record_encode)) {
+			$contract = runtime_functions::resolve('php:func:json_encode');
+			$includes[$contract->record_header] = true;
+			$encode = "inline ::scpp::result_string {$owner}::scpp_escape_json_encode(const $owner& value) {\n"
+				. "\treturn ::scpp::json::encode_fields(value.view, &$payload::scpp_escape_encode_fields);\n}\n";
+		}
 		$presence = $type->payload->declaration->kind !== record_kind::structure
 			? "inline $owner {$owner}::require($owner value) { if (!value.ptr) ::scpp::throw_empty_owner(); return value; }\n" : '';
 
@@ -493,6 +614,7 @@ CPP;
 #ifndef $guard
 #define $guard
 $allocation
+$encode
 inline $payload* {$owner}::operator->() const {
 	if (!ptr) ::scpp::throw_empty_owner();
 	return view;
@@ -524,15 +646,33 @@ CPP;
 		$owner = $type->cpp_type();
 		$constructor = $type->payload->constructor();
 		$params = $this->constructor_parameters($constructor, $headers);
-		$args = [];
-		foreach ($constructor?->parameters ?? [] as $parameter) {
-			$name = $this->name($parameter);
-			$args[] = $parameter->type_def()->cpp_trivial_value() ? $name : 'static_cast<' . $parameter->type_def()->cpp_type() . '&&>(' . $name . ')';
-		}
-		$forward = implode(', ', $args);
+		$forward = implode(', ', array_map($this->forward_argument(...), $constructor?->parameters ?? []));
 		$payload_args = $constructor !== null && self::self_value_constructor($constructor) ? '0, ' . $forward : $forward;
 		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : ::scpp::application_control(destroy_value, dispose_allocation), value($payload_args) {}\n";
-		return "{$prefix}$owner {$owner}::make($params) {\n\t$owner result;\n\tauto* storage = new allocation($forward);\n\tresult.ptr = storage;\n\tresult.view = &storage->value;\n\treturn result;\n}\n";
+		return $this->owner_factory("{$prefix}$owner {$owner}::make($params)", $owner, $forward);
+	}
+
+	/** Install the initial strong owner after successful payload construction. */
+	private function owner_factory(string $signature, string $owner, string $arguments): string
+	{
+		return "$signature {\n\t$owner result;\n\tauto* storage = new allocation($arguments);\n\tresult.ptr = storage;\n\tresult.view = &storage->value;\n\treturn result;\n}\n";
+	}
+
+	/** Spell the typed field inputs on the payload and shared allocation entry points. @param bool[] $headers */
+	private function data_parameters(data_constructor_signature $signature, array &$headers /** array<string,bool> */, bool $forwarding = false): string
+	{
+		$params = [];
+		foreach ($signature->parameters as $i => $field) {
+			$type = $field->storage_type();
+			foreach ($type->cpp_headers() as $header) $headers[$header] = true;
+			$params[] = $this->member_type($type) . ($forwarding ? '&& input_' : ' input_') . $i;
+		}
+		return implode(', ', $params);
+	}
+
+	private function data_argument(ast_instance_field $field, int $index /** uint32 */): string
+	{
+		return 'static_cast<' . $this->member_type($field->storage_type()) . '&&>(input_' . $index . ')';
 	}
 
 	/** Public layouts and unit-local uses can independently request the same concrete owner. */
@@ -603,6 +743,12 @@ CPP;
 			if (!($node instanceof ast_type_declaration)) continue;
 			$declarations[$node->symbol_key()] = $node;
 			if (!($node instanceof ast_record_declaration)) continue;
+			if ($this->record_demand($node, dependency_use::record_encode)) {
+				$definitions[] = $this->encode_definition($node->definition, $declarations, $required_headers);
+			}
+			if ($this->record_demand($node, dependency_use::record_decode)) {
+				$definitions[] = $this->decode_definition($node->definition, $declarations, $required_headers);
+			}
 			foreach (self::variance_bridges($node) as [$contract, $implementation]) {
 				$this->collect_signature_types($contract, $declarations);
 				$this->collect_signature_types($implementation, $declarations);
@@ -632,8 +778,10 @@ CPP;
 				if ($function->parameters !== [] && $function->accepts_argument_count(0)) {
 					$defaults = [];
 					foreach ($function->parameters as $parameter) {
-						$defaults[] = $this->declaration_initialization($parameter->type_def(), $parameter->default_value,
-							$parameter->default_conversion(), $required_headers);
+						$defaults[] = $parameter->type_reference instanceof ast_variadic_type_reference
+							? $parameter->type_def()->lower_cpp_empty()
+							: $this->declaration_initialization($parameter->type_def(), $parameter->default_value,
+								$parameter->default_conversion(), $required_headers);
 					}
 					$name = Cpp_Identifier::source($function->parent->short_name);
 					$definitions[] = $owner->payload->cpp_type() . '::' . $name . '() : ' . $name . '(' . implode(', ', $defaults) . ") {}\n";
@@ -680,7 +828,15 @@ CPP;
 				$refs = $this->parameters($function, $required_headers, false, borrowed_inputs: true);
 				$signature = $function->parent->definition->cpp_type() . '::' . $name . '(scpp_escape_parameter_refs, ' . implode(', ', $refs) . ')';
 			}
-			$definitions[] = $signature . $base_initializer . "\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+			$body_text = $this->local_imports() . implode("\n", $lines);
+			$definitions[] = $signature . $base_initializer . "\n{\n" . $body_text . "\n}\n";
+			$reader_input = $function->private_reader_input();
+			if ($reader_input !== null) {
+				// A body edit that loses the proof resumes ordinary by-value parameter construction.
+				$body = $function->body()->reads_parameter_without_copy($reader_input, $function->parameters[1] ?? null)
+					? $body_text : "\treturn " . $name . '(' . implode(', ', array_map($this->name(...), $function->parameters)) . ');';
+				$definitions[] = $this->collection_reader_signature($function, $reader_input) . "\n{\n" . $body . "\n}\n";
+			}
 			if ($function->is_async && ($this->headers === null || $this->headers->uses_helper($function, dependency_use::async_wait))) {
 				$arguments = array_map($this->forward_argument(...), $function->parameters);
 				$definitions[] = $this->wait_signature($function, $required_headers) . "\n{\n\treturn sync_wait("
@@ -692,6 +848,9 @@ CPP;
 			$lines = $this->statements($entry->body(), $declarations, $global_references, $required_headers);
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
+		}
+		foreach ($this->inline_adapters->dependencies() as $type) {
+			if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
 		}
 		foreach ([...$this->inline_adapters->dependencies(), ...$this->concrete_collections->dependencies(), ...$this->async_results] as $type) {
 			if ($type instanceof record_handle_definition || $type instanceof intersection_type_definition) $declarations[$type->name] = $type;
@@ -929,8 +1088,10 @@ CPP;
 		array &$required_headers /** array<string,bool> */, ?statement_return_target $function = null,
 		?cpp_resume_context $resume = null, ?string $first_initializer = null): array /** list<string> */
 	{
+		$borrowed_snapshot = null;
 		if ($body instanceof ast_function_body) {
 			$body->require_prepared();
+			$borrowed_snapshot = $body->borrowed_snapshot();
 			$this->byte_view = null;
 			/** @var ast_function_declaration $function */
 			$function = $body->parent;
@@ -991,6 +1152,26 @@ CPP;
 					if ($continuing && $loop['update'] !== null) $transfer = 'goto ' . $loop['update'] . ';';
 				}
 				$lines[] = "\t" . $transfer;
+			}
+			elseif ($statement instanceof ast_foreach_statement && $statement->value instanceof ast_writable_element) {
+				$source = $statement->source_value;
+				$owner = $this->name($source->local_def());
+				$index = 'iteration_index_' . $statement->start;
+				$type = $source->type_def();
+				if ($type instanceof key_iterable_type) {
+					$prefix = 'loop_' . $statement->start . '_';
+					$lines[] = '{ scpp::int64 ' . $prefix . 'iteration_position{}, ' . $prefix . 'iteration_limit{};';
+					$lines[] = $type->lower_cpp_iteration_initialize($owner, $prefix);
+					$lines[] = $type->iteration_key_type()->cpp_type() . ' ' . $index . '{};';
+					$lines[] = 'while (' . $type->lower_cpp_iteration_next_key($owner, $index, $prefix) . ') {';
+				} else {
+					$limit = 'iteration_limit_' . $statement->start;
+					$count = $type->lower_cpp_cardinality(collection_cardinality::count, $owner);
+					$lines[] = "for (scpp::int64 $index = 0, $limit = $count; $index < $limit; ++$index) {";
+				}
+				if ($statement->key !== null) $lines[] = '[[maybe_unused]] auto ' . $this->name($statement->key) . ' = ' . $index . ';';
+				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, null) as $line) $lines[] = "\t" . $line;
+				$lines[] = $type instanceof key_iterable_type ? '} }' : '}';
 			}
 			elseif ($statement instanceof ast_foreach_statement && ($source_type = $statement->source_value->type_def()) instanceof segment_type
 				&& $source_type->key !== null) {
@@ -1265,6 +1446,8 @@ CPP;
 					$qualifier = $this->discard_qualifier($statement->target->receiver, $global_references, $declarations, $required_headers);
 					$lines[] = $this->async_statement($qualifier . ';');
 					$field = $this->name_value($statement->target, $global_references, $declarations, $required_headers);
+				} elseif (($element = $statement->selected_record_element()) !== null) {
+					$field = $this->name($element, reference: true) . '.' . Cpp_Identifier::source($statement->target->field);
 				} elseif ($statement->target instanceof ast_field_expression && $before !== $this->suspensions) {
 					$steps = [];
 					$owner = $this->retained_place($statement->target->receiver, $global_references, $declarations, $required_headers, $steps);
@@ -1351,11 +1534,15 @@ CPP;
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				if ($body instanceof ast_function_body && $statement === $body->byte_view_length) {
 					$this->byte_view = $statement->initializer->arguments[0];
+					/** @var scoped_byte_read_type $type */
+					$type = $this->byte_view->type_def();
+					$required_headers[$type->byte_view_header()] = true;
 					$field = $this->value($this->byte_view, $global_references, $declarations, $required_headers);
 					$lines[] = "\tconst auto scpp_byte_view = " . $field . '.checked_bytes();';
 				}
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot,
-					operand_override: $first_initializer !== null && $statement === $body->statements[0] ? $first_initializer : null);
+					operand_override: $first_initializer !== null && $statement === $body->statements[0] ? $first_initializer : null,
+					borrow_snapshot: $statement === $borrowed_snapshot);
 				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
 					/** @var carrier_type_definition $type */
 					$type = $statement->local_def()->type_def();
@@ -1407,7 +1594,11 @@ CPP;
 				$lines[] = $this->async_statement('co_await ::scpp::async::delay_ms(' . $this->value($statement->value, $global_references, $declarations, $required_headers) . ');');
 			}
 			elseif ($statement instanceof ast_call_statement || $statement instanceof ast_await_statement) {
-				$lines[] = $this->async_statement($this->value($statement->value, $global_references, $declarations, $required_headers) . ';');
+				// A discarded owning result can outlive the staged operands in expression form.
+				$type = $statement->value->type_def();
+				$setup = $statement instanceof ast_call_statement && ($type === type_void::instance() || $type->cpp_trivial_value()) ? [] : null;
+				$call = $this->value($statement->value, $global_references, $declarations, $required_headers, statement_setup: $setup) . ';';
+				$lines[] = $this->async_statement($setup ? '{ ' . implode(' ', $setup) . ' ' . $call . ' }' : $call);
 			}
 			else {
 				throw new \LogicException('Unhandled prepared statement');
@@ -1711,10 +1902,29 @@ CPP;
 		return $lines;
 	}
 
-	private function name(ast_local_binding $binding): string
+	/** Read a selected element or identify the native local storage. */
+	private function name(ast_local_binding $binding, bool $reference = false): string
 	{
+		if ($binding instanceof ast_writable_element) {
+			$loop = $binding->parent;
+			$source = $loop->source_value;
+			$owner = $this->name($source->local_def());
+			$type = $source->type_def();
+			if ($reference) return $type->lower_cpp_iteration_reference($owner, $loop->start);
+			if ($type instanceof key_iterable_type) return $type->lower_cpp_iteration_current_value($owner, 'loop_' . $loop->start . '_iteration_position');
+			return $type->lower_cpp_element_read($owner, 'iteration_index_' . $loop->start);
+		}
 		return ($this->generator_locals[$binding->storage_id()] ?? null)
 			?? 'var_' . self::name_component($binding->declaration_key()) . '_' . $binding->storage_id();
+	}
+
+	/** Write immediately through the same collection setter as an indexed assignment. */
+	private function iteration_store(ast_writable_element $element, string $value): string
+	{
+		$loop = $element->parent;
+		$source = $loop->source_value;
+		$value = 'static_cast<' . $element->type_def()->cpp_type() . '>(' . $value . ')';
+		return $source->type_def()->lower_cpp_write($this->name($source->local_def()), 'iteration_index_' . $loop->start, $value);
 	}
 
 	/**
@@ -1737,12 +1947,17 @@ CPP;
 		if ($destination instanceof ast_qualified_data) {
 			$steps[] = $this->discard_qualifier($destination->receiver, $global_references, $declarations, $headers) . ';';
 			$name = $this->name_value($destination, $global_references, $declarations, $headers);
-		} elseif ($destination instanceof ast_field_expression && !$simple_rhs) {
+		} elseif ($destination instanceof ast_field_expression && (!$simple_rhs || $type instanceof carrier_type_definition)) {
 			$place = $this->retained_place($destination, $global_references, $declarations, $headers, $steps);
 			$steps[] = 'auto& compound_target = ' . $place . ';';
 			$name = 'compound_target';
 		} else {
 			$name = $property ? $this->value($destination, $global_references, $declarations, $headers) : $this->name($destination);
+		}
+		if ($destination instanceof ast_writable_element) {
+			$snapshot = $snapshot_name . ' = ' . $this->compound_left($statement, $type, $name, $headers);
+			$right = $this->value($statement->value, $global_references, $declarations, $headers);
+			return $this->iteration_store($destination, $this->compound_result($statement, $type, $snapshot_name, $right, $headers));
 		}
 		$execution = $statement->execution_type();
 		$before = $this->suspensions;
@@ -1762,6 +1977,17 @@ CPP;
 				&& self::constant_compound_operand($statement->value)))) {
 				return $name . ' ' . $operator . ' ' . $right;
 			}
+		}
+		if (($statement->left_conversion() & value_conversion::EXTRACT) !== 0) {
+			$old = $this->compound_left($statement, $type, $name, $headers);
+			$result = $this->compound_result($statement, $type, $snapshot_name, $right, $headers);
+			if ($steps !== []) {
+				$steps[] = "const auto $snapshot_name = $old;";
+				$steps[] = "$name = $result;";
+				return "{\n\t\t" . implode("\n\t\t", $steps) . "\n\t}";
+			}
+			$snapshot = "$snapshot_name = $old";
+			return "$name = $result";
 		}
 		$direct_read = $simple_rhs && ($destination instanceof ast_field_expression
 			|| ($destination instanceof ast_local_binding && $type->cpp_trivial_value()));
@@ -2034,7 +2260,8 @@ CPP;
 	 */
 	private function binding(ast_local_declaration|ast_storage_write $statement,
 		array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous', ?string $operand_override = null): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous',
+		?string $operand_override = null, bool $borrow_snapshot = false): string
 	{
 		$snapshot = null;
 		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
@@ -2049,7 +2276,8 @@ CPP;
 		}
 		if ($statement instanceof ast_reset_statement) {
 			$local = $statement->local_def();
-			return $this->name($local) . ' = ' . $local->type_def()->cpp_type() . '{}';
+			$empty = $local->type_def()->cpp_type() . '{}';
+			return $local instanceof ast_writable_element ? $this->iteration_store($local, $empty) : $this->name($local) . ' = ' . $empty;
 		}
 		if ($statement instanceof ast_update_statement) {
 			return $this->local_update($statement);
@@ -2079,6 +2307,7 @@ CPP;
 			}
 			if ($type instanceof owned_callable_type) $this->callable_dependencies($type->signature, $declarations);
 			$native = $type instanceof lambda_type_definition ? 'auto' : $type->cpp_type();
+			if ($borrow_snapshot) $native = 'const auto&';
 			$prefix = '[[maybe_unused]] ' . $native . ' ' . $this->name($statement);
 			foreach ($type->cpp_headers() as $header) {
 				$headers[$header] = true;
@@ -2121,13 +2350,30 @@ CPP;
 			$assignment = $this->name($statement) . ' = ' . $this->conversion($type, $conversion, $operand, $value) . ';';
 			return $prefix . ";\n" . $this->async_statement($assignment);
 		}
-		return $this->binding_initialization($statement, $prefix, $this->conversion($type, $conversion, $operand, $value));
+		$converted = $this->conversion($type, $conversion, $operand, $value);
+		if ($statement instanceof ast_storage_write && $statement->local_def() instanceof ast_writable_element) {
+			return $this->iteration_store($statement->local_def(), $converted);
+		}
+		return $this->binding_initialization($statement, $prefix, $converted);
 	}
 
-	private function local_update(ast_update_statement $update): string
+	/** Preserve prefix or postfix results while writing through a selected element. */
+	private function local_update(ast_update_statement $update, bool $snapshot = false): string
 	{
 		$local = $update->local_def();
-		return $local->type_def()->lower_cpp_update($update->operator, $this->name($local), $update->postfix);
+		if ($local instanceof ast_writable_element) {
+			$type = $local->type_def();
+			$operation = $type instanceof carrier_type_definition
+				? $type->lower_cpp_update($update->operator, 'element', $update->postfix, true)
+				: $type->lower_cpp_update($update->operator, 'element', $update->postfix);
+			return '([&]() { auto element = ' . $this->name($local) . '; auto result = ' . $operation . '; '
+				. $this->iteration_store($local, 'element') . '; return result; }())';
+		}
+		$type = $local->type_def();
+		if ($type instanceof carrier_type_definition) {
+			return $type->lower_cpp_update($update->operator, $this->name($local), $update->postfix, $snapshot);
+		}
+		return $type->lower_cpp_update($update->operator, $this->name($local), $update->postfix);
 	}
 
 	/** A suspended declaration starts its lifetime only after its checked initializer succeeds. */
@@ -2250,10 +2496,11 @@ CPP;
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $required_headers
 	 * @param ast_global_declaration[] $global_references
+	 * @param list<string>|null $statement_setup
 	 */
 	private function value(ast_expression $value, array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
-		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $borrow_result = false, bool $inside_scope = false, ?Cpp_Staged_Result $destination = null): string
+		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $borrow_result = false, bool $inside_scope = false, ?Cpp_Staged_Result $destination = null, ?array &$statement_setup = null): string
 	{
 		if ($this->async_body && !$inside_scope && ($value->parent instanceof ast_expression || $value->parent instanceof ast_foreach_statement)
 			&& ($value instanceof ast_call_expression || $value instanceof ast_binary_expression || $value instanceof ast_await_expression || $value instanceof ast_construction_expression)) {
@@ -2262,6 +2509,12 @@ CPP;
 		}
 		$reorderable = false;
 		$value_type = $value->type_def();
+		if ($value_type instanceof record_result_type_definition) {
+			$payload = $value_type->payload_type;
+			if ($payload instanceof shared_record_type_definition) $declarations[$payload->name] = $payload;
+			$record = $payload instanceof shared_record_type_definition ? $payload->payload : $payload;
+			$declarations[$record->declaration->symbol_key()] = $record->declaration;
+		}
 		if ($value_type instanceof enum_type_definition || $value_type instanceof nullable_enum_type_definition) {
 			$enum = $value_type instanceof nullable_enum_type_definition ? $value_type->payload_type : $value_type;
 			$declarations[$enum->declaration->symbol_key()] = $enum->declaration;
@@ -2284,11 +2537,11 @@ CPP;
 			$declarations[$name] = $callee;
 			$call = $this->invocation($producer, $callee, $suspends ? $name : $name . 'wait',
 				$callee->return_type_def(), $global_references, $declarations, $required_headers,
-				$task_name);
+				$task_name, $statement_setup);
 			return $suspends ? '(co_await ' . $call . ')' : $call;
 		}
 		if ($value instanceof ast_update_expression) {
-			return $this->local_update($value->update);
+			return $this->local_update($value->update, true);
 		}
 		if ($value instanceof ast_condition_assignment) {
 			$local = $value->target->local_def();
@@ -2349,6 +2602,13 @@ CPP;
 		if ($value instanceof ast_construction_expression || ($value instanceof ast_call_expression && $value->constructed_record() !== null)) {
 			$type = $value->type_def();
 			$shared = $value instanceof ast_new_expression || $value instanceof ast_call_expression;
+			if ($value instanceof ast_new_expression && $type instanceof runtime_handle_type) {
+				$factory = runtime_functions::resolve($value->source()->flavor->name . ':new:' . $type->name);
+				if ($factory instanceof runtime_function) {
+					$required_headers[$factory->header] = true;
+					return $this->invocation($value, $factory, $factory->symbol, $type, $global_references, $declarations, $required_headers);
+				}
+			}
 			if ($shared && $type instanceof type_exception) {
 				$message = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
 				return $type->factory->symbol . '(' . $message . ')';
@@ -2373,8 +2633,31 @@ CPP;
 				if ($pointer !== null) return $pointer . '->' . Cpp_Identifier::source($value->field);
 			}
 			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+			if ($value->receiver->type_def() instanceof runtime_handle_type) {
+				$property = runtime_functions::resolve($value->source()->flavor->name . ':property:' . $value->receiver->type_def()->name . ':' . $value->field);
+				if ($property instanceof runtime_function) {
+					$required_headers[$property->header] = true;
+					return $property->symbol . '(' . $receiver . ')';
+				}
+			}
 			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
-			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field);
+			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field)
+				. ($value->receiver->type_def() instanceof runtime_field_getters ? '()' : '');
+		}
+		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression) && $value->record_call !== null) {
+			$record = $value_type instanceof shared_record_type_definition ? $value_type->payload : $value_type;
+			if ($value_type instanceof shared_record_type_definition) $declarations[$value_type->name] = $value_type;
+			else $declarations[$record->declaration->symbol_key()] = $record->declaration;
+			$constructor = $record->constructor();
+			$name = $value_type->cpp_type();
+			if ($constructor !== null) {
+				$this->collect_signature_types($constructor, $declarations);
+				if ($value_type instanceof shared_record_type_definition) $name .= '::make';
+			} else {
+				$name .= '::scpp_escape_from_data';
+			}
+			return $this->invocation($value->record_call, $constructor ?? $record->declaration->data_constructor, $name, $value_type,
+				$global_references, $declarations, $required_headers);
 		}
 		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression)
 			&& !($value instanceof ast_tuple_expression) && $value_type instanceof boxed_type_definition && $value->source()->flavor === flavor::python) {
@@ -2526,6 +2809,15 @@ CPP;
 			return $type->lower_cpp_unary($value->operator, $operand);
 		}
 		if ($value instanceof ast_isset_expression) {
+			if (($entry = $value->hash_entry) !== null) {
+				$hash = $entry->receiver->type_def();
+				if ($hash instanceof application_collection_type) $this->concrete_collections->request_hash_isset($hash);
+				else $required_headers[$hash->php_isset_header()] = true;
+				$receiver = $this->value($entry->receiver, $global_references, $declarations, $required_headers);
+				$key = $this->value($entry->index, $global_references, $declarations, $required_headers);
+				$key = $hash->lower_cpp_key($entry->index, $key);
+				return '::scpp::php::isset(' . $receiver . ', ' . $key . ')';
+			}
 			if ($value->operand instanceof ast_index_expression && $value->operand->type_def() instanceof owned_callable_type) {
 				return $this->indexed_callable_presence($value, $global_references, $declarations, $required_headers);
 			}
@@ -2697,8 +2989,9 @@ CPP;
 			$callback = $value->callable_binding();
 			if ($callback !== null) {
 				$type = $callback->type_def();
+				if ($type instanceof callback_view_type) return $type->lower_cpp_invoke($this->name($callback));
 				$target = $type instanceof lambda_type_definition ? $callback->initializer : ($type instanceof owned_callable_type ? $type->signature : $type);
-				$call = $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers);
+				$call = $this->invocation($value, $target, $this->name($callback), $value->type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 				$reference = $target instanceof ast_lambda_expression ? $target->returns_reference : $target->reference_origin !== null;
 				return $reference && !$borrow_result
 					? 'static_cast<' . $value->type_def()->cpp_type() . '>(' . $call . ')' : $call;
@@ -2713,6 +3006,16 @@ CPP;
 			}
 			$function = $value->implementation();
 			if ($function instanceof runtime_function) {
+				if ($value_type instanceof application_collection_type) $this->concrete_collections->request($value_type);
+				if ($function instanceof record_decode_function || $function instanceof record_encode_function) {
+					$target = $function->target;
+					$declarations[$target->declaration->symbol_key()] = $target->declaration;
+					$owner = $function instanceof record_encode_function ? $function->parameters[0] : $target->default_type();
+					if ($owner instanceof shared_record_type_definition) $declarations[$owner->name] = $owner;
+				}
+				if ($function instanceof collection_transform_function) {
+					return $this->collection_transform($value, $function, $global_references, $declarations, $required_headers);
+				}
 				$use = match ($function->name()) {
 					'enum_from_value' => dependency_use::enum_from_value,
 					'enum_try_from_value' => dependency_use::enum_try_from_value,
@@ -2740,7 +3043,7 @@ CPP;
 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				if ($value->suspending_operands || $value instanceof ast_named_call) {
-					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers);
+					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 				}
 				$operands = $value->runtime_operands();
 				if ($function->receiver_method) {
@@ -2765,7 +3068,7 @@ CPP;
 					$access = $function->parameters[0] instanceof type_exception
 						&& $operands[0]->type_def() instanceof shared_record_type_definition ? '->' : '.';
 					$call = '(' . $receiver . ')' . $access . $symbol . '(' . implode(', ', $arguments) . ')';
-					return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+					return self::staged_call($call, $steps, '', $statement_setup);
 				}
 				if (count($operands) === 1 && !$function->overloaded_first) {
 					$operand = $this->value($operands[0], $global_references, $declarations, $required_headers);
@@ -2774,6 +3077,8 @@ CPP;
 						$type = $function->parameters[0];
 						foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
 						$operand = $this->conversion($type, $conversion, $operand, $operands[0]);
+					} elseif ($function->exact_arguments) {
+						$operand = $function->parameters[0]->lower_cpp_exact_argument($operands[0], $conversion, $operand, $this->inline_adapters);
 					}
 					return $symbol . '(' . $operand . ')';
 				}
@@ -2786,11 +3091,17 @@ CPP;
 					$operand_records_before = $this->record_expressions;
 					$safe = false;
 					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					$conversion = $value->conversion($index);
+					if ($conversion !== value_conversion::identity) {
+						$type = $function->parameters[$index];
+						foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+						$operand = $this->conversion($type, $conversion, $operand, $argument);
+					} elseif ($function->exact_arguments) $operand = $function->parameters[$index]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand, $this->inline_adapters);
 					$arguments[] = $index === 0 && $function->overloaded_first
 						? 'static_cast<' . $function->parameters[0]->cpp_type() . '>(' . $operand . ')' : $operand;
 					// A prepared writable reference names stable storage; binding it does not read its value.
 					if (!$function->is_reference($index) && !self::inert_literal_argument(
-						$argument, $function->parameters[$index], value_conversion::identity)) {
+						$argument, $function->parameters[$index], $conversion)) {
 						$capture_indices[] = $index;
 						// Only the last order-sensitive operand can execute after the earlier captures.
 						$type = $function->parameters[$index];
@@ -2799,7 +3110,7 @@ CPP;
 						$inline_index = $can_bind && $this->record_expressions === $operand_records_before ? $index : null;
 					}
 					// Reading a local string or literal cannot mutate another argument.
-					$direct = $direct && ($safe || $argument instanceof ast_string_expression
+					$direct = $direct && $conversion === value_conversion::identity && ($safe || $argument instanceof ast_string_expression
 						|| ($argument instanceof ast_name_expression && $argument->local_binding() !== null));
 				}
 				$steps = [];
@@ -2812,13 +3123,40 @@ CPP;
 						$steps[] = 'const auto ' . $arguments[$index] . ' = ' . $operand . ';';
 					}
 				}
-				$call = $symbol . '(' . implode(', ', $arguments) . ')';
-				return $steps === [] ? $call : '([&]() { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+				if ($function->full_arity_argument !== null && count($arguments) === count($function->parameters)) {
+					$arguments[] = $function->full_arity_argument;
+				}
+				$call = $function instanceof regex_callback_function
+					? $this->inline_adapters->call($function->adapter(count($arguments)), $arguments)
+					: $symbol . '(' . implode(', ', $arguments) . ')';
+				return self::staged_call($call, $steps, '', $statement_setup);
 			}
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
 			$result = $function->return_type_def();
-			$call = $this->invocation($value, $function, $name, $result, $global_references, $declarations, $required_headers);
+			// For a complete two-argument call the prepared slots form their own inverse.
+			$reversed = count($value->arguments) === 2 && count($function->parameters) === 2 && ($value->named->slots[0] ?? 0) === 1;
+			$argument = $value->arguments[$reversed ? 1 : 0] ?? null;
+			if (self::plain_local_read($argument, collection_operand: true)
+				&& ($input = $function->private_reader_input()) !== null && $argument->type_def() === $input->type_def()) {
+				if (count($function->parameters) === 1) {
+					$name .= 'collection_reader';
+				} else {
+					$position = $reversed ? 0 : 1;
+					$parameter = $function->parameters[1];
+					$key = $value->arguments[$position] ?? $parameter->default_value;
+					$conversion = isset($value->arguments[$position]) ? $value->conversion($position) : $parameter->default_conversion();
+					if ($conversion === value_conversion::identity && $key->type_def() === $parameter->type_def()
+						&& ($key->is_effect_free_literal() || self::plain_local_read($key))) {
+						// Both operands are inert. Binding the collection directly avoids a by-value staging temporary.
+						return $name . 'collection_reader(' . $this->name($argument->local_def()) . ', '
+							. $this->value($key, $global_references, $declarations, $required_headers) . ')';
+					}
+				}
+			}
+			// The value read through a returned reference follows argument cleanup.
+			if ($function->returns_reference) $statement_setup = null;
+			$call = $this->invocation($value, $function, $name, $result, $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 			return $function->returns_reference && !$borrow_result ? 'static_cast<' . $result->cpp_type() . '>(' . $call . ')' : $call;
 		}
 		if (($value instanceof ast_integer_expression) || ($value instanceof ast_float_expression)
@@ -2852,8 +3190,8 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
 		bool &$reorderable = false): string
 	{
-		$reorderable = $value->type_def()->cpp_trivial_value();
 		$declaration = $value->declaration();
+		$reorderable = $value->type_def()->cpp_trivial_value() && ast_writable_element::origin($value->local_binding()) === null;
 		if ($declaration instanceof ast_enum_case) {
 			return $declaration->parent->definition->cpp_case($declaration);
 		}
@@ -2986,7 +3324,8 @@ CPP;
 		}
 		$fields = [];
 		$base = $receiver;
-		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)) {
+		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)
+			&& !($base->receiver->type_def() instanceof runtime_handle_type)) {
 			$fields[] = Cpp_Identifier::source($base->field);
 			$base = $base->receiver;
 		}
@@ -3016,22 +3355,30 @@ CPP;
 	 * @param ast_global_declaration[] $global_references
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $required_headers
+	 * @param list<string>|null $statement_setup
 	 */
-	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|ast_lambda_expression|callback_type_definition|runtime_function $function,
+	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|ast_lambda_expression|callback_type_definition|runtime_function|data_constructor_signature $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null, ?array &$statement_setup = null): string
 	{
 		$steps = [];
 		$arguments = [];
 		$callback = $function instanceof callback_type_definition;
 		$runtime = $function instanceof runtime_function;
-		$operands = $runtime ? $value->runtime_operands() : $value->arguments;
+		$operands = $runtime && $value instanceof ast_call_expression ? $value->runtime_operands() : $value->arguments;
 		$parameters = $callback ? $function->inputs : ($runtime ? array_slice($function->parameters, 0, count($operands)) : $function->parameters);
+		$variadic = $callback ? $function->variadic_slot : ($runtime || $function instanceof data_constructor_signature ? null : $function->variadic_slot());
+		// An unpacked operand already supplies the native by-value vector parameter.
+		if ($value->unpacked ?? false) $variadic = null;
+		if ($variadic !== null) {
+			$last = array_pop($parameters);
+			$pack = $callback ? $last : $last->type_def();
+		}
 		if (isset($value->named)) {
 			$parameters = $value->named->evaluation_parameters($parameters);
 		}
 		$before = $this->suspensions;
-		$suspending = $value instanceof ast_call_expression && $value->suspending_operands;
+		$suspending = $value instanceof ast_data_construction ? $value->parent->suspends : ($value instanceof ast_call_expression && $value->suspending_operands);
 		$suffix = $suspending ? '_' . $value->start . '_' . $value->end : '';
 		$receiver_reorderable = true;
 		$method = $runtime ? $function->receiver_method : $function instanceof ast_function_declaration && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
@@ -3044,7 +3391,7 @@ CPP;
 			$name = $selected;
 		} elseif ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
 			foreach ($operands as $index => $argument) {
-				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index], $value->conversion($index))) continue;
+				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index] ?? $pack->element_type, $value->conversion($index))) continue;
 				// An argument can replace the slot through a closure that borrows it.
 				$selected = 'selected_callable_' . $value->start;
 				$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
@@ -3074,7 +3421,7 @@ CPP;
 			if ($function->has_virtual_dispatch() || $value->interface_dispatch) $name = '(' . $place . ').'
 				. ($value->ancestor_dispatch ? $function->parent->definition->cpp_type() . '::' : '') . self::virtual_name($function);
 			else $arguments[] = $place;
-		} elseif ($parameters === [] && $steps === []) {
+		} elseif ($variadic === null && $parameters === [] && $steps === []) {
 			return $name . '()';
 		}
 		$direct_arguments = [];
@@ -3086,10 +3433,21 @@ CPP;
 		$argument_steps = [];
 		$constructed_arguments = [];
 		foreach ($parameters as $index => $parameter) {
+			if ($parameter instanceof ast_instance_field && !isset($operands[$index])) {
+				$type = $parameter->type_def();
+				$default = $parameter->initializer === null ? '{}' : $this->declaration_initialization($type, $parameter->initializer, $parameter->conversion, $required_headers);
+				$temp = 'data_default_' . $value->start . '_' . $index;
+				$argument_steps[$index][] = $type->cpp_type() . " $temp = $default;";
+				$constructed_arguments[$index] = true;
+				$direct_arguments[$index] = 'static_cast<' . $type->cpp_type() . "&&>($temp)";
+				$inline_index = null;
+				$direct = false;
+				continue;
+			}
 			$argument = $operands[$index] ?? $parameter->default_value;
 			$conversion = isset($operands[$index]) ? $value->conversion($index) : $parameter->default_conversion();
 			$type = $callback || $runtime ? $parameter : $parameter->type_def();
-			$by_value = $runtime ? !$function->is_reference($value->named->slots[$index] ?? $index) : ($callback ? $function->input_mode($index) : $parameter->mode) === passing_mode::value;
+			$by_value = $parameter instanceof ast_instance_field || ($runtime ? !$function->is_reference($value->named->slots[$index] ?? $index) : ($callback ? $function->input_mode($index) : $parameter->mode) === passing_mode::value);
 			$operand_safe = false;
 			$records_before = $this->record_expressions;
 			$step_start = count($this->async_steps);
@@ -3097,8 +3455,8 @@ CPP;
 				&& !$type->cpp_trivial_value() && $conversion === value_conversion::identity && $argument->type_def() === $type
 				? new Cpp_Staged_Result($type, 'argument_' . $value->start . '_' . $index) : null;
 			$operand = $by_value ? $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
-				logical_root: $conversion === value_conversion::identity, destination: $destination) : $this->name($argument->local_def());
-			if ((count($parameters) > 1 || $method || $steps !== []) && count($this->async_steps) !== $step_start) {
+				logical_root: $conversion === value_conversion::identity, destination: $destination) : $this->name($argument->local_def(), reference: true);
+			if (($variadic !== null || count($parameters) > 1 || $method || $steps !== []) && count($this->async_steps) !== $step_start) {
 				$argument_steps[$index] = array_splice($this->async_steps, $step_start);
 				if ($operand === '' && $destination !== null) {
 					array_unshift($argument_steps[$index], $destination->declaration($required_headers));
@@ -3115,8 +3473,8 @@ CPP;
 					: $this->conversion($type, $conversion, $operand, $argument);
 			}
 			// Preparation already validated stable, exact storage for a reference parameter.
-			if (!$method && $steps === [] && count($parameters) === 1) {
-				$tag = $value instanceof ast_struct_default && self::self_value_constructor($function) ? '0, ' : '';
+			if ($variadic === null && !$method && $steps === [] && count($parameters) === 1) {
+				$tag = ($value instanceof ast_struct_default || ($value instanceof ast_data_construction && $result instanceof record_type_definition && $function instanceof ast_function_declaration)) && self::self_value_constructor($function) ? '0, ' : '';
 				return $name . '(' . $tag . $operand . ')';
 			}
 			$direct_arguments[$index] = $operand;
@@ -3135,7 +3493,7 @@ CPP;
 			$arguments[0] = 'enum_receiver' . $suffix;
 			$direct = false;
 		}
-		if ($argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && (!($function instanceof ast_function_declaration) || !$function->is_constructor())
+		if ($variadic === null && $argument_steps === [] && ($direct || ($steps === [] && !$method && $value instanceof ast_call_expression && (!($function instanceof ast_function_declaration) || !$function->is_constructor())
 			&& !$has_reference && count($order_sensitive) <= 1))) {
 			if (isset($value->named)) $direct_arguments = $value->named->parameter_order($direct_arguments);
 			return $name . '(' . implode(', ', $arguments ? [...$arguments, ...$direct_arguments] : $direct_arguments) . ')';
@@ -3146,7 +3504,7 @@ CPP;
 			$type = $callback || $runtime ? $parameter : $parameter->type_def();
 			$operand = $direct_arguments[$index];
 			if (isset($argument_steps[$index])) array_push($steps, ...$argument_steps[$index]);
-			if (isset($constructed_arguments[$index]) || !isset($order_sensitive[$index]) || $index === $inline_index) {
+			if (isset($constructed_arguments[$index]) || !isset($order_sensitive[$index]) || ($index === $inline_index && $variadic === null)) {
 				continue;
 			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
@@ -3159,14 +3517,79 @@ CPP;
 		}
 		if (isset($value->named)) $direct_arguments = $value->named->parameter_order($direct_arguments);
 		array_push($arguments, ...$direct_arguments);
+		if ($variadic !== null) {
+			$name_pack = $this->variadic_pack($value, $variadic, $pack, $global_references, $declarations, $required_headers, $steps);
+			$arguments[] = 'static_cast<' . $pack->cpp_type() . "&&>($name_pack)";
+			if ($before !== $this->suspensions) ++$this->async_owned_steps;
+		}
 		$call = $name . '(' . implode(', ', $arguments) . ')';
 		if ($before !== $this->suspensions) {
 			array_push($this->async_steps, ...$steps);
 			return $call;
 		}
 		$return_reference = $callback ? $function->result_suffix() : ($function instanceof statement_return_target && $function->returns_reference ? '&' : '');
-		return $steps === [] ? $call : '([&]() -> ' . ($native_result ?? $result->cpp_type() . $return_reference) . ' { ' . implode(' ', $steps)
-			. ' return ' . $call . '; }())';
+		if ($steps === []) return $call;
+		return self::staged_call($call, $steps, ' -> ' . ($native_result ?? $result->cpp_type() . $return_reference), $statement_setup);
+	}
+
+	/**
+	 * Consume the selected typed traversal; its operand temporaries live through the entire loop.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function collection_transform(ast_call_expression $call, collection_transform_function $function,
+		array &$globals, array &$declarations, array &$headers): string
+	{
+		[$input, $callback] = $call->arguments;
+		$type = $input->type_def();
+		$out = $function->return_type_def();
+		$result = $out->cpp_type();
+		$owner_steps = [];
+		$receiver = $this->retained_place($input, $globals, $declarations, $headers, $owner_steps, full_expression: true);
+		$callable = $this->value($callback, $globals, $declarations, $headers);
+		$boxed = $type instanceof boxed_type_definition;
+		$keyed = $boxed || $type instanceof hash_type_definition;
+		$key = $keyed ? 'key' : null;
+		$output = $type->iteration_output_type();
+		$element = $type->iteration_value_type()->cpp_type();
+		$item = $output === null ? 'item' : 'item.value';
+		$initial = $boxed ? ' = ' . $type->lower_cpp_empty() : '';
+		$lines = ["$result result$initial;", ($output ?? $element) . ' item{};'];
+		if ($keyed) $lines[] = ($boxed ? 'scpp::boxed_text_key' : $type->key_type->cpp_type()) . ' key{};';
+		$lines[] = $type->lower_cpp_iteration_storage($keyed && !$boxed) . $type->lower_cpp_iteration_initialize('source');
+		$next = $boxed ? $type->lower_cpp_iteration_next_classified('source', 'item', 'key') : $type->lower_cpp_iteration_next('source', 'item', $key);
+		$lines[] = "while ($next) {";
+		$value = $function->filter ? "static_cast<$element&&>($item)" : "callback(static_cast<$element&&>($item))";
+		$insert = ($keyed ? $out->lower_cpp_write('result', 'key', $value) : $out->lower_cpp_append_value('result', $value)) . ';';
+		$lines[] = $function->filter ? "if (callback($item)) $insert" : $insert;
+		$lines[] = '} return result;';
+		// A selected owned callable survives reassignment of its source slot by the callback.
+		return '[](const auto& source, auto callback) { ' . implode(' ', $lines) . ' }(' . $receiver . ', ' . $callable . ')';
+	}
+
+	/**
+	 * Fill one owned pack in source order, sharing append and conversion lowering with base construction.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 * @param list<string> $steps
+	 */
+	private function variadic_pack(ast_call_expression|ast_construction_expression $site, int $start, vector_type_definition $pack,
+		array &$globals, array &$declarations, array &$headers, array &$steps): string
+	{
+		$name = 'pack_' . $site->start . '_' . $site->end;
+		$steps[] = $pack->cpp_type() . " $name{};";
+		if ($pack instanceof application_collection_type) $this->concrete_collections->request($pack);
+		for ($i = $start; $i < count($site->arguments); ++$i) {
+			$element = $site->arguments[$i];
+			[$operand, $prerequisites] = $this->staged_operand($element, $globals, $declarations, $headers);
+			array_push($steps, ...$prerequisites);
+			$conversion = $site->conversion($i);
+			foreach ($pack->element_type->conversion_headers($conversion) as $header) $headers[$header] = true;
+			$steps[] = $pack->lower_cpp_sequence_append($element, $conversion, $name, $operand, $this->inline_adapters) . ';';
+		}
+		return $name;
 	}
 
 	/** Collect declarations for a callable's result and inputs even when the local starts absent. @param (ast_declaration_interface|type_definition)[] $declarations */
@@ -3312,13 +3735,13 @@ CPP;
 		foreach ($signature->result->conversion_headers($lambda->conversion) as $header) $headers[$header] = true;
 		$parameters = [];
 		foreach ($lambda->parameters as $parameter) {
-			$parameters[] = '[[maybe_unused]] ' . $this->signature_type($parameter->type_def(), false) . ' ' . ($parameter->mode === passing_mode::reference ? '&' : '') . $this->name($parameter);
+			$parameters[] = '[[maybe_unused]] ' . $parameter->mode->qualify($this->signature_type($parameter->type_def(), false)) . ' ' . $this->name($parameter);
 		}
 		$environment = $type->borrows_receiver ? ['&scpp_self'] : [];
 		$capture_uses = $type->borrows_receiver ? ["\t(void)scpp_self;"] : [];
 		foreach ($lambda->captures as $capture) {
 			$name = $this->name($capture);
-			$source = $this->name($capture->initializer->local_def());
+			$source = $this->name($capture->initializer->local_def(), reference: $capture->by_reference);
 			$environment[] = $capture->by_reference ? '&' . $name . ' = ' . $source
 				: $name . ' = ' . $this->conversion($capture->type_def(), $capture->initialization(), $source, $capture->initializer);
 			// An explicit capture may be unused in the source body.
@@ -3388,19 +3811,37 @@ CPP;
 			$fields = [];
 			$reordered = $site->named?->reordered();
 			foreach ($parameters as $index => $parameter) {
+				if (!$site->unpacked && $parameter->type_reference instanceof ast_variadic_type_reference) {
+					$pack = $parameter->type_def();
+					if (!isset($site->arguments[$index])) $arguments[] = $pack->lower_cpp_empty();
+					else {
+						$steps = [];
+						$name = $this->variadic_pack($site, $index, $pack, $globals, $declarations, $headers, $steps);
+						$arguments[] = '[&]() { ' . implode(' ', $steps) . ' return ' . $name . '; }()';
+					}
+					continue;
+				}
 				$argument = $site->arguments[$index] ?? $parameter->default_value;
 				$conversion = isset($site->arguments[$index]) ? $site->conversion($index) : $parameter->default_conversion();
 				$type = $parameter->type_def();
 				foreach ($type->conversion_headers($conversion) as $header) $headers[$header] = true;
-				$value = $this->value($argument, $globals, $declarations, $headers);
+				$value = $parameter->mode === passing_mode::value
+					? $this->conversion($type, $conversion, $this->value($argument, $globals, $declarations, $headers), $argument)
+					: $this->name($argument->local_def());
 				if ($reordered) {
 					$field = 'slot_' . $site->named->slots[$index];
-					$fields[] = ($type instanceof callback_type_definition ? $type->cpp_declarator($field) : $this->member_type($type) . ' ' . $field) . ';';
+					$fields[] = ($type instanceof callback_type_definition ? $type->cpp_declarator($field) : $parameter->mode->qualify($this->member_type($type)) . ' ' . $field) . ';';
 				}
-				$arguments[] = $this->conversion($type, $conversion, $value, $argument);
+				$arguments[] = $value;
+			}
+			// With labels alone the binder selects the fixed prefix and the tail defaults to empty.
+			if ($site->named !== null && !$site->unpacked && ($tail = $constructor->variadic_slot()) !== null) {
+				$type = $constructor->parameters[$tail]->type_def();
+				$arguments[] = $type->lower_cpp_empty();
+				if ($reordered) $fields[] = $this->member_type($type) . ' slot_' . $tail . ';';
 			}
 			if ($reordered) {
-				// Aggregate fields are the actual value parameters, initialized once in written order.
+				// Aggregate fields preserve each parameter’s passing mode and written evaluation order.
 				// Their lifetime ends after base initialization, before the derived fields and body.
 				$values = '[&]() { struct scpp_escape_inputs { ' . implode(' ', $fields) . ' }; return scpp_escape_inputs{' . implode(', ', $arguments) . '}; }()';
 				$arguments = [$constructor->parent->definition->cpp_type() . '::scpp_escape_named_base{}', $values];
@@ -3464,7 +3905,7 @@ CPP;
 		$collect = self::signature_forward_collector($forwards);
 		foreach ($record->fields as $field) {
 			$type = $field->type_def();
-			if ($type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
+			if ($record->is_data || $type instanceof owned_callable_type) self::visit_signature_type_dependencies($type, $collect);
 		}
 		foreach ($record->static_properties as $property) {
 			$type = $property->type_def();
@@ -3571,6 +4012,16 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** @param list<string> $steps @param ?list<string> $statement_setup */
+	private static function staged_call(string $call, array $steps, string $return_clause, ?array &$statement_setup): string
+	{
+		if ($statement_setup !== null) {
+			$statement_setup = $steps;
+			return $call;
+		}
+		return $steps === [] ? $call : '([&]()' . $return_clause . ' { ' . implode(' ', $steps) . ' return ' . $call . '; }())';
+	}
+
 	private static function integer_spelling(int $integer /** int64 */): string
 	{
 		return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : (string)$integer . 'LL';
@@ -3711,7 +4162,7 @@ CPP;
 			return;
 		}
 		if ($type instanceof segment_type) self::visit_signature_type_dependencies($type->element, $visit);
-		if ($type instanceof nullable_enum_type_definition) $visit($type->payload_type);
+		if ($type instanceof nullable_enum_type_definition || $type instanceof record_result_type_definition) $visit($type->payload_type);
 		if ($type instanceof record_handle_definition || $type instanceof record_type_definition || $type instanceof enum_type_definition) $visit($type);
 	}
 
@@ -3737,6 +4188,18 @@ CPP;
 		if ($type instanceof owned_callable_type) return false;
 		return $argument instanceof ast_callable_reference || $argument instanceof ast_lambda_expression || (($argument instanceof ast_integer_expression || $argument instanceof ast_float_expression
 			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
+	}
+
+	/** A synchronous reader can borrow a reference parameter as its collection operand. */
+	private static function plain_local_read(?ast_expression $argument, bool $collection_operand = false): bool
+	{
+		if (!$argument instanceof ast_name_expression) return false;
+		$binding = $argument->local_binding();
+		if ($binding instanceof ast_parameter_declaration) {
+			if ($binding->type_reference instanceof ast_variadic_type_reference) return $collection_operand;
+			return $collection_operand || $binding->mode === passing_mode::value;
+		}
+		return $binding !== null && $binding::class === ast_local_declaration::class;
 	}
 
 	/** Only plain, nonthrowing scalar conversions can move across an old-value read. */

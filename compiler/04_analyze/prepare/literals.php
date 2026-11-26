@@ -53,7 +53,7 @@ final class Literal_Declaration_Preparation
 			&& !(($declaration->parent instanceof ast_record_declaration) && $type->supports_static_property())) {
 			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'String globals are deferred');
 		}
-		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
+		$conversion = $type->prepare_declaration_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
 		$declaration->settle_type($type, $conversion);
 	}
 
@@ -142,8 +142,8 @@ final class Literal_Declaration_Preparation
 		$entry = $symbols->entry($file->constant_key($expr->name));
 		$dependencies->watch($entry, $owner);
 		$target = $entry->declaration();
-		if ($target === null && $expr->source()->flavor === flavor::php) {
-			$runtime = runtime_constants::integer($file->runtime_constant_key($expr->name));
+		if ($target === null) {
+			$runtime = $file->type_availability->runtime_constant($file->runtime_constant_key($expr->name), $expr->source()->flavor);
 			if ($runtime !== null) {
 				$expr->settle_runtime_constant($runtime);
 				return $runtime->value;

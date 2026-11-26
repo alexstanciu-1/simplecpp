@@ -1,1 +1,0 @@
-function make(): unique<int> { $p unique<int>; return move($p); } function f(unique<int> $p): void {} f(make()); return 0;

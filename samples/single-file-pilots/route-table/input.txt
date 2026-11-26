@@ -1,0 +1,14 @@
+# Forward references and precedence at a segment boundary
+route ANY prefix /api/ default
+route GET exact /api/status status
+backend default EDGE.example 8080 on
+backend status status.example 443 on
+backend offline old.example 80 off
+route GET prefix /legacy offline
+route GET exact /lost missing
+route ANY prefix /api default
+route GET prefix /../x default
+test GET /api/status?q=ok
+test POST /api/status
+test GET /apiculture
+test GET /legacy

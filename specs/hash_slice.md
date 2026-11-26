@@ -19,7 +19,7 @@ storage recipe. Its key/value providers implement the common `ConcreteType` inte
 A publication requests `hashes: {specializations: [{value: "int64", key: "string"}]}`.
 The metadata provider owns the header; an optional legacy header must agree with it. The name is `hash_VALUE_KEY`, matching source
 `hash<V,K>`. This slice admits int64/string keys and values, all four combinations.
-The default publication and tests/hash/publication.json now request all four. Mixed, dynamic, object keys, nested containers, native conveniences, extra
+The default publication and tests/hash/publication.json request all four. The regex-enabled profile additionally requests vector_string values with string keys for named capture columns. Mixed, dynamic, object keys, other nested containers, native conveniences, extra
 operators and hash payloads in carriers are not admitted.
 
 Publication requires int64 counts, bool_t, the requested key/value types and an

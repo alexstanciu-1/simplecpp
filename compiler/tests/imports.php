@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
+require_once __DIR__ . '/preparation_snapshot.php';
 require_once __DIR__ . '/../host/syntax.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, Program_Frontend, Project_Compiler,
@@ -64,9 +65,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	verify($file->main()->body()->statements[0]->symbol_key() === 'func:Lib\ping', 'Call key is not target identity');
 	verify(Symbol_Publication::completed($program->files)->resolve('func:App\run') === null, 'Import re-exported');
 	verify(Syntax_Inspection::file($file)['imports'][0]['local_name'] === 'run', 'Inspection lost import');
-	$before = serialize($program);
+	$snapshot = new Preparation_Snapshot();
+	$before = $snapshot->capture($program);
 	$output = Cpp_Program::emit($program);
-	verify(serialize($program) === $before, 'Emission mutated imported facts');
+	verify($snapshot->capture($program) === $before, 'Emission mutated imported facts');
 	$outputs[] = $output->files;
 	if (isset($argv[1])) {
 		// One native program combines file-local imports, rooted and relative lookup, and a shadowed global.

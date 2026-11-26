@@ -217,31 +217,32 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | PHP-flavor pattern     | Lowered C++ code                                                        | Lowered C++ header code          | Generation and lowering                |
 +========================+=========================================================================+==================================+========================================+
 | $s string = "a\0b";    | scpp::string var_s_0 = scpp::string{"a\0b", 3};                         | .cpp includes                    | The string export supplies the owning  |
-|                        |                                                                         | #include <scpp/string.hpp>       | type. The literal renderer emits exact |
+|                        |                                                                         | #include <scpp/string/type.hpp>  | type. The literal renderer emits exact |
 |                        |                                                                         | No unit header.                  | bytes and their length.                |
 |                        |                                                                         |                                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                  | var_s_0 = (var_s_0 + scpp::string{"!", 1});                             | .cpp includes                    | The string local and literal feed the  |
 |     $s string = "hi";  | scpp::bool_t var_ok_1 = ((var_s_0 == scpp::string{"hi!", 3}));          | #include <scpp/core/scalars.hpp> | runtime operators directly. The        |
-| $s = $s . "!";         |                                                                         | #include <scpp/string.hpp>       | literal carries its byte length.       |
+| $s = $s . "!";         |                                                                         | #include <scpp/string/type.hpp>  | literal carries its byte length.       |
 | $ok = $s === "hi!";    |                                                                         | No unit header.                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                  | scpp::string var_s_2 = (var_a_0 + var_b_1);                             | .cpp includes                    | Concatenation takes its left operand   |
 |     $a string = "a";   | scpp::bool_t var_ok_3 = ((var_a_0 < var_b_1));                          | #include <scpp/core/scalars.hpp> | by value. Comparison reads both        |
-|     $b string = "b";   |                                                                         | #include <scpp/string.hpp>       | strings by reference. Neither sibling  |
+|     $b string = "b";   |                                                                         | #include <scpp/string/type.hpp>  | strings by reference. Neither sibling  |
 | $s = $a . $b;          |                                                                         | No unit header.                  | can mutate the other here.             |
 | $ok = $a < $b;         |                                                                         |                                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                  | scpp::echo_bytes("A", 1);                                               | .cpp includes                    | Output bindings select literal bytes,  |
 |     $n int = 8;        | scpp::echo_int(var_n_0);                                                | #include <scpp/core/scalars.hpp> | integer output and borrowed strings.   |
 |     $s string = "ok";  | scpp::echo_string(var_s_1);                                             | #include <scpp/output.hpp>       |                                        |
-| echo "A", $n, $s;      |                                                                         | #include <scpp/string.hpp>       |                                        |
+| echo "A", $n, $s;      |                                                                         | #include <scpp/string/type.hpp>  |                                        |
 |                        |                                                                         | No unit header.                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                  | scpp::int64 var_n_1 = scpp::str::byte_length(var_s_0);                  | .cpp includes                    | Runtime metadata publishes the unary   |
 |     $s string = "abc"; |                                                                         | #include <scpp/core/scalars.hpp> | function. Preparation resolves its     |
 | $n = strlen($s);       |                                                                         | #include <scpp/string.hpp>       | signature and lowering emits the       |
-|                        |                                                                         | No unit header.                  | symbol and provider include.           |
+|                        |                                                                         | #include <scpp/string/type.hpp>  | symbol and provider include.           |
+|                        |                                                                         | No unit header.                  |                                        |
 +------------------------+-------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
 
@@ -254,13 +255,13 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | Given                                 | scpp::string var_s_0 = str_repeat(label_(), 2LL);    | .cpp includes                    | The adapter borrows the returned    |
 |     function label():string {         |                                                      | #include <scpp/core/scalars.hpp> | string through the call. The count  |
 |         return "xy";                  |                                                      | #include <scpp/php/string.hpp>   | literal passes by value.            |
-|     }                                 |                                                      | #include <scpp/string.hpp>       |                                     |
+|     }                                 |                                                      | #include <scpp/string/type.hpp>  |                                     |
 | $s=str_repeat(label(),2);             |                                                      | No unit header.                  |                                     |
 +---------------------------------------+------------------------------------------------------+----------------------------------+-------------------------------------+
 | Given                                 | scpp::string var_t_1 = ([&]() {                      | .cpp includes                    | The first argument saves the string |
 |     function change(string &$s):int { |     const auto argument_25_0 = var_s_0;              | #include <scpp/core/scalars.hpp> | before change updates the original. |
 |         $s="new";                     |     return str_repeat(argument_25_0,                 | #include <scpp/php/string.hpp>   | The scalar count passes directly.   |
-|         return 2;                     |         change_(var_s_0));                           | #include <scpp/string.hpp>       |                                     |
+|         return 2;                     |         change_(var_s_0));                           | #include <scpp/string/type.hpp>  |                                     |
 |     }                                 | }());                                                | No unit header.                  |                                     |
 |     $s string="old";                  |                                                      |                                  |                                     |
 | $t=str_repeat($s,change($s));         |                                                      |                                  |                                     |
@@ -268,7 +269,7 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | Given                                 | scpp::string var_s_0 = ([&]() {                      | .cpp includes                    | The first call finishes before the  |
 |     function text():string {          |     const auto argument_24_0 = text_();              | #include <scpp/core/scalars.hpp> | adapter borrows the final returned  |
 |         return "abc";                 |     return str_pad(argument_24_0, 6LL, pad_(), 1LL); | #include <scpp/php/string.hpp>   | string. Its bytes remain live       |
-|     }                                 | }());                                                | #include <scpp/string.hpp>       | through the call.                   |
+|     }                                 | }());                                                | #include <scpp/string/type.hpp>  | through the call.                   |
 |     function pad():string {           |                                                      | No unit header.                  |                                     |
 |         return "-";                   |                                                      |                                  |                                     |
 |     }                                 |                                                      |                                  |                                     |
@@ -277,7 +278,7 @@ The table excerpts omit the enclosing application namespace (`App` by default). 
 | Given                                 | scpp::string var_s_2 = ([&]() {                      | .cpp includes                    | The search string is saved before   |
 |     function subject(string &$key):   |     const auto argument_30_0 = var_key_1;            | #include <scpp/core/scalars.hpp> | subject changes it. The adapter     |
 |         string {                      |     const auto argument_30_1 = scpp::string{"X", 1}; | #include <scpp/php/string.hpp>   | writes the count into the named     |
-|         $key="z";                     |     return str_replace(argument_30_0, argument_30_1, | #include <scpp/string.hpp>       | local directly.                     |
+|         $key="z";                     |     return str_replace(argument_30_0, argument_30_1, | #include <scpp/string/type.hpp>  | local directly.                     |
 |         return "aa";                  |         subject_(var_key_1), var_n_0);               | No unit header.                  |                                     |
 |     }                                 | }());                                                |                                  |                                     |
 |     $n int=99;                        |                                                      |                                  |                                     |
@@ -356,7 +357,7 @@ Published integer/string vectors use bulk construction; nested/application vecto
 | $codes hash<int,string> = ["id" => 1, "int" => 2]; | scpp::hash_int64_string var_codes_0 = ([&]() {                                                               | .cpp includes                    | Metadata selects keyed transport.      |
 |                                                    |     scpp::hash_int64_string::keyed_entry input[]{{scpp::string{"id", 2}, 1L}, {scpp::string{"int", 3}, 2L}}; | #include <scpp/core/scalars.hpp> | Braced input evaluates each key then   |
 |                                                    |     return scpp::hash_int64_string::from_owned_entries(input, 2);                                            | #include <scpp/hashes.hpp>       | value, in entry order. The factory     |
-|                                                    | }());                                                                                                        | #include <scpp/string.hpp>       | presizes entries and index and rejects |
+|                                                    | }());                                                                                                        | #include <scpp/string/type.hpp>  | presizes entries and index and rejects |
 |                                                    |                                                                                                              | No unit header.                  | duplicates after materialization.      |
 +----------------------------------------------------+--------------------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
@@ -430,7 +431,7 @@ Published integer/string vectors use bulk construction; nested/application vecto
 | Given                         | var_h_0.set(scpp::string{"k", 1}, 7L);                                                          | .cpp includes                    | The generated set binding takes the    |
 |     $h hash<int,string> = []; | scpp::int64 var_x_1 = var_h_0.at(scpp::string{"k", 1});                                         | #include <scpp/core/scalars.hpp> | typed key and value directly. The at   |
 | $h["k"] = 7;                  |                                                                                                 | #include <scpp/hashes.hpp>       | binding returns a copy and throws      |
-| $x = $h["k"];                 |                                                                                                 | #include <scpp/string.hpp>       | when the key is absent.                |
+| $x = $h["k"];                 |                                                                                                 | #include <scpp/string/type.hpp>  | when the key is absent.                |
 |                               |                                                                                                 | No unit header.                  |                                        |
 +-------------------------------+-------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 ```
@@ -480,13 +481,13 @@ Published integer/string vectors use bulk construction; nested/application vecto
 | Given                                      | var_x_0.source_set(scpp::boxed_key(scpp::string{"k", 1}), scpp::mixed::from_integer(8L));          | .cpp includes                    | The boxed type constructs the runtime  |
 |     $x mixed = [];                         | scpp::mixed var_v_1 = var_x_0.source_read(scpp::boxed_key(scpp::string{"k", 1}));                  | #include <scpp/core/scalars.hpp> | key, boxes the RHS and dispatches      |
 | $x["k"] = 8;                               |                                                                                                    | #include <scpp/mixed.hpp>        | keyed storage/read operations.         |
-| $v = $x["k"];                              |                                                                                                    | #include <scpp/string.hpp>       |                                        |
+| $v = $x["k"];                              |                                                                                                    | #include <scpp/string/type.hpp>  |                                        |
 |                                            |                                                                                                    | No unit header.                  |                                        |
 +--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
 | Given                                      | var_x_0.source_set(scpp::boxed_key(scpp::string{"k", 1}), scpp::dynamic::from_integer(number_())); | .cpp includes                    | C++ chooses the order of key checking  |
 |     $x dynamic = [];                       |                                                                                                    | #include <scpp/core/scalars.hpp> | and the call to number(). Both must    |
 |     function number(): int {               |                                                                                                    | #include <scpp/dynamic.hpp>      | succeed before source_set runs.        |
-|         return 8;                          |                                                                                                    | #include <scpp/string.hpp>       |                                        |
+|         return 8;                          |                                                                                                    | #include <scpp/string/type.hpp>  |                                        |
 |     }                                      |                                                                                                    | No unit header.                  |                                        |
 | $x["k"] = number();                        |                                                                                                    |                                  |                                        |
 +--------------------------------------------+----------------------------------------------------------------------------------------------------+----------------------------------+----------------------------------------+
@@ -539,11 +540,11 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 |     }                                 |                                                   |                                  |                                   |
 | $x=pick(1,mark(2),mark(3));           |                                                   |                                  |                                   |
 +---------------------------------------+---------------------------------------------------+----------------------------------+-----------------------------------+
-| Given                                 | ([&]() -> void {                                  | .cpp includes                    | Only the value argument saves 8.  |
+| Given                                 | {                                                 | .cpp includes                    | Only the value argument saves 8.  |
 |     function write_sum(int $a,        |     scpp::int64 argument_46_0 = var_x_0;          | #include <scpp/core/scalars.hpp> | The reference names the same slot |
-|         int &$x,int $b):void {        |     return write_sum_(argument_46_0, var_x_0,     | No unit header.                  | that change updates.              |
+|         int &$x,int $b):void {        |     write_sum_(argument_46_0, var_x_0,            | No unit header.                  | that change updates.              |
 |         $x=$a+$b;                     |         change_(var_x_0));                        |                                  |                                   |
-|     }                                 | }());                                             |                                  |                                   |
+|     }                                 | }                                                 |                                  |                                   |
 |     function change(int &$x):int {    |                                                   |                                  |                                   |
 |         $x=90;                        |                                                   |                                  |                                   |
 |         return 2;                     |                                                   |                                  |                                   |
@@ -610,11 +611,11 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 +---------------------------------------------------+-------------------------------------------------------------+----------------------------------+--------------------------------------+
 | PHP-flavor pattern                                | Lowered C++ code                                            | Lowered C++ header code          | Generation and lowering              |
 +===================================================+=============================================================+==================================+======================================+
-| Given                                             | ([&]() -> void {                                            | .cpp includes                    | The local owner keeps the allocation |
+| Given                                             | {                                                           | .cpp includes                    | The local owner keeps the allocation |
 |     struct Acc {                                  |     auto receiver_owner = var_a_0;                          | #include <scpp/core/scalars.hpp> | alive. Dereferencing it checks the   |
 |         public int $n;                            |     auto&& receiver_payload = *receiver_owner.operator->(); | #include <scpp/owner_access.hpp> | receiver before argument evaluation. |
-|         public function add(int $x,int $y):void { |     return method_3_Acc_add(receiver_payload, 3LL, 2LL);    | No unit header.                  | Both integer literals pass directly. |
-|             $this->n=$x+$y;                       | }());                                                       |                                  |                                      |
+|         public function add(int $x,int $y):void { |     method_3_Acc_add(receiver_payload, 3LL, 2LL);           | No unit header.                  | Both integer literals pass directly. |
+|             $this->n=$x+$y;                       | }                                                           |                                  |                                      |
 |         }                                         |                                                             |                                  |                                      |
 |     }                                             |                                                             |                                  |                                      |
 |     $a=new Acc();                                 |                                                             |                                  |                                      |
@@ -628,10 +629,10 @@ Mixed and dynamic use the same argument lowering for their scalar factories. In 
 +---------------------------------------------------+------------------------------------------------------------+----------------------------------+-------------------------------------+
 | PHP-flavor pattern                                | Lowered C++ code                                           | Lowered C++ header code          | Generation and lowering             |
 +===================================================+============================================================+==================================+=====================================+
-| Given                                             | ([&]() -> void {                                           | .cpp includes                    | The binding evaluates the factory   |
+| Given                                             | {                                                          | .cpp includes                    | The binding evaluates the factory   |
 |     struct Point {                                |     auto&& receiver_payload = method_5_Point_make();       | #include <scpp/core/scalars.hpp> | once and keeps its returned record  |
-|         public int $n;                            |     return method_5_Point_add(receiver_payload, 3LL, 2LL); | No unit header.                  | alive through the method body. Both |
-|         public static function make():Point {     | }());                                                      |                                  | literals pass directly.             |
+|         public int $n;                            |     method_5_Point_add(receiver_payload, 3LL, 2LL);        | No unit header.                  | alive through the method body. Both |
+|         public static function make():Point {     | }                                                          |                                  | literals pass directly.             |
 |             $p Point;                             |                                                            |                                  |                                     |
 |             return $p;                            |                                                            |                                  |                                     |
 |         }                                         |                                                            |                                  |                                     |
@@ -678,15 +679,15 @@ and both functions refer to the caller's original variable.
 |                                          |                                                                     | void bump_(::scpp::int64 &var_x_0);              |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
 | lib                                      | main                                                                | .cpp includes                                    | The caller resolves the explicit or    |
-| function greet(string $s = "hi"): void { | greet_(scpp::string{"hi", 2});                                      | #include <scpp/string.hpp>                       | default argument and applies the       |
+| function greet(string $s = "hi"): void { | greet_(scpp::string{"hi", 2});                                      | #include <scpp/string/type.hpp>                  | default argument and applies the       |
 |     echo $s;                             | greet_(scpp::string{"hi", 2});                                      | #include "lib.hpp"                               | prepared conversion. The parameter     |
 | }                                        | lib                                                                 | lib.cpp includes                                 | takes the resulting string by value.   |
 | main                                     | void greet_(::scpp::string var_s_0)                                 | #include <scpp/output.hpp>                       |                                        |
-| greet();                                 | {                                                                   | #include <scpp/string.hpp>                       |                                        |
+| greet();                                 | {                                                                   | #include <scpp/string/type.hpp>                  |                                        |
 | greet("hi");                             |     scpp::echo_string(var_s_0);                                     | #include "lib.hpp"                               |                                        |
 |                                          | }                                                                   | lib.hpp                                          |                                        |
 |                                          |                                                                     | #pragma once                                     |                                        |
-|                                          |                                                                     | #include <scpp/string.hpp>                       |                                        |
+|                                          |                                                                     | #include <scpp/string/type.hpp>                  |                                        |
 |                                          |                                                                     | void greet_(::scpp::string var_s_0);             |                                        |
 |                                          |                                                                     |                                                  |                                        |
 +------------------------------------------+---------------------------------------------------------------------+--------------------------------------------------+----------------------------------------+
@@ -742,5 +743,6 @@ namespace App {
 int scpp_entry_body();
 }
 
-int main() { return ::App::scpp_entry_body(); }
+#include <scpp/entry.hpp>
+int main(int argc, char** argv) { return ::scpp::run_entry_with_exceptions(::App::scpp_entry_body, argc, argv); }
 ```

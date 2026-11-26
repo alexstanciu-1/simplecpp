@@ -6,13 +6,16 @@ namespace scpp\compiler;
 /** Owns project loading, change checks, compilation and publication; never writes host output. */
 final class Project_Compiler
 {
+	/** PROPERTIES */
 	private readonly ?string $runtime;
 
+	/** CONSTRUCTOR */
 	public function __construct(?string $runtime = null)
 	{
 		$this->runtime = $runtime;
 	}
 
+	/** METHODS */
 	/** Incremental analyzer entry point; never invokes preparation, lowering or native emission. */
 	public function frontend(string $path, ?compilation_session $previous = null, ?string $output_directory = null): compilation_session
 	{
@@ -35,11 +38,26 @@ final class Project_Compiler
 	public function run(string $path, string $facts, string $directory, bool $force = false, array $optimize_functions = []): array /** array<string,mixed> */
 	{
 		$session = (new Module_Loader($this->runtime))->load($path, $directory);
-		$state = Project_Changes::capture($session, $facts, $directory, $optimize_functions);
-		[$previous, $cached] = Cpp_Bundle::with_reader($directory,
-			static function (bool $present) use ($directory, $force, $state): array {
+		return $this->run_loaded($session, $facts, $directory, $force, $optimize_functions);
+	}
+
+	/**
+	 * Compile the session whose dependency graph was loaded by the caller.
+	 * @param string[] $optimize_functions
+	 * @return mixed[]
+	 */
+	public function run_loaded(compilation_session $session, string $facts, string $directory, bool $force, array $optimize_functions /** list<string> */): array /** array<string,mixed> */
+	{
+		$stamps = Project_Changes::capture($session, $facts, $directory, $optimize_functions);
+		[$previous, $cached, $state, $settled] = Cpp_Bundle::with_reader($directory,
+			static function (bool $present) use ($directory, $force, $stamps): array {
 				$snapshot = $present ? Cpp_Bundle::snapshot($directory) : new cpp_bundle_snapshot([], null);
-				return [$snapshot, $force ? null : Cpp_Bundle::reuse($directory, $state, $snapshot->manifest)];
+				$baseline = Cpp_Bundle::baseline($snapshot->manifest);
+				$state = $stamps;
+				$settled = [];
+				Project_Changes::confirm($state, $baseline, $settled);
+				$cached = $force || $baseline === null ? null : Cpp_Bundle::reuse($directory, $state, $snapshot->manifest);
+				return [$snapshot, $cached, $state, $settled];
 			});
 		$removed = Project_Changes::mark($session, $state, Cpp_Bundle::baseline($previous->manifest));
 		$changes = [];
@@ -49,11 +67,17 @@ final class Project_Compiler
 			}
 		}
 		if ($cached !== null) {
+			if ($settled !== []) {
+				foreach ($settled as $name => $paths) {
+					foreach ($paths as $path) unset($state['modules'][$name]['sources'][$path]['sha256']);
+				}
+				Cpp_Bundle::confirm_inputs($directory, $previous, $state);
+			}
 			return ['manifest' => $directory . '/manifest.json',
 				'sources' => count($cached['sources']), 'translation_units' => count($cached['translation_units']),
 				'rebuilt' => false];
 		}
-		return $this->compile($session, $facts, $directory, $state, $changes, $previous, $optimize_functions);
+		return $this->compile($session, $facts, $directory, $stamps, $changes, $previous, $optimize_functions);
 	}
 
 	/**
@@ -75,6 +99,7 @@ final class Project_Compiler
 		array|cpp_bundle_snapshot|null $previous /** array<string,mixed> */ = null, array $optimize_functions = []): array /** array<string,mixed> */
 	{
 		$target = Native_Target::load($facts);
+		$read_started = time();
 		$program = (new Program_Frontend())->prepare($session, $target);
 		$output = Cpp_Program::emit($program, destination_plans: Destination_Plan::select($program, $optimize_functions));
 		$inputs = [$facts];
@@ -88,6 +113,20 @@ final class Project_Compiler
 		}
 		if (($state !== null) && (Project_Changes::capture($session, $facts, $directory, $optimize_functions) !== $state)) {
 			throw new \RuntimeException('Project inputs changed during compilation; retry the build');
+		}
+		if ($state !== null) {
+			foreach ($session->entry->sources as $unit) {
+				$source = &$state['modules'][$session->entry->name]['sources'][$unit->path];
+				if (!Project_Changes::needs_confirmation($source['mtime'], $read_started)) continue;
+				$snapshot = $program->files[$session->source_key($unit)]->tokens->source;
+				$digest = hash('sha256', $snapshot->content);
+				$verified = time();
+				if (Project_Changes::digest($session->entry->root . '/' . $unit->path) !== $digest) {
+					throw new \RuntimeException('Project inputs changed during compilation; retry the build');
+				}
+				if (Project_Changes::needs_confirmation($source['mtime'], $verified)) $source['sha256'] = $digest;
+			}
+			unset($source);
 		}
 		Cpp_Bundle::write($directory, $output, $inputs, $state, $previous);
 		return ['manifest' => $directory . '/manifest.json',

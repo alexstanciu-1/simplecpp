@@ -1,1 +1,0 @@
-function f(int &$x): void {} function g(const int &$x): void { f($x); } return 0;

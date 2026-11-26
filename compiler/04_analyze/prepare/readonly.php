@@ -29,7 +29,7 @@ final class Readonly_Access
 			|| ($binding instanceof ast_parameter_declaration && $binding->parent instanceof ast_lambda_expression
 				&& $binding->parent->parent instanceof ast_inline_job && $binding->parent->parent->iteration !== null && $binding->id === 0)) return $binding;
 		return $binding instanceof ast_closure_capture
-			|| ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::readonly_reference) ? $binding : null;
+			|| ($binding instanceof ast_parameter_declaration && ($binding->mode === passing_mode::readonly_reference || $binding->is_readonly_pack())) ? $binding : null;
 	}
 
 	/** Diagnose writes at the source binding that supplies the read-only storage. */
@@ -39,6 +39,8 @@ final class Readonly_Access
 		if ($origin !== null) {
 			if ($origin instanceof ast_produced_binding && $origin->parent instanceof ast_foreach_statement)
 				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write to a read-only hash segment binding: ' . $origin->short_name);
+			if ($origin instanceof ast_parameter_declaration && $origin->is_readonly_pack())
+				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write to read-only variadic pack: ' . $origin->short_name);
 			if ($origin instanceof ast_produced_binding || ($origin instanceof ast_parameter_declaration && $origin->mode === passing_mode::value))
 				throw new diagnostic($site->source(), $site->byte_start(), 'The each index is read-only');
 			$message = $origin instanceof ast_closure_capture ? 'Cannot write to by-value capture: ' : 'Cannot write through read-only reference: ';
@@ -50,6 +52,7 @@ final class Readonly_Access
 	public static function write(ast_expression $site, bool $payload = false, ?ast_instance_field $initializing = null): void
 	{
 		if ($payload && $site->type_def()->mutates_referenced_value()) return;
+		$target = $site;
 		while ($site instanceof ast_field_expression) {
 			$field = self::field($site);
 			if ($field->is_readonly && $field !== $initializing) {
@@ -61,6 +64,11 @@ final class Readonly_Access
 		$storage = $site instanceof ast_index_expression ? $site->receiver : $site;
 		if ($storage->type_def() instanceof segment_type && $storage->type_def()->read_only)
 			throw new diagnostic($site->source(), $site->byte_start(), 'Cannot write through a read-only segment');
+		if ($storage instanceof ast_name_expression && ast_writable_element::origin($storage->local_binding()) !== null) {
+			$assignment = $target->parent;
+			if ($assignment instanceof ast_field_assignment && $assignment->target === $target && $assignment->selected_record_element() === $storage->local_binding()) return;
+			throw new diagnostic($site->source(), $site->byte_start(), 'Assign a whole writable foreach element to update its slot');
+		}
 		if ($site instanceof ast_name_expression) self::require_writable($site, $site->local_binding());
 	}
 }

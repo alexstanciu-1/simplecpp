@@ -1,0 +1,113 @@
+// Linux command-line proof over a published compiler bundle.
+function write_diagnostic(string $bytes): void {
+    if ($bytes === "") return;
+    $stream file_stream = io_open("/dev/stderr", "ab");
+    try {
+        $offset = 0;
+        while ($offset < strlen($bytes)) {
+            $written int = io_write($stream, substr($bytes, $offset));
+            if ($written === 0) throw Exception::make("Cannot write diagnostics");
+            $offset += $written;
+        }
+        if (!io_flush($stream)) throw Exception::make("Cannot flush diagnostics");
+    } finally {
+        io_close($stream);
+    }
+}
+
+function finish(process_handle $child): int {
+    try {
+        $done bool = process_poll($child);
+        while (!$done) {
+            dt_sleep_ms(1);
+            $done = process_poll($child);
+        }
+        $output process_output = process_result($child);
+        echo $output->stdout_text;
+        write_diagnostic($output->stderr_text);
+        if ($output->signal !== 0) return 128 + $output->signal;
+        return $output->exit_code;
+    } finally {
+        process_close($child);
+    }
+}
+
+function execute(string $executable, vector<string> $arguments): int {
+    $child process_handle = process_start($executable, $arguments, "", 0);
+    return finish($child);
+}
+
+function run_ninja(string $input, string $directory, string $ninja): int {
+    $bundle string = fs_realpath($input);
+    $native string = fs_realpath($directory);
+    $reader = acquire($bundle . "/.scpp-bundle.lock", true);
+    // Tokens release on scope exit, including a failed Ninja build.
+    $writer = acquire($native . "/.scpp-native.lock", false);
+    $text string = fs_get($bundle . "/manifest.json");
+    $error ?json_parse_error = null;
+    $doc json_document = json_document_parse($text, $error);
+    $root json_node = json_document_root($doc);
+    $sources vector<string> = [];
+    $libs vector<string> = [];
+    append_inputs($root, "translation_units", $bundle . "/", $sources);
+    if (json_node_has($root, "native_sources")) append_inputs($root, "native_sources", "", $sources);
+    append_inputs($root, "link_inputs", "", $libs);
+    $inputs = "# scpp build inputs v1\n";
+    foreach ($sources as $path) { $inputs .= "# source " . (string)strlen($path) . " " . $path . "\n"; }
+    foreach ($libs as $path) { $inputs .= "# library " . (string)strlen($path) . " " . $path . "\n"; }
+    $graph string = fs_get($native . "/build.ninja");
+    if (!str_starts_with($graph, $inputs . "# end inputs\n")) {
+        throw Exception::make("Republish the Ninja graph for this bundle");
+    }
+    $status = execute($ninja, ["-C", $native, "-f", "build.ninja", "program"]);
+    if ($status !== 0) return $status;
+    $app process_handle = process_start($native . "/program", [], "", 0);
+    if (!fs_lock_release($writer)) throw Exception::make("Cannot release native build lock");
+    if (!fs_lock_release($reader)) throw Exception::make("Cannot release program bundle lock");
+    return finish($app);
+}
+
+$cli = cli_arguments();
+if (count($cli) < 4) {
+    write_diagnostic("usage: driver BUNDLE ABSOLUTE_OUTPUT ABSOLUTE_CXX [CXX_FLAG ...]\n");
+    return 2;
+}
+if ($cli[1] === "--ninja") {
+    if (count($cli) !== 5) {
+        write_diagnostic("usage: driver --ninja BUNDLE BUILD_DIR ABSOLUTE_NINJA\n");
+        return 2;
+    }
+    return run_ninja($cli[2], $cli[3], $cli[4]);
+}
+$bundle = $cli[1];
+$exe = $cli[2];
+if (!str_starts_with($exe, "/")) throw Exception::make("Expected absolute executable output path");
+$lock_path = $bundle . "/.scpp-bundle.lock";
+if (fs_is_link($bundle) || fs_is_link($lock_path)) throw Exception::make("Invalid program bundle lock");
+$lock = acquire($lock_path, true);
+try {
+    $text string = fs_get($bundle . "/manifest.json");
+    $error ?json_parse_error = null;
+    $doc json_document = json_document_parse($text, $error);
+    $root json_node = json_document_root($doc);
+    $args vector<string> = [];
+    for ($i = 4; $i < count($cli); $i++) { $args[] = $cli[$i]; }
+    append_inputs($root, "translation_units", $bundle . "/", $args);
+    $has_native bool = json_node_has($root, "native_sources");
+    if ($has_native) append_inputs($root, "native_sources", "", $args);
+    append_inputs($root, "link_inputs", "", $args);
+
+    $stage string = fs_stage(fs_dirname($exe));
+    try {
+        $args[] = "-o";
+        $args[] = $stage;
+        $status = execute($cli[3], $args);
+        if ($status !== 0) return $status;
+        if (!fs_rename($stage, $exe)) throw Exception::make("Cannot publish executable");
+    } finally {
+        if (fs_exists($stage)) fs_remove($stage);
+    }
+} finally {
+    if (!fs_lock_release($lock)) throw Exception::make("Cannot release program bundle lock");
+}
+return execute($exe, []);

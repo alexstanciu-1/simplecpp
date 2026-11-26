@@ -1,0 +1,71 @@
+// Discover and digest the selected application's sources without a generated inventory.
+function source_inventory(string $directory, bool $from_bytes, string $output, string $runtime, string $view): string {
+    $manifest = manifest_location("", $directory);
+    $root = fs_dirname($manifest);
+    $graph = new Inventory_Graph();
+    $app = $graph->activate($manifest, $runtime);
+    $doc = document($app->text);
+    $node json_node = json_document_root($doc);
+    $module = $app->name;
+    $sources hash<string,string> = [];
+    if (json_node_has($node, "sources")) {
+        $selection json_node = json_node_member($node, "sources");
+        explicit_sources($selection, $sources);
+    } else {
+        $excluded = $graph->excluded;
+        if ($output !== "" && fs_is_dir($output)) {
+            $out string = fs_realpath($output);
+            $excluded[$out] = $out;
+        }
+        discover_sources($root, "", $excluded, $sources);
+    }
+    $paths vector<string> = [];
+    $main_count = 0;
+    foreach ($sources as $name => $flavor) {
+        $paths[] = $name;
+        if ($name === "main" || (!str_contains($name, "/") && str_starts_with($name, "main.")
+            && !str_contains(substr($name, 5), ".")))
+            $main_count++;
+    }
+    if (json_node_has($node, "entry")) {
+        $entry = member_text($node, "entry");
+        if (!isset($sources[$entry])) throw Exception::make("Entry missing from source inventory");
+    } elseif ($main_count !== 1) throw Exception::make("Entry requires one root-level main source");
+    $graph->validate_order();
+    if (json_node_has($node, "type") && member_text($node, "type") !== "default")
+        throw Exception::make("Executable entry must be a default module");
+    $scratch = $paths;
+    $count = count($paths);
+    order_paths($paths, $scratch, 0, $count);
+    $physical hash<string,string> = [];
+    $report = "{";
+    for ($i = 0; $i < $count; $i++) {
+        $path = $paths[$i];
+        $wrapped = "/" . $path . "/";
+        if (str_contains($wrapped, "//") || str_contains($wrapped, "/./") || str_contains($wrapped, "/../")
+            || str_contains($path, ":") || str_contains($path, "\\") || str_contains($path, "\0"))
+            throw Exception::make("Expected canonical relative source path: " . $path);
+        $disk string = fs_realpath($root . "/" . $path);
+        if (!str_starts_with($disk, rtrim($root, "/") . "/") || !fs_is_file($disk) || isset($physical[$disk]))
+            throw Exception::make("Invalid or duplicate physical source: " . $path);
+        $physical[$disk] = $path;
+        if ($view !== "sources") continue;
+        $digest = "";
+        if ($from_bytes) {
+            $bytes string = fs_get($disk);
+            $digest = host_sha256_bytes($bytes);
+        } else {
+            $digest = host_sha256_file($disk);
+        }
+        $key = $module . "/" . $path;
+        $unit = "units/" . host_sha256_bytes($key) . ".cpp";
+        if ($i > 0) $report .= ",";
+        $report .= quoted($key) . ":{\"flavor\":" . quoted($sources[$path])
+            . ",\"sha256\":" . quoted($digest) . ",\"unit\":" . quoted($unit) . "}";
+    }
+    $report .= "}";
+    if ($view === "--link-inputs") $report = $graph->link_report($app);
+    if ($view === "--graph") $report = $graph->report();
+    $graph->check_manifests();
+    return $report;
+}

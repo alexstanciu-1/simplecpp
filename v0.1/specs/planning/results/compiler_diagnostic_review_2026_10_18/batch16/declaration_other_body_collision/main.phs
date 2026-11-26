@@ -1,1 +1,0 @@
-namespace App { use Lib\C; } namespace App { class C {} return 0; }

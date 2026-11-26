@@ -30,7 +30,9 @@ file(GLOB_RECURSE generator_sources CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.cpp.tpl
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.php.tpl
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.concrete.json)
-list(APPEND generator_sources ${php_generator_source})
+list(APPEND generator_sources ${php_generator_source}
+  ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/json/record_output.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/structure/record_fields.hpp)
 set(api_tooling ${CMAKE_CURRENT_BINARY_DIR}/scpp-api-tooling)
 configure_file(tools/api_generator/tooling.py.in ${api_tooling} @ONLY)
 file(CHMOD ${api_tooling} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
@@ -73,6 +75,12 @@ string(JSON mt_segments ERROR_VARIABLE mt_error GET "${runtime_profile}" mt_segm
 if(mt_segments)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/mt_segment.hpp ${runtime_generated}/public/scpp/mt_segments.hpp)
 endif()
+foreach(helper argument_count arguments mixed_arguments)
+  if("${runtime_generated}/public/scpp/cli/${helper}.hpp" IN_LIST runtime_outputs)
+    list(APPEND runtime_outputs ${runtime_generated}/private/cli_context.hpp)
+    break()
+  endif()
+endforeach()
 list(APPEND runtime_outputs
   ${runtime_generated}/public/scpp/arithmetic.hpp
   ${runtime_generated}/public/scpp/owner_access.hpp
@@ -105,11 +113,21 @@ if(SCPP_ENABLE_JSON)
     ${runtime_generated}/public/scpp/json.hpp ${runtime_generated}/src/json.cpp)
 endif()
 if(SCPP_ENABLE_REGEX)
-  list(APPEND runtime_outputs ${runtime_generated}/private/regex_provider.hpp)
+  list(APPEND runtime_outputs ${runtime_generated}/private/regex_provider.hpp ${runtime_generated}/private/regex_capture_bindings.hpp)
 endif()
 if(SCPP_ENABLE_FILESYSTEM)
   list(APPEND runtime_outputs ${runtime_generated}/private/filesystem_provider.hpp)
+  string(JSON filesystem_locks ERROR_VARIABLE locks_error TYPE "${runtime_profile}" filesystem resources)
+  if(filesystem_locks STREQUAL "OBJECT")
+    list(APPEND runtime_outputs ${runtime_generated}/private/filesystem_locks_provider.hpp ${runtime_generated}/private/filesystem_locks_values.hpp)
+  endif()
 endif()
+foreach(family IN ITEMS io process curl mysqli ui webview fcgi)
+  string(TOUPPER "${family}" upper)
+  if(SCPP_ENABLE_${upper})
+    list(APPEND runtime_outputs "${runtime_generated}/private/${family}_provider.hpp" "${runtime_generated}/private/${family}_values.hpp")
+  endif()
+endforeach()
 # This source-local publication may have been written by another build profile.
 # Check its contents on every build; unchanged output keeps its timestamps.
 add_custom_target(scpp_runtime_publication
@@ -134,13 +152,21 @@ add_dependencies(scpp_runtime scpp_runtime_publication)
 # Runtime-only source exports intentionally omit the compiler tree.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
   set(compiler_generated ${CMAKE_CURRENT_SOURCE_DIR}/compiler/generated)
+  if(SCPP_ENABLE_DATETIME)
+    set(compiler_optional_types ${compiler_generated}/types/uint64.php)
+  endif()
+  foreach(builder IN ITEMS string_parts_builder text_builder)
+    if("${runtime_generated}/public/scpp/str/${builder}.hpp" IN_LIST runtime_outputs)
+      list(APPEND compiler_optional_types ${compiler_generated}/types/${builder}.php)
+    endif()
+  endforeach()
   add_custom_target(scpp_compiler_publication ALL
     COMMAND ${CMAKE_COMMAND}
       -DPHP=${PHP_EXECUTABLE} -DGENERATOR=${php_generator_source}
       -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication} -DFACTS=${native_facts} -DCONTEXT=${native_context}
       -DOUTPUT=${compiler_generated}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
-    BYPRODUCTS ${compiler_generated}/types/int8.php ${compiler_generated}/types/int16.php ${compiler_generated}/types/int32.php ${compiler_generated}/types/uint16.php ${compiler_generated}/types/uint32.php ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
+    BYPRODUCTS ${compiler_optional_types} ${compiler_generated}/types/int8.php ${compiler_generated}/types/int16.php ${compiler_generated}/types/int32.php ${compiler_generated}/types/uint16.php ${compiler_generated}/types/uint32.php ${compiler_generated}/types/int64.php ${compiler_generated}/types/null.php ${compiler_generated}/types/bool.php ${compiler_generated}/types/uint8.php ${compiler_generated}/types/float64.php ${compiler_generated}/types/string.php ${compiler_generated}/types/registry.php ${compiler_generated}/types/vectors.php ${compiler_generated}/types/carriers.php ${compiler_generated}/types/boxed.php ${compiler_generated}/types/hashes.php ${compiler_generated}/bindings/entry.php ${compiler_generated}/inventory.json
     DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata} ${runtime_publication}
     VERBATIM)
   add_dependencies(scpp_runtime scpp_compiler_publication)
@@ -197,12 +223,87 @@ endif()
 
 if(SCPP_ENABLE_FILESYSTEM)
   add_library(scpp_filesystem STATIC runtime/src/filesystem/filesystem.cpp)
+  if(TARGET scpp_compiler_publication)
+    add_dependencies(scpp_filesystem scpp_compiler_publication)
+  endif()
+  if(filesystem_locks STREQUAL "OBJECT")
+    target_sources(scpp_filesystem PRIVATE runtime/src/filesystem/file_lock.cpp)
+  endif()
   target_link_libraries(scpp_filesystem PUBLIC scpp_runtime)
-  target_include_directories(scpp_filesystem PRIVATE ${runtime_generated}/private)
+  target_include_directories(scpp_filesystem PRIVATE ${runtime_generated}/private runtime/src/sequence)
+endif()
+
+foreach(family IN ITEMS io process curl mysqli ui webview fcgi)
+  string(TOUPPER "${family}" upper)
+  if(SCPP_ENABLE_${upper})
+    add_library(scpp_${family} STATIC runtime/src/${family}/${family}.cpp)
+    target_link_libraries(scpp_${family} PUBLIC scpp_runtime)
+    target_include_directories(scpp_${family} PRIVATE "${runtime_generated}/private" runtime/src/sequence)
+  endif()
+endforeach()
+
+# The native application linker consumes these same selected shared objects.
+function(scpp_attach_sdk family)
+  find_package(PkgConfig REQUIRED)
+  cmake_parse_arguments(SDK "" "" "PACKAGES;LIBRARIES" ${ARGN})
+  pkg_check_modules(SDK_${family} REQUIRED IMPORTED_TARGET ${SDK_PACKAGES})
+  target_link_libraries(scpp_${family} PRIVATE PkgConfig::SDK_${family})
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${family}-deps")
+  foreach(lib IN LISTS SDK_LIBRARIES)
+    find_library(SCPP_LIB_${lib} NAMES lib${lib}.so REQUIRED)
+    file(CREATE_LINK "${SCPP_LIB_${lib}}" "${CMAKE_CURRENT_BINARY_DIR}/${family}-deps/lib${lib}.so" SYMBOLIC)
+  endforeach()
+endfunction()
+if(SCPP_ENABLE_UI)
+  scpp_attach_sdk(ui PACKAGES gtk+-3.0 LIBRARIES gtk-3 gobject-2.0 glib-2.0)
+endif()
+if(SCPP_ENABLE_WEBVIEW)
+  scpp_attach_sdk(webview PACKAGES "webkit2gtk-4.1>=2.40" json-glib-1.0 LIBRARIES webkit2gtk-4.1 javascriptcoregtk-4.1 json-glib-1.0 gio-2.0)
+  target_link_libraries(scpp_webview PUBLIC scpp_ui)
+endif()
+if(SCPP_ENABLE_MYSQLI)
+  scpp_attach_sdk(mysqli PACKAGES libmariadb LIBRARIES mariadb)
+endif()
+if(SCPP_ENABLE_FCGI)
+  if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(FATAL_ERROR "The FastCGI host requires Linux")
+  endif()
+  find_path(SCPP_FCGI_INCLUDE fcgiapp.h REQUIRED)
+  find_library(SCPP_FCGI_LIBRARY NAMES libfcgi.so REQUIRED)
+  target_include_directories(scpp_fcgi PRIVATE "${SCPP_FCGI_INCLUDE}")
+  target_link_libraries(scpp_fcgi PRIVATE "${SCPP_FCGI_LIBRARY}")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/fcgi-deps")
+  file(CREATE_LINK "${SCPP_FCGI_LIBRARY}" "${CMAKE_CURRENT_BINARY_DIR}/fcgi-deps/libfcgi.so" SYMBOLIC)
+endif()
+if(SCPP_ENABLE_CURL)
+  find_path(SCPP_CURL_INCLUDE curl/curl.h REQUIRED)
+  find_library(SCPP_CURL_LIBRARY NAMES libcurl.so REQUIRED)
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/curl-deps")
+  file(CREATE_LINK "${SCPP_CURL_LIBRARY}" "${CMAKE_CURRENT_BINARY_DIR}/curl-deps/libcurl.so" SYMBOLIC)
+  target_include_directories(scpp_curl PRIVATE "${SCPP_CURL_INCLUDE}")
+  target_link_libraries(scpp_curl PRIVATE "${SCPP_CURL_LIBRARY}")
+endif()
+if(SCPP_ENABLE_PROCESS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  find_package(Threads REQUIRED)
+  target_link_libraries(scpp_process PRIVATE Threads::Threads)
+endif()
+
+if(SCPP_ENABLE_FILESYSTEM)
+  # The translated compiler tools share a private numeric adapter.
+  set(decimal_adapter ${CMAKE_CURRENT_BINARY_DIR}/binary64-adapter)
+  add_library(scpp_compiler_binary64 STATIC compiler/06_native/binary64_literal.cpp
+    compiler/examples/retained_frontend/socket/binary64_host.cpp)
+  target_link_libraries(scpp_compiler_binary64 PRIVATE scpp_runtime)
+  file(GENERATE OUTPUT "${decimal_adapter}/module.json" CONTENT
+    "{\"name\":\"compiler-private-frontend\",\"type\":\"c++\",\"artifacts\":[\"$<TARGET_FILE:scpp_compiler_binary64>\"]}\n")
 endif()
 
 add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
 target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND TARGET scpp_compiler_publication AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_JSON AND SCPP_ENABLE_DATETIME)
+  add_subdirectory(compiler/examples/retained_frontend/socket native-frontend)
+endif()
 
 include(CTest)
 if(BUILD_TESTING)
@@ -257,6 +358,8 @@ if(BUILD_TESTING)
   add_test(NAME output_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/output_runtime.py)
   add_test(NAME compiler_entry_binding COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/entry_binding.php)
   scpp_fixture_test(entry_binding php_proven php_checked)
+  add_test(NAME compiler_cli_environment_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/cli_environment_native.py ${CMAKE_CXX_COMPILER})
   add_test(NAME compiler_launcher_native COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/launcher_native.py
     ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
@@ -300,6 +403,10 @@ if(BUILD_TESTING)
   add_test(NAME compiler_keyed_initialization_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/keyed_initialization_quick.py)
   add_test(NAME compiler_keyed_initialization_ownership COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/keyed_initialization_ownership.py --quick --out ${CMAKE_CURRENT_BINARY_DIR}/keyed-ownership --fixtures ${CMAKE_CURRENT_BINARY_DIR}/keyed-fixtures.json)
   add_test(NAME compiler_bootstrap_runtime_lookup_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/bootstrap_runtime_lookup_native.py --quick)
+  foreach(member_case properties methods constants construction)
+    add_test(NAME compiler_incremental_member_${member_case} COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/production_member_incremental.py ${member_case} ${CMAKE_CXX_COMPILER} $<TARGET_FILE:scpp_runtime>)
+  endforeach()
   add_test(NAME compiler_keyed_initialization_incremental COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/keyed_initialization_incremental.py --quick-runtime $<TARGET_FILE:scpp_runtime> --out ${CMAKE_CURRENT_BINARY_DIR}/keyed-incremental)
   add_test(NAME keyed_initialization_providers COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/keyed_initialization.py --quick --out ${CMAKE_CURRENT_BINARY_DIR}/keyed-providers)
   set_tests_properties(compiler_keyed_initialization_ownership PROPERTIES DEPENDS compiler_keyed_initialization)
@@ -313,7 +420,34 @@ if(BUILD_TESTING)
   add_test(NAME compiler_vector_operations COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_operations.php)
   scpp_fixture_test(vector_operations php php-negative)
   add_test(NAME compiler_carrier_values COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_values.php)
-  scpp_fixture_test(carrier_values php)
+  scpp_fixture_test(carrier_values php php-false-guards php-false-pairs php-nullable-pairs php-false-equality php-nullable-equality php-peer-failure)
+  add_test(NAME compiler_bool_sentinel_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture carrier_values.php --cases php-bool-sentinel-peers)
+  add_test(NAME compiler_php_carrier_operators_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_operators.php --cases php arithmetic bitwise)
+  add_test(NAME compiler_php_carrier_operator_failures_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_operators.php --cases ordering spaceship concat)
+  add_test(NAME compiler_php_builtin_admission_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_builtin_admission.php --cases php)
+  add_test(NAME compiler_php_reference_binding_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_reference_binding.php --cases php)
+  add_test(NAME compiler_php_decimal_arguments COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_decimal_arguments.php --cases php)
+  add_test(NAME compiler_php_carrier_implicit_matrix COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_carrier_implicit_matrix.php)
+  add_test(NAME compiler_php_carrier_implicit_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_implicit.php --cases php)
+  add_test(NAME compiler_php_carrier_casts_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_casts.php --cases php)
+  add_test(NAME compiler_php_carrier_writes_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_writes.php --cases php)
+  add_test(NAME compiler_php_carrier_write_failures_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_carrier_writes.php --cases missing-0 missing-1 missing-2)
+  add_test(NAME compiler_mixed_carrier_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture mixed_carrier_equality.php --cases php)
+  add_test(NAME compiler_carrier_participation_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture carrier_participation.php --cases php)
+  add_test(NAME compiler_result_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture carrier_values.php --cases php-result-peers)
   add_test(NAME compiler_boxed_scalars COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_scalars.php)
   add_test(NAME compiler_boxed_scalars_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture boxed_scalars.php --cases php-mixed php-dynamic-mutating php-mixed-bad-pair php-container-incremental-1)
@@ -438,6 +572,20 @@ if(BUILD_TESTING)
   add_executable(collection_remove_storage_test tests/collection_remove_storage.cpp)
   target_link_libraries(collection_remove_storage_test PRIVATE scpp_runtime)
   add_test(NAME collection_remove_storage COMMAND collection_remove_storage_test)
+  add_test(NAME compiler_mixed_predicates_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/mixed_predicates_native.py ${CMAKE_CXX_COMPILER})
+  add_test(NAME compiler_stable_hash_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/stable_hash_native.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  add_test(NAME compiler_text_helpers_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/text_helpers_native.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  add_test(NAME compiler_collection_transforms COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_transforms.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  add_test(NAME compiler_vector_capacity_family COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_capacity_family.py
+    ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
   add_test(NAME compiler_collection_clear COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_clear.php)
   scpp_fixture_test(collection_clear php_vector_string_ php_hash_int_string_)
   set_tests_properties(compiler_collection_clear compiler_collection_clear_native PROPERTIES TIMEOUT 120)
@@ -461,6 +609,11 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_value_passing compiler_value_passing_native PROPERTIES TIMEOUT 180)
   add_test(NAME compiler_vector_copies COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/vector_copies.php)
   scpp_fixture_test(vector_copies php_int php_string)
+  add_test(NAME compiler_data_record_codec_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/data_record_codec_native.py --quick --runtime $<TARGET_FILE:scpp_runtime>)
+  foreach(flavor php cpp js py)
+    add_test(NAME compiler_data_records_${flavor} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/data_records_native.py --quick --flavor ${flavor})
+    set_tests_properties(compiler_data_records_${flavor} PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
+  endforeach()
   add_test(NAME compiler_named_construction_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/named_construction_native.py --quick)
   set_tests_properties(compiler_named_construction_native PROPERTIES TIMEOUT 180 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_named_arguments_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/named_arguments_native.py --quick)
@@ -539,6 +692,7 @@ if(BUILD_TESTING)
   add_test(NAME compiler_conditions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/conditions.php)
   scpp_fixture_test(conditions php php_checked_assignment)
   add_test(NAME compiler_reference_parameters COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/reference_parameters.php)
+  add_test(NAME compiler_count_reader_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/count_reader_native.py --quick)
   add_test(NAME compiler_readonly_parameters_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/readonly_parameters_native.py)
   add_test(NAME compiler_reference_parameters_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/reference_parameters_native.py --quick)
   add_test(NAME compiler_parameter_defaults COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/parameter_defaults.php)
@@ -547,19 +701,89 @@ if(BUILD_TESTING)
   add_test(NAME compiler_typed_functions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/typed_functions_native.py)
   add_test(NAME compiler_integer_radix_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_radix_native.py --quick)
   add_test(NAME compiler_fixed_array_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/fixed_array_native.py --quick)
+  if(SCPP_ENABLE_FCGI)
+    find_program(SCPP_APACHE_EXECUTABLE NAMES apache2 httpd)
+    find_path(SCPP_APACHE_MODULE_DIR mod_proxy_fcgi.so PATHS /usr/lib/apache2/modules /usr/lib64/httpd/modules /usr/lib/httpd/modules)
+    if(SCPP_APACHE_EXECUTABLE AND SCPP_APACHE_MODULE_DIR)
+      add_test(NAME compiler_fcgi_apache_native COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/fcgi_apache_native.py
+        ${CMAKE_CXX_COMPILER} ${SCPP_APACHE_EXECUTABLE} ${SCPP_APACHE_MODULE_DIR})
+      set_tests_properties(compiler_fcgi_apache_native PROPERTIES TIMEOUT 60)
+    endif()
+  endif()
+  foreach(family IN ITEMS io process curl)
+    string(TOUPPER "${family}" upper)
+    if(SCPP_ENABLE_${upper})
+      add_test(NAME compiler_${family}_headers COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} headers ${family})
+      add_test(NAME compiler_${family}_native COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} ${family})
+    endif()
+  endforeach()
+  foreach(family IN ITEMS mysqli ui webview)
+    string(TOUPPER "${family}" upper)
+    if(SCPP_ENABLE_${upper})
+      add_test(NAME compiler_${family}_native COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/database_desktop_native.py ${family} ${CMAKE_CXX_COMPILER})
+      add_test(NAME compiler_${family}_headers COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} headers ${family})
+    endif()
+  endforeach()
+  if(SCPP_ENABLE_CURL)
+    add_test(NAME compiler_curl_http COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} http)
+  endif()
+  if(SCPP_ENABLE_CURL AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_IO AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_test(NAME compiler_resource_modules_combined COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/resource_modules_native.py ${CMAKE_CXX_COMPILER} all)
+  endif()
+  if(SCPP_ENABLE_JSON)
+    add_test(NAME compiler_json_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/json_native.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
+  if(SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_datetime_native COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/datetime_native.py
+      ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${CMAKE_BINARY_DIR})
+  endif()
   if(SCPP_ENABLE_REGEX)
     add_test(NAME compiler_regex_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/regex_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       ${CMAKE_CURRENT_BINARY_DIR})
   endif()
+  # The bundled application manifests select archives from the default preset.
+  if(CMAKE_BINARY_DIR STREQUAL "${CMAKE_SOURCE_DIR}/build/clang")
+    if(SCPP_ENABLE_FILESYSTEM)
+      add_test(NAME example_queue_report COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/examples/queue-report/check.py --configured)
+    else()
+      add_test(NAME example_queue_report_setup COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/examples/queue-report/check.py --check-disabled)
+    endif()
+  endif()
   if(SCPP_ENABLE_FILESYSTEM)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND filesystem_locks STREQUAL "OBJECT")
+      add_test(NAME compiler_filesystem_locks_native COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_locks_native.py ${CMAKE_CXX_COMPILER})
+      set_tests_properties(compiler_filesystem_locks_native PROPERTIES TIMEOUT 45)
+    endif()
     add_test(NAME compiler_filesystem_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    add_test(NAME compiler_filesystem_publication COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_native.py
+      ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+      $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime> --publication)
+    if(UNIX)
+      add_test(NAME compiler_filesystem_family COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/filesystem_family.py
+        ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
+        $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
+    endif()
     add_test(NAME compiler_translated_path COMMAND ${Python3_EXECUTABLE} -B
-      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_compiler_path.py
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_compiler_path.py ${decimal_adapter}
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
     if(UNIX)
@@ -645,6 +869,7 @@ if(BUILD_TESTING)
   add_test(NAME compiler_hash_find_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_find_native.py --quick)
   set_tests_properties(compiler_hash_find_native PROPERTIES TIMEOUT 300)
   add_test(NAME compiler_hash_contains COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_contains.php)
+  add_test(NAME compiler_php_hash_isset COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_hash_isset.py)
   add_test(NAME compiler_hash_contains_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/hash_contains_native.py --quick)
   set_tests_properties(compiler_hash_contains_native PROPERTIES TIMEOUT 300)
   add_test(NAME compiler_match_conditions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/match_conditions.php)
@@ -701,7 +926,74 @@ if(BUILD_TESTING)
   add_test(NAME compiler_named_callbacks_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/named_callbacks_native.py --quick)
   set_tests_properties(compiler_named_callbacks_native PROPERTIES TIMEOUT 180 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_translated_preparation_recovery COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_preparation_recovery.py)
-  set_tests_properties(compiler_translated_preparation_recovery PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
+  add_test(NAME compiler_translated_runtime_descriptor COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_runtime_descriptor.py)
+  add_test(NAME compiler_translated_construction COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_construction.py)
+  add_test(NAME compiler_translated_blocking_wait COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_blocking_wait.py)
+  add_test(NAME compiler_translated_closure_dependencies COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_closure_dependencies.py)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM)
+    add_test(NAME compiler_native_frontend_socket COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_socket.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_JSON AND SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_native_toolchain_qualification COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_toolchain_qualification.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER})
+    add_test(NAME compiler_native_ninja_publication COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_ninja_publication.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+    add_test(NAME compiler_native_link_inputs COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_link_inputs.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
+    add_test(NAME compiler_native_manifest_replacement COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_manifest_replacement.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER})
+    add_test(NAME compiler_native_decimal_literal COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_decimal_literal.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program ${PHP_EXECUTABLE})
+    add_test(NAME compiler_native_module_graph COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_module_graph.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
+    add_test(NAME compiler_native_source_inventory COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_source_inventory.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
+    add_test(NAME compiler_native_frontend_protocol COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_protocol.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
+  endif()
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_IO)
+    add_test(NAME compiler_translated_retained_frontend COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter})
+    add_test(NAME compiler_retained_checked_return COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --checked-return)
+    add_test(NAME compiler_retained_literal_returns COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --literal-returns)
+    add_test(NAME compiler_retained_parameter_incremental COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --parameter-incremental)
+    add_test(NAME compiler_retained_parameter_forwarding COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --parameter-forwarding)
+    add_test(NAME compiler_retained_multiple_parameters COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --multiple-parameters)
+    add_test(NAME compiler_retained_named_arguments COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --named-arguments)
+    add_test(NAME compiler_retained_numeric_defaults COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --numeric-defaults)
+    add_test(NAME compiler_retained_default_rebinding COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --default-rebinding)
+    add_test(NAME compiler_retained_call_retargeting COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --call-retargeting)
+    foreach(sequence shared zero ownership publication entry)
+      add_test(NAME compiler_retained_edits_${sequence} COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --edit-sequence=${sequence})
+    endforeach()
+    add_test(NAME compiler_retained_missing_call_repair COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --missing-call-repair)
+  endif()
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_FILESYSTEM
+     AND SCPP_ENABLE_JSON AND SCPP_ENABLE_IO AND SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_translated_native_ninja COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_native_ninja.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+    add_test(NAME compiler_translated_native_driver COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_native_driver.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  endif()
+  add_test(NAME compiler_translated_vector_recipe COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_vector_recipe.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+  add_test(NAME compiler_translated_punctuation COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_punctuation.py)
+  add_test(NAME compiler_translated_source_utf8 COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_source_utf8.py)
+  add_test(NAME compiler_translated_callable_signatures COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_callable_signatures.py)
+  set_tests_properties(compiler_translated_closure_dependencies compiler_translated_callable_signatures PROPERTIES TIMEOUT 60 ENVIRONMENT "XDEBUG_MODE=off")
+  set_tests_properties(compiler_translated_preparation_recovery compiler_translated_runtime_descriptor compiler_translated_construction compiler_translated_blocking_wait PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_failure_expressions_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/failure_expressions_native.py --quick)
   set_tests_properties(compiler_failure_expressions_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_finally_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/finally_native.py --quick)

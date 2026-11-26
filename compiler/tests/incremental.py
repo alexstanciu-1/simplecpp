@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import time
 
 root = Path(__file__).resolve().parents[2]
 
@@ -41,15 +42,19 @@ with tempfile.TemporaryDirectory(prefix='scpp-incremental-') as temporary:
         return {p.relative_to(output).as_posix(): (p.read_bytes(), p.stat().st_mtime_ns)
                 for p in output.rglob('*') if p.is_file()}
 
+    # Keep the source inside the confirmation window regardless of test host speed.
+    future = int(time.time()) + 60
+    os.utime(source, (future, future))
     first = run(True)
     before = snapshot()
     run(False)
     assert snapshot() == before
-    # Equal size and mtime are deliberately not detected; force is the explicit escape hatch.
+    # Equal-size edits inside the ambiguity window must invalidate the compiled source.
     stamp = source.stat()
     source.write_text('return 9;')
     os.utime(source, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
-    run(False)
+    run(True)
+    assert run.report['changes'][str(source)] == 'changed'
     run(True, force=True)
     os.utime(source, (stamp.st_atime, stamp.st_mtime + 2))
     changed = run(True)

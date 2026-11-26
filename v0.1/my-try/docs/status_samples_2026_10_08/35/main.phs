@@ -1,3 +1,0 @@
-function length(?array $values): int { return $values === null ? 0 : count($values); }
-$values = (array) 3;
-return length($values);

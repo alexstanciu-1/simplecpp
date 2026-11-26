@@ -1,13 +1,59 @@
-// The fixed grammar's return statement owns one decimal token by index.
+// A named positional parameter. Its slot is stable within this source generation.
+final class Numeric_Parameter {
+	public readonly string $name;
+	public readonly bool $floating;
+	public readonly int $slot;
+	public readonly int $default_token; // Zero when the parameter is required.
+
+	public function __construct(string $name, bool $floating, int $slot, int $default_token) {
+		$this->default_token = $default_token;
+		$this->name = $name;
+		$this->floating = $floating;
+		$this->slot = $slot;
+	}
+}
+
+// Calls depend on the return type and ordered parameter types. Named arguments also depend on the slot of each written label.
+final class Function_Signature {
+	public readonly bool $returns_float;
+	public readonly vector<Numeric_Parameter> $parameters;
+	private readonly hash<Numeric_Parameter,string> $names;
+
+	public function __construct(bool $returns_float, vector<Numeric_Parameter> $parameters, hash<Numeric_Parameter,string> $names) {
+		$this->returns_float = $returns_float;
+		$this->parameters = $parameters;
+		$this->names = $names;
+	}
+
+	public function find(string $name): ?Numeric_Parameter {
+		return hash_get_or_null($this->names, $name);
+	}
+
+	public static function matches(?Function_Signature $current, ?Function_Signature $other): bool {
+		if ($current === $other) return true;
+		if ($current === null || $other === null || $other->returns_float !== $current->returns_float || count($other->parameters) !== count($current->parameters)) return false;
+		foreach ($current->parameters as $index => $parameter) {
+			if ($parameter->floating !== $other->parameters[$index]->floating) return false;
+		}
+		return true;
+	}
+}
+
+// The return statement retains its operand and the token positions of any call arguments.
 final class Function_Return {
 	public readonly int $start;
 	public readonly int $end;
 	public readonly int $literal_token;
 
-	public function __construct(int $start, int $end, int $literal_token) {
+	public readonly bool $calls_function;
+	public readonly vector<int> $argument_tokens;
+
+	public function __construct(int $start, int $end, int $literal_token, bool $calls_function, vector<int> $argument_tokens) {
+		$this->argument_tokens = $argument_tokens;
 		$this->start = $start;
 		$this->end = $end;
 		$this->literal_token = $literal_token;
+		$this->calls_function = $calls_function;
 	}
 }
 
@@ -44,9 +90,11 @@ final class Function_Declaration {
 	public readonly string $short_name;
 	public readonly int $start;
 	public readonly int $header_end;
+	public readonly Function_Signature $signature;
 	private ?Function_Body $completed_body = null;
 
-	public function __construct(string $name, int $start, int $header_end) {
+	public function __construct(string $name, int $start, int $header_end, Function_Signature $signature) {
+		$this->signature = $signature;
 		if ($start < 0 || $header_end < $start) {
 			throw Exception::make("Invalid function header range");
 		}

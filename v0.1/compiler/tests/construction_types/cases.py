@@ -1,2 +1,0 @@
-def build():
-    return [{'mode': 'scalar'}, {'mode': 'record'}, {'mode': 'unmaterialized'}, {'mode': 'unprepared_record'}, {'mode': 'rebound'}, {'mode': 'stale_owner'}, {'mode': 'template_annotation'}, {'mode': 'stale_instance'}, {'mode': 'provider_owner'}, {'mode': 'unknown_node'}, {'mode': 'debug_family'}, {'mode': 'debug_method'}]

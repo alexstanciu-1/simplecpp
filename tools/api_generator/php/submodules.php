@@ -81,11 +81,11 @@ function typeExports(mixed $metadata, array $nodes, array $groups): array {
 }
 
 /** Publish concrete family identities from the validated specialization owner, not a second metadata inventory. */
-function publishTypeExports(array &$plan, string $group, array $identities): void {
+function publishTypeExports(array &$plan, string $group, array $identities, array $placements = []): void {
     $provider = $plan['groups'][$group]['provider'];
     foreach ($identities as $identity) {
         requireThat(!isset($plan['type_exports'][$identity]), 'Duplicate published type export: ' . $identity);
-        $plan['type_exports'][$identity] = ['symbol' => 'scpp::' . $identity, 'provider' => $provider];
+        $plan['type_exports'][$identity] = ['symbol' => 'scpp::' . $identity, 'provider' => $placements[$identity] ?? $provider];
     }
     $plan['groups'][$group]['types'] = $identities;
     ksort($plan['type_exports'], SORT_STRING);
@@ -267,9 +267,106 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
+    if (in_array('implode', $publication->string->functions ?? [], true)
+        && in_array('string', array_column($publication->hashes->specializations ?? [], 'value'), true)) {
+        $headers[] = 'scpp/php/implode_hash.hpp';
+    }
+    foreach (array_keys(object($publication->cli_helpers ?? (object)[])) as $name) {
+        $headers[] = cliHelperHeader($name);
+        if ($name === 'environment') $headers[] = 'scpp/value_error.hpp';
+    }
+    foreach (names($publication->text_builders ?? []) as $name) {
+        $headers[] = textHelperHeader($name);
+        $headers[] = 'scpp/value_error.hpp';
+    }
+    foreach (names($publication->text_helpers ?? []) as $name) {
+        $headers[] = textHelperHeader($name);
+        if ($name === 'string_byte_find') $headers[] = 'scpp/value_error.hpp';
+    }
+    if (isset($publication->json)) {
+        foreach (['document', 'pull_reader'] as $feature) {
+            if ($publication->json->$feature ?? false) $headers[] = moduleOperationHeader($publication->json->header, $feature);
+        }
+        if (in_array('decode', names($publication->json->operations), true)) {
+            $headers[] = moduleOperationHeader($publication->json->header, 'decode_record');
+            $headers[] = 'scpp/decoder.hpp';
+        }
+        if (array_filter(names($publication->json->operations), fn($id) => str_starts_with($id, 'encode_'))) {
+            $headers[] = moduleOperationHeader($publication->json->header, 'encode_record');
+            $headers[] = moduleOperationHeader($publication->json->header, 'encode_fields');
+            $headers[] = 'scpp/encoder.hpp';
+            $headers[] = 'scpp/detail/json/record_output.hpp';
+            $headers[] = 'scpp/detail/structure/record_fields.hpp';
+        }
+        foreach (names($publication->json->operations) as $id) {
+            requireThat(isset(JSON_OPERATIONS[$id]), 'Unknown JSON operation');
+            $headers[] = moduleOperationHeader(headerPath($publication->json->header), $id);
+        }
+    }
+    if (isset($publication->datetime)) {
+        $header = headerPath(at($publication->datetime, 'header'));
+        foreach (names(at($publication->datetime, 'operations')) as $name) {
+            requireThat(isset(DATETIME_SIGNATURES[$name]), 'Unknown datetime operation');
+            $headers[] = moduleOperationHeader($header, $name);
+        }
+    }
+    foreach (FUNCTION_MODULES as $family) {
+        if (!isset($publication->{$family})) continue;
+        $catalog = $metadata->{$family};
+        if (($catalog->surface ?? null) !== 'general') continue;
+        $header = providerHeader($plan, $catalog->provider);
+        if ($family === 'filesystem' && isset($publication->filesystem->resources)) {
+            $resources = $publication->filesystem->resources;
+            foreach (object(at($resources, 'types')) as $name => $type) {
+                requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module type');
+                $headers[] = moduleOperationHeader($header, $name);
+                foreach (names($type->carriers ?? []) as $carrier) {
+                    requireThat(in_array($carrier, ['result','result_or_false','result_or_bool','nullable'], true), 'Unsupported module carrier');
+                    $headers[] = moduleOperationHeader($header, $carrier . '_' . $name);
+                }
+            }
+            foreach (listValue(at($resources, 'operations')) as $operation) {
+                $name = textValue(at($operation, 'native'));
+                requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module operation');
+                $headers[] = moduleOperationHeader($header, $name);
+            }
+        }
+        if ($family === 'regex') {
+            $variants = regexModeVariants($catalog, $publication->regex);
+            if ($variants) {
+                $headers[] = 'scpp/php/regex_hash_isset.hpp';
+                $headers[] = moduleOperationHeader($header, 'flag_types');
+            }
+            foreach ($variants as $name => $_) $headers[] = moduleOperationHeader($header, $name);
+        }
+        foreach (names($publication->{$family}->functions) as $name) {
+            requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module function name');
+            $headers[] = moduleOperationHeader($header, $name);
+        }
+        foreach (names($publication->{$family}->php_exposures ?? []) as $name) {
+            requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid PHP function name');
+            $alias = at($catalog->php_exposures, $name);
+            if (isset($alias->false_result) || isset($alias->native_name)) $headers[] = "scpp/php/$name.hpp";
+        }
+    }
     if (isset($publication->vectors, $metadata->vector->reserve)) $headers[] = 'scpp/value_error.hpp';
+    if (($publication->string->index_read ?? false) && isset($metadata->string->index_read->view_provider)) {
+        $headers[] = providerHeader($plan, $metadata->string->index_read->view_provider);
+    }
+    if (isset($publication->string, $metadata->string->library_provider)) {
+        $headers[] = providerHeader($plan, $metadata->string->library_provider);
+    }
+    foreach ($publication->carriers->specializations ?? [] as $carrier) {
+        $identity = $carrier->family . '_' . $carrier->payload;
+        if (isset($metadata->carriers->specialization_providers->$identity))
+            $headers[] = providerHeader($plan, $metadata->carriers->specialization_providers->$identity);
+    }
     foreach ($publication->string->functions ?? [] as $name) {
         $function = at($metadata->string->functions, $name);
+        if (isset($function->signatures->php->header)) $headers[] = headerPath($function->signatures->php->header);
+        if (isset($metadata->string->search_policy_provider) && in_array($function->implementation, ['find', 'rfind'], true))
+            $headers[] = providerHeader($plan, $metadata->string->search_policy_provider);
+        if (isset($function->direct_provider)) $headers[] = providerHeader($plan, $function->direct_provider);
         if (in_array($function->implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) $headers[] = 'scpp/value_error.hpp';
         if (!($function->flavor_adapters ?? false)) continue;
         $flavors = $function->flavors ?? ['php', ...array_keys((array)($function->members ?? []) + (array)($function->free_names ?? []))];
@@ -285,7 +382,13 @@ function finalizePublicationProviders(array &$plan): void {
     $providers = &$plan['submodules'];
     $published = exportProviders($providers, array_column(array_merge($plan['types'], $plan['values']), 'name'));
     $published[] = $providers['groups']['output']['provider'];
-    foreach (['string', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'filesystem', 'regex'] as $family) {
+    foreach ($plan['string_functions'] ?? [] as $binding) {
+        if (!isset($binding['direct_provider'])) continue;
+        $published[] = $binding['direct_provider'];
+        $plan['string_library']['requires'][] = $binding['direct_provider'];
+    }
+    foreach ($plan['carriers'] ?? [] as $carrier) $published[] = typeExport($providers, $carrier['name'])['provider'];
+    foreach (['string', 'string_view', 'string_library', 'search_policy', 'checked_conversions', 'vector_publication', 'carrier_publication', 'hash_publication', 'regex_capture_publication', 'regex_mode_publication', 'filesystem', 'regex'] as $family) {
         if (!isset($plan[$family])) continue;
         $declaration = $plan[$family];
         $id = $declaration['provider'];

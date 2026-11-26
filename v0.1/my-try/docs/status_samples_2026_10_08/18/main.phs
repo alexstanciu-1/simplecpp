@@ -1,5 +1,0 @@
-function wrapped(): result<int> { return 7; }
-$value int = 0;
-$failure error;
-if (take($value, $failure, wrapped())) { return $value; }
-return 1;

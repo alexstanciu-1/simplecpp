@@ -70,6 +70,7 @@ public:
     std::int64_t append(boxed_value value);
     bool remove(std::int64_t key);
     bool remove(std::string_view key);
+    bool empty() const;
     std::size_t container_size() const;
     bool is_packed_container() const;
     std::int64_t iteration_limit() const;

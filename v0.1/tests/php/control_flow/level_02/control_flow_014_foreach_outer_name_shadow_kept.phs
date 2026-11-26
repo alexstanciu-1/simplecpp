@@ -1,9 +1,0 @@
-$x = 10;
-$items /** vector<int> */ = [1, 2];
-foreach ($items as $x) {
-	echo $x, "
-";
-}
-
-echo $x, "
-";

@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/native_entry_fixture.php';
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{flavor, source_file, Source_Frontend, entry_target, Cpp_Emitter, diagnostic, diagnostic_group,
@@ -89,7 +90,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	foreach (['add', 'subtract', 'multiply', 'divide', 'positive', 'negative'] as $name) {
 		$observer = str_replace('@' . $name . '@', '::App::' . $name . '_', $observer);
 	}
-	$fixtures[$flavor->name] = ['cpp' => str_replace('int main()', 'int tested_entry()', $cpp) . $observer, 'stdout_hex' => ''];
+	$fixtures[$flavor->name] = ['cpp' => rename_fixture_main('tested_entry', $cpp) . $observer, 'stdout_hex' => ''];
 	foreach (['1.0 % 2.0', 'true * 1.0'] as $invalid) {
 		rejects(fn() => $prepare($decl($invalid) . 'return 8;'), 'Unsupported binary');
 	}

@@ -1,1 +1,0 @@
-interface I { function f(): int; } class C implements I { function f(): int { return 1; } private function __destruct() {} } return 0;

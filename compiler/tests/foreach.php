@@ -151,7 +151,35 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$emit('empty', $decl('vector<int>', 'items', '[]') . $decl('int', 'value', '99') . $loop($v('items'), '') . 'echo ' . $v('value') . ';return 8;', '99');
 	rejects(fn() => $prepare($decl('int', 'n', '1') . $loop($v('n'), '') . 'return 8;'), 'iterable');
 	rejects(fn() => $prepare($setup . $loop($v('items'), '') . 'echo ' . $v('value') . ';return 8;'), 'Unknown');
-	rejects(fn() => $prepare($setup . 'foreach (' . $v('items') . ' as &' . $v('value') . ') {} return 8;'), 'Expected');
+	if ($flavor === flavor::php) {
+		$double = 'function doubled(vector<int> $items):vector<int> {foreach ($items as &$n) {$n*=2;}return $items;}';
+		$emit('writable_parameter', $double . $setup . '$out=doubled($items);echo $items[0],$out[0];return 8;', '12');
+		$ref = 'function bump(vector<int> &$items,vector<int> &$peer):void {foreach ($items as &$n) {$n+=1;echo count($peer);}}';
+		$emit('writable_reference_parameter', $ref . $setup . 'bump($items,$items);echo $items[0];return 8;', '3332');
+		rejects(fn() => $prepare(str_replace('echo count($peer);', 'clean($peer);', $ref) . $setup . 'bump($items,$items);return 8;'), 'during writable foreach');
+		$pack = 'function doubled(int ...$items):vector<int> {foreach ($items as &$n) {$n*=2;}return $items;}';
+		$prepare($pack . '$out=doubled(3);return $out[0];');
+		rejects(fn() => $prepare(str_replace('int ...', 'int &...', $pack) . 'doubled(3);return 8;'), 'read-only variadic pack');
+		$hash = '$map hash<int,string> = [];$map["key"]=1;';
+		$emit('writable_hash', $hash . 'foreach ($map as $k => &$n) {$k="other";$n+=2;}echo $map["key"];return 8;', '3');
+		rejects(fn() => $prepare($hash . 'foreach ($map as &$n) {$map["key"]=4;}return 8;'), 'during writable foreach');
+		$nested = 'foreach ($items as &$value) {$outer=function() use (&$value):void {'
+			. '$inner=function() use (&$value):void {$value+=2;};$inner();};$outer();}';
+		$twice = 'function applyTwice(callback_view<void> $op):void {applyOnce($op);applyOnce($op);}'
+			. 'function applyOnce(callback_view<void> $op):void {$op();}';
+		$view = 'foreach ($items as &$n) {$f=function() use (&$n):void {$n++;};applyTwice($f);}';
+		$emit('borrowed_callback', $twice . $setup . $view . 'echo $items[0],$items[2];return 8;', '35');
+		rejects(fn() => $prepare(str_replace('$op();', '$save function<void()> = $op;', $twice) . 'return 8;'), 'only direct invocation');
+		rejects(fn() => $prepare('function other():void {}' . str_replace('$op();', 'other();', $twice) . 'return 8;'), 'only direct invocation');
+		$conditional = 'function applyIf(bool $enabled,callback_view<void> $op):void {if ($enabled) {applyOnce($op);} else {}}';
+		$emit('conditional_view', $twice . $conditional . $setup . str_replace('applyTwice($f);', 'applyIf(false,$f);applyIf(op:$f,enabled:true);', $view)
+			. 'echo $items[0],$items[2];return 8;', '24');
+		rejects(fn() => $prepare($twice . str_replace('else {}', 'else {$saved function<void()> = $op;}', $conditional) . 'return 8;'), 'only direct invocation');
+		rejects(fn() => $prepare($twice . str_replace('if ($enabled)', 'if (!$enabled)', $conditional) . 'return 8;'), 'by-value bool parameter');
+		rejects(fn() => $prepare($twice . str_replace('bool $enabled', 'bool &$enabled', $conditional) . 'return 8;'), 'required by-value bool');
+		$emit('nested_reference_capture', $setup . $nested . 'echo $items[0],$items[2];return 8;', '35');
+		$emit('writable', $setup . 'foreach ($items as $key => &$value) {$value+=2;echo $items[$key];}return 8;', '345');
+	} else rejects(fn() => $prepare($setup . 'foreach (' . $v('items') . ' as &' . $v('value') . ') {} return 8;'), 'Expected');
 }
 if (isset($argv[1])) file_put_contents($argv[1], json_encode($fixtures, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
 echo "Foreach: all families, mutation, scopes and incremental recovery passed\n";

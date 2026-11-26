@@ -144,6 +144,12 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	verify(preg_match('/return \w+\(argument_\d+_0, argument_\d+_1, offset_\(\), 2LL\);/', $cpp) === 1,
 		'The last scalar producer can initialize its parameter before a trailing length literal');
 	$fixtures[$flavor->name . '_runtime_window_scalar'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('LO1')];
+	$discarded = $emit($label . $padding . $count_window('padding()') . '; ' . $pad_call . '; return 8;');
+	verify(preg_match('/\{ const auto (argument_\d+_0) = label_\(\); \w+\(\1, padding_\(\), 0LL, 2LL\); \}/', $discarded) === 1,
+		'A discarded scalar runtime call owns its staged arguments in the statement block');
+	verify(preg_match('/\(\[&\]\(\) \{ const auto (argument_\d+_0) = label_\(\); return \w+\(\1, 6LL, padding_\(\)/', $discarded) === 1,
+		'A discarded owning result retains its full-expression cleanup order');
+	$fixtures[$flavor->name . '_discarded_runtime_calls'] = ['cpp' => $discarded, 'stdout_hex' => bin2hex('LPLP')];
 	$window = 'echo ' . $count_window('padding()') . '; return 8;';
 	$cpp = $emit($label . $long_padding . $window);
 	verify(preg_match('/const auto (argument_\d+_0) = label_\(\); return \w+\(\1, padding_\(\), 0LL, 2LL\);/', $cpp) === 1,
@@ -338,7 +344,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		'void', "$x=$a+$b;");
 	$ref_calls = $emit($alias . $write . $change . $decl('x', 'int', '8')
 		. "write_sum($x,$x,change_int($x)); echo $x; write_pair($x,$x); echo $x; return 8;");
-	verify(preg_match('/return write_sum_\(argument_\d+_0, var_x_0, change_int_\(var_x_0\)\);/', $ref_calls) === 1
+	verify(preg_match('/\{ scpp::int64 (argument_\d+_0) = var_x_0; write_sum_\(\1, var_x_0, change_int_\(var_x_0\)\); \}/', $ref_calls) === 1
 		&& str_contains($ref_calls, 'write_pair_(var_x_0, var_x_0);'), 'Only the original by-value read requires capture');
 	$fixtures[$flavor->name . '_ordered_reference_alias'] = ['cpp' => $ref_calls, 'stdout_hex' => bin2hex('C105')];
 	$counter = match ($flavor) {
@@ -353,7 +359,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$static_calls = $emit($counter . $mark . $decl('x', 'int', '8')
 		. "{$qualifier}advance($x,2); echo $x; {$qualifier}accept(mark_int(4),mark_int(5)); return 8;");
 	verify(str_contains($static_calls, 'method_7_Counter_advance(var_x_0, 2LL);')
-		&& preg_match('/return method_7_Counter_accept\(argument_\d+_0, mark_int_\(5LL\)\);/', $static_calls) === 1,
+		&& preg_match('/; method_7_Counter_accept\(argument_\d+_0, mark_int_\(5LL\)\);/', $static_calls) === 1,
 		'Static calls must use direct reference binding and retain the first effectful conversion');
 	$fixtures[$flavor->name . '_static_arguments'] = ['cpp' => $static_calls, 'stdout_hex' => bin2hex('1045C45')];
 	$static_failure = $emit($counter . $mark . "{$qualifier}accept(mark_int(300),mark_int(5)); return 8;");
@@ -369,7 +375,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$prefix = $inline_record . $mark . $local_record;
 	$inline_calls = $emit($prefix . "{$receiver}add(3); echo {$receiver}n; {$receiver}add(mark_int(4),mark_int(5)); echo {$receiver}n; return 8;");
 	verify(str_contains($inline_calls, 'method_3_Acc_add(var_r_0, static_cast<scpp::uint8>(3LL), 2LL);')
-		&& preg_match('/return method_3_Acc_add\(var_r_0, argument_\d+_0, mark_int_\(5LL\)\);/', $inline_calls) === 1
+		&& preg_match('/; method_3_Acc_add\(var_r_0, argument_\d+_0, mark_int_\(5LL\)\);/', $inline_calls) === 1
 		&& !str_contains($inline_calls, 'receiver_payload'), 'Inline method should retain only the first effectful argument');
 	$fixtures[$flavor->name . '_inline_method_arguments'] = ['cpp' => $inline_calls, 'stdout_hex' => bin2hex('C545C9')];
 	$failure = $emit($prefix . "{$receiver}add(mark_int(300),mark_int(5)); return 8;");
@@ -401,7 +407,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$fixtures[$flavor->name . '_' . $kind . '_empty'] = ['cpp' => $empty, 'stdout_hex' => '',
 			'catch_runtime_error' => 'ownership_empty_access'];
 		$failure = $emit($prefix . $allocated . $call);
-		verify(preg_match('/return method_3_Acc_add\(receiver_payload, argument_\d+_0, mark_int_\(5LL\)\);/', $failure) === 1,
+		verify(preg_match('/; method_3_Acc_add\(receiver_payload, argument_\d+_0, mark_int_\(5LL\)\);/', $failure) === 1,
 			'Shared method must capture the checked first argument');
 		$fixtures[$flavor->name . '_' . $kind . '_checked'] = ['cpp' => $failure, 'stdout_hex' => bin2hex('300'),
 			'catch_out_of_range' => 'integer_cast_out_of_range'];
@@ -428,7 +434,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$after = "if (lock($w)) { return 9; } echo \"E\"; return 8;";
 	$cpp = $emit($setup . "$factory(inspect($w),mark_int(5),$w); $after");
 	verify(substr_count($cpp, 'auto&& receiver_payload = method_4_Temp_make(var_p_0);') === 1
-		&& preg_match('/return method_4_Temp_useArgs\(receiver_payload, argument_\d+_0, mark_int_\(5LL\), var_w_1\);/', $cpp) === 1,
+		&& preg_match('/; method_4_Temp_useArgs\(receiver_payload, argument_\d+_0, mark_int_\(5LL\), var_w_1\);/', $cpp) === 1,
 		'Temporary receiver must bind once and capture only the earlier conversion');
 	$fixtures[$flavor->name . '_temporary_lifetime'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('R0A5M45E')];
 	$cpp = $emit($setup . "$factory(3,2,$w); $after");

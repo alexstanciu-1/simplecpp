@@ -1,2 +1,0 @@
-namespace Library { const OFFSET = 2; function add(int $value): int { return $value + OFFSET; } }
-namespace App { use function Library\add; return add(3); }

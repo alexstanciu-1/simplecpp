@@ -1,1 +1,0 @@
-$x = 1.5; $y int8 = $x; return 0;

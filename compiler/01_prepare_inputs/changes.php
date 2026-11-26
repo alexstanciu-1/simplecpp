@@ -61,8 +61,43 @@ final class Project_Changes
 		ksort($modules, \SORT_STRING);
 		sort($optimize_functions, \SORT_STRING);
 		return ($optimize_functions === [] ? [] : ['optimize_functions' => array_values(array_unique($optimize_functions))])
-			+ ['version' => 4, 'php' => \PHP_VERSION, 'entry' => $session->entry_key(),
-			'group_async_methods' => $session->group_async_methods, 'cpp_namespace' => $session->cpp_namespace, 'modules' => $modules, 'other_inputs' => $other_inputs];
+			+ ['version' => 5, 'php' => \PHP_VERSION, 'entry' => $session->entry_key(),
+			'general_api' => $session->type_availability->general_api, 'group_async_methods' => $session->group_async_methods, 'cpp_namespace' => $session->cpp_namespace, 'modules' => $modules, 'other_inputs' => $other_inputs];
+	}
+
+	/** The read second and the preceding second are ambiguous, as are future file timestamps. */
+	public static function needs_confirmation(int $mtime, int $read_started): bool
+	{
+		return $mtime >= $read_started - 1;
+	}
+
+	/**
+	 * Read only selected sources whose last successful verification still needed confirmation.
+	 * @param array<string,mixed> $state
+	 * @param array<string,mixed>|null $baseline
+	 * @param array<string,list<string>> $settled
+	 */
+	public static function confirm(array &$state /** array<string,mixed> */, ?array $baseline /** array<string,mixed> */,
+		array &$settled /** array<string,list<string>> */): void
+	{
+		foreach ($baseline['modules'] ?? [] as $name => $module) {
+			foreach ($module['sources'] as $path => $old) {
+				if (!isset($old['sha256'])) continue;
+				$source = $state['modules'][$name]['sources'][$path] ?? null;
+				if ($source === null || $old['mtime'] !== $source['mtime'] || $old['size'] !== $source['size']) continue;
+				$started = time();
+				$disk_path = $state['modules'][$name]['root'] . '/' . $path;
+				$state['modules'][$name]['sources'][$path]['sha256'] = self::digest($disk_path);
+				if (!self::needs_confirmation($source['mtime'], $started)) $settled[$name][] = $path;
+			}
+		}
+	}
+
+	public static function digest(string $path): string
+	{
+		$digest = @hash_file('sha256', $path);
+		if ($digest === false) throw new \RuntimeException('Cannot read project source: ' . $path);
+		return $digest;
 	}
 
 	/**
@@ -134,7 +169,7 @@ final class Project_Changes
 	/** Reject old/corrupt saved layouts before reconstructing removed source units. */
 	public static function valid(mixed $state): bool
 	{
-		if ((!is_array($state)) || (($state['version'] ?? null) !== 4)
+		if ((!is_array($state)) || (($state['version'] ?? null) !== 5)
 			|| (!is_string($state['php'] ?? null)) || (!is_string($state['entry'] ?? null))
 			|| (!is_array($state['modules'] ?? null)) || (!is_array($state['other_inputs'] ?? null))) {
 			return false;
@@ -153,6 +188,7 @@ final class Project_Changes
 			}
 			foreach ($module['sources'] as $path => $source) {
 				if (((!is_string($path)) && (!is_int($path))) || (!self::valid_stat($source))
+					|| (array_key_exists('sha256', $source) && (!is_string($source['sha256']) || !preg_match('/^[a-f0-9]{64}$/D', $source['sha256'])))
 					|| (!is_string($source['flavor'] ?? null)) || (flavor::tryFrom($source['flavor']) === null)) {
 					return false;
 				}

@@ -47,7 +47,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$type = $resolve($family . '<int>');
 		verify($type instanceof carrier_type_definition && $type->payload_type === type_registry::integer(), 'Shared carrier payload model missing');
 		verify($type === $resolve($family . '<int64>'), 'Payload alias created a second specialization');
-		verify($type->cpp_type() === 'scpp::' . $family . '_int64' && $type->cpp_headers() === ['scpp/carriers.hpp'], 'Export binding mismatch');
+		$header = $family === 'result_or_false' ? 'scpp/carriers/result_or_false_int64.hpp' : 'scpp/carriers.hpp';
+		verify($type->cpp_type() === 'scpp::' . $family . '_int64' && $type->cpp_headers() === [$header], 'Export binding mismatch');
 		verify($resolve($family . '<bool>')->payload_type === type_registry::resolve('bool'), 'Boolean payload missing');
 		verify($resolve($family . '<string>')->payload_type === type_registry::string(), 'String payload missing');
 		$nested = $resolve($family . '<vector<string>>');

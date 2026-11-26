@@ -1,0 +1,8 @@
+{
+  "name": "native-frontend",
+  "general_api": true,
+  "dependencies": {
+    "compiler-private-frontend": {"path": "../adapter"},
+    "runtime": {"modules": ["filesystem", "json", "datetime"]}
+  }
+}

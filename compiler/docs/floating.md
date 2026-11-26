@@ -117,3 +117,51 @@ PHP fixture generation plus semantic/incremental assertions took 82.44 ms in thi
 The native port must preserve correctly rounded decimal parsing, gradual underflow
 and exact emission; ordinary underflow error codes must not accidentally become
 source rejection. PHP-specific packing is a bootstrap implementation detail.
+
+### Native port check
+
+The on-demand test `compiler_binary64_spelling_native` starts with a prepared
+binary64 value. Its private C++ formatter uses `std::bit_cast` to extract the
+sign, exponent and fraction, and `std::to_chars` to write the decimal exponent.
+On dev002, Clang/libc++ and GCC/libstdc++ each matched the PHP backend byte for
+byte on 16,376 finite patterns. Compiling the emitted literals reproduced every
+input bit pattern. The matrix covers both signs, all exponent fields, and four
+fractions per field. It also checks eight nonfinite patterns.
+
+The native service's private `decimal-literal SPELLING` command parses a signed
+decimal floating token and prints its exact C++ spelling. Conversion uses the C
+numeric locale and nearest-even rounding, then restores the calling thread's
+floating environment. Underflow can produce a subnormal or signed zero. Overflow
+that rounds to infinity produces the same range diagnostic as PHP preparation.
+A nullary PHP-flavor function in the retained frontend can return a signed decimal
+integer or floating literal. Preparation first checks the literal in its source
+type, then converts it to the declared return type. An integer returned as
+`float` rounds to binary64. A floating literal returned as `int` truncates toward
+zero and must fit int64. The declaration retains the converted constant.
+
+A prepared
+call records the callee's return type. Lowering uses that type for the C++ prototype
+and converts an integer result to binary64 at the return boundary. A function declared
+`int` can forward a floating result through `scpp::checked_float64_to_int64`.
+The runtime truncates toward zero and checks the int64 bounds. The application
+entry still requires its callee to return an integer.
+
+Changing only the callee's body reuses the forwarding unit. Changing its return
+type rechecks and emits the direct forwarder. On literal overflow the diagnostic
+points to the return operand and the previous published files remain available for retry.
+
+The retained PHP-flavor slice accepts numeric parameters by value and positional or named arguments.
+A function may return any of its parameters. Each call argument may be a signed
+decimal integer literal or a parameter from the enclosing function. Preparation
+resolves names in that function, checks arity, and pairs arguments with the
+callee's parameter types in declaration order. The watched signature includes
+the return type and the complete ordered parameter-type list. A change in any
+slot rechecks direct callers. Renaming a parameter rechecks its declaring body and callers whose written
+labels change binding. Positional callers retain their prepared bodies and emitted
+units. A stale label is diagnosed at its source offset before publication.
+
+Trailing numeric parameters may have signed integer or floating literal defaults.
+Declaration preparation converts each default to the parameter type and checks its
+range. A call records which slots it fills from defaults, including optional slots
+skipped by named arguments. Changing a converted default invalidates the callers
+that omitted that slot. Explicit callers retain their preparation and output.

@@ -2,6 +2,16 @@
 
 declare(strict_types=1);
 namespace scpp\compiler {
+	function time(): int
+	{
+		return $GLOBALS['clock'];
+	}
+
+	function hash_file(string $algorithm, string $path): string|false
+	{
+		$GLOBALS['digests'][] = $path;
+		return \hash_file($algorithm, $path);
+	}
 	/**
 	 * Observe directory access to prove dependencies are never scanned.
 	 *
@@ -33,7 +43,9 @@ namespace
 			mkdir($root . '/' . $directory);
 		}
 		file_put_contents($root . '/app/module.json', '{"dependencies":{"lib":{"path":"lib"}}}');
-		file_put_contents($root . '/app/main.cpp', 'return 8;');
+		$source = $root . '/app/main.cpp';
+		file_put_contents($source, 'return 8;');
+		$GLOBALS['clock'] = filemtime($source);
 		// Explicit missing sources and entries in dependency manifests must not trigger source validation.
 		file_put_contents($root . '/app/lib/module.json',
 			'{"sources":["absent.cpp"],"entry":"absent.cpp","artifacts":["missing.a"]}');
@@ -61,6 +73,13 @@ namespace
 		clearstatcache();
 		$inode = fileinode($inventory);
 		verify(!$compiler->run($root . '/app', $facts, $root . '/out')['rebuilt'], 'Unchanged run rebuilt');
+		$compiler_time = $GLOBALS['clock'];
+		foreach ([1 => 1, 2 => 1, 3 => 0] as $elapsed => $reads) {
+			$GLOBALS['clock'] = $compiler_time + $elapsed;
+			$GLOBALS['digests'] = [];
+			verify(!$compiler->run($root . '/app', $facts, $root . '/out')['rebuilt'], 'Confirmation rebuilt C++');
+			verify($GLOBALS['digests'] === array_fill(0, $reads, $source), 'Wrong source confirmation reads');
+		}
 		clearstatcache();
 		verify((filemtime($inventory) === 1234567890) && (fileinode($inventory) === $inode),
 			'Unchanged inventory replaced');

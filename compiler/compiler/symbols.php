@@ -227,6 +227,7 @@ final class Symbol_Publication implements declaration_sink
 	private static function signature_type(?ast_type_reference $type): ?string
 	{
 		if ($type === null) return null;
+		if ($type instanceof ast_variadic_type_reference) return self::signature_type($type->first_child) . ($type->read_only ? '&...' : '...');
 		if ($type instanceof ast_intersection_reference) return self::signature_type($type->left) . '&' . self::signature_type($type->right);
 		if ($type->first_child === null) {
 			$alias = $type->lexical_root()->imported_type_target($type->name);
@@ -235,7 +236,8 @@ final class Symbol_Publication implements declaration_sink
 		$signature = $type->name . '<';
 		$separator = '';
 		for ($part = $type->first_child; $part !== null; $part = $part->next_sibling) {
-			$signature .= $separator . self::signature_type($part) . ($part instanceof ast_callable_reference_component ? '&' : '');
+			$component = self::signature_type($part);
+			$signature .= $separator . ($part instanceof ast_callable_reference_component ? $part->mode->qualify($component) : $component);
 			$separator = ',';
 		}
 		return $signature . '>';

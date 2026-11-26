@@ -1,1 +1,0 @@
-interface I { function f(): int; } class C implements I { function f(): string { return 'x'; } } return 0;

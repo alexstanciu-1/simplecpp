@@ -19,6 +19,16 @@ struct json_parse_failure final {
 	throw json_parse_failure{std::move(message), position, category};
 }
 
+// Ordinary bytes have identical spelling in the input and the decoded string.
+[[nodiscard]] inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
+	std::size_t size = 0;
+	for (const unsigned char byte : bytes) {
+		if (byte < 0x20 || byte == '"' || byte == '\\') break;
+		++size;
+	}
+	return size;
+}
+
 [[nodiscard]] inline bool is_ascii_digit(const char ch) noexcept {
 	return ch >= '0' && ch <= '9';
 }
@@ -119,7 +129,10 @@ protected:
 			fail_json_parse("expected string", start);
 		}
 
-		std::string out;
+		const auto remaining = input_.substr(pos_);
+		const auto prefix = plain_string_prefix(remaining);
+		pos_ += prefix;
+		std::string out(remaining.substr(0, prefix));
 		while (!at_end()) {
 			const char ch = get();
 			if (ch == '"') {

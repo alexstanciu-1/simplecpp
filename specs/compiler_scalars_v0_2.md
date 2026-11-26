@@ -702,3 +702,110 @@ itself is unchanged. Same-width unsigned operations and admitted signed/unsigned
 pairs below 64 bits keep that table. Explicit conversions, strict canonical identity
 and shifts (whose count is checked independently) retain their separate contracts.
 This is a temporary bootstrap restriction, not a change to uint64's eventual semantics.
+
+## PHP carrier operands and writes
+
+Project one participating carrier layer to select the scalar operation. For a
+value-only operation, extract a present payload at execution. PHP concatenation
+accepts two strings, including present string payloads. Null, either sentinel and
+a structured failure raise the checked extraction error for both `.` and `.=`.
+
+A checked compound write evaluates its writable destination once and extracts the
+old payload before running the RHS. Apply the existing scalar operation and
+destination conversion, then wrap the new payload in the destination's original
+family. If extraction, conversion or computation fails, skip the final store.
+Effects already performed by the RHS remain observable, including changes it
+made to that same slot. Numeric updates follow the scalar update domain. A consumed
+update of an admitted integer carrier local produces the old carrier value for
+postfix and the new carrier value for prefix.
+
+## PHP explicit casts of carrier operands
+
+An explicit cast projects one participating carrier layer and requires a present
+payload. Null, either boolean sentinel and a structured failure throw
+`carrier_no_value`, including when the target is bool. For a present value the
+published explicit conversion of the payload to the destination determines
+admission, result and conversion failures. This includes the exact payload type,
+checked numeric conversions, scalar formatting, and published mixed/dynamic
+boxing or unboxing. Each cast evaluates its operand once. Conditions continue
+to use carrier truth. For example, a false sentinel makes a condition false and
+raises on an explicit bool cast.
+
+## PHP implicit conversions of carrier operands
+
+Typed initialization and declared returns select the published typed-destination
+conversion. By-value calls apply the argument rules below, then reuse the same
+payload conversion. Reassignment selects the published
+assignment conversion. Copying into the identical carrier type preserves its
+entire state in each context, including under explicit-only extraction policy.
+
+When a context needs the payload of a different source type, first require the
+publication to admit implicit extraction and the carrier family to participate.
+Extract one present payload, apply the conversion authorized for that context,
+and wrap the converted value if the destination is a carrier. A missing payload
+raises `carrier_no_value`. A present boxed payload uses its family's conversion
+and can still fail its tag or range check. Failed reassignment leaves the final
+store unexecuted. A by-value conversion creates no reference to the payload.
+
+## PHP builtin argument admission
+
+A published PHP typed input uses the same typed-destination conversion as a
+by-value user parameter. `strlen` takes one typed string. `str_replace` takes
+three typed strings and optionally binds its replacement count to exact writable
+int64 storage. Each input is evaluated and converted once in source order where
+ordering matters. A failed input conversion prevents the call and its count write.
+
+The PHP `is_bool` predicate inspects an exact mixed operand. A plain bool, a
+dynamic box and a result carrying a bool cannot supply this argument. A mixed
+value of any kind is a valid argument. The predicate returns true precisely for
+its boolean kind.
+
+The compiler catalog supplies argument policies and diagnostic labels separately
+from named-call availability and native parameter representation. Preparation
+checks them and records the conversion. A native const-reference input can borrow
+a directly supplied string or the result of an admitted conversion for the call.
+
+
+## PHP by-value call arguments
+
+For a supplied argument to a function, method or typed builtin parameter,
+preparation distinguishes passing a value from constructing a declared local
+or return value. An exact carrier argument preserves its entire state.
+
+* A plain parameter uses the published typed conversion and implicit extraction
+  policy. If it needs a payload, absence, a sentinel and a structured failure
+  raise `carrier_no_value` before the callee starts.
+* A `?T` parameter accepts plain values under its existing typed rules, null,
+  and an existing `?T`. Passing a result carrier with the same canonical payload
+  type T checks for a payload and wraps it as present. Zero, false and the empty
+  string remain present values. A failed result or either boolean sentinel
+  raises during argument evaluation. Different carrier payload types do not
+  implicitly rewrap at calls.
+* A direct mixed or dynamic argument can supply `?T` only if its family
+  publishes a typed-destination conversion to T. Boxed null supplies an empty
+  nullable. Other kinds use that conversion and supply a present payload on
+  success. A wrong kind or out-of-range value raises before the callee starts.
+  The argument is evaluated once.
+* A result, falseable result or boolean-sentinel result parameter requires its
+  exact concrete result type. To pass an ordinary value, first construct the
+  intended result in a typed declaration or return it from a producer.
+
+Exact-inspection and reference parameters continue to use their declared modes.
+
+## PHP decimal text and numeric builtin selectors
+
+A written int64 declaration and an explicit int64 cast accept byte strings as
+signed decimal integers. The complete string must match `[+-]?[0-9]+` and fit
+the signed int64 range. Preparation validates literals and statically resolved
+string constants and folds successful reads. Other strings are evaluated once
+and checked at runtime. Syntax and range failures precede assignment to the
+destination. Ordinary reassignment, argument conversion and implicit return do
+not request decimal parsing. Carrier extraction follows the policy of the
+originating context.
+
+For a PHP builtin with the published numeric selector `int64|float64`, exact
+membership selects a native overload. A participating carrier projects one
+payload under the implicit extraction policy. A mixed or dynamic box selects
+by its actual integer or floating kind and rejects other kinds. Other static
+types reject during preparation. PHP number_format uses this selector at arity
+one, two and four. Its remaining parameters use typed argument admission.

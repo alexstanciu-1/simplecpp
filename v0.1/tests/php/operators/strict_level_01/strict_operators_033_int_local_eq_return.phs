@@ -1,4 +1,0 @@
-function run(): bool {
-	$value int = 4;
-	return $value == 4;
-}

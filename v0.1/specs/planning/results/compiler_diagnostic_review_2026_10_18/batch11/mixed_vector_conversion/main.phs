@@ -1,1 +1,0 @@
-$m mixed = [1,2]; $v vector<int> = $m; return 0;

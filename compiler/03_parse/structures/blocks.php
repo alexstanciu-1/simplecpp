@@ -120,7 +120,7 @@ final class ast_switch_statement extends ast_branch_statement
 }
 
 /** Lexical storage populated by a foreach or catch header. */
-final class ast_produced_binding extends ast_expression implements ast_local_binding
+class ast_produced_binding extends ast_expression implements ast_local_binding
 {
 	use ast_declaration;
 
@@ -161,6 +161,19 @@ final class ast_produced_binding extends ast_expression implements ast_local_bin
 	public function settle_type(type_definition $type): void
 	{
 		$this->settle_value($type, null);
+	}
+}
+
+/** A fresh PHP foreach name denoting the current vector slot by index. */
+final class ast_writable_element extends ast_produced_binding
+{
+	/** A reference capture retains the selected slot's access restrictions. */
+	public static function origin(?ast_local_binding $binding): ?self
+	{
+		while ($binding instanceof ast_closure_capture && $binding->by_reference) {
+			$binding = $binding->initializer->local_def();
+		}
+		return $binding instanceof self ? $binding : null;
 	}
 }
 

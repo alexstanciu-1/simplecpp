@@ -1,3 +1,0 @@
-$items /** hash<int> */ = [];
-
-echo count($items), "\n";

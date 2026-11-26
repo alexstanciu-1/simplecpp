@@ -141,3 +141,60 @@ known LSan limitation; no clean LSan run is claimed.
 ## Byte positions
 
 String length and indexed access count encoded bytes, including embedded NUL. For example, the UTF-8 encoding of `é中😀` has length 9. Indexing outside the stored bytes throws. Compiler offsets and source spans likewise count bytes. See the [source string bindings](../compiler/docs/strings.md#metadata-declared-byte-functions).
+
+## Explicit byte helpers
+
+The general API publishes the following operations independently. C++ flavor
+can use selected general names by default. Other flavors require general_api.
+All positions and lengths here count bytes, including embedded NUL.
+
+| Operation | Result and bounds |
+| --- | --- |
+| string_byte_len(s) | int. Lowered as the size of the string. |
+| string_byte_at(s, i) | int in 0…255, or −1 outside [0,size). |
+| string_byte_slice(s, i, n) | Owned string. Negative bounds or a start past the end produce empty. An overrun truncates. |
+| string_byte_slice_equals(s, i, n, literal) | bool. Match exactly n bytes in a fully contained window, including the empty window at the end. |
+| string_byte_find(s, needle[, i]) | result_or_false<int>. Start defaults to zero and must be in [0,size], otherwise ValueError. Empty needle can match at the end. A hit at zero is present. |
+
+PHP implode(separator, parts) also accepts a published hash with string values
+and either integer or string keys. It joins the values in iteration order and
+preserves empty values and embedded NUL bytes.
+
+## Explicit UTF-8 helpers
+
+The general helper `string_utf8_is_valid(string): bool` tests whether the entire
+byte string encodes Unicode scalar values in UTF-8. Empty input and embedded NUL
+are valid. Truncated and overlong sequences, stray continuation bytes, surrogate
+encodings and code points above U+10FFFF return false.
+
+string_utf8_codepoint_count(s) returns the number of Unicode scalar values.
+string_utf8_codepoint_at(s,i) returns a scalar as int, or −1 outside the input.
+string_utf8_slice_codepoints(s,start,length) returns an owning substring.
+Negative bounds give an empty slice and lengths past the end truncate.
+All three validate the complete input. A malformed sequence anywhere switches
+the whole operation to unsigned byte units. U+0000 counts as one scalar and
+decomposed combining marks count individually. No normalization is performed.
+
+## Text builders
+
+The general API publishes two owning value types. Prefix each operation below
+with its type name and an underscore, for example `text_builder_take_string`.
+
+| Type | Operations |
+| --- | --- |
+| `string_parts_builder` | create, reserve, capacity, count, byte_len, append_string, append_int, append_bool, to_string, clear |
+| `text_builder` | create, reserve_bytes, capacity_bytes, byte_len, append_string, append_int, append_bool, to_string, take_string, clear |
+
+Construction produces an empty builder. Assignment and by-value parameters copy
+the contents independently. Mutating helpers take a writable reference to an
+exact-type variable. Queries borrow their operand for the call. A PHP-flavor
+synchronous free function may declare a readonly builder parameter with
+`const text_builder &$value` or `const string_parts_builder &$value`.
+
+String append preserves the exact bytes. Integer append writes the signed
+decimal representation. Boolean append writes ASCII 1 for true and an empty
+part for false. The parts builder counts every append, including empty parts.
+Reserve requests a minimum capacity in parts or bytes according to the type.
+A negative request raises ValueError. Clear empties the builder. A snapshot
+owns its bytes independently, and take additionally empties the text builder
+for reuse. Capacity after take is unspecified.

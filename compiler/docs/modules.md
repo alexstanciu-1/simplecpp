@@ -78,7 +78,7 @@ link the same runtime implementation from source when using the declared archive
 ## Filesystem module
 
 Configure the default build with `cmake --preset default -DSCPP_ENABLE_FILESYSTEM=ON`
-and build `scpp_filesystem`. In the application manifest select
+and run `cmake --build --preset default --target scpp_filesystem`. In a compiler checkout this target also publishes the matching compiler bindings. In the application manifest select
 `"dependencies": {"runtime": {"modules": ["filesystem"]}}`. The compiler checks that
 selection when preparing a filesystem call or import. Changing the selection uses
 the same fresh frontend generation as a change to an optional type dependency.
@@ -87,18 +87,16 @@ Runtime metadata owns the published filesystem signatures. The API generator use
 the prepared signatures for both the public C++ declarations and the compiler
 bindings. Implementations are compiled privately into the filesystem archive.
 
-| Function | Behavior |
-| --- | --- |
-| `fs_get(string) -> result<string>` | Reads exact bytes, including empty files. |
-| `fs_put(string, string) -> result<int>` | Creates or truncates a file under an existing parent. Returns the byte count after a successful write and close. |
-| `fs_rename(string, string) -> bool` | Renames an entry using the host filesystem's rename semantics. |
-| `fs_remove(string) -> bool` | Removes an entry. A missing entry returns false. |
-| `fs_stage(string) -> result<string>` | Exclusively reserves an empty file in an existing POSIX directory. |
+C++ source resolves general names such as `fs_get` by default. PHP source resolves
+natural names such as `file_get_contents`. A root manifest with `"general_api": true`
+also registers the general names for PHP, JS and Python. Changing this flag
+invalidates prepared name resolution even when the module selection stays the same.
+An identical PHP contract binds directly to the native operation. A changed
+result contract uses a generated PHP adapter. Lowered callers include the
+declaration header for their selected operation.
 
-The result-returning operations report structured errors on invalid paths and
-operational failure. Rename and remove return false on those failures. A publisher
-can reserve a stage with `fs_stage` and owns cleanup after reservation. It can
-write to the stage and use rename to promote it after a successful write.
+See the [filesystem contract](../../specs/filesystem_module.md) for the full signatures,
+failure channels, typed directory listing and Linux checked read.
 
 ## Application discovery and inventory
 
@@ -132,7 +130,7 @@ nested dependency directories are excluded from application scans. Application
 build directories, output, VCS state and generated inspection inventories are also
 excluded. Explicit app sources remain tracked even under excluded build directories.
 
-The saved input layout is version 4: module selection metadata, one source record
+The saved input layout is version 5: module selection metadata, one source record
 under its owning module, and `other_inputs`. Dependency source inventories are empty;
 artifact paths are recorded as configuration, without filesystem metadata. Older
 saved layouts cause one full rebuild. The previous output manifest is read once and
@@ -147,7 +145,15 @@ preparation/emission; unchanged inputs reuse intact output by mtime/size checks.
 A fresh final check rejects detected edits during compilation. There is no partial
 AST reuse or concurrency synchronization.
 
-Same-size edits preserving second-resolution mtime may go unnoticed. `--force`
+For selected application sources, an mtime in the read second, the preceding second,
+or the future requires a content check. Before publication the compiler compares
+the parsed bytes with the file on disk for these sources. If the timestamp is
+still ambiguous, it saves a SHA-256 digest in the source record. A subsequent
+stat match requires verifying that digest. Once verification starts at least two
+seconds after the recorded mtime, a match retires the digest under the bundle
+lock without regenerating C++. Settled sources use the stat fast path. A tool
+that restores an already settled timestamp and size can still conceal an edit.
+Other tracked inputs and generated artifacts retain their mtime/size checks. `--force`
 requests a full application rebuild. Manually rebuilt dependencies require the
 caller to relink; automatic invalidation for them is deferred.
 
