@@ -1,6 +1,59 @@
+// A numeric literal after the declaration's conversion and bounds checks.
+final class Numeric_Value {
+	public readonly int $integer;
+	public readonly float $floating;
+
+	public function __construct(int $integer, float $floating) {
+		$this->integer = $integer;
+		$this->floating = $floating;
+	}
+}
+
+function prepare_numeric_value(Translation_Source $source, Token_Span $first, Token_Span $number, bool $as_float): Numeric_Value {
+	if ($number->kind === Token_Kind::T_integer) {
+		$integer = prepare_integer_literal($source, $first, $number);
+		if ($as_float) return new Numeric_Value(0, (float)$integer);
+		return new Numeric_Value($integer, 0.0);
+	}
+	$text = substr($source->text, $number->offset, $number->length);
+	if ($first->kind === Token_Kind::T_minus) $text = "-" . $text;
+	$floating float = 0.0;
+	try {
+		$floating = host_parse_decimal($text);
+	} catch (Exception $error) {
+		throw new Translation_Diagnostic($source->path, $first->offset, $error->get_message(), $source->text);
+	}
+	if ($as_float) return new Numeric_Value(0, $floating);
+	if ($floating < -9223372036854775808.0 || $floating >= 9223372036854775808.0) {
+		throw new Translation_Diagnostic($source->path, $first->offset, "Floating conversion is outside int64 range", $source->text);
+	}
+	return new Numeric_Value((int)$floating, 0.0);
+}
+
+// Retain callable facts without retaining the callee's body or its outgoing call.
+final class Numeric_Call_Contract {
+	public readonly Function_Signature $signature;
+	public readonly hash<Numeric_Value,int> $defaults;
+
+	public function __construct(Translation_Scope $scope) {
+		$this->signature = $scope->declaration->signature;
+		$source = $scope->source;
+		$defaults hash<Numeric_Value,int> = [];
+		foreach ($this->signature->parameters as $parameter) {
+			$index = $parameter->default_token;
+			if ($index === 0) continue;
+			$first = $source->tokens[$index];
+			if ($first->kind === Token_Kind::T_minus || $first->kind === Token_Kind::T_plus) $index++;
+			$defaults[$parameter->slot] = prepare_numeric_value($source, $first, $source->tokens[$index], $parameter->floating);
+		}
+		$this->defaults = $defaults;
+	}
+}
+
 // Holds the collected function syntax and its checked return operand from preparation.
 final class Prepared_Declaration {
 	public readonly Translation_Scope $scope;
+	public readonly Numeric_Call_Contract $contract;
 	public readonly int $value;
 	public readonly float $floating_value;
 	public readonly ?Prepared_Call $call;
@@ -10,6 +63,7 @@ final class Prepared_Declaration {
 		$this->returned_parameter = $returned_parameter;
 		$this->floating_value = $floating_value;
 		$this->scope = $scope;
+		$this->contract = new Numeric_Call_Contract($scope);
 		$this->value = $value;
 		$this->call = $call;
 	}
@@ -54,7 +108,7 @@ final class Translation_Symbol {
 			if (Function_Signature::matches($old, $new)) {
 				foreach ($this->watchers as $watch) {
 					$caller = lock($watch->caller);
-					if ($caller !== null && !$caller->same_labels($old, $new)) $caller->invalidate_binding();
+					if ($caller !== null && !$caller->same_inputs($previous->contract, $declaration->contract)) $caller->invalidate_binding();
 				}
 				return;
 			}
@@ -92,6 +146,7 @@ final class Translation_Symbols {
 struct Numeric_Argument {
 	public ?Numeric_Parameter $forwarded;
 	public int $literal;
+	public ?Numeric_Value $default_value;
 }
 
 // Preparation retains a stable symbol rather than a snapshot of its declaration.
@@ -99,11 +154,15 @@ final class Prepared_Call {
 	public readonly Call_Syntax $syntax;
 	public readonly Translation_Symbol $symbol;
 	private readonly ?Function_Declaration $caller;
-	private ?Function_Signature $checked_signature = null;
+	private ?Numeric_Call_Contract $checked_contract = null;
 	public vector<Numeric_Argument> $arguments;
 
 	public function signature(): Function_Signature {
-		$signature = $this->checked_signature;
+		return $this->contract()->signature;
+	}
+
+	public function contract(): Numeric_Call_Contract {
+		$signature = $this->checked_contract;
 		if ($signature === null) throw Exception::make("Call has no checked signature");
 		return $signature;
 	}
@@ -120,31 +179,40 @@ final class Prepared_Call {
 	}
 
 	// Only written labels observe parameter names. Positional operands observe the ABI.
-	public function same_labels(Function_Signature $old, Function_Signature $new): bool {
+	public function same_inputs(Numeric_Call_Contract $old, Numeric_Call_Contract $new): bool {
+		foreach ($this->arguments as $slot => $argument) {
+			if ($argument->default_value === null) continue;
+			$left = hash_get_or_null($old->defaults, $slot);
+			$right = hash_get_or_null($new->defaults, $slot);
+			if ($left === null || $right === null || $left->integer !== $right->integer) return false;
+			// Exact binary64 spelling distinguishes positive and negative zero.
+			if ($old->signature->parameters[$slot]->floating && host_cpp_binary64($left->floating) !== host_cpp_binary64($right->floating)) return false;
+		}
 		$source = $this->syntax->source;
 		foreach ($this->syntax->argument_tokens as $index) {
 			$token = $source->tokens[$index];
 			if ($token->kind !== Token_Kind::T_identifier) continue;
 			$name = "$" . substr($source->text, $token->offset, $token->length);
-			$before = $old->find($name);
-			$after = $new->find($name);
+			$before = $old->signature->find($name);
+			$after = $new->signature->find($name);
 			if ($before === null || $after === null || $before->slot !== $after->slot) return false;
 		}
 		return true;
 	}
 
-	public function matches_published(?Function_Signature $published): bool {
-		$current = $this->signature();
+	public function matches_published(?Numeric_Call_Contract $published): bool {
+		$current = $this->contract();
 		if ($current === $published) return true;
-		return $published !== null && Function_Signature::matches($current, $published) && $this->same_labels($current, $published);
+		return $published !== null && Function_Signature::matches($current->signature, $published->signature) && $this->same_inputs($current, $published);
 	}
 
 	public function check_binding(string &$work): void {
 		if ($this->checked_revision === $this->revision) return;
 		$work .= $this->syntax->source->path . ",";
-		$signature = $this->target()->scope->declaration->signature;
+		$contract = $this->target()->contract;
+		$signature = $contract->signature;
 		$source = $this->syntax->source;
-		if (count($this->syntax->argument_tokens) !== count($signature->parameters)) {
+		if (count($this->syntax->argument_tokens) > count($signature->parameters)) {
 			throw new Translation_Diagnostic($source->path, $this->syntax->offset, "Wrong argument count for " . $this->syntax->name, $source->text);
 		}
 		$arguments vector<Numeric_Argument> = [];
@@ -179,15 +247,23 @@ final class Prepared_Call {
 			$arguments[] = $argument;
 		}
 		$ordered vector<Numeric_Argument> = [];
-		if ($named) {
+		if ($named || count($arguments) < count($signature->parameters)) {
 			foreach ($signature->parameters as $parameter) {
-				$ordered[] = $arguments[$slots[$parameter->slot]];
+				if (isset($slots[$parameter->slot])) {
+					$ordered[] = $arguments[$slots[$parameter->slot]];
+				} else {
+					$default = hash_get_or_null($contract->defaults, $parameter->slot);
+					if ($default === null) throw new Translation_Diagnostic($source->path, $this->syntax->offset, "Wrong argument count for " . $this->syntax->name, $source->text);
+					$omitted Numeric_Argument;
+					$omitted->default_value = $default;
+					$ordered[] = $omitted;
+				}
 			}
 			$this->arguments = $ordered;
 		} else {
 			$this->arguments = $arguments;
 		}
-		$this->checked_signature = $signature;
+		$this->checked_contract = $contract;
 		$this->checked_revision = $this->revision;
 	}
 
@@ -254,6 +330,11 @@ function cpp_call_arguments(Prepared_Call $call, bool &$checked): string {
 	$signature = $call->signature();
 	foreach ($call->arguments as $index => $argument) {
 		if ($index !== 0) $text .= ", ";
+		$default = $argument->default_value;
+		if ($default !== null) {
+			$text .= $signature->parameters[$index]->floating ? host_cpp_binary64($default->floating) : cpp_integer_constant($default->integer);
+			continue;
+		}
 		$parameter = $argument->forwarded;
 		$value = $parameter === null ? cpp_integer_constant($argument->literal) : "arg" . (string)$parameter->slot;
 		$text .= cpp_numeric_conversion($value, $parameter !== null && $parameter->floating, $signature->parameters[$index]->floating, $checked);
@@ -463,24 +544,8 @@ final class Translation {
 			return new Prepared_Declaration($scope, 0, null, 0.0, $returned);
 		}
 		$number = $source->tokens[$result->end - 2];
-		if ($number->kind === Token_Kind::T_integer) {
-			$integer = prepare_integer_literal($source, $first, $number);
-			if ($scope->declaration->signature->returns_float) return new Prepared_Declaration($scope, 0, null, (float)$integer);
-			return new Prepared_Declaration($scope, $integer);
-		}
-		$text = substr($source->text, $number->offset, $number->length);
-		if ($first->kind === Token_Kind::T_minus) $text = "-" . $text;
-		$floating float = 0.0;
-		try {
-			$floating = host_parse_decimal($text);
-		} catch (Exception $error) {
-			throw new Translation_Diagnostic($source->path, $first->offset, $error->get_message(), $source->text);
-		}
-		if ($scope->declaration->signature->returns_float) return new Prepared_Declaration($scope, 0, null, $floating);
-		if ($floating < -9223372036854775808.0 || $floating >= 9223372036854775808.0) {
-			throw new Translation_Diagnostic($source->path, $first->offset, "Floating conversion is outside int64 range", $source->text);
-		}
-		return new Prepared_Declaration($scope, (int)$floating);
+		$value = prepare_numeric_value($source, $first, $number, $scope->declaration->signature->returns_float);
+		return new Prepared_Declaration($scope, $value->integer, null, $value->floating);
 	}
 
 	private function finish_preparation(?Prepared_Declaration $definition, Call_Syntax $call, string &$work): Prepared_Call {

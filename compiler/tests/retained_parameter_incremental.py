@@ -250,3 +250,63 @@ def verify_named(work, exe, cxx, linker, adapter, service):
             named.write_text(f'function labeled(): int {{ return pick({operands}); }}')
             failure = request('lower')
             assert message in failure and failure.endswith('||'), failure
+
+
+def verify_defaults(work, exe, cxx, linker, adapter, service):
+    app = work/'defaults'
+    app.mkdir()
+    (app/'module.json').write_text('{}')
+    (app/'main.php').write_text('return caller();')
+    (app/'caller.php').write_text('function caller(): int { return pick(7); }')
+    (app/'supplied.php').write_text('function supplied(): int { return pick(7, second: 11); }')
+    pick = app/'pick.php'
+    signature = 'function pick(int $first, int $second%s): int { return $second; }'
+    retained = app/'generated'
+    facts = Path(adapter).parent/'native-layout/facts.json'
+
+    def snapshot(directory):
+        return {p.name: p.read_bytes() for p in directory.glob('*.cpp')}
+
+    with service(exe, app) as request:
+        for stage, value in [('cold', 11), ('edit', 13), ('repair', 11)]:
+            if stage == 'repair':
+                prior = snapshot(retained)
+                pick.write_text(signature % '')
+                failed = request('lower')
+                assert 'Wrong argument count for pick' in failed and failed.endswith('||'), failed
+                assert 'supplied.php' not in failed and snapshot(retained) == prior
+            pick.write_text(signature % f' = {value}')
+            status, prepared, emitted, written = request('lower').split('|')
+            assert status == 'ok', status
+            ru, pu, links = emitted_units(app, facts, work/'production', retained)
+            if stage != 'cold':
+                for paths in (prepared, emitted):
+                    assert set(filter(None, paths.split(','))) == {'pick.php', 'caller.php'}, paths
+                assert written == 'definition.cpp,', written
+            results = {'caller': value, 'supplied': 11}
+            expected = None if stage == 'cold' else {'caller'}
+            native(work/'retained-objs', ru, links, expected, results, False, cxx, linker)
+            native(work/'production-objs', pu, links, expected, results, True, cxx, linker)
+            if stage == 'cold':
+                original = snapshot(retained)
+            assert request('lower') == 'ok|||'
+        assert snapshot(retained) == original
+    cold = work/'fresh-defaults'
+    shutil.copytree(app, cold, ignore=shutil.ignore_patterns('generated'))
+    with service(exe, cold) as request:
+        assert request('lower').startswith('ok|') and snapshot(cold/'generated') == original
+        fresh_units = {name: cold/'generated'/path.name for name, path in ru.items()}
+        native(work/'fresh-objs', fresh_units, links, None, results, False, cxx, linker)
+        # A named argument may skip an earlier optional float. Check the literal
+        # even when every caller supplies that slot explicitly.
+        pick = cold/'pick.php'
+        pick.write_text('function pick(float $first = -3.75, int $second = 0): int { return $first; }')
+        (cold/'caller.php').write_text('function caller(): int { return pick(second: 11); }')
+        assert request('lower').startswith('ok|')
+        ru, pu, links = emitted_units(cold, facts, work/'float-production', cold/'generated')
+        for units, php in [(ru, False), (pu, True)]:
+            native(work/('float-php' if php else 'float-retained'), units, links, None,
+                   {'caller': -3, 'supplied': 7}, php, cxx, linker)
+        pick.write_text(pick.read_text().replace('int $second = 0', 'int $second = 1e30'))
+        failure = request('lower')
+        assert 'Floating conversion is outside int64 range' in failure and failure.endswith('||'), failure

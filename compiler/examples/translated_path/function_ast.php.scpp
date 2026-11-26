@@ -3,8 +3,10 @@ final class Numeric_Parameter {
 	public readonly string $name;
 	public readonly bool $floating;
 	public readonly int $slot;
+	public readonly int $default_token; // Zero when the parameter is required.
 
-	public function __construct(string $name, bool $floating, int $slot) {
+	public function __construct(string $name, bool $floating, int $slot, int $default_token) {
+		$this->default_token = $default_token;
 		$this->name = $name;
 		$this->floating = $floating;
 		$this->slot = $slot;
