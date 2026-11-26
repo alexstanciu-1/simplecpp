@@ -399,6 +399,10 @@ def verify(work, cxx, linker, adapter, selection=None):
         from retained_parameter_incremental import verify_defaults
         verify_defaults(work, exe, cxx, linker, adapter, service)
         return
+    if selection == "--default-rebinding":
+        from retained_parameter_incremental import verify_default_rebinding
+        verify_default_rebinding(work, exe, cxx, linker, adapter, service)
+        return
     if selection == "--named-arguments":
         from retained_parameter_incremental import verify_named
         verify_named(work, exe, cxx, linker, adapter, service)
