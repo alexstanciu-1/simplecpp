@@ -45,6 +45,7 @@ final class Inventory_Module {
     public string $path;
     public string $name;
     public string $text;
+    private string $identity;
     public vector<string> $defaults;
     public vector<string> $artifacts;
     public hash<string,string> $aliases;
@@ -54,8 +55,12 @@ final class Inventory_Module {
 
     public function __construct(string $path) {
         $this->path = $path;
-        $bytes = fs_get($path);
-        if (!isset($bytes)) throw Exception::make("Cannot read manifest: " . $path);
+        $this->identity = host_stat_tuple($path);
+        $mtime int = fs_mtime($path);
+        $size int = fs_size($path);
+        $bytes = fs_read_snapshot($path, $mtime, $size);
+        if (!isset($bytes)) throw Exception::make("Cannot read stable module manifest: " . $path);
+        $this->check_identity();
         $error ?json_parse_error = null;
         $text string = $bytes;
         $parsed = json_document_parse($text, $error);
@@ -70,6 +75,11 @@ final class Inventory_Module {
             $this->name = graph_string($v, "Invalid module name: " . $path);
         }
         if (!graph_name_valid($this->name)) throw Exception::make("Invalid module name: " . $path);
+    }
+
+    public function check_identity(): void {
+        if (host_stat_tuple($this->path) !== $this->identity)
+            throw Exception::make("Module manifest changed: " . $this->path);
     }
 
     public function validate(): void {
@@ -213,6 +223,10 @@ final class Inventory_Graph {
         foreach ($m->edges as $index) { $this->visit($this->modules[$index]); }
         $m->state = 2;
         $this->ordered[] = $m->name;
+    }
+
+    public function check_manifests(): void {
+        foreach ($this->modules as $module) { $module->check_identity(); }
     }
 
     public function validate_order(): void {

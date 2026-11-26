@@ -63,7 +63,9 @@ function source_inventory(string $directory, bool $from_bytes, string $output, s
         $report .= quoted($key) . ":{\"flavor\":" . quoted($sources[$path])
             . ",\"sha256\":" . quoted($digest) . ",\"unit\":" . quoted($unit) . "}";
     }
-    if ($view === "--link-inputs") return $graph->link_report($app);
-    if ($view === "--graph") return $graph->report();
-    return $report . "}";
+    $report .= "}";
+    if ($view === "--link-inputs") $report = $graph->link_report($app);
+    if ($view === "--graph") $report = $graph->report();
+    $graph->check_manifests();
+    return $report;
 }
