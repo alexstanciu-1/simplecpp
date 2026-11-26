@@ -214,9 +214,15 @@ final class Translation_Parser {
 		$return_start = $this->index;
 		$this->keyword("return");
 		$literal = $this->index;
-		$this->expect(Token_Kind::T_integer, "Expected decimal integer");
+		$calls_function = $this->source->tokens[$literal]->kind === Token_Kind::T_identifier;
+		if ($calls_function) {
+			$this->name_token();
+			$this->nullary();
+		} else {
+			$this->expect(Token_Kind::T_integer, "Expected decimal integer");
+		}
 		$this->expect(Token_Kind::T_semicolon, "Expected ;");
-		$statement = new Function_Return($return_start, $this->index, $literal);
+		$statement = new Function_Return($return_start, $this->index, $literal, $calls_function);
 		$this->expect(Token_Kind::T_rbrace, "Expected }");
 		return new Function_Body($body_start, $this->index, $statement);
 	}

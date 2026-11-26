@@ -61,11 +61,78 @@ def frontend_project(work, *, socket_service=False):
     return tool
 
 
+def verify_independent_callers(work, exe, cxx, linker, libraries):
+    app = work/'two-callers'
+    app.mkdir()
+    sources = {'left.php': 'function left(): int { return 1; }',
+               'right.php': 'function right(): int { return 7; }',
+               'call_left.php': 'function call_left(): int { return left(); }',
+               'call_right.php': 'function call_right(): int { return right(); }',
+               'main.php': 'return call_left();'}
+    for name, text in sources.items():
+        (app/name).write_text(text)
+    output = app/'generated'
+
+    def files(directory):
+        return {p.name: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns)
+                for p in directory.glob('*.cpp')}
+
+    with service(exe, app) as run:
+        def step(label, status, prepared, emitted, written, revision):
+            before = files(output)
+            row = run('lower')
+            assert row.split('|') == [status, prepared, emitted, written], (label, row)
+            after = files(output)
+            actual = {name for name in before.keys() | after.keys() if before.get(name) != after.get(name)}
+            assert actual == set(filter(None, written.split(','))), (label, actual)
+            assert run('binding-revisions') == f'call_left.php={revision},call_right.php=0,'
+            print(f'{label}: {row}')
+
+        cold = run('lower')
+        assert cold.startswith('ok|') and len(files(output)) == 6, cold
+        assert run('binding-revisions') == 'call_left.php=0,call_right.php=0,'
+        left = app/'left.php'
+        left.write_text(sources['left.php'].replace('1', '2'))
+        step('left body edit', 'ok', 'left.php,', 'left.php,', 'unit-left.php.cpp,', 0)
+        left.unlink()
+        offset = sources['call_left.php'].index('left();')
+        error = f'call_left.php:{offset}: Unknown function: left'
+        step('left removed', error, 'call_left.php,', '', '', 1)
+        step('missing target retry', error, 'call_left.php,', '', '', 1)
+        left.write_text(sources['left.php'].replace('1', '3'))
+        step('left restored', 'ok', 'left.php,call_left.php,', 'left.php,', 'unit-left.php.cpp,', 2)
+        step('settled repair', 'ok', '', '', '', 2)
+
+    fresh = work/'fresh-two-callers'
+    fresh.mkdir()
+    for name in sources:
+        shutil.copyfile(app/name, fresh/name)
+    with service(exe, fresh) as other:
+        assert other('lower').startswith('ok|')
+    assert {k: v[0] for k, v in files(output).items()} == {k: v[0] for k, v in files(fresh/'generated').items()}
+    binary = work/'two-callers-program'
+    subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
+                    ROOT/'runtime/generated/public', *sorted(output.glob('*.cpp')), *libraries, '-o', binary], check=True)
+    assert subprocess.run([binary], timeout=10).returncode == 3
+    # A restarted publisher retires only its own obsolete units.
+    external = output/'unit-external.php.cpp'
+    external.write_text('// externally owned')
+    (app/'call_right.php').unlink()
+    (app/'right.php').unlink()
+    with service(exe, app) as restarted:
+        assert restarted('lower').startswith('ok|')
+    assert external.read_text() == '// externally owned'
+    assert not (output/'unit-call_right.php.cpp').exists() and not (output/'unit-right.php.cpp').exists()
+
+
+
 def verify(work, cxx, linker):
     tool = frontend_project(work)
     bundle, exe = work/'bundle', work/'frontend'
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, manifest['link_inputs'])
+
+    verify_independent_callers(work, exe, cxx, linker, manifest['link_inputs'])
 
     app = work/'app'
     app.mkdir()

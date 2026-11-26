@@ -1,13 +1,16 @@
-// The fixed grammar's return statement owns one decimal token by index.
+// The fixed grammar's return statement records its operand token and any nullary call.
 final class Function_Return {
 	public readonly int $start;
 	public readonly int $end;
 	public readonly int $literal_token;
 
-	public function __construct(int $start, int $end, int $literal_token) {
+	public readonly bool $calls_function;
+
+	public function __construct(int $start, int $end, int $literal_token, bool $calls_function = false) {
 		$this->start = $start;
 		$this->end = $end;
 		$this->literal_token = $literal_token;
+		$this->calls_function = $calls_function;
 	}
 }
 

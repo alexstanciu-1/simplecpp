@@ -3,8 +3,11 @@ function prepared_snapshot(Translation $compiler): string {
 	if ($entry === null) return "empty";
 	$target = $entry->target();
 	if ($target !== $compiler->declaration()) throw Exception::make("Stale prepared call target");
-	return $entry->syntax->name . "|" . $target->scope->declaration->symbol_key() . "|" . (string)$target->value
-		. "|" . bin2hex(emit_translation($entry));
+	$body = (string)$target->value;
+	$call = $target->call;
+	if ($call !== null) $body = $call->syntax->name . "()";
+	return $entry->syntax->name . "|" . $target->scope->declaration->symbol_key() . "|" . $body
+		. "|" . bin2hex(emit_translation($entry, $compiler->definitions()));
 }
 
 function refresh_preparation(Frontend_Session $session, Translation $compiler, string $directory, int &$generation, string &$work): void {
@@ -64,13 +67,19 @@ while (true) {
 			refresh_preparation($session, $compiler, $cli[1], $prepared_generation, $work);
 			$call = $compiler->entry_binding();
 			if ($call === null) throw Exception::make("No prepared entry");
-			$lowering->publish($cli[1] . "/generated", $call, $emitted, $changed);
+			$lowering->publish($cli[1] . "/generated", $call, $compiler->definitions(), $emitted, $changed);
 		} catch (Translation_Diagnostic $error) {
 			$status = $error->path . ":" . (string)$error->offset . ": " . $error->detail;
 		} catch (Exception $failure) {
 			$status = $failure->get_message();
 		}
 		$response = $status . "|" . $work . "|" . $emitted . "|" . $changed;
+	} elseif ($line === "binding-revisions\n") {
+		$sources = $compiler->definitions();
+		foreach ($sources as $path => $source) {
+			$binding = $source->call;
+			if ($binding !== null) $response .= $path . "=" . (string)$binding->binding_revision() . ",";
+		}
 	} elseif ($line === "prepared-snapshot\n") {
 		$response = prepared_snapshot($compiler);
 	} else {

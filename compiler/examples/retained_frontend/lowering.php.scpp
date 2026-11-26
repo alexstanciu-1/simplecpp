@@ -34,6 +34,13 @@ final class Unit_Replacement {
 		return true;
 	}
 
+	public function withdraw(string $directory): void {
+		if (fs_is_link($this->path) || !fs_is_file($this->path)) throw Exception::make("Invalid output file");
+		$this->backup = fs_stage($directory);
+		if (!fs_rename($this->path, $this->backup)) throw Exception::make("Cannot withdraw " . $this->path);
+		$this->saved = true;
+	}
+
 	public function finish(bool $committed): void {
 		if (!$committed && $this->saved) {
 			if (!fs_rename($this->backup, $this->path)) throw Exception::make("Restore failed: " . $this->backup);
@@ -50,8 +57,10 @@ final class Unit_Lowering {
 	private string $definition_text = "";
 	private string $caller_text = "";
 	private string $adapter = "";
+	private hash<Prepared_Declaration,string> $other_definitions;
+	private hash<string,string> $other_text;
 
-	public function publish(string $directory, Prepared_Call $entry, string &$emitted, string &$changed): void {
+	public function publish(string $directory, Prepared_Call $entry, hash<Prepared_Declaration,string> $sources, string &$emitted, string &$changed): void {
 		$target = $entry->target();
 		$definition = $this->definition_text;
 		$caller = $this->caller_text;
@@ -76,6 +85,28 @@ final class Unit_Lowering {
 		if (!$held) throw Exception::make("Output bundle busy");
 		$names vector<string> = ["definition.cpp", "main.cpp", "entry.cpp"];
 		$texts vector<string> = [$definition, $caller, $adapter];
+		$marker = "// Simple C++ retained function unit\n";
+		$other hash<Prepared_Declaration,string> = [];
+		$other_text hash<string,string> = [];
+		foreach ($sources as $path => $source) {
+			if ($source === $target) continue;
+			$name = "unit-" . fs_basename($path) . ".cpp";
+			if (!$this->other_definitions->has($name) && fs_is_file($directory . "/" . $name)) {
+				$old string = fs_get($directory . "/" . $name);
+				if (!str_starts_with($old, $marker)) throw Exception::make("Unowned output file: " . $name);
+			}
+			$text = "";
+			if (hash_get_or_null($this->other_definitions, $name) === $source) {
+				$text = $this->other_text[$name];
+			} else {
+				$text = $marker . emit_definition_unit($source);
+				$emitted .= $path . ",";
+			}
+			$other[$name] = $source;
+			$other_text[$name] = $text;
+			$names[] = $name;
+			$texts[] = $text;
+		}
 		$files vector<Unit_Replacement> = [];
 		$committed = false;
 		$writes = "";
@@ -84,6 +115,19 @@ final class Unit_Lowering {
 				$file = new Unit_Replacement($directory . "/" . $name);
 				$files[] = $file;
 				if ($file->install($directory, $texts[$i])) $writes .= $name . ",";
+			}
+			// Recover the owned unit set even if a fresh process opens an existing bundle.
+			$existing vector<string> = fs_scan($directory);
+			foreach ($existing as $name) {
+				if (!str_starts_with($name, "unit-") || !str_ends_with($name, ".php.cpp") || isset($other[$name])) continue;
+				$path = $directory . "/" . $name;
+				if (fs_is_link($path) || !fs_is_file($path)) continue;
+				$old string = fs_get($path);
+				if (!str_starts_with($old, $marker)) continue;
+				$file = new Unit_Replacement($path);
+				$files[] = $file;
+				$file->withdraw($directory);
+				$writes .= $name . ",";
 			}
 			$committed = true;
 		} finally {
@@ -103,6 +147,8 @@ final class Unit_Lowering {
 		$this->definition_text = $definition;
 		$this->caller_text = $caller;
 		$this->adapter = $adapter;
+		$this->other_definitions = $other;
+		$this->other_text = $other_text;
 		$changed = $writes;
 	}
 }
