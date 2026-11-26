@@ -47,3 +47,25 @@ foreach ($branches as $lead => $words) {
 	echo "    }\n";
 }
 echo "    return Token_Kind::Unrecognized;\n}\n";
+
+// Classify whole identifier spans without allocating a substring for each source word.
+$keywords = [];
+foreach (flavor::cases() as $mode) {
+	foreach (explode(' ', $mode->keyword_spellings()) as $word) {
+		$keywords[strlen($word)][$word][] = $mode->name;
+	}
+}
+ksort($keywords);
+echo 'function word_kind_at(string &$text, int $start, int $width, Scan_Flavor $mode): Token_Kind {', "\n";
+foreach ($keywords as $width => $words) {
+	echo '    if ($width === ', $width, ") {\n";
+	foreach ($words as $word => $modes) {
+		$test = 'string_byte_slice_equals($text, $start, ' . $width . ', "' . $word . '")';
+		if (count($modes) !== count(flavor::cases())) {
+			$test .= ' && (' . implode(' || ', array_map(static fn($name) => '$mode === Scan_Flavor::' . $name, $modes)) . ')';
+		}
+		echo '        if (', $test, ") return Token_Kind::T_keyword;\n";
+	}
+	echo "    }\n";
+}
+echo "    return Token_Kind::T_identifier;\n}\n";
