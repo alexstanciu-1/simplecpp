@@ -37,6 +37,27 @@ function identifier_byte(byte $value): bool {
 	return ($value >= 65 && $value <= 90) || ($value >= 97 && $value <= 122) || $value === (byte)95;
 }
 
+// Return the exclusive end of the raw spelling; decoding belongs to the literal consumer.
+function quoted_token_end(string $path, string &$text, int $start, int $opening, int $length, bool $python, bool $interpolated): int {
+	$delimiter = $text[$opening];
+	$offset = $opening + 1;
+	$multiline = false;
+	while ($offset < $length) {
+		$byte = $text[$offset];
+		$offset++;
+		if ($byte === $delimiter) {
+			if ($python && $multiline) throw new Translation_Diagnostic($path, $start, "Multiline Python strings are deferred", $text);
+			return $offset;
+		}
+		if ($byte == 92 && $offset < $length) {
+			$byte = $text[$offset];
+			$offset++;
+		}
+		if ($byte == 10 || $byte == 13) $multiline = true;
+	}
+	throw new Translation_Diagnostic($path, $start, $interpolated ? "Unterminated interpolated string" : "Unterminated quoted string", $text);
+}
+
 function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<Token_Span> {
 	$invalid = source_utf8_error($text);
 	if ($invalid >= 0) throw new Translation_Diagnostic($path, $invalid, "Invalid UTF-8 source", $text);
@@ -82,6 +103,10 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 				}
 				$offset++;
 			}
+			if ($value == 102 && $offset === $start + 1 && $offset < $length && $text[$offset] == 34 && $mode === Scan_Flavor::cpp) {
+				$kind = Token_Kind::T_template_string;
+				$offset = quoted_token_end($path, $text, $start, $offset, $length, false, true);
+			}
 		} else if (decimal_byte($value) || ($value == 46 && $offset < $length && decimal_byte($text[$offset]))) {
 			$kind = $value == 46 ? Token_Kind::T_floating : Token_Kind::T_integer;
 			while ($offset < $length && decimal_byte($text[$offset])) {
@@ -102,6 +127,12 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 			if ($offset < $length && (identifier_byte($text[$offset]) || ($text[$offset] == 46 && !string_byte_slice_equals($text, $offset, 3, "..<")))) {
 				throw new Translation_Diagnostic($path, $start, "Unsupported numeric literal", $text);
 			}
+		} else if ($value == 34 || $value == 39) {
+			$kind = $value == 34 ? Token_Kind::T_double_string : Token_Kind::T_single_string;
+			$offset = quoted_token_end($path, $text, $start, $start, $length, $python, false);
+		} else if ($value == 96 && $mode === Scan_Flavor::js) {
+			$kind = Token_Kind::T_template_string;
+			$offset = quoted_token_end($path, $text, $start, $start, $length, false, true);
 		} else {
 			$width = 0;
 			$kind = punctuation_at($text, $start, $value, $mode, $width);
@@ -132,10 +163,10 @@ final class Translation_Source {
 	public readonly string $text;
 	public readonly vector<Token_Span> $tokens;
 
-	public function __construct(string $path, string $text) {
+	public function __construct(string $path, string $text, Scan_Flavor $mode = Scan_Flavor::php) {
 		$this->path = $path;
 		$this->text = $text;
-		$this->tokens = tokenize_source($path, $text, Scan_Flavor::php);
+		$this->tokens = tokenize_source($path, $text, $mode);
 	}
 }
 

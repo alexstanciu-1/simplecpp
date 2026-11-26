@@ -7,9 +7,11 @@ import tempfile
 
 from translated_preparation_recovery import ROOT, fresh_build, measure
 
-ORACLE = r"""
+ORACLE_PREAMBLE = r"""
 require $argv[1];
 use scpp\compiler\{Tokenizer, source_file, flavor, diagnostic, token_kind};
+"""
+PUNCTUATION_CASES = r"""
 $words = [];
 foreach (flavor::cases() as $mode) {
     foreach (Tokenizer::punctuation_kinds($mode) as $kind) $words[$kind->label()] = true;
@@ -21,6 +23,8 @@ foreach (array_keys($words) as $word) $cases[] = 'x ' . ($pairs[$word] ?? $word)
 array_push($cases, 'x ==== == =', 'x +++ ---', 'x ... .. .', 'x **= ** *', 'x ??= ?? ?',
     'x #[x]', "x //==\ny", "x #==\ny", 'x /*===*/ ==', 'x /*unfinished', 'x /*/',
     'x / //', 'x @', 'x === @', 'x ++', 'x /*é*/ ===', "x #é\n=");
+"""
+COMPARE_TOKENS = r"""
 foreach (array_unique($cases) as $text) {
     foreach (flavor::cases() as $mode) {
         $file = new source_file('input', $text, $mode);
@@ -55,7 +59,7 @@ function show(string $text, Scan_Flavor $mode): void {
 '''
 
 
-def verify(work):
+def scanner_project(work):
     app = work/'app'
     app.mkdir()
     (app/'module.json').write_text('{"general_api":true}')
@@ -65,7 +69,13 @@ def verify(work):
     shutil.copyfile(examples/'tokenizer/utf8.php.scpp', app/'utf8.php')
     with (app/'punctuation.php').open('wb') as output:
         subprocess.run(['php', examples/'tokenizer/emit_punctuation.php'], stdout=output, check=True)
-    oracle = subprocess.check_output(['php', '-r', ORACLE, ROOT/'compiler/boot.php'], text=True)
+    return app
+
+
+def verify(work):
+    app = scanner_project(work)
+    oracle = subprocess.check_output(['php', '-r', ORACLE_PREAMBLE + PUNCTUATION_CASES + COMPARE_TOKENS,
+                                      ROOT/'compiler/boot.php'], text=True)
     rows = [json.loads(line) for line in oracle.splitlines()]
     expected = {(mode, text): row for mode, text, row in rows}
     assert expected['php', 'x ==== == ='] == '1,0,1|11,2,3|61,5,1|15,7,2|61,10,1|'

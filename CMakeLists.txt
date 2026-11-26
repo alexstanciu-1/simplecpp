@@ -992,6 +992,7 @@ if(BUILD_TESTING)
   add_test(NAME compiler_translated_vector_recipe COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_vector_recipe.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
   add_test(NAME compiler_translated_punctuation COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_punctuation.py)
+  add_test(NAME compiler_translated_quotes COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_quotes.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
   add_test(NAME compiler_translated_source_utf8 COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_source_utf8.py)
   add_test(NAME compiler_translated_callable_signatures COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_callable_signatures.py)
   set_tests_properties(compiler_translated_closure_dependencies compiler_translated_callable_signatures PROPERTIES TIMEOUT 60 ENVIRONMENT "XDEBUG_MODE=off")
