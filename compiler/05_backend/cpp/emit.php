@@ -3991,7 +3991,7 @@ CPP;
 		if (!$argument instanceof ast_name_expression) return false;
 		$binding = $argument->local_binding();
 		if ($binding instanceof ast_parameter_declaration) {
-			if ($binding->type_reference instanceof ast_variadic_type_reference) return $collection_operand && !$binding->is_readonly_pack();
+			if ($binding->type_reference instanceof ast_variadic_type_reference) return $collection_operand;
 			return $collection_operand || $binding->mode === passing_mode::value;
 		}
 		return $binding !== null && $binding::class === ast_local_declaration::class;
