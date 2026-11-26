@@ -24,7 +24,14 @@ lists. Pass `--graph` to print a JSON object mapping each selected module to
 its ordered direct dependencies. The keys follow the PHP loader's dependency
 order. Requested and default submodules enter the inventory through activation.
 A module's dependencies come from its own manifest, plus the application's
-implicit runtime edge. Artifact linking remains in the project build.
+implicit runtime edge.
+
+Pass `--link-inputs` to inspect the module artifact lists and the ordered linker
+inputs. Relative paths are prefixed with the declaring manifest's directory.
+The linker list visits modules in reverse dependency order, skips the entry
+module and keeps the first occurrence of each exact path string. Per-module
+lists retain declaration order and duplicates. The project build checks file
+availability and invokes the linker.
 
 The executable defaults to the runtime manifest from its build checkout.
 Use `--runtime DIR_OR_MANIFEST` with a relocated or test runtime. Manifest JSON

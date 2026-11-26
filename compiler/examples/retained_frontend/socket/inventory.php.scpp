@@ -1,5 +1,5 @@
 // Discover and digest the selected application's sources without a generated inventory.
-function source_inventory(string $directory, bool $from_bytes, string $output, string $runtime, bool $show_graph): string {
+function source_inventory(string $directory, bool $from_bytes, string $output, string $runtime, string $view): string {
     $manifest = manifest_location("", $directory);
     $root = fs_dirname($manifest);
     $graph = new Inventory_Graph();
@@ -49,7 +49,7 @@ function source_inventory(string $directory, bool $from_bytes, string $output, s
         if (!str_starts_with($disk, rtrim($root, "/") . "/") || !fs_is_file($disk) || isset($physical[$disk]))
             throw Exception::make("Invalid or duplicate physical source: " . $path);
         $physical[$disk] = $path;
-        if ($show_graph) continue;
+        if ($view !== "sources") continue;
         $digest = "";
         if ($from_bytes) {
             $bytes string = fs_get($disk);
@@ -63,6 +63,7 @@ function source_inventory(string $directory, bool $from_bytes, string $output, s
         $report .= quoted($key) . ":{\"flavor\":" . quoted($sources[$path])
             . ",\"sha256\":" . quoted($digest) . ",\"unit\":" . quoted($unit) . "}";
     }
-    if ($show_graph) return $graph->report();
+    if ($view === "--link-inputs") return $graph->link_report($app);
+    if ($view === "--graph") return $graph->report();
     return $report . "}";
 }

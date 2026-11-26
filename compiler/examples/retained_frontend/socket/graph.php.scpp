@@ -46,6 +46,7 @@ final class Inventory_Module {
     public string $name;
     public string $text;
     public vector<string> $defaults;
+    public vector<string> $artifacts;
     public hash<string,string> $aliases;
     public hash<int,string> $edges;
     public bool $expanded = false;
@@ -101,7 +102,14 @@ final class Inventory_Module {
         }
         if (json_node_has($node, "artifacts")) {
             $art json_node = json_node_member($node, "artifacts");
-            if (json_node_kind($art) !== "null") graph_strings($art, "artifacts");
+            if (json_node_kind($art) !== "null") {
+                $paths = graph_strings($art, "artifacts");
+                $root = fs_dirname($this->path);
+                foreach ($paths as $path) {
+                    if (str_starts_with($path, "/")) $this->artifacts[] = $path;
+                    else $this->artifacts[] = $root . "/" . $path;
+                }
+            }
         }
     }
 }
@@ -209,6 +217,36 @@ final class Inventory_Graph {
 
     public function validate_order(): void {
         foreach ($this->modules as $m) { $this->visit($m); }
+    }
+
+    // Retain declaration order per module. The linker visits consumers first.
+    public function link_report(Inventory_Module $entry): string {
+        $artifacts = "{";
+        foreach ($this->ordered as $name) {
+            if ($artifacts !== "{") $artifacts .= ",";
+            $m = $this->modules[$this->names[$name]];
+            $artifacts .= quoted($name) . ":[";
+            $separator = "";
+            foreach ($m->artifacts as $path) {
+                $artifacts .= $separator . quoted($path);
+                $separator = ",";
+            }
+            $artifacts .= "]";
+        }
+        $inputs = "[";
+        $seen hash<string,string> = [];
+        for ($i = count($this->ordered); $i > 0; $i--) {
+            $name = $this->ordered[$i - 1];
+            $m = $this->modules[$this->names[$name]];
+            if ($m === $entry) continue;
+            foreach ($m->artifacts as $path) {
+                if (isset($seen[$path])) continue;
+                $seen[$path] = $path;
+                if ($inputs !== "[") $inputs .= ",";
+                $inputs .= quoted($path);
+            }
+        }
+        return "{\"artifacts\":" . $artifacts . "},\"link_inputs\":" . $inputs . "]}";
     }
 
     public function report(): string {
