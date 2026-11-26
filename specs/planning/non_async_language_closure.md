@@ -49,7 +49,7 @@ consume an element-borrow contract.
 
 Doc Status: planning
 
-Typed vectors and hashes can incur a collection copy when passed by value. Have the compiler identify read-only uses and infer when a borrow can safely replace a copy without requiring an explicit source annotation. Start with by-value collection parameters and consider local copies whose uses fit the same lifetime proof.
+Further borrowing optimizations are deferred. The parallel optimizer will own all existing compiler optimizations and evaluate additional optimization families using prepared facts. Its migration inventory, effects analysis and acceptance criteria are tracked in the [optimizer planning note](prepared_operation_effects.md).
 
 A read-only callee body alone is insufficient. In `snapshot($items, $items)`, if a second parameter clears the caller’s collection before the first parameter is read, the by-value first parameter must retain its original contents. Prove that the source remains alive and that argument evaluation, other aliases, forwarded calls and escapes cannot make the replacement observable. Keep the copy when the proof is unavailable. Track inferred facts across body and caller edits. Verify the optimization with a copy-count or allocation probe on an eligible call and the aliasing counterexample in the [reference tests](../../compiler/tests/readonly_parameters_native.py).
 
