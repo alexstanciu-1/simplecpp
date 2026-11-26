@@ -401,6 +401,10 @@ if(BUILD_TESTING)
   add_test(NAME compiler_keyed_initialization_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/keyed_initialization_quick.py)
   add_test(NAME compiler_keyed_initialization_ownership COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/keyed_initialization_ownership.py --quick --out ${CMAKE_CURRENT_BINARY_DIR}/keyed-ownership --fixtures ${CMAKE_CURRENT_BINARY_DIR}/keyed-fixtures.json)
   add_test(NAME compiler_bootstrap_runtime_lookup_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/bootstrap_runtime_lookup_native.py --quick)
+  foreach(member_case properties methods constants construction)
+    add_test(NAME compiler_incremental_member_${member_case} COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/production_member_incremental.py ${member_case} ${CMAKE_CXX_COMPILER} $<TARGET_FILE:scpp_runtime>)
+  endforeach()
   add_test(NAME compiler_keyed_initialization_incremental COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/keyed_initialization_incremental.py --quick-runtime $<TARGET_FILE:scpp_runtime> --out ${CMAKE_CURRENT_BINARY_DIR}/keyed-incremental)
   add_test(NAME keyed_initialization_providers COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/keyed_initialization.py --quick --out ${CMAKE_CURRENT_BINARY_DIR}/keyed-providers)
   set_tests_properties(compiler_keyed_initialization_ownership PROPERTIES DEPENDS compiler_keyed_initialization)
@@ -967,6 +971,12 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --default-rebinding)
     add_test(NAME compiler_retained_call_retargeting COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --call-retargeting)
+    foreach(sequence shared zero ownership publication entry)
+      add_test(NAME compiler_retained_edits_${sequence} COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --edit-sequence=${sequence})
+    endforeach()
+    add_test(NAME compiler_retained_missing_call_repair COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --missing-call-repair)
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_FILESYSTEM
      AND SCPP_ENABLE_JSON AND SCPP_ENABLE_IO AND SCPP_ENABLE_DATETIME)
