@@ -395,6 +395,10 @@ def verify(work, cxx, linker, adapter, selection=None):
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, ['-I', ROOT/'compiler/examples/retained_frontend/socket', *manifest['link_inputs']])
 
+    if selection == "--named-arguments":
+        from retained_parameter_incremental import verify_named
+        verify_named(work, exe, cxx, linker, adapter, service)
+        return
     if selection == "--multiple-parameters":
         from retained_parameter_incremental import verify_multiple
         verify_multiple(work, exe, cxx, linker, adapter, service)

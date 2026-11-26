@@ -11,7 +11,7 @@ final class Numeric_Parameter {
 	}
 }
 
-// Calls depend on the return type and ordered parameter types. Names bind within the declaring body.
+// Calls depend on the return type and ordered parameter types. Named arguments also depend on the slot of each written label.
 final class Function_Signature {
 	public readonly bool $returns_float;
 	public readonly vector<Numeric_Parameter> $parameters;

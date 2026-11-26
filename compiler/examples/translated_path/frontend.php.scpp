@@ -230,6 +230,10 @@ final class Translation_Parser {
 		$arguments vector<int> = [];
 		while ($this->source->tokens[$this->index]->kind !== Token_Kind::T_rparen) {
 			$arguments[] = $this->index;
+			if ($this->source->tokens[$this->index]->kind === Token_Kind::T_identifier) {
+				$this->index++;
+				$this->expect(Token_Kind::T_colon, "Expected : after argument label");
+			}
 			$kind = $this->source->tokens[$this->index]->kind;
 			if ($kind === Token_Kind::T_variable) {
 				$this->index++;

@@ -67,7 +67,7 @@ final class Published_Function_Unit {
 
 	public function matches(Prepared_Declaration $source): bool {
 		$binding = $source->call;
-		return $this->source === $source && ($binding === null || Function_Signature::matches($binding->signature(), $this->signature));
+		return $this->source === $source && ($binding === null || $binding->matches_published($this->signature));
 	}
 }
 
@@ -88,7 +88,7 @@ final class Unit_Lowering {
 			$emitted .= $target->scope->source->path . ",";
 			$definition = new Published_Function_Unit($target, emit_definition_unit($target));
 		}
-		if ($entry !== $this->caller || !Function_Signature::matches($entry->signature(), $this->entry_signature)) {
+		if ($entry !== $this->caller || !$entry->matches_published($this->entry_signature)) {
 			$emitted .= "main.php,";
 			$caller = emit_call_unit($entry);
 		}

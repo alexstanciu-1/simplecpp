@@ -194,3 +194,59 @@ def verify_multiple(work, exe, cxx, linker, adapter, service):
     with service(exe, cold) as request:
         assert request('lower').startswith('ok|')
     assert {p.name: p.read_bytes() for p in (cold/'generated').glob('*.cpp')} == saved
+
+
+def verify_named(work, exe, cxx, linker, adapter, service):
+    app = work/'named'
+    app.mkdir()
+    (app/'module.json').write_text('{}')
+    (app/'main.php').write_text('return caller();')
+    (app/'caller.php').write_text('function caller(): int { return pick(7, 11); }')
+    pick, named = app/'pick.php', app/'labeled.php'
+    pick.write_text('function pick(int $first, int $second): int { return $second; }')
+    named.write_text('function labeled(): int { return pick(second: 13, first: 5); }')
+    generated = app/'generated'
+    facts = Path(adapter).parent/'native-layout/facts.json'
+
+    def snapshot(directory):
+        return {p.name: p.read_bytes() for p in directory.glob('*.cpp')}
+
+    def compare(expected, labeled):
+        ru, pu, links = emitted_units(app, facts, work/'production', generated)
+        results = {'caller': 11, 'labeled': labeled}
+        native(work/'retained-objects', ru, links, expected, results, False, cxx, linker)
+        native(work/'production-objects', pu, links, None, results, True, cxx, linker)
+
+    with service(exe, app) as request:
+        assert request('lower').startswith('ok|')
+        compare(None, 13)
+        saved = snapshot(generated)
+        pick.write_text(pick.read_text().replace('$second', '$result'))
+        status, worklist, emitted, written = request('lower').split('|')
+        offset = named.read_text().index('second:')
+        assert f'labeled.php:{offset}: Unknown named argument: second' in status, status
+        assert set(filter(None, worklist.split(','))) == {'labeled.php', 'pick.php'}, worklist
+        assert emitted == written == '' and snapshot(generated) == saved
+        rejected = subprocess.run(['php', ROOT/'compiler/main.php', 'project', app, facts, work/'production'],
+                                  text=True, capture_output=True)
+        assert rejected.returncode and 'Unknown named argument: second' in rejected.stderr, rejected.stderr
+        named.write_text(named.read_text().replace('second:', 'result:'))
+        status, worklist, emitted, written = request('lower').split('|')
+        assert status == 'ok' and 'caller.php' not in (worklist + emitted), (status, worklist, emitted)
+        assert written == '' and snapshot(generated) == saved
+        compare(set(), 13)
+        assert request('lower') == 'ok|||'
+        cold = work/'fresh-named'
+        shutil.copytree(app, cold, ignore=shutil.ignore_patterns('generated'))
+        with service(exe, cold) as fresh_request:
+            assert fresh_request('lower').startswith('ok|') and snapshot(cold/'generated') == saved
+        # Both types stay int. The named call must follow the labels to their new slots.
+        pick.write_text('function pick(int $result, int $first): int { return $first; }')
+        status, worklist, emitted, written = request('lower').split('|')
+        assert status == 'ok' and 'caller.php' not in (worklist + emitted), (status, worklist, emitted)
+        compare({'labeled'}, 5)
+        for operands, message in [('7, result: 8', 'Parameter supplied twice: result'),
+                                  ('result: 7, 8', 'Positional argument after named argument')]:
+            named.write_text(f'function labeled(): int {{ return pick({operands}); }}')
+            failure = request('lower')
+            assert message in failure and failure.endswith('||'), failure

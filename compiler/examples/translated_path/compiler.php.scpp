@@ -47,7 +47,18 @@ final class Translation_Symbol {
 		$previous = lock($this->head);
 		$this->head = weak($declaration);
 		if ($previous === null && $declaration === null) return;
-		if ($previous !== null && $declaration !== null && Function_Signature::matches($previous->scope->declaration->signature, $declaration->scope->declaration->signature)) return;
+		if ($previous !== null && $declaration !== null) {
+			$old = $previous->scope->declaration->signature;
+			$new = $declaration->scope->declaration->signature;
+			if ($old === $new) return;
+			if (Function_Signature::matches($old, $new)) {
+				foreach ($this->watchers as $watch) {
+					$caller = lock($watch->caller);
+					if ($caller !== null && !$caller->same_labels($old, $new)) $caller->invalidate_binding();
+				}
+				return;
+			}
+		}
 		foreach ($this->watchers as $watch) {
 			$caller = lock($watch->caller);
 			if ($caller !== null) $caller->invalidate_binding();
@@ -108,6 +119,26 @@ final class Prepared_Call {
 		return $this->revision;
 	}
 
+	// Only written labels observe parameter names. Positional operands observe the ABI.
+	public function same_labels(Function_Signature $old, Function_Signature $new): bool {
+		$source = $this->syntax->source;
+		foreach ($this->syntax->argument_tokens as $index) {
+			$token = $source->tokens[$index];
+			if ($token->kind !== Token_Kind::T_identifier) continue;
+			$name = "$" . substr($source->text, $token->offset, $token->length);
+			$before = $old->find($name);
+			$after = $new->find($name);
+			if ($before === null || $after === null || $before->slot !== $after->slot) return false;
+		}
+		return true;
+	}
+
+	public function matches_published(?Function_Signature $published): bool {
+		$current = $this->signature();
+		if ($current === $published) return true;
+		return $published !== null && Function_Signature::matches($current, $published) && $this->same_labels($current, $published);
+	}
+
 	public function check_binding(string &$work): void {
 		if ($this->checked_revision === $this->revision) return;
 		$work .= $this->syntax->source->path . ",";
@@ -117,7 +148,24 @@ final class Prepared_Call {
 			throw new Translation_Diagnostic($source->path, $this->syntax->offset, "Wrong argument count for " . $this->syntax->name, $source->text);
 		}
 		$arguments vector<Numeric_Argument> = [];
-		foreach ($this->syntax->argument_tokens as $index) {
+		$slots hash<int,int> = [];
+		$named = false;
+		foreach ($this->syntax->argument_tokens as $position => $start) {
+			$index = $start;
+			$token = $source->tokens[$index];
+			$slot = $position;
+			if ($token->kind === Token_Kind::T_identifier) {
+				$named = true;
+				$label = substr($source->text, $token->offset, $token->length);
+				$parameter = $signature->find("$" . $label);
+				if ($parameter === null) throw new Translation_Diagnostic($source->path, $token->offset, "Unknown named argument: " . $label . " on " . $this->syntax->name, $source->text);
+				$slot = $parameter->slot;
+				if (isset($slots[$slot])) throw new Translation_Diagnostic($source->path, $token->offset, "Parameter supplied twice: " . $label, $source->text);
+				$index += 2;
+			} else if ($named) {
+				throw new Translation_Diagnostic($source->path, $token->offset, "Positional argument after named argument", $source->text);
+			}
+			$slots[$slot] = $position;
 			$first = $source->tokens[$index];
 			$argument Numeric_Argument;
 			if ($first->kind === Token_Kind::T_variable) {
@@ -130,7 +178,15 @@ final class Prepared_Call {
 			}
 			$arguments[] = $argument;
 		}
-		$this->arguments = $arguments;
+		$ordered vector<Numeric_Argument> = [];
+		if ($named) {
+			foreach ($signature->parameters as $parameter) {
+				$ordered[] = $arguments[$slots[$parameter->slot]];
+			}
+			$this->arguments = $ordered;
+		} else {
+			$this->arguments = $arguments;
+		}
 		$this->checked_signature = $signature;
 		$this->checked_revision = $this->revision;
 	}
