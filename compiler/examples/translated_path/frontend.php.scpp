@@ -226,7 +226,7 @@ final class Translation_Parser {
 		return new Function_Declaration($name, $start, $this->index, $floating);
 	}
 
-	private function read_body(bool $floating): Function_Body {
+	private function read_body(): Function_Body {
 		$body_start = $this->index;
 		$this->expect(Token_Kind::T_lbrace, "Expected {");
 		$return_start = $this->index;
@@ -236,12 +236,14 @@ final class Translation_Parser {
 		if ($calls_function) {
 			$this->name_token();
 			$this->nullary();
-		} elseif ($floating) {
+		} else {
 			$kind = $this->source->tokens[$literal]->kind;
 			if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
-			$this->expect(Token_Kind::T_floating, "Expected decimal floating literal");
-		} else {
-			$this->expect(Token_Kind::T_integer, "Expected decimal integer");
+			$kind = $this->source->tokens[$this->index]->kind;
+			if ($kind !== Token_Kind::T_integer && $kind !== Token_Kind::T_floating) {
+				throw new Translation_Diagnostic($this->source->path, $this->source->tokens[$this->index]->offset, "Expected decimal numeric literal", $this->source->text);
+			}
+			$this->index++;
 		}
 		$this->expect(Token_Kind::T_semicolon, "Expected ;");
 		$statement = new Function_Return($return_start, $this->index, $literal, $calls_function);
@@ -255,7 +257,7 @@ final class Translation_Parser {
 
 	public function parse_declaration(): Function_Declaration {
 		$function = $this->function_header();
-		Function_Declaration::complete_body($function, $this->read_body($function->returns_float));
+		Function_Declaration::complete_body($function, $this->read_body());
 		$this->expect(Token_Kind::End, "Expected end of source");
 		return $function;
 	}

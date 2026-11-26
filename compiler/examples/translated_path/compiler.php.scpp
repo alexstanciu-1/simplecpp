@@ -121,22 +121,23 @@ final class Prepared_Call {
 	}
 }
 
-function prepare_literal(Translation_Scope $scope): int {
-	$source = $scope->source;
-	$token = $source->tokens[$scope->declaration->body()->statement->literal_token];
+function prepare_integer_literal(Translation_Source $source, Token_Span $first, Token_Span $token): int {
+	$negative = $first->kind === Token_Kind::T_minus;
 	if ($token->length > 1 && $source->text[$token->offset] == 48) {
 		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer", $source->text);
 	}
 	$value = 0;
+	// Accumulate negatively so the int64 minimum fits at every step.
+	$last_digit = $negative ? 8 : 7;
 	$end = $token->offset + $token->length;
 	for ($offset = $token->offset; $offset < $end; $offset++) {
 		$digit = (int)$source->text[$offset] - 48;
-		if ($value > 922337203685477580 || ($value === 922337203685477580 && $digit > 7)) {
-			throw new Translation_Diagnostic($source->path, $token->offset, "Integer literal is outside int64 range", $source->text);
+		if ($value < -922337203685477580 || ($value === -922337203685477580 && $digit > $last_digit)) {
+			throw new Translation_Diagnostic($source->path, $first->offset, "Integer literal is outside int64 range", $source->text);
 		}
-		$value = $value * 10 + $digit;
+		$value = $value * 10 - $digit;
 	}
-	return $value;
+	return $negative ? $value : -$value;
 }
 
 function emit_definition_unit(Prepared_Declaration $target): string {
@@ -160,7 +161,7 @@ function emit_definition_unit(Prepared_Declaration $target): string {
 	} elseif ($floating) {
 		$value = host_cpp_binary64($target->floating_value);
 	} else {
-		$value = (string)$target->value . "LL";
+		$value = $target->value === (-9223372036854775807 - 1) ? "(-9223372036854775807LL - 1LL)" : (string)$target->value . "LL";
 	}
 	return $text . $result_type . $name . "() { return " . $value . "; }\n";
 }
@@ -325,19 +326,27 @@ final class Translation {
 			return new Prepared_Declaration($scope, 0, $binding);
 		}
 		$work .= $scope->source->path . ",";
-		if ($scope->declaration->returns_float) {
-			$source = $scope->source;
-			$first = $source->tokens[$result->literal_token];
-			$number = $source->tokens[$result->end - 2];
-			$text = substr($source->text, $number->offset, $number->length);
-			if ($first->kind === Token_Kind::T_minus) $text = "-" . $text;
-			try {
-				return new Prepared_Declaration($scope, 0, null, host_parse_decimal($text));
-			} catch (Exception $error) {
-				throw new Translation_Diagnostic($source->path, $first->offset, $error->get_message(), $source->text);
-			}
+		$source = $scope->source;
+		$first = $source->tokens[$result->literal_token];
+		$number = $source->tokens[$result->end - 2];
+		if ($number->kind === Token_Kind::T_integer) {
+			$integer = prepare_integer_literal($source, $first, $number);
+			if ($scope->declaration->returns_float) return new Prepared_Declaration($scope, 0, null, (float)$integer);
+			return new Prepared_Declaration($scope, $integer);
 		}
-		return new Prepared_Declaration($scope, prepare_literal($scope));
+		$text = substr($source->text, $number->offset, $number->length);
+		if ($first->kind === Token_Kind::T_minus) $text = "-" . $text;
+		$floating float = 0.0;
+		try {
+			$floating = host_parse_decimal($text);
+		} catch (Exception $error) {
+			throw new Translation_Diagnostic($source->path, $first->offset, $error->get_message(), $source->text);
+		}
+		if ($scope->declaration->returns_float) return new Prepared_Declaration($scope, 0, null, $floating);
+		if ($floating < -9223372036854775808.0 || $floating >= 9223372036854775808.0) {
+			throw new Translation_Diagnostic($source->path, $first->offset, "Floating conversion is outside int64 range", $source->text);
+		}
+		return new Prepared_Declaration($scope, (int)$floating);
 	}
 
 	private function finish_preparation(?Prepared_Declaration $definition, Call_Syntax $call, string &$work): Prepared_Call {

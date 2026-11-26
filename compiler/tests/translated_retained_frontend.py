@@ -310,6 +310,81 @@ def verify_checked_return(work, exe, cxx, linker):
     assert {p.name: p.read_bytes() for p in (cold/'generated').glob('*.cpp')} == {n: v[2] for n, v in after.items()}
 
 
+def verify_literal_returns(work, exe, cxx, linker, adapter):
+    app = work/'literal-returns'
+    app.mkdir()
+    (app/'module.json').write_text('{}')
+    (app/'main.php').write_text('return caller();')
+    (app/'caller.php').write_text('function caller(): int { return whole(); }')
+    (app/'rounded.php').write_text('function rounded(): float { return 9007199254740993; }')
+    prefix = 'function whole(): int {\n    return '
+    whole = app/'whole.php'
+    def write(literal):
+        whole.write_text(prefix + literal + ';\n}')
+
+    out = app/'generated'
+    unit = 'unit-whole.php.cpp'
+    def snapshot():
+        return {p.name: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns) for p in out.glob('*.cpp')}
+
+    def observe(production=False):
+        if production:
+            bundle = work/'php-output'
+            manifest = fresh(app, bundle)
+            units = [bundle/v for k, v in manifest['sources'].items() if Path(k).stem in ('caller', 'whole', 'rounded')]
+            declarations = 'namespace App { scpp::int64 caller_(); double rounded_(); }'
+            caller, rounded = 'App::caller_', 'App::rounded_'
+        else:
+            units = [out/'definition.cpp', out/unit, out/'unit-rounded.php.cpp']
+            caller, rounded = ['source_' + s.encode().hex() for s in ('caller', 'rounded')]
+            declarations = f'scpp::int64 {caller}(); double {rounded}();'
+        probe = work/'probe.cpp'
+        probe.write_text('#include <scpp/core/scalars.hpp>\n#include <bit>\n#include <cstdio>\n' +
+                         declarations + '\nint main() { std::printf("%lld %016llx", static_cast<long long>(' +
+                         caller + '()), std::bit_cast<unsigned long long>(' + rounded + '())); }')
+        binary = work/'probe'
+        subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', '-Werror', f'--ld-path={linker}', '-I',
+                        ROOT/'runtime/generated/public', *units, probe, '-o', binary], check=True)
+        return subprocess.check_output([binary], text=True)
+
+    write('-3.75')
+    with service(exe, app) as request:
+        assert request('lower').startswith('ok|')
+        assert observe() == observe(True) == '-3 4340000000000000'
+        before = snapshot()
+        write('9223372036854775808.0')
+        message = 'Floating conversion is outside int64 range'
+        assert request('lower') == f'whole.php:{len(prefix)}: {message}|whole.php,||'
+        assert snapshot() == before
+        facts = Path(adapter).parent/'native-layout/facts.json'
+        rejected = subprocess.run(['php', ROOT/'compiler/main.php', 'project', app, facts, work/'overflow'],
+                                  capture_output=True, text=True)
+        assert rejected.returncode and f'whole.php:2:12: {message}' in rejected.stderr, rejected
+        write('-9223372036854775808.0')
+        assert request('lower') == f'ok|whole.php,|whole.php,|{unit},'
+        repaired = snapshot()
+        assert {n for n in before if before[n] != repaired[n]} == {unit}
+        assert observe() == observe(True) == '-9223372036854775808 4340000000000000'
+        assert request('lower') == 'ok|||'
+        rounded = app/'rounded.php'
+        rounded.write_text('function rounded(): float { return -9223372036854775809; }')
+        assert request('lower') == (f'rounded.php:{rounded.read_text().index("-")}: '
+                                    'Integer literal is outside int64 range|rounded.php,||')
+        assert snapshot() == repaired
+        rounded.write_text('function rounded(): float { return -9223372036854775808; }')
+        assert request('lower') == 'ok|rounded.php,|rounded.php,|unit-rounded.php.cpp,'
+        assert observe() == '-9223372036854775808 c3e0000000000000'
+        rounded.write_text('function rounded(): float { return 9007199254740993; }')
+        assert request('lower') == 'ok|rounded.php,|rounded.php,|unit-rounded.php.cpp,'
+    cold = work/'cold'
+    cold.mkdir()
+    for path in app.glob('*.php'):
+        shutil.copyfile(path, cold/path.name)
+    with service(exe, cold) as request:
+        assert request('lower').startswith('ok|')
+    assert {p.name: p.read_bytes() for p in (cold/'generated').glob('*.cpp')} == {n: v[0] for n, v in repaired.items()}
+
+
 def verify(work, cxx, linker, adapter, selection=None):
     tool = frontend_project(work)
     config = tool/'module.json'
@@ -320,6 +395,9 @@ def verify(work, cxx, linker, adapter, selection=None):
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, ['-I', ROOT/'compiler/examples/retained_frontend/socket', *manifest['link_inputs']])
 
+    if selection == "--literal-returns":
+        verify_literal_returns(work, exe, cxx, linker, adapter)
+        return
     if selection == "--checked-return":
         verify_checked_return(work, exe, cxx, linker)
         return
