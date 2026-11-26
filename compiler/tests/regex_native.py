@@ -290,6 +290,48 @@ if ($t !== "baab") { return 19; }
 $bad result_or_false<string> = regex_replace("/[/", "", "", 0);
 if (isset($bad)) { return 20; }
 ''')
+        for pattern, replacement, subject, limit, expected, count in [
+            ('/z/', '!', 'aba', -1, 'null', 0),
+            ('/a/', 'a', 'aba', -1, '"aba"', 2),
+            ('/a/', '', 'a', -1, '""', 1),
+            ('/a/', '!', 'aba', 0, 'null', 0),
+        ]:
+            statements.append('{ $changed int = 99;')
+            statements.append(f'$value ?string = preg_filter("{pattern}", "{replacement}", "{subject}", {limit}, $changed);')
+            statements.append(f'if ($value !== {expected} || $changed !== {count}) {{ return 130; }} }}')
+        for input_type, output_type, keys in [
+            ('vector<string>', 'hash<string,int>', ['0', '1', '2']),
+            ('hash<string,int>', 'hash<string,int>', ['4', '9', '15']),
+            ('hash<string,string>', 'hash<string,string>', ['"first"', '"bad"', '"later"']),
+            ('mixed', 'mixed', ['4', '"bad"', '15']),
+        ]:
+            def literal(values):
+                entries = values if input_type == 'vector<string>' else [
+                    f'{key} => {value}' for key, value in zip(keys, values)]
+                return '[' + ', '.join(entries) + ']'
+            statements.append('{ $changed int = 99;')
+            statements.append(f'$items {input_type} = ' + literal(['"aba"', '"x"', '"a"']) + ';')
+            statements.append(f'$selectedRows {output_type} = preg_filter("/a/", "a", $items, -1, $changed);')
+            statements.append(f'if ($changed !== 3 || count($selectedRows) !== 2 || (string)$selectedRows[{keys[0]}] !== "aba"'
+                              f' || (string)$selectedRows[{keys[2]}] !== "a") {{ return 131; }}')
+            for pattern, limit in [('/z/', -1), ('/a/', 0)]:
+                statements.append(f'$changed = 99; $selectedRows = preg_filter("{pattern}", "!", $items, {limit}, $changed);')
+                statements.append('if (count($selectedRows) !== 0 || $changed !== 0) { return 132; }')
+            statements.append('$changed = 1; $selectedRows = preg_filter("/a/", "!", $items, $changed, $changed);')
+            statements.append(f'if ($changed !== 2 || (string)$selectedRows[{keys[0]}] !== "!ba") {{ return 133; }}')
+            for pattern, bad, expected in [
+                ('/(*LIMIT_MATCH=20)a|(?:b+)+c/', '"abbbbbbbbbbbbbbbbd"', 3),
+                ('/./u', 'string_byte_from_int(255)', 2),
+                ('/[/', '"anything"', 0),
+            ]:
+                statements.append('$items = ' + literal(['"aa"', bad, '"a"']) + ';')
+                statements.append(f'$changed = 99; $failed = preg_filter("{pattern}", "!", $items, -1, $changed);')
+                statements.append(f'if (isset($failed) || $changed !== {expected}) {{ return 134; }}')
+            statements.append('$items = []; $changed = 99; $selectedRows = preg_filter("/a/", "!", $items, -1, $changed);')
+            statements.append('if (count($selectedRows) !== 0 || $changed !== 0) { return 135; }')
+            statements.append('$changed = 99; $failed = preg_filter("/[/", "!", $items, -1, $changed);')
+            statements.append('if (isset($failed) || $changed !== 0) { return 136; }')
+            statements.append('}')
         # Stock PHP writes the completed count even when a later match fails.
         for pattern, replacement, subject, limit, expected, count in [
             ('/a/', 'a', '"aba"', -1, 'aba', 2),
@@ -476,6 +518,8 @@ def prove(work, runtime, flavor):
                            'preg_match_all_set_order_numbered', 'preg_match_all_pattern_order_numbered'):
                 assert f'::scpp::regex::{target}('.encode() in lowered, target
             for bad_source, diagnostic in [
+                ('preg_filter("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
+                ('$n string = ""; preg_filter("/a/", "!", ["a"], -1, $n);', 'argument 5 (count) requires writable'),
                 ('preg_replace("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
                 ('$count string = "99"; preg_replace("/a/", "!", "a", -1, $count);', 'argument 5 (count) requires writable'),
                 ('preg_replace("/a/", "!", "a", -1, PREG_SET_ORDER);',
@@ -545,7 +589,7 @@ def prove(work, runtime, flavor):
 
     first_build = build()
     if flavor == 'php':
-        for name in ('regex_named_order', 'regex_capture_allocations'):
+        for name in ('regex_named_order', 'regex_capture_allocations', 'regex_filter_count'):
             executable = work / name
             subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', '-O2', '--ld-path=' + mold,
                             '-I', root/'runtime/generated/public', root/'compiler/tests'/f'{name}.cpp',

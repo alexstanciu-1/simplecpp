@@ -93,8 +93,8 @@ A bare collection literal uses mixed. A carrier of either input type supplies it
 payload under the implicit extraction policy; a missing payload raises before grep
 runs. Invalid grep patterns yield false even for an empty input.
 
-PHP preg_filter selects its overload from the subject for both supported arities
-(pattern, replacement, subject and optional limit). A string subject returns
+PHP preg_filter selects its overload from the subject for all supported arities
+(pattern, replacement, subject, optional limit and optional fifth count). A string subject returns
 ?string. Any replacement yields a present string, including empty output and
 identity replacements. Zero replacements yields null. Invalid patterns and
 matching failures throw ValueError. A vector<string> subject returns
@@ -104,6 +104,12 @@ retain selected keys in encounter order and return false on regex failure,
 discarding any partial output. A mixed subject retains its result_or_false<mixed>
 contract. A non-container mixed subject yields an empty container for a valid
 pattern. Bare PHP list literals select the mixed overload.
+The fifth argument binds an exact writable integer. After limit validation the
+count starts at zero. It includes every completed replacement, including
+identity replacements. The limit resets per subject. A scalar matching error
+throws with the partial count available. Collections stop at the first failing
+entry and return false with the total through that entry, including replacements
+completed inside it. A pattern compilation error leaves the count at zero.
 Successful empty collections retain the value state. PHP callbacks take a
 mixed collection of numbered captures. A callback exception propagates.
 
