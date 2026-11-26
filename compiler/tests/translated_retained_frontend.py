@@ -61,11 +61,101 @@ def frontend_project(work, *, socket_service=False):
     return tool
 
 
+def verify_independent_callers(work, exe, cxx, linker, libraries):
+    app = work/'two-callers'
+    app.mkdir()
+    sources = {'left.php': 'function left(): int { return 1; }',
+               'right.php': 'function right(): int { return 7; }',
+               'call_left.php': 'function call_left(): int { return left(); }',
+               'call_right.php': 'function call_right(): int { return right(); }',
+               'main.php': 'return call_left();'}
+    for name, text in sources.items():
+        (app/name).write_text(text)
+    output = app/'generated'
+
+    def files(directory):
+        return {p.name: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns)
+                for p in directory.glob('*.cpp')}
+
+    def compare_fresh(label, expected):
+        fresh = work/label
+        fresh.mkdir()
+        for path in app.glob('*.php'):
+            shutil.copyfile(path, fresh/path.name)
+        with service(exe, fresh) as other:
+            assert other('lower').startswith('ok|')
+        assert {k: v[0] for k, v in files(output).items()} == {k: v[0] for k, v in files(fresh/'generated').items()}
+        binary = work/(label+'-program')
+        subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
+                        ROOT/'runtime/generated/public', *sorted(output.glob('*.cpp')), *libraries, '-o', binary], check=True)
+        assert subprocess.run([binary], timeout=10).returncode == expected
+
+    with service(exe, app) as run:
+        def step(label, status, prepared, emitted, written, revision, right_revision=0):
+            before = files(output)
+            row = run('lower')
+            assert row.split('|') == [status, prepared, emitted, written], (label, row)
+            after = files(output)
+            actual = {name for name in before.keys() | after.keys() if before.get(name) != after.get(name)}
+            assert actual == set(filter(None, written.split(','))), (label, actual)
+            assert run('binding-revisions') == f'call_left.php={revision},call_right.php={right_revision},'
+            print(f'{label}: {row}')
+
+        cold = run('lower')
+        assert cold.startswith('ok|') and len(files(output)) == 6, cold
+        assert run('binding-revisions') == 'call_left.php=0,call_right.php=0,'
+        left = app/'left.php'
+        left.write_text(sources['left.php'].replace('1', '2'))
+        step('left body edit', 'ok', 'left.php,', 'left.php,', 'unit-left.php.cpp,', 0)
+        left.unlink()
+        offset = sources['call_left.php'].index('left();')
+        error = f'call_left.php:{offset}: Unknown function: left'
+        step('left removed', error, 'call_left.php,', '', '', 1)
+        step('missing target retry', error, 'call_left.php,', '', '', 1)
+        left.write_text(sources['left.php'].replace('1', '3'))
+        step('left restored', 'ok', 'left.php,call_left.php,', 'left.php,', 'unit-left.php.cpp,', 2)
+        step('settled repair', 'ok', '', '', '', 2)
+
+        compare_fresh('fresh-independent', 3)
+
+        switched = sources['call_left.php'].replace('return left()', 'return right()')
+        (app/'call_left.php').write_text(switched)
+        step('retarget left caller', 'ok', 'call_left.php,', 'call_left.php,', 'definition.cpp,', 0)
+        left.unlink()
+        step('old target removed', 'ok', '', '', 'unit-left.php.cpp,', 0)
+
+        right = app/'right.php'
+        right.unlink()
+        error = f"call_left.php:{switched.index('right();')}: Unknown function: right"
+        step('shared target removed', error, 'call_left.php,', '', '', 1, 1)
+        step('shared target retry', error, 'call_left.php,', '', '', 1, 1)
+        right.write_text(sources['right.php'].replace('7', '9'))
+        step('shared target restored', 'ok', 'right.php,call_left.php,call_right.php,',
+             'right.php,', 'unit-right.php.cpp,', 2, 2)
+        step('shared target settled', 'ok', '', '', '', 2, 2)
+        compare_fresh('fresh-shared', 9)
+
+    # A restarted publisher retires only its own obsolete units.
+    external = output/'unit-external.php.cpp'
+    external.write_text('// externally owned')
+    (app/'call_left.php').write_text(sources['call_left.php'])
+    left.write_text(sources['left.php'])
+    (app/'call_right.php').unlink()
+    right.unlink()
+    with service(exe, app) as restarted:
+        assert restarted('lower').startswith('ok|')
+    assert external.read_text() == '// externally owned'
+    assert not (output/'unit-call_right.php.cpp').exists() and not (output/'unit-right.php.cpp').exists()
+
+
+
 def verify(work, cxx, linker):
     tool = frontend_project(work)
     bundle, exe = work/'bundle', work/'frontend'
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, manifest['link_inputs'])
+
+    verify_independent_callers(work, exe, cxx, linker, manifest['link_inputs'])
 
     app = work/'app'
     app.mkdir()
@@ -197,18 +287,25 @@ def verify(work, cxx, linker):
         (work/'saved-caller').rename(generated/'main.cpp')
         assert artifacts() == saved
         lower('retry after rollback', 'ok', '', both, 'definition.cpp,main.cpp,')
+        duplicate = app/'alternate.php'
+        duplicate.write_text(definition.read_text().replace('5', '6'))
+        lower('two files declare renamed', 'definition.php:9: Duplicate function: renamed; first declaration at alternate.php:1:10',
+              '', '', '')
+        definition.unlink()
+        lower('keep alternate', 'ok', 'alternate.php,', 'alternate.php,', 'definition.cpp,')
+        lower('unchanged survivor', 'ok', '', '', '')
         fresh_app = work/'cold-app'
         fresh_app.mkdir()
-        for name in ('definition.php', 'main.php'):
+        for name in ('alternate.php', 'main.php'):
             shutil.copyfile(app/name, fresh_app/name)
         with service(exe, fresh_app) as cold:
-            assert cold('lower').split('|') == ['ok', both, both, 'definition.cpp,main.cpp,entry.cpp,']
+            assert cold('lower').split('|') == ['ok', 'alternate.php,main.php,', 'alternate.php,main.php,', 'definition.cpp,main.cpp,entry.cpp,']
         assert all((generated/n).read_bytes() == (fresh_app/'generated'/n).read_bytes() for n in cpp)
         binary = work/'lowered-program'
         subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
                         ROOT/'runtime/generated/public', *(generated/n for n in cpp),
                         *manifest['link_inputs'], '-o', binary], check=True)
-        assert subprocess.run([binary], timeout=10).returncode == 5
+        assert subprocess.run([binary], timeout=10).returncode == 6
 
 
 if __name__ == '__main__':

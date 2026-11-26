@@ -155,6 +155,7 @@ function publish_ninja(string $application, string $input, string $output, strin
     $config json_node = json_document_root($settings);
     $text = render_ninja($units, $libs, $directory, $config);
     $target = $directory . "/build.ninja";
+    $graph->check_manifests();
     atomic_text($target, $text);
 }
 

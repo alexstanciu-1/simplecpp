@@ -18,6 +18,7 @@ other = """
 struct Mark {public int $x=0;public function __destruct(){echo "D";}}
 function marked(vector<Mark> $items):int {return count($items);}
 function markedSnapshot(const vector<Mark> &$items):int {$snapshot=$items;return count($snapshot);}
+function markedPair(const vector<Mark> &$items):int {$snapshot=$items;$first=count($snapshot);return $first+count($snapshot);}
 function textKeys(hash<int,string> $items):int {return count($items);}
 function invokeWidth(callback<int,vector<int>> $cb,vector<int> &$v):int {return $cb($v);}
 function snapshot(vector<int> $view,vector<int> &$writer):int {clean($writer);return count($view);}
@@ -28,7 +29,7 @@ $h[42]=7;echo first($v),lookup($h),$v[0],$h[42];
 try {echo width($v),invokeWidth(width(...),$v);} catch (Exception $e) {echo "E";}
 echo count($v),keys($h),snapshot($v,$v),count($v);
 $text hash<int,string> = [];$text["a"]=1;echo textKeys($text);
-$m Mark;$marks vector<Mark> = [$m];echo "[";echo marked($marks);echo "]";echo markedSnapshot($marks);
+$m Mark;$marks vector<Mark> = [$m];echo "[";echo marked($marks);echo "]";echo markedSnapshot($marks);echo markedPair($marks);
 return 8;
 """
 parser = argparse.ArgumentParser(description=__doc__)
@@ -36,7 +37,7 @@ parser.add_argument('--quick', action='store_true')
 quick = parser.parse_args().quick
 with TemporaryDirectory(prefix='scpp-private-count-') as directory:
     work = Path(directory)
-    cleanup = b'1D[1D]D1DD'
+    cleanup = b'1D[1D]D1D2DD'
     edits = [
         (None, None, b'1717222220' + cleanup),
         ('reader', reader.replace('return count($items);', 'clean($items);return count($items);', 1), b'1717002220' + cleanup),
@@ -93,8 +94,16 @@ function snapshotFirst(const vector<int> &$items,vector<int> &$writer):int {
 function snapshotLookup(const hash<int,int> &$items,hash<int,int> &$writer,int $key):int {
     $writer[$key]=8;$snapshot=$items;return $snapshot[$key];
 }
+function snapshotVectorPair(const vector<int> &$items,vector<int> &$writer):int {
+    $snapshot=$items;$first=$snapshot[0];return $first+$snapshot[1];
+}
+function snapshotHashPair(const hash<int,int> &$items,hash<int,int> &$writer,int $key):int {
+    $snapshot=$items;$first=$snapshot[3];return $first+$snapshot[$key];
+}
 """
-snapshot_writer = snapshot_reader.replace('$snapshot=$items;', '$snapshot=$items;clean($writer);')
+snapshot_writer = snapshot_reader.replace('$snapshot=$items;return', '$snapshot=$items;clean($writer);return').replace(
+    '$first=$snapshot[0];', '$first=$snapshot[0];$writer[1]=9;').replace(
+    '$first=$snapshot[3];', '$first=$snapshot[3];$writer[$key]=9;')
 query_reader = """
 function vecEmpty(vector<int> $items):bool {return empty($items);}
 function hashEmpty(hash<int,int> $items):bool {return empty($items);}
@@ -110,6 +119,11 @@ function snapshotReads():int {
     $v vector<int> = [4];$h hash<int,int> = [];$h[7]=6;
     $first=snapshotFirst($v,$v);$second=snapshotLookup($h,$h,7);
     return 1000*$first+100*$second+10*count($v)+count($h);
+}
+function snapshotPairReads():int {
+    $v vector<int> = [2,3];$h hash<int,int> = [];$h[3]=4;$h[7]=2;
+    $a=snapshotVectorPair($v,$v);$b=snapshotHashPair($h,$h,7);
+    return 1000*$a+100*$b+10*$v[1]+$h[7];
 }
 function replaceAtZero(vector<int> &$items):int {$items[0]=9;return 0;}
 function snapshotEffectful(const vector<int> &$items,vector<int> &$writer):int {
@@ -290,7 +304,7 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     assert 'innerCount_collection_reader(var_items' in units
     assert 'innerCount_collection_reader(var_readPack' in units
     assert 'innerVector_collection_reader(var_readPack' in units
-    assert units.count('const auto& var_snapshot_') == 2
+    assert units.count('const auto& var_snapshot_') == 4
     for symbol in ('vecEmpty', 'hashEmpty', 'hasKey', 'localAt', 'localLookup'):
         assert not re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return ' + symbol + r'_\(', units)
         assert symbol + '_collection_reader(var_' in units
@@ -326,6 +340,8 @@ if not quick:
             guard(Path(directory), 'php', function, query_reader + f'$v {collection} = [];return {function}({args});',
                   error, exception_type='std::out_of_range')
         for function, collection, error, setup, args in [
+            ('snapshotVectorPair', 'vector<int>', 'sequence_index_out_of_range', '$v[]=1;$writer vector<int> = [];', '$v,$writer'),
+            ('snapshotHashPair', 'hash<int,int>', 'hash_missing_key', '$v[3]=4;$writer hash<int,int> = [];', '$v,$writer,7'),
             ('snapshotFirst', 'vector<int>', 'sequence_index_out_of_range', '$writer vector<int> = [0];', '$v,$writer'),
             ('snapshotLookup', 'hash<int,int>', 'hash_missing_key', '$writer hash<int,int> = [];', '$v,$writer,7'),
         ]:

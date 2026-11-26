@@ -24,7 +24,7 @@ function check_failed_edit(Translation $compiler, string $definition, string $en
 		$compiler->compile($definition, $entry);
 	} catch (Translation_Diagnostic $error) {
 		$failed = true;
-		echo $error->path, "\n", $error->offset, "\n", $error->detail, "\n";
+		echo $error->path, "\n", $error->offset, "\n", $error->location, "\n", $error->detail, "\n";
 	}
 	assert_translation($failed, "Expected translated diagnostic");
 	assert_translation($compiler->declaration() === $old_declaration, "Failure replaced the declaration");
@@ -65,6 +65,36 @@ function check_reused_body(Function_Declaration $function): void {
 	}
 }
 
+// Alternate the survivor without recreating the compiler or its call site.
+function check_duplicate_repair(string $left, string $right, string $main): void {
+	$compiler = new Translation();
+	$both hash<string,string> = ["right.php" => $right, "left.php" => $left];
+	$first hash<string,string> = ["left.php" => $left];
+	$other hash<string,string> = ["right.php" => $right];
+	$good = $compiler->compile_sources($first, $main);
+	$caller = $compiler->entry_binding();
+	if ($caller === null) throw Exception::make("Missing caller");
+	$symbol = $caller->symbol;
+	for ($i = 0; $i < 2; $i++) {
+		$old = $compiler->declaration();
+		try {
+			$compiler->compile_sources($both, $main);
+			throw Exception::make("Compiled ambiguous function");
+		} catch (Translation_Diagnostic $error) {
+			if ($i === 0) save_generated("duplicate.txt", $error->path . ":" . $error->location . ": " . $error->detail);
+			assert_translation($error->path === "right.php", "Original depends on input order");
+		}
+		assert_translation($compiler->published_output() === $good && $caller->target() === $old, "Ambiguous edit changed publication");
+		$survivor = $i === 0 ? $other : $first;
+		$good = $compiler->compile_sources($survivor, $main);
+		assert_translation($compiler->entry_binding() === $caller && $caller->symbol === $symbol &&
+			$caller->target() === $compiler->declaration(), "Repair lost the call binding");
+		assert_translation($good === (new Translation())->compile_sources($survivor, $main), "Duplicate repair differs from fresh");
+		save_generated($i === 0 ? "right-survivor.cpp" : "left-survivor.cpp", $good);
+		$both = ["left.php" => $left, "right.php" => $right];
+	}
+}
+
 $definition = read_source("definition.php");
 $main = read_source("initial.source");
 $bad = read_source("bad.source");
@@ -74,12 +104,18 @@ $updated = read_source("updated.source");
 $overflow = read_source("overflow.source");
 $unclosed = read_source("unclosed.source");
 
+check_duplicate_repair(read_source("left.php"), read_source("right.php"), $main);
 $compiler = new Translation();
 $first = $compiler->compile($definition, $main);
 $declaration = $compiler->declaration();
 if ($declaration === null) { throw Exception::make("Missing prepared declaration"); }
 $initial_entry = $compiler->entry_binding();
 if ($initial_entry === null) { throw Exception::make("Missing prepared caller"); }
+$table = new Translation_Symbols();
+assert_translation($table->find("func:missing") === null, "Lookup allocated a missing name");
+$empty = $table->entry("func:missing");
+assert_translation($table->find("func:missing") === $empty && $empty->declaration() === null,
+	"A known empty symbol was confused with an absent key");
 save_generated("initial.cpp", $first);
 print_function_ast($declaration->scope->declaration);
 check_reused_body($declaration->scope->declaration);
@@ -133,13 +169,18 @@ $old_span = $old_source->tokens[$old_body->statement->literal_token];
 assert_translation($old_body->function_declaration() === $old_function, "Old body parent was replaced");
 assert_translation(substr($old_source->text, $old_span->offset, $old_span->length) === "8",
 	"An old literal span lost its source snapshot");
+assert_translation($recovered_entry->binding_revision() === 0, "Body edit notified the caller");
+$symbol->watch($recovered_entry);
+$peer = new Prepared_Call($recovered_entry->syntax, $symbol);
+$symbol->watch($peer);
+$symbol->watch($peer);
 save_generated("updated.cpp", $next);
 
 try {
 	$compiler->compile(null, $fixed);
 	throw Exception::make("Removed declaration still binds");
 } catch (Translation_Diagnostic $error) {
-	echo $error->path, "\n", $error->offset, "\n", $error->detail, "\n";
+	echo $error->path, "\n", $error->offset, "\n", $error->location, "\n", $error->detail, "\n";
 }
 assert_translation($compiler->entry_binding() === $recovered_entry && $recovered_entry->symbol === $symbol,
 	"Deletion replaced the retained entry");
@@ -147,7 +188,19 @@ assert_translation($compiler->declaration() === null && $symbol->declaration() =
 	"Deletion failed to publish a tombstone");
 assert_translation($compiler->published_output() === $next, "Deletion replaced the last good output");
 
+assert_translation($recovered_entry->binding_revision() === 1 && $peer->binding_revision() === 1 && $initial_entry->binding_revision() === 0,
+	"Withdrawal must notify the active caller once and skip the retired caller");
+try {
+	$compiler->compile(null, $fixed);
+	throw Exception::make("Repeated deletion still binds");
+} catch (Translation_Diagnostic $missing) {
+	assert_translation($recovered_entry->binding_revision() === 1, "Repeated deletion notified twice");
+}
+
+$symbol->forget($peer);
 $restored = $compiler->compile($definition, $fixed);
+assert_translation($recovered_entry->binding_revision() === 2 && $peer->binding_revision() === 1 && $initial_entry->binding_revision() === 0,
+	"Restoration must notify the active caller exactly once");
 assert_translation($compiler->declaration() !== $declaration, "Restoration reused the retired declaration");
 assert_translation($compiler->entry_binding() === $recovered_entry && $recovered_entry->symbol === $symbol,
 	"Restoration replaced the retained entry");
@@ -155,5 +208,14 @@ assert_translation($recovered_entry->target() === $compiler->declaration(), "Res
 assert_translation($restored === (new Translation())->compile($definition, $fixed), "Restoration differs from a fresh build");
 assert_translation(substr($old_source->text, $old_span->offset, $old_span->length) === "8",
 	"Restoration changed a retained source span");
+$before_removal = $compiler->declaration();
+try {
+	$compiler->compile(null, $fixed);
+	throw Exception::make("Deleted definition still present");
+} catch (Translation_Diagnostic $missing) {
+	assert_translation($compiler->declaration() === null, "Missing tombstone");
+}
+assert_translation($compiler->compile($definition, $fixed) === $restored && $compiler->declaration() !== $before_removal,
+	"Same-byte restoration reused the withdrawn declaration");
 save_generated("restored.cpp", $restored);
 return 0;

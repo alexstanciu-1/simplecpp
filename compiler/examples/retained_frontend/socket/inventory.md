@@ -39,6 +39,12 @@ uses the native JSON document reader, including its unique-key and nesting rules
 The `compiler_native_module_graph` test compares selection and graph diagnostics
 against the PHP module loader.
 
+The driver reads each resolved module manifest through a checked filesystem snapshot.
+It compares the selected manifests’ device, inode, size, and nanosecond change and
+modification times again before returning an inventory or publishing a Ninja graph.
+A detected replacement rejects the invocation. Retry loads the current manifests.
+These observations do not lock externally edited manifests.
+
 Pass `--from-bytes` to exercise hashing an in-memory source snapshot instead.
 Both paths use OpenSSL EVP and preserve embedded NULs. Neither command persists
 a digest cache. Run `compiler_native_source_inventory` to compare both modes

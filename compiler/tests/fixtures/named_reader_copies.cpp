@@ -9,6 +9,7 @@ scpp::int64 presenceReads_();
 scpp::int64 presenceOrder_();
 scpp::int64 localReads_();
 scpp::int64 snapshotReads_();
+scpp::int64 snapshotPairReads_();
 scpp::int64 effectfulSnapshotReads_();
 scpp::int64 explicitPackReads_();
 scpp::int64 unpackedPackReads_();
@@ -71,6 +72,9 @@ int main(int argc, char** argv) {
     assert(vector_copies == (writer ? 1 : 0) && hash_copies == (writer ? 1 : 0));
     vector_copies = hash_copies = 0;
     assert(App::snapshotReads_() == (writer ? 5800 : 5811));
+    assert(vector_copies == (writer ? 1 : 0) && hash_copies == (writer ? 1 : 0));
+    vector_copies = hash_copies = 0;
+    assert(App::snapshotPairReads_() == (writer ? 5699 : 5632));
     assert(vector_copies == (writer ? 1 : 0) && hash_copies == (writer ? 1 : 0));
     vector_copies = hash_copies = 0;
     assert(App::effectfulSnapshotReads_() == 49);

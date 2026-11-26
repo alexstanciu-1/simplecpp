@@ -67,11 +67,40 @@ def valid_traces(traces):
         trace in ('LR', 'RL') for trace in traces.values())
 
 
+def include_tree(root):
+    """Fingerprint names in explicit search trees. Let the compiler handle ambiguous or large trees."""
+    root = root or '.'
+    if '..' in Path(root).parts or os.path.islink(root):
+        return None
+    pending = [(root, '')]
+    names = []
+    try:
+        while pending:
+            directory, prefix = pending.pop()
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    name = prefix + entry.name
+                    if len(names) >= 4096 or entry.is_symlink():
+                        return None
+                    if entry.is_dir(follow_symlinks=False):
+                        pending.append((entry.path, name + '/'))
+                        kind = 'D'
+                    elif entry.is_file(follow_symlinks=False):
+                        kind = 'F'
+                    else:
+                        return None
+                    names.append(os.fsencode(kind + name) + b'\0')
+    except OSError:
+        return None
+    return sha(b''.join(sorted(names)))
+
+
 def request_context(compiler_name, flags, link_flags=()):
-    """Protocol request and fast-path admission; no subprocesses or filesystem fingerprinting."""
+    """Protocol request and fast-path admission; no subprocesses or file-content reads."""
     compiler = Path(shutil.which(compiler_name) or compiler_name).absolute()
     # Common Ninja/CMake invocations use absolute inputs and can share a record across build dirs.
     options = [*flags, *link_flags]
+    roots = []
     extra = []
     fast = True
     relative = False
@@ -79,6 +108,8 @@ def request_context(compiler_name, flags, link_flags=()):
     for option in args:
         if option in ('-I', '-include-pch'):
             path = next(args, '')
+            if option == '-I':
+                roots.append(path)
         elif option.startswith('--ld-path='):
             path = option.partition('=')[2]
         elif option == '-Xclang':
@@ -103,7 +134,12 @@ def request_context(compiler_name, flags, link_flags=()):
     relative |= any(not os.path.isabs(item) for k, v in env.items() if k not in ('CCC_OVERRIDE_OPTIONS', 'LD_PRELOAD')
                     for item in v.split(os.pathsep))
     fast &= not (env.get('LD_PRELOAD') or env.get('CCC_OVERRIDE_OPTIONS'))
-    request = [str(compiler), str(SOURCE), options, len(flags), env, os.getcwd() if relative else None]
+    for key in ('CPATH', 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH'):
+        if key in env:
+            roots.extend(env[key].split(os.pathsep))
+    trees = [include_tree(path) for path in roots] if fast else []
+    fast &= None not in trees
+    request = [str(compiler), str(SOURCE), options, len(flags), env, trees, os.getcwd() if relative else None]
     return compiler, request, bool(fast), extra
 
 

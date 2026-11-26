@@ -110,14 +110,19 @@ named local to a direct synchronous callback-view consumer. Storing or returning
 either closure is rejected. Nested by-value
 recapture of a borrowed binding remains deferred.
 
-A consumer declares one required by-value parameter, for example
+A consumer takes a required view by value, for example
 `function applyTwice(callback_view<void> $op):void {$op();$op();}`. Its body
-may invoke its parameter directly or pass it as the sole argument to another direct
-synchronous free function declaring the same view contract. Forwarding passes the
+may invoke its parameter directly or forward it to another direct synchronous
+consumer. A consumer may also declare a required by-value bool before the view,
+as in `applyIf(bool $enabled, callback_view<void> $op)`. An `if` or `elseif`
+condition must read that parameter directly. Every branch, including `else`,
+obeys the same body rules. A consumer forwarding to a two-parameter consumer
+passes its own flag and view in their declared slots. Forwarding passes the
 existing pointer and invocation function. Preparation checks each consumer in its
 defining file and rejects storage, scheduling and
 suspension. The caller supplies an inferred local closure with the exact nullary
-void signature. Its possible writes are checked as for a direct invocation.
+void signature. Its possible writes are checked as for a direct invocation,
+including when the caller supplies a false flag.
 The view passes a pointer to the existing closure and a typed invocation function
 for the duration of the synchronous call. Each invocation observes the live slot,
 and a throw unwinds through the consumer with earlier writes visible.

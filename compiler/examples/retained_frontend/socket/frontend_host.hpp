@@ -8,6 +8,7 @@ scpp::string host_sha256_file_(scpp::string path);
 scpp::string host_self_();
 scpp::string host_abspath_(scpp::string path);
 scpp::string host_stat_tuple_(scpp::string path);
+scpp::string host_include_tree_(scpp::string path);
 scpp::string host_probe_command_(scpp::string args, bool want_stderr);
 scpp::string host_probe_words_(scpp::string text);
 bool host_executable_(scpp::string path);

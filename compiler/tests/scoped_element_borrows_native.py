@@ -244,3 +244,32 @@ with TemporaryDirectory(prefix='scpp-borrowed-callback-consumer-') as work:
              ('consumer', None, None),
              ('consumer', consumer, expected)]
     revisions(Path(work), 'php', dict(main=view_loop, consumer=consumer, leaf=leaf), edits)
+
+conditional = 'function applyIf(bool $enabled,callback_view<void> $op):void {if ($enabled) {applyOnce($op);} else {}}'
+relay = 'function relay(bool $run,callback_view<void> $action):void {applyIf(op:$action,enabled:$run);}'
+conditional_loop = """
+function update(vector<int> &$rows,vector<int> &$alias):void {
+    $clear=function() use (&$alias):void {clean($alias);};
+    foreach ($rows as $key => &$n) {
+        $step=function() use (&$n):void {$n+=2;};
+        $key=1;relay(false,$step);echo $n,";";relay(true,$step);break;
+    }
+}
+$v vector<int> = [4,3];update($v,$v);echo $v[0],",",$v[1],";";
+$h hash<int,int> = [];$h[2]=5;$h[8]=1;
+try {
+    foreach ($h as $key => &$n) {
+        $step=function() use (&$n):void {$n+=1;if ($n===7) {throw new Exception("stop");}};
+        $key=8;relay(false,$step);echo $n,";";relay(true,$step);relay(true,$step);
+    }
+} catch (Exception $e) {echo "caught:";}
+echo $h[2],",",$h[8];return 8;
+"""
+with TemporaryDirectory(prefix='scpp-conditional-view-') as work:
+    expected = b'4;6,3;5;caught:7,1'
+    edits = [(None, None, expected),
+             ('consumer', conditional.replace('else {}', 'else {$saved function<void()> = $op;}'), 'only direct invocation'),
+             ('consumer', conditional, expected),
+             ('main', conditional_loop.replace('relay(false,$step)', 'relay(false,$clear)', 1), 'during writable foreach'),
+             ('main', conditional_loop, expected)]
+    revisions(Path(work), 'php', dict(main=conditional_loop, consumer=conditional, relay=relay, leaf=leaf), edits)

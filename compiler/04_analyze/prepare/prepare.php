@@ -148,18 +148,13 @@ final class Preparation
 		$function = $owner->parent;
 		$this->constructor_initialization = $function->is_constructor() && $function->parent instanceof ast_record_declaration
 			? new Constructor_Initialization($function->parent) : null;
+		$view = null;
 		foreach ($function->parameters as $parameter) {
 			if ($parameter->type_def() instanceof record_type_definition && $parameter->mode === passing_mode::value) {
 				$this->dependencies?->watch($this->symbols->entry($parameter->type_def()->declaration->symbol_key()), $owner);
 				$this->reserve_array_bytes($parameter->type_def()->array_bytes(), $parameter);
 			}
-			if ($parameter->type_def() instanceof callback_view_type) {
-				foreach ($syntax as $statement) {
-					if (!($statement instanceof ast_call_statement)) {
-						throw new diagnostic($statement->source(), $statement->byte_start(), 'A callback view consumer permits only direct invocation or forwarding of its parameter');
-					}
-				}
-			}
+			if ($parameter->type_def() instanceof callback_view_type) $view = $parameter;
 			$this->local_frames[0][$parameter->declaration_key()] = $parameter;
 		}
 		$this->statement_visits = 0;
@@ -168,20 +163,7 @@ final class Preparation
 		$this->loop = null;
 		$this->switch_break_states = [];
 		$this->outward = [];
-		$completion = $this->sequence($syntax, $source, $target, $function);
-		$view = $function->parameters[0] ?? null;
-		if ($view?->type_def() instanceof callback_view_type) {
-			foreach ($syntax as $statement) {
-				$call = $statement->value;
-				if ($call->callable_binding() === $view && $call->arguments === []) continue;
-				$argument = $call->arguments[0] ?? null;
-				if ($call->qualifier === call_qualifier::ordinary && $call->receiver === null && $call->member_separator === null
-					&& count($call->arguments) === 1 && $argument instanceof ast_name_expression && $argument->refers_to($view)
-					&& $call->has_direct_signature() && ($callee = $call->function_def()) instanceof ast_function_declaration
-					&& $callee->parameters[0]->type_def() instanceof callback_view_type) continue;
-				throw new diagnostic($statement->source(), $statement->byte_start(), 'A callback view consumer permits only direct invocation or forwarding of its parameter');
-			}
-		}
+		$completion = $this->sequence($syntax, $source, $target, $function, $view);
 		if (($completion & statement_completion::fallthrough) !== 0) $this->constructor_initialization?->complete($owner);
 		if (($target === null) && ($completion & statement_completion::fallthrough) !== 0 && ($function->return_type_def() !== type_void::instance())
 			&& !($function->return_type_def() instanceof generator_type_definition)) {
@@ -196,7 +178,7 @@ final class Preparation
 	 * @param ast_statement[] $syntax
 	 */
 	private function sequence(array $syntax /** list<ast_statement> */, source_file $source,
-		?entry_target $target, statement_return_target $function): int /** uint8 */
+		?entry_target $target, statement_return_target $function, ?ast_parameter_declaration $view = null): int /** uint8 */
 	{
 		$generator = $function->return_type_def();
 		$completion = statement_completion::fallthrough;
@@ -208,6 +190,9 @@ final class Preparation
 				throw new diagnostic($statement->source(), $statement->byte_start(),
 					$completion === statement_completion::returns ? 'Statements after return are outside the entry slice'
 					: 'Statements after unconditional control transfer are not supported');
+			}
+			if ($view !== null && !($statement instanceof ast_call_statement || $statement instanceof ast_if_statement)) {
+				throw new diagnostic($source, $statement->byte_start(), 'A callback view consumer permits only direct invocation or forwarding, optionally guarded by its bool parameter');
 			}
 			if ($generator instanceof generator_type_definition
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
@@ -276,7 +261,7 @@ final class Preparation
 				}
 			}
 			elseif ($statement instanceof ast_if_statement) {
-				$next = $this->conditional($statement, $source, $target, $function);
+				$next = $this->conditional($statement, $source, $target, $function, $view);
 			}
 			elseif ($statement instanceof ast_local_alias) {
 				$this->local_alias($statement);
@@ -392,6 +377,9 @@ final class Preparation
 			elseif ($statement instanceof ast_call_statement) {
 				$this->expression_visits++;
 				$this->call($statement->value);
+				if ($view !== null && !$this->view_call($statement->value, $view, $function->parameters[0])) {
+					throw new diagnostic($source, $statement->byte_start(), 'A callback view consumer permits only direct invocation or forwarding of its parameters');
+				}
 			}
 			elseif ($statement instanceof ast_return_statement)
 			{
@@ -678,9 +666,24 @@ final class Preparation
 		$this->guards = [];
 	}
 
+	/** A forwarding consumer passes only its own prepared bindings, in the callee's parameter slots. */
+	private function view_call(ast_call_expression $call, ast_parameter_declaration $view, ast_parameter_declaration $first): bool
+	{
+		if ($call->callable_binding() === $view && $call->arguments === []) return true;
+		if ($call->qualifier !== call_qualifier::ordinary || $call->receiver !== null || $call->member_separator !== null
+			|| !$call->has_direct_signature() || !(($callee = $call->function_def()) instanceof ast_function_declaration)) return false;
+		$view_slot = count($callee->parameters) - 1;
+		if (!(($callee->parameters[$view_slot] ?? null)?->type_def() instanceof callback_view_type)) return false;
+		foreach ($call->arguments as $index => $argument) {
+			$slot = $call->named->slots[$index] ?? $index;
+			if ($argument::class !== ast_name_expression::class || !$argument->refers_to($slot === $view_slot ? $view : $first)) return false;
+		}
+		return true;
+	}
+
 	/** Prepare all alternatives once, with lexical frames and conservative value barriers at alternatives and join. */
 	private function conditional(ast_if_statement $statement, source_file $source, ?entry_target $target,
-		statement_return_target $function): int /** uint8 */
+		statement_return_target $function, ?ast_parameter_declaration $view): int /** uint8 */
 	{
 		$completion = 0;
 		$has_else = false;
@@ -697,6 +700,10 @@ final class Preparation
 			if ($arm->condition !== null) {
 				$this->guard_reads = [];
 				$this->condition($arm->condition);
+				if ($view !== null && ($arm->condition::class !== ast_name_expression::class
+					|| $view === $function->parameters[0] || !$arm->condition->refers_to($function->parameters[0]))) {
+					throw new diagnostic($source, $arm->condition->byte_start(), 'A callback view condition requires its by-value bool parameter');
+				}
 				$remaining = $this->guards;
 				if ($surviving !== []) $surviving = array_intersect_key($surviving, $remaining);
 				$guard = $this->branch_guard($arm->condition, $function, $paired);
@@ -713,7 +720,7 @@ final class Preparation
 				$has_else = true;
 			}
 			$this->local_frames[] = [];
-			$arm_completion = $this->sequence($arm->body->statements, $source, $target, $function);
+			$arm_completion = $this->sequence($arm->body->statements, $source, $target, $function, $view);
 			array_pop($this->local_frames);
 			$completion |= $arm_completion;
 			if (($arm_completion & statement_completion::fallthrough) !== 0) {

@@ -99,7 +99,13 @@ Cache schema 2 binds the complete tracked-input snapshot to the context key;
 partial or legacy indexes require refresh in both Python and PHP. An unchanged hit
 requires filesystem metadata checks and record-integrity hashing only; it skips compiler
 invocations, preprocessing and binary hashing. Changes trigger full qualification.
-Unrecognized flags use the full fingerprint path. A matching record expires seven days after its successful run.
+For explicit `-I` directories and include-path environment variables, the request also
+fingerprints relative entry names and file kinds throughout each search tree. This catches
+new higher-priority headers inside existing subdirectories. The compiler selects the
+header during preprocessing. A missing or unreadable tree, a symlink entry, a special
+file, a root containing `..`, or more than 4,096 entries in one tree requires the
+full fingerprint path. Compiler-provided system roots retain their existing dependency checks.
+Unrecognized flags also use the full fingerprint path. A matching record expires seven days after its successful run.
 A failed refresh stops the build and retry runs the probe again. The recorded
 traces describe these calls on that build configuration. The emitter consumes
 the source evaluation contract.

@@ -2,19 +2,52 @@
 final class Prepared_Declaration {
 	public readonly Translation_Scope $scope;
 	public readonly int $value;
+	public readonly ?Prepared_Call $call;
 
-	public function __construct(Translation_Scope $scope, int $value) {
+	public function __construct(Translation_Scope $scope, int $value, ?Prepared_Call $call = null) {
 		$this->scope = $scope;
 		$this->value = $value;
+		$this->call = $call;
 	}
+}
+
+// The symbol observes its live callers without retaining retired preparation generations.
+struct Translation_Watch {
+	public weak<Prepared_Call> $caller;
 }
 
 // Stable identity from the compilation scope. The current generation owns the head.
 final class Translation_Symbol {
 	private weak<Prepared_Declaration> $head;
+	private vector<Translation_Watch> $watchers;
+
+	public function watch(Prepared_Call $caller): void {
+		foreach ($this->watchers as $watch) {
+			if (lock($watch->caller) === $caller) return;
+		}
+		$watch Translation_Watch;
+		$watch->caller = weak($caller);
+		$this->watchers[] = $watch;
+	}
+
+	public function forget(Prepared_Call $caller): void {
+		$keep vector<Translation_Watch> = [];
+		foreach ($this->watchers as $watch) {
+			$live = lock($watch->caller);
+			if ($live !== null && $live !== $caller) $keep[] = $watch;
+		}
+		$this->watchers = $keep;
+	}
 
 	public function publish(?Prepared_Declaration $declaration): void {
+		$previous = lock($this->head);
 		$this->head = weak($declaration);
+		// In this grammar every function has the same () : int signature.
+		if (($previous === null) === ($declaration === null)) return;
+		foreach ($this->watchers as $watch) {
+			$caller = lock($watch->caller);
+			if ($caller !== null) $caller->invalidate_binding();
+		}
 	}
 
 	public function declaration(): ?Prepared_Declaration {
@@ -26,8 +59,12 @@ final class Translation_Symbol {
 final class Translation_Symbols {
 	private hash<Translation_Symbol, string> $entries;
 
+	public function find(string $key): ?Translation_Symbol {
+		return hash_get_or_null($this->entries, $key);
+	}
+
 	public function entry(string $key): Translation_Symbol {
-		$entry = hash_get_or_null($this->entries, $key);
+		$entry = $this->find($key);
 		if ($entry === null) {
 			$entry = new Translation_Symbol();
 			$this->entries[$key] = $entry;
@@ -40,6 +77,23 @@ final class Translation_Symbols {
 final class Prepared_Call {
 	public readonly Call_Syntax $syntax;
 	public readonly Translation_Symbol $symbol;
+	private int $revision = 0;
+	private int $checked_revision = -1;
+
+	public function invalidate_binding(): void {
+		$this->revision++;
+	}
+
+	public function binding_revision(): int {
+		return $this->revision;
+	}
+
+	public function check_binding(string &$work): void {
+		if ($this->checked_revision === $this->revision) return;
+		$work .= $this->syntax->source->path . ",";
+		$this->target();
+		$this->checked_revision = $this->revision;
+	}
 
 	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol) {
 		$this->syntax = $syntax;
@@ -49,7 +103,7 @@ final class Prepared_Call {
 	public function target(): Prepared_Declaration {
 		$target = $this->symbol->declaration();
 		if ($target === null) {
-			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name);
+			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name, $this->syntax->source->text);
 		}
 		return $target;
 	}
@@ -59,14 +113,14 @@ function prepare_literal(Translation_Scope $scope): int {
 	$source = $scope->source;
 	$token = $source->tokens[$scope->declaration->body()->statement->literal_token];
 	if ($token->length > 1 && $source->text[$token->offset] == 48) {
-		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer");
+		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer", $source->text);
 	}
 	$value = 0;
 	$end = $token->offset + $token->length;
 	for ($offset = $token->offset; $offset < $end; $offset++) {
 		$digit = (int)$source->text[$offset] - 48;
 		if ($value > 922337203685477580 || ($value === 922337203685477580 && $digit > 7)) {
-			throw new Translation_Diagnostic($source->path, $token->offset, "Integer literal is outside int64 range");
+			throw new Translation_Diagnostic($source->path, $token->offset, "Integer literal is outside int64 range", $source->text);
 		}
 		$value = $value * 10 + $digit;
 	}
@@ -75,6 +129,11 @@ function prepare_literal(Translation_Scope $scope): int {
 
 function emit_definition_unit(Prepared_Declaration $target): string {
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
+	$call = $target->call;
+	if ($call !== null) {
+		$callee = "source_" . bin2hex($call->syntax->name);
+		return "#include <scpp/core/scalars.hpp>\nscpp::int64 " . $callee . "();\nscpp::int64 " . $name . "() { return " . $callee . "(); }\n";
+	}
 	return "#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "() { return " . (string)$target->value . "LL; }\n";
 }
 
@@ -89,13 +148,31 @@ function emit_entry_adapter(): string {
 		. "int main() { return scpp::run_entry_with_exceptions(entry); }\n";
 }
 
-function emit_translation(Prepared_Call $entry): string {
-	return emit_definition_unit($entry->target()) . emit_call_unit($entry) . emit_entry_adapter();
+function emit_translation(Prepared_Call $entry, hash<Prepared_Declaration,string> $sources): string {
+	$text = "";
+	foreach ($sources as $source) { $text .= emit_definition_unit($source); }
+	return $text . emit_call_unit($entry) . emit_entry_adapter();
+}
+
+// Each collection attempt owns its links. Retained syntax and the last good symbols stay immutable here.
+final class Translation_Definition_Site {
+	public readonly Translation_Scope $scope;
+	public ?Translation_Definition_Site $duplicate_element = null;
+
+	public function __construct(Translation_Scope $scope) {
+		$this->scope = $scope;
+	}
+
+	public function name_offset(): int {
+		return $this->scope->source->tokens[$this->scope->declaration->start + 1]->offset;
+	}
 }
 
 // Retains the current definition, the caller binding, and the last successful emission.
 final class Translation {
 	private readonly Translation_Symbols $symbols;
+	private hash<Translation_Scope,string> $syntax;
+	private hash<Prepared_Declaration,string> $prepared_sources;
 	private ?Prepared_Declaration $definition = null;
 	private ?Prepared_Call $entry = null;
 	private string $output = "";
@@ -106,29 +183,92 @@ final class Translation {
 	}
 
 	public function compile(?string $definition_text, string $entry_text): string {
-		$work = "";
-		$definition = $this->definition;
-		if ($definition_text === null) {
-			$definition = null;
-		} elseif ($definition === null || $definition_text !== $definition->scope->source->text) {
-			$source = new Translation_Source("definition.php", $definition_text);
-			$parser = new Translation_Parser($source);
-			$scope = $parser->parse_scope();
-			$definition = $this->prepare_definition($scope, $work);
-		}
+		$sources hash<string,string> = [];
+		if ($definition_text !== null) $sources["definition.php"] = $definition_text;
+		return $this->compile_sources($sources, $entry_text);
+	}
 
+	// Each definition source has one nullary integer function; main contains the call.
+	public function compile_sources(hash<string,string> $sources, string $entry_text): string {
+		$scopes hash<Translation_Scope,string> = [];
+		foreach ($sources as $path => $text) {
+			$scope = hash_get_or_null($this->syntax, $path);
+			if ($scope === null || $scope->source->text !== $text) {
+				$parser = new Translation_Parser(new Translation_Source($path, $text));
+				$scope = $parser->parse_scope();
+			}
+			$scopes[$path] = $scope;
+		}
 		$call = $this->entry_syntax();
 		if ($call === null || $entry_text !== $call->source->text) {
 			$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
 			$call = $parser->parse_entry();
 		}
-		$entry = $this->finish_preparation($definition, $call, $work);
+		$work = "";
+		$entry = $this->prepare_scopes($scopes, $call, $work);
+		$this->syntax = $scopes;
 		return $this->render_output($entry);
+	}
+
+	public function prepare_scopes(hash<Translation_Scope,string> $scopes, Call_Syntax $call, string &$work): Prepared_Call {
+		$paths vector<string> = [];
+		foreach ($scopes as $path => $scope) { $paths[] = $path; }
+		if (count($paths) > 1) $this->check_duplicates($paths, $scopes);
+		$prepared_sources hash<Prepared_Declaration,string> = [];
+		$definition ?Prepared_Declaration = null;
+		foreach ($paths as $path) {
+			$scope = $scopes[$path];
+			$prepared = $this->prepare_definition($scope, $work);
+			$prepared_sources[$path] = $prepared;
+			if ($scope->declaration->short_name === $call->name) $definition = $prepared;
+		}
+		if ($definition === null && count($scopes) !== 0) {
+			$work .= $call->source->path . ",";
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
+		}
+		if (count($scopes) === 0) $this->syntax = [];
+		$this->publish_sources($prepared_sources);
+		foreach ($prepared_sources as $prepared) {
+			$binding = $prepared->call;
+			if ($binding !== null) $binding->check_binding($work);
+		}
+		$entry = $this->finish_preparation($definition, $call, $work);
+		return $entry;
+	}
+
+	private function check_duplicates(vector<string> &$paths, hash<Translation_Scope,string> $scopes): void {
+		$scratch = $paths;
+		order_paths($paths, $scratch, 0, count($paths));
+		$heads hash<Translation_Definition_Site,string> = [];
+		// Prepending in reverse source order builds each duplicate chain in linear time.
+		for ($i = count($paths); $i > 0; $i--) {
+			$scope = $scopes[$paths[$i - 1]];
+			$key = $scope->declaration->symbol_key();
+			$site = new Translation_Definition_Site($scope);
+			$site->duplicate_element = hash_get_or_null($heads, $key);
+			$heads[$key] = $site;
+		}
+		foreach ($paths as $path) {
+			$scope = $scopes[$path];
+			$head = $heads[$scope->declaration->symbol_key()];
+			$extra = $head->duplicate_element;
+			if ($extra !== null && $extra->scope === $scope) {
+				$original = $head->scope->source;
+				$source = $scope->source;
+				throw new Translation_Diagnostic($source->path, $extra->name_offset(),
+					"Duplicate function: " . $scope->declaration->short_name . "; first declaration at " .
+					$original->path . ":" . translation_location($original->text, $head->name_offset()), $source->text);
+			}
+		}
+	}
+
+	public function definitions(): hash<Prepared_Declaration,string> {
+		return $this->prepared_sources;
 	}
 
 	private function render_output(Prepared_Call $entry): string {
 		if (!$this->output_current) {
-			$this->output = emit_translation($entry);
+			$this->output = emit_translation($entry, $this->prepared_sources);
 			$this->output_current = true;
 		}
 		return $this->output;
@@ -140,13 +280,22 @@ final class Translation {
 	}
 
 	public function prepare_units(Translation_Scope $scope, Call_Syntax $call, string &$work): Prepared_Call {
-		$definition = $this->prepare_definition($scope, $work);
-		return $this->finish_preparation($definition, $call, $work);
+		$scopes hash<Translation_Scope,string> = [];
+		$scopes[$scope->source->path] = $scope;
+		return $this->prepare_scopes($scopes, $call, $work);
 	}
 
 	private function prepare_definition(Translation_Scope $scope, string &$work): Prepared_Declaration {
-		$previous = $this->definition;
+		$previous = hash_get_or_null($this->prepared_sources, $scope->source->path);
 		if ($previous !== null && $previous->scope === $scope) return $previous;
+		$result = $scope->declaration->body()->statement;
+		if ($result->calls_function) {
+			$token = $scope->source->tokens[$result->literal_token];
+			$name = substr($scope->source->text, $token->offset, $token->length);
+			$syntax = new Call_Syntax($scope->source, $name, $token->offset);
+			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name));
+			return new Prepared_Declaration($scope, 0, $binding);
+		}
 		$work .= $scope->source->path . ",";
 		return new Prepared_Declaration($scope, prepare_literal($scope));
 	}
@@ -157,40 +306,54 @@ final class Translation {
 		if ($definition !== null && $definition === $previous && $entry !== null && $entry->syntax === $call) {
 			return $entry;
 		}
-		$key = "func:" . $call->name;
-		// In this grammar a function's name determines its entire public signature () : int.
-		if ($entry === null || $entry->syntax !== $call || $previous === null || $definition === null ||
-			$previous->scope->declaration->short_name !== $definition->scope->declaration->short_name) {
+		// This slice publishes one definition. Check the candidate before changing the last good head.
+		if ($definition !== null && $definition->scope->declaration->short_name !== $call->name) {
 			$work .= $call->source->path . ",";
-			if ($definition !== null && $definition->scope->resolve($key) === null) {
-				throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
-			}
-			if ($entry === null || $entry->syntax !== $call) {
-				$entry = new Prepared_Call($call, $this->symbols->entry($key));
-			}
+			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
 		}
-		$this->publish_definition($definition);
-		$entry->target();
+		$this->definition = $definition;
+		if ($entry === null || $entry->syntax !== $call) {
+			$symbol = $this->symbols->find("func:" . $call->name);
+			if ($symbol === null) {
+				$work .= $call->source->path . ",";
+				throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name, $call->source->text);
+			}
+			$candidate = new Prepared_Call($call, $symbol);
+			$candidate->check_binding($work);
+			if ($entry !== null) $entry->symbol->forget($entry);
+			$candidate->symbol->watch($candidate);
+			$entry = $candidate;
+		} else {
+			$entry->check_binding($work);
+		}
 		$this->entry = $entry;
 		$this->output_current = false;
 		return $entry;
 	}
 
-	private function publish_definition(?Prepared_Declaration $definition): void {
-		$previous = $this->definition;
-		if ($definition === $previous) {
-			return;
-		}
-		if ($previous !== null) {
-			$old_key = $previous->scope->declaration->symbol_key();
-			if ($definition === null || $definition->scope->declaration->symbol_key() !== $old_key) {
-				$this->symbols->entry($old_key)->publish(null);
+	// Publish all heads before checking caller bodies, including callers of a withdrawn name.
+	private function publish_sources(hash<Prepared_Declaration,string> $next): void {
+		$heads hash<Prepared_Declaration,string> = [];
+		foreach ($next as $source) { $heads[$source->scope->declaration->symbol_key()] = $source; }
+		foreach ($this->prepared_sources as $path => $old) {
+			$key = $old->scope->declaration->symbol_key();
+			if (!isset($heads[$key])) {
+				$this->symbols->entry($key)->publish(null);
+				$this->output_current = false;
 			}
+			$binding = $old->call;
+			if ($binding !== null && hash_get_or_null($next, $path) !== $old) $binding->symbol->forget($binding);
 		}
-		if ($definition !== null) {
-			$this->symbols->entry($definition->scope->declaration->symbol_key())->publish($definition);
+		foreach ($next as $path => $source) {
+			if (hash_get_or_null($this->prepared_sources, $path) === $source) continue;
+			$this->symbols->entry($source->scope->declaration->symbol_key())->publish($source);
+			$this->output_current = false;
 		}
-		$this->definition = $definition;
+		foreach ($next as $path => $source) {
+			$binding = $source->call;
+			if ($binding !== null && hash_get_or_null($this->prepared_sources, $path) !== $source) $binding->symbol->watch($binding);
+		}
+		$this->prepared_sources = $next;
 	}
 
 	public function declaration(): ?Prepared_Declaration {

@@ -916,6 +916,8 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_ninja_publication.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
     add_test(NAME compiler_native_link_inputs COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_link_inputs.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
+    add_test(NAME compiler_native_manifest_replacement COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_manifest_replacement.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER})
     add_test(NAME compiler_native_module_graph COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_module_graph.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
     add_test(NAME compiler_native_source_inventory COMMAND ${Python3_EXECUTABLE} -B

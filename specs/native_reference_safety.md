@@ -20,11 +20,13 @@ destructors and user-code failures must remain observable. Allocation failures f
 operations that still execute propagate under their ordinary contracts. An unknown
 effect requires a private copy.
 
+Typed vectors and hashes publish a read-only indexed lookup capability. Once the receiver and key have been evaluated, lookup preserves the collection, including its size and key set. Collections with the same snapshot contents yield the corresponding stored value or the same checked failure. Preparation selects the indexed operation from the receiver type. A borrowing proof checks its lookup capability separately from operand evaluation, copying the result, and destruction. For example, evaluating the key in `$snapshot[changeKey($writer)]` can still mutate the source through an alias.
+
 ## Private local collection snapshots
 
 A local initialized by value from a vector or hash observes the contents at initialization through its last use, including when another alias changes the source. The compiler may omit the local’s private allocation under the same copy, destruction and failure rules as a by-value collection parameter. The source must stay alive and the compiler must prove that all uses observe the snapshot.
 
-A synchronous function can end with an ordinary local initialized from an exact-type named parameter followed immediately by a scalar read of that local as its return value. Earlier statements can write through aliases: the snapshot observes the source when the declaration executes. Lowering inspects the final pair in the top-level function body. Count, emptiness, checked indexing and key presence use the prepared reader rules. An inert literal or an ordinary by-value scalar parameter may supply the key. An intervening write, a call to compute the key, or an observable element destructor requires the ordinary copy. Checked operations retain their failures at the read.
+A synchronous function can end with an ordinary local initialized from an exact-type named parameter followed immediately by a scalar read of that local as its return value. Earlier statements can write through aliases: the snapshot observes the source when the declaration executes. Lowering inspects at most the final three statements in the top-level function body. Between the snapshot and the return, one ordinary scalar local may save a first read with identity conversion and effect-free copy and destruction. The return may read the snapshot again directly or add the saved scalar to the second read with identity operand conversions. Count, emptiness, checked indexing and key presence use the prepared reader rules. An inert literal or an ordinary by-value scalar parameter may supply the key. An intervening write, a call to compute the key, or an observable element destructor requires the ordinary copy. Checked operations retain their failures at the read.
 
 ## Reference parameters and defaults
 
