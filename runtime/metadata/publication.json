@@ -772,6 +772,10 @@
       },
       {
         "family": "nullable",
+        "payload": "float64"
+      },
+      {
+        "family": "nullable",
         "payload": "bool_t"
       },
       {
