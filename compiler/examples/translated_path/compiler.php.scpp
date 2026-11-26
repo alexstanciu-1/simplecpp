@@ -79,6 +79,8 @@ final class Translation_Symbols {
 final class Prepared_Call {
 	public readonly Call_Syntax $syntax;
 	public readonly Translation_Symbol $symbol;
+	private readonly bool $expects_float;
+	private bool $callee_float = false;
 	private int $revision = 0;
 	private int $checked_revision = -1;
 
@@ -93,13 +95,18 @@ final class Prepared_Call {
 	public function check_binding(string &$work): void {
 		if ($this->checked_revision === $this->revision) return;
 		$work .= $this->syntax->source->path . ",";
-		$this->target();
+		$this->callee_float = $this->target()->scope->declaration->returns_float;
 		$this->checked_revision = $this->revision;
 	}
 
-	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol) {
+	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol, bool $expects_float = false) {
+		$this->expects_float = $expects_float;
 		$this->syntax = $syntax;
 		$this->symbol = $symbol;
+	}
+
+	public function callee_returns_float(): bool {
+		return $this->callee_float;
 	}
 
 	public function target(): Prepared_Declaration {
@@ -107,7 +114,7 @@ final class Prepared_Call {
 		if ($target === null) {
 			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name, $this->syntax->source->text);
 		}
-		if ($target->scope->declaration->returns_float) {
+		if (!$this->expects_float && $target->scope->declaration->returns_float) {
 			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Expected int return from " . $this->syntax->name, $this->syntax->source->text);
 		}
 		return $target;
@@ -134,15 +141,23 @@ function prepare_literal(Translation_Scope $scope): int {
 
 function emit_definition_unit(Prepared_Declaration $target): string {
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
-	if ($target->scope->declaration->returns_float) {
-		return "#include <scpp/core/scalars.hpp>\nscpp::float64 " . $name . "() { return " . host_cpp_binary64($target->floating_value) . "; }\n";
-	}
+	$floating = $target->scope->declaration->returns_float;
+	$result_type = $floating ? "scpp::float64 " : "scpp::int64 ";
+	$text = "#include <scpp/core/scalars.hpp>\n";
 	$call = $target->call;
+	$value = "";
 	if ($call !== null) {
 		$callee = "source_" . bin2hex($call->syntax->name);
-		return "#include <scpp/core/scalars.hpp>\nscpp::int64 " . $callee . "();\nscpp::int64 " . $name . "() { return " . $callee . "(); }\n";
+		$callee_type = $call->callee_returns_float() ? "scpp::float64 " : "scpp::int64 ";
+		$text .= $callee_type . $callee . "();\n";
+		$value = $callee . "()";
+		if ($floating && !$call->callee_returns_float()) $value = "static_cast<scpp::float64>(" . $value . ")";
+	} elseif ($floating) {
+		$value = host_cpp_binary64($target->floating_value);
+	} else {
+		$value = (string)$target->value . "LL";
 	}
-	return "#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "() { return " . (string)$target->value . "LL; }\n";
+	return $text . $result_type . $name . "() { return " . $value . "; }\n";
 }
 
 function emit_call_unit(Prepared_Call $call): string {
@@ -301,7 +316,7 @@ final class Translation {
 			$token = $scope->source->tokens[$result->literal_token];
 			$name = substr($scope->source->text, $token->offset, $token->length);
 			$syntax = new Call_Syntax($scope->source, $name, $token->offset);
-			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name));
+			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name), $scope->declaration->returns_float);
 			return new Prepared_Declaration($scope, 0, $binding);
 		}
 		$work .= $scope->source->path . ",";

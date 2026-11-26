@@ -233,13 +233,13 @@ final class Translation_Parser {
 		$this->keyword("return");
 		$literal = $this->index;
 		$calls_function = $this->source->tokens[$literal]->kind === Token_Kind::T_identifier;
-		if ($floating) {
+		if ($calls_function) {
+			$this->name_token();
+			$this->nullary();
+		} elseif ($floating) {
 			$kind = $this->source->tokens[$literal]->kind;
 			if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
 			$this->expect(Token_Kind::T_floating, "Expected decimal floating literal");
-		} elseif ($calls_function) {
-			$this->name_token();
-			$this->nullary();
 		} else {
 			$this->expect(Token_Kind::T_integer, "Expected decimal integer");
 		}

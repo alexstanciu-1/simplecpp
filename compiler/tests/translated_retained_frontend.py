@@ -154,6 +154,7 @@ def verify_decimal_returns(work, exe, cxx, linker):
     app.mkdir()
     (app/'main.php').write_text('return unrelated();')
     (app/'integer.php').write_text('function unrelated(): int { return 7; }')
+    (app/'forward.php').write_text('function forwarded(): float64 { return sample(); }')
     source = app/'decimal.php'
     generated = app/'generated'
     def write(literal):
@@ -165,16 +166,25 @@ def verify_decimal_returns(work, exe, cxx, linker):
         return {p.name: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns)
                 for p in path.glob('*.cpp')}
 
-    # Link the actual emitted float unit to an independent bit observer.
-    probe = work/'observe.cpp'
-    probe.write_text('#include <bit>\n#include <cstdint>\n#include <cstdio>\n'
-                     'double source_73616d706c65();\nint main() {'
-                     'std::printf("%016llx", std::bit_cast<unsigned long long>(source_73616d706c65())); }')
     unit = 'unit-decimal.php.cpp'
-    def bits():
+    forward_unit = 'unit-forward.php.cpp'
+    def bits(oracle=None):
+        if oracle is None:
+            units = [generated/unit, generated/forward_unit]
+            name = 'source_' + 'forwarded'.encode().hex()
+            declaration = f'double {name}();'
+        else:
+            bundle, manifest = oracle
+            units = [bundle/path for source, path in manifest['sources'].items()
+                     if Path(source).name in ('decimal.php', 'forward.php')]
+            name = 'App::forwarded_'
+            declaration = 'namespace App { double forwarded_(); }'
+        probe = work/'observe.cpp'
+        probe.write_text('#include <bit>\n#include <cstdio>\n' + declaration +
+                         '\nint main() { std::printf("%016llx", std::bit_cast<unsigned long long>(' + name + '())); }')
         binary = work/'observe'
         subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
-                        ROOT/'runtime/generated/public', generated/unit, probe, '-o', binary], check=True)
+                        ROOT/'runtime/generated/public', *units, probe, '-o', binary], check=True)
         return subprocess.check_output([binary], text=True)
 
     write('- /* unary sign */ 1e-400')
@@ -190,6 +200,29 @@ def verify_decimal_returns(work, exe, cxx, linker):
         assert request('lower') == f'ok|decimal.php,|decimal.php,|{unit},'
         after = snapshot(generated)
         assert {name for name in after if before[name] != after[name]} == {unit}
+        assert bits() == '0000000000000001'
+        assert request('lower') == 'ok|||'
+
+        write('-1e-400')
+        assert request('lower') == f'ok|decimal.php,|decimal.php,|{unit},'
+        assert bits() == '8000000000000000'
+        before_signature = snapshot(generated)
+        assert {n for n in after if before_signature[n] != after[n]} == {unit}
+
+        source.write_text('function sample(): int { return 9007199254740993; }')
+        rewrites = f'ok|decimal.php,forward.php,|decimal.php,forward.php,|{unit},{forward_unit},'
+        assert request('lower') == rewrites
+        converted = snapshot(generated)
+        assert {n for n in after if converted[n] != before_signature[n]} == {unit, forward_unit}
+        (app/'module.json').write_text('{}')
+        bundle = work/'php-decimal'
+        oracle = fresh(app, bundle)
+        assert bits() == bits((bundle, oracle)) == '4340000000000000'
+
+        write('5e-324')
+        assert request('lower') == rewrites
+        after = snapshot(generated)
+        assert {n for n in after if converted[n] != after[n]} == {unit, forward_unit}
         assert bits() == '0000000000000001'
         assert request('lower') == 'ok|||'
 

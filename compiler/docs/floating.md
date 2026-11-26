@@ -133,9 +133,13 @@ decimal floating token and prints its exact C++ spelling. Conversion uses the C
 numeric locale and nearest-even rounding, then restores the calling thread's
 floating environment. Underflow can produce a subnormal or signed zero. Overflow
 that rounds to infinity produces the same range diagnostic as PHP preparation.
-The retained frontend also accepts a nullary PHP-flavor function returning one
-signed decimal literal with declared type `float` or `float64`. Preparation keeps
-the checked binary64 value on the declaration. Lowering emits its exact hexadecimal
-spelling. The retained entry and integer caller bodies still require an integer
-callee. On overflow the diagnostic points to the return operand and the previous
-published files remain available for a retry.
+A nullary PHP-flavor function in the retained frontend can return a signed decimal
+literal or forward a nullary call from a function declared `float` or `float64`.
+Literal preparation keeps the checked binary64 value on the declaration. A prepared
+call records the callee's return type. Lowering uses that type for the C++ prototype
+and converts an integer result to binary64 at the return boundary. The integer entry
+and integer caller bodies still require an integer callee in this frontend slice.
+
+Changing only the callee's body reuses the forwarding unit. Changing its return
+type rechecks and emits the direct forwarder. On literal overflow the diagnostic
+points to the return operand and the previous published files remain available for retry.
