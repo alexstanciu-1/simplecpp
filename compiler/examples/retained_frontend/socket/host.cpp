@@ -1,4 +1,4 @@
-// Linux transport for the lifecycle proof; the test includes the translated host declarations.
+#include "frontend_host.hpp"
 #include <chrono>
 #include <cerrno>
 #include <cstring>

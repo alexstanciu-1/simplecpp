@@ -1,4 +1,4 @@
-// Linux native client operations. The calling frontend validates the three protocol commands.
+#include "frontend_host.hpp"
 #include <cerrno>
 #include <chrono>
 #include <cstring>

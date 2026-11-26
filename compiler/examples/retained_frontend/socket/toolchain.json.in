@@ -1,0 +1,5 @@
+{
+  "cxx": "@CMAKE_CXX_COMPILER@",
+  "flags": ["-std=c++23", "-stdlib=libc++", "-I", "@runtime_generated@/public", "-I", "@CMAKE_CURRENT_SOURCE_DIR@"],
+  "link_flags": ["--ld-path=@SCPP_MOLD_LINKER@"]
+}
