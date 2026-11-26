@@ -140,6 +140,7 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 			&& $value->source()->flavor === flavor::python;
 	}
 
+	/** Emit Python value equality and literal null identity directly, or call the published boxed operator. */
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{
