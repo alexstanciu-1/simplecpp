@@ -123,7 +123,7 @@ protected:
 		return value;
 	}
 
-	[[nodiscard]] std::string parse_string() {
+	[[nodiscard]] std::string_view parse_string_prefix() {
 		const std::size_t start = pos_;
 		if (get() != '"') {
 			fail_json_parse("expected string", start);
@@ -132,7 +132,11 @@ protected:
 		const auto remaining = input_.substr(pos_);
 		const auto prefix = plain_string_prefix(remaining);
 		pos_ += prefix;
-		std::string out(remaining.substr(0, prefix));
+		return remaining.substr(0, prefix);
+	}
+
+	[[nodiscard]] std::string parse_string_tail(std::size_t start, std::string_view prefix) {
+		std::string out(prefix);
 		while (!at_end()) {
 			const char ch = get();
 			if (ch == '"') {
@@ -185,6 +189,11 @@ protected:
 		}
 
 		fail_json_parse("unterminated string", start);
+	}
+
+	[[nodiscard]] std::string parse_string() {
+		const auto start = pos_;
+		return parse_string_tail(start, parse_string_prefix());
 	}
 
 	[[nodiscard]] std::string_view parse_number_token() {

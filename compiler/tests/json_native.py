@@ -92,6 +92,10 @@ $goodRoot=json_decode_as("{\"packet\":{\"data\":[3]}}",Tracked::class);
 if(!isset($goodRoot)){return 37;}
 $decodedBox Box=json_decode_as("{\"label\":\"hello\"}",Box::class);
 if($decodedBox->label!=="hello"){return 29;}
+$wire="{\"label\":\"a plain string that exceeds inline storage\",\"words\":[\"x\\u0000y\",\"\\uD83D\\uDE03\"]}";
+$typedTextFixture Text=json_decode_as($wire,Text::class); $wire="replaced";
+if($typedTextFixture->label!=="a plain string that exceeds inline storage" || $typedTextFixture->words[0]!=="x\0y" || $typedTextFixture->words[1]!=="😃"){return 52;}
+
 return 0;
 '''
 with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
@@ -104,6 +108,7 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
     records = app/'records.php'
     definitions = ('data struct Packet { public vector<int> $data; public int $version=1; }'
                    'data class Box { public string $label; }'
+                   'data struct Text { public string $label; public vector<string> $words; }'
                    'data class Pair { public Box $a; public Box $b; }'
                    'data struct Late { public Packet $payload; public float $tail; }'
                    'data class Link { public int $id; public ?Link $next=null; }'

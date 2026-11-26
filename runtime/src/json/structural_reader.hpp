@@ -148,6 +148,22 @@ public:
 	std::string read_string() {
 		return checked([&] { require_kind("string"); auto value = parse_string(); pending_ = false; return value; });
 	}
+	// The plain span is borrowed only during construction; escaped bytes transfer to the destination.
+	template<class Plain, class Owned> auto read_string(Plain plain, Owned owned) {
+		return checked([&] {
+			require_kind("string");
+			const auto start = pos_;
+			const auto prefix = parse_string_prefix();
+			if (peek() == '"') {
+				++pos_;
+				pending_ = false;
+				return plain(prefix);
+			}
+			auto bytes = parse_string_tail(start, prefix);
+			pending_ = false;
+			return owned(std::move(bytes));
+		});
+	}
 	std::string read_number() {
 		return checked([&] { require_kind("number"); auto value = std::string(parse_number_token()); pending_ = false; return value; });
 	}

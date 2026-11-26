@@ -173,6 +173,11 @@ index. The JSON provider tracks those indices in a record-local bit mask, one
 64-bit word per 64 fields. Duplicate errors retain the original key spelling,
 path and opening-quote offset, and precede validation of the following colon.
 Providers using ordinary field advancement can use the default schema lookup.
+A typed string field owns its decoded bytes. A plain string is constructed
+directly from the quoted input's contents. An escaped string uses the same
+escape parser. Short results fit inline and long results take ownership of the
+decoded buffer. A string
+vector reads each element through the same scalar operation.
 For a published int64 vector, generated decode requests the complete array in one
 operation. The JSON provider appends in order and uses scalar diagnostics at the
 first malformed element or delimiter. Other decoder providers can implement the

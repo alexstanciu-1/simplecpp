@@ -1,5 +1,12 @@
 class record_reader final : public Decoder {
     detail::json::pull_reader& cursor;
+    static string copy_string(std::string_view bytes) {
+        return string{bytes.data(), detail::checked_integer_cast<@count@>(bytes.size())};
+    }
+    static string take_string(std::string&& bytes) {
+        if (bytes.size() <= string::inline_capacity) return copy_string(bytes);
+        return detail::own_string(std::move(bytes));
+    }
 public:
     explicit record_reader(detail::json::pull_reader& source) : cursor(source) {}
     void begin_object() override { cursor.begin_object(); }

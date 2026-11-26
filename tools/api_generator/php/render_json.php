@@ -66,7 +66,7 @@ function renderJson(array $plan, array &$files): void {
             if ($type !== 'string' && !hasType($plan, $type) && !hasValue($plan, $type)) continue;
             $declarations .= "    virtual $type $method() = 0;\n";
             $body = $type === 'string'
-                ? "auto value = cursor.$method(); return string{value.data(), detail::checked_integer_cast<$count>(value.size())};"
+                ? "return cursor.$method(copy_string, take_string);"
                 : "return cursor.$method();";
             $definitions .= "    $type $method() override { $body }\n";
         }
