@@ -293,6 +293,8 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         }
         if (array_filter(names($publication->json->operations), fn($id) => str_starts_with($id, 'encode_'))) {
             $headers[] = moduleOperationHeader($publication->json->header, 'encode_record');
+            $headers[] = moduleOperationHeader($publication->json->header, 'encode_fields');
+            $headers[] = 'scpp/encoder.hpp';
             $headers[] = 'scpp/detail/json/record_output.hpp';
             $headers[] = 'scpp/detail/structure/record_fields.hpp';
         }

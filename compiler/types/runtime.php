@@ -100,6 +100,16 @@ final readonly class json_encoder_overloads extends runtime_overloads
 	}
 }
 
+/** Keep the borrowed argument and its concrete record declaration available to the calling unit. */
+final readonly class record_encode_function extends runtime_function
+{
+	public function __construct(public record_type_definition $target, type_definition $input, runtime_function $published, json_encoder_overloads $encoders)
+	{
+		parent::__construct($published->name(), [$input], $published->return_type_def(), $input->cpp_type() . '::scpp_escape_json_encode',
+			$encoders->record_header, const_reference_mask: 1, required_module: $encoders->required_module);
+	}
+}
+
 /** Published record leaf readers selected by a compile-time destination marker. */
 final readonly class json_decoder_contract extends runtime_overloads
 {

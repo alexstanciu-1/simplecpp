@@ -25,6 +25,8 @@ def prove(work):
         (None, None, diagnostic),
         ('units', base, b'8192'),
         ('sizes', sizes.replace('KIB', 'OTHER'), b'16'),
+        ('units', base.replace('1024', '1025'), b'16'),
+        ('units', base.replace('OTHER = 2', 'OTHER = 3'), b'24'),
         ('units', base.replace('const int OTHER = 2;', ''), 'Unknown namespace integer constant'),
         ('units', base, b'16'),
     ])

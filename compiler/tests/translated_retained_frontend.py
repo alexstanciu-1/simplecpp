@@ -395,6 +395,10 @@ def verify(work, cxx, linker, adapter, selection=None):
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, ['-I', ROOT/'compiler/examples/retained_frontend/socket', *manifest['link_inputs']])
 
+    if selection and selection.startswith("--edit-sequence="):
+        from retained_edit_sequences import verify as verify_edits
+        verify_edits(work, exe, cxx, linker, adapter, service, selection.split("=", 1)[1])
+        return
     if selection == "--numeric-defaults":
         from retained_parameter_incremental import verify_defaults
         verify_defaults(work, exe, cxx, linker, adapter, service)
@@ -406,6 +410,10 @@ def verify(work, cxx, linker, adapter, selection=None):
     if selection == "--call-retargeting":
         from retained_parameter_incremental import verify_call_retargeting
         verify_call_retargeting(work, exe, cxx, linker, adapter, service)
+        return
+    if selection == "--missing-call-repair":
+        from retained_parameter_incremental import verify_missing_call_repair
+        verify_missing_call_repair(work, exe, cxx, linker, adapter, service)
         return
     if selection == "--named-arguments":
         from retained_parameter_incremental import verify_named

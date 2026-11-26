@@ -73,6 +73,14 @@ $middle=readPacket("{\"data\":[10,false,30]}"); if(isset($middle)){return 27;}
 $tail=readPacket("{\"data\":[1]} garbage"); if(isset($tail)){return 28;}
 $env Envelope=json_decode_as("{\"packet\":{\"data\":[2,7]},\"box\":{\"label\":\"nested\"},\"tag\":5}",Envelope::class);
 if($env->box->label!=="nested" || $env->tag!==5 || $env->packet->version!==1 || $env->packet->data[1]!==7){return 34;}
+$nested string=json_encode($env);
+if($nested!=="{\"packet\":{\"data\":[2,7],\"version\":1},\"box\":{\"label\":\"nested\"},\"tag\":5}"){return 40;}
+$failure=encodeLate(); if(isset($failure)){return 41;}
+$pair Pair={a:$box,b:$box}; $pairText string=json_encode($pair);
+if($pairText!=="{\"a\":{\"label\":\"a\\u0000b\"},\"b\":{\"label\":\"a\\u0000b\"}}"){return 47;}
+$link Link={id:3}; $link->next=$link;
+$cycle=json_encode($link); $link->next=null; if(isset($cycle)){return 42;}
+$recovered string=json_encode($link); if($recovered!=="{\"id\":3,\"next\":null}"){return 43;}
 $missing=json_decode_as("{\"packet\":{}}",Envelope::class); if(isset($missing)){return 39;}
 $opened=json_pull_reader_create(); $started bool=$opened->start("{\"version\":4,\"data\":[9]}","",128);
 $direct Packet=Packet::decode($opened);
@@ -95,6 +103,9 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
     records = app/'records.php'
     definitions = ('data struct Packet { public vector<int> $data; public int $version=1; }'
                    'data class Box { public string $label; }'
+                   'data class Pair { public Box $a; public Box $b; }'
+                   'data struct Late { public Packet $payload; public float $tail; }'
+                   'data class Link { public int $id; public ?Link $next=null; }'
                    'data struct Reading { public float $value; }'
                    'data class Envelope { public Packet $packet; public Box $box; public int $tag; }'
                    'data class Tracked { public Packet $packet; public function __destruct(){echo "root destroyed";} }')
@@ -103,7 +114,9 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
     decoder = ('function readPacket(string $text):result<Packet> {return json_decode_as($text,Packet::class);}'
                'function snapshot(result<Packet> &$saved):Packet { $copy Packet=$saved; return $copy; }')
     reader.write_text(decoder)
-    (app/'writer.php').write_text('function encodeBox(Box $box):string {return json_encode($box);}')
+    (app/'writer.php').write_text('function encodeBox(Box $box):string {return json_encode($box);}'
+                                  'function encodeLate():result<string> {'
+                                  '$late Late={payload:{data:[2,7]},tail:1.0e308*2.0};return json_encode($late);}')
     main.write_text(source)
     proc = service(app, out)
     try:
@@ -111,6 +124,8 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
         assert 'error' not in result, result
         baseline = artifacts(out)
         units = b'\n'.join(v for k, v in baseline.items() if k.suffix == '.cpp')
+        assert b'Packet::encode(::scpp::Encoder& out) const' in units
+        assert b'encode_record(' not in units and b'encode_owned_record(' not in units
         assert b'Packet::decode(::scpp::Decoder& d)' in units
         assert b'd.next_field()' in units and b'd.next_element()' in units
         assert all(b'template<class scpp_escape_Field' not in data for data in baseline.values())
@@ -130,7 +145,7 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
         with ThreadPoolExecutor(max_workers=4) as pool:
             objects = list(pool.map(compile_unit, sources))
         subprocess.run([sys.argv[1], '-stdlib=libc++', '--ld-path='+sys.argv[2], *objects,
-                        '-Wl,--wrap=_ZN4scpp12vector_int64C1ERKS0_,--wrap=_ZN4scpp12vector_int64aSERKS0_',
+                        '-Wl,--wrap=_Znwm,--wrap=_ZN4scpp12vector_int64C1ERKS0_,--wrap=_ZN4scpp12vector_int64aSERKS0_',
                         *bundle['link_inputs'], '-o', work/'run'], check=True)
         run = subprocess.run([work/'run'], check=True, capture_output=True)
         # Only the valid root reaches construction. Both documents contain a valid nested packet.

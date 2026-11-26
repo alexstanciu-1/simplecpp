@@ -8,12 +8,13 @@ function renderJson(array $plan, array &$files): void {
     $count = $plan['string']['count_representation'];
     $boxedHeader = array_filter(array_column($module['operations'], 'family')) !== [] ? includeHeader($plan['boxed']['header']) : '';
     $h = BANNER . "#pragma once\n" . includeHeader($plan['carriers_header']) . $boxedHeader . includeHeader($plan['string']['header']) . "namespace scpp::json {\n";
-    $implementationHeaders = BANNER . includeHeader($module['header']) . includeHeader('json_native.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp');
+    $implementationHeaders = BANNER . includeHeader($module['header']) . includeHeader('json_native.hpp') . includeHeader('own_string.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp');
     $d = "";
     $signatures = [];
     $recordIncludes = [];
     $recordDeclarations = '';
     $recordDefinitions = '';
+    $encoderDeclarations = $encoderMethods = '';
     foreach ($module['operations'] as $op) {
         ['name' => $name, 'family' => $family, 'result' => $result, 'argument' => $argument] = $op;
         $signature = "$result $name(const $argument& input)";
@@ -35,6 +36,10 @@ function renderJson(array $plan, array &$files): void {
         $input = jsonNativeArgument($op, $source);
         if (!$decode) {
             foreach ($includes as $include) $recordIncludes[$include] = includeHeader($include);
+            $encoderInput = $op['nullablePayload'] === null && !in_array($op['transport'], ['bytes', 'boxed'], true)
+                ? "$argument input" : "const $argument& input";
+            $encoderDeclarations .= "    virtual void write($encoderInput) = 0;\n";
+            $encoderMethods .= "    void write($encoderInput) override { next_value(); sink.write(input); }\n";
             $recordDeclarations .= "    void write(const $argument& input) const;\n";
             $recordDefinitions .= "void record_sink::write(const $argument& input) const {\n";
             if ($op['nullablePayload'] !== null) {
@@ -52,7 +57,7 @@ function renderJson(array $plan, array &$files): void {
             $d .= "    if (!native.error.empty()) return $result{error_t{string{native.error.data(), detail::checked_integer_cast<$count>(native.error.size())}}};\n";
             $d .= "    $family value;\n    detail::ownership_access::get<detail::{$family}_value>(value) = std::move(native.value);\n    return $result{std::move(value)};\n";
         } else {
-            $d .= "    return encoded_result(native);\n";
+            $d .= "    return encoded_result(std::move(native));\n";
         }
         $d .= "}\n";
     }
@@ -77,16 +82,23 @@ function renderJson(array $plan, array &$files): void {
             $files['public/scpp/detail/' . $path] = BANNER . readFile(__DIR__ . '/../../../runtime/src/' . $path);
         }
         $recordHeader = moduleOperationHeader($module['header'], 'encode_record');
+        $files['public/scpp/encoder.hpp'] = BANNER . template('json/encoder', [
+            'includes' => implode('', $recordIncludes), 'declarations' => $encoderDeclarations]);
+        $fieldsHeader = moduleOperationHeader($module['header'], 'encode_fields');
+        $files['public/' . $fieldsHeader] = moduleHeaderBody(['scpp/encoder.hpp'], 'scpp::json',
+            "result_string encode_fields(const void*, Encoder::visit);\n");
+        $implementationHeaders .= includeHeader($fieldsHeader);
         $files['public/' . $recordHeader] = BANNER . template('json/record_encoder', [
             'includes' => implode('', $recordIncludes), 'declarations' => $recordDeclarations]);
         $implementationHeaders .= includeHeader($recordHeader);
-        $d = "static result_string encoded_result(const detail::json::outcome<std::string>& native) {\n"
+        $d = "static result_string encoded_result(detail::json::outcome<std::string>&& native) {\n"
             . "    if (!native.error.empty()) return result_string{error_t{string{native.error.data(), detail::checked_integer_cast<$count>(native.error.size())}}};\n"
-            . "    return result_string{string{native.value.data(), detail::checked_integer_cast<$count>(native.value.size())}};\n}\n"
+            . "    return result_string{detail::own_string(std::move(native.value))};\n}\n"
             . $d . $recordDefinitions
             . "void record_sink::operator()(std::string_view bytes) const { output.append(bytes); }\n"
             . "result_string encode_record_erased(const void* value, void (*visit)(const void*, detail::json::writer&)) {\n"
-            . "    return encoded_result(detail::json::encode_record(value, visit));\n}\n";
+            . "    return encoded_result(detail::json::encode_record(value, visit));\n}\n"
+            . template('json/record_writer_impl', ['methods' => $encoderMethods]);
     }
     foreach ($signatures as $name => $arguments) $h .= scalarInputFences($plan, $name, $arguments);
     $files['public/' . $module['header']] = $h . "}\n";

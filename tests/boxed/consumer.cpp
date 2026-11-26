@@ -45,6 +45,17 @@ int main() {
     require(da.remove(int64{2147483647LL}));
     auto moved = std::move(da); require(da.kind() == boxed_kind::null);
     moved.clean(); require(d.kind() == boxed_kind::container);
+    dynamic slots[] = {child, dynamic::from_integer(int64{7})};
+    auto tuple = dynamic::from_tuple(slots, 2);
+    auto tuple_copy = tuple;
+    require(tuple_copy.kind() == boxed_kind::tuple && tuple_copy.container_size() == 2);
+    require(tuple_copy.read(int64{-1}).get_integer() == 7);
+    throws<std::runtime_error>([&] { tuple.append(dynamic{}); });
+    throws<std::runtime_error>([&] { tuple.clear(); });
+    throws<std::runtime_error>([&] { tuple.remove(int64{0}); });
+    throws<std::runtime_error>([&] { tuple.set(int64{0}, dynamic{}); });
+    throws<std::runtime_error>([&] { (void)mixed::from_dynamic_scalar(tuple); });
+    require(tuple_copy.python_equal(tuple));
     auto* self = &d; d = *self; d = std::move(*self);
     require(d.read(int64{0LL}).get_integer() == 3);
     bool failed_once = false;

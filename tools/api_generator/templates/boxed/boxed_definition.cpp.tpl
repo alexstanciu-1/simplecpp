@@ -4,6 +4,7 @@ static_assert(static_cast<unsigned>(boxed_kind::integer) == static_cast<unsigned
 static_assert(static_cast<unsigned>(boxed_kind::floating) == static_cast<unsigned>(@native@::kind::floating));
 static_assert(static_cast<unsigned>(boxed_kind::string) == static_cast<unsigned>(@native@::kind::string));
 static_assert(static_cast<unsigned>(boxed_kind::container) == static_cast<unsigned>(@native@::kind::container));
+static_assert(static_cast<unsigned>(boxed_kind::tuple) == static_cast<unsigned>(@native@::kind::tuple));
 static_assert(sizeof(@n@) == sizeof(@native@) && alignof(@n@) == alignof(@native@));
 static_assert(sizeof(@native@) == @size@ && alignof(@native@) == @alignment@);
 @n@::@n@() noexcept { detail::ownership_access::construct<@native@>(*this); }
@@ -18,6 +19,17 @@ static_assert(sizeof(@native@) == @size@ && alignof(@native@) == @alignment@);
 @n@ @n@::from_string(const string& value) { @n@ result; @result@ = @native@::string({value.data(), static_cast<std::size_t>(value.size())}); return result; }
 @n@ @n@::container() { @n@ result; @result@ = @native@::container(); return result; }
 @n@ @n@::python_list() { @n@ result; @result@ = @native@::python_list(); return result; }
+@n@ @n@::from_tuple(@n@* values, int64 count) {
+    if (count < 0) throw std::length_error("negative_initializer_count");
+    std::vector<@native@> slots;
+    slots.reserve(static_cast<std::size_t>(count));
+    for (int64 i = 0; i < count; ++i) slots.push_back(std::move(detail::ownership_access::get<@native@>(values[i])));
+    @n@ result;
+    @result@ = @native@::tuple(std::move(slots));
+    return result;
+}
+bool_t @n@::python_equal(const @n@& other) const { return @self@.python_equal(@other@); }
+bool_t @n@::python_next(int64& position, int64 limit, @n@& value) const { return @self@.python_next(position, limit, @value@); }
 bool_t @n@::python_contains(const @n@& needle) const { return @self@.python_contains(detail::ownership_access::get<@native@>(needle)); }
 boxed_kind @n@::kind() const noexcept { return static_cast<boxed_kind>(@self@.type()); }
 bool_t @n@::get_boolean() const { return bool_t{@self@.get_boolean()}; }

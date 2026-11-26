@@ -16,7 +16,7 @@ trait record_literal_preparation
 }
 
 /** Typed [] or [a, b] initializer; owns ordered syntax and uses the destination's collection contract. */
-final class ast_collection_expression extends ast_expression
+class ast_collection_expression extends ast_expression
 {
 	use record_literal_preparation;
 
@@ -57,6 +57,11 @@ final class ast_collection_expression extends ast_expression
 		parent::reset_preparation();
 		$this->conversions = [];
 	}
+}
+
+/** Parenthesized Python tuple display. The slots share the ordered initializer model. */
+final class ast_tuple_expression extends ast_collection_expression
+{
 }
 
 /** One ordered key/value input occurrence, e.g. key() => value(); owns both expressions. */

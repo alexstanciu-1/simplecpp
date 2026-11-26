@@ -17,7 +17,7 @@ set(proofs
   hash_contains called_methods object_access ast_parent_lifetime
   shared_upcasts interface_access expression_static
   structs struct_properties struct_methods struct_constructors classes
-  boxed_collection_methods boxed_clear boxed_literals boxed_fields boxed_index_mutation
+  boxed_collection_methods boxed_clear boxed_literals python_tuple boxed_fields boxed_index_mutation
   protected_static_data protected_static
   abstract_methods interfaces virtual_methods extends parent_methods capture_free_lambdas python_flavor
   application_vectors application_hashes application_vector_signatures

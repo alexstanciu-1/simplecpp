@@ -178,9 +178,15 @@ function renderString(array $plan, array &$groups): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('strings/string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $vars['classic_storage'] = array_intersect($classic, ['format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes'])
-        ? template('strings/string_classic_storage', ['n' => $n]) : '';
+    $usesClassicStorage = array_intersect($classic, ['format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes']);
+    $vars['classic_storage'] = ($usesClassicStorage || isset($plan['json'])) ? template('strings/string_own', ['n' => $n]) : '';
+    if ($usesClassicStorage) $vars['classic_storage'] .= template('strings/string_classic_storage', ['n' => $n]);
     $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
+    if (isset($plan['json'])) {
+        $d .= "$n detail::own_string(std::string&& bytes) {\n"
+            . "    static_cast<void>(detail::checked_integer_cast<$count>(bytes.size()));\n"
+            . "    return string_access::own(std::move(bytes));\n}\n";
+    }
     if ($read) {
         $view = template('strings/checked_byte_view', ['n' => $n, 'key' => $read['key'], 'result' => $read['result']]);
         if ($plan['string_view']['provider'] === $s['provider']) $h .= $view;

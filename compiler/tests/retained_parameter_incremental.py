@@ -22,25 +22,27 @@ def native(directory, units, links, expected, results, php, cxx, linker):
         (directory/'probe.cpp').write_text('#include <scpp/core/scalars.hpp>\n#include <cstdio>\n' +
             declarations + '\nint main() { std::printf("' + ' '.join(['%lld'] * len(names)) + '", ' +
             ', '.join(f'static_cast<long long>({symbol}())' for symbol in symbols) + '); }')
-        rules = [f'rule cc\n  command = {cxx} -std=c++23 -stdlib=libc++ -I{ROOT}/runtime/generated/public -MMD -MF $out.d -c $in -o $out\n  depfile = $out.d\n  deps = gcc',
-                 f'rule link\n  command = {cxx} -stdlib=libc++ --ld-path={linker} $in -o $out']
-        rules += [f'build {name}.o: cc {src}' for name, src in units.items()]
-        subjects = ' '.join(name+'.o' for name in units if name not in ('entry', 'main'))
-        rules += ['build probe.o: cc probe.cpp',
-                  f'build observer: link probe.o {subjects} ' + ' '.join(links),
-                  'default observer ' + ' '.join(name+'.o' for name in units)]
-        graph.write_text('\n'.join(rules)+'\n')
+    rules = [f'rule cc\n  command = {cxx} -std=c++23 -stdlib=libc++ -I{ROOT}/runtime/generated/public -MMD -MF $out.d -c $in -o $out\n  depfile = $out.d\n  deps = gcc',
+             f'rule link\n  command = {cxx} -stdlib=libc++ --ld-path={linker} $in -o $out']
+    rules += [f'build {name}.o: cc {src}' for name, src in units.items()]
+    subjects = ' '.join(name+'.o' for name in units if name not in ('entry', 'main'))
+    rules += ['build probe.o: cc probe.cpp',
+              f'build observer: link probe.o {subjects} ' + ' '.join(links),
+              'default observer ' + ' '.join(name+'.o' for name in units)]
+    graph_text = '\n'.join(rules)+'\n'
+    if not graph.exists() or graph.read_text() != graph_text:
+        graph.write_text(graph_text)
     log = directory/'.ninja_log'
     offset = log.stat().st_size if log.exists() else 0
     subprocess.run(['ninja', '-C', directory], check=True, stdout=subprocess.PIPE)
     edges = [line.split('\t')[3] for line in log.read_bytes()[offset:].decode().splitlines()
              if not line.startswith('#')]
     if expected is not None:
-        assert set(edges) == {name+'.o' for name in expected} | ({'observer'} if expected else set()), edges
+        assert set(edges) == {name+'.o' for name in expected} | ({'observer'} if expected - {'main', 'entry'} else set()), edges
     assert subprocess.check_output([directory/'observer'], text=True) == ' '.join(map(str, results.values()))
 
 
-def emitted_units(app, facts, production, retained):
+def emitted_units(app, facts, production, retained, definition_name='caller'):
     subprocess.run(['php', ROOT/'compiler/main.php', 'project', app, facts, production],
                    check=True, stdout=subprocess.PIPE)
     manifest = json.loads((production/'manifest.json').read_text())
@@ -48,7 +50,7 @@ def emitted_units(app, facts, production, retained):
     php_units = {by_unit.get(path, Path(path).stem): production/path for path in manifest['translation_units']}
     retained_units = {p.name.removeprefix('unit-').removesuffix('.cpp').removesuffix('.php'): p
                       for p in retained.glob('*.cpp')}
-    retained_units['caller'] = retained_units.pop('definition')
+    retained_units[definition_name] = retained_units.pop('definition')
     return retained_units, php_units, manifest['link_inputs']
 
 
@@ -384,3 +386,65 @@ def verify_call_retargeting(work, exe, cxx, linker, adapter, service):
             verify_rebinding_stage(work, app, exe, request, service, cxx, linker, adapter, stage,
                                    sources, objects, {'caller': caller, 'control': control},
                                    production_objects={'caller', 'right'} if stage == 'switch' else objects)
+
+
+def verify_missing_call_repair(work, exe, cxx, linker, adapter, service):
+    app = work/'missing-call'
+    app.mkdir()
+    (app/'module.json').write_text('{}')
+    (app/'main.php').write_text('return caller();')
+    caller = app/'caller.php'
+    caller.write_text('function caller(): int { return left(); }')
+    (app/'control.php').write_text('function control(): int { return left(); }')
+    left = app/'left.php'
+    left.write_text('function left(int $value = 11): int { return $value; }')
+    generated = app/'generated'
+    facts = Path(adapter).parent/'native-layout/facts.json'
+    objects = work/'retained-objs'
+
+    def published():
+        return {p.name: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns)
+                for p in generated.iterdir()}
+
+    with service(exe, app) as request:
+        assert request('lower').startswith('ok|')
+        ru, _, links = emitted_units(app, facts, work/'production', generated)
+        initial = {'caller': 11, 'control': 11}
+        native(objects, ru, links, None, initial, False, cxx, linker)
+        saved = published()
+        caller.write_text('function caller(): int { return right(); }')
+        error = f'caller.php:{caller.read_text().index("right()")}: Unknown function: right'
+
+        for stage, expected in [('retarget', {'caller.php'}), ('left-edit', {'left.php', 'caller.php'})]:
+            if stage == 'left-edit':
+                left.write_text(left.read_text().replace('11', '13'))
+            status, prepared, emitted, written = request('lower').split('|')
+            assert status == error and emitted == written == '', (stage, status, emitted, written)
+            assert set(filter(None, prepared.split(','))) == expected, (stage, prepared)
+            assert published() == saved
+            native(objects, ru, links, set(), initial, False, cxx, linker)
+
+        (app/'right.php').write_text('function right(int $value = 17): int { return $value; }')
+        status, prepared, emitted, written = request('lower').split('|')
+        assert status == 'ok', status
+        assert set(filter(None, prepared.split(','))) == {'caller.php', 'right.php', 'control.php'}, prepared
+        assert set(filter(None, emitted.split(','))) == {'caller.php', 'control.php', 'left.php', 'right.php'}, emitted
+        ru, pu, links = emitted_units(app, facts, work/'production', generated)
+        rebuilt = {'caller', 'right', 'control'}
+        assert set(filter(None, written.split(','))) == {ru[name].name for name in rebuilt}, written
+        repaired = {'caller': 17, 'control': 13}
+        native(objects, ru, links, rebuilt, repaired, False, cxx, linker)
+        native(work/'production-objs', pu, links, None, repaired, True, cxx, linker)
+        saved = published()
+        assert request('lower') == 'ok|||' and published() == saved
+        native(objects, ru, links, set(), repaired, False, cxx, linker)
+
+    cold = work/'fresh-repair'
+    shutil.copytree(app, cold, ignore=shutil.ignore_patterns('generated'))
+    with service(exe, cold) as fresh:
+        assert fresh('lower').startswith('ok|')
+    fresh_dir = cold/'generated'
+    assert {p.name: p.read_bytes() for p in fresh_dir.glob('*.cpp')} == {
+        p.name: p.read_bytes() for p in generated.glob('*.cpp')}
+    native(cold/'objects', {k: fresh_dir/p.name for k, p in ru.items()},
+           links, None, repaired, False, cxx, linker)

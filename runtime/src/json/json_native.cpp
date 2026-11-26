@@ -253,6 +253,7 @@ template<boxed_family Family> void writer::write(const boxed_value<Family>& valu
         case kind::integer: write(value.get_integer()); break;
         case kind::floating: write(value.get_floating()); break;
         case kind::string: write(std::string_view{value.get_string()}); break;
+        case kind::tuple: throw encode_failure{"json_encode: tuple is unsupported"};
         case kind::container: table(value); break;
     }
 }

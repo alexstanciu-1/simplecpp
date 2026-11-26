@@ -137,6 +137,9 @@ final class Syntax_Inspection
 			foreach ($expression->entries as $entry) $entries[] = ['key' => self::expression($entry->key), 'value' => self::expression($entry->value)];
 			return ['kind' => 'keyed_collection', 'entries' => $entries];
 		}
+		if ($expression instanceof ast_tuple_expression) {
+			return ['kind' => 'tuple', 'elements' => array_map(self::expression(...), $expression->elements)];
+		}
 		if ($expression instanceof ast_collection_expression) {
 			return $expression->elements === [] ? ['kind' => 'empty_collection']
 				: ['kind' => 'collection', 'elements' => array_map(self::expression(...), $expression->elements)];

@@ -90,7 +90,7 @@ function compilerJsonCases(?array $runtime, array $types): array {
     }
     if ($encoders !== []) {
         $cases[] = "\t\t\t'php:func:json_encode', 'general:func:json_encode' => \$bindings[\$key] ??= new json_encoder_overloads(["
-            . implode(', ', $encoders) . "], '" . moduleOperationHeader($runtime['json']['header'], 'encode_record') . "'),";
+            . implode(', ', $encoders) . "], '" . moduleOperationHeader($runtime['json']['header'], 'encode_fields') . "'),";
     }
     return array_merge($cases, compilerJsonDocumentCases($runtime, $types), compilerJsonReaderCases($runtime, $types));
 }
