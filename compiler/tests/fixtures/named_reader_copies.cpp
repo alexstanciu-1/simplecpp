@@ -7,6 +7,9 @@ namespace App {
 scpp::int64 explicitPackReads_();
 scpp::int64 unpackedPackReads_();
 scpp::int64 emptyPackReads_();
+scpp::int64 explicitReadonlyPackReads_();
+scpp::int64 unpackedReadonlyPackReads_();
+scpp::int64 emptyReadonlyPackReads_();
 scpp::int64 scalarReads_();
 scpp::int64 convertedKeyReads_();
 scpp::int64 namedReads_();
@@ -84,6 +87,16 @@ int main(int argc, char** argv) {
     assert(vector_copies == (writer ? 2 : 1));
     vector_copies = 0;
     assert(App::emptyPackReads_() == 0);
+    assert(vector_copies == 0);
+
+    vector_copies = 0;
+    assert(App::explicitReadonlyPackReads_() == (writer ? 94 : 44));
+    assert(vector_copies == (writer ? 1 : 0));
+    vector_copies = 0;
+    assert(App::unpackedReadonlyPackReads_() == (writer ? 944 : 444));
+    assert(vector_copies == (writer ? 2 : 1));
+    vector_copies = 0;
+    assert(App::emptyReadonlyPackReads_() == 0);
     assert(vector_copies == 0);
 
     const bool reference_key = std::string_view(argv[1]) == "reference-key";

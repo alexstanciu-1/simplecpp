@@ -121,6 +121,14 @@ function unpackedPackReads():int {
 function packCount(int ...$items):int {return innerCount($items);}
 function emptyPackReads():int {return packCount();}
 function readonlyPackCount(int &...$readPack):int {return innerCount($readPack);}
+function emptyReadonlyPackReads():int {return readonlyPackCount();}
+function fromReadonlyPack(int &...$readPack):int {
+    $observed=innerVector($readPack);return 10*$observed+$readPack[0];
+}
+function explicitReadonlyPackReads():int {return fromReadonlyPack(4,8);}
+function unpackedReadonlyPackReads():int {
+    $v vector<int> = [4,8];$observed=fromReadonlyPack(...$v);return 10*$observed+$v[0];
+}
 function outerVector(vector<int> $items):int {
     $items[0]=6;$read=innerVector($items);return 10*$read+$items[0];
 }
@@ -204,7 +212,10 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
              ('reader', keyed_reader.replace('$key=0', '$key'), 'Argument count mismatch'),
              ('reader', keyed_reader, expected),
              ('reader', keyed_reader.replace('$key', '$offset'), 'Unknown named argument: key'),
-             ('main', named_calls.replace('key:', 'offset:'), expected)]
+             ('main', named_calls.replace('key:', 'offset:'), expected),
+             ('forward', forward_calls.replace('$observed=innerVector($readPack);',
+                                               '$readPack[0]=7;$observed=innerVector($readPack);'), 'read-only variadic pack'),
+             ('forward', forward_calls, expected)]
     revisions(work, 'php', dict(main=named_calls, reader=keyed_reader, forward=forward_calls, forward_reader=forward_reader + scalar_reader, driver=key_driver), edits[:1] if quick else edits)
     out = work/'php-out'
     units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
@@ -214,7 +225,8 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     assert 'innerHash_collection_reader(var_refItems' in units
     assert 'innerVector_collection_reader(var_packItems' in units
     assert 'innerCount_collection_reader(var_items' in units
-    assert 'innerCount_(var_readPack' in units
+    assert 'innerCount_collection_reader(var_readPack' in units
+    assert 'innerVector_collection_reader(var_readPack' in units
     for symbol in ('element', 'byKey'):
         assert units.count(symbol + '_collection_reader(var_') == 6, units
     if not quick:
