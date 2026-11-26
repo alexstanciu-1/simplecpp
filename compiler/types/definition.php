@@ -238,8 +238,9 @@ interface sequence_initializer_type extends indexed_collection_type
 }
 
 /** Exact native element access for codec traversal of a prepared ordered sequence. */
-interface native_sequence_type extends sequence_initializer_type, counted_collection_type
+interface native_sequence_type extends counted_collection_type
 {
+	public function write_type(): type_definition;
 	public function lower_cpp_element_read(string $receiver, string $index): string;
 	public function lower_cpp_append_value(string $receiver, string $value): string;
 }
