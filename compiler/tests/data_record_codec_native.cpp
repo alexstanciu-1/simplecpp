@@ -47,6 +47,70 @@ auto encode_integer = [](std::int64_t value, auto& sink) {
     sink(std::string_view(buffer, end - buffer));
 };
 
+using App::scpp_records::Packet;
+static int vector_copies;
+extern "C" void __real__ZN4scpp12vector_int64C1ERKS0_(void*, const void*);
+extern "C" void __wrap__ZN4scpp12vector_int64C1ERKS0_(void* target, const void* source) {
+    ++vector_copies;
+    __real__ZN4scpp12vector_int64C1ERKS0_(target, source);
+}
+extern "C" void* __real__ZN4scpp12vector_int64aSERKS0_(void*, const void*);
+extern "C" void* __wrap__ZN4scpp12vector_int64aSERKS0_(void* target, const void* source) {
+    ++vector_copies;
+    return __real__ZN4scpp12vector_int64aSERKS0_(target, source);
+}
+
+Packet read_packet(std::string text) {
+    json::pull_reader source(std::move(text), "packet", 16);
+    auto integer = []<class Value>(auto& reader) {
+        static_assert(std::is_same_v<Value, std::int64_t>);
+        return reader.read_integer();
+    };
+    json::record_input input{source, integer};
+    auto result = structure::read<Packet>(input, Packet::scpp_escape_from_data);
+    source.finish_document();
+    return result;
+}
+
+std::string write_packet(const Packet& packet) {
+    std::string out;
+    json::write_record(packet, [&](std::string_view part) { out.append(part); }, encode_integer);
+    return out;
+}
+
+void check_packet() {
+    auto packet = read_packet(R"({"data":[0]})");
+    packet = read_packet(R"({"version":9,"data":[3,-4,8]})");
+    assert(packet.version == 9 && packet.data.size() == 3);
+    assert(write_packet(packet) == R"({"data":[3,-4,8],"version":9})");
+    assert(write_packet(read_packet(R"({"data":[]})")) == R"({"data":[],"version":1})");
+    try {
+        packet = read_packet(R"({"data":[1,false,3]})");
+        assert(false);
+    } catch (const json::read_error& error) {
+        assert(error.path == R"($["data"][1])");
+    }
+    assert(write_packet(packet) == R"({"data":[3,-4,8],"version":9})");
+    assert(vector_copies == 0);
+    auto copy = packet;
+    copy.data = packet.data;
+    assert(vector_copies == 2);
+
+    using App::scpp_records::Flags;
+    json::pull_reader source(R"({"data":[true,false]})", "flags", 16);
+    auto boolean = []<class Value>(auto& reader) {
+        static_assert(std::is_same_v<Value, bool>);
+        return reader.read_boolean();
+    };
+    json::record_input input{source, boolean};
+    auto flags = structure::read<Flags>(input, Flags::scpp_escape_from_data);
+    source.finish_document();
+    std::string output;
+    json::write_record(flags, [&](std::string_view part) { output += part; },
+                       [](bool value, auto& sink) { sink(value ? "true" : "false"); });
+    assert(output == R"({"data":[true,false]})");
+}
+
 template<bool adapter>
 std::string transcode(const std::string& source) {
     json::pull_reader reader(source, "test", 16);
@@ -97,7 +161,8 @@ void check_small_objects() {
     reader.finish_document();
 }
 
-int main() {
+int main(int argc, char** argv) {
+    check_packet();
     check_small_objects();
     check_duplicate(R"({"a":1,"b":2,"c":3,"d":4,"\u0061":5})", R"($["\u0061"])");
     check_duplicate(R"({"a":1,"b":2,"\u0063":3,"d":4,"c":5})", R"($["c"])");
@@ -114,6 +179,7 @@ int main() {
         try { transcode<true>(input); assert(false); }
         catch (const json::read_error&) {}
     }
+    const int repeats = argc == 2 && std::string_view(argv[1]) == "--quick" ? 1 : 64;
     for (int records : {1, 128}) {
         std::string source = "[";
         for (int i = 0; i < records; ++i) {
@@ -126,10 +192,10 @@ int main() {
         auto sample = [&](auto transcode_fn) {
             auto start = std::chrono::steady_clock::now();
             auto before = allocations;
-            for (int repeat = 0; repeat < 64; ++repeat) assert(transcode_fn(source) == expected);
+            for (int repeat = 0; repeat < repeats; ++repeat) assert(transcode_fn(source) == expected);
             auto count = allocations - before;
             double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-            std::cout << " " << count / 64 << " alloc/doc " << source.size() * 64 / seconds / 1e6 << " MB/s";
+            std::cout << " " << count / repeats << " alloc/doc " << source.size() * repeats / seconds / 1e6 << " MB/s";
             return count;
         };
         std::cout << records << " records, handwritten then generated:";
