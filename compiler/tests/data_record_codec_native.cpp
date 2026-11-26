@@ -70,7 +70,37 @@ std::string transcode(const std::string& source) {
     return out;
 }
 
+void check_duplicate(std::string input, std::string_view expected_path) {
+    auto offset = input.rfind(',') + 1;
+    json::pull_reader reader(std::move(input), "test", 16);
+    reader.begin_object();
+    try {
+        while (reader.next_property()) reader.read_integer();
+        assert(false);
+    } catch (const json::read_error& error) {
+        assert(error.category == "duplicate_key");
+        assert(error.position == offset && error.path == expected_path);
+    }
+}
+
+void check_small_objects() {
+    std::string source = R"([{"y":1,"x":2},{"x":3,"y":4}])";
+    json::pull_reader reader(std::move(source), "test", 16);
+    reader.begin_array();
+    assert(reader.next_element());
+    assert(generated(reader).x == 2);
+    auto before = allocations;
+    assert(reader.next_element());
+    assert(generated(reader).x == 3);
+    assert(allocations == before);
+    assert(!reader.next_element());
+    reader.finish_document();
+}
+
 int main() {
+    check_small_objects();
+    check_duplicate(R"({"a":1,"b":2,"c":3,"d":4,"\u0061":5})", R"($["\u0061"])");
+    check_duplicate(R"({"a":1,"b":2,"\u0063":3,"d":4,"c":5})", R"($["c"])");
     const auto original = Point::scpp_escape_from_data(2, 7);
     int visited = 0;
     structure::visit(original, [&](std::string_view name, const auto& member) {
