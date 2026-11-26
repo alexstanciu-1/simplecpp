@@ -1666,7 +1666,7 @@ final class Preparation
 			}
 			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
 				if ($syntax->source()->flavor === flavor::php && $left === $right
-					&& $left instanceof carrier_type_definition && $left->false_only_sentinel()) {
+					&& $left instanceof carrier_type_definition && ($left->accepts_empty() || $left->false_only_sentinel())) {
 					$payload = $left->payload_type;
 					if ($payload->binary_result($syntax->operator, $payload) !== type_bool::instance()
 						|| !$payload->binary_syntax_allowed($syntax->operator, $syntax)) {

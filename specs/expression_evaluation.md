@@ -548,10 +548,10 @@ for every payload, including integer zero, an empty string and a boolean false.
 This literal rule does not extend to a variable holding false or to loose equality.
 
 For PHP `===` and `!==` between two operands of the same published
-`result_or_false<T>` type, `T` must admit the corresponding same-type strict
-comparison. Capture the left value before evaluating the right. Two false
-sentinels are identical, a sentinel and a payload are distinct, and two
-payloads follow the strict identity rule for `T`.
+`nullable<T>` or `result_or_false<T>` type, `T` must admit the corresponding same-type strict
+comparison. Capture the left value before evaluating the right. Two absent nullable values are identical, as are two false sentinels.
+A payload differs from either alternate state. Two payloads follow the strict
+identity rule for `T`.
 
 Ordering uses checked one-layer extraction instead of state sorting, followed by
 the payload ordering contract. A non-value state throws. Left extraction/conversion

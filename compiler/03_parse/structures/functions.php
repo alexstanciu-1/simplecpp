@@ -576,8 +576,9 @@ final class Named_Arguments
 	}
 
 	/**
-	 * @param string[] $operands
-	 * @return string[]
+	 * @template T
+	 * @param T[] $operands
+	 * @return T[]
 	 */
 	public function parameter_order(array $operands): array
 	{
@@ -724,11 +725,15 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	}
 
 	/** Query the prepared operation only when lowering this body's private collection-reader entry. */
-	public function reads_parameter_without_copy(ast_parameter_declaration $parameter): bool
+	public function reads_parameter_without_copy(ast_parameter_declaration $parameter, ?ast_parameter_declaration $key): bool
 	{
 		if (count($this->statements) !== 1 || !($this->statements[0] instanceof ast_return_statement)) return false;
 		$value = $this->statements[0]->value;
-		if ($value instanceof ast_index_expression && $value->index instanceof ast_integer_expression) {
+		if ($key !== null) {
+			if (!($value instanceof ast_index_expression) || !($value->index instanceof ast_name_expression)
+				|| !$value->index->refers_to($key)) return false;
+			$receiver = $value->receiver;
+		} elseif ($value instanceof ast_index_expression && $value->index instanceof ast_integer_expression) {
 			$receiver = $value->receiver;
 		} elseif ($value instanceof ast_call_expression && $value->cardinality === collection_cardinality::count) {
 			$receiver = $value->arguments[0];
@@ -856,8 +861,10 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	/** Signature-only eligibility keeps cross-unit declarations stable across reader/writer edits. */
 	public function private_reader_input(): ?ast_parameter_declaration
 	{
-		if (count($this->parameters) !== 1 || $this->parent instanceof ast_method_owner || $this->is_async || $this->returns_reference
+		if ($this->parameters === [] || count($this->parameters) > 2 || $this->parent instanceof ast_method_owner || $this->is_async || $this->returns_reference
 			|| $this->return_type_def() !== type_int64::instance()) return null;
+		$key = $this->parameters[1] ?? null;
+		if ($key !== null && ($key->mode !== passing_mode::value || $key->type_def() !== type_int64::instance())) return null;
 		$input = $this->parameters[0];
 		return $input->mode === passing_mode::value && !($input->type_reference instanceof ast_variadic_type_reference)
 			&& $input->type_def()->private_copy_allocation_only() ? $input : null;
