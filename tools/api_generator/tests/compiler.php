@@ -32,11 +32,11 @@ $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
 $peerCarriers = unserialize($originalExportMetadata)->carriers;
 unset($peerCarriers->peer_equality->operators->equal);
-$strictPeers = compilerPeerEquality($peerCarriers);
+$strictPeers = compilerPeerEquality($peerCarriers, [], [], []);
 requireThat(!str_contains($strictPeers, 'binary_operator::equal') && str_contains($strictPeers, 'binary_operator::identical'),
     'Removing ordinary equality must preserve only the strict peer binding');
 $peerCarriers->operand_participation->families = ['nullable', 'result_or_false'];
-$restrictedPeers = compilerPeerEquality($peerCarriers);
+$restrictedPeers = compilerPeerEquality($peerCarriers, [], [], []);
 requireThat(str_contains($restrictedPeers, "'nullable', 'result_or_false' =>")
     && !str_contains($restrictedPeers, "'result_or_bool'") && !str_contains($restrictedPeers, '.is_false()'),
     'Removing a participating family must also remove its shared alternate comparison');
@@ -250,6 +250,9 @@ $limitedGroup->compiler->mixed_numeric_operators->arithmetic = [];
 $limitedGroup->compiler->mixed_numeric_operators->comparisons = [];
 $limitedGroup->compiler->mixed_numeric_operators->compound_operators = [];
 $limitedFiles = renderCompiler($limitedGroup, $facts);
+requireThat(!str_contains($limitedFiles['types/carriers.php'], 'value_conversion::numeric_floating')
+    && str_contains($limitedFiles['types/carriers.php'], 'new prepared_peer_equality($comparator, null)'),
+    'Removing scalar promotion must preserve only mixed strict peer equality');
 foreach (['int64', 'uint8'] as $identity) {
     requireThat(!str_contains($limitedFiles['types/' . $identity . '.php'], 'binary_operator::add')
         && !str_contains($limitedFiles['types/' . $identity . '.php'], 'binary_operator::less'), 'Integer group removal ignored');
@@ -1231,6 +1234,10 @@ unset($without->compiler->strict_identity);
 // Removing scalar admission alone still permits other payload providers (e.g. enums).
 requireThat(!str_contains(renderCompiler($without, $facts)['types/string.php'], 'binary_operator::identical'),
     'A peer rule must not grant identity to its payload');
+$withoutStrictPeers = renderCompiler($without, $facts)['types/carriers.php'];
+requireThat(!str_contains($withoutStrictPeers, 'new prepared_peer_equality($comparator, null)')
+    && str_contains($withoutStrictPeers, 'value_conversion::numeric_floating'),
+    'Removing scalar identity must preserve only mixed ordinary peer equality');
 unset($without->carriers->peer_equality->operators->identical);
 $ordinaryOnly = renderCompiler($without, $facts);
 foreach ($ordinaryOnly as $source) {

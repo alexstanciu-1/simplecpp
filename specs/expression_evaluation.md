@@ -549,14 +549,17 @@ This literal rule does not extend to a variable holding false or to loose equali
 
 In PHP, operand participation projects a published carrier to its payload type and a
 plain operand to its own type. Equality consumes this rule when at least one operand
-is a carrier and the projected types match. The four carrier families can compare
+is a carrier and the projected types match or form the published canonical int/float pair. The four carrier families can compare
 across families or with a plain payload in either order, using `==`, `!=`, `===`
 and `!==` when the corresponding payload comparator is admitted. Explicit literal
 state guards take precedence. A plain boolean variable always contributes a payload.
 The catalog selects ordinary or strict payload comparison and its inverse.
 Capture the left state before evaluating the right. Matching absent states compare
 equal. A payload differs from absence, including a successful boolean false.
-Two payloads use the selected comparator for `T`. For `result_or_bool<T>`, matching
+Two matching payload types use the selected comparator for `T`. For int/float,
+ordinary equality applies the scalar int-to-float conversion inside the two-value
+branch. Strict identity returns false in that branch without extracting either
+payload. Two empty nullables still compare equal under both operators. For `result_or_bool<T>`, matching
 boolean sentinels compare equal. Opposite sentinels differ, and a successful
 boolean payload differs from either sentinel, including one of the same polarity.
 Two failures of `result<T>` compare equal under `==`. Under `===`, compare their

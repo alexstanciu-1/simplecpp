@@ -178,7 +178,9 @@ SCPP;
 		$result_source = <<<'SCPP'
 function error_peers(result<int> &$a): bool {
     $empty ?int = null;
-    return $a == $empty || $empty === $a || $a === 0 || 0 == $a;
+    $floating ?float = null;
+    return $a == $empty || $empty === $a || $a === 0 || 0 == $a
+        || $a == $floating || $floating === $a || 0.0 == $a || $a === 0.0;
 }
 function ordinary(result<int> &$a, result<int> &$b): bool { return $a == $b; }
 function different(result<int> &$a, result<int> &$b): bool { return $a != $b; }
@@ -304,7 +306,8 @@ SCPP;
 		$main = $directory . '/main.' . $flavor->name;
 		$library = $directory . '/library.' . $flavor->name;
 		$pair_check = $flavor === flavor::php ? 'echo (int)(provide() === provide()), (int)(provide() == provide()), (int)(provide() === 0);' : '';
-		file_put_contents($main, $pair_check . 'echo (int)isset(provide()), provide() + 5; return 8;');
+		$sum = $flavor === flavor::php ? '(int)(provide() + 5)' : 'provide() + 5';
+		file_put_contents($main, $pair_check . 'echo (int)isset(provide()), ' . $sum . '; return 8;');
 		$compiler = new Project_Compiler();
 		$session = null;
 		$root = null;
@@ -313,7 +316,10 @@ SCPP;
 		$revision = time();
 		$steps = [['nullable<int>', '12'], ['result<int>', '13.75'], ['nullable<string>', '"wrong"'],
 			['retry', ''], ['result_or_false<int>', '14'], ['delete', ''], ['nullable<int64>', '15']];
-		if ($flavor === flavor::php) $steps[] = ['result_or_bool<int>', '16'];
+		if ($flavor === flavor::php) {
+			$steps[] = ['nullable<float>', '16.0'];
+			$steps[] = ['result_or_bool<int>', '16'];
+		}
 		foreach ($steps as $step => [$type, $value]) {
 			if ($type !== 'retry') {
 				if ($type === 'delete') {

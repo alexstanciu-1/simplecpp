@@ -717,7 +717,7 @@
     "peer_equality": {
       "flavor": "php",
       "operands": "operand_participation",
-      "payloads": "matching_types",
+      "payloads": {"matching_types": true, "scalar_pairs": [["int64", "float64"]]},
       "evaluation": "snapshot_left_then_right",
       "states": "match_alternate_state",
       "operators": {"equal": "not_equal", "identical": "not_identical"}

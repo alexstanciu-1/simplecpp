@@ -1687,14 +1687,14 @@ final class Preparation
 			}
 			$carrier = $left instanceof carrier_type_definition ? $left : $right;
 			if ($carrier instanceof carrier_type_definition) {
-				$comparator = peer_equality_operator($left, $right, $syntax->source()->flavor, $syntax->operator);
-				if ($comparator !== null) {
-					$payload = $carrier->payload_type;
-					if ($payload->binary_result($comparator, $payload) !== type_bool::instance()
-						|| !$payload->binary_syntax_allowed($comparator, $syntax)) {
+				$comparison = peer_equality_binding($left, $right, $syntax->source()->flavor, $syntax->operator);
+				if ($comparison !== null) {
+					$execution = $comparison->execution;
+					if ($execution !== null && ($execution->binary_result($comparison->operator, $execution) !== type_bool::instance()
+						|| !$execution->binary_syntax_allowed($comparison->operator, $syntax))) {
 						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands or operator');
 					}
-					$syntax->settle_binary(type_bool::instance(), $carrier, peer_comparator: $comparator);
+					$syntax->settle_binary(type_bool::instance(), $carrier, peer_equality: $comparison);
 					return;
 				}
 			}

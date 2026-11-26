@@ -401,6 +401,8 @@ if(BUILD_TESTING)
   scpp_fixture_test(carrier_values php php-false-guards php-false-pairs php-nullable-pairs php-false-equality php-nullable-equality php-peer-failure)
   add_test(NAME compiler_bool_sentinel_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture carrier_values.php --cases php-bool-sentinel-peers)
+  add_test(NAME compiler_mixed_carrier_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture mixed_carrier_equality.php --cases php)
   add_test(NAME compiler_carrier_participation_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture carrier_participation.php --cases php)
   add_test(NAME compiler_result_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py

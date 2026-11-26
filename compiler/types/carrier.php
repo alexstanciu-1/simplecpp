@@ -46,6 +46,7 @@ abstract class carrier_type_definition extends type_definition implements presen
 	{
 		$left_present = $this->lower_cpp_presence($left);
 		$right_present = $this->lower_cpp_presence($right);
+		if ($payloads_equal === 'false') return "(!$left_present && !$right_present)";
 		return "($left_present ? ($right_present && $payloads_equal) : !$right_present)";
 	}
 
@@ -55,24 +56,36 @@ abstract class carrier_type_definition extends type_definition implements presen
 		return $this->lower_cpp_presence($value);
 	}
 
-	private function lower_matching_peers(ast_binary_expression $expr, string $left, string $right): string
+	/** Apply scalar conversions only to two payloads after testing the carrier states. */
+	private function lower_peer_equality(ast_binary_expression $expr, string $left, string $right): string
 	{
 		$left_type = $expr->left->type_def();
 		$right_type = $expr->right->type_def();
 		$left_carried = $left_type instanceof self;
 		$right_carried = $right_type instanceof self;
-		$payloads_equal = $this->payload_type->lower_cpp_binary($expr->peer_comparator,
-			$left_carried ? $left_type->lower_cpp_extract($left) : $left,
-			$right_carried ? $right_type->lower_cpp_extract($right) : $right, $this->payload_type);
-		if ($left_type === $right_type) {
-			return $this->lower_cpp_peer_equality($left, $right, $payloads_equal, $expr->peer_comparator);
+		$comparison = $expr->peer_equality;
+		$execution = $comparison->execution;
+		$payloads_equal = 'false';
+		if ($execution !== null) {
+			$left_value = $left_carried ? $left_type->lower_cpp_extract($left) : $left;
+			$right_value = $right_carried ? $right_type->lower_cpp_extract($right) : $right;
+			$payloads_equal = $execution->lower_cpp_binary($comparison->operator,
+				$execution->lower_scalar_conversion($comparison->left_conversion, $left_value),
+				$execution->lower_scalar_conversion($comparison->right_conversion, $right_value), $execution);
+		}
+		if ($left_carried && $right_carried && $left_type->family === $right_type->family) {
+			return $this->lower_cpp_peer_equality($left, $right, $payloads_equal, $comparison->operator);
+		}
+		$alternate = $left_carried && $right_carried ? shared_peer_alternate($left_type, $right_type, $left, $right) : null;
+		if ($execution === null) {
+			// Disjoint states still evaluate both source operands, including staged plain scalars.
+			return $alternate ?? "(static_cast<void>($left), static_cast<void>($right), false)";
 		}
 		if (!$left_carried || !$right_carried) {
 			$present = $this->lower_cpp_payload_presence($left_carried ? $left : $right);
 			return "($present && $payloads_equal)";
 		}
 		$both_values = $left_type->lower_cpp_payload_presence($left) . ' && ' . $right_type->lower_cpp_payload_presence($right);
-		$alternate = shared_peer_alternate($left_type, $right_type, $left, $right);
 		return $alternate === null ? "($both_values && $payloads_equal)" : "(($both_values && $payloads_equal) || $alternate)";
 	}
 
@@ -80,9 +93,9 @@ abstract class carrier_type_definition extends type_definition implements presen
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{
-		if ($expr->peer_comparator !== null) {
-			$equal = $this->lower_matching_peers($expr, $left, $right);
-			return $expr->operator !== $expr->peer_comparator ? '!' . $equal : $equal;
+		if ($expr->peer_equality !== null) {
+			$equal = $this->lower_peer_equality($expr, $left, $right);
+			return $expr->operator !== $expr->peer_equality->operator ? '!' . $equal : $equal;
 		}
 		$carrier_first = $expr->left->type_def() === $this;
 		$literal = $carrier_first ? $expr->right : $expr->left;
@@ -97,7 +110,7 @@ abstract class carrier_type_definition extends type_definition implements presen
 	/** Two local reads need no snapshots. Stage effectful pairs before inspecting either state. */
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
 	{
-		return $expr->peer_comparator === null
+		return $expr->peer_equality === null
 			|| (!($expr->left instanceof ast_string_expression) && !($expr->right instanceof ast_string_expression)
 				&& self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right));
 	}

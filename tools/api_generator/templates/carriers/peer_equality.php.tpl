@@ -10,7 +10,7 @@ function carrier_operand_payload(type_definition $type): ?type_definition
 }
 
 /** Resolve the positive comparator for the first consumer of operand participation. */
-function peer_equality_operator(type_definition $left, type_definition $right, flavor $flavor, binary_operator $operator): ?binary_operator
+function peer_equality_binding(type_definition $left, type_definition $right, flavor $flavor, binary_operator $operator): ?prepared_peer_equality
 {
 @dispatch@
 }

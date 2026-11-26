@@ -115,6 +115,25 @@ final class ast_comparison_chain extends ast_expression
 	}
 }
 
+/** Scalar operation to perform only inside the two-payload branch of a carrier comparison.
+ * A null execution type denotes unequal scalar kinds under the strict identity policy. */
+final readonly class prepared_peer_equality
+{
+	public binary_operator $operator;
+	public ?type_definition $execution;
+	public int $left_conversion /** uint16 */;
+	public int $right_conversion /** uint16 */;
+
+	public function __construct(binary_operator $operator, ?type_definition $execution,
+		int $left_conversion = value_conversion::identity, int $right_conversion = value_conversion::identity)
+	{
+		$this->operator = $operator;
+		$this->execution = $execution;
+		$this->left_conversion = $left_conversion;
+		$this->right_conversion = $right_conversion;
+	}
+}
+
 /** Owns operands of e.g. value < limit or ready && valid; inherited type readiness records successful admission. */
 class ast_binary_expression extends ast_expression
 {
@@ -129,7 +148,7 @@ class ast_binary_expression extends ast_expression
 	/** Prepared fact: native non-owning execution type; null before settlement or after reset. */
 	protected ?type_definition $execution_type = null;
 	/** Prepared fact: positive payload comparison selected for a state-preserving peer comparison. */
-	public ?binary_operator $peer_comparator = null;
+	public ?prepared_peer_equality $peer_equality = null;
 	/** Prepared fact: approved left conversion; identity before settlement or after reset. */
 	public int $left_conversion /** uint16 */ = value_conversion::identity;
 	/** Prepared fact: approved right conversion; identity before settlement or after reset. */
@@ -151,10 +170,10 @@ class ast_binary_expression extends ast_expression
 	/** METHODS */
 	/** Publish the result and conversions, with a folded value for integer constant declarations. */
 	public function settle_binary(type_definition $result, ?type_definition $execution = null,
-		int $left /** uint16 */ = value_conversion::identity, int $right /** uint16 */ = value_conversion::identity, ?int $folded /** ?int64 */ = null, ?binary_operator $peer_comparator = null): void
+		int $left /** uint16 */ = value_conversion::identity, int $right /** uint16 */ = value_conversion::identity, ?int $folded /** ?int64 */ = null, ?prepared_peer_equality $peer_equality = null): void
 	{
 		$this->settle_value($result, $folded);
-		$this->peer_comparator = $peer_comparator;
+		$this->peer_equality = $peer_equality;
 		$this->execution_type = $execution ?? $this->left->value_type();
 		$uses_payload = !$this->operator->logical() && !($this->execution_type instanceof carrier_type_definition);
 		$this->left_conversion = $left | ($uses_payload && $this->left->type_def() instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
@@ -172,7 +191,7 @@ class ast_binary_expression extends ast_expression
 	{
 		parent::reset_preparation();
 		$this->execution_type = null;
-		$this->peer_comparator = null;
+		$this->peer_equality = null;
 		$this->left_conversion = value_conversion::identity;
 		$this->right_conversion = value_conversion::identity;
 	}

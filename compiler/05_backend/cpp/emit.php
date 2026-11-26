@@ -113,8 +113,15 @@ final class Cpp_Emitter
 				$required_headers[$header] = true;
 			}
 		}
-		$binding = $value->peer_comparator !== null ? $type->payload_type : $type;
-		foreach ($binding->binary_headers($value->peer_comparator ?? $value->operator) as $header) {
+		$comparison = $value->peer_equality;
+		if ($comparison !== null) {
+			$type = $comparison->execution;
+			if ($type === null) return;
+			foreach ([$comparison->left_conversion, $comparison->right_conversion] as $conversion) {
+				foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+			}
+		}
+		foreach ($type->binary_headers($comparison?->operator ?? $value->operator) as $header) {
 			$required_headers[$header] = true;
 		}
 	}

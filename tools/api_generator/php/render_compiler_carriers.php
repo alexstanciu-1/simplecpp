@@ -78,7 +78,7 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
 }
 
 /** Publish shared operand participation and the equality group that consumes it. */
-function compilerPeerEquality(mixed $carriers): string {
+function compilerPeerEquality(mixed $carriers, array $definitions, array $promotions, array $binary): string {
     $template = readFile(__DIR__ . '/../templates/carriers/peer_equality.php.tpl');
     $rule = $carriers->peer_equality ?? null;
     $participation = $carriers->operand_participation ?? null;
@@ -108,21 +108,65 @@ function compilerPeerEquality(mixed $carriers): string {
     if ($rule === null) return str_replace('@dispatch@', "\treturn null;", $template);
     requireThat($published !== [], 'Equality requires published carrier operands');
     fields($rule, ['flavor', 'operands', 'payloads', 'evaluation', 'states', 'operators']);
-    literals($rule, ['operands' => 'operand_participation', 'payloads' => 'matching_types',
+    literals($rule, ['operands' => 'operand_participation',
         'evaluation' => 'snapshot_left_then_right', 'states' => 'match_alternate_state']);
     $flavor = textValue(at($rule, 'flavor'));
     requireThat(in_array($flavor, ['php', 'cpp', 'js', 'python'], true), 'Unknown peer equality flavor');
     $arms = [];
-    foreach (fields(at($rule, 'operators'), ['equal', 'identical']) as $positive => $inverse) {
+    $operators = fields(at($rule, 'operators'), ['equal', 'identical']);
+    foreach ($operators as $positive => $inverse) {
         requireThat($inverse === 'not_' . $positive, 'Invalid inverse equality operator');
         $arms[$positive] = "\t\tbinary_operator::$positive, binary_operator::$inverse => binary_operator::$positive,";
     }
     requireThat($arms !== [], 'Empty peer equality rule');
     ksort($arms, SORT_STRING);
+    $mixed = compilerMixedPeerBindings(at($rule, 'payloads'), $operators, $definitions, $promotions, $binary);
     $dispatch = "\tif (\$flavor !== flavor::$flavor) return null;\n"
         . "\t\$comparator = match (\$operator) {\n" . implode("\n", $arms) . "\n\t\tdefault => null,\n\t};\n"
         . "\tif (\$comparator === null) return null;\n"
-        . "\t\$payload = carrier_operand_payload(\$left);\n"
-        . "\treturn \$payload !== null && \$payload === carrier_operand_payload(\$right) ? \$comparator : null;";
+        . "\t\$left = carrier_operand_payload(\$left);\n\t\$right = carrier_operand_payload(\$right);\n"
+        . "\tif (\$left !== null && \$left === \$right) return new prepared_peer_equality(\$comparator, \$left);\n"
+        . implode("\n", $mixed) . "\n\treturn null;";
     return str_replace('@dispatch@', $dispatch, $template);
+}
+
+/** Emit carrier payload recipes from the same normalized scalar plans used by plain comparisons. */
+function compilerMixedPeerBindings(mixed $payloads, array $operators, array $definitions, array $promotions, array $binary): array {
+    fields($payloads, ['matching_types', 'scalar_pairs']);
+    literals($payloads, ['matching_types' => true]);
+    $mixed = [];
+    foreach (listValue(at($payloads, 'scalar_pairs')) as $pair) {
+        $types = names($pair);
+        requireThat(count($types) === 2, 'Expected two distinct scalar payload types');
+        foreach ([$types, array_reverse($types)] as [$left, $right]) {
+            if (!isset($definitions[$left], $definitions[$right])) continue;
+            $bindings = compilerPeerPairArms($operators, $right, $definitions, $promotions[$left] ?? [], $binary[$left] ?? []);
+            if ($bindings === []) continue;
+            $mixed[] = "\tif (\$left === type_{$definitions[$left]['class']}::instance() && \$right === type_{$definitions[$right]['class']}::instance()) {\n"
+                . "\t\treturn match (\$operator) {\n" . implode("\n", $bindings) . "\n\t\t\tdefault => null,\n\t\t};\n\t}";
+        }
+    }
+    return $mixed;
+}
+
+/** Select only published ordinary promotions and strict identity arms for one ordered scalar pair. */
+function compilerPeerPairArms(array $operators, string $right, array $definitions, array $promotions, array $binary): array {
+    $arms = [];
+    $selected = array_merge(array_keys($operators), array_values($operators));
+    foreach ($promotions as $row) {
+        if ($row['right'] !== $right) continue;
+        foreach (array_intersect($row['operators'], $selected) as $operator) {
+            requireThat($row['result'] === 'bool_t', 'Peer comparison must return bool');
+            $exec = 'type_' . $definitions[$row['execution']]['class'] . '::instance()';
+            $arms[] = "\t\t\tbinary_operator::$operator => new prepared_peer_equality(\$comparator, $exec, "
+                . "value_conversion::{$row['left_conversion']}, value_conversion::{$row['right_conversion']}),";
+        }
+    }
+    foreach ($selected as $operator) {
+        $identity = $binary[$operator] ?? [];
+        if (!in_array($right, $identity['identity_peers'] ?? [], true)) continue;
+        requireThat($identity['different_result'] === in_array($operator, $operators, true), 'Unsupported scalar identity policy');
+        $arms[] = "\t\t\tbinary_operator::$operator => new prepared_peer_equality(\$comparator, null),";
+    }
+    return $arms;
 }
