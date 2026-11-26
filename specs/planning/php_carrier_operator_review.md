@@ -27,3 +27,27 @@ fields across result specializations without allocating. The generated checked
 update takes its slot as a lambda argument so a temporary receiver lives through
 write-back. The fixtures exercise soundness and evaluation order. They do not
 measure executable performance.
+
+## Explicit casts and numeric coverage
+
+Scalar numeric and text casts already emitted one checked payload read.
+The audit found two missing compositions at the PHP explicit cast boundary:
+boxing a carried scalar into mixed/dynamic and casting a carried mixed/dynamic
+through its published boxed conversion. Both now use the shared operand family
+metadata and the existing payload conversion. Cross-family mixed/dynamic
+conversion and typed string-to-bool conversion remain outside the scalar rules.
+A failed result raises before boxed tag dispatch. The native fixture also checks
+a successful boxed false and one evaluation of a function returning a result.
+
+The carrier operator fixtures exercise unary signs, all six binary arithmetic
+operators, bitwise complement/AND/OR/XOR, both shifts, and prefix/postfix updates.
+The checked integer compound fixture observes the result after each of
+`+= -= *= /= %= **= <<= >>= |= ^= &=`. This covers operator spellings;
+specializations and widths still depend on the active publication.
+
+A lowering probe paired 15 published carrier types with seven targets (bool,
+byte, int, float, string, mixed and dynamic). Across all 105 pairs, admission
+matched the corresponding plain payload cast: 87 accepted and 18 rejected.
+Each accepted carrier expression emitted a checked value read. The comparison
+covered the local publication including JSON result types. The native regression
+selects boxed-result cases when the build publishes those specializations.

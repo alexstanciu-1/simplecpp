@@ -40,6 +40,18 @@ $s .= append($s);
 $other result_or_false<string> = "b";
 $s .= $other;
 echo $s . "!";
+$n ?int = 6;
+$n += 3; echo "|", $n + 0;
+$n -= 1; echo "|", $n + 0;
+$n *= 7; echo "|", $n + 0;
+$n /= 2; echo "|", $n + 0;
+$n %= 9; echo "|", $n + 0;
+$n **= 3; echo "|", $n + 0;
+$n <<= 3; echo "|", $n + 0;
+$n >>= 1; echo "|", $n + 0;
+$n |= 3; echo "|", $n + 0;
+$n ^= 5; echo "|", $n + 0;
+$n &= 7; echo "|", $n + 0;
 return 8;
 SCPP;
 $cpp = $compile($source);
@@ -67,7 +79,7 @@ int check_writes() {
     return App::scpp_entry_body();
 }
 CPP;
-$fixtures = ['php' => ['cpp' => $cpp, 'stdout_hex' => bin2hex("10|10|12|13|4|1|8|a\0!b!")]];
+$fixtures = ['php' => ['cpp' => $cpp, 'stdout_hex' => bin2hex("10|10|12|13|4|1|8|a\0!b!|9|8|56|28|1|1|8|4|7|2|2")]];
 foreach (['$s ?string = null;', '$s result_or_false<string> = false_sentinel;', '$s result_or_bool<string> = true_sentinel;'] as $i => $decl) {
 	$fixtures["missing-$i"] = ['cpp' => $compile('function rhs(): string { echo "unexpected"; return "!"; }' . $decl . '$s .= rhs(); return 8;'),
 		'stdout_hex' => '', 'catch_runtime_error' => 'carrier_no_value'];

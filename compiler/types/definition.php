@@ -698,21 +698,27 @@ abstract class type_definition
 	final public function prepare_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
 		$source = $value->type_def();
+		$transport = 0;
+		if ($source instanceof carrier_type_definition) {
+			if ($source === $this) return value_conversion::identity;
+			$source->require_extraction($value, $context);
+			$transport = value_conversion::EXTRACT;
+			if ($context === conversion_context::explicit_cast && $value->source()->flavor === flavor::php) {
+				$source = carrier_operand_payload($source)
+					?? throw new diagnostic($value->source(), $value->byte_start(), 'Carrier does not participate in explicit casts');
+				if ($source === $this) return $transport | value_conversion::identity;
+				if ($this instanceof boxed_type_definition && $this->accepts_scalar($source)) return $transport | value_conversion::box_scalar;
+			}
+		}
 		if ($source instanceof boxed_type_definition && $source !== $this) {
 			if (!$source->admits_extraction($this, $context)) {
 				throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported boxed conversion to ' . $this->name);
 			}
-			return match ($context) {
+			return $transport | match ($context) {
 				conversion_context::typed_destination => value_conversion::unbox_typed,
 				conversion_context::explicit_cast => value_conversion::unbox_explicit,
 				conversion_context::assignment => value_conversion::unbox_assignment,
 			};
-		}
-		if ($source === $this && $this instanceof carrier_type_definition) {
-			return value_conversion::identity;
-		}
-		if ($source instanceof carrier_type_definition) {
-			$source->require_extraction($value, $context);
 		}
 		if ($this instanceof carrier_type_definition) {
 			return $this->prepare_construction($value, $context);
@@ -721,7 +727,7 @@ abstract class type_definition
 			return value_conversion::identity | value_conversion::EXTRACT;
 		}
 		$conversion = $this->prepare_scalar_conversion($value, $context);
-		return $conversion | ($source instanceof carrier_type_definition ? value_conversion::EXTRACT : 0);
+		return $conversion | $transport;
 	}
 
 	/** Lower a prepared operand for an overload requiring this exact native representation. */
@@ -746,24 +752,26 @@ abstract class type_definition
 			$value = $adapters->call($request, [$value]);
 			$conversion = $request->continuation;
 		}
-		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
-			return $this->box_cpp($syntax, $value);
-		}
-		if ($source instanceof boxed_type_definition && $conversion !== value_conversion::identity) {
-			$context = match ($conversion) {
-				value_conversion::unbox_typed => 'typed_destination',
-				value_conversion::unbox_explicit => 'explicit_cast',
-				value_conversion::unbox_assignment => 'assignment',
-			};
-			return 'scpp::boxed_' . $source->name . '_' . $context . '_' . $this->name . '(' . $value . ')';
-		}
 		if (($conversion & value_conversion::EXTRACT) !== 0) {
 			if (!($source instanceof carrier_type_definition)) {
 				throw new \LogicException('Checked extraction requires its source carrier type');
 			}
 			$value = $source->lower_cpp_extract($value);
 			$source = $source->payload_type;
-			$syntax = null;
+			$conversion &= ~value_conversion::EXTRACT;
+			if ($conversion !== value_conversion::box_scalar) $syntax = null;
+		}
+		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
+			return $this->box_cpp($syntax, $value);
+		}
+		if ($source instanceof boxed_type_definition && in_array($conversion,
+			[value_conversion::unbox_explicit, value_conversion::unbox_typed, value_conversion::unbox_assignment], true)) {
+			$context = match ($conversion) {
+				value_conversion::unbox_typed => 'typed_destination',
+				value_conversion::unbox_explicit => 'explicit_cast',
+				value_conversion::unbox_assignment => 'assignment',
+			};
+			return 'scpp::boxed_' . $source->name . '_' . $context . '_' . $this->name . '(' . $value . ')';
 		}
 		if ($this instanceof carrier_type_definition) {
 			if ($conversion === value_conversion::sentinel_carrier) {

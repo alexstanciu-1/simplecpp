@@ -718,3 +718,15 @@ Effects already performed by the RHS remain observable, including changes it
 made to that same slot. Numeric updates follow the scalar update domain. A consumed
 update of an admitted integer carrier local produces the old carrier value for
 postfix and the new carrier value for prefix.
+
+## PHP explicit casts of carrier operands
+
+An explicit cast projects one participating carrier layer and requires a present
+payload. Null, either boolean sentinel and a structured failure throw
+`carrier_no_value`, including when the target is bool. For a present value the
+published explicit conversion of the payload to the destination determines
+admission, result and conversion failures. This includes the exact payload type,
+checked numeric conversions, scalar formatting, and published mixed/dynamic
+boxing or unboxing. Each cast evaluates its operand once. Conditions continue
+to use carrier truth. For example, a false sentinel makes a condition false and
+raises on an explicit bool cast.
