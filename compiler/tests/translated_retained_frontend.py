@@ -77,15 +77,28 @@ def verify_independent_callers(work, exe, cxx, linker, libraries):
         return {p.name: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns)
                 for p in directory.glob('*.cpp')}
 
+    def compare_fresh(label, expected):
+        fresh = work/label
+        fresh.mkdir()
+        for path in app.glob('*.php'):
+            shutil.copyfile(path, fresh/path.name)
+        with service(exe, fresh) as other:
+            assert other('lower').startswith('ok|')
+        assert {k: v[0] for k, v in files(output).items()} == {k: v[0] for k, v in files(fresh/'generated').items()}
+        binary = work/(label+'-program')
+        subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
+                        ROOT/'runtime/generated/public', *sorted(output.glob('*.cpp')), *libraries, '-o', binary], check=True)
+        assert subprocess.run([binary], timeout=10).returncode == expected
+
     with service(exe, app) as run:
-        def step(label, status, prepared, emitted, written, revision):
+        def step(label, status, prepared, emitted, written, revision, right_revision=0):
             before = files(output)
             row = run('lower')
             assert row.split('|') == [status, prepared, emitted, written], (label, row)
             after = files(output)
             actual = {name for name in before.keys() | after.keys() if before.get(name) != after.get(name)}
             assert actual == set(filter(None, written.split(','))), (label, actual)
-            assert run('binding-revisions') == f'call_left.php={revision},call_right.php=0,'
+            assert run('binding-revisions') == f'call_left.php={revision},call_right.php={right_revision},'
             print(f'{label}: {row}')
 
         cold = run('lower')
@@ -103,22 +116,32 @@ def verify_independent_callers(work, exe, cxx, linker, libraries):
         step('left restored', 'ok', 'left.php,call_left.php,', 'left.php,', 'unit-left.php.cpp,', 2)
         step('settled repair', 'ok', '', '', '', 2)
 
-    fresh = work/'fresh-two-callers'
-    fresh.mkdir()
-    for name in sources:
-        shutil.copyfile(app/name, fresh/name)
-    with service(exe, fresh) as other:
-        assert other('lower').startswith('ok|')
-    assert {k: v[0] for k, v in files(output).items()} == {k: v[0] for k, v in files(fresh/'generated').items()}
-    binary = work/'two-callers-program'
-    subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
-                    ROOT/'runtime/generated/public', *sorted(output.glob('*.cpp')), *libraries, '-o', binary], check=True)
-    assert subprocess.run([binary], timeout=10).returncode == 3
+        compare_fresh('fresh-independent', 3)
+
+        switched = sources['call_left.php'].replace('return left()', 'return right()')
+        (app/'call_left.php').write_text(switched)
+        step('retarget left caller', 'ok', 'call_left.php,', 'call_left.php,', 'definition.cpp,', 0)
+        left.unlink()
+        step('old target removed', 'ok', '', '', 'unit-left.php.cpp,', 0)
+
+        right = app/'right.php'
+        right.unlink()
+        error = f"call_left.php:{switched.index('right();')}: Unknown function: right"
+        step('shared target removed', error, 'call_left.php,', '', '', 1, 1)
+        step('shared target retry', error, 'call_left.php,', '', '', 1, 1)
+        right.write_text(sources['right.php'].replace('7', '9'))
+        step('shared target restored', 'ok', 'right.php,call_left.php,call_right.php,',
+             'right.php,', 'unit-right.php.cpp,', 2, 2)
+        step('shared target settled', 'ok', '', '', '', 2, 2)
+        compare_fresh('fresh-shared', 9)
+
     # A restarted publisher retires only its own obsolete units.
     external = output/'unit-external.php.cpp'
     external.write_text('// externally owned')
+    (app/'call_left.php').write_text(sources['call_left.php'])
+    left.write_text(sources['left.php'])
     (app/'call_right.php').unlink()
-    (app/'right.php').unlink()
+    right.unlink()
     with service(exe, app) as restarted:
         assert restarted('lower').startswith('ok|')
     assert external.read_text() == '// externally owned'
