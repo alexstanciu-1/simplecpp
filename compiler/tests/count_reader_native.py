@@ -17,6 +17,7 @@ function keys(hash<int,int> $items):int {return count($items);}
 other = """
 struct Mark {public int $x=0;public function __destruct(){echo "D";}}
 function marked(vector<Mark> $items):int {return count($items);}
+function markedSnapshot(const vector<Mark> &$items):int {$snapshot=$items;return count($snapshot);}
 function textKeys(hash<int,string> $items):int {return count($items);}
 function invokeWidth(callback<int,vector<int>> $cb,vector<int> &$v):int {return $cb($v);}
 function snapshot(vector<int> $view,vector<int> &$writer):int {clean($writer);return count($view);}
@@ -27,7 +28,7 @@ $h[42]=7;echo first($v),lookup($h),$v[0],$h[42];
 try {echo width($v),invokeWidth(width(...),$v);} catch (Exception $e) {echo "E";}
 echo count($v),keys($h),snapshot($v,$v),count($v);
 $text hash<int,string> = [];$text["a"]=1;echo textKeys($text);
-$m Mark;$marks vector<Mark> = [$m];echo "[";echo marked($marks);echo "]";
+$m Mark;$marks vector<Mark> = [$m];echo "[";echo marked($marks);echo "]";echo markedSnapshot($marks);
 return 8;
 """
 parser = argparse.ArgumentParser(description=__doc__)
@@ -35,7 +36,7 @@ parser.add_argument('--quick', action='store_true')
 quick = parser.parse_args().quick
 with TemporaryDirectory(prefix='scpp-private-count-') as directory:
     work = Path(directory)
-    cleanup = b'1D[1D]DD'
+    cleanup = b'1D[1D]D1DD'
     edits = [
         (None, None, b'1717222220' + cleanup),
         ('reader', reader.replace('return count($items);', 'clean($items);return count($items);', 1), b'1717002220' + cleanup),
@@ -85,6 +86,15 @@ function innerCount(vector<int> $items):int {return count($items);}
 function innerVector(vector<int> $items):int {return $items[0];}
 function innerHash(hash<int,int> $items,int $key):int {return $items[$key];}
 """
+snapshot_reader = """
+function snapshotFirst(const vector<int> &$items,vector<int> &$writer):int {
+    $writer[0]=5;$snapshot=$items;return $snapshot[0];
+}
+function snapshotLookup(const hash<int,int> &$items,hash<int,int> &$writer,int $key):int {
+    $writer[$key]=8;$snapshot=$items;return $snapshot[$key];
+}
+"""
+snapshot_writer = snapshot_reader.replace('$snapshot=$items;', '$snapshot=$items;clean($writer);')
 query_reader = """
 function vecEmpty(vector<int> $items):bool {return empty($items);}
 function hashEmpty(hash<int,int> $items):bool {return empty($items);}
@@ -96,6 +106,18 @@ query_writer = query_reader.replace('return empty', 'clean($items);return empty'
     'return hash_contains', 'clean($items);return hash_contains').replace(
     '$result=$items', '$items[0]=8;$result=$items')
 query_calls = """
+function snapshotReads():int {
+    $v vector<int> = [4];$h hash<int,int> = [];$h[7]=6;
+    $first=snapshotFirst($v,$v);$second=snapshotLookup($h,$h,7);
+    return 1000*$first+100*$second+10*count($v)+count($h);
+}
+function replaceAtZero(vector<int> &$items):int {$items[0]=9;return 0;}
+function snapshotEffectful(const vector<int> &$items,vector<int> &$writer):int {
+    $snapshot=$items;return $snapshot[replaceAtZero($writer)];
+}
+function effectfulSnapshotReads():int {
+    $v vector<int> = [4];$seen=snapshotEffectful($v,$v);return 10*$seen+$v[0];
+}
 function emptyReads():int {
     $v vector<int> = [];$h hash<int,int> = [];
     $both=10*(int)vecEmpty($v)+(int)hashEmpty($h);$v[]=4;$h[0]=6;
@@ -237,12 +259,12 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     work = Path(directory)
     expected = b'1111|5757|680/680|668857:24:5577:V5V9H7H9V5V9H7H9'
     forward_writer = forward_reader.replace('return $items[', '$items[0]=9;return $items[')
-    forward_writer += query_writer
+    forward_writer += query_writer + snapshot_writer
     forward_writer += scalar_reader.replace('return $items[0];}', '$items[0]=false;return $items[0];}', 1).replace(
         'return $items[$key];}', '$items[$key]=-4.5;return $items[$key];}')
     edits = [(None, None, expected),
              ('forward_reader', forward_writer, b'11|9957|680/680|969857:24:5577:V5V9H7H9V5V9H7H9'),
-             ('forward_reader', forward_reader + query_reader + scalar_reader, expected),
+             ('forward_reader', forward_reader + query_reader + snapshot_reader + scalar_reader, expected),
              ('main', named_calls.replace('int $which', 'int &$which'), expected.replace(b'680/680', b'681/681')),
              ('main', named_calls, expected),
              ('reader', keyed_reader.replace('$key=0', '$key=1'), b'1111|5757|680/680|668857:24:6688:V5V9H7H9V5V9H7H9'),
@@ -254,7 +276,7 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
                                                '$readPack[0]=7;$observed=innerVector($readPack);'), 'read-only variadic pack'),
              ('forward', forward_calls, expected)]
     sources = dict(main=named_calls, reader=keyed_reader, forward=forward_calls, queries=query_calls,
-                   forward_reader=forward_reader + query_reader + scalar_reader, driver=key_driver)
+                   forward_reader=forward_reader + query_reader + snapshot_reader + scalar_reader, driver=key_driver)
     revisions(work, 'php', sources, edits[:1] if quick else edits)
     out = work/'php-out'
     units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
@@ -268,6 +290,7 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     assert 'innerCount_collection_reader(var_items' in units
     assert 'innerCount_collection_reader(var_readPack' in units
     assert 'innerVector_collection_reader(var_readPack' in units
+    assert units.count('const auto& var_snapshot_') == 2
     for symbol in ('vecEmpty', 'hashEmpty', 'hasKey', 'localAt', 'localLookup'):
         assert not re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return ' + symbol + r'_\(', units)
         assert symbol + '_collection_reader(var_' in units
@@ -301,6 +324,12 @@ if not quick:
         for function, collection, error, args in [('localAt', 'vector<int>', 'sequence_index_out_of_range', '$v'),
                                                    ('localLookup', 'hash<int,int>', 'hash_missing_key', '$v,0')]:
             guard(Path(directory), 'php', function, query_reader + f'$v {collection} = [];return {function}({args});',
+                  error, exception_type='std::out_of_range')
+        for function, collection, error, setup, args in [
+            ('snapshotFirst', 'vector<int>', 'sequence_index_out_of_range', '$writer vector<int> = [0];', '$v,$writer'),
+            ('snapshotLookup', 'hash<int,int>', 'hash_missing_key', '$writer hash<int,int> = [];', '$v,$writer,7'),
+        ]:
+            guard(Path(directory), 'php', function, snapshot_reader + f'$v {collection} = [];{setup}return {function}({args});',
                   error, exception_type='std::out_of_range')
     from classes_native import fixture
     for flavor in ('cpp', 'js'):
@@ -347,10 +376,14 @@ if not quick:
         presence = forms['function']('present', 'bool', [('items', 'hash<int,int>'), ('key', 'int')],
                                      local_decl + 'hash_contains(items,key);return found;')
         vacant = forms['function']('vacant', 'bool', [('items', 'hash<int,int>')], 'return empty(items);')
-        provider = presence + vacant
+        local_copy = 'auto copy=items;' if flavor == 'cpp' else 'let copy=items;'
+        saved = forms['function']('saved', 'int', [('&items', 'hash<int,int>'), ('&alias', 'hash<int,int>')],
+                                  'alias[0]=7;' + local_copy + 'return copy[0];')
+        provider = presence + vacant + saved
         writer = provider.replace(local_decl, 'items[1]=8;' + local_decl).replace('return empty', 'items[1]=8;return empty')
-        app = table + 'if(vacant(table)){echo "E";}table[0]=6;if(present(table,1)){echo "P";}echo count(table);return 8;'
+        writer = writer.replace(local_copy, local_copy + 'alias[0]=9;')
+        app = table + 'if(vacant(table)){echo "E";}table[0]=6;if(present(table,1)){echo "P";}echo count(table),saved(table,table),table[0];return 8;'
         with TemporaryDirectory(prefix='scpp-query-readers-') as directory:
             revisions(Path(directory), flavor, dict(main=app, reader=provider), [
-                (None, None, b'E1'), ('reader', writer, b'P1'), ('reader', None, None), ('reader', provider, b'E1'),
+                (None, None, b'E177'), ('reader', writer, b'P179'), ('reader', None, None), ('reader', provider, b'E177'),
             ])

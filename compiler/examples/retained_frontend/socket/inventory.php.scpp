@@ -1,23 +1,18 @@
 // Discover and digest the selected application's sources without a generated inventory.
-function source_inventory(string $directory, bool $from_bytes, string $output): string {
-    $manifest = manifest_location(".", $directory);
+function source_inventory(string $directory, bool $from_bytes, string $output, string $runtime, string $view): string {
+    $manifest = manifest_location("", $directory);
     $root = fs_dirname($manifest);
-    $text string = fs_get($manifest);
-    $doc = document($text);
+    $graph = new Inventory_Graph();
+    $app = $graph->activate($manifest, $runtime);
+    $doc = document($app->text);
     $node json_node = json_document_root($doc);
-    if (json_node_kind($node) !== "object") throw Exception::make("Expected module manifest");
-    if (json_node_has($node, "type") && member_text($node, "type") !== "default")
-        throw Exception::make("Executable entry must be a default module");
-    $module = fs_basename($root);
-    if (json_node_has($node, "name")) $module = member_text($node, "name");
+    $module = $app->name;
     $sources hash<string,string> = [];
     if (json_node_has($node, "sources")) {
         $selection json_node = json_node_member($node, "sources");
         explicit_sources($selection, $sources);
     } else {
-        $visited hash<string,string> = [];
-        $excluded hash<string,string> = [];
-        dependency_roots($manifest, "", $visited, $excluded);
+        $excluded = $graph->excluded;
         if ($output !== "" && fs_is_dir($output)) {
             $out string = fs_realpath($output);
             $excluded[$out] = $out;
@@ -36,6 +31,9 @@ function source_inventory(string $directory, bool $from_bytes, string $output): 
         $entry = member_text($node, "entry");
         if (!isset($sources[$entry])) throw Exception::make("Entry missing from source inventory");
     } elseif ($main_count !== 1) throw Exception::make("Entry requires one root-level main source");
+    $graph->validate_order();
+    if (json_node_has($node, "type") && member_text($node, "type") !== "default")
+        throw Exception::make("Executable entry must be a default module");
     $scratch = $paths;
     $count = count($paths);
     order_paths($paths, $scratch, 0, $count);
@@ -51,6 +49,7 @@ function source_inventory(string $directory, bool $from_bytes, string $output): 
         if (!str_starts_with($disk, rtrim($root, "/") . "/") || !fs_is_file($disk) || isset($physical[$disk]))
             throw Exception::make("Invalid or duplicate physical source: " . $path);
         $physical[$disk] = $path;
+        if ($view !== "sources") continue;
         $digest = "";
         if ($from_bytes) {
             $bytes string = fs_get($disk);
@@ -64,5 +63,7 @@ function source_inventory(string $directory, bool $from_bytes, string $output): 
         $report .= quoted($key) . ":{\"flavor\":" . quoted($sources[$path])
             . ",\"sha256\":" . quoted($digest) . ",\"unit\":" . quoted($unit) . "}";
     }
+    if ($view === "--link-inputs") return $graph->link_report($app);
+    if ($view === "--graph") return $graph->report();
     return $report . "}";
 }

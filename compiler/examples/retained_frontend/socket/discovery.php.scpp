@@ -8,57 +8,10 @@ function source_flavor(string $path): string {
 }
 
 function manifest_location(string $base, string $location): string {
-    if (!str_starts_with($location, "/")) $location = $base . "/" . $location;
-    if (fs_is_dir($location)) $location .= "/module.json";
+    if ($base !== "" && !str_starts_with($location, "/")) $location = $base . "/" . $location;
+    if (fs_is_dir($location)) $location = rtrim($location, "/") . "/module.json";
+    if (!fs_is_file($location)) throw Exception::make("Missing module manifest: " . $location);
     return fs_realpath($location);
-}
-
-// Collect the roots of active dependencies, including submodules with custom manifest names.
-function dependency_roots(string $manifest, string $alias, hash<string,string> &$visited,
-                          hash<string,string> &$excluded): void {
-    $key = $manifest . "\0" . $alias;
-    if (isset($visited[$key])) return;
-    $visited[$key] = $manifest;
-    $base = fs_dirname($manifest);
-    $bytes string = fs_get($manifest);
-    $doc = document($bytes);
-    $node json_node = json_document_root($doc);
-    if ($alias !== "") {
-        $modules json_node = json_node_member($node, "modules");
-        $child = manifest_location($base, member_text($modules, $alias));
-        $excluded[fs_dirname($child)] = $child;
-        dependency_roots($child, "", $visited, $excluded);
-        return;
-    }
-    if (json_node_has($node, "defaults")) {
-        $defaults json_node = json_node_member($node, "defaults");
-        $count int = json_node_size($defaults);
-        for ($i = 0; $i < $count; $i++) {
-            $item json_node = json_node_at($defaults, $i);
-            $name string = json_node_string($item);
-            dependency_roots($manifest, $name, $visited, $excluded);
-        }
-    }
-    if (!json_node_has($node, "dependencies")) return;
-    $deps json_node = json_node_member($node, "dependencies");
-    $size int = json_node_size($deps);
-    for ($j = 0; $j < $size; $j++) {
-        $name string = json_node_key($deps, $j);
-        $opts json_node = json_node_member($deps, $name);
-        if ($name === "runtime" && !json_node_has($opts, "path")) continue;
-        $target = manifest_location($base, member_text($opts, "path"));
-        $excluded[fs_dirname($target)] = $target;
-        dependency_roots($target, "", $visited, $excluded);
-        if (json_node_has($opts, "modules")) {
-            $requests json_node = json_node_member($opts, "modules");
-            $n int = json_node_size($requests);
-            for ($k = 0; $k < $n; $k++) {
-                $request json_node = json_node_at($requests, $k);
-                $sub string = json_node_string($request);
-                dependency_roots($target, $sub, $visited, $excluded);
-            }
-        }
-    }
 }
 
 function discover_sources(string $root, string $prefix, hash<string,string> &$excluded,

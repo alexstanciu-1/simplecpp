@@ -19,8 +19,25 @@ roots and the standard build, generated, vendor and node_modules directories.
 Pass `--output-directory PATH` to exclude a custom output directory as well.
 Keys are ordered by relative path using bytewise comparison.
 
-This command inventories source files. The PHP project build still owns full
-module graph validation, runtime provider selection, and artifact linking.
+Every inventory invocation resolves the module graph, including explicit source
+lists. Pass `--graph` to print a JSON object mapping each selected module to
+its ordered direct dependencies. The keys follow the PHP loader's dependency
+order. Requested and default submodules enter the inventory through activation.
+A module's dependencies come from its own manifest, plus the application's
+implicit runtime edge.
+
+Pass `--link-inputs` to inspect the module artifact lists and the ordered linker
+inputs. Relative paths are prefixed with the declaring manifest's directory.
+The linker list visits modules in reverse dependency order, skips the entry
+module and keeps the first occurrence of each exact path string. Per-module
+lists retain declaration order and duplicates. The project build checks file
+availability and invokes the linker.
+
+The executable defaults to the runtime manifest from its build checkout.
+Use `--runtime DIR_OR_MANIFEST` with a relocated or test runtime. Manifest JSON
+uses the native JSON document reader, including its unique-key and nesting rules.
+The `compiler_native_module_graph` test compares selection and graph diagnostics
+against the PHP module loader.
 
 Pass `--from-bytes` to exercise hashing an in-memory source snapshot instead.
 Both paths use OpenSSL EVP and preserve embedded NULs. Neither command persists

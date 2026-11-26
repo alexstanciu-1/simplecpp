@@ -55,14 +55,24 @@ if (count($cli) > 1) {
         if (count($cli) < 3) return 2;
         $from_bytes = false;
         $output = "";
+        $runtime = inventory_default_runtime();
+        $view = "sources";
         for ($i = 3; $i < count($cli); $i++) {
             if ($cli[$i] === "--from-bytes") $from_bytes = true;
+            elseif ($cli[$i] === "--graph" || $cli[$i] === "--link-inputs") {
+                if ($view !== "sources") return 2;
+                $view = $cli[$i];
+            }
+            elseif ($cli[$i] === "--runtime" && $i + 1 < count($cli)) {
+                $i++;
+                $runtime = $cli[$i];
+            }
             elseif ($cli[$i] === "--output-directory" && $i + 1 < count($cli)) {
                 $i++;
                 $output = $cli[$i];
             } else return 2;
         }
-        echo source_inventory($cli[2], $from_bytes, $output);
+        echo source_inventory($cli[2], $from_bytes, $output, $runtime, $view);
         return 0;
     }
     if (count($cli) < 3 || count($cli) > 4 || $cli[1] !== "frontend") return 2;

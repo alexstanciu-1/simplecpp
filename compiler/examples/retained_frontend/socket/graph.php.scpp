@@ -1,0 +1,267 @@
+// Module activation and dependency order follow the PHP project loader.
+function graph_fields(json_node $node, string $allowed, string $where): void {
+    if (json_node_kind($node) !== "object") throw Exception::make("Expected an object: " . $where);
+    $count int = json_node_size($node);
+    for ($i = 0; $i < $count; $i++) {
+        $key string = json_node_key($node, $i);
+        if (str_contains($key, "|") || !str_contains($allowed, "|" . $key . "|"))
+            throw Exception::make("Unsupported field " . $key . " in " . $where);
+    }
+}
+
+function graph_strings(json_node $node, string $where): vector<string> {
+    if (json_node_kind($node) !== "array") throw Exception::make("Expected a string list: " . $where);
+    $out vector<string> = [];
+    $n int = json_node_size($node);
+    for ($i = 0; $i < $n; $i++) {
+        $item json_node = json_node_at($node, $i);
+        if (json_node_kind($item) !== "string" || json_node_string($item) === "")
+            throw Exception::make("Expected nonempty string: " . $where);
+        $s string = json_node_string($item);
+        $out[] = $s;
+    }
+    return $out;
+}
+
+function graph_name_valid(string $name): bool {
+    if ($name === "") return false;
+    for ($i = 0; $i < strlen($name); $i++) {
+        $b = (int)$name[$i];
+        if (($b >= 65 && $b <= 90) || ($b >= 97 && $b <= 122) || $b === 95) continue;
+        if ($i > 0 && (($b >= 48 && $b <= 57) || $b === 45 || $b === 46)) continue;
+        return false;
+    }
+    return true;
+}
+
+function graph_string(json_node $node, string $message): string {
+    if (json_node_kind($node) !== "string") throw Exception::make($message);
+    $value string = json_node_string($node);
+    if ($value === "") throw Exception::make($message);
+    return $value;
+}
+
+final class Inventory_Module {
+    public string $path;
+    public string $name;
+    public string $text;
+    public vector<string> $defaults;
+    public vector<string> $artifacts;
+    public hash<string,string> $aliases;
+    public hash<int,string> $edges;
+    public bool $expanded = false;
+    public int $state = 0;
+
+    public function __construct(string $path) {
+        $this->path = $path;
+        $bytes = fs_get($path);
+        if (!isset($bytes)) throw Exception::make("Cannot read manifest: " . $path);
+        $error ?json_parse_error = null;
+        $text string = $bytes;
+        $parsed = json_document_parse($text, $error);
+        if (!isset($parsed)) throw Exception::make("Invalid module JSON: " . $path . ": Syntax error");
+        $this->text = $text;
+        $doc json_document = $parsed;
+        $node json_node = json_document_root($doc);
+        graph_fields($node, "|name|type|entry|sources|dependencies|modules|defaults|artifacts|cpp_namespace|async_task_methods|general_api|", $path);
+        $this->name = fs_basename(fs_dirname($path));
+        if (json_node_has($node, "name")) {
+            $v json_node = json_node_member($node, "name");
+            $this->name = graph_string($v, "Invalid module name: " . $path);
+        }
+        if (!graph_name_valid($this->name)) throw Exception::make("Invalid module name: " . $path);
+    }
+
+    public function validate(): void {
+        $doc = document($this->text);
+        $node json_node = json_document_root($doc);
+        if (json_node_has($node, "type")) {
+            $t json_node = json_node_member($node, "type");
+            $type = graph_string($t, "Invalid module type: " . $this->path);
+            if ($type !== "default" && $type !== "c++") throw Exception::make("Invalid module type: " . $this->path);
+        }
+        $fields vector<string> = ["dependencies", "modules"];
+        foreach ($fields as $field) {
+            if (json_node_has($node, $field)) {
+                $obj json_node = json_node_member($node, $field);
+                if (json_node_kind($obj) !== "object") throw Exception::make("dependencies and modules must be objects: " . $this->path);
+            }
+        }
+        if (json_node_has($node, "defaults")) {
+            $items json_node = json_node_member($node, "defaults");
+            $this->defaults = graph_strings($items, "defaults");
+        }
+        if (json_node_has($node, "modules")) {
+            $mods json_node = json_node_member($node, "modules");
+            $n int = json_node_size($mods);
+            for ($i = 0; $i < $n; $i++) {
+                $alias string = json_node_key($mods, $i);
+                $loc json_node = json_node_member($mods, $alias);
+                $this->aliases[$alias] = graph_string($loc, "Invalid submodule path: " . $alias);
+            }
+        }
+        if (json_node_has($node, "artifacts")) {
+            $art json_node = json_node_member($node, "artifacts");
+            if (json_node_kind($art) !== "null") {
+                $paths = graph_strings($art, "artifacts");
+                $root = fs_dirname($this->path);
+                foreach ($paths as $path) {
+                    if (str_starts_with($path, "/")) $this->artifacts[] = $path;
+                    else $this->artifacts[] = $root . "/" . $path;
+                }
+            }
+        }
+    }
+}
+
+final class Inventory_Request {
+    public string $path;
+    public vector<string> $requested;
+
+    public function __construct(string $path, vector<string> $requested) {
+        $this->path = $path;
+        $this->requested = $requested;
+    }
+}
+
+final class Inventory_Graph {
+    private hash<int,string> $paths;
+    private hash<int,string> $names;
+    private vector<Inventory_Module> $modules;
+    private vector<Inventory_Request> $queue;
+    private hash<string,string> $activated;
+    private vector<string> $ordered;
+    public hash<string,string> $excluded;
+
+    private function read(string $path): Inventory_Module {
+        if ($this->paths->has($path)) return $this->modules[$this->paths[$path]];
+        $m = new Inventory_Module($path);
+        if ($this->names->has($m->name)) throw Exception::make("Conflicting module name: " . $m->name);
+        $m->validate();
+        $index = count($this->modules);
+        $this->paths[$path] = $index;
+        $this->names[$m->name] = $index;
+        $this->modules[] = $m;
+        return $m;
+    }
+
+    private function expand(Inventory_Module $m, json_node $deps, string $runtime): void {
+        $n int = json_node_size($deps);
+        for ($i = 0; $i < $n; $i++) {
+            $name string = json_node_key($deps, $i);
+            $opts json_node = json_node_member($deps, $name);
+            graph_fields($opts, "|path|modules|", "dependency " . $name);
+            $target = $runtime;
+            if (json_node_has($opts, "path")) {
+                $v json_node = json_node_member($opts, "path");
+                $loc = graph_string($v, "Invalid dependency path: " . $name);
+                $target = manifest_location(fs_dirname($m->path), $loc);
+            } elseif ($name !== "runtime") throw Exception::make("Dependency requires path: " . $name);
+            $dep = $this->read($target);
+            if ($dep->name !== $name) throw Exception::make("Dependency name does not match manifest: " . $name);
+            $m->edges[$name] = $this->names[$name];
+            $aliases vector<string> = [];
+            if (json_node_has($opts, "modules")) {
+                $items json_node = json_node_member($opts, "modules");
+                $aliases = graph_strings($items, "modules");
+            }
+            $this->queue[] = new Inventory_Request($target, $aliases);
+        }
+    }
+
+    public function activate(string $entry, string $runtime_location): Inventory_Module {
+        $app = $this->read($entry);
+        $runtime = manifest_location("", $runtime_location);
+        $base = $this->read($runtime);
+        if ($base->name !== "runtime") throw Exception::make("Built-in runtime manifest must be named runtime");
+        $this->queue[] = new Inventory_Request($entry, []);
+        $this->queue[] = new Inventory_Request($runtime, []);
+        for ($i = 0; $i < count($this->queue); $i++) {
+            $request = $this->queue[$i];
+            $m = $this->read($request->path);
+            $aliases = $request->requested;
+            if (!$m->expanded) {
+                $m->expanded = true;
+                foreach ($m->defaults as $alias) { $aliases[] = $alias; }
+                $doc = document($m->text);
+                $node json_node = json_document_root($doc);
+                if (json_node_has($node, "dependencies")) {
+                    $deps json_node = json_node_member($node, "dependencies");
+                    $this->expand($m, $deps, $runtime);
+                }
+            }
+            foreach ($aliases as $alias) {
+                if (!$m->aliases->has($alias)) throw Exception::make("Unknown submodule: " . $m->name . "::" . $alias);
+                $key = $m->path . "\0" . $alias;
+                if ($this->activated->has($key)) continue;
+                $this->activated[$key] = $alias;
+                $target = manifest_location(fs_dirname($m->path), $m->aliases[$alias]);
+                $this->queue[] = new Inventory_Request($target, []);
+            }
+        }
+        $app->edges["runtime"] = $this->names["runtime"];
+        foreach ($this->modules as $m) {
+            if ($m !== $app) $this->excluded[fs_dirname($m->path)] = $m->path;
+        }
+        return $app;
+    }
+
+    private function visit(Inventory_Module $m): void {
+        if ($m->state === 1) throw Exception::make("Module dependency cycle: " . $m->name);
+        if ($m->state === 2) return;
+        $m->state = 1;
+        foreach ($m->edges as $index) { $this->visit($this->modules[$index]); }
+        $m->state = 2;
+        $this->ordered[] = $m->name;
+    }
+
+    public function validate_order(): void {
+        foreach ($this->modules as $m) { $this->visit($m); }
+    }
+
+    // Retain declaration order per module. The linker visits consumers first.
+    public function link_report(Inventory_Module $entry): string {
+        $artifacts = "{";
+        foreach ($this->ordered as $name) {
+            if ($artifacts !== "{") $artifacts .= ",";
+            $m = $this->modules[$this->names[$name]];
+            $artifacts .= quoted($name) . ":[";
+            $separator = "";
+            foreach ($m->artifacts as $path) {
+                $artifacts .= $separator . quoted($path);
+                $separator = ",";
+            }
+            $artifacts .= "]";
+        }
+        $inputs = "[";
+        $seen hash<string,string> = [];
+        for ($i = count($this->ordered); $i > 0; $i--) {
+            $name = $this->ordered[$i - 1];
+            $m = $this->modules[$this->names[$name]];
+            if ($m === $entry) continue;
+            foreach ($m->artifacts as $path) {
+                if (isset($seen[$path])) continue;
+                $seen[$path] = $path;
+                if ($inputs !== "[") $inputs .= ",";
+                $inputs .= quoted($path);
+            }
+        }
+        return "{\"artifacts\":" . $artifacts . "},\"link_inputs\":" . $inputs . "]}";
+    }
+
+    public function report(): string {
+        $text = "{";
+        foreach ($this->ordered as $name) {
+            if ($text !== "{") $text .= ",";
+            $text .= quoted($name) . ":[";
+            $m = $this->modules[$this->names[$name]];
+            $separator = "";
+            foreach ($m->edges as $dep => $index) {
+                $text .= $separator . quoted($dep);
+                $separator = ",";
+            }
+            $text .= "]";
+        }
+        return $text . "}";
+    }
+}
