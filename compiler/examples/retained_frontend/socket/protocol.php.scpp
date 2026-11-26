@@ -52,9 +52,17 @@ function report(Frontend_Session $session, string $root, string $line, bool &$st
 $cli = cli_arguments();
 if (count($cli) > 1) {
     if ($cli[1] === "inventory") {
-        if (count($cli) < 3 || count($cli) > 4) return 2;
-        if (count($cli) === 4 && $cli[3] !== "--from-bytes") return 2;
-        echo source_inventory($cli[2], count($cli) === 4);
+        if (count($cli) < 3) return 2;
+        $from_bytes = false;
+        $output = "";
+        for ($i = 3; $i < count($cli); $i++) {
+            if ($cli[$i] === "--from-bytes") $from_bytes = true;
+            elseif ($cli[$i] === "--output-directory" && $i + 1 < count($cli)) {
+                $i++;
+                $output = $cli[$i];
+            } else return 2;
+        }
+        echo source_inventory($cli[2], $from_bytes, $output);
         return 0;
     }
     if (count($cli) < 3 || count($cli) > 4 || $cli[1] !== "frontend") return 2;

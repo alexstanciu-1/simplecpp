@@ -1,19 +1,56 @@
-// Digest the paths selected by Module_Loader for one application.
-function source_inventory(string $directory, bool $from_bytes): string {
-    $text string = fs_get($directory . "/module.sources.json");
+// Discover and digest the selected application's sources without a generated inventory.
+function source_inventory(string $directory, bool $from_bytes, string $output): string {
+    $manifest = manifest_location(".", $directory);
+    $root = fs_dirname($manifest);
+    $text string = fs_get($manifest);
     $doc = document($text);
-    $root json_node = json_document_root($doc);
-    $modules json_node = json_node_member($root, "modules");
-    if (json_node_kind($modules) !== "object" || json_node_size($modules) !== 1)
-        throw Exception::make("Expected one application in the source inventory");
-    $module string = json_node_key($modules, 0);
-    $sources json_node = json_node_member($modules, $module);
-    if (json_node_kind($sources) !== "object") throw Exception::make("Expected source paths");
-    $count int = json_node_size($sources);
+    $node json_node = json_document_root($doc);
+    if (json_node_kind($node) !== "object") throw Exception::make("Expected module manifest");
+    if (json_node_has($node, "type") && member_text($node, "type") !== "default")
+        throw Exception::make("Executable entry must be a default module");
+    $module = fs_basename($root);
+    if (json_node_has($node, "name")) $module = member_text($node, "name");
+    $sources hash<string,string> = [];
+    if (json_node_has($node, "sources")) {
+        $selection json_node = json_node_member($node, "sources");
+        explicit_sources($selection, $sources);
+    } else {
+        $visited hash<string,string> = [];
+        $excluded hash<string,string> = [];
+        dependency_roots($manifest, "", $visited, $excluded);
+        if ($output !== "" && fs_is_dir($output)) {
+            $out string = fs_realpath($output);
+            $excluded[$out] = $out;
+        }
+        discover_sources($root, "", $excluded, $sources);
+    }
+    $paths vector<string> = [];
+    $main_count = 0;
+    foreach ($sources as $name => $flavor) {
+        $paths[] = $name;
+        if ($name === "main" || (!str_contains($name, "/") && str_starts_with($name, "main.")
+            && !str_contains(substr($name, 5), ".")))
+            $main_count++;
+    }
+    if (json_node_has($node, "entry")) {
+        $entry = member_text($node, "entry");
+        if (!isset($sources[$entry])) throw Exception::make("Entry missing from source inventory");
+    } elseif ($main_count !== 1) throw Exception::make("Entry requires one root-level main source");
+    $scratch = $paths;
+    $count = count($paths);
+    order_paths($paths, $scratch, 0, $count);
+    $physical hash<string,string> = [];
     $report = "{";
     for ($i = 0; $i < $count; $i++) {
-        $path string = json_node_key($sources, $i);
-        $disk = $directory . "/" . $path;
+        $path = $paths[$i];
+        $wrapped = "/" . $path . "/";
+        if (str_contains($wrapped, "//") || str_contains($wrapped, "/./") || str_contains($wrapped, "/../")
+            || str_contains($path, ":") || str_contains($path, "\\") || str_contains($path, "\0"))
+            throw Exception::make("Expected canonical relative source path: " . $path);
+        $disk string = fs_realpath($root . "/" . $path);
+        if (!str_starts_with($disk, rtrim($root, "/") . "/") || !fs_is_file($disk) || isset($physical[$disk]))
+            throw Exception::make("Invalid or duplicate physical source: " . $path);
+        $physical[$disk] = $path;
         $digest = "";
         if ($from_bytes) {
             $bytes string = fs_get($disk);
@@ -24,7 +61,7 @@ function source_inventory(string $directory, bool $from_bytes): string {
         $key = $module . "/" . $path;
         $unit = "units/" . host_sha256_bytes($key) . ".cpp";
         if ($i > 0) $report .= ",";
-        $report .= quoted($key) . ":{\"flavor\":" . quoted(member_text($sources, $path))
+        $report .= quoted($key) . ":{\"flavor\":" . quoted($sources[$path])
             . ",\"sha256\":" . quoted($digest) . ",\"unit\":" . quoted($unit) . "}";
     }
     return $report . "}";

@@ -6,6 +6,7 @@ foreach(source IN ITEMS translated_path/frontend translated_path/function_ast re
   get_filename_component(name ${source} NAME)
   configure_file(${examples}/${source}.php.scpp ${app}/${name}.php COPYONLY)
 endforeach()
+configure_file(discovery.php.scpp ${app}/discovery.php COPYONLY)
 configure_file(inventory.php.scpp ${app}/inventory.php COPYONLY)
 configure_file(protocol.php.scpp ${app}/main.php COPYONLY)
 configure_file(module.json ${app}/module.json COPYONLY)
