@@ -35,12 +35,14 @@ unset($peerRule->operators->equal);
 $strictPeers = compilerPeerEquality($peerRule, $metadata->carriers->families);
 requireThat(!str_contains($strictPeers, 'binary_operator::equal') && str_contains($strictPeers, 'binary_operator::identical'),
     'Removing ordinary equality must preserve only the strict peer binding');
-$peerRule->families[] = 'result';
+$invalidMetadata = unserialize($originalExportMetadata);
+$invalidMetadata->carriers->error->peer_equality->identical->fields[] = 'address';
 try {
-    compilerPeerEquality($peerRule, $metadata->carriers->families);
-    throw new \LogicException('Accepted a structured error for sentinel equality');
+    $plan = [];
+    prepareCarriers($invalidMetadata, (object)[], $plan);
+    throw new \LogicException('Accepted a non-field in error identity');
 } catch (\RuntimeException $error) {
-    requireThat(str_contains($error->getMessage(), 'empty or sentinel alternate states'), 'Unexpected peer state validation error');
+    requireThat(str_contains($error->getMessage(), 'Invalid error identity fields'), 'Unexpected peer state validation error');
 }
 // A type opts into dispatch independently of its ordinary equality and literal operations.
 $dispatch = unserialize($originalExportMetadata);
@@ -72,6 +74,11 @@ $functionMetadata->string->functions->count_bytes = $declaration;
 $declaration->symbol = 'scpp::str::measured_bytes';
 $demand = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
 $demand->string->functions = ['count_bytes'];
+$lineOnly = unserialize(serialize($functionMetadata));
+$lineOnly->carriers->error->peer_equality->identical->fields = ['line'];
+$lineOnlyRuntime = render(prepareRuntime($lineOnly, $demand, $facts))['src/runtime.cpp'];
+requireThat(str_contains($lineOnlyRuntime, 'bool_t{present_ == other.present_ && line_ == other.line_}'),
+    'Native error identity must use exactly the catalog fields');
 $mtDemand = clone $demand;
 foreach ([false, true] as $enabled) {
     $mtDemand->mt_segments = $enabled;

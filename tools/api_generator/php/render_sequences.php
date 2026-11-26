@@ -488,7 +488,13 @@ function renderCarriers(array $plan, array &$groups): array {
     $d = '';
     if(isset($plan['error'])) {
         $h .= template('errors/error_declaration', ['fences' => scalarInputFences($plan, 'error_t', [['string', 'int64'], ['string', 'int64', 'string']], true)]);
-        $d .= template('errors/error_definition');
+        $comparisons = [];
+        foreach ($plan['error']['identity_fields'] as $field) {
+            $comparisons[] = $plan['error'][$field] === 'string'
+                ? "detail::string_access::read({$field}_) == detail::string_access::read(other.{$field}_)"
+                : "{$field}_ == other.{$field}_";
+        }
+        $d .= template('errors/error_definition', ['identity' => implode(' && ', $comparisons)]);
     }
     foreach($plan['carriers'] as $c) {
         $n = $c['name'];
@@ -524,7 +530,7 @@ function renderCarrier(array $plan, array $c): array {
         $d .= "$n::$n(null_t) noexcept {}\n";
     }
     if($result) {
-        $class .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n";
+        $class .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n    bool_t same_error_identity(const $n& other) const;\n";
         $d .= template('carriers/carrier_error_definition', $vars);
     }
     else {

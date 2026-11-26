@@ -711,7 +711,7 @@
     "presence": {"value": "has_value", "true": "is_true"},
     "peer_equality": {
       "flavor": "php",
-      "families": ["nullable", "result_or_false", "result_or_bool"],
+      "families": ["nullable", "result", "result_or_false", "result_or_bool"],
       "operands": "same_type",
       "evaluation": "snapshot_left_then_right",
       "states": "match_alternate_state",
@@ -732,7 +732,8 @@
       "message": "string",
       "line": "int64",
       "file": "string",
-      "state": "explicit_present"
+      "state": "explicit_present",
+      "peer_equality": {"equal": "same_state", "identical": {"fields": ["message", "file", "line"]}}
     }
   },
   "ownership": {

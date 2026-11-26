@@ -42,7 +42,7 @@ abstract class carrier_type_definition extends type_definition implements presen
 	}
 
 	/** Two-state peers have one alternate state. Multi-sentinel providers specialize this observation. */
-	protected function lower_cpp_peer_equality(string $left, string $right, string $payloads_equal): string
+	protected function lower_cpp_peer_equality(string $left, string $right, string $payloads_equal, binary_operator $comparator): string
 	{
 		$left_present = $this->lower_cpp_presence($left);
 		$right_present = $this->lower_cpp_presence($right);
@@ -56,7 +56,7 @@ abstract class carrier_type_definition extends type_definition implements presen
 		if ($expr->peer_comparator !== null) {
 			$payloads_equal = $this->payload_type->lower_cpp_binary($expr->peer_comparator,
 				$this->lower_cpp_extract($left), $this->lower_cpp_extract($right), $this->payload_type);
-			$equal = $this->lower_cpp_peer_equality($left, $right, $payloads_equal);
+			$equal = $this->lower_cpp_peer_equality($left, $right, $payloads_equal, $expr->peer_comparator);
 			return $expr->operator !== $expr->peer_comparator ? '!' . $equal : $equal;
 		}
 		$carrier_first = $expr->left->type_def() === $this;
