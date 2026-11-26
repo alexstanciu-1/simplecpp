@@ -312,6 +312,31 @@ def verify_defaults(work, exe, cxx, linker, adapter, service):
         assert 'Floating conversion is outside int64 range' in failure and failure.endswith('||'), failure
 
 
+def verify_rebinding_stage(work, app, exe, request, service, cxx, linker, adapter,
+                           stage, sources, objects, results, production_objects=None):
+    generated = app/'generated'
+    facts = Path(adapter).parent/'native-layout/facts.json'
+    status, prepared, emitted, written = request('lower').split('|')
+    assert status == 'ok', (stage, status)
+    ru, pu, links = emitted_units(app, facts, work/'production', generated)
+    if sources is not None:
+        for paths in (prepared, emitted):
+            assert set(filter(None, paths.split(','))) == {n+'.php' for n in sources}, (stage, paths)
+        assert set(filter(None, written.split(','))) == {ru[n].name for n in objects}, (stage, written)
+    native(work/'retained-objs', ru, links, objects, results, False, cxx, linker)
+    native(work/'production-objs', pu, links, production_objects, results, True, cxx, linker)
+
+    cold = work/('fresh-'+stage)
+    shutil.copytree(app, cold, ignore=shutil.ignore_patterns('generated'))
+    with service(exe, cold) as fresh_request:
+        assert fresh_request('lower').startswith('ok|')
+    fresh_dir = cold/'generated'
+    assert {p.name: p.read_bytes() for p in fresh_dir.glob('*.cpp')} == {
+        p.name: p.read_bytes() for p in generated.glob('*.cpp')}, stage
+    fresh_units = {name: fresh_dir/path.name for name, path in ru.items()}
+    native(cold/'objects', fresh_units, links, None, results, False, cxx, linker)
+
+
 def verify_default_rebinding(work, exe, cxx, linker, adapter, service):
     app = work/'rebinding'
     app.mkdir()
@@ -319,8 +344,6 @@ def verify_default_rebinding(work, exe, cxx, linker, adapter, service):
     (app/'main.php').write_text('return caller();')
     (app/'caller.php').write_text('function caller(): int { return pick(first: 7); }')
     (app/'positional.php').write_text('function positional(): int { return pick(7, 8); }')
-    generated = app/'generated'
-    facts = Path(adapter).parent/'native-layout/facts.json'
 
     # Each edit is applied to the same session. Source work includes emission
     # attempts, while the expected objects identify units whose bytes changed.
@@ -333,23 +356,31 @@ def verify_default_rebinding(work, exe, cxx, linker, adapter, service):
     with service(exe, app) as request:
         for stage, left, right, named, positional, sources, objects in stages:
             (app/'pick.php').write_text(f'function pick(int ${left}, int ${right}): int {{ return $second; }}')
-            status, prepared, emitted, written = request('lower').split('|')
-            assert status == 'ok', (stage, status)
-            ru, pu, links = emitted_units(app, facts, work/'production', generated)
-            if sources is not None:
-                for paths in (prepared, emitted):
-                    assert set(filter(None, paths.split(','))) == {n+'.php' for n in sources}, (stage, paths)
-                assert set(filter(None, written.split(','))) == {ru[n].name for n in objects}, (stage, written)
-            results = {'caller': named, 'positional': positional}
-            native(work/'retained-objs', ru, links, objects, results, False, cxx, linker)
-            native(work/'production-objs', pu, links, None, results, True, cxx, linker)
+            verify_rebinding_stage(work, app, exe, request, service, cxx, linker, adapter, stage,
+                                   sources, objects, {'caller': named, 'positional': positional})
 
-            cold = work/('fresh-'+stage)
-            shutil.copytree(app, cold, ignore=shutil.ignore_patterns('generated'))
-            with service(exe, cold) as fresh_request:
-                assert fresh_request('lower').startswith('ok|')
-            fresh_dir = cold/'generated'
-            assert {p.name: p.read_bytes() for p in fresh_dir.glob('*.cpp')} == {
-                p.name: p.read_bytes() for p in generated.glob('*.cpp')}, stage
-            fresh_units = {name: fresh_dir/path.name for name, path in ru.items()}
-            native(cold/'objects', fresh_units, links, None, results, False, cxx, linker)
+
+def verify_call_retargeting(work, exe, cxx, linker, adapter, service):
+    app = work/'retarget'
+    app.mkdir()
+    (app/'module.json').write_text('{}')
+    (app/'main.php').write_text('return caller();')
+    (app/'control.php').write_text('function control(): int { return left(); }')
+
+    def target(name, default):
+        return f'function {name}(int $value = {default}): int {{ return $value; }}'
+
+    (app/'left.php').write_text(target('left', 11))
+    (app/'right.php').write_text(target('right', 11))
+    stages = [
+        ('initial', 'caller', 'function caller(): int { return left(); }', 11, 11, None, None),
+        ('switch', 'caller', 'function caller(): int { return right(); }', 11, 11, {'caller'}, {'caller'}),
+        ('left-default', 'left', target('left', 13), 11, 13, {'left', 'control'}, {'control'}),
+        ('right-default', 'right', target('right', 17), 17, 13, {'right', 'caller'}, {'caller'}),
+    ]
+    with service(exe, app) as request:
+        for stage, source, contents, caller, control, sources, objects in stages:
+            (app/(source+'.php')).write_text(contents)
+            verify_rebinding_stage(work, app, exe, request, service, cxx, linker, adapter, stage,
+                                   sources, objects, {'caller': caller, 'control': control},
+                                   production_objects={'caller', 'right'} if stage == 'switch' else objects)
