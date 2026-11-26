@@ -1626,9 +1626,10 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_reference->spelling());
 			}
 			$source = $syntax->operand->type_def();
-			if ($type instanceof boxed_type_definition && $source instanceof record_type_definition) {
+			$schema = $source instanceof native_sequence_type ? $source->write_type() : $source;
+			if ($type instanceof boxed_type_definition && $schema instanceof record_type_definition) {
 				$seen = $path = [];
-				$this->check_boxed_schema($source, $type, $syntax, $seen, $path);
+				$this->check_boxed_schema($schema, $type, $syntax, $seen, $path);
 				$syntax->settle_cast($type, value_conversion::export_record);
 			} else $syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, conversion_context::explicit_cast));
 			return;
@@ -2182,11 +2183,12 @@ final class Preparation
 		}
 		foreach ($data->parameters as $field) {
 			$type = $field->type_def();
-			if ($type instanceof record_type_definition) {
+			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
+			if ($leaf instanceof record_type_definition) {
 				$path[] = $record->name . '::$' . $field->short_name;
-				$this->check_boxed_schema($type, $box, $site, $seen, $path);
+				$this->check_boxed_schema($leaf, $box, $site, $seen, $path);
 				array_pop($path);
-			} elseif (!$box->exports_scalar($type instanceof native_sequence_type ? $type->write_type() : $type)) {
+			} elseif (!$box->exports_scalar($leaf)) {
 				$path[] = $record->name . '::$' . $field->short_name;
 				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot export ' . implode(' -> ', $path) . ' (' . $type->name . ') to ' . $box->name);
 			}

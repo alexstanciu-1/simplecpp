@@ -15,6 +15,17 @@ trait Cpp_Record_Encoder
 		return 'encode';
 	}
 
+	/** Visit an ordered struct slot synchronously. External encoders retain value-read semantics unless they guarantee a stable source. */
+	public static function record_vector_walk(native_sequence_type $vector, string $source): string
+	{
+		$count = $vector->lower_cpp_cardinality(collection_cardinality::count, $source);
+		$read = $vector->lower_cpp_element_read($source, 'i');
+		$method = self::encode_method($vector->write_type());
+		return "out.begin_array();\n    for (::scpp::int64 i = 0, count = $count; i < count; ++i) {\n"
+			. "        if (out.stable_record_elements()) ($source).scpp_escape_read_slot(i).$method(out);\n"
+			. "        else ($read).$method(out);\n    }\n    out.end_array();";
+	}
+
 	/** @param mixed[] $declarations @param bool[] $headers */
 	private function encode_definition(record_type_definition $record, array &$declarations, array &$headers): string
 	{
@@ -28,6 +39,12 @@ trait Cpp_Record_Encoder
 				: 'static_cast<const ' . $field->parent->definition->cpp_type() . '&>(*this).' . $member;
 			$lines[] = 'out.field(' . Cpp_String_Literals::bytes($field->short_name) . ');';
 			if ($type instanceof native_sequence_type) {
+				if ($type->write_type() instanceof record_type_definition) {
+					$nested = $type->write_type()->declaration;
+					$declarations[$nested->symbol_key()] = $nested;
+					$lines[] = self::record_vector_walk($type, $read);
+					continue;
+				}
 				$count = $type->lower_cpp_cardinality(collection_cardinality::count, $read);
 				$element = $type->lower_cpp_element_read($read, 'i');
 				$write = $this->encode_leaf($type->write_type(), $element, $declarations);
