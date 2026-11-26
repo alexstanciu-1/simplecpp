@@ -4,8 +4,10 @@ final class Prepared_Declaration {
 	public readonly int $value;
 	public readonly float $floating_value;
 	public readonly ?Prepared_Call $call;
+	public readonly bool $returns_parameter;
 
-	public function __construct(Translation_Scope $scope, int $value, ?Prepared_Call $call = null, float $floating_value = 0.0) {
+	public function __construct(Translation_Scope $scope, int $value, ?Prepared_Call $call = null, float $floating_value = 0.0, bool $returns_parameter = false) {
+		$this->returns_parameter = $returns_parameter;
 		$this->floating_value = $floating_value;
 		$this->scope = $scope;
 		$this->value = $value;
@@ -45,7 +47,8 @@ final class Translation_Symbol {
 		$previous = lock($this->head);
 		$this->head = weak($declaration);
 		if ($previous === null && $declaration === null) return;
-		if ($previous !== null && $declaration !== null && $previous->scope->declaration->returns_float === $declaration->scope->declaration->returns_float) return;
+		if ($previous !== null && $declaration !== null && $previous->scope->declaration->returns_float === $declaration->scope->declaration->returns_float &&
+			$previous->scope->declaration->parameter_type === $declaration->scope->declaration->parameter_type) return;
 		foreach ($this->watchers as $watch) {
 			$caller = lock($watch->caller);
 			if ($caller !== null) $caller->invalidate_binding();
@@ -81,6 +84,16 @@ final class Prepared_Call {
 	public readonly Translation_Symbol $symbol;
 	private readonly bool $is_entry;
 	private bool $callee_float = false;
+	private Parameter_Type $parameter_type = Parameter_Type::absent;
+	private int $argument = 0;
+
+	public function parameter(): Parameter_Type {
+		return $this->parameter_type;
+	}
+
+	public function argument(): int {
+		return $this->argument;
+	}
 	private int $revision = 0;
 	private int $checked_revision = -1;
 
@@ -95,7 +108,19 @@ final class Prepared_Call {
 	public function check_binding(string &$work): void {
 		if ($this->checked_revision === $this->revision) return;
 		$work .= $this->syntax->source->path . ",";
-		$this->callee_float = $this->target()->scope->declaration->returns_float;
+		$function = $this->target()->scope->declaration;
+		$index = $this->syntax->argument_token;
+		$source = $this->syntax->source;
+		if (($index < 0) !== ($function->parameter_type === Parameter_Type::absent)) {
+			throw new Translation_Diagnostic($source->path, $this->syntax->offset, "Wrong argument count for " . $this->syntax->name, $source->text);
+		}
+		if ($index >= 0) {
+			$first = $source->tokens[$index];
+			if ($first->kind !== Token_Kind::T_integer) $index++;
+			$this->argument = prepare_integer_literal($source, $first, $source->tokens[$index]);
+		}
+		$this->parameter_type = $function->parameter_type;
+		$this->callee_float = $function->returns_float;
 		$this->checked_revision = $this->revision;
 	}
 
@@ -140,6 +165,21 @@ function prepare_integer_literal(Translation_Source $source, Token_Span $first, 
 	return $negative ? $value : -$value;
 }
 
+function cpp_parameter_type(Parameter_Type $type): string {
+	if ($type === Parameter_Type::absent) return "";
+	return $type === Parameter_Type::floating ? "scpp::float64" : "scpp::int64";
+}
+
+function cpp_integer_constant(int $value): string {
+	return $value === (-9223372036854775807 - 1) ? "(-9223372036854775807LL - 1LL)" : (string)$value . "LL";
+}
+
+function cpp_call_argument(Prepared_Call $call): string {
+	if ($call->parameter() === Parameter_Type::absent) return "";
+	$value = cpp_integer_constant($call->argument());
+	return $call->parameter() === Parameter_Type::floating ? "static_cast<scpp::float64>(" . $value . ")" : $value;
+}
+
 function emit_definition_unit(Prepared_Declaration $target): string {
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
 	$floating = $target->scope->declaration->returns_float;
@@ -147,29 +187,37 @@ function emit_definition_unit(Prepared_Declaration $target): string {
 	$text = "#include <scpp/core/scalars.hpp>\n";
 	$call = $target->call;
 	$value = "";
+	$parameter = cpp_parameter_type($target->scope->declaration->parameter_type);
+	if ($parameter !== "") $parameter .= " arg";
+	$operand_float = $floating;
+	$prototype = "";
 	if ($call !== null) {
 		$callee = "source_" . bin2hex($call->syntax->name);
-		$callee_type = $call->callee_returns_float() ? "scpp::float64 " : "scpp::int64 ";
-		$value = $callee . "()";
-		if ($floating && !$call->callee_returns_float()) {
-			$value = "static_cast<scpp::float64>(" . $value . ")";
-		} elseif (!$floating && $call->callee_returns_float()) {
-			$text .= "#include <scpp/conversions.hpp>\n";
-			$value = "scpp::checked_float64_to_int64(" . $value . ")";
-		}
-		$text .= $callee_type . $callee . "();\n";
+		$operand_float = $call->callee_returns_float();
+		$callee_type = $operand_float ? "scpp::float64 " : "scpp::int64 ";
+		$prototype = $callee_type . $callee . "(" . cpp_parameter_type($call->parameter()) . ");\n";
+		$value = $callee . "(" . cpp_call_argument($call) . ")";
+	} elseif ($target->returns_parameter) {
+		$value = "arg";
+		$operand_float = $target->scope->declaration->parameter_type === Parameter_Type::floating;
 	} elseif ($floating) {
 		$value = host_cpp_binary64($target->floating_value);
 	} else {
-		$value = $target->value === (-9223372036854775807 - 1) ? "(-9223372036854775807LL - 1LL)" : (string)$target->value . "LL";
+		$value = cpp_integer_constant($target->value);
 	}
-	return $text . $result_type . $name . "() { return " . $value . "; }\n";
+	if ($floating && !$operand_float) {
+		$value = "static_cast<scpp::float64>(" . $value . ")";
+	} elseif (!$floating && $operand_float) {
+		$text .= "#include <scpp/conversions.hpp>\n";
+		$value = "scpp::checked_float64_to_int64(" . $value . ")";
+	}
+	return $text . $prototype . $result_type . $name . "(" . $parameter . ") { return " . $value . "; }\n";
 }
 
 function emit_call_unit(Prepared_Call $call): string {
 	$name = "source_" . bin2hex($call->syntax->name);
-	return "#include <scpp/entry.hpp>\n#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "();\n"
-		. "int entry() { return scpp::entry_exit_checked(" . $name . "()); }\n";
+	return "#include <scpp/entry.hpp>\n#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "(" . cpp_parameter_type($call->parameter()) . ");\n"
+		. "int entry() { return scpp::entry_exit_checked(" . $name . "(" . cpp_call_argument($call) . ")); }\n";
 }
 
 function emit_entry_adapter(): string {
@@ -321,13 +369,19 @@ final class Translation {
 		if ($result->calls_function) {
 			$token = $scope->source->tokens[$result->literal_token];
 			$name = substr($scope->source->text, $token->offset, $token->length);
-			$syntax = new Call_Syntax($scope->source, $name, $token->offset);
+			$syntax = new Call_Syntax($scope->source, $name, $token->offset, $result->argument_token);
 			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name), false);
 			return new Prepared_Declaration($scope, 0, $binding);
 		}
 		$work .= $scope->source->path . ",";
 		$source = $scope->source;
 		$first = $source->tokens[$result->literal_token];
+		if ($first->kind === Token_Kind::T_variable) {
+			if (substr($source->text, $first->offset, $first->length) !== $scope->declaration->parameter_name) {
+				throw new Translation_Diagnostic($source->path, $first->offset, "Unknown parameter", $source->text);
+			}
+			return new Prepared_Declaration($scope, 0, null, 0.0, true);
+		}
 		$number = $source->tokens[$result->end - 2];
 		if ($number->kind === Token_Kind::T_integer) {
 			$integer = prepare_integer_literal($source, $first, $number);

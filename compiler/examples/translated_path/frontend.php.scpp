@@ -69,8 +69,12 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 		}
 
 		$kind = Token_Kind::End;
-		if (identifier_byte($value)) {
-			$kind = Token_Kind::T_identifier;
+		$variable = $mode === Scan_Flavor::php && $value == 36;
+		if ($variable && ($offset === $length || !identifier_byte($text[$offset]))) {
+			throw new Translation_Diagnostic($path, $start, "Expected variable name", $text);
+		}
+		if ($variable || identifier_byte($value)) {
+			$kind = $variable ? Token_Kind::T_variable : Token_Kind::T_identifier;
 			while ($offset < $length) {
 				$next = $text[$offset];
 				if (!identifier_byte($next) && !decimal_byte($next)) {
@@ -135,13 +139,16 @@ final class Translation_Source {
 	}
 }
 
-// The selected entry has one return of a nullary source call.
+// A call owns its optional argument token in the same retained source.
 final class Call_Syntax {
 	public readonly Translation_Source $source;
 	public readonly string $name;
 	public readonly int $offset;
 
-	public function __construct(Translation_Source $source, string $name, int $offset) {
+	public readonly int $argument_token;
+
+	public function __construct(Translation_Source $source, string $name, int $offset, int $argument_token) {
+		$this->argument_token = $argument_token;
 		$this->source = $source;
 		$this->name = $name;
 		$this->offset = $offset;
@@ -208,22 +215,41 @@ final class Translation_Parser {
 		return $token;
 	}
 
-	private function nullary(): void {
+	private function call_argument(): int {
 		$this->expect(Token_Kind::T_lparen, "Expected (");
+		$argument = -1;
+		$kind = $this->source->tokens[$this->index]->kind;
+		if ($kind !== Token_Kind::T_rparen) {
+			$argument = $this->index;
+			if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
+			$this->expect(Token_Kind::T_integer, "Expected decimal integer argument");
+		}
 		$this->expect(Token_Kind::T_rparen, "Expected )");
+		return $argument;
 	}
 
 	private function function_header(): Function_Declaration {
 		$start = $this->index;
 		$this->keyword("function");
 		$name = $this->spelling($this->name_token());
-		$this->nullary();
+		$this->expect(Token_Kind::T_lparen, "Expected (");
+		$parameter = Parameter_Type::absent;
+		$variable = "";
+		if ($this->source->tokens[$this->index]->kind !== Token_Kind::T_rparen) {
+			$param_token = $this->expect(Token_Kind::T_identifier, "Expected parameter type");
+			$param_word = $this->spelling($param_token);
+			if ($param_word === "int" || $param_word === "int64") $parameter = Parameter_Type::integer;
+			elseif ($param_word === "float" || $param_word === "float64") $parameter = Parameter_Type::floating;
+			else throw new Translation_Diagnostic($this->source->path, $param_token->offset, "Expected numeric parameter type", $this->source->text);
+			$variable = $this->spelling($this->expect(Token_Kind::T_variable, "Expected parameter name"));
+		}
+		$this->expect(Token_Kind::T_rparen, "Expected )");
 		$this->expect(Token_Kind::T_colon, "Expected :");
 		$type = $this->expect(Token_Kind::T_identifier, "Expected return type");
 		$word = $this->spelling($type);
 		$floating = $word === "float" || $word === "float64";
 		if (!$floating && $word !== "int") throw new Translation_Diagnostic($this->source->path, $type->offset, "Expected int or float", $this->source->text);
-		return new Function_Declaration($name, $start, $this->index, $floating);
+		return new Function_Declaration($name, $start, $this->index, $floating, $parameter, $variable);
 	}
 
 	private function read_body(): Function_Body {
@@ -233,9 +259,12 @@ final class Translation_Parser {
 		$this->keyword("return");
 		$literal = $this->index;
 		$calls_function = $this->source->tokens[$literal]->kind === Token_Kind::T_identifier;
+		$argument = -1;
 		if ($calls_function) {
 			$this->name_token();
-			$this->nullary();
+			$argument = $this->call_argument();
+		} elseif ($this->source->tokens[$literal]->kind === Token_Kind::T_variable) {
+			$this->index++;
 		} else {
 			$kind = $this->source->tokens[$literal]->kind;
 			if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
@@ -246,7 +275,7 @@ final class Translation_Parser {
 			$this->index++;
 		}
 		$this->expect(Token_Kind::T_semicolon, "Expected ;");
-		$statement = new Function_Return($return_start, $this->index, $literal, $calls_function);
+		$statement = new Function_Return($return_start, $this->index, $literal, $calls_function, $argument);
 		$this->expect(Token_Kind::T_rbrace, "Expected }");
 		return new Function_Body($body_start, $this->index, $statement);
 	}
@@ -265,10 +294,10 @@ final class Translation_Parser {
 	public function parse_entry(): Call_Syntax {
 		$this->keyword("return");
 		$name = $this->name_token();
-		$this->nullary();
+		$argument = $this->call_argument();
 		$this->expect(Token_Kind::T_semicolon, "Expected ;");
 		$this->expect(Token_Kind::End, "Expected end of source");
-		return new Call_Syntax($this->source, $this->spelling($name), $name->offset);
+		return new Call_Syntax($this->source, $this->spelling($name), $name->offset, $argument);
 	}
 }
 

@@ -149,3 +149,10 @@ entry still requires its callee to return an integer.
 Changing only the callee's body reuses the forwarding unit. Changing its return
 type rechecks and emits the direct forwarder. On literal overflow the diagnostic
 points to the return operand and the previous published files remain available for retry.
+
+The retained PHP-flavor slice also accepts one positional numeric parameter by
+value. A function may return that parameter, and a call may supply a signed
+decimal integer literal. Both the return type and the parameter type (including
+absence) belong to the watched signature. A type change rechecks direct callers
+and updates their C++ prototypes and conversions. Renaming a positional parameter
+only requires preparing its declaring body.
