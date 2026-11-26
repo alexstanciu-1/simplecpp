@@ -59,6 +59,7 @@ final class value_conversion
 	public const int intersection_capability /** uint16 */ = 26;
 	public const int guarded_intersection /** uint16 */ = 27;
 
+	public const int export_list /** uint16 */ = 31;
 	public const int decimal_text /** uint16 */ = 29;
 	public const int decimal_literal /** uint16 */ = 30;
 	public const int boxed_nullable_argument /** uint16 */ = 28;
@@ -68,6 +69,7 @@ final class value_conversion
 	{
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
+			self::export_list => 'export_list',
 			self::decimal_text => 'decimal_text',
 			self::decimal_literal => 'decimal_literal',
 			self::boxed_nullable_argument => 'boxed_nullable_argument',

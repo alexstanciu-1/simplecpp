@@ -32,7 +32,7 @@ final class type_@name@ extends boxed_type_definition implements iterable_type, 
 		return ['@header@'];
 	}
 
-	public function accepts_scalar(type_definition $source): bool
+@export_factory@	public function accepts_scalar(type_definition $source): bool
 	{
 		return match ($source->name) { @sources@ => true, default => false };
 	}

@@ -100,10 +100,38 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 	abstract public function box_cpp(ast_expression $syntax, string $value): string;
 	abstract public function admits_pair(binary_operator $operator, type_definition $peer, bool $box_left): bool;
 
+	/** Selected from the intersection of structural writes and this family's scalar factories. */
+	protected function export_factory(type_definition $element): ?string
+	{
+		return null;
+	}
+
+	/** Borrow the evaluated vector once and publish a fresh list after every element has been boxed. */
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		if ($conversion !== value_conversion::export_list) return null;
+		if (!($source instanceof native_sequence_type)) throw new \LogicException('Unprepared list export');
+		$factory = $this->export_factory($source->write_type()) ?? throw new \LogicException('Missing list element factory');
+		$count = $source->lower_cpp_cardinality(collection_cardinality::count, 'source');
+		$element = $source->lower_cpp_element_read('source', 'i');
+		$body = "\tauto list = " . $this->lower_cpp_empty() . ";\n"
+			. "\tfor (::scpp::int64 i = 0, count = $count; i < count; ++i) list.append($factory($element));\n"
+			. "\treturn list;\n";
+		return new cpp_inline_adapter('export_list', [new cpp_adapter_parameter($source, 'source', cpp_adapter_mode::const_reference)],
+			$this, $body, false);
+	}
+
 	/** Admit copies within this family and box scalar values through the generated bindings. */
 	public function prepare_scalar_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
-		if ($value->type_def() === $this) {
+		$source = $value->type_def();
+		if ($context === conversion_context::explicit_cast && $source instanceof native_sequence_type) {
+			if ($this->export_factory($source->write_type()) === null) {
+				throw new diagnostic($value->source(), $value->byte_start(), 'Cannot export element type ' . $source->write_type()->name . ' to ' . $this->name);
+			}
+			return value_conversion::export_list;
+		}
+		if ($source === $this) {
 			return value_conversion::identity;
 		}
 		if ($this->accepts_scalar($value->type_def())) {
