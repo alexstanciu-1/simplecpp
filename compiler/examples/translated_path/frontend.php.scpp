@@ -226,12 +226,16 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 			}
 			$offset = $start + $width;
 		}
+		$token_length = $offset - $start;
+		if ($token_length > 0xFFFFFF) {
+			throw new Translation_Diagnostic($path, $start, "Token length exceeds 24-bit capacity", $text);
+		}
 		if ($python) {
 			if (!$pending) python_indentation($levels, $line_start, $tokens, $path, $text, $start);
 			$pending = true;
 			python_delimiter($closers, $kind, $path, $text, $start);
 		}
-		append_span($tokens, $kind, $start, $offset - $start);
+		append_span($tokens, $kind, $start, $token_length);
 	}
 
 	if ($python) {
