@@ -28,6 +28,12 @@ RADIX_CASES = r"""
 array_push($cases, 'x "é" 0x1e + 0O17', 'x 0X1E+2', 'x 0x000fF..<0o7', 'x 0o000755',
     'x 0x', 'x 0O', 'x 0xG', 'x 0o8', 'x 0o78', 'x 0x1g', 'x 0x1_2', 'x 0o7.0', 'x 0b10');
 """
+LAYOUT_CASES = r"""
+array_push($cases, "", "\t# ignored\r\n", "a\r\n  b", "a\n  b\n    c\n  d\ne",
+    "a\n  b\n    c", "a\n  b\n    c\nd", "a\n  b\n    c\n   d", "a\n  b\n    c\n  d",
+    "a\n  # ignored\n\t\n  b # tail", "f(\n\t[\n {1:2}\n ]\n)\n", "a\r", "a\n \tb",
+    "a([)]", "a(\n", "a]", "a\n  'é'\r\n  b\n", "a\n  b\n   # trailing comment");
+"""
 COMPARE_TOKENS = r"""
 foreach (array_unique($cases) as $text) {
     foreach (flavor::cases() as $mode) {
@@ -35,7 +41,6 @@ foreach (array_unique($cases) as $text) {
         try {
             $row = '';
             foreach ((new Tokenizer($file))->tokenize()->tokens as $t) {
-                if (in_array($t->kind, [token_kind::newline, token_kind::indent, token_kind::dedent], true)) continue;
                 $row .= $t->kind->value . ',' . $t->offset . ',' . $t->length . '|';
             }
         } catch (diagnostic $e) {
@@ -63,6 +68,31 @@ function show(string $text, Scan_Flavor $mode): void {
 '''
 
 
+LAYOUT_REPAIR = r"""
+function repair_layout(): void {
+    $mode = Scan_Flavor::python;
+    $current = new Translation_Source("input", "a\n  b\n    c", $mode);
+    $old = $current;
+    try {
+        $current = new Translation_Source("input", "a\n  b\n    c\n   d", $mode);
+        throw Exception::make("Accepted unmatched dedent");
+    } catch (Translation_Diagnostic $error) {
+        if ($error->offset !== 12 || $error->detail !== "Unmatched Python dedent") throw $error;
+    }
+    if ($current !== $old) throw Exception::make("Replaced source on layout failure");
+    $repair = "a\n  b\n    c\n  d";
+    $current = new Translation_Source("input", $repair, $mode);
+    $fresh = new Translation_Source("input", $repair, $mode);
+    if (count($current->tokens) !== count($fresh->tokens)) throw Exception::make("Different repaired token count");
+    foreach ($current->tokens as $index => $token) {
+        $expected = $fresh->tokens[$index];
+        if ($token->kind !== $expected->kind || $token->offset !== $expected->offset || $token->length !== $expected->length)
+            throw Exception::make("Different repaired token span");
+    }
+}
+"""
+
+
 def scanner_project(work):
     app = work/'app'
     app.mkdir()
@@ -78,14 +108,16 @@ def scanner_project(work):
 
 def verify(work):
     app = scanner_project(work)
-    oracle = subprocess.check_output(['php', '-r', ORACLE_PREAMBLE + PUNCTUATION_CASES + RADIX_CASES + COMPARE_TOKENS,
+    oracle = subprocess.check_output(['php', '-r', ORACLE_PREAMBLE + PUNCTUATION_CASES + RADIX_CASES + LAYOUT_CASES + COMPARE_TOKENS,
                                       ROOT/'compiler/boot.php'], text=True)
     rows = [json.loads(line) for line in oracle.splitlines()]
     expected = {(mode, text): row for mode, text, row in rows}
     assert expected['php', 'x ==== == ='] == '1,0,1|11,2,3|61,5,1|15,7,2|61,10,1|'
     assert expected['python', 'x ==== == ='] == '2:Unsupported punctuation in Python flavor'
-    assert expected['python', 'x ++'] == '1,0,1|50,2,1|50,3,1|'
-    main = [DRIVER]
+    assert expected['python', 'x ++'] == '1,0,1|50,2,1|50,3,1|65,4,0|'
+    assert expected['python', 'a\r\n  b'] == '1,0,1|65,1,2|66,5,0|1,5,1|65,6,0|67,6,0|'
+    assert expected['python', 'a\n  b\n    c\n   d'] == '12:Unmatched Python dedent'
+    main = [DRIVER, LAYOUT_REPAIR, 'repair_layout();']
     for mode, source, _ in rows:
         main.append(f'show({json.dumps(source, ensure_ascii=False)}, Scan_Flavor::{mode});')
     (app/'main.php').write_text('\n'.join([*main, 'return 8;']))

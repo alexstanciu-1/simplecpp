@@ -73,22 +73,83 @@ function quoted_token_end(string $path, string &$text, int $start, int $opening,
 	throw new Translation_Diagnostic($path, $start, $interpolated ? "Unterminated interpolated string" : "Unterminated quoted string", $text);
 }
 
+function append_span(vector<Token_Span> &$tokens, Token_Kind $kind, int $offset, int $length): void {
+	$token Token_Span;
+	$token->kind = $kind;
+	$token->offset = $offset;
+	$token->length = $length;
+	$tokens[] = $token;
+}
+
+function python_indentation(vector<int> &$levels, int $line_start, vector<Token_Span> &$tokens, string &$path, string &$text, int $start): void {
+	for ($i = $line_start; $i < $start; $i++) {
+		if ($text[$i] == 9) throw new Translation_Diagnostic($path, $i, "Tab in Python indentation", $text);
+	}
+	$width = $start - $line_start;
+	$depth = count($levels);
+	$previous = $depth === 0 ? 0 : $levels[$depth - 1];
+	if ($width > $previous) {
+		$levels[] = $width;
+		append_span($tokens, Token_Kind::T_indent, $start, 0);
+		return;
+	}
+	while ($width < $previous) {
+		$depth--;
+		$levels->remove($depth);
+		append_span($tokens, Token_Kind::T_dedent, $start, 0);
+		$previous = $depth === 0 ? 0 : $levels[$depth - 1];
+	}
+	if ($width !== $previous) throw new Translation_Diagnostic($path, $line_start, "Unmatched Python dedent", $text);
+}
+
+function python_delimiter(vector<int> &$closers, Token_Kind $kind, string &$path, string &$text, int $start): void {
+	if ($kind === Token_Kind::T_lparen) $closers[] = enum_value(Token_Kind::T_rparen);
+	else if ($kind === Token_Kind::T_lbracket) $closers[] = enum_value(Token_Kind::T_rbracket);
+	else if ($kind === Token_Kind::T_lbrace) $closers[] = enum_value(Token_Kind::T_rbrace);
+	else if ($kind === Token_Kind::T_rparen || $kind === Token_Kind::T_rbracket || $kind === Token_Kind::T_rbrace) {
+		$last = count($closers) - 1;
+		if ($last < 0 || $closers[$last] !== enum_value($kind)) {
+			throw new Translation_Diagnostic($path, $start, "Mismatched Python delimiter", $text);
+		}
+		$closers->remove($last);
+	}
+}
+
 function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<Token_Span> {
 	$invalid = source_utf8_error($text);
 	if ($invalid >= 0) throw new Translation_Diagnostic($path, $invalid, "Invalid UTF-8 source", $text);
 	$tokens vector<Token_Span> = [];
 	$length = strlen($text);
+	$python = $mode === Scan_Flavor::python;
+	// Layout stacks belong to this scan; indentation zero is implicit.
+	$levels vector<int> = [];
+	$closers vector<int> = [];
+	$line_start = 0;
+	$pending = false;
 	$offset = 0;
 	while ($offset < $length) {
 		$start = $offset;
 		$value = $text[$offset];
 		$offset++;
-		if ($value == 32 || $value == 9 || $value == 10 || $value == 13) {
+		if ($value == 10 || $value == 13) {
+			if ($python) {
+				if ($value == 13) {
+					if ($offset === $length || $text[$offset] != 10) throw new Translation_Diagnostic($path, $start, "Expected LF after carriage return", $text);
+					$offset++;
+				}
+				if ($pending && count($closers) === 0) {
+					append_span($tokens, Token_Kind::T_newline, $start, $offset - $start);
+					$pending = false;
+				}
+				$line_start = $offset;
+			}
+			continue;
+		}
+		if ($value == 32 || $value == 9) {
 			continue;
 		}
 
 		// Comment openers take precedence over punctuation in the bootstrap lexer.
-		$python = $mode === Scan_Flavor::python;
 		$line_comment = ($value == 35 && ($python || ($mode === Scan_Flavor::php &&
 			!string_byte_slice_equals($text, $start, 2, "#[")))) ||
 			(!$python && $value == 47 && string_byte_slice_equals($text, $start, 2, "//"));
@@ -165,18 +226,22 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 			}
 			$offset = $start + $width;
 		}
-		$token Token_Span;
-		$token->kind = $kind;
-		$token->offset = $start;
-		$token->length = $offset - $start;
-		$tokens[] = $token;
+		if ($python) {
+			if (!$pending) python_indentation($levels, $line_start, $tokens, $path, $text, $start);
+			$pending = true;
+			python_delimiter($closers, $kind, $path, $text, $start);
+		}
+		append_span($tokens, $kind, $start, $offset - $start);
 	}
 
-	$end Token_Span;
-	$end->kind = Token_Kind::End;
-	$end->offset = $length;
-	$end->length = 0;
-	$tokens[] = $end;
+	if ($python) {
+		if (count($closers) !== 0) throw new Translation_Diagnostic($path, $length, "Unclosed Python delimiter", $text);
+		if ($pending) append_span($tokens, Token_Kind::T_newline, $length, 0);
+		for ($level = count($levels); $level > 0; $level--) {
+			append_span($tokens, Token_Kind::T_dedent, $length, 0);
+		}
+	}
+	append_span($tokens, Token_Kind::End, $length, 0);
 	return $tokens;
 }
 
