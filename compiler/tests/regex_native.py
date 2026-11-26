@@ -395,6 +395,41 @@ if (isset($bad)) { return 20; }
             statements.append('$changed = 99; $failed = preg_filter("/[/", "!", $items, -1, $changed);')
             statements.append('if (isset($failed) || $changed !== 0) { return 136; }')
             statements.append('}')
+        for shape, keys in [
+            ('vector<string>', ['0', '1', '2']),
+            ('hash<string,int>', ['17', '2', '9']),
+            ('hash<string,string>', ['"z"', '"b"', '"a"']),
+        ]:
+            def subjects(values):
+                entries = values if shape == 'vector<string>' else [
+                    f'{key} => {value}' for key, value in zip(keys, values)]
+                return '[' + ', '.join(entries) + ']'
+
+            statements.append('{ $n int = 99;')
+            statements.append(f'$items {shape} = ' + subjects(['"aa"', '"miss"', '"a"']) + ';')
+            statements.append(f'$out {shape} = preg_replace("/a/", "", $items);')
+            statements.append(f'if (count($out) !== 3 || $out[{keys[0]}] !== "" || $out[{keys[1]}] !== "miss"'
+                              f' || $out[{keys[2]}] !== "") {{ return 170; }}')
+            statements.append('$seen string = ""; foreach ($out as $replaceKey => $replaceValue) { $seen .= (string)$replaceKey; }')
+            order = ''.join(key.strip('"') for key in keys)
+            statements.append(f'if ($seen !== "{order}") {{ return 171; }}')
+            statements.append('$out = preg_replace("/a/", "!", $items, 0);')
+            statements.append(f'if ($out[{keys[0]}] !== "aa" || $out[{keys[2]}] !== "a") {{ return 172; }}')
+            statements.append('$n = 1; $out = preg_replace("/a/", "!", $items, $n, $n);')
+            statements.append(f'if ($n !== 2 || $out[{keys[0]}] !== "!a" || $out[{keys[2]}] !== "!") {{ return 173; }}')
+            for pattern, limit, count in [('/a/', -1, 3), ('/z/', -1, 0), ('/a/', 0, 0)]:
+                statements.append(f'$n = 99; $out = preg_replace("{pattern}", "a", $items, {limit}, $n);')
+                statements.append(f'if ($n !== {count} || count($out) !== 3 || $out[{keys[0]}] !== "aa"'
+                                  f' || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "a") {{ return 174; }}')
+            for pattern, bad, count in [('/(*LIMIT_MATCH=20)a|(?:b+)+c/', '"abbbbbbbbbbbbbbbbd"', 3),
+                                        ('/./u', 'string_byte_from_int(255)', 2)]:
+                statements.append('$items = ' + subjects(['"aa"', bad, '"a"']) + ';')
+                statements.append(f'$n = 99; $failed = preg_replace("{pattern}", "!", $items, -1, $n);')
+                statements.append(f'if (isset($failed) || $n !== {count}) {{ return 175; }}')
+            statements.append('$items = []; $n = 99; $out = preg_replace("/a/", "!", $items, -1, $n);')
+            statements.append('if (count($out) !== 0 || $n !== 0) { return 176; }')
+            statements.append('$n = 99; $invalid = preg_replace("/[/", "!", $items, 0, $n);')
+            statements.append('if (isset($invalid) || $n !== 0) { return 177; } }')
         # PHP exposes one single-match row to either callback form. Compare all nine row types.
         for shape in ('vector', 'hash', 'mixed'):
             for cell, flags, offsets, nulls in [
@@ -641,7 +676,8 @@ def prove(work, runtime, flavor):
         ok()
         if flavor == 'php':
             lowered = b'\n'.join(artifacts(output).values())
-            for target in ('preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
+            for target in ('preg_replace_vector', 'preg_replace_int_keys', 'preg_replace_string_keys',
+                           'preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
                            'preg_filter_string_keys', 'preg_filter', 'preg_match_numbered', 'preg_match_all_numbered',
                            'preg_match_named', 'preg_match_all_named_rows', 'preg_match_all_named_columns',
                            'preg_match_all_set_order_named', 'preg_match_all_pattern_order_named',

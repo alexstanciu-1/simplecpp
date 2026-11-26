@@ -150,3 +150,11 @@ completed replacement counts once, including identity replacements. On regex
 failure the call returns false and the slot retains the number completed before
 failure. An invalid pattern, miss or zero limit writes zero. When the same slot
 supplies limit and count, its incoming value determines the limit.
+
+PHP `preg_replace` also accepts a vector of strings or an integer- or
+string-keyed hash of strings. The result is a falseable collection of the same
+type. Success preserves every key in iteration order, including misses and
+replacements yielding an empty string. Each row gets the full limit. On the
+first failed row, the call returns false and discards the output collection.
+Count includes completed replacements in earlier rows and in the failed row.
+An invalid pattern returns false even for an empty collection.

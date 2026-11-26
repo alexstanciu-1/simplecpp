@@ -354,8 +354,8 @@ nullable_string preg_filter_string(const string& pattern, const string& replacem
 }
 
 namespace {
-template<class Key, class Input, class Keep>
-bool filter_rows(const string& pattern, const string& replacement, const Input& input, int64 limit, int64& total, Keep keep) {
+template<bool KeepMisses, class Key, class Input, class Keep>
+bool rewrite_rows(const string& pattern, const string& replacement, const Input& input, int64 limit, int64& total, Keep keep) {
     validate_limit(limit);
     total = 0;
     capture_pattern compiled(pattern);
@@ -371,14 +371,15 @@ bool filter_rows(const string& pattern, const string& replacement, const Input& 
         total += changed;
         if (!ok) return false;
         if (changed) keep(key, owned(row));
+        else if constexpr (KeepMisses) keep(key, std::move(subject));
     }
     return true;
 }
 
-template<class Key, class Hash, class Result, class Input>
-Result filter_keyed(const string& pattern, const string& replacement, const Input& input, int64 limit, int64& total) {
+template<bool KeepMisses, class Key, class Hash, class Result, class Input>
+Result rewrite_keyed(const string& pattern, const string& replacement, const Input& input, int64 limit, int64& total) {
     Hash output;
-    if (!filter_rows<Key>(pattern, replacement, input, limit, total, [&](const Key& key, string value) {
+    if (!rewrite_rows<KeepMisses, Key>(pattern, replacement, input, limit, total, [&](const Key& key, string value) {
         output.set(key, std::move(value));
     })) return Result::from_false();
     return Result{std::move(output)};
@@ -388,7 +389,7 @@ Result filter_keyed(const string& pattern, const string& replacement, const Inpu
 result_or_false_vector_string filter(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
     vector_string output;
     int64 total;
-    if (!filter_rows<int64>(pattern, replacement, input, limit, total, [&](int64, string value) {
+    if (!rewrite_rows<false, int64>(pattern, replacement, input, limit, total, [&](int64, string value) {
         output.append(std::move(value));
     })) return result_or_false_vector_string::from_false();
     return result_or_false_vector_string{std::move(output)};
@@ -398,8 +399,51 @@ result_or_false_vector_string filter(const string& pattern, const string& replac
     return filter(pattern, replacement, input, -1);
 }
 
+result_or_false_vector_string preg_replace_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit, int64& changed) {
+    vector_string output;
+    if (!rewrite_rows<true, int64>(pattern, replacement, input, limit, changed, [&](int64, string value) {
+        output.append(std::move(value));
+    })) return result_or_false_vector_string::from_false();
+    return result_or_false_vector_string{std::move(output)};
+}
+
+result_or_false_vector_string preg_replace_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
+    int64 changed;
+    return preg_replace_vector(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_vector_string preg_replace_vector(const string& pattern, const string& replacement, const vector_string& input) {
+    return preg_replace_vector(pattern, replacement, input, -1);
+}
+
+result_or_false_hash_string_int64 preg_replace_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit, int64& changed) {
+    return rewrite_keyed<true, int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_hash_string_int64 preg_replace_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit) {
+    int64 changed;
+    return preg_replace_int_keys(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_hash_string_int64 preg_replace_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input) {
+    return preg_replace_int_keys(pattern, replacement, input, -1);
+}
+
+result_or_false_hash_string_string preg_replace_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit, int64& changed) {
+    return rewrite_keyed<true, string, hash_string_string, result_or_false_hash_string_string>(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_hash_string_string preg_replace_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit) {
+    int64 changed;
+    return preg_replace_string_keys(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_hash_string_string preg_replace_string_keys(const string& pattern, const string& replacement, const hash_string_string& input) {
+    return preg_replace_string_keys(pattern, replacement, input, -1);
+}
+
 result_or_false_hash_string_int64 preg_filter_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit, int64& changed) {
-    return filter_keyed<int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
+    return rewrite_keyed<false, int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
 }
 
 result_or_false_hash_string_int64 preg_filter_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
@@ -412,7 +456,7 @@ result_or_false_hash_string_int64 preg_filter_vector(const string& pattern, cons
 }
 
 result_or_false_hash_string_int64 preg_filter_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit, int64& changed) {
-    return filter_keyed<int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
+    return rewrite_keyed<false, int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
 }
 
 result_or_false_hash_string_int64 preg_filter_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit) {
@@ -425,7 +469,7 @@ result_or_false_hash_string_int64 preg_filter_int_keys(const string& pattern, co
 }
 
 result_or_false_hash_string_string preg_filter_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit, int64& changed) {
-    return filter_keyed<string, hash_string_string, result_or_false_hash_string_string>(pattern, replacement, input, limit, changed);
+    return rewrite_keyed<false, string, hash_string_string, result_or_false_hash_string_string>(pattern, replacement, input, limit, changed);
 }
 
 result_or_false_hash_string_string preg_filter_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit) {

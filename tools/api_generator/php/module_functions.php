@@ -81,16 +81,8 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         $functions[$name]['required_parameters'] = $required;
         if (isset($function->overload)) {
             $group = textValue($function->overload);
-            requireThat($flavor === 'php' && preg_match('/^[a-z][a-z_0-9]*$/D', $group), 'Invalid PHP overload group');
-            $policy = at(at($catalog, 'php_overloads'), $group);
-            fields($policy, ['selector', 'list_context', 'arguments']);
-            $selector = at($policy, 'selector');
-            requireThat(is_int($selector) && isset($parameters[$selector])
-                && (isset($policy->list_context) === !(bool)($reference_mask & (1 << $selector))), 'Invalid module overload selector');
-            $functions[$name]['overload'] = $group;
-            $functions[$name]['selector'] = $selector;
-            $functions[$name]['list_context'] = isset($policy->list_context) ? textValue($policy->list_context) : null;
-            $functions[$name]['arguments'] = listValue(at($policy, 'arguments'));
+            requireThat($flavor === 'php', 'Invalid PHP overload group');
+            applyModuleOverload($catalog, $group, $functions[$name]);
         }
         if ($surface === 'general') {
             if ($flavor === null) $functions[$name]['surface'] = 'general';
@@ -144,7 +136,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     }
     foreach (names($publication->{$family}->php_exposures ?? [], 'Duplicate PHP exposure') as $name) {
         $alias = at(at($catalog, 'php_exposures'), $name);
-        fields($alias, ['target', 'native_name', 'false_result', 'optional_output', 'arguments']);
+        fields($alias, ['target', 'native_name', 'false_result', 'optional_output', 'arguments', 'overload']);
         requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid PHP function name');
         requireThat($surface === 'general' && !isset($functions[$name]), 'Expected a distinct PHP exposure of a general function');
         $target = textValue(at($alias, 'target'));
@@ -170,7 +162,8 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             }
             $symbol = "scpp::php::$name";
         }
-        requireThat(isset($alias->optional_output) === isset($alias->arguments), 'An optional output requires PHP argument admission');
+        requireThat((!isset($alias->arguments) || isset($alias->optional_output))
+            && (!isset($alias->optional_output) || isset($alias->arguments) !== isset($alias->overload)), 'An optional output requires PHP argument admission');
         if (isset($alias->optional_output)) {
             requireThat(!isset($alias->false_result) && !isset($alias->native_name), 'An optional output requires a direct native target');
             $out = moduleFunctionTypeExport($plan, textValue($alias->optional_output));
@@ -178,15 +171,29 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             requireThat($slot < 32, 'Too many module function parameters');
             $binding['reference_mask'] |= 1 << $slot;
             $binding['parameters'][] = ['type' => $out['identity'], 'native' => $out['symbol'] . '&'];
-            $binding['arguments'] = listValue($alias->arguments);
+            if (isset($alias->arguments)) $binding['arguments'] = listValue($alias->arguments);
             $binding['output_overload'] = true;
             $binding['includes'] = [$binding['header'], providerHeader($plan['submodules'], $out['provider'])];
             $binding['header'] = "scpp/php/$name.hpp";
             checkHeader($plan, $binding['header']);
         }
+        if (isset($alias->overload)) applyModuleOverload($catalog, textValue($alias->overload), $binding);
         $binding['symbol'] = $symbol;
         $plan[$family]['php_exposures'][$name] = $binding;
     }
+}
+
+function applyModuleOverload(object $catalog, string $group, array &$binding): void {
+    requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $group) === 1, 'Invalid PHP overload group');
+    $policy = at(at($catalog, 'php_overloads'), $group);
+    fields($policy, ['selector', 'list_context', 'arguments']);
+    $selector = at($policy, 'selector');
+    requireThat(is_int($selector) && isset($binding['parameters'][$selector])
+        && (isset($policy->list_context) === !(bool)($binding['reference_mask'] & (1 << $selector))), 'Invalid module overload selector');
+    $binding['overload'] = $group;
+    $binding['selector'] = $selector;
+    $binding['list_context'] = isset($policy->list_context) ? textValue($policy->list_context) : null;
+    $binding['arguments'] = listValue(at($policy, 'arguments'));
 }
 
 /** Resolve the concrete public export and guard against unpublished scalar identities. */
