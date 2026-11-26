@@ -62,7 +62,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	verify(!str_contains($direct, 'scpp::string') && !str_contains($direct, '<scpp/string/type.hpp>'), 'Direct echo allocated storage');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("héllo\0world\nhéllo\0world\na\\nb!" . $boundary . $boundary . $escape_output)];
 	foreach ([
-		$decl('string', 'bad', '8'), $decl('int', 'bad', '"8"'),
+		$decl('string', 'bad', '8'), $decl('int', 'bad', $flavor === flavor::php ? '"8x"' : '"8"'),
 		$decl('bool', 'bad', '"true"'), $decl('float', 'bad', '"8.5"'),
 		'global ' . $decl('string', 'bad', '"x"'), 'global ' . $decl('string', 'bad', '1'),
 		'return "x";', $decl('string', 'bad', match ($flavor) {

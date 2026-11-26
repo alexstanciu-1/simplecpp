@@ -31,9 +31,10 @@ function compilerCardinalityMethods(array $methods, string $count, array $defini
 }
 
 /** Compile PHP source admission independently of native argument representation. */
-function compilerPhpAdmission(array $policies, string $name, int $arity, array $references = []): string {
+function compilerPhpAdmission(array $policies, string $name, int $arity, array $references = [], bool $allowPrefix = false): string {
     if (!isset($policies[$name])) return '';
     $slots = listValue($policies[$name]);
+    if ($allowPrefix) $slots = array_slice($slots, 0, $arity);
     requireThat(count($slots) === $arity, "Wrong PHP admission arity for $name");
     $labels = [];
     $typed = 0;
@@ -376,18 +377,33 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 $key = "$flavor:$scope:" . $adapter['name'];
                 if (isset($binding['overloads'])) {
                     $rows = [];
+                    $project = $binding['project_selector'] ?? false;
+                    if ($project) requireThat(count($phpAdmission[$name] ?? []) === max(array_keys($binding['overloads'])),
+                        "Incomplete PHP union argument policy for $name");
                     foreach ($binding['overloads'] as $argumentCount => $variants) {
                         $byType = [];
+                        $boxes = $project ? array_column($runtime['boxed']['families'] ?? [], 'name') : [];
+                        foreach ($boxes as $box) {
+                            $types = reset($variants);
+                            $types[0] = $box;
+                            $variants[$box] = $types;
+                        }
                         foreach ($variants as $input => $types) {
                             if (!isset($runtimeTypes[$input])) continue;
                             $params = array_map(static fn($type) => 'type_' . $runtimeTypes[$type] . '::instance()', $types);
                             $constRefs = stringAdapterConstReferenceMask($types);
+                            $boxed = in_array($input, $boxes, true);
+                            $header = $boxed ? "scpp/php/{$name}_$input.hpp" : $adapter['header'];
+                            $symbol = $boxed ? $adapter['symbol'] . '_' . $input : $adapter['symbol'];
+                            if ($boxed) $constRefs |= 1;
+                            $overload = $boxed ? 'false' : 'true';
+                            $policy = $project ? compilerPhpAdmission($phpAdmission, $name, $argumentCount, allowPrefix: true) : '';
                             $byType[] = 'type_' . $runtimeTypes[$input] . "::class => new runtime_function('$name', ["
-                                . implode(', ', $params) . "], type_$result::instance(), '{$adapter['symbol']}', '{$adapter['header']}', '$flavor', overloaded_first: true, const_reference_mask: $constRefs)";
+                                . implode(', ', $params) . "], type_$result::instance(), '$symbol', '$header', '$flavor', overloaded_first: $overload, const_reference_mask: $constRefs$policy)";
                         }
                         $rows[] = "$argumentCount => [" . implode(', ', $byType) . ']';
                     }
-                    $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_overloads([" . implode(', ', $rows) . ']),';
+                    $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_overloads([" . implode(', ', $rows) . ']' . ($project ? ', project_selector: true' : '') . '),';
                     continue;
                 }
                 $types = stringAdapterOrder($adapter['parameters'] ?? $binding['parameters'], $adapter);

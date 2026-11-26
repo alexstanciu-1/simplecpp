@@ -791,3 +791,21 @@ or return value. An exact carrier argument preserves its entire state.
   intended result in a typed declaration or return it from a producer.
 
 Exact-inspection and reference parameters continue to use their declared modes.
+
+## PHP decimal text and numeric builtin selectors
+
+A written int64 declaration and an explicit int64 cast accept byte strings as
+signed decimal integers. The complete string must match `[+-]?[0-9]+` and fit
+the signed int64 range. Preparation validates literals and statically resolved
+string constants and folds successful reads. Other strings are evaluated once
+and checked at runtime. Syntax and range failures precede assignment to the
+destination. Ordinary reassignment, argument conversion and implicit return do
+not request decimal parsing. Carrier extraction follows the policy of the
+originating context.
+
+For a PHP builtin with the published numeric selector `int64|float64`, exact
+membership selects a native overload. A participating carrier projects one
+payload under the implicit extraction policy. A mixed or dynamic box selects
+by its actual integer or floating kind and rejects other kinds. Other static
+types reject during preparation. PHP number_format uses this selector at arity
+one, two and four. Its remaining parameters use typed argument admission.

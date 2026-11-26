@@ -282,7 +282,7 @@ final class record_type_definition extends type_definition implements dependency
 						throw new diagnostic($field->source(), $field->initializer->byte_start(), 'Enum field default requires an enum case');
 					}
 				} else type_registry::prepare_literal($field->initializer);
-				$field->conversion = $type->prepare_conversion($field->initializer, conversion_context::typed_destination);
+				$field->conversion = $type->prepare_declaration_conversion($field->initializer, conversion_context::typed_destination);
 			}
 			$field_bytes = $type instanceof self ? $type->array_bytes() : ($type instanceof fixed_array_type ? $type->bytes : 0);
 			if ($field_bytes > fixed_array_type::PAYLOAD_LIMIT - $bytes) {

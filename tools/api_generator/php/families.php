@@ -183,7 +183,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'direct_provider', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'numeric_inputs', 'arities', 'ascii_fold']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'direct_provider', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'numeric_inputs', 'selector', 'arities', 'ascii_fold']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
@@ -300,6 +300,10 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $formatted = $implementation === 'format_number';
         requireThat($formatted === isset($function->numeric_inputs) && $formatted === isset($function->arities),
             'Numeric input overloads require explicit arities');
+        if (isset($function->selector)) {
+            requireThat($formatted && $function->selector === 'payload_or_box_kind', 'Unsupported overload selector');
+            $plan['string_functions'][$name]['project_selector'] = true;
+        }
         if ($formatted) {
             literals($function, ['numeric_inputs' => ['int64', 'float64'], 'arities' => [1, 2, 4]]);
             foreach ($function->numeric_inputs as $input) {

@@ -615,7 +615,7 @@
       "trim": {"parameters": ["string"], "signatures": {"php": {"parameters": ["string", "string"], "required_parameters": 1}}, "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "both", "members": {"cpp": "trim", "js": "trim"}, "flavor_adapters": true},
       "ltrim": {"parameters": ["string"], "signatures": {"php": {"parameters": ["string", "string"], "required_parameters": 1}}, "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "start", "members": {"cpp": "trim_start", "js": "trimStart"}, "flavor_adapters": true},
       "rtrim": {"parameters": ["string"], "signatures": {"php": {"parameters": ["string", "string"], "required_parameters": 1}}, "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "end", "members": {"cpp": "trim_end", "js": "trimEnd"}, "flavor_adapters": true},
-      "number_format": {"parameters": ["int64", "int64", "string", "string"], "numeric_inputs": ["int64", "float64"], "arities": [1, 2, 4], "result": "string", "symbol": "scpp::str::number_format", "implementation": "format_number", "flavors": ["php"], "flavor_adapters": true},
+      "number_format": {"parameters": ["int64", "int64", "string", "string"], "numeric_inputs": ["int64", "float64"], "selector": "payload_or_box_kind", "arities": [1, 2, 4], "result": "string", "symbol": "scpp::str::number_format", "implementation": "format_number", "flavors": ["php"], "flavor_adapters": true},
       "strcmp": {"parameters": ["string", "string"], "result": "int64", "symbol": "scpp::str::compare_bytes", "implementation": "compare_bytes", "ascii_fold": false, "flavors": ["php"], "flavor_adapters": true},
       "strcasecmp": {"parameters": ["string", "string"], "result": "int64", "symbol": "scpp::str::compare_bytes", "implementation": "compare_bytes", "ascii_fold": true, "flavors": ["php"], "flavor_adapters": true},
       "strncmp": {"parameters": ["string", "string", "int64"], "result": "int64", "symbol": "scpp::str::compare_prefix", "implementation": "compare_prefix", "ascii_fold": false, "flavors": ["php"], "flavor_adapters": true},
@@ -1331,6 +1331,7 @@
   },
   "compiler": {
     "php_builtin_admission": {
+      "number_format": [["value", "typed"], ["decimals", "typed"], ["decimal_separator", "typed"], ["thousands_separator", "typed"]],
       "strlen": [["string", "typed"]],
       "str_replace": [["search", "typed"], ["replace", "typed"], ["subject", "typed"], ["count", "writable"]],
       "is_bool": [["value", "exact"]]

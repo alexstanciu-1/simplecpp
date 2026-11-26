@@ -1992,7 +1992,8 @@ final class Preparation
 				$this->value($selected, destination: $selected instanceof ast_collection_expression ? $runtime->list_context : null);
 				$prepared = $selected;
 			}
-			$runtime = $variants[$selected->type_def()::class] ?? null;
+			$selector = $runtime->project_selector ? $selected->value_type() : $selected->type_def();
+			$runtime = $variants[$selector::class] ?? null;
 			if ($runtime === null) {
 				throw new diagnostic($selected->source(), $selected->byte_start(), ($selection_index === 0 ? 'Unsupported first argument type for ' : 'Unsupported argument type for ') . $call->name);
 			}

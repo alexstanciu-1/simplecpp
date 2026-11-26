@@ -53,7 +53,7 @@ final class Literal_Declaration_Preparation
 			&& !(($declaration->parent instanceof ast_record_declaration) && $type->supports_static_property())) {
 			throw new diagnostic($declaration->source(), $declaration->byte_start(), 'String globals are deferred');
 		}
-		$conversion = $type->prepare_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
+		$conversion = $type->prepare_declaration_conversion($declaration->initializer, $declaration->type_reference !== null ? conversion_context::typed_destination : conversion_context::inference);
 		$declaration->settle_type($type, $conversion);
 	}
 

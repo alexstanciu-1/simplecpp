@@ -31,6 +31,11 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
         };
         if ($family === 'string') {
             $h .= "namespace scpp::types { using ::scpp::string; }\n";
+            if (hasType($plan, 'int64')) {
+                $files['public/scpp/php/parse_decimal_int64.hpp'] = BANNER . "#pragma once\n" . scalarProviderIncludes($plan)
+                    . "namespace scpp { class string; namespace php { int64 parse_decimal_int64(const string& value); } }\n";
+                $d .= template('strings/php_decimal_int64');
+            }
             $carrierIncludes = [];
             foreach ($plan['string_functions'] ?? [] as $binding) {
                 foreach ($binding['adapters'] ?? [] as $flavor => $adapter) {

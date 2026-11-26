@@ -511,11 +511,9 @@ SCPP;
 			rejects(fn() => $prepare("echo number_format($arg); return 8;"), 'Unsupported first argument type');
 		}
 		foreach (['1,"two"', '1,2,0,","', '1,2,".",false'] as $args) {
-			rejects(fn() => $prepare("echo number_format($args); return 8;"), 'number_format requires');
+			rejects(fn() => $prepare("echo number_format($args); return 8;"), 'number_format argument');
 		}
-		foreach (['mixed', 'dynamic', 'byte'] as $type) {
-			rejects(fn() => $prepare('$v ' . $type . ' = 1; echo number_format($v); return 8;'), 'Unsupported first argument type');
-		}
+		rejects(fn() => $prepare('$v byte = 1; echo number_format($v); return 8;'), 'Unsupported first argument type');
 	} else {
 		foreach (['strcmp', 'strcasecmp'] as $name) {
 			rejects(fn() => $prepare("echo $name(\"a\",\"b\"); return 8;"), 'Unknown function');

@@ -700,6 +700,17 @@ abstract class type_definition
 			if ($copy === true) return value_conversion::identity;
 			if ($copy === false) throw new diagnostic($value->source(), $value->byte_start(), 'Cannot copy a local of type ' . $this->name);
 		}
+		return $this->prepare_declaration_conversion($value, $context);
+	}
+
+	/** A written PHP integer declaration explicitly requests decimal parsing. */
+	final public function prepare_declaration_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
+	{
+		if ($context === conversion_context::typed_destination && $value->source()->flavor === flavor::php
+			&& $this === type_int64::instance() && $value->value_type() instanceof type_string) {
+			if ($value->type_def() instanceof carrier_type_definition) $value->type_def()->require_extraction($value, $context);
+			return $this->prepare_conversion($value, conversion_context::explicit_cast);
+		}
 		return $this->prepare_conversion($value, $context);
 	}
 
@@ -734,6 +745,18 @@ abstract class type_definition
 				if ($source === $this) return $transport | value_conversion::identity;
 				if ($this instanceof boxed_type_definition && $this->accepts_scalar($source)) return $transport | value_conversion::box_scalar;
 			}
+		}
+		if ($context === conversion_context::explicit_cast && $value->source()->flavor === flavor::php
+			&& $this === type_int64::instance() && $source instanceof type_string) {
+			$bytes = constant_dispatch::string_label_bytes($value);
+			if ($bytes === null) return $transport | value_conversion::decimal_text;
+			if (!preg_match('/\A[+-]?[0-9]+\z/', $bytes)) throw new diagnostic($value->source(), $value->byte_start(), 'Invalid decimal integer text');
+			$digits = ltrim($bytes, '+-0');
+			$limit = $bytes[0] === '-' ? '9223372036854775808' : '9223372036854775807';
+			if (strlen($digits) > strlen($limit) || (strlen($digits) === strlen($limit) && strcmp($digits, $limit) > 0)) {
+				throw new diagnostic($value->source(), $value->byte_start(), 'Decimal text is outside int64 range');
+			}
+			return value_conversion::decimal_literal;
 		}
 		// A PHP carrier destination applies this context to its payload, including boxed conversions.
 		if ($this instanceof carrier_type_definition && (!($source instanceof boxed_type_definition) || $value->source()->flavor === flavor::php)) {
@@ -787,6 +810,11 @@ abstract class type_definition
 			$conversion &= ~value_conversion::EXTRACT;
 			if (($conversion & value_conversion::OPERATION_MASK) !== value_conversion::box_scalar) $syntax = null;
 		}
+		if ($conversion === value_conversion::decimal_text) return 'scpp::php::parse_decimal_int64(' . $value . ')';
+		if ($conversion === value_conversion::decimal_literal) {
+			$integer = (int)constant_dispatch::string_label_bytes($syntax);
+			return $integer === \PHP_INT_MIN ? '(-9223372036854775807LL - 1LL)' : $integer . 'LL';
+		}
 		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
 			return $this->box_cpp($syntax, $value);
 		}
@@ -830,6 +858,7 @@ abstract class type_definition
 	/** Evaluate only a known source fact; conversion handlers may explicitly decline evaluation. */
 	final public function evaluate_constant(int $conversion /** uint16 */, ast_expression $source): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
 	{
+		if ($conversion === value_conversion::decimal_literal) return (int)constant_dispatch::string_label_bytes($source);
 		return $source->constant_known() ? $this->convert_constant($conversion, $source->constant())
 			: constant_evaluation::unavailable;
 	}
@@ -837,6 +866,7 @@ abstract class type_definition
 	/** @return string[] Includes for the prepared payload conversion and destination carrier. */
 	final public function conversion_headers(int $conversion /** uint16 */): array /** list<string> */
 	{
+		if (($conversion & value_conversion::OPERATION_MASK) === value_conversion::decimal_text) return ['scpp/php/parse_decimal_int64.hpp'];
 		if ($this instanceof carrier_type_definition) {
 			return ($conversion & value_conversion::WRAP) !== 0
 				? array_merge($this->cpp_headers(), $this->payload_type->scalar_conversion_headers($conversion & value_conversion::OPERATION_MASK))

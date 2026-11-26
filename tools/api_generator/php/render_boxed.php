@@ -15,7 +15,8 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             . "int64 boxed_key(int64 key);\nboxed_text_key boxed_key(string key);\n}\n";
         $h = BANNER . "#pragma once\n";
     }
-    $d = BANNER . includeHeader($box['header']) . includeHeader('boxed_conversion.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp') . includeHeader('packed_key.hpp') . "namespace scpp {\n";
+    $unionIncludes = '';
+    $d = includeHeader($box['header']) . includeHeader('boxed_conversion.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp') . includeHeader('packed_key.hpp') . "namespace scpp {\n";
     if ($split) {
         $d = str_replace("namespace scpp {\n", includeHeader('source_key.hpp') . implode('', array_map(__NAMESPACE__ . '\\includeHeader', $plan['boxed_dispatch']['headers'])) . "namespace scpp {\n", $d);
         $d .= "int64 boxed_key(int64 key) { return detail::packed_key::integer(key); }\n"
@@ -95,10 +96,36 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             $d .= "void $n::set($parameter key, $n value) { $self.set($expression, std::move($value)); }\n";
             $d .= "bool_t $n::remove(const $key& key) { return bool_t{{$self}.remove($expression)}; }\n";
         }
+        foreach ($plan['string_functions'] ?? [] as $name => $binding) {
+            if (empty($binding['project_selector'])) continue;
+            $adapter = $binding['adapters']['php'];
+            $path = "scpp/php/{$name}_$n.hpp";
+            $header = BANNER . "#pragma once\n" . scalarProviderIncludes($plan) . "namespace scpp { class string; class $n; namespace php {\n";
+            $unionIncludes .= includeHeader($path) . includeHeader($adapter['header']);
+            foreach ($binding['overloads'] as $variants) {
+                $types = reset($variants);
+                $params = ["const $n& value"];
+                $args = [];
+                foreach (array_slice($types, 1) as $i => $type) {
+                    $params[] = ($type === 'string' ? 'const string&' : $type) . " arg$i";
+                    $args[] = "arg$i";
+                }
+                $signature = $binding['result'] . " {$name}_$n(" . implode(', ', $params) . ')';
+                $header .= "$signature;\n";
+                $d .= "namespace php { $signature {\n    switch (value.kind()) {\n";
+                foreach (array_keys($variants) as $input) {
+                    $kind = ['int64' => 'integer', 'float64' => 'floating'][$input];
+                    $call = implode(', ', ["value.get_$kind()", ...$args]);
+                    $d .= "    case boxed_kind::$kind: return ::{$adapter['symbol']}($call);\n";
+                }
+                $d .= "    default: throw std::runtime_error(\"boxed_scalar_kind\");\n    }\n} }\n";
+            }
+            $files['public/' . $path] = $header . "} }\n";
+        }
         if ($box['scalar_conversions']) {
             $d .= "$n $n::from_{$peer}_scalar(const $peer& value) { $n result; {$vars['result']} = detail::{$n}_from_{$peer}_scalar(detail::ownership_access::get<detail::{$peer}_value>(value)); return result; }\n";
         }
     }
     $files['public/'.$box['header']] = $h . ($split ? '' : "}\n");
-    $files['src/boxed.cpp'] = $d . "}\n";
+    $files['src/boxed.cpp'] = BANNER . $unionIncludes . $d . "}\n";
 }

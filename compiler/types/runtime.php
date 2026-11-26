@@ -82,7 +82,7 @@ final readonly class runtime_overloads
 	public bool $receiver_method;
 
 	/** @param array<int,array<class-string<type_definition>,runtime_function>> $by_arity */
-	public function __construct(array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */, int $argument_index /** uint32 */ = 0, bool $receiver_method = false, public ?type_definition $list_context = null, public ?string $required_module = null)
+	public function __construct(array $by_arity /** array<uint32,array<class-string<type_definition>,runtime_function>> */, int $argument_index /** uint32 */ = 0, bool $receiver_method = false, public ?type_definition $list_context = null, public ?string $required_module = null, public bool $project_selector = false)
 	{
 		$this->by_arity = $by_arity;
 		$this->argument_index = $argument_index;
