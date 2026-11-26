@@ -1,5 +1,7 @@
 """Private collection readers preserve snapshots, callbacks and observable cleanup across edits."""
 import argparse
+import json
+import subprocess
 import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -75,8 +77,48 @@ with TemporaryDirectory(prefix='scpp-keyed-reader-') as directory:
     revisions(work, 'php', dict(main=keyed_main, reader=keyed_reader), edits[:1] if quick else edits)
     units = '\n'.join(p.read_text() for p in (work/'php-out/units').glob('*.cpp'))
     for symbol in ('element', 'byKey'):
-        assert units.count(symbol + '_collection_reader(var_') == 2, units
+        assert units.count(symbol + '_collection_reader(var_') == (3 if symbol == 'element' else 2), units
         assert re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return [^;]+\.at\(', units)
+
+named_calls = """
+function namedReads():int {
+    $v vector<int> = [5];$h hash<int,int> = [];$h[0]=7;$k=0;
+    return element(items:$v,key:$k) + element(key:0,items:$v)
+        + byKey(items:$h,key:0) + byKey(key:$k,items:$h);
+}
+function changeVector(vector<int> &$v):int {$v[0]=9;echo "V";return 0;}
+function changeHash(hash<int,int> &$h):int {$h[0]=9;echo "H";return 0;}
+function orderedReads():int {
+    $v vector<int> = [5];$h hash<int,int> = [];$h[0]=7;
+    echo element(items:$v,key:changeVector($v));$v[0]=5;
+    echo element(key:changeVector($v),items:$v);
+    echo byKey(items:$h,key:changeHash($h));$h[0]=7;
+    echo byKey(key:changeHash($h),items:$h);
+    return 8;
+}
+echo namedReads();return orderedReads();
+"""
+with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
+    work = Path(directory)
+    expected = b'24V5V9H7H9'
+    edits = [(None, None, expected),
+             ('reader', keyed_reader.replace('$key', '$offset'), 'Unknown named argument: key'),
+             ('main', named_calls.replace('key:', 'offset:'), expected)]
+    revisions(work, 'php', dict(main=named_calls, reader=keyed_reader), edits[:1] if quick else edits)
+    out = work/'php-out'
+    units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
+    for symbol in ('element', 'byKey'):
+        assert units.count(symbol + '_collection_reader(var_') == 2, units
+    if not quick:
+        root = Path(__file__).resolve().parents[2]
+        sources = json.loads((out/'manifest.json').read_text())['translation_units']
+        probe = work/'copies'
+        subprocess.run(['clang++', '-O2', '-std=c++23', '-stdlib=libc++', '-I', root/'runtime/generated/public',
+                        *(out/unit for unit in sources if unit != 'entry.cpp'),
+                        root/'compiler/tests/fixtures/named_reader_copies.cpp', root/'build/clang/libscpp_runtime.a',
+                        '-Wl,--wrap=_ZN4scpp12vector_int64C1ERKS0_,--wrap=_ZN4scpp16hash_int64_int64C1ERKS0_',
+                        '-o', probe], check=True)
+        subprocess.run([probe], check=True, stdout=subprocess.DEVNULL)
 
 if not quick:
     with TemporaryDirectory(prefix='scpp-index-failure-') as directory:
@@ -95,11 +137,13 @@ if not quick:
         read += forms['function']('first', 'int', [('items', 'vector<int>')], 'return items[0];')
         read += forms['function']('element', 'int', [('items', 'vector<int>'), ('key', 'int')], 'return items[key];')
         local = 'vector<int> v=[3,5];' if flavor == 'cpp' else 'let v:vector<int> = [3,5];'
-        app = local + 'echo width(v),first(v),element(v,1),v[0];return 8;'
+        app = local + 'echo width(v),first(v),element(v,1),element(key:0,items:v),element(items:v,key:1),v[0];return 8;'
         with TemporaryDirectory(prefix='scpp-private-count-') as directory:
             revisions(Path(directory), flavor, dict(main=app, reader=read), [
-                (None, None, b'2353'),
-                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'2793'),
+                (None, None, b'235353'),
+                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'279993'),
                 ('reader', None, None),
-                ('reader', read, b'2353'),
+                ('reader', read, b'235353'),
+                ('reader', read.replace('key', 'offset'), 'Unknown named argument: key'),
+                ('main', app.replace('key:', 'offset:'), b'235353'),
             ])

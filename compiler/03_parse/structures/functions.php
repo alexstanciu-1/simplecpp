@@ -576,8 +576,9 @@ final class Named_Arguments
 	}
 
 	/**
-	 * @param string[] $operands
-	 * @return string[]
+	 * @template T
+	 * @param T[] $operands
+	 * @return T[]
 	 */
 	public function parameter_order(array $operands): array
 	{
