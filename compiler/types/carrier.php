@@ -163,6 +163,16 @@ abstract class carrier_type_definition extends type_definition implements presen
 		return true;
 	}
 
+	/** Borrow the box once so temporaries and effectful arguments have the same kind check and conversion. */
+	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
+	{
+		if ($conversion !== value_conversion::boxed_nullable_argument) return null;
+		$payload = $this->payload_type->lower_cpp_conversion(value_conversion::unbox_typed, 'box', source_type: $source);
+		$body = "\tif (box.kind() == scpp::boxed_kind::null) return {};\n\treturn " . $this->cpp_type() . '{' . $payload . "};\n";
+		return new cpp_inline_adapter('boxed_nullable_argument', [new cpp_adapter_parameter($source, 'box', cpp_adapter_mode::const_reference)],
+			$this, $body, false);
+	}
+
 	/** Wrap only an admitted payload conversion, or the metadata-authorized empty state. */
 	public function prepare_construction(ast_expression $value, conversion_context $context): int /** uint16 */
 	{

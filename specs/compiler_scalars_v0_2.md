@@ -781,6 +781,11 @@ or return value. An exact carrier argument preserves its entire state.
   string remain present values. A failed result or either boolean sentinel
   raises during argument evaluation. Different carrier payload types do not
   implicitly rewrap at calls.
+* A direct mixed or dynamic argument can supply `?T` only if its family
+  publishes a typed-destination conversion to T. Boxed null supplies an empty
+  nullable. Other kinds use that conversion and supply a present payload on
+  success. A wrong kind or out-of-range value raises before the callee starts.
+  The argument is evaluated once.
 * A result, falseable result or boolean-sentinel result parameter requires its
   exact concrete result type. To pass an ordinary value, first construct the
   intended result in a typed declaration or return it from a producer.

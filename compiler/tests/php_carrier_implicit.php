@@ -21,10 +21,37 @@ class Reader {
     public function status(result_or_bool<bool> $r): int { $expected result_or_bool<bool> = true_sentinel; return (int)($r === $expected); }
 }
 function pass_flag(result_or_bool<bool> $r): int { $reader = new Reader(); return $reader->read($r); }
+function text_size(?string $s, int &$calls): int { $calls++; return $s === null ? -1 : strlen($s); }
 function position(): result_or_false<int> { echo "P"; return strpos("abc", "a"); }
 SCPP;
 $native = '';
 $fragments = ['scpp::mixed::from_integer((var_v_0).value())', 'scpp::dynamic::from_integer((var_v_0).value())'];
+foreach (['mixed', 'dynamic'] as $box) {
+	$functions .= str_replace('BOX', $box, <<<'SCPP'
+function produce_BOX(BOX &$v, int &$reads): BOX { $reads++; return $v; }
+function text_BOX(BOX &$v, int &$reads, int &$calls): int { return text_size(produce_BOX($v, $reads), $calls); }
+function number_BOX(BOX &$v, int &$calls): int { return read_optional($v, $calls); }
+SCPP);
+	$native .= str_replace('BOX', $box, <<<'CPP'
+    {
+        using Box = scpp::BOX;
+        scpp::int64 reads{0}, calls{0};
+        Box v{};
+        if (App::text_BOX_(v, reads, calls) != -1) return 92;
+        v = Box::from_string(scpp::string{""});
+        if (App::text_BOX_(v, reads, calls) != 0) return 93;
+        v = Box::container();
+        try { App::text_BOX_(v, reads, calls); return 94; }
+        catch (const std::runtime_error& e) { if (std::string_view{e.what()} != "boxed_scalar_kind") return 95; }
+        if (reads != 3 || calls != 2) return 96;
+        v = Box::from_integer(scpp::int64{0});
+        if (App::number_BOX_(v, calls) != 0) return 97;
+        v = Box::from_floating(1e100);
+        try { App::number_BOX_(v, calls); return 98; }
+        catch (const std::out_of_range& e) { if (std::string_view{e.what()} != "integer_cast_out_of_range" || calls != 3) return 99; }
+    }
+CPP);
+}
 if (type_registry::specialize('result', type_mixed::instance()) !== null) {
 	$functions .= <<<'SCPP'
 function from_scalar(?int &$x): result<mixed> { return $x; }

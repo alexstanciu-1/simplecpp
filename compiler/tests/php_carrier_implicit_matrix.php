@@ -21,6 +21,16 @@ function implicit_body(string $source, string $target, string $context): ?string
 	}
 }
 
+foreach (['mixed', 'dynamic'] as $box) {
+	if (implicit_body($box, '?vector<string>', 'arg') !== null) throw new RuntimeException("Box supplied an unsupported vector payload");
+	foreach (['init', 'assign', 'arg', 'return'] as $context) {
+		$cpp = implicit_body($box, '?string', $context);
+		if ($cpp === null || str_contains($cpp, 'box.kind() == scpp::boxed_kind::null') !== ($context === 'arg')) {
+			throw new RuntimeException("Unexpected boxed null handling in $context");
+		}
+	}
+}
+
 // Passing a carrier across numeric domains is a separate choice from converting a plain payload.
 if (implicit_body('result<int>', '?float', 'arg') !== null || implicit_body('result<int>', 'result<bool>', 'arg') !== null) {
 	throw new RuntimeException('Call accepted a different carrier payload type');

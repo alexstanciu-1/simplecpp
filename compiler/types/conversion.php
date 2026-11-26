@@ -59,11 +59,14 @@ final class value_conversion
 	public const int intersection_capability /** uint16 */ = 26;
 	public const int guarded_intersection /** uint16 */ = 27;
 
+	public const int boxed_nullable_argument /** uint16 */ = 28;
+
 	/** Inspection only; preparation and lowering use numeric operations directly. */
 	public static function name(int $code /** uint16 */): string
 	{
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
+			self::boxed_nullable_argument => 'boxed_nullable_argument',
 			self::guarded_intersection => 'guarded_intersection',
 			self::intersection_base => 'intersection_base',
 			self::intersection_capability => 'intersection_capability',

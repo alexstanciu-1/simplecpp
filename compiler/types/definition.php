@@ -713,6 +713,12 @@ abstract class type_definition
 					throw new diagnostic($value->source(), $value->byte_start(),
 						'Cannot pass ' . $source->name . ' to a parameter of type ' . $this->name);
 				}
+				if ($source instanceof boxed_type_definition) {
+					if (!$source->admits_extraction($this->payload_type, conversion_context::typed_destination)) {
+						throw new diagnostic($value->source(), $value->byte_start(), 'Unsupported boxed conversion to ' . $this->name);
+					}
+					return value_conversion::boxed_nullable_argument;
+				}
 			}
 			// Scalar conversion, checked extraction and wrapping reuse the typed-destination plan.
 			$context = conversion_context::typed_destination;
