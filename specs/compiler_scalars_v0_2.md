@@ -733,8 +733,9 @@ raises on an explicit bool cast.
 
 ## PHP implicit conversions of carrier operands
 
-Typed initialization, by-value arguments and declared returns select the
-published typed-destination conversion. Reassignment selects the published
+Typed initialization and declared returns select the published typed-destination
+conversion. By-value calls apply the argument rules below, then reuse the same
+payload conversion. Reassignment selects the published
 assignment conversion. Copying into the identical carrier type preserves its
 entire state in each context, including under explicit-only extraction policy.
 
@@ -763,3 +764,25 @@ The compiler catalog supplies argument policies and diagnostic labels separately
 from named-call availability and native parameter representation. Preparation
 checks them and records the conversion. A native const-reference input can borrow
 a directly supplied string or the result of an admitted conversion for the call.
+
+
+## PHP by-value call arguments
+
+For a supplied argument to a function, method or typed builtin parameter,
+preparation distinguishes passing a value from constructing a declared local
+or return value. An exact carrier argument preserves its entire state.
+
+* A plain parameter uses the published typed conversion and implicit extraction
+  policy. If it needs a payload, absence, a sentinel and a structured failure
+  raise `carrier_no_value` before the callee starts.
+* A `?T` parameter accepts plain values under its existing typed rules, null,
+  and an existing `?T`. Passing a result carrier with the same canonical payload
+  type T checks for a payload and wraps it as present. Zero, false and the empty
+  string remain present values. A failed result or either boolean sentinel
+  raises during argument evaluation. Different carrier payload types do not
+  implicitly rewrap at calls.
+* A result, falseable result or boolean-sentinel result parameter requires its
+  exact concrete result type. To pass an ordinary value, first construct the
+  intended result in a typed declaration or return it from a producer.
+
+Exact-inspection and reference parameters continue to use their declared modes.

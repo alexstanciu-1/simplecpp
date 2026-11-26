@@ -698,6 +698,16 @@ abstract class type_definition
 	final public function prepare_conversion(ast_expression $value, conversion_context $context): int /** uint16 */
 	{
 		$source = $value->type_def();
+		if ($context === conversion_context::value_argument) {
+			if ($value->source()->flavor === flavor::php && $this instanceof carrier_type_definition && $source !== $this) {
+				if (!$this->accepts_empty() || ($source instanceof carrier_type_definition && $source->payload_type !== $this->payload_type)) {
+					throw new diagnostic($value->source(), $value->byte_start(),
+						'Cannot pass ' . $source->name . ' to a parameter of type ' . $this->name);
+				}
+			}
+			// Scalar conversion, checked extraction and wrapping reuse the typed-destination plan.
+			$context = conversion_context::typed_destination;
+		}
 		$transport = 0;
 		if ($source instanceof carrier_type_definition) {
 			if ($source === $this) return value_conversion::identity;

@@ -17,6 +17,7 @@ enum conversion_context: int
 	case assignment = 3;
 	case inference = 4;
 	case compound_write_back = 5;
+	case value_argument = 6;
 }
 
 /** Packed prepared conversion: low byte is the scalar operation; high bits describe carrier transport. */

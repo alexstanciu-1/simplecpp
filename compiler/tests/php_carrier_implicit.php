@@ -13,6 +13,15 @@ function box_return(result_or_false<int> &$v): dynamic { return $v; }
 function copy_state(result<int> $v): result<int> { $x result<int> = $v; $x = $v; return $x; }
 function once(): ?int { echo "X"; return 7; }
 function widen(float $x): float { return $x; }
+function read_optional(?int $v, int &$calls): int { $calls++; return $v ?? -1; }
+function pass_error(result<int> $r, int &$calls): int { return read_optional($r, $calls); }
+function pass_miss(result_or_false<int> $r, int &$calls): int { return read_optional($r, $calls); }
+class Reader {
+    public function read(?bool $v): int { return $v === null ? 2 : (int)$v; }
+    public function status(result_or_bool<bool> $r): int { $expected result_or_bool<bool> = true_sentinel; return (int)($r === $expected); }
+}
+function pass_flag(result_or_bool<bool> $r): int { $reader = new Reader(); return $reader->read($r); }
+function position(): result_or_false<int> { echo "P"; return strpos("abc", "a"); }
 SCPP;
 $native = '';
 $fragments = ['scpp::mixed::from_integer((var_v_0).value())', 'scpp::dynamic::from_integer((var_v_0).value())'];
@@ -44,9 +53,22 @@ $main = <<<'SCPP'
 $boxed mixed = once();
 $n int = $boxed;
 echo $n, (int)widen(once());
+$calls = 0;
+echo read_optional(position(), $calls), read_optional(null, $calls), read_optional(7, $calls), $calls;
+$false_value result_or_bool<bool> = false;
+echo pass_flag($false_value);
+$reader = new Reader();
+$command result_or_bool<bool> = true_sentinel;
+echo $reader->status($command);
 return 8;
 SCPP;
 $entry = (new Source_Frontend())->prepare(new source_file('implicit', $functions . $main, flavor::php), new entry_target(31));
+try {
+	(new Source_Frontend())->prepare(new source_file('bad_method', $functions . '$reader = new Reader(); $reader->status(true); return 8;', flavor::php), new entry_target(31));
+	throw new RuntimeException('Method accepted a plain boolean for a result parameter');
+} catch (\scpp\compiler\diagnostic $error) {
+	if (!str_contains($error->getMessage(), 'Cannot pass bool_t to a parameter of type result_or_bool<bool_t>')) throw $error;
+}
 $cpp = (new Cpp_Emitter())->emit($entry);
 foreach ($fragments as $fragment) {
 	if (!str_contains($cpp, $fragment)) throw new RuntimeException('Missing implicit conversion: ' . $fragment);
@@ -71,6 +93,9 @@ int check_implicit() {
     if (!missing([&] { App::box_return_(miss); }) || !missing([&] { App::store_(failed, slot); })) return 82;
     if (App::consume_(slot) != out || App::copy_state_(failed).error().get_line() != out) return 83;
     if (App::consume_(App::init_(seven)) != 7) return 84;
+    if (!missing([&] { App::pass_error_(failed, out); }) || !missing([&] { App::pass_miss_(miss, out); }) || out != 23) return 90;
+    if (!missing([] { App::pass_flag_(scpp::result_or_bool_bool_t::from_true()); })
+        || !missing([] { App::pass_flag_(scpp::result_or_bool_bool_t::from_false()); })) return 91;
 CPP;
 $cpp .= "\n" . $native . "\n    return App::scpp_entry_body();\n}\n";
-file_put_contents($argv[1], json_encode(['php' => ['cpp' => $cpp, 'stdout_hex' => bin2hex('X7X7')]], JSON_THROW_ON_ERROR));
+file_put_contents($argv[1], json_encode(['php' => ['cpp' => $cpp, 'stdout_hex' => bin2hex('X7X7P0-17301')]], JSON_THROW_ON_ERROR));

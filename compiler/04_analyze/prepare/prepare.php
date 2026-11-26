@@ -1990,7 +1990,7 @@ final class Preparation
 			elseif ($typed && $argument->type_def() !== $type) {
 				if ($conversions === []) $conversions = array_fill(0, count($operands), value_conversion::identity);
 				try {
-					$conversions[$index] = $type->prepare_conversion($argument, conversion_context::typed_destination);
+					$conversions[$index] = $type->prepare_conversion($argument, conversion_context::value_argument);
 				} catch (diagnostic) {
 					$message = $label . 'requires ' . $type->name . ', received ' . $argument->type_def()->name;
 					try {
@@ -2494,7 +2494,7 @@ final class Preparation
 					throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires an integer');
 				}
 				$binding = $enum->definition->helper_function($use);
-				$conversion = $binding->parameters[0]->prepare_conversion($argument, conversion_context::typed_destination);
+				$conversion = $binding->parameters[0]->prepare_conversion($argument, conversion_context::value_argument);
 				$call->settle_runtime($binding, [$conversion]);
 				return;
 			}
@@ -2928,7 +2928,7 @@ final class Preparation
 						continue;
 					}
 				}
-				$conversions[] = $type->prepare_conversion($argument, conversion_context::typed_destination);
+				$conversions[] = $type->prepare_conversion($argument, conversion_context::value_argument);
 			}
 		}
 		// Invocation follows every argument evaluation. Preserve earlier snapshots, invalidate future reads.
