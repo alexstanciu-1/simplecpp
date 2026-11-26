@@ -42,7 +42,7 @@ def verify(work, cxx, linker):
     tool.mkdir()
     (tool/'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {
         'runtime': {'modules': ['filesystem', 'io']}}}))
-    for name in ('frontend', 'function_ast'):
+    for name in ('frontend', 'function_ast', 'compiler'):
         shutil.copyfile(examples/f'translated_path/{name}.php.scpp', tool/f'{name}.php')
     for name in ('main', 'session'):
         shutil.copyfile(examples/f'retained_frontend/{name}.php.scpp', tool/f'{name}.php')
@@ -95,6 +95,42 @@ def verify(work, cxx, linker):
         definition.write_bytes(b'\xff')
         assert run('run').split('|') == ['definition.php:0: Invalid UTF-8 source', '4', one, '', both]
         assert run('snapshot') == repaired
+
+    definition.write_text(first)
+    main.write_text('return answer();')
+    with service(exe, app) as run:
+        def prepare(status, frontend, prepared, parsed, work_done, reused):
+            row = run('prepare')
+            assert row.split('|') == [status, str(frontend), str(prepared), parsed, work_done, reused], row
+            print(row)
+
+        prepare('ok', 1, 1, both, both, '')
+        prepare('ok', 2, 2, '', '', both)
+        definition.write_text(first.replace('1', '2'))
+        prepare('ok', 3, 3, one, one, caller)
+        good = run('prepared-snapshot')
+        assert good.startswith('answer|func:answer|2|')
+        definition.write_text(first.replace('1', '9223372036854775808'))
+        error = f'definition.php:{first.index("1")}: Integer literal is outside int64 range'
+        prepare(error, 4, 3, one, one, both)
+        assert run('prepared-snapshot') == good
+        prepare(error, 5, 3, '', one, both)
+        definition.write_text(first.replace('1', '3'))
+        prepare('ok', 6, 6, one, one, caller)
+        repaired = run('prepared-snapshot')
+        assert repaired.startswith('answer|func:answer|3|') and repaired != good
+        assert b'return 3LL;' in bytes.fromhex(repaired.split('|')[-1])
+        with service(exe, app) as cold:
+            assert cold('prepare').split('|') == ['ok', '1', '1', both, both, '']
+            assert cold('prepared-snapshot') == repaired
+
+        # A changed public name invalidates an unchanged caller; both candidates publish together.
+        definition.write_text(first.replace('answer', 'other'))
+        prepare('main.php:7: Unknown function: answer', 7, 6, one, both, both)
+        assert run('prepared-snapshot') == repaired
+        main.write_text('return other();')
+        prepare('ok', 8, 8, caller, both, '')
+        assert run('prepared-snapshot').startswith('other|func:other|1|')
 
 
 if __name__ == '__main__':

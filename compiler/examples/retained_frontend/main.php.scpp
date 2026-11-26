@@ -23,6 +23,43 @@ function frontend_snapshot(Frontend_Session $session): string {
 		. ";" . $entry->name . "," . (string)$entry->offset;
 }
 
+function prepared_snapshot(Translation $compiler): string {
+	$entry = $compiler->entry_binding();
+	if ($entry === null) return "empty";
+	$target = $entry->target();
+	if ($target !== $compiler->declaration()) throw Exception::make("Stale prepared call target");
+	return $entry->syntax->name . "|" . $target->scope->declaration->symbol_key() . "|" . (string)$target->value
+		. "|" . bin2hex($compiler->published_output());
+}
+
+function prepare_request(Frontend_Session $session, Translation $compiler, string $directory, int &$generation): string {
+	$work = "";
+	$status = "ok";
+	$old_entry = $compiler->entry_binding();
+	$old_definition = $compiler->declaration();
+	try {
+		$session->refresh($directory);
+		$scope = $session->scope;
+		$call = $session->entry;
+		if ($scope === null || $call === null) throw Exception::make("Incomplete frontend publication");
+		$compiler->prepare_syntax($scope, $call, $work);
+		$definition = $compiler->declaration();
+		$binding = $compiler->entry_binding();
+		if ($definition === null || $definition->scope !== $scope || $binding === null || $binding->syntax !== $call) {
+			throw Exception::make("Preparation lost the frontend syntax identity");
+		}
+		$generation = $session->generation;
+	} catch (Translation_Diagnostic $error) {
+		$status = $error->path . ":" . (string)$error->offset . ": " . $error->detail;
+	}
+	$entry = $compiler->entry_binding();
+	$reused = "";
+	if ($old_definition !== null && $old_definition === $compiler->declaration()) $reused .= "definition.php,";
+	if ($old_entry !== null && $old_entry === $entry) $reused .= "main.php,";
+	return $status . "|" . (string)$session->generation . "|" . (string)$generation . "|" . $session->parsed
+		. "|" . $work . "|" . $reused;
+}
+
 function handle_request(Frontend_Session $session, string $directory, string $command): string {
 	if ($command === "snapshot\n") return frontend_snapshot($session);
 	if ($command !== "run\n") return "unknown request";
@@ -44,6 +81,8 @@ function handle_request(Frontend_Session $session, string $directory, string $co
 $cli = cli_arguments();
 if (count($cli) !== 2) return 2;
 $session = new Frontend_Session();
+$compiler = new Translation();
+$prepared_generation = 0;
 $input file_stream = io_open("/dev/stdin", "rb");
 $output file_stream = io_open("/dev/stdout", "ab");
 while (true) {
@@ -53,7 +92,15 @@ while (true) {
 		break;
 	}
 	$line string = $request;
-	$response = handle_request($session, $cli[1], $line) . "\n";
+	$response = "";
+	if ($line === "prepare\n") {
+		$response = prepare_request($session, $compiler, $cli[1], $prepared_generation);
+	} elseif ($line === "prepared-snapshot\n") {
+		$response = prepared_snapshot($compiler);
+	} else {
+		$response = handle_request($session, $cli[1], $line);
+	}
+	$response .= "\n";
 	$offset = 0;
 	while ($offset < strlen($response)) {
 		$written int = io_write($output, substr($response, $offset));
