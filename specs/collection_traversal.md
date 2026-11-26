@@ -103,9 +103,11 @@ An inferred local PHP closure inside the loop may capture the selected slot with
 `use (&$point)`. Creation binds the current slot once. Direct calls of that
 local during the iteration read and write the live element under the same access
 rules as the loop body. The borrow ends with its lexical scope, including on
-continue, break, return or exception. Forwarding the closure as a callback,
-storing or returning it, and recapturing the borrowed binding in a nested
-closure are outside this contract.
+continue, break, return or exception. A nested inferred local closure may recapture that binding by reference. It binds
+the reference held by its enclosing closure, including after the visible loop key
+changes. Each borrowing closure can only be invoked directly within its lexical
+scope. Passing, storing or returning either closure is rejected. Nested by-value
+recapture of a borrowed binding remains deferred.
 
 For a borrowed source, the loop also protects other mutable reference parameters
 and by-reference lexical captures of the same canonical collection type. Distinct

@@ -2124,8 +2124,8 @@ final class Preparation
 			}
 			$this->value($capture->initializer);
 			$origin = $capture->initializer->local_def();
-			if ($origin instanceof ast_closure_capture && ast_writable_element::origin($origin) !== null) {
-				throw new diagnostic($capture->source(), $capture->byte_start(), 'Nested capture of a borrowed foreach element is deferred');
+			if (!$capture->by_reference && $origin instanceof ast_closure_capture && ast_writable_element::origin($origin) !== null) {
+				throw new diagnostic($capture->source(), $capture->byte_start(), 'Nested by-value capture of a borrowed foreach element is deferred');
 			}
 			$capture_type = $capture->initializer->type_def();
 			$conversion = $capture->by_reference ? value_conversion::identity : $this->prepare_local_initialization($capture, $capture_type);
@@ -2133,7 +2133,7 @@ final class Preparation
 			if ($capture->by_reference) {
 				// Different capture names can borrow the same slot through local aliases.
 				$this->require_collection_available($capture, $origin);
-				if ($origin instanceof ast_writable_element && (!($lambda->parent instanceof ast_local_declaration)
+				if (ast_writable_element::origin($origin) !== null && (!($lambda->parent instanceof ast_local_declaration)
 					|| $lambda->parent->type_reference !== null || $lambda->parent->initializer !== $lambda)) {
 					throw new diagnostic($capture->source(), $capture->byte_start(), 'A borrowed foreach element requires an inferred local closure');
 				}
