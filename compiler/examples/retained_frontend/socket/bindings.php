@@ -17,6 +17,8 @@ function private_frontend_binding(string $key): ?runtime_function
 			'host_request' => [[], $string],
 			'host_reply' => [[$string], $void],
 			'host_close' => [[], $void],
+			'host_sha256_bytes' => [[$string], $string],
+			'host_sha256_file' => [[$string], $string],
 			'host_pid' => [[], type_registry::integer()],
 			'host_exchange' => [[$string, $string], $string],
 		] as $name => [$parameters, $result]) {

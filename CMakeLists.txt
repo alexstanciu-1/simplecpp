@@ -901,6 +901,8 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_socket.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_JSON AND SCPP_ENABLE_DATETIME)
+    add_test(NAME compiler_native_source_inventory COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_source_inventory.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
     add_test(NAME compiler_native_frontend_protocol COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/native_frontend_protocol.py ${CMAKE_CURRENT_BINARY_DIR}/native-frontend/native/program)
   endif()
