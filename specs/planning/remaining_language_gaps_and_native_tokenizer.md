@@ -281,8 +281,22 @@ while its application was held open, and the next build printed `2` using the
 new translation unit. The combined focused check took 1.92 seconds. The native driver also invokes the PHP host's saved Ninja graph. Across three
 short-lived invocations on dev002, the two-source application plus generated entry
 required three compiles and one link initially, zero compiles and links unchanged,
-and one compile and one link after a function-body edit. Retained service
-transport remains open.
+and one compile and one link after a function-body edit. The Linux native frontend now retains the two-source bootstrap parser's
+last successful source snapshots, token spans, declaration scope and entry syntax
+across sequential requests over stdin/stdout. Each request rereads both files.
+A byte-identical source reuses its parsed object. Failed requests leave the
+successful generation intact. On dev002 the cold, unchanged, body edit, syntax
+error and repair attempted 2, 0, 1, 1 and 1 parses. The repaired snapshot matched
+a separate cold process, including source bytes, tokens, AST ranges and symbol key.
+The production PHP service continues to own its full grammar and socket lifecycle.
+The native `prepare` request consumes the published scope and call syntax by
+identity. In the two-source grammar, changing only the integer returned by the
+definition rechecks that body and reuses the caller's binding. A valid literal
+outside int64 advances the frontend alone. Retrying attempts preparation again
+without reparsing. Repair matched a fresh process on the resolved key, value
+and emitted C++ bytes. Renaming the function also rechecks its caller.
+[Session](../../compiler/examples/retained_frontend/session.php.scpp) ·
+[Five-case comparison](../../compiler/tests/translated_retained_frontend.py)
 [Driver](../../compiler/examples/native_driver/main.php.scpp) ·
 [Native comparison](../../compiler/tests/translated_native_driver.py)
 

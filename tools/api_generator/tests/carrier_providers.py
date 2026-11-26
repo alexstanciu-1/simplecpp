@@ -43,7 +43,9 @@ def proof(work):
             return json.loads((runtime / 'prepared.json').read_text())
 
     default = emit(metadata, publication)
-    assert len(default['carriers']) == 16
+    requested = publication['carriers']['specializations']
+    assert sorted(c['name'] for c in default['carriers']) == sorted(
+        f"{c['family']}_{c['payload']}" for c in requested)
     assert [c['name'] for c in default['carriers'] if c['instance_field']] == ['nullable_string']
     assert default['carrier_families']['result']['default_state'] == 'value'
     assert default['carrier_families']['result_or_bool']['states'] == {'value': 'payload', 'false': None, 'true': None}

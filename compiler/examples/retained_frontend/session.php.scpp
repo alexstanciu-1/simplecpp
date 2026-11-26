@@ -1,0 +1,42 @@
+// One application, with the two file roles supported by Translation_Parser.
+final class Frontend_Session {
+	public ?Translation_Scope $scope = null;
+	public ?Call_Syntax $entry = null;
+	public int $generation = 0;
+	public string $tokenized = "";
+	public string $parsed = "";
+
+	private function parser(string $path, string $text): Translation_Parser {
+		$this->tokenized .= $path . ",";
+		$source = new Translation_Source($path, $text);
+		$this->parsed .= $path . ",";
+		return new Translation_Parser($source);
+	}
+
+	private function read_source(string $directory, string $path): string {
+		$result = fs_get($directory . "/" . $path);
+		if (!isset($result)) throw new Translation_Diagnostic($path, 0, "Cannot read source");
+		return $result;
+	}
+
+	public function refresh(string $directory): void {
+		$this->tokenized = "";
+		$this->parsed = "";
+		$scope = $this->scope;
+		$entry = $this->entry;
+		$text string = $this->read_source($directory, "definition.php");
+		if ($scope === null || $scope->source->text !== $text) {
+			$parser = $this->parser("definition.php", $text);
+			$scope = $parser->parse_scope();
+		}
+		$main string = $this->read_source($directory, "main.php");
+		if ($entry === null || $entry->source->text !== $main) {
+			$parser = $this->parser("main.php", $main);
+			$entry = $parser->parse_entry();
+		}
+		// Publish only after every changed file has parsed successfully.
+		$this->scope = $scope;
+		$this->entry = $entry;
+		$this->generation++;
+	}
+}

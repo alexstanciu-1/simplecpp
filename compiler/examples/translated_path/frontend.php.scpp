@@ -122,6 +122,25 @@ final class Call_Syntax {
 	}
 }
 
+// The collected definition owns the source generation and its completed function.
+final class Translation_Scope {
+	public readonly Translation_Source $source;
+	public readonly Function_Declaration $declaration;
+
+	public function __construct(Translation_Source $source, Function_Declaration $declaration) {
+		$declaration->body();
+		$this->source = $source;
+		$this->declaration = $declaration;
+	}
+
+	public function resolve(string $key): ?Function_Declaration {
+		if ($this->declaration->symbol_key() === $key) {
+			return $this->declaration;
+		}
+		return null;
+	}
+}
+
 // The parse cursor consumes tokens from only its own source.
 final class Translation_Parser {
 	private Translation_Source $source;
@@ -189,6 +208,10 @@ final class Translation_Parser {
 		$statement = new Function_Return($return_start, $this->index, $literal);
 		$this->expect(Token_Kind::T_rbrace, "Expected }");
 		return new Function_Body($body_start, $this->index, $statement);
+	}
+
+	public function parse_scope(): Translation_Scope {
+		return new Translation_Scope($this->source, $this->parse_declaration());
 	}
 
 	public function parse_declaration(): Function_Declaration {

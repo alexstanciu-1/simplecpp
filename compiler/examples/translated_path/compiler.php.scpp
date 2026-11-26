@@ -73,25 +73,6 @@ function prepare_literal(Translation_Scope $scope): int {
 	return $value;
 }
 
-// The collected definition owns the source generation and its completed function.
-final class Translation_Scope {
-	public readonly Translation_Source $source;
-	public readonly Function_Declaration $declaration;
-
-	public function __construct(Translation_Source $source, Function_Declaration $declaration) {
-		$declaration->body();
-		$this->source = $source;
-		$this->declaration = $declaration;
-	}
-
-	public function resolve(string $key): ?Function_Declaration {
-		if ($this->declaration->symbol_key() === $key) {
-			return $this->declaration;
-		}
-		return null;
-	}
-}
-
 function emit_translation(Prepared_Call $entry): string {
 	$target = $entry->target();
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
@@ -115,14 +96,15 @@ final class Translation {
 	}
 
 	public function compile(?string $definition_text, string $entry_text): string {
+		$work = "";
 		$definition = $this->definition;
 		if ($definition_text === null) {
 			$definition = null;
 		} elseif ($definition === null || $definition_text !== $definition->scope->source->text) {
 			$source = new Translation_Source("definition.php", $definition_text);
 			$parser = new Translation_Parser($source);
-			$scope = new Translation_Scope($source, $parser->parse_declaration());
-			$definition = new Prepared_Declaration($scope, prepare_literal($scope));
+			$scope = $parser->parse_scope();
+			$definition = $this->prepare_definition($scope, $work);
 		}
 
 		$call = $this->entry_syntax();
@@ -130,14 +112,39 @@ final class Translation {
 			$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
 			$call = $parser->parse_entry();
 		}
-		$key = "func:" . $call->name;
-		if ($definition !== null && $definition->scope->resolve($key) === null) {
-			throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
-		}
+		return $this->finish_preparation($definition, $call, $work);
+	}
 
+	// The resident frontend already owns these immutable syntax objects.
+	public function prepare_syntax(Translation_Scope $scope, Call_Syntax $call, string &$work): string {
+		$definition = $this->prepare_definition($scope, $work);
+		return $this->finish_preparation($definition, $call, $work);
+	}
+
+	private function prepare_definition(Translation_Scope $scope, string &$work): Prepared_Declaration {
+		$previous = $this->definition;
+		if ($previous !== null && $previous->scope === $scope) return $previous;
+		$work .= $scope->source->path . ",";
+		return new Prepared_Declaration($scope, prepare_literal($scope));
+	}
+
+	private function finish_preparation(?Prepared_Declaration $definition, Call_Syntax $call, string &$work): string {
 		$entry = $this->entry;
-		if ($entry === null || $entry->syntax !== $call) {
-			$entry = new Prepared_Call($call, $this->symbols->entry($key));
+		$previous = $this->definition;
+		if ($definition !== null && $definition === $previous && $entry !== null && $entry->syntax === $call) {
+			return $this->output;
+		}
+		$key = "func:" . $call->name;
+		// In this grammar a function's name determines its entire public signature () : int.
+		if ($entry === null || $entry->syntax !== $call || $previous === null || $definition === null ||
+			$previous->scope->declaration->short_name !== $definition->scope->declaration->short_name) {
+			$work .= $call->source->path . ",";
+			if ($definition !== null && $definition->scope->resolve($key) === null) {
+				throw new Translation_Diagnostic($call->source->path, $call->offset, "Unknown function: " . $call->name);
+			}
+			if ($entry === null || $entry->syntax !== $call) {
+				$entry = new Prepared_Call($call, $this->symbols->entry($key));
+			}
 		}
 		$this->publish_definition($definition);
 		$output = emit_translation($entry);

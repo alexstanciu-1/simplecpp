@@ -2915,13 +2915,18 @@ CPP;
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
 			$result = $function->return_type_def();
-			$argument = $value->arguments[0] ?? null;
+			$reader_arguments = $value->arguments;
+			if (isset($value->named) && count($reader_arguments) === 2 && count($function->parameters) === 2) {
+				// Inspect explicit operands by parameter slot. Ordinary invocation retains their written order.
+				$reader_arguments = $value->named->parameter_order($reader_arguments);
+			}
+			$argument = $reader_arguments[0] ?? null;
 			if (self::plain_local_read($argument)
 				&& ($input = $function->private_reader_input()) !== null && $argument->type_def() === $input->type_def()) {
 				if (count($function->parameters) === 1) {
 					$name .= 'collection_reader';
-				} elseif (!isset($value->named) && isset($value->arguments[1])) {
-					$key = $value->arguments[1];
+				} elseif (isset($reader_arguments[1])) {
+					$key = $reader_arguments[1];
 					if ($key->type_def() === type_int64::instance() && ($key instanceof ast_integer_expression || self::plain_local_read($key))) {
 						// Both operands are inert. Binding the collection directly avoids a by-value staging temporary.
 						return $name . 'collection_reader(' . $this->name($argument->local_def()) . ', '

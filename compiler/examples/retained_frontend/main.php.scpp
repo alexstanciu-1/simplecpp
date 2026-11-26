@@ -1,0 +1,112 @@
+function source_snapshot(Translation_Source $source): string {
+	$row = $source->path . ":" . bin2hex($source->text);
+	foreach ($source->tokens as $t) {
+		$row .= "|" . (string)enum_value($t->kind) . "," . (string)$t->offset . "," . (string)$t->length;
+	}
+	return $row;
+}
+
+function frontend_snapshot(Frontend_Session $session): string {
+	$scope = $session->scope;
+	$entry = $session->entry;
+	if ($scope === null || $entry === null) return "empty";
+	$function = $scope->declaration;
+	$body = $function->body();
+	$stmt = $body->statement;
+	if ($scope->resolve($function->symbol_key()) !== $function || $body->function_declaration() !== $function) {
+		throw Exception::make("Invalid published declaration");
+	}
+	return source_snapshot($scope->source) . ";" . source_snapshot($entry->source)
+		. ";" . $function->symbol_key() . "," . (string)$function->start . "," . (string)$function->header_end
+		. "," . (string)$function->end() . "," . (string)$body->start . "," . (string)$body->end
+		. "," . (string)$stmt->start . "," . (string)$stmt->end . "," . (string)$stmt->literal_token
+		. ";" . $entry->name . "," . (string)$entry->offset;
+}
+
+function prepared_snapshot(Translation $compiler): string {
+	$entry = $compiler->entry_binding();
+	if ($entry === null) return "empty";
+	$target = $entry->target();
+	if ($target !== $compiler->declaration()) throw Exception::make("Stale prepared call target");
+	return $entry->syntax->name . "|" . $target->scope->declaration->symbol_key() . "|" . (string)$target->value
+		. "|" . bin2hex($compiler->published_output());
+}
+
+function prepare_request(Frontend_Session $session, Translation $compiler, string $directory, int &$generation): string {
+	$work = "";
+	$status = "ok";
+	$old_entry = $compiler->entry_binding();
+	$old_definition = $compiler->declaration();
+	try {
+		$session->refresh($directory);
+		$scope = $session->scope;
+		$call = $session->entry;
+		if ($scope === null || $call === null) throw Exception::make("Incomplete frontend publication");
+		$compiler->prepare_syntax($scope, $call, $work);
+		$definition = $compiler->declaration();
+		$binding = $compiler->entry_binding();
+		if ($definition === null || $definition->scope !== $scope || $binding === null || $binding->syntax !== $call) {
+			throw Exception::make("Preparation lost the frontend syntax identity");
+		}
+		$generation = $session->generation;
+	} catch (Translation_Diagnostic $error) {
+		$status = $error->path . ":" . (string)$error->offset . ": " . $error->detail;
+	}
+	$entry = $compiler->entry_binding();
+	$reused = "";
+	if ($old_definition !== null && $old_definition === $compiler->declaration()) $reused .= "definition.php,";
+	if ($old_entry !== null && $old_entry === $entry) $reused .= "main.php,";
+	return $status . "|" . (string)$session->generation . "|" . (string)$generation . "|" . $session->parsed
+		. "|" . $work . "|" . $reused;
+}
+
+function handle_request(Frontend_Session $session, string $directory, string $command): string {
+	if ($command === "snapshot\n") return frontend_snapshot($session);
+	if ($command !== "run\n") return "unknown request";
+	$previous_scope = $session->scope;
+	$previous_entry = $session->entry;
+	$status = "ok";
+	try {
+		$session->refresh($directory);
+	} catch (Translation_Diagnostic $error) {
+		$status = $error->path . ":" . (string)$error->offset . ": " . $error->detail;
+	}
+	$reused = "";
+	if ($previous_scope !== null && $session->scope === $previous_scope) $reused .= "definition.php,";
+	if ($previous_entry !== null && $session->entry === $previous_entry) $reused .= "main.php,";
+	return $status . "|" . (string)$session->generation . "|" . $session->tokenized
+		. "|" . $session->parsed . "|" . $reused;
+}
+
+$cli = cli_arguments();
+if (count($cli) !== 2) return 2;
+$session = new Frontend_Session();
+$compiler = new Translation();
+$prepared_generation = 0;
+$input file_stream = io_open("/dev/stdin", "rb");
+$output file_stream = io_open("/dev/stdout", "ab");
+while (true) {
+	$request = io_read_line($input);
+	if (!isset($request)) {
+		if (!io_eof($input)) throw Exception::make("Cannot read frontend request");
+		break;
+	}
+	$line string = $request;
+	$response = "";
+	if ($line === "prepare\n") {
+		$response = prepare_request($session, $compiler, $cli[1], $prepared_generation);
+	} elseif ($line === "prepared-snapshot\n") {
+		$response = prepared_snapshot($compiler);
+	} else {
+		$response = handle_request($session, $cli[1], $line);
+	}
+	$response .= "\n";
+	$offset = 0;
+	while ($offset < strlen($response)) {
+		$written int = io_write($output, substr($response, $offset));
+		if ($written === 0) throw Exception::make("Cannot write frontend response");
+		$offset += $written;
+	}
+	if (!io_flush($output)) throw Exception::make("Cannot flush frontend response");
+}
+return 0;
