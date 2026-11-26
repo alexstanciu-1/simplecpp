@@ -133,5 +133,19 @@ decimal floating token and prints its exact C++ spelling. Conversion uses the C
 numeric locale and nearest-even rounding, then restores the calling thread's
 floating environment. Underflow can produce a subnormal or signed zero. Overflow
 that rounds to infinity produces the same range diagnostic as PHP preparation.
-This entry point exercises literal preparation independently of the retained
-frontend's integer-function grammar.
+A nullary PHP-flavor function in the retained frontend can return a signed decimal
+integer or floating literal. Preparation first checks the literal in its source
+type, then converts it to the declared return type. An integer returned as
+`float` rounds to binary64. A floating literal returned as `int` truncates toward
+zero and must fit int64. The declaration retains the converted constant.
+
+A prepared
+call records the callee's return type. Lowering uses that type for the C++ prototype
+and converts an integer result to binary64 at the return boundary. A function declared
+`int` can forward a floating result through `scpp::checked_float64_to_int64`.
+The runtime truncates toward zero and checks the int64 bounds. The application
+entry still requires its callee to return an integer.
+
+Changing only the callee's body reuses the forwarding unit. Changing its return
+type rechecks and emits the direct forwarder. On literal overflow the diagnostic
+points to the return operand and the previous published files remain available for retry.

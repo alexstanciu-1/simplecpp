@@ -27,3 +27,9 @@ $other Packet = {version: 2, data: $items};
 An authored constructor supplies the parameter names, types, visibility and defaults, including when inherited. Its body runs once. Otherwise the compiler derives a named signature from public instance fields in declaration order, starting with the data base's inputs. Each omitted input uses its field's declared or ordinary type default. A readonly field without a declared default, an enum without a case default, a required owner, or an embedded record that requires constructor inputs must be supplied. Inline fixed arrays cannot be passed as generated constructor inputs. A non-data base requires an authored constructor for data initialization.
 
 The ordinary named-call binder diagnoses unknown, duplicate and missing required inputs. Keys must be literal names. Explicit values evaluate once in written order, even when it differs from parameter order. Construction completes before the destination changes. A generated field signature admits keyed initialization only. Ordinary class ownership and struct value semantics apply to the result.
+
+## Native codec adapters for field-derived signatures
+
+The generated payload publishes the same ordered public fields to native input and output adapters. An output visitor borrows each field for one synchronous call. An input reader consumes fields in wire order into typed local slots, checks required fields, supplies defaults in declaration order, and invokes the selected payload or owner factory once. The transport owns document completion and publication. An output sink can receive a prefix before a later field fails.
+
+The internal JSON bridge uses the structural pull reader and a synchronous byte sink. The codec supplies typed value decoding and encoding, including any recursion and format-specific validation. This native adapter applies to field-derived signatures. Source-level JSON API selection and authored constructor mappings remain open.

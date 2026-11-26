@@ -1,10 +1,12 @@
-// Holds the collected function syntax and the checked integer from preparation.
+// Holds the collected function syntax and its checked return operand from preparation.
 final class Prepared_Declaration {
 	public readonly Translation_Scope $scope;
 	public readonly int $value;
+	public readonly float $floating_value;
 	public readonly ?Prepared_Call $call;
 
-	public function __construct(Translation_Scope $scope, int $value, ?Prepared_Call $call = null) {
+	public function __construct(Translation_Scope $scope, int $value, ?Prepared_Call $call = null, float $floating_value = 0.0) {
+		$this->floating_value = $floating_value;
 		$this->scope = $scope;
 		$this->value = $value;
 		$this->call = $call;
@@ -42,8 +44,8 @@ final class Translation_Symbol {
 	public function publish(?Prepared_Declaration $declaration): void {
 		$previous = lock($this->head);
 		$this->head = weak($declaration);
-		// In this grammar every function has the same () : int signature.
-		if (($previous === null) === ($declaration === null)) return;
+		if ($previous === null && $declaration === null) return;
+		if ($previous !== null && $declaration !== null && $previous->scope->declaration->returns_float === $declaration->scope->declaration->returns_float) return;
 		foreach ($this->watchers as $watch) {
 			$caller = lock($watch->caller);
 			if ($caller !== null) $caller->invalidate_binding();
@@ -77,6 +79,8 @@ final class Translation_Symbols {
 final class Prepared_Call {
 	public readonly Call_Syntax $syntax;
 	public readonly Translation_Symbol $symbol;
+	private readonly bool $is_entry;
+	private bool $callee_float = false;
 	private int $revision = 0;
 	private int $checked_revision = -1;
 
@@ -91,13 +95,18 @@ final class Prepared_Call {
 	public function check_binding(string &$work): void {
 		if ($this->checked_revision === $this->revision) return;
 		$work .= $this->syntax->source->path . ",";
-		$this->target();
+		$this->callee_float = $this->target()->scope->declaration->returns_float;
 		$this->checked_revision = $this->revision;
 	}
 
-	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol) {
+	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol, bool $is_entry = true) {
+		$this->is_entry = $is_entry;
 		$this->syntax = $syntax;
 		$this->symbol = $symbol;
+	}
+
+	public function callee_returns_float(): bool {
+		return $this->callee_float;
 	}
 
 	public function target(): Prepared_Declaration {
@@ -105,36 +114,56 @@ final class Prepared_Call {
 		if ($target === null) {
 			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name, $this->syntax->source->text);
 		}
+		if ($this->is_entry && $target->scope->declaration->returns_float) {
+			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Expected int return from " . $this->syntax->name, $this->syntax->source->text);
+		}
 		return $target;
 	}
 }
 
-function prepare_literal(Translation_Scope $scope): int {
-	$source = $scope->source;
-	$token = $source->tokens[$scope->declaration->body()->statement->literal_token];
+function prepare_integer_literal(Translation_Source $source, Token_Span $first, Token_Span $token): int {
+	$negative = $first->kind === Token_Kind::T_minus;
 	if ($token->length > 1 && $source->text[$token->offset] == 48) {
 		throw new Translation_Diagnostic($source->path, $token->offset, "Expected an unpadded decimal integer", $source->text);
 	}
 	$value = 0;
+	// Accumulate negatively so the int64 minimum fits at every step.
+	$last_digit = $negative ? 8 : 7;
 	$end = $token->offset + $token->length;
 	for ($offset = $token->offset; $offset < $end; $offset++) {
 		$digit = (int)$source->text[$offset] - 48;
-		if ($value > 922337203685477580 || ($value === 922337203685477580 && $digit > 7)) {
-			throw new Translation_Diagnostic($source->path, $token->offset, "Integer literal is outside int64 range", $source->text);
+		if ($value < -922337203685477580 || ($value === -922337203685477580 && $digit > $last_digit)) {
+			throw new Translation_Diagnostic($source->path, $first->offset, "Integer literal is outside int64 range", $source->text);
 		}
-		$value = $value * 10 + $digit;
+		$value = $value * 10 - $digit;
 	}
-	return $value;
+	return $negative ? $value : -$value;
 }
 
 function emit_definition_unit(Prepared_Declaration $target): string {
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
+	$floating = $target->scope->declaration->returns_float;
+	$result_type = $floating ? "scpp::float64 " : "scpp::int64 ";
+	$text = "#include <scpp/core/scalars.hpp>\n";
 	$call = $target->call;
+	$value = "";
 	if ($call !== null) {
 		$callee = "source_" . bin2hex($call->syntax->name);
-		return "#include <scpp/core/scalars.hpp>\nscpp::int64 " . $callee . "();\nscpp::int64 " . $name . "() { return " . $callee . "(); }\n";
+		$callee_type = $call->callee_returns_float() ? "scpp::float64 " : "scpp::int64 ";
+		$value = $callee . "()";
+		if ($floating && !$call->callee_returns_float()) {
+			$value = "static_cast<scpp::float64>(" . $value . ")";
+		} elseif (!$floating && $call->callee_returns_float()) {
+			$text .= "#include <scpp/conversions.hpp>\n";
+			$value = "scpp::checked_float64_to_int64(" . $value . ")";
+		}
+		$text .= $callee_type . $callee . "();\n";
+	} elseif ($floating) {
+		$value = host_cpp_binary64($target->floating_value);
+	} else {
+		$value = $target->value === (-9223372036854775807 - 1) ? "(-9223372036854775807LL - 1LL)" : (string)$target->value . "LL";
 	}
-	return "#include <scpp/core/scalars.hpp>\nscpp::int64 " . $name . "() { return " . (string)$target->value . "LL; }\n";
+	return $text . $result_type . $name . "() { return " . $value . "; }\n";
 }
 
 function emit_call_unit(Prepared_Call $call): string {
@@ -188,7 +217,7 @@ final class Translation {
 		return $this->compile_sources($sources, $entry_text);
 	}
 
-	// Each definition source has one nullary integer function; main contains the call.
+	// Each definition source has one nullary function; main contains the call.
 	public function compile_sources(hash<string,string> $sources, string $entry_text): string {
 		$scopes hash<Translation_Scope,string> = [];
 		foreach ($sources as $path => $text) {
@@ -293,17 +322,38 @@ final class Translation {
 			$token = $scope->source->tokens[$result->literal_token];
 			$name = substr($scope->source->text, $token->offset, $token->length);
 			$syntax = new Call_Syntax($scope->source, $name, $token->offset);
-			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name));
+			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name), false);
 			return new Prepared_Declaration($scope, 0, $binding);
 		}
 		$work .= $scope->source->path . ",";
-		return new Prepared_Declaration($scope, prepare_literal($scope));
+		$source = $scope->source;
+		$first = $source->tokens[$result->literal_token];
+		$number = $source->tokens[$result->end - 2];
+		if ($number->kind === Token_Kind::T_integer) {
+			$integer = prepare_integer_literal($source, $first, $number);
+			if ($scope->declaration->returns_float) return new Prepared_Declaration($scope, 0, null, (float)$integer);
+			return new Prepared_Declaration($scope, $integer);
+		}
+		$text = substr($source->text, $number->offset, $number->length);
+		if ($first->kind === Token_Kind::T_minus) $text = "-" . $text;
+		$floating float = 0.0;
+		try {
+			$floating = host_parse_decimal($text);
+		} catch (Exception $error) {
+			throw new Translation_Diagnostic($source->path, $first->offset, $error->get_message(), $source->text);
+		}
+		if ($scope->declaration->returns_float) return new Prepared_Declaration($scope, 0, null, $floating);
+		if ($floating < -9223372036854775808.0 || $floating >= 9223372036854775808.0) {
+			throw new Translation_Diagnostic($source->path, $first->offset, "Floating conversion is outside int64 range", $source->text);
+		}
+		return new Prepared_Declaration($scope, (int)$floating);
 	}
 
 	private function finish_preparation(?Prepared_Declaration $definition, Call_Syntax $call, string &$work): Prepared_Call {
 		$entry = $this->entry;
 		$previous = $this->definition;
 		if ($definition !== null && $definition === $previous && $entry !== null && $entry->syntax === $call) {
+			$entry->check_binding($work);
 			return $entry;
 		}
 		// This slice publishes one definition. Check the candidate before changing the last good head.

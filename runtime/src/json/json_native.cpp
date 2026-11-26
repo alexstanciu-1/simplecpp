@@ -176,9 +176,12 @@ public:
 	}
 };
 
-void json_escape_string(const std::string_view value, std::string &out) {
+void json_escape_string(std::string_view value, std::string &out) {
 	out.push_back('"');
-	for (const unsigned char byte : value) {
+	const auto prefix = reader_detail::plain_string_prefix(value);
+	out.append(value.substr(0, prefix));
+	for (std::size_t i = prefix; i < value.size(); ++i) {
+		const auto byte = static_cast<unsigned char>(value[i]);
 		switch (byte) {
 			case '"': out += "\\\""; break;
 			case '\\': out += "\\\\"; break;
@@ -187,15 +190,19 @@ void json_escape_string(const std::string_view value, std::string &out) {
 			case '\n': out += "\\n"; break;
 			case '\r': out += "\\r"; break;
 			case '\t': out += "\\t"; break;
-			default:
-				if (byte < 0x20u) {
-                    constexpr char hex[] = "0123456789ABCDEF";
-                    out += "\\u00";
-                    out.push_back(hex[byte >> 4]);
-                    out.push_back(hex[byte & 15]);
-				} else {
-					out.push_back(static_cast<char>(byte));
+			default: {
+				if (byte >= 0x20) {
+					const auto run = 1 + reader_detail::plain_string_prefix(value.substr(i + 1));
+					if (run == 1) out.push_back(value[i]);
+					else out.append(value.substr(i, run));
+					i += run - 1;
+					break;
 				}
+				constexpr char hex[] = "0123456789ABCDEF";
+				out += "\\u00";
+				out.push_back(hex[byte >> 4]);
+				out.push_back(hex[byte & 15]);
+			}
 		}
 	}
 	out.push_back('"');

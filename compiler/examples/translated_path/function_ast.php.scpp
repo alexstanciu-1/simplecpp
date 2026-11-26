@@ -47,9 +47,11 @@ final class Function_Declaration {
 	public readonly string $short_name;
 	public readonly int $start;
 	public readonly int $header_end;
+	public readonly bool $returns_float;
 	private ?Function_Body $completed_body = null;
 
-	public function __construct(string $name, int $start, int $header_end) {
+	public function __construct(string $name, int $start, int $header_end, bool $returns_float = false) {
+		$this->returns_float = $returns_float;
 		if ($start < 0 || $header_end < $start) {
 			throw Exception::make("Invalid function header range");
 		}

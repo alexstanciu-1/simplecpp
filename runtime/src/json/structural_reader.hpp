@@ -2,6 +2,7 @@
 #pragma once
 #include "reader.hpp"
 #include "../sequence/utf8_codepoints.hpp"
+#include <array>
 #include <charconv>
 #include <unordered_set>
 #include <vector>
@@ -22,7 +23,18 @@ class pull_reader final : private reader_detail::json_reader {
 		bool object, first = true;
 		std::size_t index = 0;
 		std::string path;
-		std::unordered_set<std::string> keys;
+		// Small objects need no hash nodes or bucket array. Only overflow keys
+		// enter the set; index counts inline keys here and elements in array frames.
+		std::array<std::string, 2> inline_keys{};
+		std::unordered_set<std::string> overflow_keys{};
+
+		bool insert_key(const std::string& key) {
+			for (std::size_t i = 0; i < index; ++i)
+				if (inline_keys[i] == key) return false;
+			if (index == inline_keys.size()) return overflow_keys.insert(key).second;
+			inline_keys[index++] = key;
+			return true;
+		}
 	};
 	std::string source_, file_, path_ = "$", key_;
 	std::vector<frame> frames_;
@@ -60,7 +72,7 @@ class pull_reader final : private reader_detail::json_reader {
 		require_kind(object ? "object" : "array");
 		if (frames_.size() >= limit_) reader_detail::fail_json_parse("nesting limit exceeded", pos_, "depth");
 		++pos_;
-		frames_.push_back(frame{object, true, 0, path_, {}});
+		frames_.push_back(frame{object, true, 0, path_});
 		pending_ = false;
 	}
 	bool next(bool object) {
@@ -80,8 +92,10 @@ class pull_reader final : private reader_detail::json_reader {
 			const auto start = pos_;
 			key_ = parse_string();
 			// Bracket paths preserve arbitrary decoded member names without ambiguity.
-			path_ += "[" + std::string(input_.substr(start, pos_ - start)) + "]";
-			if (!scope.keys.insert(key_).second)
+			path_.push_back('[');
+			path_.append(input_.substr(start, pos_ - start));
+			path_.push_back(']');
+			if (!scope.insert_key(key_))
 				reader_detail::fail_json_parse("duplicate object key " + std::string(input_.substr(start, pos_ - start)), start, "duplicate_key");
 			skip_whitespace();
 			if (get() != ':') reader_detail::fail_json_parse("expected ':'", pos_ - 1);
@@ -114,13 +128,15 @@ public:
 	void begin_array() { checked([&] { begin(false); }); }
 	bool next_property() { return checked([&] { return next(true); }); }
 	bool next_element() { return checked([&] { return next(false); }); }
-	std::string property_name() {
-		return checked([&] {
+	// Valid until this reader advances to another property.
+	std::string_view property_view() {
+		return checked([&]() -> std::string_view {
 			if (!pending_ || frames_.empty() || !frames_.back().object)
 				reader_detail::fail_json_parse("no selected object property", pos_, "protocol");
 			return key_;
 		});
 	}
+	std::string property_name() { return std::string(property_view()); }
 	std::string read_string() {
 		return checked([&] { require_kind("string"); auto value = parse_string(); pending_ = false; return value; });
 	}
