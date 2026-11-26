@@ -87,6 +87,12 @@ function innerHash(hash<int,int> $items,int $key):int {return $items[$key];}
 forward_calls = """
 function fromRef(vector<int> &$refItems):int {return innerVector($refItems);}
 function fromReadonly(const vector<int> &$readItems):int {return innerVector($readItems);}
+function fromReadonlyHash(const hash<int,int> &$items,int $key):int {return innerHash(key:$key,items:$items);}
+function readonlyForwardReads():int {
+    $v vector<int> = [5];$h hash<int,int> = [];$h[0]=7;
+    $vr=fromReadonly($v);$hr=fromReadonlyHash($h,0);
+    return 1000*$vr+100*$hr+10*$v[0]+$h[0];
+}
 function fromPack(int ...$packItems):int {return innerVector($packItems);}
 function outerVector(vector<int> $items):int {
     $items[0]=6;$read=innerVector($items);return 10*$read+$items[0];
@@ -135,18 +141,18 @@ function orderedReads():int {
     echo byKey(key:changeHash($h),items:$h);
     return 8;
 }
-echo positionalKeyProbe(),"/",reversedKeyProbe(),"|",forwardReads(),":",namedReads(),":",defaultReads(),":";return orderedReads();
+echo readonlyForwardReads(),"|",positionalKeyProbe(),"/",reversedKeyProbe(),"|",forwardReads(),":",namedReads(),":",defaultReads(),":";return orderedReads();
 """
 with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     work = Path(directory)
-    expected = b'680/680|668857:24:5577:V5V9H7H9'
+    expected = b'5757|680/680|668857:24:5577:V5V9H7H9'
     forward_writer = forward_reader.replace('return $items[', '$items[0]=9;return $items[')
     edits = [(None, None, expected),
-             ('forward_reader', forward_writer, b'680/680|969857:24:5577:V5V9H7H9'),
+             ('forward_reader', forward_writer, b'9957|680/680|969857:24:5577:V5V9H7H9'),
              ('forward_reader', forward_reader, expected),
              ('main', named_calls.replace('int $which', 'int &$which'), expected.replace(b'680/680', b'681/681')),
              ('main', named_calls, expected),
-             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'680/680|668857:24:6688:V5V9H7H9'),
+             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'5757|680/680|668857:24:6688:V5V9H7H9'),
              ('reader', keyed_reader.replace('$key=0', '$key'), 'Argument count mismatch'),
              ('reader', keyed_reader, expected),
              ('reader', keyed_reader.replace('$key', '$offset'), 'Unknown named argument: key'),
@@ -154,7 +160,7 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     revisions(work, 'php', dict(main=named_calls, reader=keyed_reader, forward=forward_calls, forward_reader=forward_reader, driver=key_driver), edits[:1] if quick else edits)
     out = work/'php-out'
     units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
-    for parameter in ('refItems', 'readItems', 'packItems'):
+    for parameter in ('refItems', 'packItems'):
         assert 'innerVector_(var_' + parameter in units
     for symbol in ('element', 'byKey'):
         assert units.count(symbol + '_collection_reader(var_') == 6, units
@@ -162,7 +168,7 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
         root = Path(__file__).resolve().parents[2]
         # Each fresh bundle was checked against the resident compiler's output at that revision.
         for bundle, state in ((work/'php-fresh-0', 'reader'), (work/'php-fresh-1', 'writer'),
-                              (work/'php-fresh-3', 'reference-key'), (work/'php-fresh-4', 'restored-key')):
+                              (work/'php-fresh-2', 'restored-reader'), (work/'php-fresh-3', 'reference-key'), (work/'php-fresh-4', 'restored-key')):
             sources = json.loads((bundle/'manifest.json').read_text())['translation_units']
             probe = work/('copies-' + state)
             subprocess.run(['clang++', '-O2', '-std=c++23', '-stdlib=libc++', '-I', root/'runtime/generated/public',
