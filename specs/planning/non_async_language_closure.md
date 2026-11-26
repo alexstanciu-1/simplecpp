@@ -63,13 +63,17 @@ The [count-reader feasibility study](benchmarks/inferred_collection_borrows/repo
 
 Doc Status: planning
 
-Typed keyed literals now use the [named constructor of a data record](../data_initialization.md#named-construction-of-data-records). Runtime structure import, streaming export and JSON integration remain open.
+Typed keyed literals now use the [named constructor of a data record](../data_initialization.md#named-construction-of-data-records). Field-derived records also support [typed JSON encoding and decoding](../data_initialization.md#native-codec-adapters-for-field-derived-signatures). General in-memory structure import and export remain open.
 
 Explore an opt-in interface or capability for converting between a typed value and an in-memory structure. The working names are `::to_structure` for exposing ordered elements or key/value entries, and `::from_structure` for constructing a typed value from structured input. The two directions could be supported independently. The motivating case is a typed vector used as a child of a `mixed` or `dynamic` literal (ARR-VALUE-001).
 
 Explore sharing the part of [initialization](../data_initialization.md#construction-targets) that consumes ordered inputs. For example, a vector could expose its integers in order once, and the selected family's list initializer could box them and construct the child. In the reverse direction, a typed target could adapt structured input to its existing list or keyed initializer, reusing entry conversion, key validation and construction failure handling. The literal parser would still own source notation.
 
 Before adopting a contract, decide how a type publishes each capability, when a known destination may select it implicitly, and how entries are passed with their order and lifetime preserved. Check the design against both a positional collection and a keyed record, including invalid input and the existing mixed/dynamic family boundary. The names, signatures and selection rules remain open.
+
+**Native list export probe.** A [focused Clang probe](probes/boxed_vector_export.cpp) sends `begin_array`, typed `write` and `end_array` through the existing `Encoder&`. The destination constructs a fresh packed container, boxes each value in its own family and appends it. Both `mixed` and `dynamic` preserved the order and contents of integer and string vectors after replacement, clearing and destruction of the source, including a heap-backed string. The shared test traversal uses only vector size and checked element reads; a string read currently returns a value.
+
+The JSON-off default publication supplies the boxed families and vectors. Today the JSON generator alone publishes the Encoder header and selects its overloads, and record lowering requests the JSON binding. To reproduce the probe, build the default runtime and the `json_publication` test fixture, copy only its `generated-json-proof/public/scpp/encoder.hpp` to a temporary `scpp/` include directory, and compile the probe as C++23 with libc++, assertions enabled, that include root and `runtime/generated/public`. Link the default `scpp_runtime`, `scpp_boxed_storage` and `scpp_packed_storage` archives. The probe links and runs without a JSON header dependency or JSON library. For production, publish shared structural operations from destination-independent metadata and select the boxed destination at preparation. This probe covers scalar leaves in flat lists; shared boxed subtrees and their aliasing contracts remain open.
 
 ### Call-target storage and conversion follow-up
 
