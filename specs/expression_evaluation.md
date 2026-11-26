@@ -547,12 +547,14 @@ carrier expression once. `===` succeeds only for the sentinel; `!==` succeeds
 for every payload, including integer zero, an empty string and a boolean false.
 This literal rule does not extend to a variable holding false or to loose equality.
 
-In PHP, same-type peers of `nullable<T>` and `result_or_false<T>` support
+In PHP, same-type peers of `nullable<T>`, `result_or_false<T>` and `result_or_bool<T>` support
 `==`, `!=`, `===` and `!==` when the corresponding payload equality is admitted.
 The catalog selects ordinary or strict payload comparison and its inverse.
 Capture the left state before evaluating the right. Matching absent states compare
 equal. A payload differs from absence, including a successful boolean false.
-Two payloads use the selected comparator for `T`.
+Two payloads use the selected comparator for `T`. For `result_or_bool<T>`, matching
+boolean sentinels compare equal. Opposite sentinels differ, and a successful
+boolean payload differs from either sentinel, including one of the same polarity.
 
 Ordering uses checked one-layer extraction instead of state sorting, followed by
 the payload ordering contract. A non-value state throws. Left extraction/conversion

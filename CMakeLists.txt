@@ -399,6 +399,8 @@ if(BUILD_TESTING)
   scpp_fixture_test(vector_operations php php-negative)
   add_test(NAME compiler_carrier_values COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_values.php)
   scpp_fixture_test(carrier_values php php-false-guards php-false-pairs php-nullable-pairs php-false-equality php-nullable-equality php-peer-failure)
+  add_test(NAME compiler_bool_sentinel_equality_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture carrier_values.php --cases php-bool-sentinel-peers)
   add_test(NAME compiler_boxed_scalars COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_scalars.php)
   add_test(NAME compiler_boxed_scalars_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture boxed_scalars.php --cases php-mixed php-dynamic-mutating php-mixed-bad-pair php-container-incremental-1)

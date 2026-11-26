@@ -711,10 +711,10 @@
     "presence": {"value": "has_value", "true": "is_true"},
     "peer_equality": {
       "flavor": "php",
-      "families": ["nullable", "result_or_false"],
+      "families": ["nullable", "result_or_false", "result_or_bool"],
       "operands": "same_type",
       "evaluation": "snapshot_left_then_right",
-      "states": "payload_or_single_absence",
+      "states": "match_alternate_state",
       "operators": {"equal": "not_equal", "identical": "not_identical"}
     },
     "sentinels": {

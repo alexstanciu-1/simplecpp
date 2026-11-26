@@ -52,6 +52,9 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             '@instance_field@' => $carrier['instance_field'] ? 'true' : 'false',
             '@sentinel_cases@' => implode("\n", $sentinelCases),
             '@presence_expression@' => $presenceExpression,
+            '@peer_equality@' => $hasTrueState ? strtr(readFile(__DIR__ . '/../templates/carriers/boolean_sentinel_equality.php.tpl'), [
+                '@payload@' => $valuePresence, '@true@' => $carrier['presence']['true'],
+            ]) : '',
             '@presence@' => $valuePresence,
             '@true_presence@' => $truePresence,
             '@dispatch_label_type@' => in_array($carrier['family'], ['nullable', 'result'], true) ? '$this->payload_type' : '$this',
@@ -68,19 +71,22 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
     return [$code, $cases, $literals, $typeNames];
 }
 
-/** Compile the same-type, two-state equality policy into direct operator dispatch. */
+/** Compile the same-type peer equality policy into direct operator dispatch. */
 function compilerPeerEquality(mixed $rule, mixed $families): string {
     $template = readFile(__DIR__ . '/../templates/carriers/peer_equality.php.tpl');
     if ($rule === null) return str_replace('@dispatch@', "\treturn null;", $template);
     fields($rule, ['flavor', 'families', 'operands', 'evaluation', 'states', 'operators']);
-    literals($rule, ['operands' => 'same_type', 'evaluation' => 'snapshot_left_then_right', 'states' => 'payload_or_single_absence']);
+    literals($rule, ['operands' => 'same_type', 'evaluation' => 'snapshot_left_then_right', 'states' => 'match_alternate_state']);
     $flavor = textValue(at($rule, 'flavor'));
     requireThat(in_array($flavor, ['php', 'cpp', 'js', 'python'], true), 'Unknown peer equality flavor');
     $tests = [];
     foreach (names(at($rule, 'families')) as $name) {
         $states = object(at(at($families, $name), 'states'));
-        requireThat(count($states) === 2 && ($states['value'] ?? null) === 'payload'
-            && in_array(null, $states, true), 'Peer equality requires one payload and one absent state');
+        $alternates = array_diff_key($states, ['value' => true]);
+        requireThat(($states['value'] ?? null) === 'payload' && $alternates !== []
+            && ($alternates === ['empty' => null] || array_diff_key($alternates, ['false' => null, 'true' => null]) === [])
+            && array_filter($alternates, static fn($data) => $data !== null) === [],
+            'Peer equality requires empty or sentinel alternate states');
         $tests[] = '$family !== ' . var_export($name, true);
     }
     $arms = [];
