@@ -1625,7 +1625,13 @@ final class Preparation
 			if ($type === null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_reference->spelling());
 			}
-			$syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, conversion_context::explicit_cast));
+			$source = $syntax->operand->type_def();
+			$schema = $source instanceof native_sequence_type ? $source->write_type() : $source;
+			if ($type instanceof boxed_type_definition && $schema instanceof record_type_definition) {
+				$seen = $path = [];
+				$this->check_boxed_schema($schema, $type, $syntax, $seen, $path);
+				$syntax->settle_cast($type, value_conversion::export_record);
+			} else $syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, conversion_context::explicit_cast));
 			return;
 		}
 		if ($syntax instanceof ast_unary_expression) {
@@ -1948,6 +1954,48 @@ final class Preparation
 		}
 	}
 
+	/** Supply mixed context to an unannotated lambda and resolve a declared capture row once. */
+	private function regex_callable(regex_callback_overloads $group, ast_expression $value): regex_callback_function
+	{
+		if ($value instanceof ast_lambda_expression) {
+			$annotation = $value->parameters[0]->type_reference ?? null;
+			$row = $annotation === null ? type_mixed::instance()
+				: Type_Resolution::signature($annotation, $this->symbols, $this->owner->parent, $this->dependencies, watcher: $this->owner);
+			$binding = $group->binding($row, $value);
+			$this->value($value, destination: $binding->callback);
+			return $binding;
+		}
+		if ($value instanceof ast_callable_reference) $this->callback_reference($value, null);
+		else $this->value($value);
+		$type = $value->type_def();
+		$signature = $type instanceof owned_callable_type || $type instanceof lambda_type_definition ? $type->signature : $type;
+		return $group->binding($signature instanceof callback_type_definition ? ($signature->inputs[0] ?? null) : null, $value);
+	}
+
+	/** Select the table from its declared type or the first literal entry, preserving entry preparation order. */
+	private function regex_callback_binding(regex_callback_overloads $group, ast_expression $value): regex_callback_function
+	{
+		if (!$group->table) return $this->regex_callable($group, $value);
+		if ($value instanceof ast_keyed_collection_expression) {
+			$binding = null;
+			foreach ($value->entries as $entry) {
+				$this->value($entry->key);
+				if ($binding === null) $binding = $this->regex_callable($group, $entry->value);
+				else $this->value($entry->value, destination: $binding->callback);
+				$table = $binding->parameters[0];
+				$table->prepare_key($entry->key);
+				$entry->conversion = $binding->callback->prepare_conversion($entry->value, conversion_context::typed_destination);
+			}
+			$value->settle_collection($binding->parameters[0]);
+			return $binding;
+		}
+		$context = $value instanceof ast_collection_expression ? $group->binding(type_mixed::instance(), $value)->parameters[0] : null;
+		$this->value($value, destination: $context);
+		$table = $value->type_def();
+		$callback = $table instanceof hash_type_definition ? $table->value_type : null;
+		return $group->binding($callback instanceof owned_callable_type ? ($callback->signature->inputs[0] ?? null) : null, $value);
+	}
+
 	/** A callee can replace the slot only after its arguments are evaluated. @param int[] $writes */
 	private function invalidate_references(ast_expression $call, array $writes /** list<uint32> */): void
 	{
@@ -1990,6 +2038,10 @@ final class Preparation
 		}
 		$operands = $call->runtime_operands($runtime instanceof runtime_function ? $runtime : null);
 		$prepared ??= $call->receiver;
+		if ($runtime instanceof regex_callback_overloads) {
+			$prepared = $operands[$runtime->argument_index] ?? throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
+			$runtime = $this->regex_callback_binding($runtime, $prepared);
+		}
 		if ($runtime instanceof runtime_overloads) {
 			$variants = $runtime->by_arity[count($operands)] ?? null;
 			if ($variants === null) {
@@ -2109,6 +2161,40 @@ final class Preparation
 		}
 	}
 
+	/** Request the shared field walk and recheck casts/calls when a contributing layout changes. */
+	private function watch_encode_schema(record_type_definition $record): void
+	{
+		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_encode->value);
+		for ($base = $record->base(); $base !== null; $base = $base->base()) {
+			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
+		}
+	}
+
+	/** Validate and watch each embedded value schema once per cast. @param bool[] $seen @param string[] $path */
+	private function check_boxed_schema(record_type_definition $record, boxed_type_definition $box, ast_cast_expression $site, array &$seen, array &$path): void
+	{
+		if (isset($seen[$record->name])) return;
+		$seen[$record->name] = true;
+		$this->watch_encode_schema($record);
+		$data = $record->declaration->data_constructor;
+		if (!$box->supports_record_export() || $record->declaration->kind !== record_kind::structure || $data === null || $record->constructor() !== null) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Boxed record export requires a field-derived data struct and structural Encoder'
+				. ($path === [] ? '' : ' at ' . implode(' -> ', $path)));
+		}
+		foreach ($data->parameters as $field) {
+			$type = $field->type_def();
+			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
+			if ($leaf instanceof record_type_definition) {
+				$path[] = $record->name . '::$' . $field->short_name;
+				$this->check_boxed_schema($leaf, $box, $site, $seen, $path);
+				array_pop($path);
+			} elseif (!$box->exports_scalar($leaf)) {
+				$path[] = $record->name . '::$' . $field->short_name;
+				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot export ' . implode(' -> ', $path) . ' (' . $type->name . ') to ' . $box->name);
+			}
+		}
+	}
+
 	/** Resolve field encoders using the active module's published overloads. */
 	private function record_encoder(json_encoder_overloads $encoders, type_definition $input, ast_expression $site): ?runtime_function
 	{
@@ -2117,6 +2203,7 @@ final class Preparation
 		if ($record->declaration->data_constructor === null || $record->constructor() !== null) return null;
 		$seen = [];
 		$this->check_encode_schema($record, $encoders, $site, $seen);
+		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_json_encode->value);
 		$variants = $encoders->by_arity[1];
 		$published = reset($variants);
 		return new record_encode_function($record, $input, $published, $encoders);
@@ -2127,10 +2214,7 @@ final class Preparation
 	{
 		if (isset($seen[$record->name])) return;
 		$seen[$record->name] = true;
-		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_encode->value);
-		for ($base = $record->base(); $base !== null; $base = $base->base()) {
-			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
-		}
+		$this->watch_encode_schema($record);
 		foreach ($record->declaration->data_constructor->parameters as $field) {
 			$type = $field->type_def();
 			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
@@ -2989,7 +3073,8 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(), 'Callback requires a source free function or static method: ' . $site->name);
 		}
 		$target->require_access($this->owner->parent->parent, $site, null, $this->access_watcher());
-		$signature ??= new callback_type_definition($target->return_type_def(), [$element]);
+		$signature ??= new callback_type_definition($target->return_type_def(), $element !== null ? [$element]
+			: array_map(static fn(ast_parameter_declaration $parameter): type_definition => $parameter->type_def(), $target->parameters));
 		$signature->require_target($site, $target);
 		if ($record instanceof ast_record_declaration && $this->dependencies !== null) {
 			$symbol = $this->dependencies->static_call($this->owner, $symbol, $type);

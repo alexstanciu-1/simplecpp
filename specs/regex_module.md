@@ -93,8 +93,8 @@ A bare collection literal uses mixed. A carrier of either input type supplies it
 payload under the implicit extraction policy; a missing payload raises before grep
 runs. Invalid grep patterns yield false even for an empty input.
 
-PHP preg_filter selects its overload from the subject for both supported arities
-(pattern, replacement, subject and optional limit). A string subject returns
+PHP preg_filter selects its overload from the subject for all supported arities
+(pattern, replacement, subject, optional limit and optional fifth count). A string subject returns
 ?string. Any replacement yields a present string, including empty output and
 identity replacements. Zero replacements yields null. Invalid patterns and
 matching failures throw ValueError. A vector<string> subject returns
@@ -104,11 +104,49 @@ retain selected keys in encounter order and return false on regex failure,
 discarding any partial output. A mixed subject retains its result_or_false<mixed>
 contract. A non-container mixed subject yields an empty container for a valid
 pattern. Bare PHP list literals select the mixed overload.
-Successful empty collections retain the value state. PHP callbacks take a
-mixed collection of numbered captures. A callback exception propagates.
+The fifth argument binds an exact writable integer. After limit validation the
+count starts at zero. It includes every completed replacement, including
+identity replacements. The limit resets per subject. A scalar matching error
+throws with the partial count available. Collections stop at the first failing
+entry and return false with the total through that entry, including replacements
+completed inside it. A pattern compilation error leaves the count at zero.
+Successful empty collections retain the value state. A callback exception propagates.
+
+Each PHP replacement callback takes one capture row and returns a string.
+The declared callback input, or the callback table's value signature, selects
+the native row. A numbered row is `vector<Cell>`. A named row is
+`hash<Cell,string>` and includes decimal group keys and name aliases in the
+single-match order described above. Both use the same capture cell table as
+preg_match. A mixed row uses integer group keys and string names, including
+when flags are zero. Adding name aliases changes the count and iteration of
+mixed rows for patterns containing names.
+
+Flags follow count (sixth argument for preg_replace_callback, fifth for its
+array form) and default to zero. Only PREG_OFFSET_CAPTURE and
+PREG_UNMATCHED_AS_NULL are admitted. The bits must match the native cell type
+exactly. A mixed callback accepts all four combinations. Unsupported bits or
+incompatible cells raise ValueError before any invocation or count write, even
+for an empty table. An unannotated inline callback defaults to mixed.
+Offsets are absolute bytes in the input to the current pattern pass. Later
+patterns in a table see the output of the preceding pattern.
+
+The PHP callback helpers accept an optional exact writable integer count after
+the by-value limit (argument five for preg_replace_callback and four for
+preg_replace_callback_array). preg_replace_callback publishes the number of
+invocations on return, including a false regex result, and includes the throwing
+invocation when a callback raises. The running count is private during callbacks.
+preg_replace_callback_array applies the limit independently per pattern and
+publishes the sum only on success, including zero for an empty table. On failure
+or exception the table helper leaves any callback writes to the count slot intact.
 
 Replacement limits are per subject and per pattern. The optional limit is a
 value argument even when the caller supplies a writable integer. Minus one
 means unlimited. Zero replacements still validates the pattern. A negative
 limit below minus one raises ValueError. Split also accepts zero for unlimited.
-Count-output replacement overloads are outside this publication.
+Scalar PHP `preg_replace(pattern, replacement, subject[, limit[, count]])`
+returns `result_or_false<string>`. The fifth argument binds an exact writable
+integer slot. Its initial value is discarded after limit validation. Each
+completed replacement counts once, including identity replacements. On regex
+failure the call returns false and the slot retains the number completed before
+failure. An invalid pattern, miss or zero limit writes zero. When the same slot
+supplies limit and count, its incoming value determines the limit.

@@ -47,6 +47,16 @@ this API. There is no new automatic flush policy. The remaining source-language
 work is tracked in [echo debt](planning/echo_debt.md); the authoritative output
 semantics remain [output_v0_2](output_v0_2.md).
 
+## Structural output
+
+The runtime publication can select `"structural_encoder": true` to expose
+`scpp/encoder.hpp`. The default runtime selects it. A JSON encode publication
+also requests this dependency. Its scalar writes follow the runtime's published
+value types, boxed families and nullable carriers. Numeric and boolean values
+pass by value; strings, boxes and nullable values are borrowed for each call.
+A JSON writer accepts the subset selected by its JSON operations. The native
+boxed export probe links only the application runtime.
+
 ## Metadata-owned declaration providers
 
 `runtime.json` owns `submodules` (module, header, direct `requires` providers and

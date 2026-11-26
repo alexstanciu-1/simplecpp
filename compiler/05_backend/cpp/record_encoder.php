@@ -15,11 +15,20 @@ trait Cpp_Record_Encoder
 		return 'encode';
 	}
 
+	/** Visit an ordered struct slot synchronously. External encoders retain value-read semantics unless they guarantee a stable source. */
+	public static function record_vector_walk(native_sequence_type $vector, string $source): string
+	{
+		$count = $vector->lower_cpp_cardinality(collection_cardinality::count, $source);
+		$read = $vector->lower_cpp_element_read($source, 'i');
+		$method = self::encode_method($vector->write_type());
+		return "out.begin_array();\n    for (::scpp::int64 i = 0, count = $count; i < count; ++i) {\n"
+			. "        if (out.stable_record_elements()) ($source).scpp_escape_read_slot(i).$method(out);\n"
+			. "        else ($read).$method(out);\n    }\n    out.end_array();";
+	}
+
 	/** @param mixed[] $declarations @param bool[] $headers */
 	private function encode_definition(record_type_definition $record, array &$declarations, array &$headers): string
 	{
-		$contract = runtime_functions::resolve('php:func:json_encode');
-		$headers[$contract->record_header] = true;
 		$name = $record->cpp_type();
 		$method = self::encode_method($record);
 		$lines = ['out.begin_object();'];
@@ -30,6 +39,12 @@ trait Cpp_Record_Encoder
 				: 'static_cast<const ' . $field->parent->definition->cpp_type() . '&>(*this).' . $member;
 			$lines[] = 'out.field(' . Cpp_String_Literals::bytes($field->short_name) . ');';
 			if ($type instanceof native_sequence_type) {
+				if ($type->write_type() instanceof record_type_definition) {
+					$nested = $type->write_type()->declaration;
+					$declarations[$nested->symbol_key()] = $nested;
+					$lines[] = self::record_vector_walk($type, $read);
+					continue;
+				}
 				$count = $type->lower_cpp_cardinality(collection_cardinality::count, $read);
 				$element = $type->lower_cpp_element_read($read, 'i');
 				$write = $this->encode_leaf($type->write_type(), $element, $declarations);
@@ -39,10 +54,12 @@ trait Cpp_Record_Encoder
 			} else $lines[] = $this->encode_leaf($type, $read, $declarations);
 		}
 		$lines[] = 'out.end_object();';
-		return "void {$name}::{$method}(::scpp::Encoder& out) const {\n    " . implode("\n    ", $lines) . "\n}\n"
+		$walk = "void {$name}::{$method}(::scpp::Encoder& out) const {\n    " . implode("\n    ", $lines) . "\n}\n"
 			. "void {$name}::scpp_escape_encode_fields(const void* value, ::scpp::Encoder& out) {\n"
-			. "    static_cast<const $name*>(value)->{$method}(out);\n}\n"
-			. "::scpp::result_string {$name}::scpp_escape_json_encode(const $name& value) {\n"
+			. "    static_cast<const $name*>(value)->{$method}(out);\n}\n";
+		if (!$this->record_demand($record->declaration, dependency_use::record_json_encode)) return $walk;
+		$headers[runtime_functions::resolve('php:func:json_encode')->record_header] = true;
+		return $walk . "::scpp::result_string {$name}::scpp_escape_json_encode(const $name& value) {\n"
 			. "    return ::scpp::json::encode_fields(&value, &scpp_escape_encode_fields);\n}\n";
 	}
 

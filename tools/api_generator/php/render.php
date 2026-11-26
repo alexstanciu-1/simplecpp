@@ -169,6 +169,21 @@ function render(array $plan): array {
     renderTextBuilders($plan, $files);
     renderTextHelpers($plan, $files);
     renderDatetime($plan, $files);
+    if (isset($plan['structural_encoder'])) {
+        $scalarHeaders = [];
+        $forwards = $declarations = '';
+        foreach ($plan['structural_encoder'] as $type => $parameter) {
+            if ($parameter !== $type) $forwards .= "class $type;\n";
+            else {
+                $export = typeExport($plan['submodules'], $type);
+                $header = providerHeader($plan['submodules'], $export['provider']);
+                $scalarHeaders[$header] = includeHeader($header);
+            }
+            $declarations .= "    virtual void write($parameter input) = 0;\n";
+        }
+        $includes = implode('', $scalarHeaders);
+        $files['public/scpp/encoder.hpp'] = BANNER . template('structure/encoder', compact('includes', 'forwards', 'declarations'));
+    }
     renderJson($plan, $files);
     renderResourceModules($plan, $files);
     renderRegexCaptureTypes($plan, $files, $groups);

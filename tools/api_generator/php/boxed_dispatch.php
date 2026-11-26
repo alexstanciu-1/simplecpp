@@ -180,6 +180,10 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
             }
             $factories .= "\t\t\t'$source' => $factory,\n";
         }
+        $exportFactories = '';
+        foreach (array_intersect_key($plan['kinds'], $runtime['structural_encoder'] ?? []) as $type => $tag) {
+            $exportFactories .= "\t\t\t'$type' => 'scpp::$name::from_$tag',\n";
+        }
         $pairs = [];
         $results = [];
         foreach (boxedBinaryBindings($plan, $name) as $row) {
@@ -220,6 +224,8 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
         foreach (['php', 'cpp', 'js'] as $flavor) $flavorCode .= "flavor::$flavor => " . boxedFlavorMask([$flavor]) . ', ';
         $code .= strtr(readFile(__DIR__ . '/../templates/boxed/compiler_boxed.php.tpl'), [
             '@compounds@' => implode(', ', $compounds), '@updates@' => implode(', ', $updateCases), '@results@' => $resultCode, '@flavor_mask@' => $flavorCode,
+            '@export_factory@' => $exportFactories === '' ? '' : "\tpublic function supports_record_export(): bool { return true; }\n\n\tprotected function export_factory(type_definition \$element): ?string\n\t{\n"
+                . "\t\treturn match (\$element->name) {\n" . $exportFactories . "\t\t\tdefault => null,\n\t\t};\n\t}\n\n",
             '@literal_methods@' => $runtime['boxed']['initialization'] === 'ordered_family_literals'
                 ? readFile(__DIR__ . '/../templates/boxed/compiler_literal_input.php.tpl') : '',
             '@literal_interfaces@' => $runtime['boxed']['initialization'] === 'ordered_family_literals'

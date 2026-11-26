@@ -14,7 +14,7 @@ function renderJson(array $plan, array &$files): void {
     $recordIncludes = [];
     $recordDeclarations = '';
     $recordDefinitions = '';
-    $encoderDeclarations = $encoderMethods = '';
+    $encoderMethods = [];
     foreach ($module['operations'] as $op) {
         ['name' => $name, 'family' => $family, 'result' => $result, 'argument' => $argument] = $op;
         $signature = "$result $name(const $argument& input)";
@@ -36,10 +36,8 @@ function renderJson(array $plan, array &$files): void {
         $input = jsonNativeArgument($op, $source);
         if (!$decode) {
             foreach ($includes as $include) $recordIncludes[$include] = includeHeader($include);
-            $encoderInput = $op['nullablePayload'] === null && !in_array($op['transport'], ['bytes', 'boxed'], true)
-                ? "$argument input" : "const $argument& input";
-            $encoderDeclarations .= "    virtual void write($encoderInput) = 0;\n";
-            $encoderMethods .= "    void write($encoderInput) override { next_value(); sink.write(input); }\n";
+            $encoderInput = $plan['structural_encoder'][$argument];
+            $encoderMethods[$argument] = "    void write($encoderInput input) override { next_value(); sink.write(input); }\n";
             $recordDeclarations .= "    void write(const $argument& input) const;\n";
             $recordDefinitions .= "void record_sink::write(const $argument& input) const {\n";
             if ($op['nullablePayload'] !== null) {
@@ -91,10 +89,11 @@ function renderJson(array $plan, array &$files): void {
             $files['public/scpp/detail/' . $path] = BANNER . readFile(__DIR__ . '/../../../runtime/src/' . $path);
         }
         $recordHeader = moduleOperationHeader($module['header'], 'encode_record');
-        $files['public/scpp/encoder.hpp'] = BANNER . template('json/encoder', [
-            'includes' => implode('', $recordIncludes), 'declarations' => $encoderDeclarations]);
+        foreach ($plan['structural_encoder'] as $type => $parameter) {
+            $encoderMethods[$type] ??= "    void write($parameter) override { throw unpublished_json_leaf{}; }\n";
+        }
         $fieldsHeader = moduleOperationHeader($module['header'], 'encode_fields');
-        $files['public/' . $fieldsHeader] = moduleHeaderBody(['scpp/encoder.hpp'], 'scpp::json',
+        $files['public/' . $fieldsHeader] = moduleHeaderBody(['scpp/encoder.hpp', $plan['carriers_header']], 'scpp::json',
             "result_string encode_fields(const void*, Encoder::visit);\n");
         $implementationHeaders .= includeHeader($fieldsHeader);
         $files['public/' . $recordHeader] = BANNER . template('json/record_encoder', [
@@ -107,7 +106,7 @@ function renderJson(array $plan, array &$files): void {
             . "void record_sink::operator()(std::string_view bytes) const { output.append(bytes); }\n"
             . "result_string encode_record_erased(const void* value, void (*visit)(const void*, detail::json::writer&)) {\n"
             . "    return encoded_result(detail::json::encode_record(value, visit));\n}\n"
-            . template('json/record_writer_impl', ['methods' => $encoderMethods]);
+            . template('json/record_writer_impl', ['methods' => implode('', $encoderMethods)]);
     }
     foreach ($signatures as $name => $arguments) $h .= scalarInputFences($plan, $name, $arguments);
     $files['public/' . $module['header']] = $h . "}\n";

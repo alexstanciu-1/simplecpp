@@ -112,11 +112,14 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $plan[$family] = compact('provider', 'header', 'module', 'namespace', 'requires', 'functions');
     foreach (names($publication->{$family}->callbacks ?? [], 'Duplicate regex callback') as $name) {
         $item = at(at($catalog, 'callbacks'), $name);
-        fields($item, ['input', 'surface', 'table']);
+        fields($item, ['input', 'surface', 'table', 'optional_output', 'capture_rows']);
         $input = textValue(at($item, 'input'));
         $callbackSurface = textValue(at($item, 'surface'));
         requireThat($family === 'regex' && in_array($input, ['mixed', 'vector_string'], true)
             && in_array($callbackSurface, ['general', 'php'], true), 'Unsupported regex callback signature');
+        $countOutput = isset($item->optional_output);
+        requireThat(!$countOutput || ($callbackSurface === 'php' && $input === 'mixed' && $item->optional_output === 'int64'),
+            'Unsupported callback count output');
         $table = boolean(at($item, 'table'));
         $callbackHeader = moduleOperationHeader($header, 'callback_' . $input);
         $includes = [];
@@ -124,7 +127,16 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             $export = moduleFunctionTypeExport($plan, $type);
             $includes[] = providerHeader($plan['submodules'], $export['provider']);
         }
-        $plan[$family]['callbacks'][$name] = compact('input', 'table', 'callbackSurface', 'callbackHeader', 'includes');
+        $plan[$family]['callbacks'][$name] = compact('input', 'table', 'callbackSurface', 'callbackHeader', 'includes', 'countOutput');
+        if (isset($item->capture_rows)) {
+            requireThat($countOutput, 'PHP capture flags follow the count output');
+            foreach (regexCallbackRows($catalog, $publication->regex, $item) as $row => $shape) {
+                moduleFunctionTypeExport($plan, $row);
+                $rowHeader = moduleOperationHeader($header, 'callback_row_' . $row);
+                $plan[$family]['callback_rows'][$row] = $shape + ['header' => $rowHeader];
+                $plan[$family]['callbacks'][$name]['rows'][$row] = $rowHeader;
+            }
+        }
     }
     foreach (object($catalog->php_constants ?? (object)[]) as $constant => $value) {
         requireThat(preg_match('/^[A-Z][A-Z_0-9]*$/D', $constant) === 1 && is_int($value), 'Invalid module integer constant');
@@ -132,7 +144,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     }
     foreach (names($publication->{$family}->php_exposures ?? [], 'Duplicate PHP exposure') as $name) {
         $alias = at(at($catalog, 'php_exposures'), $name);
-        fields($alias, ['target', 'native_name', 'false_result']);
+        fields($alias, ['target', 'native_name', 'false_result', 'optional_output', 'arguments']);
         requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid PHP function name');
         requireThat($surface === 'general' && !isset($functions[$name]), 'Expected a distinct PHP exposure of a general function');
         $target = textValue(at($alias, 'target'));
@@ -157,6 +169,20 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
                 requireThat($alias->native_name === $name, 'Expected matching PHP native function name');
             }
             $symbol = "scpp::php::$name";
+        }
+        requireThat(isset($alias->optional_output) === isset($alias->arguments), 'An optional output requires PHP argument admission');
+        if (isset($alias->optional_output)) {
+            requireThat(!isset($alias->false_result) && !isset($alias->native_name), 'An optional output requires a direct native target');
+            $out = moduleFunctionTypeExport($plan, textValue($alias->optional_output));
+            $slot = count($binding['parameters']);
+            requireThat($slot < 32, 'Too many module function parameters');
+            $binding['reference_mask'] |= 1 << $slot;
+            $binding['parameters'][] = ['type' => $out['identity'], 'native' => $out['symbol'] . '&'];
+            $binding['arguments'] = listValue($alias->arguments);
+            $binding['output_overload'] = true;
+            $binding['includes'] = [$binding['header'], providerHeader($plan['submodules'], $out['provider'])];
+            $binding['header'] = "scpp/php/$name.hpp";
+            checkHeader($plan, $binding['header']);
         }
         $binding['symbol'] = $symbol;
         $plan[$family]['php_exposures'][$name] = $binding;
@@ -209,6 +235,12 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         }
     }
     foreach ($module['php_exposures'] ?? [] as $name => $binding) {
+        if (isset($binding['output_overload'])) {
+            $parameters = implode(', ', array_column($binding['parameters'], 'native'));
+            $code = "[[nodiscard]] {$binding['native_result']} {$binding['native_name']}($parameters);\n";
+            $files['public/' . $binding['header']] = moduleHeaderBody($binding['includes'], $module['namespace'], $code);
+            continue;
+        }
         if (!str_starts_with($binding['symbol'], 'scpp::php::')) continue;
         $parameters = [];
         $arguments = [];
@@ -228,19 +260,35 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
     }
     $groups[] = ['provider' => $module['provider'], 'declarations' => $declarations . "}\n", 'system' => []];
     $bridge = BANNER . "#pragma once\n" . includeHeader($module['header']);
+    foreach ($module['php_exposures'] ?? [] as $binding) {
+        if (isset($binding['output_overload'])) $bridge .= includeHeader($binding['header']);
+    }
     if ($family === 'filesystem') {
         // The archive compiles all implementations even for a reduced source publication.
         $carrier = typeExport($plan['submodules'], 'result_vector_string');
         $bridge .= includeHeader(providerHeader($plan['submodules'], $carrier['provider']));
     }
+    $countedInputs = array_column(array_filter($module['callbacks'] ?? [], fn($cb) => $cb['countOutput']), 'input');
     foreach ($module['callbacks'] ?? [] as $callback) {
         $input = $callback['input'];
         $header = $callback['callbackHeader'];
         if (isset($files['public/' . $header])) continue;
         $declaration = "using render_$input = string (*)(const void*, $input);\n"
             . "result_or_false_string replace_callback(const string&, const void*, render_$input, const string&, int64);\n";
+        if (in_array($input, $countedInputs, true))
+            $declaration .= "result_or_false_string replace_callback(const string&, const void*, render_$input, const string&, int64, int64&);\n";
         $files['public/' . $header] = moduleHeaderBody($callback['includes'], $module['namespace'], $declaration);
         $bridge .= includeHeader($header);
+    }
+    foreach ($module['callback_rows'] ?? [] as $row => $shape) {
+        $export = moduleFunctionTypeExport($plan, $row);
+        $includes = [providerHeader($plan['submodules'], $export['provider'])];
+        foreach (['string', 'int64', 'result_or_false_string'] as $type)
+            $includes[] = providerHeader($plan['submodules'], moduleFunctionTypeExport($plan, $type)['provider']);
+        $declaration = "using callback_row_$row = string (*)(const void*, $row);\n"
+            . "result_or_false_string replace_capture_callback(const string&, const void*, callback_row_$row, const string&, int64, int64*, int64);\n";
+        $files['public/' . $shape['header']] = moduleHeaderBody($includes, $module['namespace'], $declaration);
+        $bridge .= includeHeader($shape['header']);
     }
     if ($family === 'regex') {
         $files['private/regex_capture_bindings.hpp'] = renderRegexModeBindings($plan);
@@ -270,7 +318,7 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
             $name = $binding['overload'] ?? $name;
             $key = ($surface === null ? '' : $surface . ':') . 'func:' . $name;
             $policy = '';
-            if (isset($binding['overload'])) {
+            if (isset($binding['arguments'])) {
                 $references = [];
                 foreach (array_keys($types) as $slot) {
                     if ($binding['reference_mask'] & (1 << $slot)) $references[] = $slot;

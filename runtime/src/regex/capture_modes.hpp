@@ -19,6 +19,8 @@ Cell capture_value(std::string_view subject, const PCRE2_SIZE* bounds) {
         pair.append(std::move(value));
         pair.append(mixed::from_integer(start));
         return pair;
+    } else if constexpr (std::is_same_v<Cell, string>) {
+        return text;
     } else if constexpr (Flags & capture_offsets) {
         return Cell{std::move(text), start};
     } else {

@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "structural_encoder": true,
   "async_frames": true,
   "mt_segments": true,
   "modules": ["numeric"],

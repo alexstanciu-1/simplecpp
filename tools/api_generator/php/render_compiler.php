@@ -310,7 +310,19 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $key = $binding['callbackSurface'] . ':func:' . $name;
         $input = 'type_' . $runtimeTypes[$binding['input']] . '::instance()';
         $table = $binding['table'] ? 'true' : 'false';
-        $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}'),";
+        $countOutput = $binding['countOutput'] ? 'true' : 'false';
+        if (isset($binding['rows'])) {
+            $allowed = $runtime['regex']['php_constants']['PREG_OFFSET_CAPTURE'] | $runtime['regex']['php_constants']['PREG_UNMATCHED_AS_NULL'];
+            $rows = [];
+            foreach ($binding['rows'] as $row => $header) {
+                $type = $runtimeTypes[$row];
+                $flags = $runtime['regex']['callback_rows'][$row]['flags'];
+                $rows[] = "type_$type::instance()->name => [type_$type::instance(), '$header', $flags]";
+            }
+            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_overloads('$name', $table, $allowed, [" . implode(', ', $rows) . "]),";
+            continue;
+        }
+        $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}', $countOutput),";
     }
     foreach ($runtime['collection_transforms'] ?? [] as $name) {
         $runtimeCases[] = "\t\t\t'general:func:$name' => runtime_factory::$name,";

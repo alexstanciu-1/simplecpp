@@ -59,6 +59,12 @@ compliance. See the implementation handoff.
 - Mixed containers contain mixed values; dynamic containers contain dynamic values.
   Scalar expressions are boxed into the destination family. Neither family may
   contain a container from the other, including through native adapters or aliases.
+- An explicit `(mixed)$items` or `(dynamic)$items` cast of a typed vector builds
+  a fresh packed list in that family. A scalar element requires a structural write and a destination boxing factory.
+  A by-value field-derived data struct uses its [boxed field walk](data_initialization.md#explicit-boxed-export). Evaluate the source once
+  and box checked element reads in order; an empty vector produces an empty list.
+  Later changes to the vector leave the exported list intact. Assignment and nested
+  literals require the cast explicitly, e.g. `["data" => (mixed)$items]`.
 - Mixed containers retain value/COW behavior. Dynamic container copies share identity;
   mutation is visible through aliases. Scalar copies have value semantics. Replacing
   a dynamic variable or by-value parameter replaces only that binding's value,
