@@ -128,7 +128,7 @@ class ast_binary_expression extends ast_expression
 	/** PREP FACTS */
 	/** Prepared fact: native non-owning execution type; null before settlement or after reset. */
 	protected ?type_definition $execution_type = null;
-	/** Positive payload comparison selected for a state-preserving peer comparison. */
+	/** Prepared fact: positive payload comparison selected for a state-preserving peer comparison. */
 	public ?binary_operator $peer_comparator = null;
 	/** Prepared fact: approved left conversion; identity before settlement or after reset. */
 	public int $left_conversion /** uint16 */ = value_conversion::identity;
