@@ -191,7 +191,7 @@ final class Prepared_Call {
 		$source = $this->syntax->source;
 		foreach ($this->syntax->argument_tokens as $index) {
 			$token = $source->tokens[$index];
-			if ($token->kind !== Token_Kind::T_identifier) continue;
+			if (!$source->is_argument_label($token)) continue;
 			$name = "$" . substr($source->text, $token->offset, $token->length);
 			$before = $old->signature->find($name);
 			$after = $new->signature->find($name);
@@ -222,7 +222,7 @@ final class Prepared_Call {
 			$index = $start;
 			$token = $source->tokens[$index];
 			$slot = $position;
-			if ($token->kind === Token_Kind::T_identifier) {
+			if ($source->is_argument_label($token)) {
 				$named = true;
 				$label = substr($source->text, $token->offset, $token->length);
 				$parameter = $signature->find("$" . $label);

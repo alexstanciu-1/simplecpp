@@ -121,6 +121,7 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 	$tokens vector<Token_Span> = [];
 	$length = strlen($text);
 	$python = $mode === Scan_Flavor::python;
+	$js = $mode === Scan_Flavor::js;
 	// Layout stacks belong to this scan; indentation zero is implicit.
 	$levels vector<int> = [];
 	$closers vector<int> = [];
@@ -170,11 +171,10 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 		if ($variable && ($offset === $length || !identifier_byte($text[$offset]))) {
 			throw new Translation_Diagnostic($path, $start, "Expected variable name", $text);
 		}
-		if ($variable || identifier_byte($value)) {
-			$kind = $variable ? Token_Kind::T_variable : Token_Kind::T_identifier;
+		if ($variable || identifier_byte($value) || ($js && $value == 36)) {
 			while ($offset < $length) {
 				$next = $text[$offset];
-				if (!identifier_byte($next) && !decimal_byte($next)) {
+				if (!identifier_byte($next) && !decimal_byte($next) && !($js && $next == 36)) {
 					break;
 				}
 				$offset++;
@@ -182,6 +182,8 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 			if ($value == 102 && $offset === $start + 1 && $offset < $length && $text[$offset] == 34 && $mode === Scan_Flavor::cpp) {
 				$kind = Token_Kind::T_template_string;
 				$offset = quoted_token_end($path, $text, $start, $offset, $length, false, true);
+			} else {
+				$kind = $variable ? Token_Kind::T_variable : word_kind_at($text, $start, $offset - $start, $mode);
 			}
 		} else if (decimal_byte($value) || ($value == 46 && $offset < $length && decimal_byte($text[$offset]))) {
 			$kind = $value == 46 ? Token_Kind::T_floating : Token_Kind::T_integer;
@@ -260,6 +262,12 @@ final class Translation_Source {
 		$this->text = $text;
 		$this->tokens = tokenize_source($path, $text, $mode);
 	}
+
+	// PHP permits the contextual keyword data as a named argument label.
+	public function is_argument_label(Token_Span $token): bool {
+		return $token->kind === Token_Kind::T_identifier || ($token->kind === Token_Kind::T_keyword &&
+			string_byte_slice_equals($this->text, $token->offset, $token->length, "data"));
+	}
 }
 
 // A call owns its ordered argument tokens in the same retained source.
@@ -323,7 +331,7 @@ final class Translation_Parser {
 
 	private function keyword(string $name): void {
 		$message = "Expected " . $name;
-		$token = $this->expect(Token_Kind::T_identifier, $message);
+		$token = $this->expect(Token_Kind::T_keyword, $message);
 		if ($this->spelling($token) !== $name) {
 			throw new Translation_Diagnostic($this->source->path, $token->offset, $message, $this->source->text);
 		}
@@ -332,7 +340,7 @@ final class Translation_Parser {
 	private function name_token(): Token_Span {
 		$token = $this->expect(Token_Kind::T_identifier, "Expected function name");
 		$name = $this->spelling($token);
-		if ($name === "function" || $name === "int" || $name === "return") {
+		if ($name === "int") {
 			throw new Translation_Diagnostic($this->source->path, $token->offset, "Expected function name", $this->source->text);
 		}
 		return $token;
@@ -353,7 +361,7 @@ final class Translation_Parser {
 		$arguments vector<int> = [];
 		while ($this->source->tokens[$this->index]->kind !== Token_Kind::T_rparen) {
 			$arguments[] = $this->index;
-			if ($this->source->tokens[$this->index]->kind === Token_Kind::T_identifier) {
+			if ($this->source->is_argument_label($this->source->tokens[$this->index])) {
 				$this->index++;
 				$this->expect(Token_Kind::T_colon, "Expected : after argument label");
 			}

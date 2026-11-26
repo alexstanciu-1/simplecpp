@@ -1,4 +1,4 @@
-"""Compare punctuation in the translated scanner with the production lexer in each flavor."""
+"""Compare translated token kinds, byte spans and diagnostics with production in each flavor."""
 import json
 from pathlib import Path
 import shutil
@@ -23,6 +23,19 @@ foreach (array_keys($words) as $word) $cases[] = 'x ' . ($pairs[$word] ?? $word)
 array_push($cases, 'x ==== == =', 'x +++ ---', 'x ... .. .', 'x **= ** *', 'x ??= ?? ?',
     'x #[x]', "x //==\ny", "x #==\ny", 'x /*===*/ ==', 'x /*unfinished', 'x /*/',
     'x / //', 'x @', 'x === @', 'x ++', 'x /*é*/ ===', "x #é\n=");
+"""
+WORD_CASES = r"""
+$inventory = [];
+foreach (flavor::cases() as $mode) {
+    foreach (explode(' ', $mode->keyword_spellings()) as $word) $inventory[$word] = true;
+}
+$names = [];
+foreach (array_keys($inventory) as $word) {
+    array_push($names, $word, strtoupper($word), $word . '2', $word . '_', '_' . $word);
+}
+$cases[] = implode(' ', $names);
+array_push($cases, '$', '$7', '$item', 'item$2', '$$x', '$return', 'return$tail', 'let letValue',
+    'x $ é', 'π', 'xπ', '_x2', 'f"word"', '42$x');
 """
 RADIX_CASES = r"""
 array_push($cases, 'x "é" 0x1e + 0O17', 'x 0X1E+2', 'x 0x000fF..<0o7', 'x 0o000755',
@@ -108,7 +121,7 @@ def scanner_project(work):
 
 def verify(work):
     app = scanner_project(work)
-    oracle = subprocess.check_output(['php', '-r', ORACLE_PREAMBLE + PUNCTUATION_CASES + RADIX_CASES + LAYOUT_CASES + COMPARE_TOKENS,
+    oracle = subprocess.check_output(['php', '-r', ORACLE_PREAMBLE + PUNCTUATION_CASES + RADIX_CASES + WORD_CASES + LAYOUT_CASES + COMPARE_TOKENS,
                                       ROOT/'compiler/boot.php'], text=True)
     rows = [json.loads(line) for line in oracle.splitlines()]
     expected = {(mode, text): row for mode, text, row in rows}
@@ -117,9 +130,13 @@ def verify(work):
     assert expected['python', 'x ++'] == '1,0,1|50,2,1|50,3,1|65,4,0|'
     assert expected['python', 'a\r\n  b'] == '1,0,1|65,1,2|66,5,0|1,5,1|65,6,0|67,6,0|'
     assert expected['python', 'a\n  b\n    c\n   d'] == '12:Unmatched Python dedent'
+    assert expected['php', '$return'] == '2,0,7|'
+    assert expected['js', '$return'] == '1,0,7|'
+    assert expected['js', 'item$2'] == '1,0,6|'
+    assert expected['php', 'let letValue'] != expected['js', 'let letValue']
     main = [DRIVER, LAYOUT_REPAIR, 'repair_layout();']
     for mode, source, _ in rows:
-        main.append(f'show({json.dumps(source, ensure_ascii=False)}, Scan_Flavor::{mode});')
+        main.append(f'show(hex2bin("{source.encode().hex()}"), Scan_Flavor::{mode});')
     (app/'main.php').write_text('\n'.join([*main, 'return 8;']))
     generated = work/'generated'
     result = fresh_build(app, generated)
