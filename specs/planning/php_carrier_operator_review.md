@@ -51,3 +51,22 @@ matched the corresponding plain payload cast: 87 accepted and 18 rejected.
 Each accepted carrier expression emitted a checked value read. The comparison
 covered the local publication including JSON result types. The native regression
 selects boxed-result cases when the build publishes those specializations.
+
+## Implicit initialization, reassignment, arguments and returns
+
+A differential source probe compared a parameter holding a plain payload with a
+parameter holding the corresponding carrier. Each was used in a typed local
+initializer, a write to an existing local/parameter, a by-value call and a typed
+return. Against the local JSON-enabled publication, 142 of 420 comparisons
+initially disagreed on admission or lowering. All 420 agreed after routing
+implicit conversions through the shared operand projection and retaining the
+destination context. The committed matrix checks one value read per admitted
+conversion and separately checks whole-state copies in all four contexts.
+
+The differences centered on scalar boxing and boxed payload extraction.
+Preparing the destination carrier before the boxed conversion also fixed
+construction of result<mixed> from mixed and a lowering failure constructing it
+from an integer. Native checks distinguish a missing result from a present
+box with the wrong scalar kind, preserve the target after either failure, and
+observe an effectful producer exactly once. Explicit-only publication rejects
+the paths that require extraction and still admits whole-carrier copies.

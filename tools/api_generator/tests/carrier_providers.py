@@ -84,6 +84,13 @@ def proof(work):
     assert 'function implicit_extraction(): bool\n\t{\n\t\treturn false;' in explicit_code
     assert 'function implicit_extraction(): bool\n\t{\n\t\treturn true;' not in explicit_code
 
+    # Run the same four source contexts with the explicit-only compiler publication.
+    alternate_boot = work / 'explicit_boot.php'
+    alternate_boot.write_text((compiler_root / 'boot.php').read_text()
+        .replace("__DIR__ . '/generated/", repr(str(compiler)) + " . '/")
+        .replace('__DIR__', repr(str(compiler_root))))
+    run(['php', compiler_root / 'tests/php_carrier_implicit_matrix.php', alternate_boot])
+
     emit(metadata, publication)
     for invalid in ('states', 'default', 'provider', 'legacy_header', 'access', 'presence', 'sentinel'):
         m, p = copy.deepcopy(metadata), copy.deepcopy(publication)

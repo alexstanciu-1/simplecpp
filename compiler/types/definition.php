@@ -703,12 +703,16 @@ abstract class type_definition
 			if ($source === $this) return value_conversion::identity;
 			$source->require_extraction($value, $context);
 			$transport = value_conversion::EXTRACT;
-			if ($context === conversion_context::explicit_cast && $value->source()->flavor === flavor::php) {
+			if ($value->source()->flavor === flavor::php && $context !== conversion_context::inference) {
 				$source = carrier_operand_payload($source)
-					?? throw new diagnostic($value->source(), $value->byte_start(), 'Carrier does not participate in explicit casts');
+					?? throw new diagnostic($value->source(), $value->byte_start(), 'Carrier does not participate in payload conversion');
 				if ($source === $this) return $transport | value_conversion::identity;
 				if ($this instanceof boxed_type_definition && $this->accepts_scalar($source)) return $transport | value_conversion::box_scalar;
 			}
+		}
+		// A PHP carrier destination applies this context to its payload, including boxed conversions.
+		if ($this instanceof carrier_type_definition && (!($source instanceof boxed_type_definition) || $value->source()->flavor === flavor::php)) {
+			return $this->prepare_construction($value, $context);
 		}
 		if ($source instanceof boxed_type_definition && $source !== $this) {
 			if (!$source->admits_extraction($this, $context)) {
@@ -719,9 +723,6 @@ abstract class type_definition
 				conversion_context::explicit_cast => value_conversion::unbox_explicit,
 				conversion_context::assignment => value_conversion::unbox_assignment,
 			};
-		}
-		if ($this instanceof carrier_type_definition) {
-			return $this->prepare_construction($value, $context);
 		}
 		if (($source instanceof carrier_type_definition) && ($source->payload_type === $this)) {
 			return value_conversion::identity | value_conversion::EXTRACT;
@@ -759,7 +760,7 @@ abstract class type_definition
 			$value = $source->lower_cpp_extract($value);
 			$source = $source->payload_type;
 			$conversion &= ~value_conversion::EXTRACT;
-			if ($conversion !== value_conversion::box_scalar) $syntax = null;
+			if (($conversion & value_conversion::OPERATION_MASK) !== value_conversion::box_scalar) $syntax = null;
 		}
 		if ($conversion === value_conversion::box_scalar && $this instanceof boxed_type_definition && $syntax !== null) {
 			return $this->box_cpp($syntax, $value);
@@ -784,7 +785,7 @@ abstract class type_definition
 				return '((void)(' . $value . '), ' . $this->cpp_type() . '{})';
 			}
 			if (($conversion & value_conversion::WRAP) !== 0) {
-				$value = $this->payload_type->lower_scalar_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax, $source);
+				$value = $this->payload_type->lower_cpp_conversion($conversion & value_conversion::OPERATION_MASK, $value, $syntax, $source, $adapters);
 				return $this->cpp_type() . '{static_cast<' . $this->payload_type->cpp_type() . '>(' . $value . ')}';
 			}
 		}

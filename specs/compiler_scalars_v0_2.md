@@ -730,3 +730,18 @@ checked numeric conversions, scalar formatting, and published mixed/dynamic
 boxing or unboxing. Each cast evaluates its operand once. Conditions continue
 to use carrier truth. For example, a false sentinel makes a condition false and
 raises on an explicit bool cast.
+
+## PHP implicit conversions of carrier operands
+
+Typed initialization, by-value arguments and declared returns select the
+published typed-destination conversion. Reassignment selects the published
+assignment conversion. Copying into the identical carrier type preserves its
+entire state in each context, including under explicit-only extraction policy.
+
+When a context needs the payload of a different source type, first require the
+publication to admit implicit extraction and the carrier family to participate.
+Extract one present payload, apply the conversion authorized for that context,
+and wrap the converted value if the destination is a carrier. A missing payload
+raises `carrier_no_value`. A present boxed payload uses its family's conversion
+and can still fail its tag or range check. Failed reassignment leaves the final
+store unexecuted. A by-value conversion creates no reference to the payload.
