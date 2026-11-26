@@ -143,7 +143,7 @@ with TemporaryDirectory(prefix='scpp-selected-element-capture-') as work:
         ('store($f);', 'direct local invocation'),
         ('$alias =& $f;', 'direct local invocation'),
         ('invoke(function() use (&$point):void {});', 'requires an inferred local closure'),
-        ('$nested=function() use (&$point):void {$g=function() use (&$point):void {};};', 'Nested capture'),
+        ('$nested=function() use (&$point):void {$g=function() use ($point):void {};};', 'Nested by-value capture'),
     ]:
         edits.append(('main', capture_loop.replace('$f();$copy=', replacement+'$copy='), error))
     edits += [
@@ -160,3 +160,87 @@ with TemporaryDirectory(prefix='scpp-selected-element-capture-') as work:
         ('record', record, trace),
     ]
     revisions(Path(work), 'php', dict(main=capture_loop, record=record), edits)
+
+nested_loop = """
+function invoke(callback<void> $op):void {$op();}
+function store(function<void()> $op):void {}
+function update(vector<Sample> &$rows,vector<Sample> &$alias):void {
+    foreach ($rows as $key => &$point) {
+        $outer=function() use (&$point):void {
+            $inner=function() use (&$point):void {$point->x=12;};
+            $inner();
+        };
+        $key=1;$outer();
+        break;
+    }
+}
+$p Sample;$v vector<Sample> = [$p,$p];update($v,$v);
+$first=$v[0];$second=$v[1];echo $first->x,",",$second->x,";";
+$h hash<Sample,int> = [];$h[2]=$p;$h[5]=$p;
+try {
+    foreach ($h as $key => &$point) {
+        $outer=function() use (&$point):void {
+            $inner=function() use (&$point):void {$point->x=20;throw new Exception("stop");};
+            $inner();
+        };
+        $key=5;$outer();
+    }
+} catch (Exception $e) {$first=$h[2];$second=$h[5];echo $first->x,",",$second->x;}
+return 8;
+"""
+with TemporaryDirectory(prefix='scpp-nested-element-borrow-') as work:
+    expected = b'12,1;20,1'
+    edits = [(None, None, expected)]
+    for call in ('invoke($inner);', 'store($inner);', '$copy=$inner;', '$saved function<void()> = $inner;'):
+        edits.append(('main', nested_loop.replace('$inner();', call, 1), 'direct local invocation'))
+    edits += [
+        ('main', nested_loop.replace('$inner();', 'return $inner;', 1), 'direct local invocation'),
+        ('main', nested_loop.replace('$inner=function() use (&$point):void {$point->x=12;};',
+                                     'invoke(function() use (&$point):void {$point->x=12;});'), 'requires an inferred local closure'),
+        ('main', nested_loop.replace('$outer=function() use (&$point)', '$outer=function() use (&$point,&$alias)', 1)
+                            .replace('$inner=function() use (&$point):void {$point->x=12;',
+                                     '$inner=function() use (&$point,&$alias):void {clean($alias);$point->x=12;', 1),
+         'during writable foreach'),
+        ('main', nested_loop, expected),
+        ('record', record.replace('public int $x', 'public readonly int $x'), 'Cannot modify readonly property'),
+        ('record', None, None),
+        ('record', record, expected),
+    ]
+    revisions(Path(work), 'php', dict(main=nested_loop, record=record), edits)
+
+consumer = 'function applyTwice(callback_view<void> $op):void {$op();$op();}'
+view_loop = """
+function &keep(int &$n):int {
+    $f=function() use (&$n):void {$n+=1;};applyTwice($f);return $n;
+}
+$counter=0;$ref =& keep($counter);echo $ref,";";
+function update(vector<int> &$rows,vector<int> &$alias):void {
+    $clear=function() use (&$alias):void {clean($alias);};
+    foreach ($rows as $key => &$n) {
+        $step=function() use (&$n):void {$n+=2;};
+        $key=1;applyTwice($step);break;
+    }
+}
+$v vector<int> = [4,3];update($v,$v);echo $v[0],",",$v[1],";";
+$h hash<int,int> = [];$h[2]=5;$h[8]=1;
+try {
+    foreach ($h as $key => &$n) {
+        $step=function() use (&$n):void {$n+=1;if ($n===7) {throw new Exception("stop");}};
+        $key=8;applyTwice(op:$step);
+    }
+} catch (Exception $e) {echo "caught:";}
+echo $h[2],",",$h[8];return 8;
+"""
+with TemporaryDirectory(prefix='scpp-borrowed-callback-consumer-') as work:
+    expected = b'2;8,3;caught:7,1'
+    edits = [(None, None, expected),
+             ('consumer', consumer.replace('$op();$op();', '$saved function<void()> = $op;'), 'only direct invocation'),
+             ('consumer', consumer.replace('$op();$op();', 'applyTwice($op);'), 'only direct invocation'),
+             ('consumer', consumer, expected),
+             ('main', view_loop.replace('applyTwice($step)', 'applyTwice($clear)'), 'during writable foreach'),
+             ('main', view_loop.replace('applyTwice($step)', 'applyTwice(function() use (&$n):void {})'), 'named local closure'),
+             ('main', view_loop, expected),
+             ('consumer', consumer.replace('callback_view<void>', 'callback<void>'), 'direct local invocation'),
+             ('consumer', None, None),
+             ('consumer', consumer, expected)]
+    revisions(Path(work), 'php', dict(main=view_loop, consumer=consumer), edits)

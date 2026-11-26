@@ -2,10 +2,12 @@
 set(app ${CMAKE_CURRENT_BINARY_DIR}/app)
 set(examples ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 foreach(source IN ITEMS translated_path/frontend translated_path/function_ast retained_frontend/session
-    retained_frontend/frontend_requests tokenizer/utf8)
+    retained_frontend/frontend_requests tokenizer/utf8 native_driver/build_inputs)
   get_filename_component(name ${source} NAME)
   configure_file(${examples}/${source}.php.scpp ${app}/${name}.php COPYONLY)
 endforeach()
+configure_file(qualification.php.scpp ${app}/qualification.php COPYONLY)
+configure_file(ninja.php.scpp ${app}/ninja.php COPYONLY)
 configure_file(graph.php.scpp ${app}/graph.php COPYONLY)
 # Escape a PHP single-quoted source literal for checkout paths containing quotes or backslashes.
 string(REPLACE "\\" "\\\\" inventory_runtime_path "${PROJECT_SOURCE_DIR}/runtime")
@@ -17,7 +19,7 @@ configure_file(protocol.php.scpp ${app}/main.php COPYONLY)
 configure_file(module.json ${app}/module.json COPYONLY)
 
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
-add_library(scpp_frontend_host STATIC host.cpp client.cpp sha256.cpp)
+add_library(scpp_frontend_host STATIC host.cpp client.cpp sha256.cpp qualification_host.cpp)
 target_link_libraries(scpp_frontend_host PRIVATE scpp_runtime OpenSSL::Crypto)
 file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/adapter/module.json" CONTENT
   "{\"name\":\"compiler-private-frontend\",\"type\":\"c++\",\"artifacts\":[\"$<TARGET_FILE:scpp_frontend_host>\",\"$<TARGET_FILE:OpenSSL::Crypto>\"]}\n")

@@ -51,6 +51,17 @@ function report(Frontend_Session $session, string $root, string $line, bool &$st
 
 $cli = cli_arguments();
 if (count($cli) > 1) {
+    if ($cli[1] === "qualify") return qualification_cli($cli);
+    if ($cli[1] === "publish-ninja") {
+        if (count($cli) !== 6 && count($cli) !== 8) return 2;
+        $runtime = inventory_default_runtime();
+        if (count($cli) === 8) {
+            if ($cli[6] !== "--runtime") return 2;
+            $runtime = $cli[7];
+        }
+        publish_ninja($cli[2], $cli[3], $cli[4], $cli[5], $runtime);
+        return 0;
+    }
     if ($cli[1] === "inventory") {
         if (count($cli) < 3) return 2;
         $from_bytes = false;

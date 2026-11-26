@@ -43,3 +43,28 @@ Pass `--from-bytes` to exercise hashing an in-memory source snapshot instead.
 Both paths use OpenSSL EVP and preserve embedded NULs. Neither command persists
 a digest cache. Run `compiler_native_source_inventory` to compare both modes
 with PHP project digests and the backend's unit naming.
+
+## Publish a Ninja graph
+
+```sh
+build/clang/native-frontend/native/program publish-ninja APP BUNDLE NATIVE_DIR TOOLCHAIN.json
+```
+
+The publisher reads translation units and optional native sources from a published
+C++ bundle. It derives libraries from the current application module graph and
+requires their exact order to agree with the bundle. Pass `--runtime PATH` after
+the toolchain file to select a custom runtime manifest. The toolchain file follows
+the PHP native build configuration.
+
+Publication takes a shared bundle lock and the native directory's exclusive lock.
+A changed graph replaces `build.ninja` via a staged rename. Identical graph bytes
+preserve its timestamp. Ninja invokes the native executable's `qualify` command and tracks header
+dependencies through compiler depfiles. Qualification compiles and runs the
+shared C++ argument-order probe with the selected compiler and flags. Admitted
+requests reuse a successful result for up to seven days while tracked input
+metadata matches. Other flags require fingerprinting before reuse. A successful
+run writes the context stamp only when its key changes.
+
+The native qualifier stores a separately locked `native-<request>.json` in the
+configured cache and fingerprints its own executable. Python qualification keeps
+its existing cache format and serves as the differential reference.

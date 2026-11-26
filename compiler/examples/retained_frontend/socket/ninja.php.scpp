@@ -1,0 +1,175 @@
+function ninja_line(string $value): string {
+    if ($value === "" || str_contains($value, "\0") || str_contains($value, "\r") || str_contains($value, "\n"))
+        throw Exception::make("Expected nonempty single-line string");
+    return $value;
+}
+
+function ninja_arg(string $arg): string {
+    return "'" . str_replace('$', '$$', str_replace("'", "'\\''", ninja_line($arg))) . "'";
+}
+
+function ninja_path(string $path): string {
+    ninja_line($path);
+    if (str_contains($path, "\"") || str_contains($path, "'") || str_contains($path, "\\") || str_contains($path, "|"))
+        throw Exception::make("Unsupported Ninja input path spelling: " . $path);
+    if (!str_starts_with($path, "/") || !fs_is_file($path)) throw Exception::make("Missing absolute native input: " . $path);
+    return str_replace(":", '$:', str_replace(" ", '$ ', str_replace('$', '$$', $path)));
+}
+
+function ninja_executable(string $name, string $directory): string {
+    ninja_line($name);
+    $dirs vector<string> = [""];
+    if (!str_contains($name, "/")) {
+        $env = getenv("PATH");
+        $search = "";
+        if (isset($env)) $search = (string)$env;
+        $dirs = explode(":", $search);
+    }
+    foreach ($dirs as $dir) {
+        $path = $name;
+        if ($dir !== "") $path = $dir . "/" . $name;
+        if (!str_starts_with($path, "/")) $path = $directory . "/" . $path;
+        if (fs_is_file($path) && host_executable($path)) {
+            $result = "";
+            $parts = explode("/", $path);
+            foreach ($parts as $part) {
+                if ($part !== "" && $part !== ".") $result .= "/" . $part;
+            }
+            return $result;
+        }
+    }
+    throw Exception::make("Native executable not found: " . $name);
+}
+
+function ninja_option(json_node $config, string $key, string $fallback): string {
+    if (!json_node_has($config, $key)) return $fallback;
+    return ninja_line(member_text($config, $key));
+}
+
+function render_ninja(vector<string> $units, vector<string> $libraries, string $directory, json_node $config): string {
+    graph_fields($config, "|cxx|flags|link_flags|cache|ninja|python|jobs|", "toolchain");
+    $cxx = ninja_executable(member_text($config, "cxx"), $directory);
+    ninja_executable(ninja_option($config, "ninja", "ninja"), $directory);
+    if (json_node_has($config, "jobs")) {
+        $node json_node = json_node_member($config, "jobs");
+        $jobs int = json_node_int($node);
+        if ($jobs < 1 || $jobs > 1024) throw Exception::make("Native jobs must be in 1..1024");
+    }
+    $cache = ninja_option($config, "cache", $directory . "/qualification");
+    if (!str_starts_with($cache, "/")) $cache = $directory . "/" . $cache;
+    $stamp = ".scpp-native-context";
+    $probe = ninja_arg(host_self()) . " 'qualify'"
+        . " '--cxx' " . ninja_arg($cxx) . " '--cache' " . ninja_arg($cache) . " '--context-stamp' " . ninja_arg($stamp);
+    $command = ninja_arg($cxx);
+    $node json_node = json_node_member($config, "flags");
+    $flags = graph_strings($node, "flags");
+    foreach ($flags as $flag) {
+        if ($flag === "-include-pch" || str_starts_with($flag, "-include-pch=") || $flag === "-fpch-preprocess")
+            throw Exception::make("PCH orchestration is deferred");
+        $command .= " " . ninja_arg($flag);
+        $probe .= " " . ninja_arg("--flag=" . $flag);
+    }
+    $link = "";
+    if (json_node_has($config, "link_flags")) {
+        $link_node json_node = json_node_member($config, "link_flags");
+        $link_flags = graph_strings($link_node, "link_flags");
+        foreach ($link_flags as $flag) {
+            if ($link !== "") $link .= " ";
+            $link .= ninja_arg($flag);
+            $probe .= " " . ninja_arg("--link-flag=" . $flag);
+        }
+    }
+    $inputs = "# scpp build inputs v1\n";
+    $rules = "ninja_required_version = 1.10\nrule qualify\n  command = " . $probe
+        . "\n  restat = 1\nbuild force-qualification: phony\nbuild " . $stamp . ": qualify force-qualification\nrule compile\n  command = "
+        . $command . ' -MD -MF $out.d -c $in -o $out' . "\n" . '  depfile = $out.d' . "\n  deps = gcc\nrule link\n  command = "
+        . $command . ' $in ' . $link . ' -o $out' . "\n";
+    $objects = "";
+    $seen hash<string,string> = [];
+    foreach ($units as $unit) {
+        $escaped = ninja_path($unit);
+        $inputs .= "# source " . (string)strlen($unit) . " " . $unit . "\n";
+        if (isset($seen[$unit])) continue;
+        $object = "unit-" . host_sha256_bytes($unit) . ".o";
+        $seen[$unit] = $object;
+        $objects .= " " . $object;
+        $rules .= "build " . $object . ": compile " . $escaped . " | " . $stamp . "\n";
+    }
+    $paths vector<string> = [];
+    foreach ($libraries as $path) {
+        $paths[] = ninja_path($path);
+        $inputs .= "# library " . (string)strlen($path) . " " . $path . "\n";
+    }
+    return $inputs . "# end inputs\n" . $rules . "build program: link" . $objects . " " . implode(" ", $paths)
+        . " | " . $stamp . "\ndefault program\n";
+}
+
+function ensure_native_directory(string $directory): void {
+    if (fs_is_dir($directory)) return;
+    $parent = fs_dirname($directory);
+    if ($directory === "" || $parent === $directory) throw Exception::make("Invalid native build directory");
+    if ($parent !== "") ensure_native_directory($parent);
+    if (!fs_mkdir($directory) && !fs_is_dir($directory)) throw Exception::make("Cannot create native build directory");
+}
+
+function publish_ninja(string $application, string $input, string $output, string $config_path, string $runtime): void {
+    $bundle string = fs_realpath($input);
+    $reader = acquire($bundle . "/.scpp-bundle.lock", true);
+    if (fs_is_link($input) || fs_is_link($bundle . "/manifest.json") || fs_is_link($bundle . "/units"))
+        throw Exception::make("Expected dedicated nonsymlink bundle");
+    $bytes string = fs_get($bundle . "/manifest.json");
+    $doc = document($bytes);
+    $manifest json_node = json_document_root($doc);
+    $format = member_text($manifest, "format");
+    if ($format !== "scpp-cpp-program-v1" && $format !== "scpp-cpp-program-v2") throw Exception::make("Unsupported program manifest");
+    $names vector<string> = [];
+    append_inputs($manifest, "translation_units", "", $names);
+    $units vector<string> = [];
+    foreach ($names as $name) {
+        if ($name !== "entry.cpp") {
+            if (strlen($name) !== 74 || !str_starts_with($name, "units/") || !str_ends_with($name, ".cpp"))
+                throw Exception::make("Invalid program artifact path");
+            for ($i = 6; $i < 70; $i++) {
+                $b = (int)$name[$i];
+                if (!(($b >= 48 && $b <= 57) || ($b >= 97 && $b <= 102))) throw Exception::make("Invalid program artifact path");
+            }
+        }
+        $units[] = $bundle . "/" . $name;
+    }
+    if (json_node_has($manifest, "native_sources")) append_inputs($manifest, "native_sources", "", $units);
+    $graph = new Inventory_Graph();
+    $entry = $graph->activate(manifest_location("", $application), $runtime);
+    $graph->validate_order();
+    $libs = $graph->link_inputs($entry);
+    $published vector<string> = [];
+    if (json_node_has($manifest, "link_inputs")) append_inputs($manifest, "link_inputs", "", $published);
+    if (count($libs) !== count($published)) throw Exception::make("Republish the bundle for the selected link inputs");
+    for ($i = 0; $i < count($libs); $i++) {
+        if ($libs[$i] !== $published[$i]) throw Exception::make("Republish the bundle for the selected link inputs");
+    }
+    ensure_native_directory($output);
+    $directory string = fs_realpath($output);
+    $writer = acquire($directory . "/.scpp-native.lock", false);
+    $config_bytes string = fs_get($config_path);
+    $settings = document($config_bytes);
+    $config json_node = json_document_root($settings);
+    $text = render_ninja($units, $libs, $directory, $config);
+    $target = $directory . "/build.ninja";
+    atomic_text($target, $text);
+}
+
+function atomic_text(string $target, string $text): void {
+    $directory = fs_dirname($target);
+    if ($directory === "") $directory = ".";
+    if (fs_is_file($target) && !fs_is_link($target)) {
+        $old string = fs_get($target);
+        if ($old === $text) return;
+    }
+    $stage string = fs_stage($directory);
+    try {
+        $size int = fs_put($stage, $text);
+        if ($size !== strlen($text) || !fs_rename($stage, $target)) throw Exception::make("Cannot publish file: " . $target);
+    } finally {
+        if (fs_exists($stage)) fs_remove($stage);
+    }
+}

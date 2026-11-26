@@ -1,0 +1,279 @@
+// Native qualification owns its cache protocol. The reference probe's four arithmetic cases are shared.
+function probe_run(vector<string> $args, bool $stderr): string {
+    return host_probe_command(implode("\0", $args), $stderr);
+}
+
+function probe_words(string $text): vector<string> {
+    $packed = host_probe_words($text);
+    $result vector<string> = [];
+    foreach (explode("\0", $packed) as $word) {
+        if ($word !== "") $result[] = $word;
+    }
+    return $result;
+}
+
+function probe_snapshot(hash<string,string> &$paths): string {
+    $names vector<string> = [];
+    foreach ($paths as $path => $unused) { $names[] = $path; }
+    $scratch = $names;
+    order_paths($names, $scratch, 0, count($names));
+    $text = "{";
+    foreach ($names as $path) {
+        if ($text !== "{") $text .= ",";
+        $text .= quoted($path) . ":" . host_stat_tuple($path);
+    }
+    return $text . "}";
+}
+
+function probe_word_in(string $word, string $list): bool {
+    return $word !== "" && !str_contains($word, "|") && str_contains($list, "|" . $word . "|");
+}
+
+// Unknown options still get full content fingerprinting before a cached observation can be reused.
+function probe_request(string $cxx, string $source, vector<string> $flags, vector<string> $links,
+                       hash<string,string> &$paths, bool &$fast): string {
+    $args = $flags;
+    foreach ($links as $flag) { $args[] = $flag; }
+    $identity vector<string> = ["native-qualification-v1", $cxx, $source, host_self(), (string)count($flags), (string)count($links)];
+    $relative = false;
+    foreach ($args as $arg) {
+        $identity[] = $arg;
+        if (!str_starts_with($arg, "-") && !str_starts_with($arg, "/")) $relative = true;
+    }
+    for ($i = 0; $i < count($args); $i++) {
+        $option = $args[$i];
+        $path = "";
+        if ($option === "-I" || $option === "-include-pch") {
+            $i++;
+            if ($i < count($args)) $path = $args[$i];
+        } elseif (str_starts_with($option, "--ld-path=")) $path = substr($option, 10);
+        elseif ($option === "-Xclang") {
+            $i++;
+            if ($i >= count($args) || $args[$i] !== "-fno-validate-pch") $fast = false;
+            continue;
+        } elseif (str_starts_with($option, "-std=") || str_starts_with($option, "-stdlib=")
+            || probe_word_in($option, "|-O0|-O1|-O2|-O3|-Os|-Oz|-g|-g0|-DNDEBUG|-Wall|-Wextra|-Wpedantic|-Werror|")) continue;
+        else { $fast = false; continue; }
+        if ($path === "") { $fast = false; continue; }
+        if (!str_starts_with($path, "/")) $relative = true;
+        $paths[host_abspath($path)] = "";
+    }
+    $keys vector<string> = ["PATH","CPATH","CPLUS_INCLUDE_PATH","C_INCLUDE_PATH","GCC_EXEC_PREFIX","COMPILER_PATH",
+        "LIBRARY_PATH","LD_LIBRARY_PATH","LD_PRELOAD","SDKROOT","CCC_OVERRIDE_OPTIONS"];
+    foreach ($keys as $key) {
+        $setting = getenv($key);
+        if (!isset($setting)) continue;
+        $value string = $setting;
+        $identity[] = $key;
+        $identity[] = $value;
+        if ($key === "CCC_OVERRIDE_OPTIONS" || $key === "LD_PRELOAD") {
+            if ($value !== "") $fast = false;
+            continue;
+        }
+        foreach (explode(":", $value) as $item) {
+            if (!str_starts_with($item, "/")) $relative = true;
+            if ($item !== "" && probe_word_in($key, "|CPATH|CPLUS_INCLUDE_PATH|C_INCLUDE_PATH|LD_LIBRARY_PATH|LIBRARY_PATH|"))
+                $paths[host_abspath($item)] = "";
+        }
+    }
+    if ($relative) $identity[] = host_abspath(".");
+    return host_sha256_bytes(implode("\0", $identity));
+}
+
+function probe_components(vector<string> $driver, string $source, hash<string,string> &$paths): string {
+    $plan = $driver;
+    $plan[] = "-###"; $plan[] = "-c"; $plan[] = $source;
+    $frontend = "";
+    foreach (explode("\n", probe_run($plan, true)) as $line) {
+        if (!str_starts_with($line, " ")) continue;
+        $words = probe_words($line);
+        if (count($words) === 0) continue;
+        $found = fs_basename($words[0]) === "cc1plus";
+        foreach ($words as $arg) { if ($arg === "-cc1") $found = true; }
+        if ($found) { $frontend = ninja_executable($words[0], host_abspath(".")); break; }
+    }
+    if ($frontend === "") throw Exception::make("Cannot identify compiler frontend");
+    $executables vector<string> = [$driver[0], $frontend];
+    $components hash<string,string> = [];
+    foreach ($executables as $exe) {
+        if (isset($components[$exe])) continue;
+        $components[$exe] = "";
+        $cmd vector<string> = ["env", "LC_ALL=C", "ldd", $exe];
+        foreach (explode("\n", probe_run($cmd, false)) as $line) {
+            $parts = explode(" => ", trim($line));
+            if (count($parts) !== 2 || (!str_starts_with($parts[0], "libclang") && !str_starts_with($parts[0], "libLLVM"))) continue;
+            $lib = explode(" (", $parts[1]);
+            $components[$lib[0]] = "";
+        }
+    }
+    $names vector<string> = [];
+    foreach ($components as $path => $unused) { $names[] = $path; }
+    $scratch = $names;
+    order_paths($names, $scratch, 0, count($names));
+    $hashes vector<string> = [];
+    foreach ($names as $path) {
+        $paths[$path] = "";
+        $hashes[] = $path;
+        $hashes[] = host_sha256_file($path);
+    }
+    return host_sha256_bytes(implode("\0", $hashes));
+}
+
+function probe_traces(string $output): string {
+    $values hash<string,string> = [];
+    foreach (explode("\n", trim($output)) as $line) {
+        if (str_contains($line, "'") || str_contains($line, "\"") || str_contains($line, "\\"))
+            throw Exception::make("Invalid probe output");
+        $fields = probe_words($line);
+        if (count($fields) !== 2) throw Exception::make("Invalid probe output");
+        $key = $fields[0];
+        $val = $fields[1];
+        if (!probe_word_in($key,"|divide|divide_zero|remainder|remainder_zero|") || isset($values[$key])
+            || ($val !== "LR" && $val !== "RL")) throw Exception::make("Invalid probe observation");
+        $values[$key] = $val;
+    }
+    if (count($values) !== 4) throw Exception::make("Incomplete probe observations");
+    $keys vector<string> = ["divide","divide_zero","remainder","remainder_zero"];
+    $json = "{";
+    foreach ($keys as $key) {
+        if ($json !== "{") $json .= ",";
+        $json .= quoted($key) . ":" . quoted($values[$key]);
+    }
+    return $json . "}";
+}
+
+// One atomic record binds snapshot, observation and expiry to this request and fingerprint.
+function probe_cached(string $file, string $slot, string $fingerprint, bool $fast, string &$traces): string {
+    if (!fs_is_file($file)) return "";
+    try {
+        $text string = fs_get($file);
+        $doc = document($text);
+        $root json_node = json_document_root($doc);
+        if (json_node_kind($root) !== "object" || !json_node_has($root,"payload") || !json_node_has($root,"checksum")) return "";
+        $raw_payload json_node = json_node_member($root,"payload");
+        $checksum json_node = json_node_member($root,"checksum");
+        if (json_node_kind($raw_payload) !== "string" || json_node_kind($checksum) !== "string") return "";
+        $payload string = json_node_string($raw_payload);
+        if (host_sha256_bytes($payload) !== member_text($root,"checksum")) return "";
+        $body = document($payload);
+        $node json_node = json_document_root($body);
+        if (json_node_kind($node) !== "object") return "";
+        $fields vector<string> = ["slot","observations","key","inputs"];
+        foreach ($fields as $field) {
+            if (!json_node_has($node,$field)) return "";
+            $item json_node = json_node_member($node,$field);
+            if (json_node_kind($item) !== "string") return "";
+        }
+        if (!json_node_has($node,"time")) return "";
+        if (member_text($node,"slot") !== $slot) return "";
+        $date json_node = json_node_member($node,"time");
+        $seconds = json_node_int($date);
+        if (!isset($seconds)) return "";
+        $tested int = $seconds;
+        $now = dt_now();
+        if ($tested > $now || $tested <= $now - 604800) return "";
+        $raw = member_text($node,"observations");
+        $traces = probe_traces($raw);
+        $key = member_text($node,"key");
+        if (strlen($key) !== 64) return "";
+        for ($i = 0; $i < 64; $i++) {
+            $b = (int)$key[$i];
+            if (!(($b >= 48 && $b <= 57) || ($b >= 97 && $b <= 102))) return "";
+        }
+        if (!$fast) return $key === $fingerprint ? $key : "";
+        $snapshot = member_text($node,"inputs");
+        $inputs = document($snapshot);
+        $map json_node = json_document_root($inputs);
+        if (json_node_kind($map) !== "object") return "";
+        $n int = json_node_size($map);
+        if ($n === 0) return "";
+        $paths hash<string,string> = [];
+        for ($i = 0; $i < $n; $i++) {
+            $path string = json_node_key($map,$i);
+            if (!str_starts_with($path,"/") || str_contains($path,"\0")) return "";
+            $paths[$path] = "";
+        }
+        return probe_snapshot($paths) === $snapshot ? $key : "";
+    } catch (Exception $error) { return ""; }
+}
+
+function qualify_toolchain(string $compiler, vector<string> $flags, vector<string> $links, string $cache, string $stamp): void {
+    $source = fs_dirname(inventory_default_runtime()) . "/tools/layout_probe/argument_order.cpp";
+    $cxx = ninja_executable($compiler, host_abspath("."));
+    $fast = true;
+    $paths hash<string,string> = [];
+    $slot = probe_request($cxx,$source,$flags,$links,$paths,$fast);
+    ensure_native_directory($cache);
+    $base = $cache . "/native-" . $slot;
+    $lock = acquire($base . ".lock",false);
+    $file = $base . ".json";
+    $traces = "";
+    $key = "";
+    $status = "cached";
+    if ($fast) $key = probe_cached($file,$slot,"",true,$traces);
+    if ($key === "") {
+        $driver vector<string> = [$cxx];
+        foreach ($flags as $flag) { $driver[] = $flag; }
+        $dep string = fs_stage($cache);
+        try {
+            $pre = $driver;
+            $pre[] = "-E"; $pre[] = "-P"; $pre[] = "-MD"; $pre[] = "-MF"; $pre[] = $dep;
+            $pre[] = "-MT"; $pre[] = "probe"; $pre[] = $source;
+            $preprocessed = host_sha256_bytes(probe_run($pre,false));
+            $data string = fs_get($dep);
+            if (!str_starts_with($data,"probe:")) throw Exception::make("Missing probe depfile target");
+            $body = str_replace("\\\n"," ",substr($data,6));
+            foreach (probe_words(str_replace('$$','$',$body)) as $path) { $paths[host_abspath($path)] = ""; }
+            $components = probe_components($driver,$source,$paths);
+            $paths[host_self()] = "";
+            $paths[$source] = "";
+            $snapshot = probe_snapshot($paths);
+            $version = trim(probe_run([$cxx,"--version"],false));
+            $target = $driver;
+            $target[] = "-dumpmachine";
+            $facts vector<string> = [$slot,$snapshot,$preprocessed,$components,$version,trim(probe_run($target,false)),
+                host_sha256_file($source),host_sha256_file(host_self())];
+            $key = host_sha256_bytes(implode("\0",$facts));
+            if ($fast || probe_cached($file,$slot,$key,false,$traces) === "") {
+                $binary string = fs_stage($cache);
+                try {
+                    $cmd = $driver;
+                    $cmd[] = $source;
+                    foreach ($links as $flag) { $cmd[] = $flag; }
+                    $cmd[] = "-o"; $cmd[] = $binary;
+                    probe_run($cmd,false);
+                    $raw = probe_run([$binary],false);
+                    $traces = probe_traces($raw);
+                    $payload = "{\"slot\":" . quoted($slot) . ",\"key\":" . quoted($key) . ",\"inputs\":" . quoted($snapshot)
+                        . ",\"observations\":" . quoted($raw) . ",\"time\":" . (string)dt_now() . "}";
+                    atomic_text($file,"{\"checksum\":" . quoted(host_sha256_bytes($payload)) . ",\"payload\":" . quoted($payload) . "}");
+                    $status = "qualified";
+                } finally { fs_remove($binary); }
+            }
+        } finally { fs_remove($dep); }
+    }
+    if ($stamp !== "") atomic_text($stamp,$key . "\n");
+    echo "Native argument probe ", $status, ": ", $key, " ", $traces, "\n";
+}
+
+function qualification_cli(vector<string> $args): int {
+    $flags vector<string> = [];
+    $links vector<string> = [];
+    $compiler = "";
+    $cache = "";
+    $stamp = "";
+    for ($i = 2; $i < count($args); $i++) {
+        $arg = $args[$i];
+        if (str_starts_with($arg,"--flag=")) $flags[] = substr($arg,7);
+        elseif (str_starts_with($arg,"--link-flag=")) $links[] = substr($arg,12);
+        elseif ($i + 1 < count($args) && ($arg === "--cxx" || $arg === "--cache" || $arg === "--context-stamp")) {
+            $i++;
+            if ($arg === "--cxx") $compiler = $args[$i];
+            elseif ($arg === "--cache") $cache = $args[$i];
+            else $stamp = $args[$i];
+        } else return 2;
+    }
+    if ($compiler === "" || $cache === "") return 2;
+    qualify_toolchain($compiler,$flags,$links,$cache,$stamp);
+    return 0;
+}

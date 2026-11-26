@@ -1,0 +1,23 @@
+function acquire(string $path, bool $shared): file_lock_handle {
+    if (fs_is_link($path)) throw Exception::make("Invalid build lock");
+    $lock = fs_lock_empty();
+    $held bool = fs_lock_try($lock, $path, $shared);
+    while (!$held) {
+        dt_sleep_ms(1);
+        $held = fs_lock_try($lock, $path, $shared);
+    }
+    return $lock;
+}
+
+function append_inputs(json_node $root, string $field, string $prefix, vector<string> &$args): void {
+    $list json_node = json_node_member($root, $field);
+    $kind string = json_node_kind($list);
+    if ($kind !== "array") throw Exception::make("Expected manifest array " . $field);
+    $count int = json_node_size($list);
+    if ($field === "translation_units" && $count === 0) throw Exception::make("Empty executable bundle");
+    for ($i = 0; $i < $count; $i++) {
+        $item json_node = json_node_at($list, $i);
+        $path string = json_node_string($item);
+        $args[] = $prefix . $path;
+    }
+}

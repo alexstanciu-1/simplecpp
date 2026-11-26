@@ -152,3 +152,9 @@ if(SCPP_ENABLE_DATETIME)
     ${PROJECT_SOURCE_DIR}/compiler/tests/callable_signature_churn.py ${CMAKE_CXX_COMPILER} ${CMAKE_BINARY_DIR})
   set_tests_properties(compiler_callable_signature_churn PROPERTIES LABELS on_demand ENVIRONMENT "XDEBUG_MODE=off")
 endif()
+
+if(TARGET scpp_native_frontend)
+  add_test(NAME compiler_native_toolchain_qualification_full COMMAND ${Python3_EXECUTABLE} -B
+    ${PROJECT_SOURCE_DIR}/compiler/tests/native_toolchain_qualification.py ${PROJECT_BINARY_DIR}/native-frontend/native/program ${CMAKE_CXX_COMPILER} --full)
+  set_tests_properties(compiler_native_toolchain_qualification_full PROPERTIES LABELS on_demand)
+endif()
