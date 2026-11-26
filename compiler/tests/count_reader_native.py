@@ -81,6 +81,7 @@ with TemporaryDirectory(prefix='scpp-keyed-reader-') as directory:
         assert re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return [^;]+\.at\(', units)
 
 forward_reader = """
+function innerCount(vector<int> $items):int {return count($items);}
 function innerVector(vector<int> $items):int {return $items[0];}
 function innerHash(hash<int,int> $items,int $key):int {return $items[$key];}
 """
@@ -109,7 +110,17 @@ function readonlyForwardReads():int {
     $vr=fromReadonly($v);$hr=fromReadonlyHash($h,0);
     return 1000*$vr+100*$hr+10*$v[0]+$h[0];
 }
-function fromPack(int ...$packItems):int {return innerVector($packItems);}
+function fromPack(int ...$packItems):int {
+    $packItems[0]+=1;$read=innerVector($packItems);$packItems[0]+=1;
+    return 10*$read+$packItems[0];
+}
+function explicitPackReads():int {return fromPack(4,8);}
+function unpackedPackReads():int {
+    $v vector<int> = [4,8];$read=fromPack(...$v);return 10*$read+$v[0];
+}
+function packCount(int ...$items):int {return innerCount($items);}
+function emptyPackReads():int {return packCount();}
+function readonlyPackCount(int &...$readPack):int {return innerCount($readPack);}
 function outerVector(vector<int> $items):int {
     $items[0]=6;$read=innerVector($items);return 10*$read+$items[0];
 }
@@ -201,7 +212,9 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     assert re.search(r'convertedAt_collection_reader\(const [^;{]+\)\s*\{\s*return convertedAt_\(', units)
     assert 'innerVector_collection_reader(var_refItems' in units
     assert 'innerHash_collection_reader(var_refItems' in units
-    assert 'innerVector_(var_packItems' in units
+    assert 'innerVector_collection_reader(var_packItems' in units
+    assert 'innerCount_collection_reader(var_items' in units
+    assert 'innerCount_(var_readPack' in units
     for symbol in ('element', 'byKey'):
         assert units.count(symbol + '_collection_reader(var_') == 6, units
     if not quick:

@@ -4,6 +4,9 @@
 #include <string_view>
 
 namespace App {
+scpp::int64 explicitPackReads_();
+scpp::int64 unpackedPackReads_();
+scpp::int64 emptyPackReads_();
 scpp::int64 scalarReads_();
 scpp::int64 convertedKeyReads_();
 scpp::int64 namedReads_();
@@ -72,6 +75,16 @@ int main(int argc, char** argv) {
     assert(App::mutableForwardReads_() == (writer ? 9975 : 6475));
     const int mutable_copies = writer ? 1 : 0;
     assert(vector_copies == mutable_copies && hash_copies == mutable_copies);
+
+    vector_copies = 0;
+    assert(App::explicitPackReads_() == (writer ? 96 : 56));
+    assert(vector_copies == (writer ? 1 : 0));
+    vector_copies = 0;
+    assert(App::unpackedPackReads_() == (writer ? 964 : 564));
+    assert(vector_copies == (writer ? 2 : 1));
+    vector_copies = 0;
+    assert(App::emptyPackReads_() == 0);
+    assert(vector_copies == 0);
 
     const bool reference_key = std::string_view(argv[1]) == "reference-key";
     const int key_copies = reference_key ? 2 : 1;
