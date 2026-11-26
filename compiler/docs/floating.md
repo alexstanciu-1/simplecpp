@@ -117,3 +117,21 @@ PHP fixture generation plus semantic/incremental assertions took 82.44 ms in thi
 The native port must preserve correctly rounded decimal parsing, gradual underflow
 and exact emission; ordinary underflow error codes must not accidentally become
 source rejection. PHP-specific packing is a bootstrap implementation detail.
+
+### Native port check
+
+The on-demand test `compiler_binary64_spelling_native` starts with a prepared
+binary64 value. Its private C++ formatter uses `std::bit_cast` to extract the
+sign, exponent and fraction, and `std::to_chars` to write the decimal exponent.
+On dev002, Clang/libc++ and GCC/libstdc++ each matched the PHP backend byte for
+byte on 16,376 finite patterns. Compiling the emitted literals reproduced every
+input bit pattern. The matrix covers both signs, all exponent fields, and four
+fractions per field. It also checks eight nonfinite patterns.
+
+The native service's private `decimal-literal SPELLING` command parses a signed
+decimal floating token and prints its exact C++ spelling. Conversion uses the C
+numeric locale and nearest-even rounding, then restores the calling thread's
+floating environment. Underflow can produce a subnormal or signed zero. Overflow
+that rounds to infinity produces the same range diagnostic as PHP preparation.
+This entry point exercises literal preparation independently of the retained
+frontend's integer-function grammar.

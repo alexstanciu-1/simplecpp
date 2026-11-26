@@ -19,7 +19,8 @@ configure_file(protocol.php.scpp ${app}/main.php COPYONLY)
 configure_file(module.json ${app}/module.json COPYONLY)
 
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
-add_library(scpp_frontend_host STATIC host.cpp client.cpp sha256.cpp qualification_host.cpp)
+add_library(scpp_frontend_host STATIC host.cpp client.cpp sha256.cpp qualification_host.cpp binary64_host.cpp
+  ${PROJECT_SOURCE_DIR}/compiler/06_native/binary64_literal.cpp)
 target_link_libraries(scpp_frontend_host PRIVATE scpp_runtime OpenSSL::Crypto)
 file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/adapter/module.json" CONTENT
   "{\"name\":\"compiler-private-frontend\",\"type\":\"c++\",\"artifacts\":[\"$<TARGET_FILE:scpp_frontend_host>\",\"$<TARGET_FILE:OpenSSL::Crypto>\"]}\n")

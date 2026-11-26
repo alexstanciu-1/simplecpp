@@ -3,6 +3,7 @@
 #include <scpp/string.hpp>
 
 namespace App {
+scpp::string host_decimal_literal_(scpp::string spelling);
 scpp::string host_sha256_bytes_(scpp::string bytes);
 scpp::string host_sha256_file_(scpp::string path);
 scpp::string host_self_();
