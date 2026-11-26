@@ -959,11 +959,55 @@ result_or_false_string replace_with_callback(const string& pattern, const string
     })) return result_or_false_string::from_false();
     return result_or_false_string{owned(output)};
 }
-mixed callback_row(const capture_pattern& compiled, std::string_view text, int count) {
-    auto row = mixed::container();
-    for (int i = 0; i < count; ++i) row.append(mixed::from_string(owned(compiled.capture(text, i))));
-    return row;
+template<int Flags, bool Named, class Cell, class Row, class Invoke>
+result_or_false_string capture_callback(const string& pattern, const void* context, Invoke invoke,
+                                        const string& subject, int64 limit, int64* count) {
+    validate_limit(limit);
+    capture_pattern compiled(pattern);
+    int64 completed = 0;
+    if (compiled.data) {
+        const auto names = Named ? names_by_group(compiled) : std::vector<string>{};
+        const auto groups = pcre2_get_ovector_count(compiled.data.get());
+        const auto text = bytes(subject);
+        std::string output;
+        const bool ok = rewrite(compiled, text, limit, output, completed, [&](std::string& out, int matched) {
+            auto row = capture_container<Row>();
+            const auto* pairs = pcre2_get_ovector_pointer(compiled.data.get());
+            const size_t width = Flags & unmatched_as_null ? groups : matched;
+            for (size_t i = 0; i < width; ++i) {
+                const auto* bounds = i < static_cast<size_t>(matched) ? pairs + i * 2 : nullptr;
+                write_capture<Named>(row, i, names, bounds && bounds[0] != PCRE2_UNSET, capture_value<Flags, Cell>(text, bounds));
+            }
+            auto invoke_row = [&] {
+                try {
+                    return invoke(context, std::move(row));
+                } catch (...) {
+                    if (count) *count = completed + 1;
+                    throw;
+                }
+            };
+            out.append(bytes(invoke_row()));
+        });
+        if (ok) {
+            if (count) *count = completed;
+            return result_or_false_string{owned(output)};
+        }
+    }
+    if (count) *count = completed;
+    return result_or_false_string::from_false();
 }
+
+result_or_false_string mixed_callback(const string& pattern, const void* context, render_mixed invoke,
+                                      const string& subject, int64 limit, int64* count, int64 flags) {
+    switch (flags) {
+        case 0: return capture_callback<0, true, mixed, mixed>(pattern, context, invoke, subject, limit, count);
+        case capture_offsets: return capture_callback<capture_offsets, true, mixed, mixed>(pattern, context, invoke, subject, limit, count);
+        case unmatched_as_null: return capture_callback<unmatched_as_null, true, mixed, mixed>(pattern, context, invoke, subject, limit, count);
+        case capture_modifiers: return capture_callback<capture_modifiers, true, mixed, mixed>(pattern, context, invoke, subject, limit, count);
+        default: throw ValueError("unsupported regex callback capture flags");
+    }
+}
+
 }
 result_or_false_string replace_callback(const string& pattern, const void* context, render_vector_string invoke,
                                         const string& subject, int64 limit) {
@@ -974,26 +1018,11 @@ result_or_false_string replace_callback(const string& pattern, const void* conte
 }
 result_or_false_string replace_callback(const string& pattern, const void* context, render_mixed invoke,
                                         const string& subject, int64 limit) {
-    int64 changed = 0;
-    return replace_with_callback(pattern, subject, limit, changed, [&](const auto& compiled, auto text, int count) {
-        return invoke(context, callback_row(compiled, text, count));
-    });
+    return mixed_callback(pattern, context, invoke, subject, limit, nullptr, 0);
 }
 result_or_false_string replace_callback(const string& pattern, const void* context, render_mixed invoke,
                                         const string& subject, int64 limit, int64& count) {
-    int64 completed = 0;
-    auto result = replace_with_callback(pattern, subject, limit, completed, [&](const auto& compiled, auto text, int width) {
-        auto row = callback_row(compiled, text, width);
-        try {
-            return invoke(context, std::move(row));
-        } catch (...) {
-            // rewrite increments completed after the callback returns.
-            count = completed + 1;
-            throw;
-        }
-    });
-    count = completed;
-    return result;
+    return mixed_callback(pattern, context, invoke, subject, limit, &count, 0);
 }
 }
 

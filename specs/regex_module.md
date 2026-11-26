@@ -110,8 +110,25 @@ identity replacements. The limit resets per subject. A scalar matching error
 throws with the partial count available. Collections stop at the first failing
 entry and return false with the total through that entry, including replacements
 completed inside it. A pattern compilation error leaves the count at zero.
-Successful empty collections retain the value state. PHP callbacks take a
-mixed collection of numbered captures. A callback exception propagates.
+Successful empty collections retain the value state. A callback exception propagates.
+
+Each PHP replacement callback takes one capture row and returns a string.
+The declared callback input, or the callback table's value signature, selects
+the native row. A numbered row is `vector<Cell>`. A named row is
+`hash<Cell,string>` and includes decimal group keys and name aliases in the
+single-match order described above. Both use the same capture cell table as
+preg_match. A mixed row uses integer group keys and string names, including
+when flags are zero. Adding name aliases changes the count and iteration of
+mixed rows for patterns containing names.
+
+Flags follow count (sixth argument for preg_replace_callback, fifth for its
+array form) and default to zero. Only PREG_OFFSET_CAPTURE and
+PREG_UNMATCHED_AS_NULL are admitted. The bits must match the native cell type
+exactly. A mixed callback accepts all four combinations. Unsupported bits or
+incompatible cells raise ValueError before any invocation or count write, even
+for an empty table. An unannotated inline callback defaults to mixed.
+Offsets are absolute bytes in the input to the current pattern pass. Later
+patterns in a table see the output of the preceding pattern.
 
 The PHP callback helpers accept an optional exact writable integer count after
 the by-value limit (argument five for preg_replace_callback and four for

@@ -820,8 +820,8 @@
     "callbacks": {
       "regex_replace_callback": {"surface": "general", "input": "vector_string", "table": false},
       "regex_replace_callback_array": {"surface": "general", "input": "vector_string", "table": true},
-      "preg_replace_callback": {"surface": "php", "input": "mixed", "table": false, "optional_output": "int64"},
-      "preg_replace_callback_array": {"surface": "php", "input": "mixed", "table": true, "optional_output": "int64"}
+      "preg_replace_callback": {"surface": "php", "input": "mixed", "table": false, "optional_output": "int64", "capture_rows": ["numbered", "named"]},
+      "preg_replace_callback_array": {"surface": "php", "input": "mixed", "table": true, "optional_output": "int64", "capture_rows": ["numbered", "named"]}
     },
     "capture_modes": {
       "offset": {"cell": "regex_offset_capture", "offset": true, "nullable": false},

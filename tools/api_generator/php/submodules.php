@@ -344,7 +344,13 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
                 $headers[] = 'scpp/php/regex_hash_isset.hpp';
                 $headers[] = moduleOperationHeader($header, 'flag_types');
             }
-            foreach ($variants as $name => $_) $headers[] = moduleOperationHeader($header, $name);
+            foreach ($variants as $name => [$base]) {
+                if ($base !== null) $headers[] = moduleOperationHeader($header, $name);
+            }
+            foreach ($publication->regex->callbacks ?? [] as $callback) {
+                foreach (regexCallbackRows($catalog, $publication->regex, at($catalog->callbacks, $callback)) as $row => $_)
+                    $headers[] = moduleOperationHeader($header, 'callback_row_' . $row);
+            }
         }
         foreach (names($publication->{$family}->functions) as $name) {
             requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module function name');

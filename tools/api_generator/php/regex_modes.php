@@ -2,6 +2,27 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
+/** The same row publication supplies configure-time headers, compiler signatures and archive instantiations. */
+function regexCallbackRows(object $catalog, object $request, object $callback): array {
+    if (!isset($callback->capture_rows)) return [];
+    $rows = ['mixed' => ['flags' => -1, 'cell' => 'mixed', 'named' => true]];
+    $cells = ['string' => 0];
+    foreach (names($request->capture_modes ?? []) as $mode) {
+        $definition = at($catalog->capture_modes, $mode);
+        $cells[$definition->cell] = ($definition->offset ? $catalog->php_constants->PREG_OFFSET_CAPTURE : 0)
+            | ($definition->nullable ? $catalog->php_constants->PREG_UNMATCHED_AS_NULL : 0);
+    }
+    foreach (names($callback->capture_rows) as $kind) {
+        requireThat(in_array($kind, ['numbered', 'named'], true), 'Unknown regex callback row');
+        $named = $kind === 'named';
+        foreach ($cells as $cell => $flags) {
+            $row = $named ? "hash_{$cell}_string" : "vector_$cell";
+            $rows[$row] = compact('cell', 'flags', 'named');
+        }
+    }
+    return $rows;
+}
+
 /** Expand only selected operation/mode pairs. The base signature owns arity and the writable selector. */
 function regexModeVariants(object $catalog, object $request): array {
     $variants = [];
@@ -18,6 +39,14 @@ function regexModeVariants(object $catalog, object $request): array {
                 continue;
             }
             $variants[$base . '_' . $mode] = [$base, $mode, $definition, $layout];
+        }
+    }
+    // Callback publications also consume cells without requiring a preg_match overload.
+    foreach ($request->callbacks ?? [] as $callback) {
+        foreach ($catalog->callbacks->$callback->capture_rows ?? [] as $keys) {
+            foreach ($request->capture_modes ?? [] as $mode) {
+                $variants["callback_type_{$keys}_$mode"] = [null, $mode, $catalog->capture_modes->$mode, ['single', $keys]];
+            }
         }
     }
     return $variants;
@@ -109,6 +138,7 @@ function prepareRegexModes(object $catalog, object $request, string $moduleHeade
                 $plan['regex_mode_hashes'][$type] = $h;
             }
         }
+        if ($base === null) continue;
         if ($layout === null) {
             $carrierName = $catalog->functions->$base->result;
             if (!isset($plan['submodules']['type_exports'][$carrierName])) {
@@ -191,6 +221,18 @@ function renderRegexModeBindings(array $plan): string {
             $code .= 'result_or_false_int64 ' . $name . '(' . implode(', ', $parameters) . ") {\n"
                 . "    return collect_flagged<capture_order::$layout, $named, $flags, $cell, $row, $column>(pattern, subject, matches, $actual, $offset);\n}\n";
         }
+    }
+    foreach ($plan['regex']['callback_rows'] ?? [] as $row => $shape) {
+        $named = $shape['named'] ? 'true' : 'false';
+        $code .= "result_or_false_string replace_capture_callback(const string& pattern, const void* ctx, callback_row_$row invoke, "
+            . "const string& subject, int64 limit, int64* count, int64 flags) {\n";
+        if ($row === 'mixed') {
+            $code .= "    return mixed_callback(pattern, ctx, invoke, subject, limit, count, flags);\n";
+        } else {
+            $code .= "    if (flags != {$shape['flags']}) throw ValueError(\"capture flags do not match callback row\");\n"
+                . "    return capture_callback<{$shape['flags']}, $named, {$shape['cell']}, $row>(pattern, ctx, invoke, subject, limit, count);\n";
+        }
+        $code .= "}\n";
     }
     return $code . "}\n";
 }
