@@ -1325,7 +1325,7 @@ final class Preparation
 	}
 
 	/** Resolve a contextual construction target before applying PHP/JS defaults. */
-	private function literal(ast_collection_expression|ast_keyed_collection_expression $syntax, ?type_definition $type, ?string $initializing): void
+	private function literal(ast_collection_expression|ast_keyed_collection_expression $syntax, ?type_definition $type, ?string $initializing, ?ast_expression $prepared_key = null): void
 	{
 		$syntax->suspends = false;
 		$syntax->record_call = null;
@@ -1359,7 +1359,7 @@ final class Preparation
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Keyed initializer requires an explicitly typed published keyed destination');
 		}
 		foreach ($syntax->entries as $entry) {
-			$this->value($entry->key, $initializing);
+			if ($entry->key !== $prepared_key) $this->value($entry->key, $initializing);
 			$type->prepare_key($entry->key);
 			$this->collection_element($entry->value, $type->write_type(), $initializing);
 			$entry->conversion = $type->write_type()->prepare_conversion($entry->value, conversion_context::typed_destination);
@@ -2010,6 +2010,26 @@ final class Preparation
 		}
 	}
 
+	/** Resolve a literal from its key or list shape before choosing an ordered rewrite overload. */
+	private function rewrite_input(rewrite_rule_overloads $group, ast_expression $argument, bool $typed): type_definition
+	{
+		if ($argument instanceof ast_keyed_collection_expression) {
+			$key = $argument->entries[0]->key;
+			$this->value($key);
+			$hash = Type_Resolution::collection('hash', type_string::instance(), $key->type_def());
+			if ($hash === null || !isset($group->rule_types[$hash::class])) {
+				throw new diagnostic($key->source(), $key->byte_start(), 'Rewrite rule keys must be int or string');
+			}
+			$this->literal($argument, $hash, null, $key);
+		} else {
+			$context = $argument instanceof ast_collection_expression ? ($group->rule_types[type_vector_string::class] ?? null)
+				: ($typed ? type_string::instance() : null);
+			$this->value($argument, destination: $context);
+		}
+		$type = $typed ? $argument->value_type() : $argument->type_def();
+		return $group->rule_types[$type::class] ?? type_string::instance();
+	}
+
 	/** Validate supplied runtime arguments against their generated signature. */
 	private function runtime_call(ast_call_expression $call, runtime_function|runtime_overloads $runtime, ?ast_expression $prepared = null): void
 	{
@@ -2038,6 +2058,7 @@ final class Preparation
 		}
 		$operands = $call->runtime_operands($runtime instanceof runtime_function ? $runtime : null);
 		$prepared ??= $call->receiver;
+		$rule_group = $runtime instanceof rewrite_rule_overloads ? $runtime : null;
 		$callback_group = $runtime instanceof regex_callback_overloads ? $runtime : null;
 		if ($callback_group !== null) {
 			$prepared = $operands[$runtime->argument_index] ?? throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
@@ -2081,7 +2102,18 @@ final class Preparation
 			$type = $runtime->parameters[$slot];
 			$typed = $labels !== [] && ($runtime->php_typed_inputs & (1 << $slot)) !== 0;
 			$label = $labels === [] ? '' : $call->name . ' argument ' . ($slot + 1) . ' (' . $labels[$slot] . ') ';
-			if ($argument !== $prepared && $argument !== $call->receiver && !($runtime instanceof borrowed_slot_function && $index >= 2)) {
+			if ($rule_group !== null && $slot < 2) {
+				$type = $this->rewrite_input($rule_group, $argument, $typed);
+				if ($type !== $runtime->parameters[$slot]) {
+					if ($slot === 1 && $runtime->parameters[0] === type_string::instance()) {
+						throw new diagnostic($argument->source(), $argument->byte_start(), 'A replacement collection requires a pattern collection');
+					}
+					$parameters = $runtime->parameters;
+					$parameters[$slot] = $type;
+					$runtime = $runtime->with_inputs($parameters, $rule_group->rule_header);
+				}
+			}
+			elseif ($argument !== $prepared && $argument !== $call->receiver && !($runtime instanceof borrowed_slot_function && $index >= 2)) {
 				$this->value($argument, destination: $labels === [] || $typed ? $type : null);
 			}
 			if ($index === 0 && $runtime->receiver_method && $call->receiver !== null) {

@@ -5,6 +5,7 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1090,6 +1091,109 @@ result_or_false_string replace_callback(const string& pattern, const void* conte
 result_or_false_string replace_callback(const string& pattern, const void* context, render_mixed invoke,
                                         const string& subject, int64 limit, int64& count) {
     return mixed_callback(pattern, context, invoke, subject, limit, &count, 0);
+}
+}
+
+namespace scpp::regex {
+namespace {
+struct replacement_rule {
+    string pattern;
+    string replacement;
+    std::optional<capture_pattern> compiled;
+
+    bool prepare() {
+        if (!compiled) compiled.emplace(pattern);
+        return compiled->data != nullptr;
+    }
+};
+
+template<class Patterns, class Replacements>
+std::vector<replacement_rule> make_rules(const Patterns& patterns, const Replacements& replacements, int64 limit) {
+    validate_limit(limit);
+    std::vector<replacement_rule> rules;
+    rules.reserve(patterns.size());
+    int64 pattern_pos = 0, replacement_pos = 0;
+    const auto stop = patterns.iteration_limit();
+    string pattern;
+    while (patterns.iteration_next(pattern_pos, stop, pattern)) {
+        string replacement;
+        if constexpr (std::is_same_v<Replacements, string>) replacement = replacements;
+        else replacements.iteration_next(replacement_pos, replacements.iteration_limit(), replacement);
+        rules.push_back({std::move(pattern), std::move(replacement), std::nullopt});
+    }
+    return rules;
+}
+
+// Compile on first use. An error in a later rule leaves the earlier counts observable.
+outcome rewrite_rule_row(std::vector<replacement_rule>& rules, string& value, int64 limit, int64& total) {
+    const int64 before = total;
+    for (auto& rule : rules) {
+        if (!rule.prepare()) return outcome::invalid_pattern;
+        int64 changed = 0;
+        std::string rewritten;
+        const bool ok = rewrite_string(*rule.compiled, rule.replacement, value, limit, rewritten, changed);
+        total += changed;
+        if (!ok) return outcome::engine_error;
+        if (changed) value = owned(rewritten);
+    }
+    return total == before ? outcome::miss : outcome::match;
+}
+
+template<bool Filter, class Result, class Subject>
+Result apply_rules(std::vector<replacement_rule> rules, const Subject& subject, int64 limit, int64& total) {
+    total = 0;
+    if constexpr (std::is_same_v<Subject, string>) {
+        string value = subject;
+        const auto status = rewrite_rule_row(rules, value, limit, total);
+        if constexpr (Filter) {
+            if (status == outcome::invalid_pattern) throw ValueError("preg_filter: invalid pattern");
+            if (status == outcome::engine_error) throw ValueError("preg_filter: matching failed");
+            if (status == outcome::miss) return nullable_string{};
+        } else if (status == outcome::invalid_pattern || status == outcome::engine_error) return Result::from_false();
+        return Result{std::move(value)};
+    } else {
+        int64 position = 0;
+        // Empty collections have no first row on which to validate the patterns.
+        bool empty;
+        if constexpr (std::is_same_v<Subject, mixed>) empty = subject.kind() != boxed_kind::container || !subject.container_size();
+        else empty = subject.empty();
+        if (empty && !std::all_of(rules.begin(), rules.end(), [](auto& rule) { return rule.prepare(); }))
+            return Result::from_false();
+        if constexpr (std::is_same_v<Subject, mixed>) {
+            auto output = mixed::container();
+            if (!rules.empty() && !empty) {
+                int64 numeric_key;
+                string text_key;
+                mixed entry;
+                const auto stop = subject.iteration_limit();
+                while (subject.iteration_next(position, stop, numeric_key, text_key, entry)) {
+                    auto value = boxed_mixed_explicit_cast_string(entry);
+                    const auto status = rewrite_rule_row(rules, value, limit, total);
+                    if (status == outcome::invalid_pattern || status == outcome::engine_error) return Result::from_false();
+                    if (status == outcome::miss) continue;
+                    entry = mixed::from_string(std::move(value));
+                    if (numeric_key < 0) output.set(text_key, entry);
+                    else output.set(numeric_key, entry);
+                }
+            }
+            return Result{std::move(output)};
+        } else {
+            using Output = std::conditional_t<Filter && std::is_same_v<Subject, vector_string>, hash_string_int64, Subject>;
+            Output output;
+            std::conditional_t<std::is_same_v<Subject, hash_string_string>, string, int64> key{};
+            string value;
+            const auto stop = subject.iteration_limit();
+            while (subject.iteration_next(position, stop, key, value)) {
+                const auto status = rewrite_rule_row(rules, value, limit, total);
+                if (status == outcome::invalid_pattern || status == outcome::engine_error) return Result::from_false();
+                if (Filter && status == outcome::miss) continue;
+                if constexpr (std::is_same_v<Output, vector_string>) output.append(std::move(value));
+                else output.set(key, std::move(value));
+            }
+            return Result{std::move(output)};
+        }
+    }
+}
 }
 }
 

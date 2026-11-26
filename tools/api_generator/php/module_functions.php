@@ -193,7 +193,13 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
 function applyModuleOverload(object $catalog, string $group, array &$binding): void {
     requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $group) === 1, 'Invalid PHP overload group');
     $policy = at(at($catalog, 'php_overloads'), $group);
-    fields($policy, ['selector', 'list_context', 'arguments']);
+    fields($policy, ['selector', 'list_context', 'arguments', 'rule_inputs', 'keep_rows']);
+    if (isset($policy->rule_inputs)) {
+        $binding['rule_inputs'] = names($policy->rule_inputs);
+        $binding['keep_rows'] = textValue(at($policy, 'keep_rows'));
+        requireThat($binding['rule_inputs'] !== [] && in_array($binding['keep_rows'], ['all', 'matched'], true), 'Invalid rewrite rule publication');
+        $binding['rule_header'] = "scpp/php/{$group}_rules.hpp";
+    }
     $selector = at($policy, 'selector');
     requireThat(is_int($selector) && isset($binding['parameters'][$selector])
         && (isset($policy->list_context) === !(bool)($binding['reference_mask'] & (1 << $selector))), 'Invalid module overload selector');
@@ -315,9 +321,42 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         }
     }
     if ($family === 'regex') {
-        $files['private/regex_capture_bindings.hpp'] = renderRegexModeBindings($plan);
+        $definitions = renderRegexRuleInputs($module, $plan, $files, $bridge);
+        $files['private/regex_capture_bindings.hpp'] = renderRegexModeBindings($plan) . $definitions;
     }
     $files["private/{$family}_provider.hpp"] = $bridge;
+}
+
+/** Publish ordered-rule signatures separately so single-rule callers retain their narrow header. */
+function renderRegexRuleInputs(array $module, array $plan, array &$files, string &$bridge): string {
+    $groups = [];
+    $definitions = '';
+    foreach (array_merge($module['functions'], $module['php_exposures'] ?? []) as $binding) {
+        if (!isset($binding['rule_inputs'])) continue;
+        $header = $binding['rule_header'];
+        $subject = $binding['parameters'][2]['type'];
+        $result = $binding['result'];
+        $name = $binding['native_name'];
+        $filter = $binding['keep_rows'] === 'matched' ? 'true' : 'false';
+        foreach ([...$binding['rule_inputs'], 'string', 'int64', $subject, $result] as $type) {
+            $export = moduleFunctionTypeExport($plan, $type);
+            $groups[$header]['includes'][] = providerHeader($plan['submodules'], $export['provider']);
+        }
+        foreach ($binding['rule_inputs'] as $patterns) {
+            foreach (['string', ...$binding['rule_inputs']] as $replacements) {
+                $prefix = "$result $name(const $patterns& patterns, const $replacements& replacements, const $subject& subject, int64 limit";
+                $groups[$header]['declarations'][] = "[[nodiscard]] $prefix = -1);\n[[nodiscard]] $prefix, int64& total);\n";
+                $definitions .= "$prefix, int64& total) {\n"
+                    . "    return apply_rules<$filter, $result>(make_rules(patterns, replacements, limit), subject, limit, total);\n}\n"
+                    . "$prefix) {\n    int64 total;\n    return $name(patterns, replacements, subject, limit, total);\n}\n";
+            }
+        }
+    }
+    foreach ($groups as $header => $group) {
+        $files['public/' . $header] = moduleHeaderBody($group['includes'], $module['namespace'], implode('', $group['declarations']));
+        $bridge .= includeHeader($header);
+    }
+    return "namespace {$module['namespace']} {\n$definitions}\n";
 }
 
 /** Build PHP overload tables alongside ordinary module bindings from the same native signatures. */
@@ -363,6 +402,10 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
                     requireThat(!isset($overloads[$key]['variants'][$arity][$type]), "Duplicate overload selector for $key");
                     $overloads[$key]['variants'][$arity][$type] = 'type_' . $runtimeTypes[$type] . "::class => $call";
                 }
+                if (isset($binding['rule_inputs'])) {
+                    $overloads[$key]['rule_inputs'] = $binding['rule_inputs'];
+                    $overloads[$key]['rule_header'] = $binding['rule_header'];
+                }
                 $overloads[$key]['index'] = $index;
                 $overloads[$key]['context'] = $binding['list_context'];
             } else $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= $call,";
@@ -375,7 +418,13 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
                 $rows[] = "$arity => [" . implode(', ', $variants) . ']';
             }
             $selection = $context === null ? '' : ", list_context: type_{$runtimeTypes[$context]}::instance(), project_selector: true";
-            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_overloads([" . implode(', ', $rows)
+            $class = 'runtime_overloads';
+            if (isset($group['rule_inputs'])) {
+                $class = 'rewrite_rule_overloads';
+                $inputs = array_map(fn($t) => "type_{$runtimeTypes[$t]}::class => type_{$runtimeTypes[$t]}::instance()", $group['rule_inputs']);
+                $selection .= ", rule_types: [" . implode(', ', $inputs) . "], rule_header: '{$group['rule_header']}'";
+            }
+            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new $class([" . implode(', ', $rows)
                 . "], argument_index: {$group['index']}$selection, required_module: $module),";
         }
     }

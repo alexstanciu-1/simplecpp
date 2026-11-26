@@ -846,8 +846,8 @@
       "preg_match_all_set_order": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["offset", "exact"]]},
       "preg_match_all": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["flags", "exact"], ["offset", "exact"]]},
       "preg_match": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["flags", "exact"], ["offset", "exact"]]},
-      "preg_replace": {"selector": 2, "list_context": "vector_string", "arguments": [["pattern", "exact"], ["replacement", "exact"], ["subject", "exact"], ["limit", "exact"], ["count", "writable"]]},
-      "preg_filter": {"selector": 2, "list_context": "mixed", "arguments": [["pattern", "typed"], ["replacement", "typed"], ["subject", "typed"], ["limit", "typed"], ["count", "writable"]]},
+      "preg_replace": {"rule_inputs": ["vector_string", "hash_string_int64", "hash_string_string"], "keep_rows": "all", "selector": 2, "list_context": "vector_string", "arguments": [["pattern", "exact"], ["replacement", "exact"], ["subject", "exact"], ["limit", "exact"], ["count", "writable"]]},
+      "preg_filter": {"rule_inputs": ["vector_string", "hash_string_int64", "hash_string_string"], "keep_rows": "matched", "selector": 2, "list_context": "mixed", "arguments": [["pattern", "typed"], ["replacement", "typed"], ["subject", "typed"], ["limit", "typed"], ["count", "writable"]]},
       "preg_grep": {"selector": 1, "list_context": "mixed", "arguments": [["pattern", "typed"], ["input", "typed"]]}
     },
     "php_exposures": {

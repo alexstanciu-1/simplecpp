@@ -345,6 +345,10 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
             }
         }
         if ($family === 'regex') {
+            foreach (array_merge($publication->regex->functions, $publication->regex->php_exposures ?? []) as $operation) {
+                $group = $catalog->functions->$operation->overload ?? $catalog->php_exposures->$operation->overload ?? null;
+                if ($group !== null && isset($catalog->php_overloads->$group->rule_inputs)) $headers[] = "scpp/php/{$group}_rules.hpp";
+            }
             $variants = regexModeVariants($catalog, $publication->regex);
             if ($variants) {
                 $headers[] = 'scpp/php/regex_hash_isset.hpp';

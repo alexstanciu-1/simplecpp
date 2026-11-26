@@ -66,6 +66,12 @@ readonly class runtime_function implements callable_signature
 		return $this->source_name;
 	}
 
+	/** Preserve the native ownership and writable-slot policy. @param type_definition[] $parameters */
+	public function with_inputs(array $parameters /** list<type_definition> */, string $header): self
+	{
+		return clone($this, ['parameters' => $parameters, 'header' => $header]);
+	}
+
 	public function return_type_def(): type_definition
 	{
 		return $this->result;
@@ -87,6 +93,19 @@ readonly class runtime_overloads
 		$this->by_arity = $by_arity;
 		$this->argument_index = $argument_index;
 		$this->receiver_method = $receiver_method;
+	}
+}
+
+/** A subject overload can also take ordered pattern and replacement collections. */
+final readonly class rewrite_rule_overloads extends runtime_overloads
+{
+	/** @param array<int,array<class-string<type_definition>,runtime_function>> $by_arity
+	 * @param array<class-string<type_definition>,type_definition> $rule_types
+	 */
+	public function __construct(array $by_arity, int $argument_index, type_definition $list_context, bool $project_selector,
+		string $required_module, public array $rule_types, public string $rule_header)
+	{
+		parent::__construct($by_arity, $argument_index, list_context: $list_context, required_module: $required_module, project_selector: $project_selector);
 	}
 }
 

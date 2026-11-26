@@ -153,7 +153,7 @@ $fields vector<string> = $parts;
 if (count($fields) !== 0) { return 24; }
 $parts = preg_split("/[/", "");
 if ($parts !== false) { return 25; }
-if (cli_argc() >= 5) {
+if (cli_argc() >= 5 && cli_argc() <= 9) {
     $n int = 99;
     $never function<string(vector<regex_offset_capture>)> = function(vector<regex_offset_capture> $r):string {
         echo "invoked"; return "wrong";
@@ -172,6 +172,14 @@ if (cli_argc() >= 5) {
         if (cli_argc() === 8) { preg_replace_callback("/a/", $identity, "a", -1, $n, 1); }
     } finally { echo $n; }
     return 150;
+}
+if (cli_argc() === 10 || cli_argc() === 11) {
+    $n int = 99;
+    try {
+        if (cli_argc() === 10) { preg_filter(["/x/", "/[/"], "!", "xx", -1, $n); }
+        else { preg_filter(["/x/", "/(*LIMIT_MATCH=20)a|(?:b+)+c/"], ["a","!"], "xbbbbbbbbbbbbbbbbd", -1, $n); }
+    } finally { echo $n; }
+    return 198;
 }
 if (cli_argc() === 3) { preg_filter("/[/", "", "", 0); return 55; }
 if (cli_argc() === 4) { preg_filter("/./u", "", string_byte_from_int(255)); return 56; }
@@ -582,6 +590,52 @@ CallbackTrace::$log = ""; $cbCount = 99;
 $cbFailure = preg_replace_callback_array(["/a(.)/" => firstRule(...), "/[/" => firstRule(...)], $cbSubjects, -1, $cbCount);
 if (isset($cbFailure) || $cbCount !== 99 || CallbackTrace::$log !== "abab") { return 189; }
 }''')
+        for helper in ('preg_replace', 'preg_filter'):
+            for patterns in ('["/a/", "/b/"]', '[9 => "/a/", 2 => "/b/"]', '["z" => "/a/", "a" => "/b/"]'):
+                for replacements in ('["b", "Z"]', '[2 => "b", 9 => "Z"]', '["a" => "b", "z" => "Z"]'):
+                    statements += ['{ $n int = 1;', f'$text string = {helper}({patterns}, {replacements}, "aa", $n, $n);',
+                                   'if ($text !== "Za" || $n !== 2) { return 190; } }']
+            for replacements, expected, count in [('["b"]', '', 2), ('["b","Z","unused"]', 'Z', 2), ('"b"', 'b', 2)]:
+                statements += ['{ $n int = 99;', f'$text string = {helper}(["/a/", "/b/"], {replacements}, "a", -1, $n);',
+                               f'if ($text !== "{expected}" || $n !== {count}) {{ return 191; }} }}']
+            for shape, keys in [('vector<string>', ['0','1','2']), ('hash<string,int>', ['17','2','9']),
+                                ('hash<string,string>', ['"z"','"b"','"a"'])] + ([('mixed',['17','"b"','9'])] if helper == 'preg_filter' else []):
+                def literal(values):
+                    entries = values if shape == 'vector<string>' else [
+                        f'{key} => {value}' for key, value in zip(keys, values)]
+                    return '[' + ', '.join(entries) + ']'
+                filtering = helper == 'preg_filter'
+                output = 'hash<string,int>' if filtering and shape == 'vector<string>' else shape
+                statements += ['{ $n int = 99;', f'$items {shape} = ' + literal(['"x"', '"miss"', '"x"']) + ';',
+                               '$p hash<string,int> = [7 => "/x/", 1 => "/a/"];',
+                               f'$out {output} = {helper}($p, ["a", "x"], $items, -1, $n);',
+                               f'if ($n !== 4 || count($out) !== {2 if filtering else 3} || (string)$out[{keys[2]}] !== "x") {{ return 192; }}',
+                               f'$out = {helper}([], [], $items, -1, $n);',
+                               f'if ($n !== 0 || count($out) !== {0 if filtering else 3}) {{ return 193; }}',
+                               '$items = ' + literal(['"x"', '"xbbbbbbbbbbbbbbbbd"', '"x"']) + ';',
+                               f'$failed = {helper}(["/x/", $hardPattern], ["a","!"], $items, -1, $n);',
+                               'if (isset($failed) || $n !== 4) { return 194; }',
+                               f'$failed = {helper}(["/x/", "/[/"], "!", $items, -1, $n);',
+                               'if (isset($failed) || $n !== 1) { return 195; }',
+                               f'$items = []; $failed = {helper}(["/x/", "/[/"], [], $items, 0, $n);',
+                               'if (isset($failed) || $n !== 0) { return 196; } }']
+        statements.append('''{
+$n int = 99;
+$failed = preg_replace(["/x/", $hardPattern], ["a","!"], "xbbbbbbbbbbbbbbbbd", -1, $n);
+if (isset($failed) || $n !== 2) { return 197; }
+}''')
+        statements.append('''
+function nextRules(int &$step): vector<string> {
+    $step += 1;
+    if ($step === 1) { return ["/a/"]; }
+    return ["z"];
+}
+{
+$step int = 0;
+$text string = preg_replace(nextRules($step), nextRules($step), "aa", -1, $step);
+if ($step !== 2 || $text !== "zz") { return 199; }
+}
+''')
         # Each row checks the same plain pieces and their absolute byte offsets.
         statements.append('$splitFlags int = PREG_SPLIT_DELIM_CAPTURE;')
         for pattern, subject, tail, expected in [
@@ -739,6 +793,8 @@ def prove(work, runtime, flavor):
         ok()
         if flavor == 'php':
             lowered = b'\n'.join(artifacts(output).values())
+            for helper in ('preg_replace', 'preg_filter'):
+                assert f'scpp/php/{helper}_rules.hpp'.encode() in lowered
             for header in ('callback_row_vector_string_vector_string', 'callback_row_vector_string_hash_string_int64',
                            'callback_row_vector_string_hash_string_string', 'callback_row_hash_regex_offset_capture_string_vector_string'):
                 assert f'scpp/regex/{header}.hpp'.encode() in lowered, header
@@ -753,6 +809,8 @@ def prove(work, runtime, flavor):
                 ('preg_replace_callback("/a/", fn($row) => "!", "a", 1, 99);', 'Reference argument requires stable'),
                 ('$rules hash<function<string(mixed)>,string> = []; $s string = ""; preg_replace_callback_array($rules, "a", 1, $s);',
                  'Reference argument requires exact storage type'),
+                ('preg_filter("/a/", ["!"], "a");', 'replacement collection requires a pattern collection'),
+                ('preg_replace("/a/", ["!"], "a");', 'replacement collection requires a pattern collection'),
                 ('preg_filter("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
                 ('$n string = ""; preg_filter("/a/", "!", ["a"], -1, $n);', 'argument 5 (count) requires writable'),
                 ('preg_replace("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
@@ -835,6 +893,9 @@ def prove(work, runtime, flavor):
         for argc in (5, 6, 7, 8, 9):
             failed = subprocess.run([first_build['executable'], *(['flags'] * (argc - 1))], capture_output=True, text=True)
             assert failed.returncode == 1 and 'flags' in failed.stderr and failed.stdout.strip() == '99', failed
+        for argc, message in [(10, 'invalid pattern'), (11, 'matching failed')]:
+            failed = subprocess.run([first_build['executable'], *(['pattern'] * (argc - 1))], capture_output=True, text=True)
+            assert failed.returncode == 1 and message in failed.stderr and failed.stdout.strip() == '2', failed
         for args, message in [(['invalid', 'pattern'], 'preg_filter: invalid pattern'),
                               (['invalid', 'utf', 'subject'], 'preg_filter: matching failed')]:
             failed = subprocess.run([first_build['executable'], *args], capture_output=True, text=True)

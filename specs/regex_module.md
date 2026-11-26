@@ -167,3 +167,15 @@ replacements yielding an empty string. Each row gets the full limit. On the
 first failed row, the call returns false and discards the output collection.
 Count includes completed replacements in earlier rows and in the failed row.
 An invalid pattern returns false even for an empty collection.
+
+PHP `preg_replace` and `preg_filter` also accept a vector of string patterns or a
+hash of string patterns with integer or string keys. A string replacement applies
+to every pattern. A vector or either hash of replacements requires a pattern
+collection. The two collections pair by iteration position, ignoring keys.
+Missing replacements supply the empty string and surplus replacements are ignored.
+For each subject in order, all rules run in order on successive outputs. The limit
+resets for each rule on each row. Filter keeps a row if any replacement completed,
+including when the final text equals the input. Empty rules perform no replacements.
+With empty input all patterns are still validated. A later invalid pattern or match
+error stops the call immediately, with the scalar and collection failure states
+above and count including completed replacements through the failing rule.
