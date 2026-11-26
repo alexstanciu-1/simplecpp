@@ -286,6 +286,16 @@ if(SCPP_ENABLE_PROCESS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
   target_link_libraries(scpp_process PRIVATE Threads::Threads)
 endif()
 
+if(SCPP_ENABLE_FILESYSTEM)
+  # The translated compiler tools share a private numeric adapter.
+  set(decimal_adapter ${CMAKE_CURRENT_BINARY_DIR}/binary64-adapter)
+  add_library(scpp_compiler_binary64 STATIC compiler/06_native/binary64_literal.cpp
+    compiler/examples/retained_frontend/socket/binary64_host.cpp)
+  target_link_libraries(scpp_compiler_binary64 PRIVATE scpp_runtime)
+  file(GENERATE OUTPUT "${decimal_adapter}/module.json" CONTENT
+    "{\"name\":\"compiler-private-frontend\",\"type\":\"c++\",\"artifacts\":[\"$<TARGET_FILE:scpp_compiler_binary64>\"]}\n")
+endif()
+
 add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
 target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
 
@@ -762,7 +772,7 @@ if(BUILD_TESTING)
         $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
     endif()
     add_test(NAME compiler_translated_path COMMAND ${Python3_EXECUTABLE} -B
-      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_compiler_path.py
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_compiler_path.py ${decimal_adapter}
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
       $<TARGET_FILE:scpp_filesystem> $<TARGET_FILE:scpp_runtime>)
     if(UNIX)
@@ -933,7 +943,7 @@ if(BUILD_TESTING)
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_FILESYSTEM AND SCPP_ENABLE_IO)
     add_test(NAME compiler_translated_retained_frontend COMMAND ${Python3_EXECUTABLE} -B
-      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER})
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter})
   endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SCPP_ENABLE_PROCESS AND SCPP_ENABLE_FILESYSTEM
      AND SCPP_ENABLE_JSON AND SCPP_ENABLE_IO AND SCPP_ENABLE_DATETIME)

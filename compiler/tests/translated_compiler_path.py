@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-PHP, CXX, LINKER, FILESYSTEM, RUNTIME = sys.argv[1:]
+ADAPTER, PHP, CXX, LINKER, FILESYSTEM, RUNTIME = sys.argv[1:]
 FACTS = Path(RUNTIME).parent / 'native-layout/facts.json'
 EXAMPLE = ROOT / 'compiler/examples/translated_path'
 ENV = {**os.environ, 'XDEBUG_MODE': 'off'}
@@ -28,7 +28,7 @@ def project(app, output, expected=0):
 
 def native_binary(units, libraries, binary):
     run(CXX, '-std=c++23', '-stdlib=libc++', '-O1', f'--ld-path={LINKER}',
-        '-I', ROOT / 'runtime/generated/public', *units, *libraries, '-o', binary)
+        '-I', ROOT / 'runtime/generated/public', '-I', EXAMPLE.parent/'retained_frontend/socket', *units, *libraries, '-o', binary)
 
 
 def build_bundle(bundle, libraries, binary):
@@ -47,10 +47,12 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     with (translator/'punctuation.php').open('wb') as generated:
         subprocess.run([PHP, EXAMPLE.parent/'tokenizer/emit_punctuation.php'], stdout=generated, check=True)
     shutil.copyfile(EXAMPLE.parent/'tokenizer/utf8.php.scpp', translator/'utf8.php')
-    (translator / 'module.json').write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem"]}}}')
+    (translator / 'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {
+        'compiler-private-frontend': {'path': ADAPTER}, 'runtime': {'modules': ['filesystem']}}}))
     host_bundle, executable = work / 'translator-cpp', work / 'translated-compiler'
     project(translator, host_bundle)
-    build_bundle(host_bundle, [FILESYSTEM, RUNTIME], executable)
+    numeric_links = json.loads((Path(ADAPTER)/'module.json').read_text())['artifacts']
+    build_bundle(host_bundle, [FILESYSTEM, RUNTIME, *numeric_links], executable)
 
     definition = b'function answer_2() : int {\n  return 8;\n}\n'
     updated = b'function answer_2() : int {\n  return 9;\n}\n'

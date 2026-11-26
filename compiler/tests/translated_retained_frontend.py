@@ -149,12 +149,83 @@ def verify_independent_callers(work, exe, cxx, linker, libraries):
 
 
 
-def verify(work, cxx, linker):
+def verify_decimal_returns(work, exe, cxx, linker):
+    app = work/'decimal-returns'
+    app.mkdir()
+    (app/'main.php').write_text('return unrelated();')
+    (app/'integer.php').write_text('function unrelated(): int { return 7; }')
+    source = app/'decimal.php'
+    generated = app/'generated'
+    def write(literal):
+        text = f'function sample(): float {{\n  return {literal};\n}}'
+        source.write_text(text)
+        return text.index(literal)
+
+    def snapshot(path):
+        return {p.name: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns)
+                for p in path.glob('*.cpp')}
+
+    # Link the actual emitted float unit to an independent bit observer.
+    probe = work/'observe.cpp'
+    probe.write_text('#include <bit>\n#include <cstdint>\n#include <cstdio>\n'
+                     'double source_73616d706c65();\nint main() {'
+                     'std::printf("%016llx", std::bit_cast<unsigned long long>(source_73616d706c65())); }')
+    unit = 'unit-decimal.php.cpp'
+    def bits():
+        binary = work/'observe'
+        subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
+                        ROOT/'runtime/generated/public', generated/unit, probe, '-o', binary], check=True)
+        return subprocess.check_output([binary], text=True)
+
+    write('- /* unary sign */ 1e-400')
+    with service(exe, app) as request:
+        assert request('lower').startswith('ok|')
+        assert bits() == '8000000000000000'
+        before = snapshot(generated)
+        offset = write('1e400')
+        error = f'decimal.php:{offset}: Floating literal is outside float64 finite range|decimal.php,||'
+        assert request('lower') == error
+        assert snapshot(generated) == before
+        write('5e-324')
+        assert request('lower') == f'ok|decimal.php,|decimal.php,|{unit},'
+        after = snapshot(generated)
+        assert {name for name in after if before[name] != after[name]} == {unit}
+        assert bits() == '0000000000000001'
+        assert request('lower') == 'ok|||'
+
+        # A live integer entry watches its callee's signature, including after failure.
+        integer = app/'integer.php'
+        original = integer.read_text()
+        integer.write_text('function unrelated(): float64 { return .5; }')
+        for attempt in range(2):
+            failure = request('lower')
+            assert failure.startswith('main.php:7: Expected int return from unrelated|'), failure
+            assert snapshot(generated) == after
+        integer.write_text(original)
+        assert request('lower').startswith('ok|')
+        assert snapshot(generated) == after
+
+    fresh_app = work/'fresh-decimal'
+    fresh_app.mkdir()
+    for path in app.glob('*.php'):
+        shutil.copyfile(path, fresh_app/path.name)
+    with service(exe, fresh_app) as request:
+        assert request('lower').startswith('ok|')
+    assert {k: v[0] for k, v in after.items()} == {
+        k: v[0] for k, v in snapshot(fresh_app/'generated').items()}
+
+
+def verify(work, cxx, linker, adapter):
     tool = frontend_project(work)
+    config = tool/'module.json'
+    module = json.loads(config.read_text())
+    module['dependencies']['compiler-private-frontend'] = {'path': adapter}
+    config.write_text(json.dumps(module))
     bundle, exe = work/'bundle', work/'frontend'
     manifest = fresh(tool, bundle)
-    build(bundle, exe, cxx, linker, manifest['link_inputs'])
+    build(bundle, exe, cxx, linker, ['-I', ROOT/'compiler/examples/retained_frontend/socket', *manifest['link_inputs']])
 
+    verify_decimal_returns(work, exe, cxx, linker)
     verify_independent_callers(work, exe, cxx, linker, manifest['link_inputs'])
 
     app = work/'app'

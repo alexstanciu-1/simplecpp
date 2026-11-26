@@ -1,10 +1,12 @@
-// Holds the collected function syntax and the checked integer from preparation.
+// Holds the collected function syntax and its checked return operand from preparation.
 final class Prepared_Declaration {
 	public readonly Translation_Scope $scope;
 	public readonly int $value;
+	public readonly float $floating_value;
 	public readonly ?Prepared_Call $call;
 
-	public function __construct(Translation_Scope $scope, int $value, ?Prepared_Call $call = null) {
+	public function __construct(Translation_Scope $scope, int $value, ?Prepared_Call $call = null, float $floating_value = 0.0) {
+		$this->floating_value = $floating_value;
 		$this->scope = $scope;
 		$this->value = $value;
 		$this->call = $call;
@@ -42,8 +44,8 @@ final class Translation_Symbol {
 	public function publish(?Prepared_Declaration $declaration): void {
 		$previous = lock($this->head);
 		$this->head = weak($declaration);
-		// In this grammar every function has the same () : int signature.
-		if (($previous === null) === ($declaration === null)) return;
+		if ($previous === null && $declaration === null) return;
+		if ($previous !== null && $declaration !== null && $previous->scope->declaration->returns_float === $declaration->scope->declaration->returns_float) return;
 		foreach ($this->watchers as $watch) {
 			$caller = lock($watch->caller);
 			if ($caller !== null) $caller->invalidate_binding();
@@ -105,6 +107,9 @@ final class Prepared_Call {
 		if ($target === null) {
 			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name, $this->syntax->source->text);
 		}
+		if ($target->scope->declaration->returns_float) {
+			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Expected int return from " . $this->syntax->name, $this->syntax->source->text);
+		}
 		return $target;
 	}
 }
@@ -129,6 +134,9 @@ function prepare_literal(Translation_Scope $scope): int {
 
 function emit_definition_unit(Prepared_Declaration $target): string {
 	$name = "source_" . bin2hex($target->scope->declaration->short_name);
+	if ($target->scope->declaration->returns_float) {
+		return "#include <scpp/core/scalars.hpp>\nscpp::float64 " . $name . "() { return " . host_cpp_binary64($target->floating_value) . "; }\n";
+	}
 	$call = $target->call;
 	if ($call !== null) {
 		$callee = "source_" . bin2hex($call->syntax->name);
@@ -188,7 +196,7 @@ final class Translation {
 		return $this->compile_sources($sources, $entry_text);
 	}
 
-	// Each definition source has one nullary integer function; main contains the call.
+	// Each definition source has one nullary function; main contains the call.
 	public function compile_sources(hash<string,string> $sources, string $entry_text): string {
 		$scopes hash<Translation_Scope,string> = [];
 		foreach ($sources as $path => $text) {
@@ -297,6 +305,18 @@ final class Translation {
 			return new Prepared_Declaration($scope, 0, $binding);
 		}
 		$work .= $scope->source->path . ",";
+		if ($scope->declaration->returns_float) {
+			$source = $scope->source;
+			$first = $source->tokens[$result->literal_token];
+			$number = $source->tokens[$result->end - 2];
+			$text = substr($source->text, $number->offset, $number->length);
+			if ($first->kind === Token_Kind::T_minus) $text = "-" . $text;
+			try {
+				return new Prepared_Declaration($scope, 0, null, host_parse_decimal($text));
+			} catch (Exception $error) {
+				throw new Translation_Diagnostic($source->path, $first->offset, $error->get_message(), $source->text);
+			}
+		}
 		return new Prepared_Declaration($scope, prepare_literal($scope));
 	}
 
@@ -304,6 +324,7 @@ final class Translation {
 		$entry = $this->entry;
 		$previous = $this->definition;
 		if ($definition !== null && $definition === $previous && $entry !== null && $entry->syntax === $call) {
+			$entry->check_binding($work);
 			return $entry;
 		}
 		// This slice publishes one definition. Check the candidate before changing the last good head.

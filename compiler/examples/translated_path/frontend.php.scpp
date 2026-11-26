@@ -78,10 +78,25 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 				}
 				$offset++;
 			}
-		} else if (decimal_byte($value)) {
-			$kind = Token_Kind::T_integer;
+		} else if (decimal_byte($value) || ($value == 46 && $offset < $length && decimal_byte($text[$offset]))) {
+			$kind = $value == 46 ? Token_Kind::T_floating : Token_Kind::T_integer;
 			while ($offset < $length && decimal_byte($text[$offset])) {
 				$offset++;
+			}
+			if ($value != 46 && $offset < $length && $text[$offset] == 46 && !string_byte_slice_equals($text, $offset, 2, "..")) {
+				$kind = Token_Kind::T_floating;
+				$offset++;
+				while ($offset < $length && decimal_byte($text[$offset])) { $offset++; }
+			}
+			if ($offset < $length && ($text[$offset] == 69 || $text[$offset] == 101)) {
+				$kind = Token_Kind::T_floating;
+				$offset++;
+				if ($offset < $length && ($text[$offset] == 43 || $text[$offset] == 45)) $offset++;
+				if ($offset === $length || !decimal_byte($text[$offset])) throw new Translation_Diagnostic($path, $start, "Expected exponent digits", $text);
+				while ($offset < $length && decimal_byte($text[$offset])) { $offset++; }
+			}
+			if ($offset < $length && (identifier_byte($text[$offset]) || ($text[$offset] == 46 && !string_byte_slice_equals($text, $offset, 3, "..<")))) {
+				throw new Translation_Diagnostic($path, $start, "Unsupported numeric literal", $text);
 			}
 		} else {
 			$width = 0;
@@ -204,18 +219,25 @@ final class Translation_Parser {
 		$name = $this->spelling($this->name_token());
 		$this->nullary();
 		$this->expect(Token_Kind::T_colon, "Expected :");
-		$this->keyword("int");
-		return new Function_Declaration($name, $start, $this->index);
+		$type = $this->expect(Token_Kind::T_identifier, "Expected return type");
+		$word = $this->spelling($type);
+		$floating = $word === "float" || $word === "float64";
+		if (!$floating && $word !== "int") throw new Translation_Diagnostic($this->source->path, $type->offset, "Expected int or float", $this->source->text);
+		return new Function_Declaration($name, $start, $this->index, $floating);
 	}
 
-	private function read_body(): Function_Body {
+	private function read_body(bool $floating): Function_Body {
 		$body_start = $this->index;
 		$this->expect(Token_Kind::T_lbrace, "Expected {");
 		$return_start = $this->index;
 		$this->keyword("return");
 		$literal = $this->index;
 		$calls_function = $this->source->tokens[$literal]->kind === Token_Kind::T_identifier;
-		if ($calls_function) {
+		if ($floating) {
+			$kind = $this->source->tokens[$literal]->kind;
+			if ($kind === Token_Kind::T_minus || $kind === Token_Kind::T_plus) $this->index++;
+			$this->expect(Token_Kind::T_floating, "Expected decimal floating literal");
+		} elseif ($calls_function) {
 			$this->name_token();
 			$this->nullary();
 		} else {
@@ -233,7 +255,7 @@ final class Translation_Parser {
 
 	public function parse_declaration(): Function_Declaration {
 		$function = $this->function_header();
-		Function_Declaration::complete_body($function, $this->read_body());
+		Function_Declaration::complete_body($function, $this->read_body($function->returns_float));
 		$this->expect(Token_Kind::End, "Expected end of source");
 		return $function;
 	}

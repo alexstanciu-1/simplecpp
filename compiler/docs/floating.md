@@ -133,5 +133,9 @@ decimal floating token and prints its exact C++ spelling. Conversion uses the C
 numeric locale and nearest-even rounding, then restores the calling thread's
 floating environment. Underflow can produce a subnormal or signed zero. Overflow
 that rounds to infinity produces the same range diagnostic as PHP preparation.
-This entry point exercises literal preparation independently of the retained
-frontend's integer-function grammar.
+The retained frontend also accepts a nullary PHP-flavor function returning one
+signed decimal literal with declared type `float` or `float64`. Preparation keeps
+the checked binary64 value on the declaration. Lowering emits its exact hexadecimal
+spelling. The retained entry and integer caller bodies still require an integer
+callee. On overflow the diagnostic points to the return operand and the previous
+published files remain available for a retry.
