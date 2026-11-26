@@ -24,6 +24,10 @@ array_push($cases, 'x ==== == =', 'x +++ ---', 'x ... .. .', 'x **= ** *', 'x ??
     'x #[x]', "x //==\ny", "x #==\ny", 'x /*===*/ ==', 'x /*unfinished', 'x /*/',
     'x / //', 'x @', 'x === @', 'x ++', 'x /*é*/ ===', "x #é\n=");
 """
+RADIX_CASES = r"""
+array_push($cases, 'x "é" 0x1e + 0O17', 'x 0X1E+2', 'x 0x000fF..<0o7', 'x 0o000755',
+    'x 0x', 'x 0O', 'x 0xG', 'x 0o8', 'x 0o78', 'x 0x1g', 'x 0x1_2', 'x 0o7.0', 'x 0b10');
+"""
 COMPARE_TOKENS = r"""
 foreach (array_unique($cases) as $text) {
     foreach (flavor::cases() as $mode) {
@@ -74,7 +78,7 @@ def scanner_project(work):
 
 def verify(work):
     app = scanner_project(work)
-    oracle = subprocess.check_output(['php', '-r', ORACLE_PREAMBLE + PUNCTUATION_CASES + COMPARE_TOKENS,
+    oracle = subprocess.check_output(['php', '-r', ORACLE_PREAMBLE + PUNCTUATION_CASES + RADIX_CASES + COMPARE_TOKENS,
                                       ROOT/'compiler/boot.php'], text=True)
     rows = [json.loads(line) for line in oracle.splitlines()]
     expected = {(mode, text): row for mode, text, row in rows}
