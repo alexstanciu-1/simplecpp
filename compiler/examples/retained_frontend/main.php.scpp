@@ -29,7 +29,20 @@ function prepared_snapshot(Translation $compiler): string {
 	$target = $entry->target();
 	if ($target !== $compiler->declaration()) throw Exception::make("Stale prepared call target");
 	return $entry->syntax->name . "|" . $target->scope->declaration->symbol_key() . "|" . (string)$target->value
-		. "|" . bin2hex($compiler->published_output());
+		. "|" . bin2hex(emit_translation($entry));
+}
+
+function refresh_preparation(Frontend_Session $session, Translation $compiler, string $directory, int &$generation, string &$work): void {
+	$session->refresh($directory);
+	$scope = $session->scope;
+	$call = $session->entry;
+	if ($scope === null || $call === null) throw Exception::make("Incomplete frontend publication");
+	$binding = $compiler->prepare_units($scope, $call, $work);
+	$definition = $compiler->declaration();
+	if ($definition === null || $definition->scope !== $scope || $binding->syntax !== $call) {
+		throw Exception::make("Preparation lost the frontend syntax identity");
+	}
+	$generation = $session->generation;
 }
 
 function prepare_request(Frontend_Session $session, Translation $compiler, string $directory, int &$generation): string {
@@ -38,17 +51,7 @@ function prepare_request(Frontend_Session $session, Translation $compiler, strin
 	$old_entry = $compiler->entry_binding();
 	$old_definition = $compiler->declaration();
 	try {
-		$session->refresh($directory);
-		$scope = $session->scope;
-		$call = $session->entry;
-		if ($scope === null || $call === null) throw Exception::make("Incomplete frontend publication");
-		$compiler->prepare_syntax($scope, $call, $work);
-		$definition = $compiler->declaration();
-		$binding = $compiler->entry_binding();
-		if ($definition === null || $definition->scope !== $scope || $binding === null || $binding->syntax !== $call) {
-			throw Exception::make("Preparation lost the frontend syntax identity");
-		}
-		$generation = $session->generation;
+		refresh_preparation($session, $compiler, $directory, $generation, $work);
 	} catch (Translation_Diagnostic $error) {
 		$status = $error->path . ":" . (string)$error->offset . ": " . $error->detail;
 	}
@@ -82,6 +85,7 @@ $cli = cli_arguments();
 if (count($cli) !== 2) return 2;
 $session = new Frontend_Session();
 $compiler = new Translation();
+$lowering = new Unit_Lowering();
 $prepared_generation = 0;
 $input file_stream = io_open("/dev/stdin", "rb");
 $output file_stream = io_open("/dev/stdout", "ab");
@@ -95,6 +99,22 @@ while (true) {
 	$response = "";
 	if ($line === "prepare\n") {
 		$response = prepare_request($session, $compiler, $cli[1], $prepared_generation);
+	} elseif ($line === "lower\n") {
+		$work = "";
+		$emitted = "";
+		$changed = "";
+		$status = "ok";
+		try {
+			refresh_preparation($session, $compiler, $cli[1], $prepared_generation, $work);
+			$call = $compiler->entry_binding();
+			if ($call === null) throw Exception::make("No prepared entry");
+			$lowering->publish($cli[1] . "/generated", $call, $emitted, $changed);
+		} catch (Translation_Diagnostic $error) {
+			$status = $error->path . ":" . (string)$error->offset . ": " . $error->detail;
+		} catch (Exception $failure) {
+			$status = $failure->get_message();
+		}
+		$response = $status . "|" . $work . "|" . $emitted . "|" . $changed;
 	} elseif ($line === "prepared-snapshot\n") {
 		$response = prepared_snapshot($compiler);
 	} else {

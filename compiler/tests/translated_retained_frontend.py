@@ -1,5 +1,6 @@
 """Drive one native frontend process through edits and compare its publication with a cold process."""
 from contextlib import contextmanager
+import fcntl
 import json
 from pathlib import Path
 import select
@@ -44,7 +45,7 @@ def verify(work, cxx, linker):
         'runtime': {'modules': ['filesystem', 'io']}}}))
     for name in ('frontend', 'function_ast', 'compiler'):
         shutil.copyfile(examples/f'translated_path/{name}.php.scpp', tool/f'{name}.php')
-    for name in ('main', 'session'):
+    for name in ('main', 'session', 'lowering'):
         shutil.copyfile(examples/f'retained_frontend/{name}.php.scpp', tool/f'{name}.php')
     shutil.copyfile(examples/'tokenizer/utf8.php.scpp', tool/'utf8.php')
     with (tool/'punctuation.php').open('wb') as output:
@@ -131,6 +132,70 @@ def verify(work, cxx, linker):
         main.write_text('return other();')
         prepare('ok', 8, 8, caller, both, '')
         assert run('prepared-snapshot').startswith('other|func:other|1|')
+
+    definition.write_text(first)
+    main.write_text('return answer();')
+    generated = app/'generated'
+    cpp = ['definition.cpp', 'main.cpp', 'entry.cpp']
+
+    def artifacts():
+        if not generated.exists():
+            return {}
+        assert all(p.name in [*cpp, '.scpp-bundle.lock'] for p in generated.iterdir())
+        return {n: ((generated/n).read_bytes(), (generated/n).stat().st_ino, (generated/n).stat().st_mtime_ns)
+                for n in cpp if (generated/n).is_file()}
+
+    with service(exe, app) as run:
+        def lower(case, status, prepared, emitted, changed):
+            before = artifacts()
+            row = run('lower')
+            assert row.split('|') == [status, prepared, emitted, changed], (case, row)
+            after = artifacts()
+            actual = [n for n in cpp if before.get(n) != after.get(n)]
+            expected = changed.rstrip(',').split(',') if changed else []
+            assert actual == expected, (case, actual)
+            print(f'{case}: {row}')
+
+        lower('cold', 'ok', both, both, 'definition.cpp,main.cpp,entry.cpp,')
+        lower('unchanged', 'ok', '', '', '')
+        definition.write_text(first.replace('1', '2'))
+        lower('body edit', 'ok', one, one, 'definition.cpp,')
+        definition.write_text(definition.read_text() + ' // comment')
+        lower('comment edit', 'ok', one, one, '')
+        definition.write_text(first.replace('1', '9223372036854775808'))
+        lower('preparation error', error, one, '', '')
+        definition.write_text(first.replace('1', '3'))
+        lower('repair', 'ok', one, one, 'definition.cpp,')
+        definition.write_text(first.replace('1', '4'))
+        with (generated/'.scpp-bundle.lock').open('rb') as reader:
+            fcntl.flock(reader, fcntl.LOCK_SH)
+            lower('publication blocked', 'Output bundle busy', one, one, '')
+        lower('retry same input', 'ok', '', one, 'definition.cpp,')
+        lower('settled', 'ok', '', '', '')
+
+        # Make the second destination invalid. The first replacement has already happened.
+        saved = artifacts()
+        definition.write_text(first.replace('answer', 'renamed').replace('1', '5'))
+        main.write_text('return renamed();')
+        (generated/'main.cpp').rename(work/'saved-caller')
+        (generated/'main.cpp').mkdir()
+        lower('rollback during publication', 'Invalid output file', both, both, '')
+        (generated/'main.cpp').rmdir()
+        (work/'saved-caller').rename(generated/'main.cpp')
+        assert artifacts() == saved
+        lower('retry after rollback', 'ok', '', both, 'definition.cpp,main.cpp,')
+        fresh_app = work/'cold-app'
+        fresh_app.mkdir()
+        for name in ('definition.php', 'main.php'):
+            shutil.copyfile(app/name, fresh_app/name)
+        with service(exe, fresh_app) as cold:
+            assert cold('lower').split('|') == ['ok', both, both, 'definition.cpp,main.cpp,entry.cpp,']
+        assert all((generated/n).read_bytes() == (fresh_app/'generated'/n).read_bytes() for n in cpp)
+        binary = work/'lowered-program'
+        subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
+                        ROOT/'runtime/generated/public', *(generated/n for n in cpp),
+                        *manifest['link_inputs'], '-o', binary], check=True)
+        assert subprocess.run([binary], timeout=10).returncode == 5
 
 
 if __name__ == '__main__':
