@@ -46,7 +46,9 @@ abstract class carrier_type_definition extends type_definition implements presen
 		if ($expr->left->type_def() === $this && $expr->right->type_def() === $this) {
 			$payloads_equal = $this->payload_type->lower_cpp_binary(binary_operator::identical,
 				$this->lower_cpp_extract($left), $this->lower_cpp_extract($right), $this->payload_type);
-			$equal = "(($left).is_false() ? ($right).is_false() : (!($right).is_false() && $payloads_equal))";
+			$left_present = $this->lower_cpp_presence($left);
+			$right_present = $this->lower_cpp_presence($right);
+			$equal = "($left_present ? ($right_present && $payloads_equal) : !$right_present)";
 			return $expr->operator === binary_operator::not_identical ? '!' . $equal : $equal;
 		}
 		$carrier_first = $expr->left->type_def() === $this;

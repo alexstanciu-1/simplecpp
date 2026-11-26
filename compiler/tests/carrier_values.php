@@ -112,6 +112,32 @@ SCPP;
 		rejects(fn() => $prepare('$a result_or_false<vector<string>> = false_sentinel; return (int)($a === $a);'),
 			'Unsupported binary operands');
 
+		$nullable_pairs = <<<'SCPP'
+enum Status { case Ready=0; case Busy=1; }
+function replace_absent(?int &$slot, int &$calls): ?int {
+    $calls += 1; $slot = 0; return $slot;
+}
+function observe(string $tag, ?int $slot): ?int { echo $tag; return $slot; }
+$a ?int=null; $b ?int=null; $zero ?int=0; $two ?int=2;
+echo (int)($a === $b), (int)($a !== $b), (int)($a === $zero), (int)($zero !== $a),
+     (int)($zero === $zero), (int)($two !== $zero), "|";
+$calls=0;
+echo (int)($a === replace_absent($a,$calls)), $calls, (int)($a === $zero), "|";
+echo (int)(observe("L",$b) !== observe("R",$a)), "|";
+$f ?bool=false; $no_flag ?bool=null;
+$s ?string=""; $other ?string="0"; $no_text ?string=null;
+echo (int)($f === $f), (int)($f === $no_flag), (int)($s === $s), (int)($s !== $other), (int)($no_text === $s), "|";
+$x ?float=0.0; $y ?float=-0.0;
+$ready ?Status=Status::Ready; $busy ?Status=Status::Busy; $none ?Status=null;
+echo (int)($x === $y), (int)($ready === $ready), (int)($ready !== $busy), (int)($none === $ready);
+return 8;
+SCPP;
+		$fixtures['php-nullable-pairs'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($nullable_pairs)),
+			'stdout_hex' => bin2hex('100111|011|LR1|10110|1110')];
+		rejects(fn() => $prepare('$a nullable<vector<string>> = null; return (int)($a === $a);'),
+			'Unsupported binary operands');
+
+
 	}
 	$presence = $decl('nullable<int>', 'none', 'null')
 		. $decl('result_or_false<bool>', 'successful', 'false')
