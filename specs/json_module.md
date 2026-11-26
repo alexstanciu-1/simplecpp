@@ -168,7 +168,16 @@ A nested field may be an embedded data struct or a required data class with
 a supported schema. Each record consumes exactly one object on the same
 decoder. The native `Decoder` interface exposes object and array entry,
 field and element advancement, a borrowed field name, typed leaf reads and
-schema rejection. A false result from `next_field()` closes the object.
+schema rejection. Generated typed decoders classify decoded field names by schema
+index. The JSON provider tracks those indices in a record-local bit mask, one
+64-bit word per 64 fields. Duplicate errors retain the original key spelling,
+path and opening-quote offset, and precede validation of the following colon.
+Providers using ordinary field advancement can use the default schema lookup.
+For a published int64 vector, generated decode requests the complete array in one
+operation. The JSON provider appends in order and uses scalar diagnostics at the
+first malformed element or delimiter. Other decoder providers can implement the
+operation through ordinary array advancement and integer reads.
+A false result from `next_field()` closes the object.
 At the root it also guarantees document completion. A source call such as
 `Packet::decode($reader)` takes a started JSON pull reader and returns the
 record directly. An authored static method with that name takes precedence.

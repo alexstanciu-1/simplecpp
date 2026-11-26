@@ -8,6 +8,22 @@ public:
         if (cursor.at_root()) cursor.finish_document();
         return false;
     }
+    int next_record_field(field_lookup lookup, std::span<std::uint64_t> seen) override {
+        int field = unknown_field;
+        const bool more = cursor.next_record_property([&](std::string_view key) {
+            field = lookup(key);
+            if (field == unknown_field) return true; // The generated decoder rejects it after the colon.
+            const auto word = static_cast<std::size_t>(field) / 64;
+            if (word >= seen.size()) throw std::logic_error("record field outside duplicate mask");
+            const auto bit = std::uint64_t{1} << (field % 64);
+            const bool fresh = (seen[word] & bit) == 0;
+            seen[word] |= bit;
+            return fresh;
+        });
+        if (more) return field;
+        if (cursor.at_root()) cursor.finish_document();
+        return end_fields;
+    }
     std::string_view field_name() override { return cursor.property_view(); }
     void begin_array() override { cursor.begin_array(); }
     bool next_element() override { return cursor.next_element(); }

@@ -161,7 +161,36 @@ void check_small_objects() {
     reader.finish_document();
 }
 
+// Compare committed elements and the full diagnostic against ordinary scalar traversal.
+void check_integer_arrays() {
+    auto decode = [](const std::string& text, bool batched) {
+        std::pair<std::vector<std::int64_t>, std::string> result;
+        try {
+            json::pull_reader reader(text, "fixture", 128);
+            reader.begin_object();
+            assert(reader.next_property());
+            if (batched) reader.read_integers([&](auto value) { result.first.push_back(value); });
+            else {
+                reader.begin_array();
+                while (reader.next_element()) result.first.push_back(reader.read_integer());
+            }
+            assert(!reader.next_property());
+            reader.finish_document();
+        } catch (const json::read_error& error) {
+            result.second = error.what();
+        }
+        return result;
+    };
+    for (const auto prefix : {"", "-9223372036854775808, 0,9223372036854775807,"}) {
+        for (const auto suffix : {"", "-0", "-00", "01", "-", "+1", "1.", "2e3", "1e-", "false",
+                                  "null", "{}", "[]", "9223372036854775808", "1 2", "3,", "2x"}) {
+            std::string doc = std::string{"{\"data\":["} + prefix + suffix + "]}";
+            assert(decode(doc, false) == decode(doc, true));
+        }
+    }
+}
 int main(int argc, char** argv) {
+    check_integer_arrays();
     check_packet();
     check_small_objects();
     check_duplicate(R"({"a":1,"b":2,"c":3,"d":4,"\u0061":5})", R"($["\u0061"])");

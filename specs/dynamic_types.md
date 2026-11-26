@@ -60,8 +60,8 @@ compliance. See the implementation handoff.
   Scalar expressions are boxed into the destination family. Neither family may
   contain a container from the other, including through native adapters or aliases.
 - An explicit `(mixed)$items` or `(dynamic)$items` cast of a typed vector builds
-  a fresh packed list in that family. The element type must have both a published
-  structural scalar write and a destination boxing factory. Evaluate the source once
+  a fresh packed list in that family. A scalar element requires a structural write and a destination boxing factory.
+  A by-value field-derived data struct uses its [boxed field walk](data_initialization.md#explicit-boxed-export). Evaluate the source once
   and box checked element reads in order; an empty vector produces an empty list.
   Later changes to the vector leave the exported list intact. Assignment and nested
   literals require the cast explicitly, e.g. `["data" => (mixed)$items]`.

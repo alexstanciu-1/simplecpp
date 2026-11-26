@@ -39,14 +39,15 @@ The internal JSON bridge uses the structural pull reader and a synchronous byte 
 An explicit `(mixed)$packet` or `(dynamic)$packet` exports a field-derived data
 struct in declaration order. The cast evaluates its operand once and reads the
 current field values. Scalar leaves require both a structural write and a boxing
-factory in the selected family. A vector field uses the same rule for its
-elements. Each field is stored under its declared name and each vector becomes a
+factory in the selected family. A vector field accepts scalar leaves or by-value field-derived data structs. Each field is stored under its declared name and each vector becomes a
 fresh packed list. An embedded by-value field-derived data struct becomes a
 fresh keyed child in the same family, with its own declaration order and
 independent scalar and vector snapshots. Publication follows completion of the
-whole record.
+whole record. A cast of a vector of these structs uses the same element walk as a
+vector field. It visits each checked slot by const reference and builds a fresh
+keyed child for each element, in vector order.
 
 Both destinations consume the same generated `encode(Encoder&) const` field
 walk as JSON. Boxed export requires only the application runtime. Implicit record
-export, authored constructor mappings, vectors of records and shared owners remain
+export, authored constructor mappings, and shared owners remain
 outside this cast contract.

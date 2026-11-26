@@ -110,6 +110,12 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
                    'data struct Reading { public float $value; }'
                    'data class Envelope { public Packet $packet; public Box $box; public int $tag; }'
                    'data class Tracked { public Packet $packet; public function __destruct(){echo "root destroyed";} }')
+    definitions += 'data struct Wide {' + ''.join(f'public int $f{i}=0;' for i in range(65)) + '}'
+    source = source.replace('return 0;', r"""
+$wide Wide=json_decode_as("{\"f0\":1,\"f63\":2,\"f64\":3}",Wide::class);
+if($wide->f0!==1 || $wide->f63!==2 || $wide->f64!==3){return 48;}
+$dup=json_decode_as("{\"f64\":1,\"f64\":2}",Wide::class);if(isset($dup)){return 49;}
+return 0;""")
     records.write_text(definitions)
     reader = app/'reader.php'
     decoder = ('function readPacket(string $text):result<Packet> {return json_decode_as($text,Packet::class);}'
@@ -128,7 +134,7 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
         assert units.count(b'Packet::encode(::scpp::Encoder& out) const') == 1
         assert b'encode_record(' not in units and b'encode_owned_record(' not in units
         assert b'Packet::decode(::scpp::Decoder& d)' in units
-        assert b'd.next_field()' in units and b'd.next_element()' in units
+        assert b'd.next_record_field(' in units and b'd.read_integers(' in units
         assert all(b'template<class scpp_escape_Field' not in data for data in baseline.values())
         assert b'decode_record<' not in units and b'record_result<' not in units
         bundle = json.loads((out/'manifest.json').read_text())

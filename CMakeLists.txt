@@ -630,6 +630,7 @@ if(BUILD_TESTING)
   add_test(NAME compiler_collection_bootstrap_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_bootstrap_native.py --quick)
   set_tests_properties(compiler_collection_bootstrap_native PROPERTIES TIMEOUT 600 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_boxed_record_casts COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_record_casts.py)
+  add_test(NAME compiler_boxed_record_vectors COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_record_vectors.py)
   add_test(NAME compiler_boxed_vector_casts COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_vector_casts.py)
   add_test(NAME compiler_boxed_collection_coverage COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/boxed_collection_coverage.py --quick)
   set_tests_properties(compiler_boxed_collection_coverage PROPERTIES TIMEOUT 180 ENVIRONMENT "XDEBUG_MODE=off")
@@ -961,6 +962,8 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --checked-return)
     add_test(NAME compiler_retained_literal_returns COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --literal-returns)
+    add_test(NAME compiler_retained_radix_returns COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --radix-returns)
     add_test(NAME compiler_retained_parameter_incremental COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/translated_retained_frontend.py ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${decimal_adapter} --parameter-incremental)
     add_test(NAME compiler_retained_parameter_forwarding COMMAND ${Python3_EXECUTABLE} -B

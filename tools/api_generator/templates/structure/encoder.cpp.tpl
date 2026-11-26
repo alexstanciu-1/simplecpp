@@ -10,6 +10,8 @@ class Encoder {
     const frame* active = nullptr;
 public:
     using visit = void (*)(const void*, Encoder&);
+    // Opt in only if no operation in this synchronous traversal can mutate the input through an alias.
+    virtual bool stable_record_elements() const noexcept { return false; }
     virtual void begin_object() = 0;
     // The name is a declared source field identifier, borrowed for this call.
     virtual void field(std::string_view name) = 0;

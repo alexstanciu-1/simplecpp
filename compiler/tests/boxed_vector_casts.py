@@ -57,7 +57,7 @@ return 8;
         source_edit(main, program)
         source_edit(helpers, 'struct Item {public int $id;}' + library.replace('vector<int>', 'vector<Item>').replace('[2,7]', '[]'))
         err = invoke(proc)
-        assert 'Cannot export element type' in err.get('error', ''), err
+        assert 'requires a field-derived data struct' in err.get('error', ''), err
         source_edit(helpers, library)
         assert 'error' not in invoke(proc) and artifacts(out) == baseline
     finally:

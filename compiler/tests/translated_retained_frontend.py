@@ -310,7 +310,7 @@ def verify_checked_return(work, exe, cxx, linker):
     assert {p.name: p.read_bytes() for p in (cold/'generated').glob('*.cpp')} == {n: v[2] for n, v in after.items()}
 
 
-def verify_literal_returns(work, exe, cxx, linker, adapter):
+def verify_literal_returns(work, exe, cxx, linker, adapter, radix):
     app = work/'literal-returns'
     app.mkdir()
     (app/'module.json').write_text('{}')
@@ -347,8 +347,7 @@ def verify_literal_returns(work, exe, cxx, linker, adapter):
                         ROOT/'runtime/generated/public', *units, probe, '-o', binary], check=True)
         return subprocess.check_output([binary], text=True)
 
-    write('-3.75')
-    with service(exe, app) as request:
+    def decimal_edits(request):
         assert request('lower').startswith('ok|')
         assert observe() == observe(True) == '-3 4340000000000000'
         before = snapshot()
@@ -376,6 +375,44 @@ def verify_literal_returns(work, exe, cxx, linker, adapter):
         assert observe() == '-9223372036854775808 c3e0000000000000'
         rounded.write_text('function rounded(): float { return 9007199254740993; }')
         assert request('lower') == 'ok|rounded.php,|rounded.php,|unit-rounded.php.cpp,'
+        return repaired
+
+    def radix_edits(request):
+        for literal, emitted in [('0X7FFFFFFFFFFFFFFF', '9223372036854775807LL'),
+                                 ('-0O1000000000000000000000', '(-9223372036854775807LL - 1LL)')]:
+            write(literal)
+            assert request('lower') == f'ok|whole.php,|whole.php,|{unit},'
+            assert emitted in (out/unit).read_text()
+        write('0x1e')
+        assert request('lower') == f'ok|whole.php,|whole.php,|{unit},'
+        assert observe() == observe(True) == '30 4340000000000000'
+        before = snapshot()
+        write('0x')
+        error = f'whole.php:{len(prefix)}: Expected integer digits after radix prefix|||'
+        assert request('lower') == error
+        assert request('lower') == error
+        assert snapshot() == before
+        write('0o17')
+        assert request('lower') == f'ok|whole.php,|whole.php,|{unit},'
+        repaired = snapshot()
+        assert {n for n in before if before[n] != repaired[n]} == {unit}
+        assert observe() == observe(True) == '15 4340000000000000'
+        assert request('lower') == 'ok|||'
+        for literal in ('0x8000000000000000', '-0O1000000000000000000001'):
+            write(literal)
+            assert request('lower') == (f'whole.php:{len(prefix)}: Integer literal is outside int64 range'
+                                        '|whole.php,||')
+            assert snapshot() == repaired
+        write('0o17')
+        return repaired
+
+    write('1' if radix else '-3.75')
+    with service(exe, app) as request:
+        if radix:
+            assert request('lower').startswith('ok|')
+            repaired = radix_edits(request)
+        else:
+            repaired = decimal_edits(request)
     cold = work/'cold'
     cold.mkdir()
     for path in app.glob('*.php'):
@@ -427,8 +464,8 @@ def verify(work, cxx, linker, adapter, selection=None):
         from retained_parameter_incremental import verify as verify_parameter
         verify_parameter(work, exe, cxx, linker, adapter, service, forwarding=selection == "--parameter-forwarding")
         return
-    if selection == "--literal-returns":
-        verify_literal_returns(work, exe, cxx, linker, adapter)
+    if selection in ("--literal-returns", "--radix-returns"):
+        verify_literal_returns(work, exe, cxx, linker, adapter, radix=selection == "--radix-returns")
         return
     if selection == "--checked-return":
         verify_checked_return(work, exe, cxx, linker)

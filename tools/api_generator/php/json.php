@@ -62,6 +62,11 @@ function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
             'private_includes' => ['runtime/src/json', 'runtime/src/boxed', 'runtime/src/hash', 'runtime/src/ownership', 'runtime/src/numeric']]];
 }
 
+/** The typed array reader appends directly into the published int64 vector. */
+function jsonIntegerVector(array $plan): ?string {
+    return array_column($plan['vectors'] ?? [], 'name', 'element')['int64'] ?? null;
+}
+
 /** Select source signatures only when the active compiler also publishes their types. */
 function compilerJsonCases(?array $runtime, array $types): array {
     $cases = [];
@@ -78,8 +83,10 @@ function compilerJsonCases(?array $runtime, array $types): array {
             foreach (JSON_RECORD_READERS as $id => $method) {
                 if (isset($types[$id])) $leaves[] = 'type_' . $types[$id] . "::class => '$method'";
             }
+            $vector = jsonIntegerVector($runtime);
+            $sequences = $vector !== null && isset($types[$vector]) ? "type_{$types[$vector]}::class => 'read_integers'" : '';
             $cases[] = "\t\t\t'php:func:json_decode_as', 'general:func:json_decode_as' => \$bindings[\$key] ??= new json_decoder_contract(["
-                . implode(', ', $leaves) . "], '" . moduleOperationHeader($runtime['json']['header'], 'decode_record') . "'),";
+                . implode(', ', $leaves) . "], '" . moduleOperationHeader($runtime['json']['header'], 'decode_record') . "', [$sequences]),";
         }
         if ($name === 'json_encode') {
             $encoders[] = "$argument::class => $binding";

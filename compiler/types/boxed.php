@@ -124,6 +124,13 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 			return new cpp_inline_adapter('export_record', [new cpp_adapter_parameter($source, 'source', cpp_adapter_mode::const_reference)],
 				$this, $body, false);
 		}
+		if ($conversion === value_conversion::export_record && $source instanceof native_sequence_type) {
+			$body = "\treturn " . $this->cpp_type() . "::from_record(&source, [](const void* raw, ::scpp::Encoder& out) {\n"
+				. "\t    const auto& items = *static_cast<const " . $source->cpp_type() . "*>(raw);\n"
+				. "\t    " . Cpp_Emitter::record_vector_walk($source, 'items') . "\n\t});\n";
+			return new cpp_inline_adapter('export_record_vector', [new cpp_adapter_parameter($source, 'source', cpp_adapter_mode::const_reference)],
+				$this, $body, false, headers: ['scpp/encoder.hpp']);
+		}
 		if ($conversion !== value_conversion::export_list) return null;
 		if (!($source instanceof native_sequence_type)) throw new \LogicException('Unprepared list export');
 		$factory = $this->export_factory($source->write_type()) ?? throw new \LogicException('Missing list element factory');

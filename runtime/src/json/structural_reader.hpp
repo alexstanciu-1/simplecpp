@@ -75,7 +75,7 @@ class pull_reader final : private reader_detail::json_reader {
 		frames_.push_back(frame{object, true, 0, path_});
 		pending_ = false;
 	}
-	bool next(bool object) {
+	template<class Insert> bool next(bool object, Insert insert) {
 		if (pending_ || frames_.empty() || frames_.back().object != object)
 			reader_detail::fail_json_parse("consume selected value before advancing the matching container", pos_, "protocol");
 		auto &scope = frames_.back();
@@ -95,7 +95,7 @@ class pull_reader final : private reader_detail::json_reader {
 			path_.push_back('[');
 			path_.append(input_.substr(start, pos_ - start));
 			path_.push_back(']');
-			if (!scope.insert_key(key_))
+			if (!insert(scope, key_))
 				reader_detail::fail_json_parse("duplicate object key " + std::string(input_.substr(start, pos_ - start)), start, "duplicate_key");
 			skip_whitespace();
 			if (get() != ':') reader_detail::fail_json_parse("expected ':'", pos_ - 1);
@@ -104,6 +104,9 @@ class pull_reader final : private reader_detail::json_reader {
 		}
 		pending_ = true;
 		return true;
+	}
+	bool next(bool object) {
+		return next(object, [](frame& scope, const std::string& key) { return scope.insert_key(key); });
 	}
 public:
 	explicit pull_reader(std::string text, std::string file, std::int64_t limit)
@@ -127,6 +130,11 @@ public:
 	void begin_object() { checked([&] { begin(true); }); }
 	void begin_array() { checked([&] { begin(false); }); }
 	bool next_property() { return checked([&] { return next(true); }); }
+	template<class Insert> bool next_record_property(Insert insert) {
+		return checked([&] {
+			return next(true, [&](frame&, const std::string& key) { return insert(key); });
+		});
+	}
 	bool next_element() { return checked([&] { return next(false); }); }
 	// Valid until this reader advances to another property.
 	std::string_view property_view() {
@@ -152,6 +160,42 @@ public:
 				reader_detail::fail_json_parse("expected signed 64-bit integer spelling", start, "integer");
 			pending_ = false; return value;
 		});
+	}
+	// Consume a typed integer array without formatting a diagnostic path for each valid element.
+	template<class Append> void read_integers(Append append) {
+		begin_array();
+		auto& scope = frames_.back();
+		std::size_t checkpoint;
+		for (;;) {
+			checkpoint = pos_;
+			skip_whitespace();
+			if (peek() == ']') {
+				++pos_;
+				path_ = scope.path;
+				frames_.pop_back();
+				return;
+			}
+			if (!scope.first) {
+				if (peek() != ',') break;
+				++pos_;
+				skip_whitespace();
+			}
+			const char* first = input_.data() + pos_;
+			const char* end = input_.data() + input_.size();
+			std::int64_t value;
+			const auto parsed = std::from_chars(first, end, value);
+			if (parsed.ec != std::errc{}) break;
+			const char* digits = first + (*first == '-');
+			if (*digits == '0' && parsed.ptr - digits > 1) break;
+			if (parsed.ptr != end && (*parsed.ptr == '.' || *parsed.ptr == 'e' || *parsed.ptr == 'E')) break;
+			pos_ = static_cast<std::size_t>(parsed.ptr - input_.data());
+			scope.first = false;
+			++scope.index;
+			append(value);
+		}
+		// Replay from the delimiter so the scalar reader owns error precedence, offset and path.
+		pos_ = checkpoint;
+		while (next_element()) append(read_integer());
 	}
 	bool read_boolean() {
 		return checked([&] { require_kind("boolean"); const bool value = peek() == 't'; expect_literal(value ? "true" : "false"); pending_ = false; return value; });
