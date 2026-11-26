@@ -134,9 +134,28 @@ return 8;
 SCPP;
 		$fixtures['php-nullable-pairs'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($nullable_pairs)),
 			'stdout_hex' => bin2hex('100111|011|LR1|10110|1110')];
-		rejects(fn() => $prepare('$a nullable<vector<string>> = null; return (int)($a === $a);'),
-			'Unsupported binary operands');
-
+		foreach (['==', '!=', '===', '!=='] as $operator) {
+			rejects(fn() => $prepare('$a nullable<vector<string>> = null; return (int)($a ' . $operator . ' $a);'),
+				'Unsupported binary operands');
+		}
+		foreach (['false' => $pairs, 'nullable' => $nullable_pairs] as $family => $strict_source) {
+			$source = str_replace(['===', '!=='], ['==', '!='], $strict_source);
+			$cpp = (new Cpp_Emitter())->emit($prepare($source));
+			$fixtures["php-$family-equality"] = ['cpp' => $cpp, 'stdout_hex' => $fixtures["php-$family-pairs"]['stdout_hex']];
+		}
+		$cpp = $fixtures['php-nullable-equality']['cpp'];
+		verify(str_contains($cpp, '(var_a_0).has_value() ? ((var_b_1).has_value()'),
+			'Stable nullable locals must compare directly');
+		verify(str_contains($cpp, 'const auto binary_left = var_a_0; const auto binary_right = replace_absent_(var_a_0, var_calls_4);'),
+			'Snapshot the entire left carrier before the mutating RHS');
+		$throws = <<<'SCPP'
+function fail_left(): ?int { throw new Exception("left"); }
+function right(): ?int { echo "R"; return null; }
+try { echo (int)(fail_left() == right()); } catch (Exception $e) { echo $e->get_message(); }
+return 8;
+SCPP;
+		$fixtures['php-peer-failure'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($throws)),
+			'stdout_hex' => bin2hex('left')];
 
 	}
 	$presence = $decl('nullable<int>', 'none', 'null')
@@ -223,7 +242,7 @@ SCPP;
 		file_put_contents($directory . '/module.json', '{}');
 		$main = $directory . '/main.' . $flavor->name;
 		$library = $directory . '/library.' . $flavor->name;
-		$pair_check = $flavor === flavor::php ? 'echo (int)(provide() === provide());' : '';
+		$pair_check = $flavor === flavor::php ? 'echo (int)(provide() === provide()), (int)(provide() == provide());' : '';
 		file_put_contents($main, $pair_check . 'echo (int)isset(provide()), provide() + 5; return 8;');
 		$compiler = new Project_Compiler();
 		$session = null;
@@ -262,7 +281,7 @@ SCPP;
 			}
 			$fresh = Cpp_Program::emit((new Program_Frontend())->prepare_sources($session->entry_key(), $sources, $target))->files;
 			verify($incremental === $fresh, 'Incremental differs from fresh');
-			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex(($pair_check === '' ? '1' : '11') . (string)((int)(float)$value + 5))];
+			$fixtures[$flavor->name . '-incremental-' . $step] = ['files' => $incremental, 'stdout_hex' => bin2hex(($pair_check === '' ? '1' : '111') . (string)((int)(float)$value + 5))];
 		}
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op failed to reuse bodies');

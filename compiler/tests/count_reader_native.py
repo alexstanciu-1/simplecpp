@@ -56,7 +56,7 @@ with TemporaryDirectory(prefix='scpp-private-count-') as directory:
 
 keyed_reader = """
 function element(vector<int> $items,int $key=0):int {return $items[$key];}
-function byKey(hash<int,int> $items,int $key):int {return $items[$key];}
+function byKey(hash<int,int> $items,int $key=0):int {return $items[$key];}
 """
 keyed_main = """
 function change(vector<int> &$items):int {$items[1]=9;echo "M";return 1;}
@@ -77,7 +77,7 @@ with TemporaryDirectory(prefix='scpp-keyed-reader-') as directory:
     revisions(work, 'php', dict(main=keyed_main, reader=keyed_reader), edits[:1] if quick else edits)
     units = '\n'.join(p.read_text() for p in (work/'php-out/units').glob('*.cpp'))
     for symbol in ('element', 'byKey'):
-        assert units.count(symbol + '_collection_reader(var_') == (3 if symbol == 'element' else 2), units
+        assert units.count(symbol + '_collection_reader(var_') == (4 if symbol == 'element' else 2), units
         assert re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return [^;]+\.at\(', units)
 
 named_calls = """
@@ -85,6 +85,10 @@ function namedReads():int {
     $v vector<int> = [5];$h hash<int,int> = [];$h[0]=7;$k=0;
     return element(items:$v,key:$k) + element(key:0,items:$v)
         + byKey(items:$h,key:0) + byKey(key:$k,items:$h);
+}
+function defaultReads():int {
+    $v vector<int> = [5,6];$h hash<int,int> = [];$h[0]=7;$h[1]=8;
+    return 1000 * element($v) + 100 * element(items:$v) + 10 * byKey($h) + byKey(items:$h);
 }
 function changeVector(vector<int> &$v):int {$v[0]=9;echo "V";return 0;}
 function changeHash(hash<int,int> &$h):int {$h[0]=9;echo "H";return 0;}
@@ -96,19 +100,22 @@ function orderedReads():int {
     echo byKey(key:changeHash($h),items:$h);
     return 8;
 }
-echo namedReads();return orderedReads();
+echo namedReads(),":",defaultReads(),":";return orderedReads();
 """
 with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     work = Path(directory)
-    expected = b'24V5V9H7H9'
+    expected = b'24:5577:V5V9H7H9'
     edits = [(None, None, expected),
+             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'24:6688:V5V9H7H9'),
+             ('reader', keyed_reader.replace('$key=0', '$key'), 'Argument count mismatch'),
+             ('reader', keyed_reader, expected),
              ('reader', keyed_reader.replace('$key', '$offset'), 'Unknown named argument: key'),
              ('main', named_calls.replace('key:', 'offset:'), expected)]
     revisions(work, 'php', dict(main=named_calls, reader=keyed_reader), edits[:1] if quick else edits)
     out = work/'php-out'
     units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
     for symbol in ('element', 'byKey'):
-        assert units.count(symbol + '_collection_reader(var_') == 2, units
+        assert units.count(symbol + '_collection_reader(var_') == 4, units
     if not quick:
         root = Path(__file__).resolve().parents[2]
         sources = json.loads((out/'manifest.json').read_text())['translation_units']
@@ -136,14 +143,19 @@ if not quick:
         read = forms['function']('width', 'int', [('items', 'vector<int>')], 'return count(items);')
         read += forms['function']('first', 'int', [('items', 'vector<int>')], 'return items[0];')
         read += forms['function']('element', 'int', [('items', 'vector<int>'), ('key', 'int')], 'return items[key];')
+        key_param = 'key:int' if flavor == 'js' else 'int key'
+        read = read.replace(key_param, key_param + '=0')
         local = 'vector<int> v=[3,5];' if flavor == 'cpp' else 'let v:vector<int> = [3,5];'
-        app = local + 'echo width(v),first(v),element(v,1),element(key:0,items:v),element(items:v,key:1),v[0];return 8;'
+        app = local + 'echo width(v),first(v),element(v,1),element(key:0,items:v),element(items:v,key:1),v[0],element(v),element(items:v);return 8;'
         with TemporaryDirectory(prefix='scpp-private-count-') as directory:
             revisions(Path(directory), flavor, dict(main=app, reader=read), [
-                (None, None, b'235353'),
-                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'279993'),
+                (None, None, b'23535333'),
+                ('reader', read.replace(key_param + '=0', key_param + '=1'), b'23535355'),
+                ('reader', read.replace(key_param + '=0', key_param), 'Argument count mismatch'),
+                ('reader', read, b'23535333'),
+                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'27999399'),
                 ('reader', None, None),
-                ('reader', read, b'235353'),
+                ('reader', read, b'23535333'),
                 ('reader', read.replace('key', 'offset'), 'Unknown named argument: key'),
-                ('main', app.replace('key:', 'offset:'), b'235353'),
+                ('main', app.replace('key:', 'offset:'), b'23535333'),
             ])

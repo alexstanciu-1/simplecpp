@@ -30,6 +30,18 @@ unset($metadata->compiler->modules->{'runtime-numeric'}, $metadata->compiler->pu
 $metadata->compiler->integer_operators->compounds->types = ['int64', 'uint8'];
 $originalExportMetadata = serialize($metadata);
 $files = renderCompiler($metadata, $facts);
+$peerRule = unserialize($originalExportMetadata)->carriers->peer_equality;
+unset($peerRule->operators->equal);
+$strictPeers = compilerPeerEquality($peerRule, $metadata->carriers->families);
+requireThat(!str_contains($strictPeers, 'binary_operator::equal') && str_contains($strictPeers, 'binary_operator::identical'),
+    'Removing ordinary equality must preserve only the strict peer binding');
+$peerRule->families[] = 'result_or_bool';
+try {
+    compilerPeerEquality($peerRule, $metadata->carriers->families);
+    throw new \LogicException('Accepted a multi-sentinel family for two-state equality');
+} catch (\RuntimeException $error) {
+    requireThat(str_contains($error->getMessage(), 'one payload and one absent state'), 'Unexpected peer state validation error');
+}
 // A type opts into dispatch independently of its ordinary equality and literal operations.
 $dispatch = unserialize($originalExportMetadata);
 unset($dispatch->compiler->value_types->string->constant_dispatch);
@@ -1204,6 +1216,10 @@ try {
 
 $without = unserialize(serialize($metadata));
 unset($without->compiler->strict_identity);
+// Removing scalar admission alone still permits other payload providers (e.g. enums).
+requireThat(!str_contains(renderCompiler($without, $facts)['types/string.php'], 'binary_operator::identical'),
+    'A peer rule must not grant identity to its payload');
+unset($without->carriers->peer_equality->operators->identical);
 $ordinaryOnly = renderCompiler($without, $facts);
 foreach ($ordinaryOnly as $source) {
     requireThat(!str_contains($source, 'binary_operator::identical'), 'Removed identity still generated');

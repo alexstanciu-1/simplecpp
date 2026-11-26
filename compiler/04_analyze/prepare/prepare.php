@@ -1664,17 +1664,19 @@ final class Preparation
 				$owner->prepare_binary($syntax);
 				return;
 			}
-			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
-				if ($syntax->source()->flavor === flavor::php && $left === $right
-					&& $left instanceof carrier_type_definition && ($left->accepts_empty() || $left->false_only_sentinel())) {
+			if ($left === $right && $left instanceof carrier_type_definition) {
+				$comparator = peer_equality_operator($left->family, $syntax->source()->flavor, $syntax->operator);
+				if ($comparator !== null) {
 					$payload = $left->payload_type;
-					if ($payload->binary_result($syntax->operator, $payload) !== type_bool::instance()
-						|| !$payload->binary_syntax_allowed($syntax->operator, $syntax)) {
+					if ($payload->binary_result($comparator, $payload) !== type_bool::instance()
+						|| !$payload->binary_syntax_allowed($comparator, $syntax)) {
 						throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported binary operands or operator');
 					}
-					$syntax->settle_binary(type_bool::instance(), $left);
+					$syntax->settle_binary(type_bool::instance(), $left, peer_comparator: $comparator);
 					return;
 				}
+			}
+			if ($syntax->operator === binary_operator::identical || $syntax->operator === binary_operator::not_identical) {
 				$carrier = $left instanceof carrier_type_definition ? $left : $right;
 				$literal = $carrier === $left ? $syntax->right : $syntax->left;
 				if ($carrier instanceof carrier_type_definition

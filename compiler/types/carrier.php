@@ -9,11 +9,13 @@ abstract class carrier_type_definition extends type_definition implements presen
 	/** PROPERTIES */
 	/** Native non-owning canonical payload definition, shared by all occurrences. */
 	public readonly type_definition $payload_type;
+	public readonly string $family;
 
 	/** CONSTRUCTOR */
-	protected function __construct(string $name, type_definition $payload)
+	protected function __construct(string $family, type_definition $payload)
 	{
-		parent::__construct($name);
+		parent::__construct($family . '<' . $payload->name . '>');
+		$this->family = $family;
 		$this->payload_type = $payload;
 	}
 
@@ -43,13 +45,13 @@ abstract class carrier_type_definition extends type_definition implements presen
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{
-		if ($expr->left->type_def() === $this && $expr->right->type_def() === $this) {
-			$payloads_equal = $this->payload_type->lower_cpp_binary(binary_operator::identical,
+		if ($expr->peer_comparator !== null) {
+			$payloads_equal = $this->payload_type->lower_cpp_binary($expr->peer_comparator,
 				$this->lower_cpp_extract($left), $this->lower_cpp_extract($right), $this->payload_type);
 			$left_present = $this->lower_cpp_presence($left);
 			$right_present = $this->lower_cpp_presence($right);
 			$equal = "($left_present ? ($right_present && $payloads_equal) : !$right_present)";
-			return $expr->operator === binary_operator::not_identical ? '!' . $equal : $equal;
+			return $expr->operator !== $expr->peer_comparator ? '!' . $equal : $equal;
 		}
 		$carrier_first = $expr->left->type_def() === $this;
 		$literal = $carrier_first ? $expr->right : $expr->left;
@@ -64,7 +66,7 @@ abstract class carrier_type_definition extends type_definition implements presen
 	/** Two local reads need no snapshots. Stage effectful pairs before inspecting either state. */
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
 	{
-		return $expr->left->type_def() !== $this || $expr->right->type_def() !== $this
+		return $expr->peer_comparator === null
 			|| (self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right));
 	}
 
@@ -122,7 +124,7 @@ final class nullable_enum_type_definition extends carrier_type_definition
 {
 	public function __construct(enum_type_definition $payload)
 	{
-		parent::__construct('nullable<' . $payload->name . '>', $payload);
+		parent::__construct('nullable', $payload);
 	}
 
 	public function dispatch_label_type(): type_definition
