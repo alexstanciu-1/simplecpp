@@ -56,7 +56,7 @@ abstract class carrier_type_definition extends type_definition implements presen
 		return $this->lower_cpp_presence($value);
 	}
 
-	/** Apply scalar conversions only to two payloads after testing the carrier states. */
+	/** Match shared alternate states and compare present payloads using the prepared scalar conversions. */
 	private function lower_peer_equality(ast_binary_expression $expr, string $left, string $right): string
 	{
 		$left_type = $expr->left->type_def();

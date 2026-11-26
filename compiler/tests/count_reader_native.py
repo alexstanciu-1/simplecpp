@@ -81,11 +81,28 @@ with TemporaryDirectory(prefix='scpp-keyed-reader-') as directory:
         assert re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return [^;]+\.at\(', units)
 
 forward_reader = """
+function innerCount(vector<int> $items):int {return count($items);}
 function innerVector(vector<int> $items):int {return $items[0];}
 function innerHash(hash<int,int> $items,int $key):int {return $items[$key];}
 """
+scalar_reader = """
+function flagAt(vector<bool> $items):bool {return $items[0];}
+function floatAt(vector<float> $items,int $key=1):float {return $items[$key];}
+function convertedAt(vector<int> $items):float {return $items[0];}
+function convertedKeyAt(vector<float> $items,int $pos=1.75):float {return $items[$pos];}
+"""
 forward_calls = """
-function fromRef(vector<int> &$refItems):int {return innerVector($refItems);}
+function fromRef(vector<int> &$refItems):int {
+    $refItems[0]=6;$read=innerVector($refItems);$refItems[0]+=1;return $read;
+}
+function fromRefHash(hash<int,int> &$refItems,int $key):int {
+    $refItems[$key]=4;$read=innerHash(key:$key,items:$refItems);$refItems[$key]+=1;return $read;
+}
+function mutableForwardReads():int {
+    $v vector<int> = [1];$h hash<int,int> = [];$h[0]=2;
+    $vr=fromRef($v);$hr=fromRefHash($h,0);
+    return 1000*$vr+100*$hr+10*$v[0]+$h[0];
+}
 function fromReadonly(const vector<int> &$readItems):int {return innerVector($readItems);}
 function fromReadonlyHash(const hash<int,int> &$items,int $key):int {return innerHash(key:$key,items:$items);}
 function readonlyForwardReads():int {
@@ -93,12 +110,31 @@ function readonlyForwardReads():int {
     $vr=fromReadonly($v);$hr=fromReadonlyHash($h,0);
     return 1000*$vr+100*$hr+10*$v[0]+$h[0];
 }
-function fromPack(int ...$packItems):int {return innerVector($packItems);}
+function fromPack(int ...$packItems):int {
+    $packItems[0]+=1;$read=innerVector($packItems);$packItems[0]+=1;
+    return 10*$read+$packItems[0];
+}
+function explicitPackReads():int {return fromPack(4,8);}
+function unpackedPackReads():int {
+    $v vector<int> = [4,8];$read=fromPack(...$v);return 10*$read+$v[0];
+}
+function packCount(int ...$items):int {return innerCount($items);}
+function emptyPackReads():int {return packCount();}
+function readonlyPackCount(int &...$readPack):int {return innerCount($readPack);}
 function outerVector(vector<int> $items):int {
     $items[0]=6;$read=innerVector($items);return 10*$read+$items[0];
 }
 function outerHash(hash<int,int> $items):int {
     $items[0]=8;$read=innerHash(key:0,items:$items);return 10*$read+$items[0];
+}
+function convertedKeyReads():int {
+    $v vector<float> = [0.5,2.5];
+    return (int)(convertedKeyAt($v) === 2.5) + (int)(convertedKeyAt(pos:true,items:$v) === 2.5);
+}
+function scalarReads():int {
+    $flags vector<bool> = [true];$values vector<float> = [0.5,2.5];$k=1;
+    $flag=flagAt($flags);$value=floatAt(key:$k,items:$values);
+    return 1000*(int)$flag+100*(int)($value === 2.5)+10*(int)$flags[0]+(int)($values[1] === 2.5);
 }
 function forwardReads():int {
     $v vector<int> = [5];$h hash<int,int> = [];$h[0]=7;
@@ -133,35 +169,52 @@ function defaultReads():int {
 }
 function changeVector(vector<int> &$v):int {$v[0]=9;echo "V";return 0;}
 function changeHash(hash<int,int> &$h):int {$h[0]=9;echo "H";return 0;}
+function vectorAliasOrder(vector<int> &$items,vector<int> &$alias):void {
+    echo element(items:$items,key:changeVector($alias));$items[0]=5;
+    echo element(key:changeVector($alias),items:$items);
+}
+function hashAliasOrder(hash<int,int> &$items,hash<int,int> &$alias):void {
+    echo byKey(items:$items,key:changeHash($alias));$items[0]=7;
+    echo byKey(key:changeHash($alias),items:$items);
+}
 function orderedReads():int {
     $v vector<int> = [5];$h hash<int,int> = [];$h[0]=7;
     echo element(items:$v,key:changeVector($v));$v[0]=5;
     echo element(key:changeVector($v),items:$v);
     echo byKey(items:$h,key:changeHash($h));$h[0]=7;
     echo byKey(key:changeHash($h),items:$h);
+    $v[0]=5;$h[0]=7;
+    vectorAliasOrder($v,$v);hashAliasOrder($h,$h);
     return 8;
 }
-echo readonlyForwardReads(),"|",positionalKeyProbe(),"/",reversedKeyProbe(),"|",forwardReads(),":",namedReads(),":",defaultReads(),":";return orderedReads();
+echo scalarReads(),"|",readonlyForwardReads(),"|",positionalKeyProbe(),"/",reversedKeyProbe(),"|",forwardReads(),":",namedReads(),":",defaultReads(),":";return orderedReads();
 """
 with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
     work = Path(directory)
-    expected = b'5757|680/680|668857:24:5577:V5V9H7H9'
+    expected = b'1111|5757|680/680|668857:24:5577:V5V9H7H9V5V9H7H9'
     forward_writer = forward_reader.replace('return $items[', '$items[0]=9;return $items[')
+    forward_writer += scalar_reader.replace('return $items[0];}', '$items[0]=false;return $items[0];}', 1).replace(
+        'return $items[$key];}', '$items[$key]=-4.5;return $items[$key];}')
     edits = [(None, None, expected),
-             ('forward_reader', forward_writer, b'9957|680/680|969857:24:5577:V5V9H7H9'),
-             ('forward_reader', forward_reader, expected),
+             ('forward_reader', forward_writer, b'11|9957|680/680|969857:24:5577:V5V9H7H9V5V9H7H9'),
+             ('forward_reader', forward_reader + scalar_reader, expected),
              ('main', named_calls.replace('int $which', 'int &$which'), expected.replace(b'680/680', b'681/681')),
              ('main', named_calls, expected),
-             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'5757|680/680|668857:24:6688:V5V9H7H9'),
+             ('reader', keyed_reader.replace('$key=0', '$key=1'), b'1111|5757|680/680|668857:24:6688:V5V9H7H9V5V9H7H9'),
              ('reader', keyed_reader.replace('$key=0', '$key'), 'Argument count mismatch'),
              ('reader', keyed_reader, expected),
              ('reader', keyed_reader.replace('$key', '$offset'), 'Unknown named argument: key'),
              ('main', named_calls.replace('key:', 'offset:'), expected)]
-    revisions(work, 'php', dict(main=named_calls, reader=keyed_reader, forward=forward_calls, forward_reader=forward_reader, driver=key_driver), edits[:1] if quick else edits)
+    revisions(work, 'php', dict(main=named_calls, reader=keyed_reader, forward=forward_calls, forward_reader=forward_reader + scalar_reader, driver=key_driver), edits[:1] if quick else edits)
     out = work/'php-out'
     units = '\n'.join(p.read_text() for p in (out/'units').glob('*.cpp'))
-    for parameter in ('refItems', 'packItems'):
-        assert 'innerVector_(var_' + parameter in units
+    assert 'convertedKeyAt_collection_reader(var_' not in units
+    assert re.search(r'convertedAt_collection_reader\(const [^;{]+\)\s*\{\s*return convertedAt_\(', units)
+    assert 'innerVector_collection_reader(var_refItems' in units
+    assert 'innerHash_collection_reader(var_refItems' in units
+    assert 'innerVector_collection_reader(var_packItems' in units
+    assert 'innerCount_collection_reader(var_items' in units
+    assert 'innerCount_(var_readPack' in units
     for symbol in ('element', 'byKey'):
         assert units.count(symbol + '_collection_reader(var_') == 6, units
     if not quick:
@@ -175,6 +228,7 @@ with TemporaryDirectory(prefix='scpp-named-reader-') as directory:
                             *(bundle/unit for unit in sources if unit != 'entry.cpp'),
                             root/'compiler/tests/fixtures/named_reader_copies.cpp', root/'build/clang/libscpp_runtime.a',
                             '-Wl,--wrap=_ZN4scpp12vector_int64C1ERKS0_,--wrap=_ZN4scpp16hash_int64_int64C1ERKS0_',
+                            '-Wl,--wrap=_ZN4scpp13vector_bool_tC1ERKS0_,--wrap=_ZN4scpp14vector_float64C1ERKS0_',
                             '-o', probe], check=True)
             subprocess.run([probe, state], check=True, stdout=subprocess.DEVNULL)
 
@@ -199,16 +253,31 @@ if not quick:
         local = 'vector<int> v=[3,5];' if flavor == 'cpp' else 'let v:vector<int> = [3,5];'
         outer = forms['function']('outer', 'int', [('items', 'vector<int>'), ('k', 'int')],
                                   'return element(items,k)*10+items[k];')
-        app = outer + local + 'echo outer(v,1),width(v),first(v),element(v,1),element(key:0,items:v),element(items:v,key:1),v[0],element(v),element(items:v);return 8;'
+        from_ref = forms['function']('fromRef', 'int', [('&items', 'vector<int>'), ('k', 'int')],
+                                     'return element(items,k);')
+        app = from_ref + outer + local + 'echo fromRef(v,1),outer(v,1),width(v),first(v),element(v,1),element(key:0,items:v),element(items:v,key:1),v[0],element(v),element(items:v);return 8;'
         with TemporaryDirectory(prefix='scpp-private-count-') as directory:
             revisions(Path(directory), flavor, dict(main=app, reader=read), [
-                (None, None, b'5523535333'),
-                ('reader', read.replace(key_param + '=0', key_param + '=1'), b'5523535355'),
+                (None, None, b'55523535333'),
+                ('reader', read.replace(key_param + '=0', key_param + '=1'), b'55523535355'),
                 ('reader', read.replace(key_param + '=0', key_param), 'Argument count mismatch'),
-                ('reader', read, b'5523535333'),
-                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'9527999399'),
+                ('reader', read, b'55523535333'),
+                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'99527999399'),
                 ('reader', None, None),
-                ('reader', read, b'5523535333'),
+                ('reader', read, b'55523535333'),
                 ('reader', read.replace('key', 'offset'), 'Unknown named argument: key'),
-                ('main', app.replace('key:', 'offset:'), b'5523535333'),
+                ('main', app.replace('key:', 'offset:'), b'55523535333'),
+            ])
+
+
+        flags = forms['function']('flag', 'bool', [('items', 'vector<bool>')], 'return items[0];')
+        numbers = forms['function']('number', 'float', [('items', 'vector<float>')], 'return items[0];')
+        locals_ = ('vector<bool> flags=[true];vector<float> nums=[2.5];' if flavor == 'cpp'
+                   else 'let flags:vector<bool> = [true];let nums:vector<float> = [2.5];')
+        app = locals_ + 'if(flag(flags)){echo "B";}if(number(nums) === 2.5){echo "F";}if(flags[0] && nums[0] === 2.5){echo "S";}return 8;'
+        writers = flags.replace('return items[0]', 'items[0]=false;return items[0]') + numbers.replace(
+            'return items[0]', 'items[0]=0.0;return items[0]')
+        with TemporaryDirectory(prefix='scpp-scalar-reader-') as directory:
+            revisions(Path(directory), flavor, dict(main=app, reader=flags + numbers), [
+                (None, None, b'BFS'), ('reader', writers, b'S'), ('reader', flags + numbers, b'BFS'),
             ])

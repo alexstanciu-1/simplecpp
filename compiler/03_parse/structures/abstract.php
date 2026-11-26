@@ -279,6 +279,14 @@ abstract class ast_expression extends ast_node
 		return $this->type_def ?? throw new \LogicException('Expression type is not settled');
 	}
 
+	/** A literal of a type whose plain value can be copied and destroyed without effects. */
+	public function is_effect_free_literal(): bool
+	{
+		return ($this instanceof ast_integer_expression || $this instanceof ast_float_expression
+			|| $this instanceof ast_keyword_expression || $this instanceof ast_string_expression)
+			&& $this->type_def()->copy_has_no_observable_effects();
+	}
+
 	/** Operator/conversion view of one payload layer; the stored expression type remains unchanged. */
 	public function value_type(): type_definition
 	{

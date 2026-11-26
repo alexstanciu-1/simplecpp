@@ -728,12 +728,15 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function reads_parameter_without_copy(ast_parameter_declaration $parameter, ?ast_parameter_declaration $key): bool
 	{
 		if (count($this->statements) !== 1 || !($this->statements[0] instanceof ast_return_statement)) return false;
-		$value = $this->statements[0]->value;
+		$return = $this->statements[0];
+		$value = $return->value;
+		if ($value === null || $value->type_def() !== $this->parent->return_type_def()
+			|| $return->conversion() !== value_conversion::identity) return false;
 		if ($key !== null) {
 			if (!($value instanceof ast_index_expression) || !($value->index instanceof ast_name_expression)
 				|| !$value->index->refers_to($key)) return false;
 			$receiver = $value->receiver;
-		} elseif ($value instanceof ast_index_expression && $value->index instanceof ast_integer_expression) {
+		} elseif ($value instanceof ast_index_expression && $value->index->is_effect_free_literal()) {
 			$receiver = $value->receiver;
 		} elseif ($value instanceof ast_call_expression && $value->cardinality === collection_cardinality::count) {
 			$receiver = $value->arguments[0];
@@ -862,9 +865,9 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 	public function private_reader_input(): ?ast_parameter_declaration
 	{
 		if ($this->parameters === [] || count($this->parameters) > 2 || $this->parent instanceof ast_method_owner || $this->is_async || $this->returns_reference
-			|| $this->return_type_def() !== type_int64::instance()) return null;
+			|| !$this->return_type_def()->copy_has_no_observable_effects()) return null;
 		$key = $this->parameters[1] ?? null;
-		if ($key !== null && ($key->mode !== passing_mode::value || $key->type_def() !== type_int64::instance())) return null;
+		if ($key !== null && ($key->mode !== passing_mode::value || !$key->type_def()->copy_has_no_observable_effects())) return null;
 		$input = $this->parameters[0];
 		return $input->mode === passing_mode::value && !($input->type_reference instanceof ast_variadic_type_reference)
 			&& $input->type_def()->private_copy_allocation_only() ? $input : null;

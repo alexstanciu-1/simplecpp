@@ -2940,20 +2940,20 @@ CPP;
 			$name = self::function_name($function);
 			$declarations[$name] = $function;
 			$result = $function->return_type_def();
-			$reader_arguments = $value->arguments;
-			if (isset($value->named) && count($reader_arguments) === 2 && count($function->parameters) === 2) {
-				// Inspect explicit operands by parameter slot. Ordinary invocation retains their written order.
-				$reader_arguments = $value->named->parameter_order($reader_arguments);
-			}
-			$argument = $reader_arguments[0] ?? null;
-			if (self::plain_local_read($argument, allow_readonly_reference: true)
+			// For a complete two-argument call the prepared slots form their own inverse.
+			$reversed = count($value->arguments) === 2 && count($function->parameters) === 2 && ($value->named->slots[0] ?? 0) === 1;
+			$argument = $value->arguments[$reversed ? 1 : 0] ?? null;
+			if (self::plain_local_read($argument, collection_operand: true)
 				&& ($input = $function->private_reader_input()) !== null && $argument->type_def() === $input->type_def()) {
 				if (count($function->parameters) === 1) {
 					$name .= 'collection_reader';
 				} else {
-					$key = $reader_arguments[1] ?? $function->parameters[1]->default_value;
-					if ($key instanceof ast_integer_expression || (isset($reader_arguments[1]) && self::plain_local_read($key)
-						&& $key->type_def() === type_int64::instance())) {
+					$position = $reversed ? 0 : 1;
+					$parameter = $function->parameters[1];
+					$key = $value->arguments[$position] ?? $parameter->default_value;
+					$conversion = isset($value->arguments[$position]) ? $value->conversion($position) : $parameter->default_conversion();
+					if ($conversion === value_conversion::identity && $key->type_def() === $parameter->type_def()
+						&& ($key->is_effect_free_literal() || self::plain_local_read($key))) {
 						// Both operands are inert. Binding the collection directly avoids a by-value staging temporary.
 						return $name . 'collection_reader(' . $this->name($argument->local_def()) . ', '
 							. $this->value($key, $global_references, $declarations, $required_headers) . ')';
@@ -3985,14 +3985,14 @@ CPP;
 			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
 	}
 
-	/** Only the collection operand may forward a read-only reference to the synchronous reader. */
-	private static function plain_local_read(?ast_expression $argument, bool $allow_readonly_reference = false): bool
+	/** A synchronous reader can borrow a reference parameter as its collection operand. */
+	private static function plain_local_read(?ast_expression $argument, bool $collection_operand = false): bool
 	{
 		if (!$argument instanceof ast_name_expression) return false;
 		$binding = $argument->local_binding();
 		if ($binding instanceof ast_parameter_declaration) {
-			return !($binding->type_reference instanceof ast_variadic_type_reference) && ($binding->mode === passing_mode::value
-				|| ($allow_readonly_reference && $binding->mode === passing_mode::readonly_reference));
+			if ($binding->type_reference instanceof ast_variadic_type_reference) return $collection_operand && !$binding->is_readonly_pack();
+			return $collection_operand || $binding->mode === passing_mode::value;
 		}
 		return $binding !== null && $binding::class === ast_local_declaration::class;
 	}
