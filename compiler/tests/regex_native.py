@@ -290,6 +290,34 @@ if ($t !== "baab") { return 19; }
 $bad result_or_false<string> = regex_replace("/[/", "", "", 0);
 if (isset($bad)) { return 20; }
 ''')
+        # Each row checks the same plain pieces and their absolute byte offsets.
+        statements.append('$splitFlags int = PREG_SPLIT_DELIM_CAPTURE;')
+        for pattern, subject, tail, expected in [
+            ('/,/', 'é,', '', [('é', 0), ('', 3)]),
+            ('/,/', 'α', ', 1', [('α', 0)]),
+            ('/,/', 'α', '', [('α', 0)]),
+            ('/,/', '', ', -1, PREG_SPLIT_NO_EMPTY', []),
+            ('/(x)?(,)(y)?/u', 'é,,b', ', 0, $splitFlags',
+             [('é', 0), ('', -1), (',', 2), ('', 3), ('', -1), (',', 3), ('b', 4)]),
+            ('/(,)/', 'a,b,c,d', ', 3, $splitFlags',
+             [('a', 0), (',', 1), ('b', 2), (',', 3), ('c,d', 4)]),
+            ('/(,)/', ',,a,b,c', ', 2, $splitFlags | PREG_SPLIT_NO_EMPTY',
+             [(',', 0), (',', 1), ('a', 2), (',', 3), ('b,c', 4)]),
+            ('/()/u', 'é', ', -1, $splitFlags', [('', 0), ('', 0), ('é', 0), ('', 2), ('', 2)]),
+        ]:
+            args = f'"{pattern}", "{subject}"{tail}'
+            offset_args = args + (' | PREG_SPLIT_OFFSET_CAPTURE' if '$splitFlags' in tail else '')
+            statements.append('{')
+            statements.append(f'$offsetResult result_or_false<vector<regex_offset_capture>> = preg_split_offsets({offset_args});')
+            statements.append('$offsetFields vector<regex_offset_capture> = $offsetResult;')
+            statements.append(f'$plainFields vector<string> = preg_split({args});')
+            statements.append(f'if (count($plainFields) !== {len(expected)} || count($offsetFields) !== {len(expected)}) {{ return 124; }}')
+            for index, (value, offset) in enumerate(expected):
+                statements.append(f'if ($offsetFields[{index}]->text !== "{value}" || $offsetFields[{index}]->byte_offset !== {offset}'
+                                  f' || $plainFields[{index}] !== $offsetFields[{index}]->text) {{ return 125; }}')
+            statements.append('}')
+        statements.append('if (preg_split_offsets("/[/", "", 1) !== false || '
+                          'preg_split_offsets("/./u", string_byte_from_int(255)) !== false) { return 126; }')
         # At byte 2, group 1 is unset, group 2 matches empty and group 4 is trailing/unset.
         statements.append('$capturePattern string = "/(?<pre>x)?(?<empty>)(é)(?<tail>z)?/u";')
         for suffix, cell, flag, offsets, nulls in [
@@ -404,11 +432,12 @@ def prove(work, runtime, flavor):
             source_edit(source, 'regex_test("/a/", "a"); return 0;')
             assert 'regex_test' in invoke(resident).get('error', '')
             if flavor == 'php':
-                source_edit(source, 'preg_quote("."); preg_match("/a/", "a"); '
+                source_edit(source, 'preg_split_offsets("/,/", "a,b"); preg_quote("."); preg_match("/a/", "a"); '
                                    'preg_grep("/x/", preg_split("/,/", "x,y")); return 0;')
                 ok()
                 lowered = b'\n'.join(artifacts(output).values())
                 assert b'::scpp::regex::split(' in lowered and b'::scpp::regex::preg_grep_vector(' in lowered
+                assert b'::scpp::regex::split_offsets(' in lowered
                 assert b'::scpp::regex::preg_grep(' not in lowered
             source_edit(source, fixture(flavor))
         source_edit(manifest, enabled)

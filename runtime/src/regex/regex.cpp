@@ -408,28 +408,58 @@ result_or_false_hash_string_string preg_filter_string_keys(const string& pattern
     return preg_filter_string_keys(pattern, replacement, input, -1);
 }
 
+namespace {
+template<class Result, class Fields, class Make>
+Result split_fields(const string& pattern, const string& subject, int64 limit, int64 flags, Make make) {
+    capture_pattern compiled(pattern);
+    if (!compiled.data) return Result::from_false();
+    Fields fields;
+    const auto text = bytes(subject);
+    size_t copied = 0;
+    int64 pieces = 0;
+    auto append = [&](std::string_view field, int64 offset) {
+        if ((flags & 1) && field.empty()) return false;
+        fields.append(make(owned(field), offset));
+        return true;
+    };
+    if (limit != 1 && !compiled.each(text, 0, [&](int count, size_t start, size_t end) {
+        if (append(text.substr(copied, start - copied), copied)) ++pieces;
+        if (flags & 2) {
+            const auto* pairs = pcre2_get_ovector_pointer(compiled.data.get());
+            for (int i = 1; i < count; ++i) {
+                const auto from = pairs[2 * i];
+                if (from == PCRE2_UNSET) append({}, -1);
+                else append(text.substr(from, pairs[2 * i + 1] - from), from);
+            }
+        }
+        copied = end;
+        return limit <= 0 || pieces < limit - 1;
+    })) return Result::from_false();
+    append(text.substr(copied), copied);
+    return Result{std::move(fields)};
+}
+}
+
+#if __has_include(<scpp/regex/preg_split_offsets.hpp>)
+result_or_false_vector_regex_offset_capture split_offsets(const string& pattern, const string& subject, int64 limit, int64 flags) {
+    validate_limit(limit);
+    return split_fields<result_or_false_vector_regex_offset_capture, vector_regex_offset_capture>(
+        pattern, subject, limit, flags, [](string field, int64 offset) { return regex_offset_capture{std::move(field), offset}; });
+}
+result_or_false_vector_regex_offset_capture split_offsets(const string& pattern, const string& subject, int64 limit) {
+    return split_offsets(pattern, subject, limit, 0);
+}
+result_or_false_vector_regex_offset_capture split_offsets(const string& pattern, const string& subject) {
+    return split_offsets(pattern, subject, -1, 0);
+}
+#endif
+
 result_or_false_vector_string split(const string& pattern, const string& subject, int64 limit, int64 flags) {
     validate_limit(limit);
     if (flags & 4) throw ValueError("regex_split offset captures are unsupported");
-    capture_pattern compiled(pattern);
-    if (!compiled.data) return result_or_false_vector_string::from_false();
-    vector_string fields;
-    const auto text = bytes(subject);
-    size_t copied = 0;
-    auto append = [&](std::string_view field) {
-        if (!(flags & 1) || !field.empty()) fields.append(owned(field));
-    };
-    if (limit != 1 && !compiled.each(text, 0, [&](int count, size_t start, size_t end) {
-        append(text.substr(copied, start - copied));
-        if (flags & 2)
-            for (int i = 1; i < count; ++i) append(compiled.capture(text, i));
-        copied = end;
-        return limit <= 0 || fields.size() < limit - 1;
-    })) return result_or_false_vector_string::from_false();
-    append(text.substr(copied));
-    return result_or_false_vector_string{std::move(fields)};
+    return split_fields<result_or_false_vector_string, vector_string>(
+        pattern, subject, limit, flags, [](string field, int64) { return field; });
 }
-
 result_or_false_vector_string split(const string& pattern, const string& subject, int64 limit) {
     return split(pattern, subject, limit, 0);
 }

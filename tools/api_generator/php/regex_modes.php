@@ -11,7 +11,12 @@ function regexModeVariants(object $catalog, object $request): array {
         fields($definition, ['cell', 'offset', 'nullable']);
         foreach (names($request->functions) as $base) {
             $layout = $catalog->capture_operations->$base ?? null;
-            if ($layout === null) continue;
+            if ($layout === null) {
+                // A return-valued operation already has a complete signature in the catalog.
+                if (($catalog->functions->$base->result ?? null) === 'result_or_false_vector_' . $definition->cell)
+                    $variants[$base] = [$base, $mode, $definition, null];
+                continue;
+            }
             $variants[$base . '_' . $mode] = [$base, $mode, $definition, $layout];
         }
     }
@@ -53,7 +58,7 @@ function prepareRegexModes(object $catalog, object $request, string $moduleHeade
     requireThat($vector && $hash, 'Capture modes require the string vector and string hash');
     $signatures = [];
     foreach ($variants as $name => [$base, $mode, $definition, $layout]) {
-        [$order, $keys] = listValue($layout);
+        [$order, $keys] = $layout === null ? ['single', 'numbered'] : listValue($layout);
         requireThat(in_array($order, ['single', 'both', 'rows', 'columns', 'fixed_rows', 'fixed_columns'], true)
             && in_array($keys, ['named', 'numbered'], true), 'Unknown regex capture layout');
         $cell = textValue($definition->cell);
@@ -104,6 +109,16 @@ function prepareRegexModes(object $catalog, object $request, string $moduleHeade
                 $plan['regex_mode_hashes'][$type] = $h;
             }
         }
+        if ($layout === null) {
+            $carrierName = $catalog->functions->$base->result;
+            if (!isset($plan['submodules']['type_exports'][$carrierName])) {
+                $prototype = array_column($plan['carriers'], null, 'name')['result_or_false_vector_string'] ?? null;
+                requireThat($prototype !== null, 'Capture results require a falseable vector carrier');
+                $plan['regex_carriers'][] = ['name' => $carrierName, 'payload' => $column, 'header' => $header] + $prototype;
+                $plan['submodules']['type_exports'][$carrierName] = ['symbol' => 'scpp::' . $carrierName, 'provider' => $provider];
+            }
+            continue;
+        }
         $binding = clone $catalog->functions->$base;
         $binding->native_name = $name;
         $binding->parameters[2] = (object)['type' => $outer, 'native_passing' => 'reference'];
@@ -143,6 +158,12 @@ function renderRegexModeTypes(array $plan, array &$files, array &$groups): void 
         }
     }
     $header = $publication['header'];
+    foreach ($plan['regex_carriers'] ?? [] as $carrier) {
+        if ($carrier['header'] !== $header) continue;
+        [$h, $d] = renderCarrier($plan, $carrier);
+        $decl .= "namespace scpp {\n$h}\n";
+        $body .= $d;
+    }
     $files['src/hash.cpp'] .= includeHeader($header) . $hashBody;
     $files['src/runtime.cpp'] .= includeHeader($header) . "namespace scpp {\n$body}\n";
     $files['public/scpp/php/regex_hash_isset.hpp'] = BANNER . "#pragma once\n" . includeHeader($header)

@@ -72,7 +72,18 @@ array for an offset pair. Traditional helpers validate the flags against the
 exact native output type before writing. The two fixed-order helpers infer
 the capture modifiers from that output type and retain the optional byte offset.
 
-The split flags are PREG_SPLIT_NO_EMPTY and PREG_SPLIT_DELIM_CAPTURE.
+Both split helpers accept PREG_SPLIT_NO_EMPTY and PREG_SPLIT_DELIM_CAPTURE.
+A positive limit counts emitted ordinary pieces, including the final unsplit
+remainder. Captured delimiters and suppressed empty pieces consume no limit.
+
+PHP `preg_split_offsets(pattern, subject[, limit[, flags]])` returns
+`result_or_false<vector<regex_offset_capture>>`. It always includes absolute
+byte offsets and accepts a redundant PREG_SPLIT_OFFSET_CAPTURE bit. A field
+or participating delimiter capture can be empty at its actual byte position.
+An interior unmatched delimiter group yields empty text at -1. Trailing
+unmatched groups are omitted. With NO_EMPTY all empty cells are omitted.
+A successful empty vector remains present. Regex failure returns false.
+Plain preg_split retains its string vector and rejects the offset bit.
 
 PHP preg_split directly exposes regex_split and returns result_or_false<vector<string>>.
 For preg_grep the second argument selects the overload. A vector<string> yields
@@ -100,5 +111,4 @@ Replacement limits are per subject and per pattern. The optional limit is a
 value argument even when the caller supplies a writable integer. Minus one
 means unlimited. Zero replacements still validates the pattern. A negative
 limit below minus one raises ValueError. Split also accepts zero for unlimited.
-Count-output replacement overloads and PREG_SPLIT_OFFSET_CAPTURE are outside this
-publication.
+Count-output replacement overloads are outside this publication.

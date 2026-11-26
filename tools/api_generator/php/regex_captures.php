@@ -58,6 +58,7 @@ function renderRegexCaptureTypes(array $plan, array &$files, array &$groups): vo
     }
     $decl .= "namespace scpp {\n";
     foreach ($plan['regex_carriers'] ?? [] as $carrier) {
+        if ($carrier['header'] !== $pub['header']) continue;
         [$h, $d] = renderCarrier($plan, $carrier);
         $decl .= $h;
         $body .= $d;
