@@ -52,23 +52,54 @@ with TemporaryDirectory(prefix='scpp-private-count-') as directory:
     assert 'marked_collection_reader' not in units and 'textKeys_collection_reader' not in units
     assert '&width_' in units and '&width_collection_reader' not in units
 
+keyed_reader = """
+function element(vector<int> $items,int $key=0):int {return $items[$key];}
+function byKey(hash<int,int> $items,int $key):int {return $items[$key];}
+"""
+keyed_main = """
+function change(vector<int> &$items):int {$items[1]=9;echo "M";return 1;}
+$v vector<int> = [4,6];$h hash<int,int> = [];$h[1]=8;$key=1;
+echo element($v,$key),element($v,0),byKey($h,$key),byKey($h,1),":";
+echo element($v),element(key:1,items:$v),":";
+echo element($v,change($v)),":",$v[1],$h[1];
+return 8;
+"""
+with TemporaryDirectory(prefix='scpp-keyed-reader-') as directory:
+    work = Path(directory)
+    expected = b'6488:46:M6:98'
+    writer = keyed_reader.replace('return $items[$key];', '$items[$key]=2;return $items[$key];')
+    changed_call = keyed_main.replace('element($v,$key)', 'element($v,change($v))')
+    edits = [(None, None, expected), ('main', changed_call, b'M6488:49:M9:98'), ('main', keyed_main, expected),
+             ('reader', writer, b'2222:22:M2:98'),
+             ('reader', None, None), ('reader', keyed_reader, expected)]
+    revisions(work, 'php', dict(main=keyed_main, reader=keyed_reader), edits[:1] if quick else edits)
+    units = '\n'.join(p.read_text() for p in (work/'php-out/units').glob('*.cpp'))
+    for symbol in ('element', 'byKey'):
+        assert units.count(symbol + '_collection_reader(var_') == 2, units
+        assert re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{\s*return [^;]+\.at\(', units)
+
 if not quick:
     with TemporaryDirectory(prefix='scpp-index-failure-') as directory:
         for function, collection, error in [('first', 'vector<int>', 'sequence_index_out_of_range'),
                                             ('lookup', 'hash<int,int>', 'hash_missing_key')]:
             guard(Path(directory), 'php', function, reader + f'$v {collection} = [];return {function}($v);',
                   error, exception_type='std::out_of_range')
+        for function, collection, error in [('element', 'vector<int>', 'sequence_index_out_of_range'),
+                                            ('byKey', 'hash<int,int>', 'hash_missing_key')]:
+            guard(Path(directory), 'php', function, keyed_reader + f'$v {collection} = [];$key=1;return {function}($v,$key);',
+                  error, exception_type='std::out_of_range')
     from classes_native import fixture
     for flavor in ('cpp', 'js'):
         forms = fixture(flavor)
         read = forms['function']('width', 'int', [('items', 'vector<int>')], 'return count(items);')
         read += forms['function']('first', 'int', [('items', 'vector<int>')], 'return items[0];')
+        read += forms['function']('element', 'int', [('items', 'vector<int>'), ('key', 'int')], 'return items[key];')
         local = 'vector<int> v=[3,5];' if flavor == 'cpp' else 'let v:vector<int> = [3,5];'
-        app = local + 'echo width(v),first(v),v[0];return 8;'
+        app = local + 'echo width(v),first(v),element(v,1),v[0];return 8;'
         with TemporaryDirectory(prefix='scpp-private-count-') as directory:
             revisions(Path(directory), flavor, dict(main=app, reader=read), [
-                (None, None, b'233'),
-                ('reader', read.replace('return items[0]', 'items[0]=9;return items[0]'), b'293'),
+                (None, None, b'2353'),
+                ('reader', read.replace('return items[key]', 'items[key]=9;return items[key]').replace('return items[0]', 'items[0]=7;return items[0]'), b'2793'),
                 ('reader', None, None),
-                ('reader', read, b'233'),
+                ('reader', read, b'2353'),
             ])
