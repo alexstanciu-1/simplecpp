@@ -35,12 +35,12 @@ unset($peerRule->operators->equal);
 $strictPeers = compilerPeerEquality($peerRule, $metadata->carriers->families);
 requireThat(!str_contains($strictPeers, 'binary_operator::equal') && str_contains($strictPeers, 'binary_operator::identical'),
     'Removing ordinary equality must preserve only the strict peer binding');
-$peerRule->families[] = 'result_or_bool';
+$peerRule->families[] = 'result';
 try {
     compilerPeerEquality($peerRule, $metadata->carriers->families);
-    throw new \LogicException('Accepted a multi-sentinel family for two-state equality');
+    throw new \LogicException('Accepted a structured error for sentinel equality');
 } catch (\RuntimeException $error) {
-    requireThat(str_contains($error->getMessage(), 'one payload and one absent state'), 'Unexpected peer state validation error');
+    requireThat(str_contains($error->getMessage(), 'empty or sentinel alternate states'), 'Unexpected peer state validation error');
 }
 // A type opts into dispatch independently of its ordinary equality and literal operations.
 $dispatch = unserialize($originalExportMetadata);

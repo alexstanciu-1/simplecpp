@@ -148,6 +148,33 @@ SCPP;
 			'Stable nullable locals must compare directly');
 		verify(str_contains($cpp, 'const auto binary_left = var_a_0; const auto binary_right = replace_absent_(var_a_0, var_calls_4);'),
 			'Snapshot the entire left carrier before the mutating RHS');
+		$states = ['p_false' => 'false', 'p_true' => 'true', 's_false' => 'false_sentinel', 's_true' => 'true_sentinel'];
+		$table = '';
+		foreach ($states as $name => $initial) $table .= '$' . $name . " result_or_bool<bool> = $initial;";
+		$expected = '';
+		foreach (['==', '!=', '===', '!=='] as $op) {
+			foreach (array_keys($states) as $left) {
+				foreach (array_keys($states) as $right) {
+					$table .= 'echo (int)($' . $left . " $op " . '$' . $right . ');';
+					$expected .= (string)(int)(($left === $right) !== str_starts_with($op, '!'));
+				}
+			}
+		}
+		$mutation = <<<'SCPP'
+function change(result_or_bool<bool> &$slot): result_or_bool<bool> {
+    echo "R"; $slot=true_sentinel; return $slot;
+}
+echo (int)($p_true === change($p_true)), (int)($p_true == $s_true);
+return 8;
+SCPP;
+		$cpp = (new Cpp_Emitter())->emit($prepare($table . $mutation));
+		verify(str_contains($cpp, '!(var_s_true_3).has_value() && (var_p_true_1).is_true() == (var_s_true_3).is_true()'),
+			'Stable operands must compare the stored sentinel only after excluding a payload');
+		verify(str_contains($cpp, 'const auto binary_left = var_p_true_1; const auto binary_right = change_(var_p_true_1);'),
+			'Save the whole boolean-sentinel carrier before changing its slot');
+		$fixtures['php-bool-sentinel-peers'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex($expected . 'R01')];
+		rejects(fn() => $prepare('$a result_or_bool<vector<string>> = true_sentinel; return (int)($a == $a);'),
+			'Unsupported binary operands');
 		$throws = <<<'SCPP'
 function fail_left(): ?int { throw new Exception("left"); }
 function right(): ?int { echo "R"; return null; }
@@ -252,6 +279,7 @@ SCPP;
 		$revision = time();
 		$steps = [['nullable<int>', '12'], ['result<int>', '13.75'], ['nullable<string>', '"wrong"'],
 			['retry', ''], ['result_or_false<int>', '14'], ['delete', ''], ['nullable<int64>', '15']];
+		if ($flavor === flavor::php) $steps[] = ['result_or_bool<int>', '16'];
 		foreach ($steps as $step => [$type, $value]) {
 			if ($type !== 'retry') {
 				if ($type === 'delete') {
