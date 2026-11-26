@@ -27,7 +27,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
     }
     $recordExport = $split && isset($plan['structural_encoder']);
     if ($recordExport) {
-        $d = includeHeader('scpp/encoder.hpp') . $d;
+        $d = "#include <vector>\n" . includeHeader('scpp/encoder.hpp') . $d;
         $methods = '';
         foreach ($plan['structural_encoder'] as $type => $parameter) {
             $kind = $plan['boxed_dispatch']['kinds'][$type] ?? null;

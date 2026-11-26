@@ -111,20 +111,9 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return false;
 	}
 
-	/** A field-derived struct exports current field values through the same scalar factories as a vector. */
-	public function check_record_export(record_type_definition $record, ast_cast_expression $site): void
+	public function exports_scalar(type_definition $element): bool
 	{
-		$data = $record->declaration->data_constructor;
-		if (!$this->supports_record_export() || $record->declaration->kind !== record_kind::structure || $data === null || $record->constructor() !== null) {
-			throw new diagnostic($site->source(), $site->byte_start(), 'Boxed record export requires a field-derived data struct and structural Encoder');
-		}
-		foreach ($data->parameters as $field) {
-			$type = $field->type_def();
-			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
-			if ($this->export_factory($leaf) === null) {
-				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot export ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ') to ' . $this->name);
-			}
-		}
+		return $this->export_factory($element) !== null;
 	}
 
 	/** Borrow the evaluated vector once and publish a fresh list after every element has been boxed. */

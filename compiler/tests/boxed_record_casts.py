@@ -14,9 +14,14 @@ with tempfile.TemporaryDirectory(prefix='boxed-record-casts-') as folder:
     app.mkdir()
     (app/'module.json').write_text('{"entry":"main.php"}')
     record = app/'packet.php'
+    child = app/'point.php'
+    point = 'data struct Point { public int $x; public vector<int> $samples; }'
+    source_edit(child, point)
     schema = '''data struct Packet {
+        public Point $left;
         public int $version = 1;
         public vector<int> $data;
+        public Point $right;
         public string $label;
         public vector<string> $tags;
     }'''
@@ -26,13 +31,19 @@ with tempfile.TemporaryDirectory(prefix='boxed-record-casts-') as folder:
     main = app/'main.php'
     program = '''
 function once(Packet $p):Packet {echo "!";return $p;}
-$p Packet = {tags:["long text beyond inline string capacity","z"],data:[2,7]};
+$p Packet = {right:{samples:[8],x:9},left:{samples:[5],x:4},tags:["long text beyond inline string capacity","z"],data:[2,7]};
 $p->version = 3; $p->label = "old";
 $m = (mixed)once($p); $d = (dynamic)once($p);
+$p->left = {x:44,samples:[55]}; $p->right = {x:99,samples:[]};
 $p->version = 4; $p->data = [99]; $p->label = "new"; $p->tags = [];
 '''
     body = '''
 foreach (BOX as $key => $value) {echo (string)$key, "|";}
+$left = BOX["left"]; $right = BOX["right"];
+foreach ($left as $ck => $cv) {echo (string)$ck, "|";}
+$lv = $left["samples"]; $rv = $right["samples"];
+echo (int)$left["x"], (int)$lv[0], (int)$right["x"], (int)$rv[0];
+$left["x"] = 70; echo (int)$right["x"];
 $data = BOX["data"]; $tags = BOX["tags"];
 echo (int)BOX["version"], (string)BOX["label"], (int)$data[0], (int)$data[1], (string)$tags[0], (string)$tags[1];
 '''
@@ -48,6 +59,7 @@ $last_tags = $a["tags"]; echo count($last_tags), (int)$b["version"]; return 8;''
         code = b'\n'.join(baseline.values())
         assert b'scpp_escape_json_encode' not in code and b'scpp/json/' not in code
         assert code.count(b'Packet::encode(::scpp::Encoder& out) const') == 1
+        assert code.count(b'Point::encode(::scpp::Encoder& out) const') == 1
         build = root/'native'
         build.mkdir()
         manifest = json.loads((out/'manifest.json').read_text())
@@ -55,9 +67,14 @@ $last_tags = $a["tags"]; echo count($last_tags), (int)$b["version"]; return 8;''
         units = [out/u for u in manifest['translation_units']]
         subprocess.run(write_build(build, units), cwd=build, check=True)
         run = subprocess.run([build/'program'], capture_output=True)
-        one = b'version|data|label|tags|3old27long text beyond inline string capacityz'
+        one = b'left|version|data|right|label|tags|x|samples|459893old27long text beyond inline string capacityz'
         assert (run.returncode, run.stdout, run.stderr) == (8, b'!!'+one*2+b'04', b''), run
 
+        source_edit(child, point.replace('public int $x;', 'public int $x; public hash<int,int> $lookup;'))
+        error = invoke(proc).get('error', '')
+        assert 'Packet::$left -> Point::$lookup' in error, error
+        source_edit(child, point)
+        assert 'error' not in invoke(proc) and artifacts(out) == baseline
         source_edit(record, schema.replace('public string $label;', 'public string $label; public hash<int,int> $lookup;'))
         error = invoke(proc).get('error', '')
         assert 'Cannot export Packet::$lookup' in error, error

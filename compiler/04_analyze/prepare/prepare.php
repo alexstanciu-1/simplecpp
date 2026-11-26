@@ -1627,8 +1627,8 @@ final class Preparation
 			}
 			$source = $syntax->operand->type_def();
 			if ($type instanceof boxed_type_definition && $source instanceof record_type_definition) {
-				$this->watch_encode_schema($source);
-				$type->check_record_export($source, $syntax);
+				$seen = $path = [];
+				$this->check_boxed_schema($source, $type, $syntax, $seen, $path);
 				$syntax->settle_cast($type, value_conversion::export_record);
 			} else $syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, conversion_context::explicit_cast));
 			return;
@@ -2120,6 +2120,30 @@ final class Preparation
 		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_encode->value);
 		for ($base = $record->base(); $base !== null; $base = $base->base()) {
 			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
+		}
+	}
+
+	/** Validate and watch each embedded value schema once per cast. @param bool[] $seen @param string[] $path */
+	private function check_boxed_schema(record_type_definition $record, boxed_type_definition $box, ast_cast_expression $site, array &$seen, array &$path): void
+	{
+		if (isset($seen[$record->name])) return;
+		$seen[$record->name] = true;
+		$this->watch_encode_schema($record);
+		$data = $record->declaration->data_constructor;
+		if (!$box->supports_record_export() || $record->declaration->kind !== record_kind::structure || $data === null || $record->constructor() !== null) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Boxed record export requires a field-derived data struct and structural Encoder'
+				. ($path === [] ? '' : ' at ' . implode(' -> ', $path)));
+		}
+		foreach ($data->parameters as $field) {
+			$type = $field->type_def();
+			if ($type instanceof record_type_definition) {
+				$path[] = $record->name . '::$' . $field->short_name;
+				$this->check_boxed_schema($type, $box, $site, $seen, $path);
+				array_pop($path);
+			} elseif (!$box->exports_scalar($type instanceof native_sequence_type ? $type->write_type() : $type)) {
+				$path[] = $record->name . '::$' . $field->short_name;
+				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot export ' . implode(' -> ', $path) . ' (' . $type->name . ') to ' . $box->name);
+			}
 		}
 	}
 

@@ -41,9 +41,12 @@ struct in declaration order. The cast evaluates its operand once and reads the
 current field values. Scalar leaves require both a structural write and a boxing
 factory in the selected family. A vector field uses the same rule for its
 elements. Each field is stored under its declared name and each vector becomes a
-fresh packed list. Publication follows completion of the whole record.
+fresh packed list. An embedded by-value field-derived data struct becomes a
+fresh keyed child in the same family, with its own declaration order and
+independent scalar and vector snapshots. Publication follows completion of the
+whole record.
 
 Both destinations consume the same generated `encode(Encoder&) const` field
 walk as JSON. Boxed export requires only the application runtime. Implicit record
-export, authored constructor mappings, nested records and shared owners remain
+export, authored constructor mappings, vectors of records and shared owners remain
 outside this cast contract.
