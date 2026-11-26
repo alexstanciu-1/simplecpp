@@ -58,6 +58,7 @@ $reject=json_pull_reader_create(); $ok=$reject->start("[]","",1);
 if(isset($reject->reject("schema failure")) || isset($reject->kind())){return 19;}
 $packet Packet={data:[3,-4,8]}; $encoded=json_encode($packet);
 if(!isset($encoded)){return 20;}
+$packed = (mixed)$packet; $numbers = $packed["data"]; if ((int)$numbers[1] !== -4) {return 48;}
 $wire string=$encoded;
 if($wire!=="{\"data\":[3,-4,8],\"version\":1}"){return 21;}
 $box Box={label:"a\0b"}; $label string=encodeBox($box);
@@ -124,7 +125,7 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
         assert 'error' not in result, result
         baseline = artifacts(out)
         units = b'\n'.join(v for k, v in baseline.items() if k.suffix == '.cpp')
-        assert b'Packet::encode(::scpp::Encoder& out) const' in units
+        assert units.count(b'Packet::encode(::scpp::Encoder& out) const') == 1
         assert b'encode_record(' not in units and b'encode_owned_record(' not in units
         assert b'Packet::decode(::scpp::Decoder& d)' in units
         assert b'd.next_field()' in units and b'd.next_element()' in units

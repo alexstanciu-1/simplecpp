@@ -25,6 +25,18 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             . "    if (index >= 0) return {boxed_key(static_cast<int64>(index)), {}};\n"
             . "    return {-1, std::move(key)};\n}\n";
     }
+    $recordExport = $split && isset($plan['structural_encoder']);
+    if ($recordExport) {
+        $d = includeHeader('scpp/encoder.hpp') . $d;
+        $methods = '';
+        foreach ($plan['structural_encoder'] as $type => $parameter) {
+            $kind = $plan['boxed_dispatch']['kinds'][$type] ?? null;
+            $methods .= $kind === null
+                ? "    void write($parameter) override { throw std::logic_error(\"unsupported boxed record leaf\"); }\n"
+                : "    void write($parameter value) override { put(Box::from_$kind(value)); }\n";
+        }
+        $d .= template('structure/boxed_record_writer', compact('methods'));
+    }
     foreach ($box['families'] as $family) {
         $n = $family['name']; $native = $family['native'];
         $get = fn(string $value): string => "detail::ownership_access::get<$native>($value)";
@@ -48,6 +60,11 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             $const = $operation === 'has' ? ' const' : '';
             $sourceMembers .= "    bool_t $binding(int64 key)$const { return $operation(boxed_key(key)); }\n"
                 . "    bool_t $binding(const string& key)$const { auto normalized = boxed_key(key); return normalized.index < 0 ? $operation(normalized.text) : $operation(normalized.index); }\n";
+        }
+        if ($recordExport) {
+            $sourceMembers .= "    static $n from_record(const void* source, void (*visit)(const void*, Encoder&));\n";
+            $d .= "$n $n::from_record(const void* source, void (*visit)(const void*, Encoder&)) {\n"
+                . "    boxed_record_writer<$n> out;\n    visit(source, out);\n    return out.finish();\n}\n";
         }
         $literalEntry = '';
         if ($split && $box['initialization'] === 'ordered_family_literals') {
@@ -76,6 +93,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             $h .= includeHeader(providerHeader($plan['submodules'], $provider));
             [$api, $impl] = renderBoxedDispatch($plan['boxed_dispatch'], $n);
             $forward = $box['scalar_conversions'] ? "class $peer; " : '';
+            if ($recordExport) $forward .= 'class Encoder; ';
             $groups[] = ['provider' => $provider, 'system' => [], 'declarations' =>
                 includeHeader('scpp/boxed_key.hpp') . includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $literalEntry . $api . $predicates . "}\n"];
             $d .= $impl . "$n $n::source_read(const boxed_text_key& key) const { return key.index < 0 ? read(key.text) : read(key.index); }\n"

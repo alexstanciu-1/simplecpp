@@ -106,9 +106,35 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return null;
 	}
 
+	public function supports_record_export(): bool
+	{
+		return false;
+	}
+
+	/** A field-derived struct exports current field values through the same scalar factories as a vector. */
+	public function check_record_export(record_type_definition $record, ast_cast_expression $site): void
+	{
+		$data = $record->declaration->data_constructor;
+		if (!$this->supports_record_export() || $record->declaration->kind !== record_kind::structure || $data === null || $record->constructor() !== null) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Boxed record export requires a field-derived data struct and structural Encoder');
+		}
+		foreach ($data->parameters as $field) {
+			$type = $field->type_def();
+			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
+			if ($this->export_factory($leaf) === null) {
+				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot export ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ') to ' . $this->name);
+			}
+		}
+	}
+
 	/** Borrow the evaluated vector once and publish a fresh list after every element has been boxed. */
 	public function cpp_conversion_adapter(int $conversion /** uint16 */, ?type_definition $source): ?cpp_inline_adapter
 	{
+		if ($conversion === value_conversion::export_record && $source instanceof record_type_definition) {
+			$body = "\treturn " . $this->cpp_type() . '::from_record(&source, &' . $source->cpp_type() . "::scpp_escape_encode_fields);\n";
+			return new cpp_inline_adapter('export_record', [new cpp_adapter_parameter($source, 'source', cpp_adapter_mode::const_reference)],
+				$this, $body, false);
+		}
 		if ($conversion !== value_conversion::export_list) return null;
 		if (!($source instanceof native_sequence_type)) throw new \LogicException('Unprepared list export');
 		$factory = $this->export_factory($source->write_type()) ?? throw new \LogicException('Missing list element factory');

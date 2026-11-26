@@ -1625,7 +1625,12 @@ final class Preparation
 			if ($type === null) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_reference->spelling());
 			}
-			$syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, conversion_context::explicit_cast));
+			$source = $syntax->operand->type_def();
+			if ($type instanceof boxed_type_definition && $source instanceof record_type_definition) {
+				$this->watch_encode_schema($source);
+				$type->check_record_export($source, $syntax);
+				$syntax->settle_cast($type, value_conversion::export_record);
+			} else $syntax->settle_cast($type, $type->prepare_conversion($syntax->operand, conversion_context::explicit_cast));
 			return;
 		}
 		if ($syntax instanceof ast_unary_expression) {
@@ -2109,6 +2114,15 @@ final class Preparation
 		}
 	}
 
+	/** Request the shared field walk and recheck casts/calls when a contributing layout changes. */
+	private function watch_encode_schema(record_type_definition $record): void
+	{
+		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_encode->value);
+		for ($base = $record->base(); $base !== null; $base = $base->base()) {
+			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
+		}
+	}
+
 	/** Resolve field encoders using the active module's published overloads. */
 	private function record_encoder(json_encoder_overloads $encoders, type_definition $input, ast_expression $site): ?runtime_function
 	{
@@ -2117,6 +2131,7 @@ final class Preparation
 		if ($record->declaration->data_constructor === null || $record->constructor() !== null) return null;
 		$seen = [];
 		$this->check_encode_schema($record, $encoders, $site, $seen);
+		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_json_encode->value);
 		$variants = $encoders->by_arity[1];
 		$published = reset($variants);
 		return new record_encode_function($record, $input, $published, $encoders);
@@ -2127,10 +2142,7 @@ final class Preparation
 	{
 		if (isset($seen[$record->name])) return;
 		$seen[$record->name] = true;
-		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_encode->value);
-		for ($base = $record->base(); $base !== null; $base = $base->base()) {
-			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
-		}
+		$this->watch_encode_schema($record);
 		foreach ($record->declaration->data_constructor->parameters as $field) {
 			$type = $field->type_def();
 			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
