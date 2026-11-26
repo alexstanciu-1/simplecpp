@@ -10,11 +10,18 @@ final class Translation_Diagnostic extends Exception {
 	public readonly string $path;
 	public readonly int $offset;
 	public readonly string $detail;
+	public readonly string $location;
 
-	public function __construct(string $path, int $offset, string $detail) {
+	public function __construct(string $path, int $offset, string $detail, string $bytes = "") {
 		$this->path = $path;
 		$this->offset = $offset;
 		$this->detail = $detail;
+		$line = 1;
+		$start = 0;
+		for ($i = 0; $i < $offset && $i < strlen($bytes); $i++) {
+			if ($bytes[$i] == 10) { $line++; $start = $i + 1; }
+		}
+		$this->location = (string)$line . ":" . (string)($offset - $start + 1);
 	}
 }
 
@@ -28,7 +35,7 @@ function identifier_byte(byte $value): bool {
 
 function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<Token_Span> {
 	$invalid = source_utf8_error($text);
-	if ($invalid >= 0) throw new Translation_Diagnostic($path, $invalid, "Invalid UTF-8 source");
+	if ($invalid >= 0) throw new Translation_Diagnostic($path, $invalid, "Invalid UTF-8 source", $text);
 	$tokens vector<Token_Span> = [];
 	$length = strlen($text);
 	$offset = 0;
@@ -52,7 +59,7 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 		if (!$python && $value == 47 && string_byte_slice_equals($text, $start, 2, "/*")) {
 			$offset++;
 			while ($offset < $length && !string_byte_slice_equals($text, $offset, 2, "*/")) { $offset++; }
-			if ($offset === $length) throw new Translation_Diagnostic($path, $start, "Unterminated block comment");
+			if ($offset === $length) throw new Translation_Diagnostic($path, $start, "Unterminated block comment", $text);
 			$offset += 2;
 			continue;
 		}
@@ -75,9 +82,9 @@ function tokenize_source(string $path, string $text, Scan_Flavor $mode): vector<
 		} else {
 			$width = 0;
 			$kind = punctuation_at($text, $start, $value, $mode, $width);
-			if ($kind === Token_Kind::Unrecognized) throw new Translation_Diagnostic($path, $start, "Unsupported token");
+			if ($kind === Token_Kind::Unrecognized) throw new Translation_Diagnostic($path, $start, "Unsupported token", $text);
 			if ($kind === Token_Kind::Rejected) {
-				throw new Translation_Diagnostic($path, $start, "Unsupported punctuation in Python flavor");
+				throw new Translation_Diagnostic($path, $start, "Unsupported punctuation in Python flavor", $text);
 			}
 			$offset = $start + $width;
 		}
@@ -153,7 +160,7 @@ final class Translation_Parser {
 	private function expect(Token_Kind $kind, string $message): Token_Span {
 		$token = $this->source->tokens[$this->index];
 		if ($token->kind !== $kind) {
-			throw new Translation_Diagnostic($this->source->path, $token->offset, $message);
+			throw new Translation_Diagnostic($this->source->path, $token->offset, $message, $this->source->text);
 		}
 		if ($kind !== Token_Kind::End) {
 			$this->index++;
@@ -169,7 +176,7 @@ final class Translation_Parser {
 		$message = "Expected " . $name;
 		$token = $this->expect(Token_Kind::T_identifier, $message);
 		if ($this->spelling($token) !== $name) {
-			throw new Translation_Diagnostic($this->source->path, $token->offset, $message);
+			throw new Translation_Diagnostic($this->source->path, $token->offset, $message, $this->source->text);
 		}
 	}
 
@@ -177,7 +184,7 @@ final class Translation_Parser {
 		$token = $this->expect(Token_Kind::T_identifier, "Expected function name");
 		$name = $this->spelling($token);
 		if ($name === "function" || $name === "int" || $name === "return") {
-			throw new Translation_Diagnostic($this->source->path, $token->offset, "Expected function name");
+			throw new Translation_Diagnostic($this->source->path, $token->offset, "Expected function name", $this->source->text);
 		}
 		return $token;
 	}

@@ -1,0 +1,92 @@
+// PHP frontend wire protocol for the retained two-source bootstrap grammar.
+function quoted(string $text): string {
+    return json_encode($text);
+}
+
+function member_text(json_node $root, string $name): string {
+    $item json_node = json_node_member($root, $name);
+    return json_node_string($item);
+}
+
+function document(string $line): json_document {
+    $error ?json_parse_error = null;
+    $parsed = json_document_parse($line, $error);
+    if (!isset($parsed)) throw Exception::make("Syntax error");
+    return $parsed;
+}
+
+function report(Frontend_Session $session, string $root, string $line, bool &$stop): string {
+    $doc = document($line);
+    $node json_node = json_document_root($doc);
+    if (json_node_kind($node) !== "object" || !json_node_has($node, "command")) throw Exception::make("Unknown service command");
+    $member json_node = json_node_member($node, "command");
+    if (json_node_kind($member) !== "string") throw Exception::make("Unknown service command");
+    $cmd string = json_node_string($member);
+    $extra = "";
+    if ($cmd === "frontend") {
+        $scope = $session->scope;
+        $entry = $session->entry;
+        $start = dt_monotonic_ms();
+        $session->refresh($root);
+        $elapsed = dt_monotonic_ms() - $start;
+        $added = 0;
+        $reused = 0;
+        if ($scope === null) $added++;
+        elseif ($scope === $session->scope) $reused++;
+        if ($entry === null) $added++;
+        elseif ($entry === $session->entry) $reused++;
+        $mode = $added === 2 ? "full" : "incremental";
+        $extra = ",\"mode\":" . quoted($mode) . ",\"frontend_ms\":" . (string)$elapsed
+            . ",\"sources\":2,\"symbols\":1,\"counts\":{\"added\":" . (string)$added
+            . ",\"changed\":" . (string)(2 - $added - $reused) . ",\"removed\":0,\"reused\":" . (string)$reused . "}";
+    } elseif ($cmd === "stop") {
+        $stop = true;
+    } elseif ($cmd !== "status") {
+        throw Exception::make("Unknown service command");
+    }
+    $running = $stop ? "false" : "true";
+    return "{\"running\":" . $running . ",\"pid\":" . (string)host_pid() . ",\"application\":" . quoted($root)
+        . ",\"idle_seconds\":3600,\"generation\":" . (string)$session->generation . $extra . "}";
+}
+
+$cli = cli_arguments();
+if (count($cli) > 1) {
+    if (count($cli) < 3 || count($cli) > 4 || $cli[1] !== "frontend") return 2;
+    $cmd = count($cli) === 4 ? $cli[3] : "frontend";
+    if ($cmd !== "frontend" && $cmd !== "status" && $cmd !== "stop") return 2;
+    $line = host_exchange($cli[2], $cmd);
+    $doc = document($line);
+    $node json_node = json_document_root($doc);
+    if (json_node_has($node, "error")) throw Exception::make(member_text($node, "error"));
+    echo $line;
+    return 0;
+}
+
+host_directory();
+$root string = fs_realpath(".");
+$lock = fs_lock_empty();
+if (fs_is_link(".scpp/compiler.lock")) throw Exception::make("Invalid frontend lock");
+$owner bool = fs_lock_try($lock, ".scpp/compiler.lock");
+if (!$owner) return 0;
+try {
+    host_listen();
+    $session = new Frontend_Session();
+    $stop = false;
+    while (!$stop) {
+        $line = host_request();
+        if ($line === "") break;
+        $reply = "";
+        try {
+            $reply = report($session, $root, $line, $stop);
+        } catch (Translation_Diagnostic $error) {
+            $reply = "{\"error\":" . quoted($root . "/" . $error->path . ":" . $error->location . ": " . $error->detail) . "}";
+        } catch (Exception $error) {
+            $reply = "{\"error\":" . quoted($error->get_message()) . "}";
+        }
+        host_reply($reply . "\n");
+    }
+} finally {
+    host_close();
+    if (!fs_lock_release($lock)) throw Exception::make("Cannot release frontend lock");
+}
+return 0;
