@@ -69,3 +69,20 @@ taskset -c 7 python3 "$study/run.py" "$work" > "$work/results.json"
 ```
 
 [Raw samples, checksum-validated runs and allocation counts](dev002.json) · [Variant builder](build.py) · [Fused reader experiment](batch.inc) · [Measurement driver](run.py)
+
+## Production integer-vector decoder on dev002
+
+The generated typed record now calls one integer-array operation for a published int64 vector. The JSON reader consumes valid integer tokens in a single pass, appends into the existing vector, and replays the scalar path from the current delimiter if the fast path cannot accept the input. The production change retains input ownership and ordinary vector growth. Alternate decoder providers inherit scalar traversal.
+
+The following rates are decimal MB of JSON input per second. The preserved binary with the typed field mask and the new production binary participated in the same seven shuffled rounds on dev002 CPU 7. The wire format is a compact object containing data (consecutive integers starting at zero) and version (7). The 128- and 4,096-element production samples all exceeded every baseline sample. Empty and three-element results had substantial timing variation.
+
+| Decoder | Empty | 3 integers | 128 integers | 4,096 integers |
+|---|---:|---:|---:|---:|
+| Previous Simple C++ | 53.1 | 67.1 | 57.6 | 79.8 |
+| Current Simple C++ | 72.9 | 97.6 | 259.9 | 389.4 |
+| PHP 8.5.12 | 76.4 | 74.3 | 87.0 | 129.9 |
+| Node.js 22.23.4 | 106.4 | 95.9 | 283.5 | 473.7 |
+| nlohmann/json 3.11.3 | 55.6 | 50.5 | 66.3 | 96.4 |
+| Python 3.12.3 | 21.1 | 21.7 | 74.9 | 132.6 |
+
+[Raw measurements, controls and methodology](../json_record_arrays/integer-vector-languages.dev002.json)

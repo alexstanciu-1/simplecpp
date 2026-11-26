@@ -26,6 +26,14 @@ def replace(text, old, new):
 modes = sys.argv[3:] or ['baseline', 'field', 'mask', 'row', 'ordered']
 for mode in modes:
     folder = work/mode
+    if mode == 'production':
+        folder.mkdir(exist_ok=True)
+        flags = ['clang++', '-std=c++23', '-O3', '-DNDEBUG', '-stdlib=libc++', '-I', root/'runtime/generated/public']
+        manifest = json.loads((work/'out/manifest.json').read_text())
+        for name, options in [('time', []), ('counts', ['-DCOUNTERS', '-Wl,--wrap=_Znwm'])]:
+            subprocess.run([*flags, '-include', header, here/'main.cpp', unit, *options,
+                            *manifest['link_inputs'], '-o', folder/name], check=True)
+        continue
     src, inc = folder/'src', folder/'public'
     shutil.copytree(root/'runtime/src', src, dirs_exist_ok=True)
     shutil.copytree(root/'runtime/generated/public', inc, dirs_exist_ok=True)

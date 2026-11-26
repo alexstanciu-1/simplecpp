@@ -56,3 +56,26 @@ python3 "$study/run.py" "$work" --check
 # Sustained timings on dev002
 taskset -c 7 python3 "$study/run.py" "$work" > "$work/results.json"
 ```
+
+## Production duplicate mask
+
+The generated decoder classifies each decoded name once. The JSON reader uses its field index to check a record-local mask before consuming the colon. The existing generic reader still owns diagnostic construction. The comparison below uses the preserved baseline executable and the generated production record linked against the ordinary JSON publication. Both decoded the same documents on CPU 7 of dev002 in nine shuffled timing rounds.
+
+| Document | Baseline µs | Production µs | Baseline allocations | Production allocations |
+|---|---:|---:|---:|---:|
+| Empty array | 0.137 | 0.140 | 2 | 2 |
+| 1 ordered row | 0.515 | 0.448 | 9 | 6 |
+| 64 two-field rows | 11.44 | 10.92 | 10 | 10 |
+| 64 ordered rows | 21.17 | 17.33 | 202 | 10 |
+| 64 shuffled rows | 22.73 | 18.73 | 202 | 10 |
+| 64 shuffled rows with an escaped key | 25.40 | 21.01 | 202 | 10 |
+| 1,024 shuffled rows | 374.99 | 309.51 | 3,086 | 14 |
+
+The largest case used 103,184 allocated bytes per document, down from 201,488. The production reader matched the oracle for 56 valid documents and reproduced all 76 baseline error messages byte for byte. To repeat this comparison, retain the baseline binaries in the work directory, build the new JSON-enabled publication, then run:
+
+```sh
+XDEBUG_MODE=off python3 "$study/build.py" "$PWD" "$work" production
+taskset -c 7 python3 "$study/run.py" "$work" --production
+```
+
+[Production and baseline raw samples](production.dev002.json)

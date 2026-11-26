@@ -12,8 +12,9 @@ import subprocess
 parser = argparse.ArgumentParser()
 parser.add_argument('work', type=Path)
 parser.add_argument('--check', action='store_true')
+parser.add_argument('--production', action='store_true', help='compare baseline and unmodified production binaries')
 opts = parser.parse_args()
-modes = ['baseline', 'field', 'mask', 'row', 'ordered']
+modes = ['baseline', 'production'] if opts.production else ['baseline', 'field', 'mask', 'row', 'ordered']
 rng = random.Random(12473)
 
 def execute(mode, tool, documents, *args):

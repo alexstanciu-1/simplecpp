@@ -78,7 +78,7 @@ CPP;
 		if ($value instanceof shared_record_type_definition) $declarations[$value->name] = $value;
 		$name = $value->cpp_type();
 		$result = $record->record_result()->cpp_type();
-		$locals = $cases = $finish = $arguments = [];
+		$locals = $lookup = $cases = $finish = $arguments = [];
 		foreach ($record->declaration->data_constructor->parameters as $i => $field) {
 			$type = $field->storage_type();
 			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
@@ -105,7 +105,9 @@ CPP;
 					$locals[] = "bool $present = false;";
 					$body[] = "$present = true;";
 				}
-				if ($type instanceof native_sequence_type) {
+				if (isset($contract->sequences[$type::class])) {
+					$body[] = 'd.' . $contract->sequences[$type::class] . "($slot);";
+				} elseif ($type instanceof native_sequence_type) {
 					$body[] = 'd.begin_array();';
 					$body[] = 'while (d.next_element()) ' . $type->lower_cpp_append_value($slot, $read) . ';';
 				} else $body[] = "$slot = $read;";
@@ -116,12 +118,21 @@ CPP;
 				$default = $this->declaration_initialization($type, $field->initializer, $field->conversion, $headers);
 				$finish[] = "if (!$present) $slot = $default;";
 			} elseif ($nested instanceof record_type_definition && $type === $leaf) $take = "($present ? $take : $native{})";
-			$cases[] = "if (key == $spelling) {\n            " . implode("\n            ", $body) . "\n        }";
+			$lookup[] = "    if (key == $spelling) return $i;";
+			$cases[] = "    case $i:\n        " . implode("\n        ", $body) . "\n        break;";
 			$arguments[] = $take;
 		}
-		$loop = $cases === [] ? '' : implode(' else ', $cases) . ' else ';
-		$lines = [...$locals, 'd.begin_object();', 'while (d.next_field()) {',
-			'    const auto key = d.field_name();', '    ' . $loop . 'd.reject("unknown field");', '}', ...$finish,
+		$mask = '{}';
+		if ($lookup !== []) {
+			$words = intdiv(count($lookup) + 63, 64);
+			$locals[] = "std::uint64_t seen_fields[$words]{};";
+			$mask = 'seen_fields';
+		}
+		$key = $lookup === [] ? 'std::string_view' : 'std::string_view key';
+		$lines = [...$locals, "constexpr auto lookup = []($key) {", ...$lookup,
+			'    return ::scpp::Decoder::unknown_field;', '};', 'd.begin_object();',
+			"for (int field; (field = d.next_record_field(lookup, $mask)) != ::scpp::Decoder::end_fields;) {",
+			'    switch (field) {', ...$cases, '    default: d.reject("unknown field");', '    }', '}', ...$finish,
 			'return scpp_escape_from_data(' . implode(', ', $arguments) . ');'];
 		$method = self::decode_method($record);
 		$code = "$name {$name}::{$method}(::scpp::Decoder& d) {\n    " . implode("\n    ", $lines) . "\n}\n";

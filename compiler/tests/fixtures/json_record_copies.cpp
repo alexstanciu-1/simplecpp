@@ -27,14 +27,15 @@ extern "C" void* __wrap__ZN4scpp12vector_int64aSERKS0_(void* dest, const void* s
 
 // A second provider proves that the generated method only uses the Decoder contract.
 class VersionReader final : public scpp::Decoder {
-    bool offered = false;
+    int field = 0;
+    int element = 0;
 public:
     void begin_object() override {}
-    bool next_field() override { return !std::exchange(offered, true); }
-    std::string_view field_name() override { return "version"; }
-    scpp::int64 read_integer() override { return 6; }
-    void begin_array() override { reject("array"); }
-    bool next_element() override { reject("element"); }
+    bool next_field() override { return ++field <= 2; }
+    std::string_view field_name() override { return field == 1 ? "version" : "data"; }
+    scpp::int64 read_integer() override { return field == 1 ? 6 : element; }
+    void begin_array() override { element = 0; }
+    bool next_element() override { return ++element <= 2; }
     bool read_boolean() override { reject("bool"); }
     scpp::string read_string() override { reject("string"); }
     [[noreturn]] void reject(const char* why) override { throw std::runtime_error(why); }
@@ -93,11 +94,18 @@ int main() {
     for (auto bytes : {21u, 22u, 23u, 65536u})
         if (!check_publication(bytes)) return 47;
     VersionReader reader;
-    if (App::scpp_records::Packet::decode(reader).version != 6) return 38;
+    auto decoded = App::scpp_records::Packet::decode(reader);
+    if (decoded.version != 6 || decoded.data.size() != 2 || decoded.data.at(1) != 2) return 38;
     auto bad = App::readPacket_(scpp::string{R"({"data":[10,false,30]})"});
     if (!bad.has_error()) return 30;
     auto message = bad.error().get_message();
     if (std::string_view(message.data(), message.size()).find(R"($["data"][1])") == std::string_view::npos) return 31;
+    // A duplicate is diagnosed at the second opening quote, even before a missing colon.
+    auto duplicate = App::readPacket_(scpp::string{R"({"data":[],"\u0064ata" 42})"});
+    if (!duplicate.has_error()) return 50;
+    auto diagnostic = duplicate.error().get_message();
+    if (std::string_view(diagnostic.data(), diagnostic.size()) !=
+        R"(: byte 11 at $["\u0064ata"]: duplicate object key "\u0064ata")") return 51;
     auto saved = App::readPacket_(scpp::string{R"({"data":[3,4]})"});
     PacketEvents encoder;
     saved.value().encode(encoder);
