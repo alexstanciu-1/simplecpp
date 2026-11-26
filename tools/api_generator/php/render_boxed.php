@@ -37,6 +37,18 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         }
         $d .= template('structure/boxed_record_writer', compact('methods'));
     }
+    $recordImport = $split && isset($plan['structural_decoder']);
+    if ($recordImport) {
+        $d = "#include <stdexcept>\n#include <string>\n#include <vector>\n" . includeHeader('scpp/decoder.hpp') . $d;
+        $methods = '';
+        foreach ($plan['structural_decoder'] as $type => $method) {
+            $kind = $plan['boxed_dispatch']['kinds'][$type] ?? null;
+            $body = $kind === null ? 'reject("unsupported boxed record leaf");'
+                : "take(boxed_kind::$kind, \"expected $kind\"); return selected.get_$kind();";
+            $methods .= "    $type $method() override { $body }\n";
+        }
+        $d .= template('structure/boxed_record_reader', compact('methods'));
+    }
     foreach ($box['families'] as $family) {
         $n = $family['name']; $native = $family['native'];
         $get = fn(string $value): string => "detail::ownership_access::get<$native>($value)";
@@ -66,6 +78,11 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             $d .= "$n $n::from_record(const void* source, void (*visit)(const void*, Encoder&)) {\n"
                 . "    boxed_record_writer<$n> out;\n    visit(source, out);\n    return out.finish();\n}\n";
         }
+        if ($recordImport) {
+            $sourceMembers .= "    void with_decoder(void* output, void (*consume)(void*, Decoder&)) const;\n";
+            $d .= "void $n::with_decoder(void* output, void (*consume)(void*, Decoder&)) const {\n"
+                . "    boxed_record_reader<$n> reader(*this);\n    consume(output, reader);\n    reader.finish();\n}\n";
+        }
         $literalEntry = '';
         if ($split && $box['initialization'] === 'ordered_family_literals') {
             $sourceMembers .= "    struct keyed_entry;\n";
@@ -93,6 +110,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             $h .= includeHeader(providerHeader($plan['submodules'], $provider));
             [$api, $impl] = renderBoxedDispatch($plan['boxed_dispatch'], $n);
             $forward = $box['scalar_conversions'] ? "class $peer; " : '';
+            if ($recordImport) $forward .= 'class Decoder; ';
             if ($recordExport) $forward .= 'class Encoder; ';
             $groups[] = ['provider' => $provider, 'system' => [], 'declarations' =>
                 includeHeader('scpp/boxed_key.hpp') . includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $literalEntry . $api . $predicates . "}\n"];

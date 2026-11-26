@@ -374,6 +374,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Published Decoder operation for a scalar leaf. */
+	public function structural_reader(): ?string
+	{
+		return null;
+	}
+
 	/** Canonical types match by identity. Callable contracts also compare their signature components. */
 	public function matches(type_definition $other): bool
 	{

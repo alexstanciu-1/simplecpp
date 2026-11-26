@@ -300,7 +300,7 @@ final class record_result_type_definition extends carrier_type_definition
 	/** @return string[] */
 	public function cpp_headers(): array /** list<string> */
 	{
-		return type_result_dynamic::instance()->cpp_headers();
+		return [type_registry::RECORD_RESULT_HEADER];
 	}
 }
 

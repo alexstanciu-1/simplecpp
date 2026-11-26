@@ -11,7 +11,7 @@ require_once __DIR__ . '/hashes.php';
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry
 {
-	public const bool HAS_MT_SEGMENTS = @mt_available@;
+	@record_result_header@public const bool HAS_MT_SEGMENTS = @mt_available@;
 	public const bool HAS_ASYNC_FRAMES = @async_available@;
 
 	/** Runtime concrete values eligible for task storage when requested by an application. */

@@ -57,6 +57,19 @@ pass by value; strings, boxes and nullable values are borrowed for each call.
 A JSON writer accepts the subset selected by its JSON operations. The native
 boxed export probe links only the application runtime.
 
+## Structural input
+
+The default runtime selects `"structural_decoder": true` to publish
+`scpp/decoder.hpp`. A JSON decode publication also requests the interface.
+With boxed scalar dispatch, each published boxed family offers a synchronous
+`with_decoder(output, consume)` native call. The cursor reads object fields
+in entry order and requires list keys to be consecutive integers starting at
+zero. An empty container can serve either role. Scalar reads require the
+exact boxed kind. The cursor retains its active containers and borrows the
+current field name until the next traversal operation. It accepts up to 128
+open containers. A shape or scalar mismatch throws `std::invalid_argument`
+with its field and element path.
+
 ## Metadata-owned declaration providers
 
 `runtime.json` owns `submodules` (module, header, direct `requires` providers and

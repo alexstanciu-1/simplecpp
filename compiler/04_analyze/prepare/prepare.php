@@ -2132,33 +2132,8 @@ final class Preparation
 	private function decode_binding(ast_record_declaration $node, json_decoder_contract $contract, ast_node $site, bool $cursor): runtime_function
 	{
 		$records = [];
-		$this->check_decode_schema($node->definition, $contract, $site, $records);
+		self::check_decode_schema($node->definition, $site, $this->symbols, $this->dependencies, $this->owner, $records, json: true);
 		return new record_decode_function($node->definition, $contract, $cursor);
-	}
-
-	/** Watch each reachable schema once, including recursive owner fields. @param record_type_definition[] $records */
-	private function check_decode_schema(record_type_definition $record, json_decoder_contract $contract, ast_node $site, array &$records): void
-	{
-		if (isset($records[$record->name])) return;
-		$records[$record->name] = $record;
-		$node = $record->declaration;
-		$this->dependencies?->watch($this->symbols->entry($node->symbol_key()), $this->owner, dependency_use::record_result->value | dependency_use::record_decode->value);
-		if ($node->is_abstract || $node->data_constructor === null || $record->constructor() !== null) {
-			throw new diagnostic($site->source(), $site->byte_start(), 'Decoding requires a concrete data record with a generated constructor');
-		}
-		$record->require_destruction($site, true);
-		for ($base = $record->base(); $base !== null; $base = $base->base()) {
-			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
-		}
-		foreach ($node->data_constructor->parameters as $field) {
-			$type = $field->storage_type();
-			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
-			$nested = $leaf instanceof shared_record_type_definition && $leaf->required ? $leaf->payload : $leaf;
-			if ($nested instanceof record_type_definition) $this->check_decode_schema($nested, $contract, $site, $records);
-			elseif (!isset($contract->leaves[$leaf::class])) {
-				throw new diagnostic($site->source(), $site->byte_start(), 'No JSON decoder for ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ')');
-			}
-		}
 	}
 
 	/** Request the shared field walk and recheck casts/calls when a contributing layout changes. */
@@ -3175,6 +3150,42 @@ final class Preparation
 	}
 
 	/** STATIC METHODS */
+	/** Watch each reachable schema once, including recursive owner fields. @param record_type_definition[] $records */
+	public static function check_decode_schema(record_type_definition $record, ast_node $site, scope $symbols, ?Dependency_Watches $dependencies,
+		dependency_watcher $owner, array &$records, bool $json = false): void
+	{
+		if (isset($records[$record->name])) return;
+		$records[$record->name] = $record;
+		$node = $record->declaration;
+		$uses = dependency_use::record_decode->value;
+		if ($json) $uses |= dependency_use::record_json_decode->value | dependency_use::record_result->value;
+		$dependencies?->watch($symbols->entry($node->symbol_key()), $owner, $uses);
+		if ($node->is_abstract || $node->data_constructor === null || $record->constructor() !== null) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Decoding requires a concrete data record with a generated constructor');
+		}
+		$record->require_destruction($site, true);
+		for ($base = $record->base(); $base !== null; $base = $base->base()) {
+			$dependencies?->watch($symbols->entry($base->declaration->symbol_key()), $owner);
+		}
+		foreach ($node->data_constructor->parameters as $field) {
+			$type = $field->storage_type();
+			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
+			$nested = $leaf instanceof shared_record_type_definition && $leaf->required ? $leaf->payload : $leaf;
+			if ($nested instanceof record_type_definition) {
+				if ($type === $leaf && !$json) {
+					if (type_registry::RECORD_RESULT_HEADER === null) {
+						throw new diagnostic($site->source(), $site->byte_start(), 'Embedded record decoding requires carrier storage');
+					}
+					$dependencies?->watch($symbols->entry($nested->declaration->symbol_key()), $owner, dependency_use::record_result->value);
+				}
+				self::check_decode_schema($nested, $site, $symbols, $dependencies, $owner, $records, $json);
+			}
+			elseif ($leaf->structural_reader() === null) {
+				throw new diagnostic($site->source(), $site->byte_start(), ($json ? 'No JSON decoder for ' : 'No structural decoder for ') . $record->name . '::$' . $field->short_name . ' (' . $type->name . ')');
+			}
+		}
+	}
+
 	private static function borrows_mutably(ast_local_binding $binding): bool
 	{
 		return ($binding instanceof ast_parameter_declaration && $binding->mode === passing_mode::reference)
