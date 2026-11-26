@@ -3960,11 +3960,14 @@ CPP;
 			|| $argument instanceof ast_keyword_expression) && self::inert_scalar_conversion($type, $conversion));
 	}
 
-	/** Exclude reference aliases, iteration bindings, parameters and qualified accesses. */
+	/** Collection and key operands may read a plain local or an ordinary by-value parameter. */
 	private static function plain_local_read(?ast_expression $argument): bool
 	{
 		if (!$argument instanceof ast_name_expression) return false;
 		$binding = $argument->local_binding();
+		if ($binding instanceof ast_parameter_declaration) {
+			return $binding->mode === passing_mode::value && !($binding->type_reference instanceof ast_variadic_type_reference);
+		}
 		return $binding !== null && $binding::class === ast_local_declaration::class;
 	}
 
