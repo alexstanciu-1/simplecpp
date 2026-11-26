@@ -137,8 +137,10 @@ A nullary PHP-flavor function in the retained frontend can return a signed decim
 literal or forward a nullary call from a function declared `float` or `float64`.
 Literal preparation keeps the checked binary64 value on the declaration. A prepared
 call records the callee's return type. Lowering uses that type for the C++ prototype
-and converts an integer result to binary64 at the return boundary. The integer entry
-and integer caller bodies still require an integer callee in this frontend slice.
+and converts an integer result to binary64 at the return boundary. A function declared
+`int` can forward a floating result through `scpp::checked_float64_to_int64`.
+The runtime truncates toward zero and checks the int64 bounds. The application
+entry still requires its callee to return an integer.
 
 Changing only the callee's body reuses the forwarding unit. Changing its return
 type rechecks and emits the direct forwarder. On literal overflow the diagnostic

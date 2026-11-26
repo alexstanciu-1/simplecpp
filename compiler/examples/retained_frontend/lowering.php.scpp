@@ -54,32 +54,37 @@ final class Unit_Replacement {
 // A published unit depends on its own declaration and the ABI of any called function.
 final class Published_Function_Unit {
 	public readonly Prepared_Declaration $source;
-	public readonly bool $callee_float;
+	private readonly bool $callee_float;
 	public readonly string $text;
 
-	public function __construct(Prepared_Declaration $source, bool $callee_float, string $text) {
+	public function __construct(Prepared_Declaration $source, string $text) {
 		$this->source = $source;
-		$this->callee_float = $callee_float;
+		$binding = $source->call;
+		$this->callee_float = $binding !== null && $binding->callee_returns_float();
 		$this->text = $text;
+	}
+
+	public function matches(Prepared_Declaration $source): bool {
+		$binding = $source->call;
+		return $this->source === $source && $this->callee_float === ($binding !== null && $binding->callee_returns_float());
 	}
 }
 
 final class Unit_Lowering {
-	private ?Prepared_Declaration $definition = null;
+	private ?Published_Function_Unit $definition = null;
 	private ?Prepared_Call $caller = null;
-	private string $definition_text = "";
 	private string $caller_text = "";
 	private string $adapter = "";
 	private hash<Published_Function_Unit,string> $other_definitions;
 
 	public function publish(string $directory, Prepared_Call $entry, hash<Prepared_Declaration,string> $sources, string &$emitted, string &$changed): void {
 		$target = $entry->target();
-		$definition = $this->definition_text;
+		$definition = $this->definition;
 		$caller = $this->caller_text;
 		$adapter = $this->adapter;
-		if ($target !== $this->definition) {
+		if ($definition === null || !$definition->matches($target)) {
 			$emitted .= $target->scope->source->path . ",";
-			$definition = emit_definition_unit($target);
+			$definition = new Published_Function_Unit($target, emit_definition_unit($target));
 		}
 		if ($entry !== $this->caller) {
 			$emitted .= "main.php,";
@@ -96,7 +101,7 @@ final class Unit_Lowering {
 		$held bool = fs_lock_try($lock, $lock_path);
 		if (!$held) throw Exception::make("Output bundle busy");
 		$names vector<string> = ["definition.cpp", "main.cpp", "entry.cpp"];
-		$texts vector<string> = [$definition, $caller, $adapter];
+		$texts vector<string> = [$definition->text, $caller, $adapter];
 		$marker = "// Simple C++ retained function unit\n";
 		$other hash<Published_Function_Unit,string> = [];
 		foreach ($sources as $path => $source) {
@@ -107,16 +112,14 @@ final class Unit_Lowering {
 				if (!str_starts_with($old, $marker)) throw Exception::make("Unowned output file: " . $name);
 			}
 			$text = "";
-			$binding = $source->call;
-			$callee_float = $binding !== null && $binding->callee_returns_float();
 			$unit = hash_get_or_null($this->other_definitions, $name);
-			if ($unit !== null && $unit->source === $source && $unit->callee_float === $callee_float) {
+			if ($unit !== null && $unit->matches($source)) {
 				$text = $unit->text;
 				$other[$name] = $unit;
 			} else {
 				$text = $marker . emit_definition_unit($source);
 				$emitted .= $path . ",";
-				$other[$name] = new Published_Function_Unit($source, $callee_float, $text);
+				$other[$name] = new Published_Function_Unit($source, $text);
 			}
 			$names[] = $name;
 			$texts[] = $text;
@@ -156,9 +159,8 @@ final class Unit_Lowering {
 			if ($cleanup_error !== "") throw Exception::make($cleanup_error);
 		}
 		// A failed attempt leaves the published syntax identities and text unchanged.
-		$this->definition = $target;
+		$this->definition = $definition;
 		$this->caller = $entry;
-		$this->definition_text = $definition;
 		$this->caller_text = $caller;
 		$this->adapter = $adapter;
 		$this->other_definitions = $other;

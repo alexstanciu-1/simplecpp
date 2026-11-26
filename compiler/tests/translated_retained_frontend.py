@@ -248,7 +248,69 @@ def verify_decimal_returns(work, exe, cxx, linker):
         k: v[0] for k, v in snapshot(fresh_app/'generated').items()}
 
 
-def verify(work, cxx, linker, adapter):
+def verify_checked_return(work, exe, cxx, linker):
+    app = work/'checked-return'
+    app.mkdir()
+    (app/'module.json').write_text('{}')
+    (app/'main.php').write_text('return whole();')
+    (app/'whole.php').write_text('function whole(): int { return sample(); }')
+    (app/'quiet.php').write_text('function quiet(): int { return 7; }')
+    sample = app/'sample.php'
+    generated = app/'generated'
+    sample_unit = 'unit-sample.php.cpp'
+
+    def observe(units, production=False):
+        name = 'App::whole_' if production else 'source_' + 'whole'.encode().hex()
+        declaration = 'namespace App { scpp::int64 whole_(); }' if production else f'scpp::int64 {name}();'
+        probe = work/'observe-int.cpp'
+        probe.write_text('#include <scpp/core/scalars.hpp>\n#include <cstdio>\n#include <stdexcept>\n' +
+                         declaration + '\nint main() { try { std::printf("%lld", static_cast<long long>(' +
+                         name + '())); } catch (const std::out_of_range& e) { std::fputs(e.what(), stdout); } }')
+        binary = work/'observe-int'
+        subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I',
+                        ROOT/'runtime/generated/public', *units, probe, *manifest['link_inputs'], '-o', binary], check=True)
+        return subprocess.check_output([binary], text=True)
+
+    def snapshot():
+        return {p.name: (p.stat().st_ino, p.stat().st_mtime_ns, p.read_bytes())
+                for p in generated.glob('*.cpp')}
+
+    with service(exe, app) as request:
+        sample.write_text('function sample(): float { return -3.75; }')
+        assert request('lower').startswith('ok|')
+        units = [generated/'definition.cpp', generated/sample_unit]
+        bundle = work/'production-int'
+        manifest = fresh(app, bundle)
+        php_units = [bundle/unit for path, unit in manifest['sources'].items()
+                     if Path(path).name in ('whole.php', 'sample.php')]
+        assert observe(units) == observe(php_units, production=True) == '-3'
+        for literal, expected in [('9223372036854775808.0', 'integer_cast_out_of_range'),
+                                  ('-9223372036854775808.0', '-9223372036854775808')]:
+            before = snapshot()
+            sample.write_text(f'function sample(): float {{ return {literal}; }}')
+            assert request('lower') == f'ok|sample.php,|sample.php,|{sample_unit},'
+            assert {n for n, v in snapshot().items() if v != before[n]} == {sample_unit}
+            assert observe(units) == expected
+
+        before = snapshot()
+        sample.write_text('function sample(): int { return 19; }')
+        assert request('lower') == f'ok|sample.php,whole.php,|whole.php,sample.php,|definition.cpp,{sample_unit},'
+        after = snapshot()
+        assert {n for n in after if after[n] != before[n]} == {'definition.cpp', sample_unit}
+        assert 'checked_float64_to_int64' not in units[0].read_text()
+        assert observe(units) == '19'
+        assert request('lower') == 'ok|||'
+
+    cold = work/'fresh-checked'
+    cold.mkdir()
+    for source in app.glob('*.php'):
+        shutil.copyfile(source, cold/source.name)
+    with service(exe, cold) as request:
+        assert request('lower').startswith('ok|')
+    assert {p.name: p.read_bytes() for p in (cold/'generated').glob('*.cpp')} == {n: v[2] for n, v in after.items()}
+
+
+def verify(work, cxx, linker, adapter, selection=None):
     tool = frontend_project(work)
     config = tool/'module.json'
     module = json.loads(config.read_text())
@@ -258,6 +320,9 @@ def verify(work, cxx, linker, adapter):
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, ['-I', ROOT/'compiler/examples/retained_frontend/socket', *manifest['link_inputs']])
 
+    if selection == "--checked-return":
+        verify_checked_return(work, exe, cxx, linker)
+        return
     verify_decimal_returns(work, exe, cxx, linker)
     verify_independent_callers(work, exe, cxx, linker, manifest['link_inputs'])
 

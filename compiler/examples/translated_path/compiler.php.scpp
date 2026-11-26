@@ -79,7 +79,7 @@ final class Translation_Symbols {
 final class Prepared_Call {
 	public readonly Call_Syntax $syntax;
 	public readonly Translation_Symbol $symbol;
-	private readonly bool $expects_float;
+	private readonly bool $is_entry;
 	private bool $callee_float = false;
 	private int $revision = 0;
 	private int $checked_revision = -1;
@@ -99,8 +99,8 @@ final class Prepared_Call {
 		$this->checked_revision = $this->revision;
 	}
 
-	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol, bool $expects_float = false) {
-		$this->expects_float = $expects_float;
+	public function __construct(Call_Syntax $syntax, Translation_Symbol $symbol, bool $is_entry = true) {
+		$this->is_entry = $is_entry;
 		$this->syntax = $syntax;
 		$this->symbol = $symbol;
 	}
@@ -114,7 +114,7 @@ final class Prepared_Call {
 		if ($target === null) {
 			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Unknown function: " . $this->syntax->name, $this->syntax->source->text);
 		}
-		if (!$this->expects_float && $target->scope->declaration->returns_float) {
+		if ($this->is_entry && $target->scope->declaration->returns_float) {
 			throw new Translation_Diagnostic($this->syntax->source->path, $this->syntax->offset, "Expected int return from " . $this->syntax->name, $this->syntax->source->text);
 		}
 		return $target;
@@ -149,9 +149,14 @@ function emit_definition_unit(Prepared_Declaration $target): string {
 	if ($call !== null) {
 		$callee = "source_" . bin2hex($call->syntax->name);
 		$callee_type = $call->callee_returns_float() ? "scpp::float64 " : "scpp::int64 ";
-		$text .= $callee_type . $callee . "();\n";
 		$value = $callee . "()";
-		if ($floating && !$call->callee_returns_float()) $value = "static_cast<scpp::float64>(" . $value . ")";
+		if ($floating && !$call->callee_returns_float()) {
+			$value = "static_cast<scpp::float64>(" . $value . ")";
+		} elseif (!$floating && $call->callee_returns_float()) {
+			$text .= "#include <scpp/conversions.hpp>\n";
+			$value = "scpp::checked_float64_to_int64(" . $value . ")";
+		}
+		$text .= $callee_type . $callee . "();\n";
 	} elseif ($floating) {
 		$value = host_cpp_binary64($target->floating_value);
 	} else {
@@ -316,7 +321,7 @@ final class Translation {
 			$token = $scope->source->tokens[$result->literal_token];
 			$name = substr($scope->source->text, $token->offset, $token->length);
 			$syntax = new Call_Syntax($scope->source, $name, $token->offset);
-			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name), $scope->declaration->returns_float);
+			$binding = new Prepared_Call($syntax, $this->symbols->entry("func:" . $name), false);
 			return new Prepared_Declaration($scope, 0, $binding);
 		}
 		$work .= $scope->source->path . ",";
