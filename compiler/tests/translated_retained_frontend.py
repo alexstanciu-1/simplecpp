@@ -37,19 +37,32 @@ def service(exe, app):
             proc.stdout.close()
 
 
-def verify(work, cxx, linker):
+def frontend_project(work, *, socket_service=False):
     examples = ROOT/'compiler/examples'
     tool = work/'tool'
     tool.mkdir()
+    modules = ['filesystem'] if socket_service else ['filesystem', 'io']
     (tool/'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {
-        'runtime': {'modules': ['filesystem', 'io']}}}))
-    for name in ('frontend', 'function_ast', 'compiler'):
+        'runtime': {'modules': modules}}}))
+    frontend = ['frontend', 'function_ast']
+    session = ['session', 'frontend_requests']
+    if socket_service:
+        shutil.copyfile(examples/'retained_frontend/socket/main.php.scpp', tool/'main.php')
+    else:
+        frontend.append('compiler')
+        session.extend(['main', 'lowering'])
+    for name in frontend:
         shutil.copyfile(examples/f'translated_path/{name}.php.scpp', tool/f'{name}.php')
-    for name in ('main', 'session', 'lowering'):
+    for name in session:
         shutil.copyfile(examples/f'retained_frontend/{name}.php.scpp', tool/f'{name}.php')
     shutil.copyfile(examples/'tokenizer/utf8.php.scpp', tool/'utf8.php')
     with (tool/'punctuation.php').open('wb') as output:
         subprocess.run(['php', examples/'tokenizer/emit_punctuation.php'], stdout=output, check=True)
+    return tool
+
+
+def verify(work, cxx, linker):
+    tool = frontend_project(work)
     bundle, exe = work/'bundle', work/'frontend'
     manifest = fresh(tool, bundle)
     build(bundle, exe, cxx, linker, manifest['link_inputs'])

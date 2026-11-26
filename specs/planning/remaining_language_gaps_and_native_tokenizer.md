@@ -310,6 +310,18 @@ compiled and ran on dev002.
 [Driver](../../compiler/examples/native_driver/main.php.scpp) ·
 [Native comparison](../../compiler/tests/translated_native_driver.py)
 
+**Native Unix-socket lifecycle on Linux.** A compiled frontend serves its
+retained session over a line protocol using the published filesystem lock and
+a proof-only C++ Unix-stream adapter linked against generated declarations.
+Eight simultaneous starters converged on one owner. Disconnecting mid-command
+preserved the generation; disconnecting after a complete request advanced it
+once and the server continued serving. Stop removed the socket under the lock.
+After SIGKILL a new starter recovered the stale endpoint, reused the lock inode
+and parsed the edited application cold. The test launcher supplies the working
+directory and starts processes. Production PHP client compatibility, automatic
+daemon startup from the native client and a published raw socket API remain open.
+[Lifecycle test](../../compiler/tests/native_frontend_socket.py)
+
 Acceptance checks:
 
 1. Compare offset, length, kind, and spelling with the oracle on real inputs, including longest punctuation, flavor keywords, comments, quotes, and token-length limits.
