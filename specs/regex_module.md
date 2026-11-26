@@ -111,4 +111,10 @@ Replacement limits are per subject and per pattern. The optional limit is a
 value argument even when the caller supplies a writable integer. Minus one
 means unlimited. Zero replacements still validates the pattern. A negative
 limit below minus one raises ValueError. Split also accepts zero for unlimited.
-Count-output replacement overloads are outside this publication.
+Scalar PHP `preg_replace(pattern, replacement, subject[, limit[, count]])`
+returns `result_or_false<string>`. The fifth argument binds an exact writable
+integer slot. Its initial value is discarded after limit validation. Each
+completed replacement counts once, including identity replacements. On regex
+failure the call returns false and the slot retains the number completed before
+failure. An invalid pattern, miss or zero limit writes zero. When the same slot
+supplies limit and count, its incoming value determines the limit.

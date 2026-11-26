@@ -344,7 +344,7 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach (names($publication->{$family}->php_exposures ?? []) as $name) {
             requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid PHP function name');
             $alias = at($catalog->php_exposures, $name);
-            if (isset($alias->false_result) || isset($alias->native_name)) $headers[] = "scpp/php/$name.hpp";
+            if (isset($alias->false_result) || isset($alias->native_name) || isset($alias->optional_output)) $headers[] = "scpp/php/$name.hpp";
         }
     }
     if (isset($publication->vectors, $metadata->vector->reserve)) $headers[] = 'scpp/value_error.hpp';

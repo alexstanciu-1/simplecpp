@@ -314,14 +314,19 @@ result_or_false_hash_string_int64 preg_grep_vector(const string& pattern, const 
     return result_or_false_hash_string_int64{std::move(output)};
 }
 
-result_or_false_string replace(const string& pattern, const string& replacement, const string& subject, int64 limit) {
+result_or_false_string replace(const string& pattern, const string& replacement, const string& subject, int64 limit, int64& changed) {
     validate_limit(limit);
+    changed = 0;
     capture_pattern compiled(pattern);
     if (!compiled.data) return result_or_false_string::from_false();
     std::string output;
-    int64 changed = 0;
     if (!rewrite_string(compiled, replacement, subject, limit, output, changed)) return result_or_false_string::from_false();
     return result_or_false_string{owned(output)};
+}
+
+result_or_false_string replace(const string& pattern, const string& replacement, const string& subject, int64 limit) {
+    int64 changed;
+    return replace(pattern, replacement, subject, limit, changed);
 }
 
 result_or_false_string replace(const string& pattern, const string& replacement, const string& subject) {

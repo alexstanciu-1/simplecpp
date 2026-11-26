@@ -290,6 +290,29 @@ if ($t !== "baab") { return 19; }
 $bad result_or_false<string> = regex_replace("/[/", "", "", 0);
 if (isset($bad)) { return 20; }
 ''')
+        # Stock PHP writes the completed count even when a later match fails.
+        for pattern, replacement, subject, limit, expected, count in [
+            ('/a/', 'a', '"aba"', -1, 'aba', 2),
+            ('/z/', '!', '"aba"', -1, 'aba', 0),
+            ('/a/', '!', '"aba"', 0, 'aba', 0),
+            ('/a/', '!', '"aba"', 1, '!ba', 1),
+            ('/[/', '!', '"aba"', -1, None, 0),
+            ('/[/', '!', '"aba"', 0, None, 0),
+            ('/./u', '!', 'string_byte_from_int(255)', -1, None, 0),
+            ('/(*LIMIT_MATCH=20)a|(?:b+)+c/', '!', '"abbbbbbbbbbbbbbbbd"', -1, None, 1),
+        ]:
+            statements.append('{ $changed int = 99;')
+            statements.append(f'$result result_or_false<string> = preg_replace("{pattern}", "{replacement}", {subject}, {limit}, $changed);')
+            value = 'false' if expected is None else f'"{expected}"'
+            statements.append(f'if ($result !== {value} || $changed !== {count}) {{ return 127; }} }}')
+        statements.append('''{
+$n int = 1;
+$text string = preg_replace("/a/", "!", "aba", $n, $n);
+if ($n !== 1 || $text !== "!ba") { return 128; }
+$n = 9;
+$text = preg_replace("/a/", "!", "aba", $n, $n);
+if ($n !== 2 || $text !== "!b!") { return 129; }
+}''')
         # Each row checks the same plain pieces and their absolute byte offsets.
         statements.append('$splitFlags int = PREG_SPLIT_DELIM_CAPTURE;')
         for pattern, subject, tail, expected in [
@@ -433,10 +456,12 @@ def prove(work, runtime, flavor):
             assert 'regex_test' in invoke(resident).get('error', '')
             if flavor == 'php':
                 source_edit(source, 'preg_split_offsets("/,/", "a,b"); preg_quote("."); preg_match("/a/", "a"); '
+                                   '$n int = 1; preg_replace("/a/", "!", "aba", $n, $n); '
                                    'preg_grep("/x/", preg_split("/,/", "x,y")); return 0;')
                 ok()
                 lowered = b'\n'.join(artifacts(output).values())
                 assert b'::scpp::regex::split(' in lowered and b'::scpp::regex::preg_grep_vector(' in lowered
+                assert b'::scpp::regex::replace(' in lowered and b'scpp/php/preg_replace.hpp' in lowered
                 assert b'::scpp::regex::split_offsets(' in lowered
                 assert b'::scpp::regex::preg_grep(' not in lowered
             source_edit(source, fixture(flavor))
@@ -451,6 +476,11 @@ def prove(work, runtime, flavor):
                            'preg_match_all_set_order_numbered', 'preg_match_all_pattern_order_numbered'):
                 assert f'::scpp::regex::{target}('.encode() in lowered, target
             for bad_source, diagnostic in [
+                ('preg_replace("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
+                ('$count string = "99"; preg_replace("/a/", "!", "a", -1, $count);', 'argument 5 (count) requires writable'),
+                ('preg_replace("/a/", "!", "a", -1, PREG_SET_ORDER);',
+                 'argument 5 (count) Constant cannot bind a mutable reference'),
+                ('$count int = 0; regex_replace("/a/", "!", "a", -1, $count);', 'Argument count mismatch'),
                 ('$m hash<vector<string>,string> = []; preg_match_all_set_order("/a/", "a", $m);', 'Unsupported argument type'),
                 ('$m vector<hash<string,string>> = []; preg_match_all_pattern_order("/a/", "a", $m);', 'Unsupported argument type'),
                 ('$m = preg_split("/,/", "a"); preg_match("/a/", "a", $m);', 'Unsupported argument type'),

@@ -132,7 +132,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     }
     foreach (names($publication->{$family}->php_exposures ?? [], 'Duplicate PHP exposure') as $name) {
         $alias = at(at($catalog, 'php_exposures'), $name);
-        fields($alias, ['target', 'native_name', 'false_result']);
+        fields($alias, ['target', 'native_name', 'false_result', 'optional_output', 'arguments']);
         requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid PHP function name');
         requireThat($surface === 'general' && !isset($functions[$name]), 'Expected a distinct PHP exposure of a general function');
         $target = textValue(at($alias, 'target'));
@@ -157,6 +157,20 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
                 requireThat($alias->native_name === $name, 'Expected matching PHP native function name');
             }
             $symbol = "scpp::php::$name";
+        }
+        requireThat(isset($alias->optional_output) === isset($alias->arguments), 'An optional output requires PHP argument admission');
+        if (isset($alias->optional_output)) {
+            requireThat(!isset($alias->false_result) && !isset($alias->native_name), 'An optional output requires a direct native target');
+            $out = moduleFunctionTypeExport($plan, textValue($alias->optional_output));
+            $slot = count($binding['parameters']);
+            requireThat($slot < 32, 'Too many module function parameters');
+            $binding['reference_mask'] |= 1 << $slot;
+            $binding['parameters'][] = ['type' => $out['identity'], 'native' => $out['symbol'] . '&'];
+            $binding['arguments'] = listValue($alias->arguments);
+            $binding['output_overload'] = true;
+            $binding['includes'] = [$binding['header'], providerHeader($plan['submodules'], $out['provider'])];
+            $binding['header'] = "scpp/php/$name.hpp";
+            checkHeader($plan, $binding['header']);
         }
         $binding['symbol'] = $symbol;
         $plan[$family]['php_exposures'][$name] = $binding;
@@ -209,6 +223,12 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         }
     }
     foreach ($module['php_exposures'] ?? [] as $name => $binding) {
+        if (isset($binding['output_overload'])) {
+            $parameters = implode(', ', array_column($binding['parameters'], 'native'));
+            $code = "[[nodiscard]] {$binding['native_result']} {$binding['native_name']}($parameters);\n";
+            $files['public/' . $binding['header']] = moduleHeaderBody($binding['includes'], $module['namespace'], $code);
+            continue;
+        }
         if (!str_starts_with($binding['symbol'], 'scpp::php::')) continue;
         $parameters = [];
         $arguments = [];
@@ -228,6 +248,9 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
     }
     $groups[] = ['provider' => $module['provider'], 'declarations' => $declarations . "}\n", 'system' => []];
     $bridge = BANNER . "#pragma once\n" . includeHeader($module['header']);
+    foreach ($module['php_exposures'] ?? [] as $binding) {
+        if (isset($binding['output_overload'])) $bridge .= includeHeader($binding['header']);
+    }
     if ($family === 'filesystem') {
         // The archive compiles all implementations even for a reduced source publication.
         $carrier = typeExport($plan['submodules'], 'result_vector_string');
@@ -270,7 +293,7 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
             $name = $binding['overload'] ?? $name;
             $key = ($surface === null ? '' : $surface . ':') . 'func:' . $name;
             $policy = '';
-            if (isset($binding['overload'])) {
+            if (isset($binding['arguments'])) {
                 $references = [];
                 foreach (array_keys($types) as $slot) {
                     if ($binding['reference_mask'] & (1 << $slot)) $references[] = $slot;

@@ -852,7 +852,10 @@
     "php_exposures": {
       "preg_split": {"target": "regex_split"},
       "preg_quote": {"target": "regex_quote"},
-      "preg_replace": {"target": "regex_replace"},
+      "preg_replace": {
+        "target": "regex_replace", "optional_output": "int64",
+        "arguments": [["pattern", "exact"], ["replacement", "exact"], ["subject", "exact"], ["limit", "exact"], ["count", "writable"]]
+      },
       "preg_jit_available": {"target": "regex_jit_available"}
     },
     "functions": {
