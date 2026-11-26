@@ -743,11 +743,13 @@ SCPP;
 	try {
 		$lib = "$dir/lib." . $flavor->name;
 		file_put_contents("$dir/module.json", '{}');
-		file_put_contents("$dir/main." . $flavor->name, 'echo string_byte_from_int(strlen(word())), (int)' . $method('contains', 'word()', '"中"')
+		$word_length = $flavor === flavor::php ? 'strlen(strlen_source())' : 'strlen(word())';
+		file_put_contents("$dir/main." . $flavor->name, 'echo string_byte_from_int(' . $word_length . '), (int)' . $method('contains', 'word()', '"中"')
 			. ', (int)' . $method('ends_with', 'word()', '"😀"') . '; return 8;');
 		$function = static fn(string $type, string $name, string $body) => ($flavor === flavor::cpp
 			? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 		$valid = $function('string', 'word', 'echo "X"; return "é中😀";');
+		$producer = $flavor === flavor::php ? $function('string', 'strlen_source', 'return word();') : '';
 		$compiler = new Project_Compiler();
 		$session = null;
 		$root = null;
@@ -766,7 +768,10 @@ SCPP;
 					unlink($lib);
 				}
 				else {
-					file_put_contents($lib, $body);
+					$input = $producer;
+					if ($step === 1 && $flavor === flavor::php) $input = $function('int', 'strlen_source', 'return word();');
+					if ($step === 5 && $flavor === flavor::php) $input = $function('mixed', 'strlen_source', 'return word();');
+					file_put_contents($lib, $body . $input);
 					touch($lib, ++$revision);
 				}
 				$session = $compiler->frontend($dir, $session);

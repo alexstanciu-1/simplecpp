@@ -2907,12 +2907,17 @@ CPP;
 					$operand_records_before = $this->record_expressions;
 					$safe = false;
 					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
-					if ($function->exact_arguments) $operand = $function->parameters[$index]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand, $this->inline_adapters);
+					$conversion = $value->conversion($index);
+					if ($conversion !== value_conversion::identity) {
+						$type = $function->parameters[$index];
+						foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+						$operand = $this->conversion($type, $conversion, $operand, $argument);
+					} elseif ($function->exact_arguments) $operand = $function->parameters[$index]->lower_cpp_exact_argument($argument, value_conversion::identity, $operand, $this->inline_adapters);
 					$arguments[] = $index === 0 && $function->overloaded_first
 						? 'static_cast<' . $function->parameters[0]->cpp_type() . '>(' . $operand . ')' : $operand;
 					// A prepared writable reference names stable storage; binding it does not read its value.
 					if (!$function->is_reference($index) && !self::inert_literal_argument(
-						$argument, $function->parameters[$index], value_conversion::identity)) {
+						$argument, $function->parameters[$index], $conversion)) {
 						$capture_indices[] = $index;
 						// Only the last order-sensitive operand can execute after the earlier captures.
 						$type = $function->parameters[$index];
@@ -2921,7 +2926,7 @@ CPP;
 						$inline_index = $can_bind && $this->record_expressions === $operand_records_before ? $index : null;
 					}
 					// Reading a local string or literal cannot mutate another argument.
-					$direct = $direct && ($safe || $argument instanceof ast_string_expression
+					$direct = $direct && $conversion === value_conversion::identity && ($safe || $argument instanceof ast_string_expression
 						|| ($argument instanceof ast_name_expression && $argument->local_binding() !== null));
 				}
 				$steps = [];

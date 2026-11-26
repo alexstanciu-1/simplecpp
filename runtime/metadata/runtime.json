@@ -1330,6 +1330,11 @@
     ]
   },
   "compiler": {
+    "php_builtin_admission": {
+      "strlen": [["string", "typed"]],
+      "str_replace": [["search", "typed"], ["replace", "typed"], ["subject", "typed"], ["count", "writable"]],
+      "is_bool": [["value", "exact"]]
+    },
     "published_transport_types": {"uint64": "runtime-numeric"},
     "generic_syntax": { "fixed_array": ["type", "integer_extent"] },
     "exception": {

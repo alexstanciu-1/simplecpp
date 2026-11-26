@@ -52,6 +52,8 @@ return 0;
             main.write_text('$x mixed=0; $d dynamic=1; $wrapped ?int=1; '+expression+'; return 0;')
             result = invoke(proc)
             reason = 'Argument count mismatch' if expression in ('is_int()', 'is_int($x,$x)') else 'Unsupported first argument type'
+            if expression.startswith('is_bool('):
+                reason = 'is_bool argument 1 (value) requires exact mixed'
             assert reason in result.get('error', ''), (expression, result)
         main.write_text(source)
         assert 'error' not in invoke(proc)

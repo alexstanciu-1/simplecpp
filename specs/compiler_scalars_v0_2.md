@@ -745,3 +745,21 @@ and wrap the converted value if the destination is a carrier. A missing payload
 raises `carrier_no_value`. A present boxed payload uses its family's conversion
 and can still fail its tag or range check. Failed reassignment leaves the final
 store unexecuted. A by-value conversion creates no reference to the payload.
+
+## PHP builtin argument admission
+
+A published PHP typed input uses the same typed-destination conversion as a
+by-value user parameter. `strlen` takes one typed string. `str_replace` takes
+three typed strings and optionally binds its replacement count to exact writable
+int64 storage. Each input is evaluated and converted once in source order where
+ordering matters. A failed input conversion prevents the call and its count write.
+
+The PHP `is_bool` predicate inspects an exact mixed operand. A plain bool, a
+dynamic box and a result carrying a bool cannot supply this argument. A mixed
+value of any kind is a valid argument. The predicate returns true precisely for
+its boolean kind.
+
+The compiler catalog supplies argument policies and diagnostic labels separately
+from named-call availability and native parameter representation. Preparation
+checks them and records the conversion. A native const-reference input can borrow
+a directly supplied string or the result of an admitted conversion for the call.

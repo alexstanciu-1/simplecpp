@@ -74,7 +74,8 @@ foreach (['long' => 'L', 'long long' => 'LL'] as $native => $suffix) {
 // A runtime function must follow the published source spelling and binding in both outputs.
 $functionMetadata = unserialize($originalExportMetadata);
 $declaration = $functionMetadata->string->functions->strlen;
-unset($functionMetadata->string->functions->strlen);
+$functionMetadata->compiler->php_builtin_admission->count_bytes = $functionMetadata->compiler->php_builtin_admission->strlen;
+unset($functionMetadata->compiler->php_builtin_admission->strlen, $functionMetadata->string->functions->strlen);
 $functionMetadata->string->functions->count_bytes = $declaration;
 $declaration->symbol = 'scpp::str::measured_bytes';
 $demand = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
@@ -110,6 +111,17 @@ $functionPlan = prepareRuntime($functionMetadata, $demand, $facts);
 $registry = renderCompiler($functionMetadata, $facts, $functionPlan)['types/registry.php'];
 requireThat(str_contains($registry, "'func:count_bytes'") && str_contains($registry, "'scpp::str::measured_bytes'")
     && !str_contains($registry, "'func:strlen'"), 'Source function registration ignored runtime metadata');
+$admissionMeta = unserialize(serialize($functionMetadata));
+$admissionMeta->compiler->php_builtin_admission->count_bytes = [['text', 'typed']];
+$registry = renderCompiler($admissionMeta, $facts, $functionPlan)['types/registry.php'];
+requireThat(str_contains($registry, "php_argument_labels: ['text'], php_typed_inputs: 1"), 'Missing published PHP input policy');
+$admissionMeta->compiler->php_builtin_admission->count_bytes = [['text', 'writable']];
+try {
+    renderCompiler($admissionMeta, $facts, $functionPlan);
+    throw new \LogicException('Writable admission on a value slot');
+} catch (\RuntimeException $error) {
+    requireThat(str_contains($error->getMessage(), 'Invalid PHP argument mode'), $error->getMessage());
+}
 requireThat(str_contains(render($functionPlan)['public/scpp/string.hpp'], 'measured_bytes(const string&'), 'String binding ignored runtime metadata');
 $demand->string->functions = ['string_byte_from_int'];
 $bytePlan = prepareRuntime($functionMetadata, $demand, $facts);

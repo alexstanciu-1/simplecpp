@@ -47,7 +47,7 @@ $invalid = [
 	['$p ?int = 7; bump($p);', 'exact storage type int64, received nullable<int64>'],
 	['$p int = 7; clear_position($p);', 'exact storage type nullable<int64>, received int64'],
 	['$p ?int = 7; bump((int)$p);', 'stable variable storage'],
-	['$p ?int = null; $s = str_replace("a","b","a",$p);', 'exact storage type int64, received nullable<int64>'],
+	['$p ?int = null; $s = str_replace("a","b","a",$p);', 'str_replace argument 4 (count) requires writable int64 storage, received nullable<int64>'],
 	['$xs vector<int> = [1]; bump($xs[0]);', 'stable variable storage'],
 	['function writer(const vector<int> &$v): void { observe($v, $v); }', 'Cannot write through read-only reference'],
 	['function &bad(?int &$slot): ?int { $local ?int = 7; return $local; }', 'must originate in its writable parameter'],

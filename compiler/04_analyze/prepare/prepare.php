@@ -1861,22 +1861,24 @@ final class Preparation
 	 * @param int[] $writes Local storage IDs invalidated by the call.
 	 */
 	private function bind_reference(ast_expression $argument, type_definition $type, array &$writes /** list<uint32> */, bool $readonly = false,
-		ast_function_declaration|ast_lambda_expression|callback_type_definition|null $target = null): void
+		ast_function_declaration|ast_lambda_expression|callback_type_definition|null $target = null, string $label = ''): void
 	{
 		$storage = $argument instanceof ast_name_expression ? $argument->declaration() : null;
 		if (!$readonly && ($storage instanceof ast_constant_declaration || $storage instanceof runtime_integer_constant)) {
-			throw new diagnostic($argument->source(), $argument->byte_start(), 'Constant cannot bind a mutable reference');
+			throw new diagnostic($argument->source(), $argument->byte_start(), $label . 'Constant cannot bind a mutable reference');
 		}
 		if (!($storage instanceof ast_local_binding)) {
 			throw new diagnostic($argument->source(), $argument->byte_start(),
-				'Reference argument requires stable variable storage: a named local or parameter');
+				($label === '' ? 'Reference argument requires stable variable storage: a named local or parameter'
+				: $label . 'requires a writable ' . $type->name . ' variable, received ' . $argument->type_def()->name));
 		}
 		if (ast_writable_element::origin($storage) !== null && (!($target instanceof ast_function_declaration)
 			|| $target->parent instanceof ast_method_owner || $target->is_async || $target->returns_reference)) {
-			throw new diagnostic($argument->source(), $argument->byte_start(), 'Writable foreach element cannot bind a reference parameter');
+			throw new diagnostic($argument->source(), $argument->byte_start(), $label . 'Writable foreach element cannot bind a reference parameter');
 		}
 		if ($storage->type_def() !== $type) {
-			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type ' . $type->name . ', received ' . $storage->type_def()->name);
+			throw new diagnostic($argument->source(), $argument->byte_start(), ($label === '' ? 'Reference argument requires exact storage type ' . $type->name : $label . 'requires writable ' . $type->name . ' storage')
+				. ', received ' . $storage->type_def()->name);
 		}
 		if (!$readonly) {
 			Readonly_Access::require_writable($argument, $storage);
@@ -1945,11 +1947,15 @@ final class Preparation
 			throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 		}
 		$writes = [];
+		$conversions = [];
+		$labels = $runtime->php_argument_labels !== [] && $call->source()->flavor === flavor::php ? $runtime->php_argument_labels : [];
 		foreach ($operands as $index => $argument) {
 			$slot = $slots[$index] ?? $index;
 			$type = $runtime->parameters[$slot];
+			$typed = $labels !== [] && ($runtime->php_typed_inputs & (1 << $slot)) !== 0;
+			$label = $labels === [] ? '' : $call->name . ' argument ' . ($slot + 1) . ' (' . $labels[$slot] . ') ';
 			if ($argument !== $prepared && $argument !== $call->receiver && !($runtime instanceof borrowed_slot_function && $index >= 2)) {
-				$this->value($argument, destination: $type);
+				$this->value($argument, destination: $labels === [] || $typed ? $type : null);
 			}
 			if ($index === 0 && $runtime->receiver_method && $call->receiver !== null) {
 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
@@ -1959,17 +1965,33 @@ final class Preparation
 				}
 			}
 			elseif ($runtime->is_reference($slot)) {
-				$this->bind_reference($argument, $type, $writes);
+				$this->bind_reference($argument, $type, $writes, label: $label);
+			}
+			elseif ($typed && $argument->type_def() !== $type) {
+				if ($conversions === []) $conversions = array_fill(0, count($operands), value_conversion::identity);
+				try {
+					$conversions[$index] = $type->prepare_conversion($argument, conversion_context::typed_destination);
+				} catch (diagnostic) {
+					$message = $label . 'requires ' . $type->name . ', received ' . $argument->type_def()->name;
+					try {
+						$type->prepare_conversion($argument, conversion_context::explicit_cast);
+						$message .= '. Use an explicit (' . $type->name . ') cast for this conversion';
+					} catch (diagnostic) {
+						// The explicit conversion is unavailable as well.
+					}
+					throw new diagnostic($argument->source(), $argument->byte_start(), $message);
+				}
 			}
 			elseif ($type instanceof owned_callable_type) {
 				$type->prepare_scalar_conversion($argument, conversion_context::typed_destination);
 			}
 			elseif ($argument->type_def() !== $type) {
-				throw new diagnostic($argument->source(), $argument->byte_start(), $call->name . ' requires ' . $type->name);
+				throw new diagnostic($argument->source(), $argument->byte_start(), ($label === '' ? $call->name . ' requires ' . $type->name
+					: $label . 'requires exact ' . $type->name . ', received ' . $argument->type_def()->name));
 			}
 		}
 		if ($writes !== []) $this->invalidate_references($call, $writes);
-		$call->settle_runtime($runtime);
+		$call->settle_runtime($runtime, $conversions);
 	}
 
 	/** Check each JS namespace prefix until a visible value owns the rest of the dotted path. */

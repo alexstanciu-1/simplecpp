@@ -171,3 +171,13 @@ returns now require a bare lexical variable or a call with a proven surviving
 origin. The frontend rejects the qualified property at preparation. The audit
 used the existing source admission rules for readonly types and method returns.
 See the [reference safety contract](../native_reference_safety.md).
+
+
+## Builtin argument follow-up
+
+PHP `strlen` now accepts the mixed and result strings in the walkthrough, giving
+the same lengths as the user-defined function. The direct typed inputs of
+`str_replace` follow the same conversion rule. Its count argument still names
+writable integer storage. `is_bool` requires an actual mixed value and reports
+the received type at an invalid argument. The JSON document helper in the same
+walkthrough row retains its previous exact argument contract.

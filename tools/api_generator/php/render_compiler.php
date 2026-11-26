@@ -30,6 +30,26 @@ function compilerCardinalityMethods(array $methods, string $count, array $defini
     return strtr(readFile(__DIR__ . '/../templates/collections/collection_cardinality.php.tpl'), $bindings);
 }
 
+/** Compile PHP source admission independently of native argument representation. */
+function compilerPhpAdmission(array $policies, string $name, int $arity, array $references = []): string {
+    if (!isset($policies[$name])) return '';
+    $slots = listValue($policies[$name]);
+    requireThat(count($slots) === $arity, "Wrong PHP admission arity for $name");
+    $labels = [];
+    $typed = 0;
+    foreach ($slots as $i => $slot) {
+        requireThat(is_array($slot) && count($slot) === 2, "Invalid PHP admission slot for $name");
+        [$label, $mode] = $slot;
+        requireThat(is_string($label) && preg_match('/^[a-z_][a-z0-9_]*$/D', $label)
+            && !isset($labels[$label]), "Invalid PHP argument label for $name");
+        requireThat(in_array($mode, ['typed', 'exact', 'writable'], true)
+            && ($mode === 'writable') === in_array($i, $references, true), "Invalid PHP argument mode for $name");
+        $labels[$label] = var_export($label, true);
+        if ($mode === 'typed') $typed |= 1 << $i;
+    }
+    return ', php_argument_labels: [' . implode(', ', $labels) . "], php_typed_inputs: $typed";
+}
+
 /** Generate the supported core scalar definitions; module membership determines availability. */
 function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): array {
     // A null plan is the scalar-only generator test surface; production always supplies a validated runtime plan.
@@ -37,7 +57,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
+    fields($compiler, ['php_builtin_admission', 'published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
+    $phpAdmission = object($compiler->php_builtin_admission ?? new \stdClass());
+    if (isset($metadata->string->functions, $metadata->boxed->mixed_predicates)) {
+        foreach ($phpAdmission as $name => $_) {
+            requireThat(isset($metadata->string->functions->$name) || isset($metadata->boxed->mixed_predicates->$name),
+                "Unknown PHP admission target: $name");
+        }
+    }
     $extentFamilies = [];
     foreach (object($compiler->generic_syntax ?? new \stdClass()) as $family => $arguments) {
         requireThat(preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $family) && $arguments === ['type', 'integer_extent'], 'Unsupported generic syntax: ' . $family);
@@ -306,9 +333,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $header = providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $source)['provider']);
         if ($source === 'mixed') {
             foreach (array_keys($runtime['mixed_predicates'] ?? []) as $name) {
-                $function = "new runtime_function('$name', [type_mixed::instance()], type_bool::instance(), '::scpp::$name', '$header', const_reference_mask: 1)";
-                // Select on the operand's own type before contextual typing can construct a mixed literal.
-                $runtimeCases[] = "\t\t\t'php:func:$name', 'general:func:$name' => \$bindings['mixed:$name'] ??= new runtime_overloads([1 => [type_mixed::class => $function]]),";
+                $function = "new runtime_function('$name', [type_mixed::instance()], type_bool::instance(), '::scpp::$name', '$header', const_reference_mask: 1";
+                $policy = compilerPhpAdmission($phpAdmission, $name, 1);
+                $keys = "'php:func:$name', 'general:func:$name'";
+                if ($policy !== '') {
+                    $runtimeCases[] = "\t\t\t'php:func:$name' => \$bindings[\$key] ??= $function$policy),";
+                    $keys = "'general:func:$name'";
+                }
+                $runtimeCases[] = "\t\t\t$keys => \$bindings['mixed:$name'] ??= new runtime_overloads([1 => [type_mixed::class => $function)]]),";
             }
         }
         foreach ($family['source_collection']['methods'] as $name => $binding) {
@@ -368,6 +400,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 }
                 $constRefs = stringAdapterConstReferenceMask($types);
                 if ($constRefs) $required .= ', const_reference_mask: ' . $constRefs;
+                if ($flavor === 'php') $required .= compilerPhpAdmission($phpAdmission, $name, count($types), $adapter['reference_parameters'] ?? []);
                 $symbol = $adapter['symbol'];
                 $header = $adapter['header'];
                 $adapterFlavor = ", '$flavor'";
@@ -402,9 +435,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
         $keys = [$binding['members'] ? "php:func:$name" : "func:$name"];
         foreach ($binding['members'] as $flavor => $member) $keys[] = "$flavor:string:$member";
+        $policy = compilerPhpAdmission($phpAdmission, $name, count($parameters));
         $labels = implode(', ', array_map(static fn($key) => var_export($key, true), $keys));
         $runtimeCases[] = "\t\t\t$labels => \$bindings['$name'] ??= new runtime_function('$name', ["
-            . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'),";
+            . implode(', ', $parameters) . "], type_$result::instance(), '{$binding['symbol']}', '{$binding['header']}'$policy),";
     }
     foreach (compilerBuilderCases($runtime['text_builders'] ?? [], $runtimeTypes) as $case) $runtimeCases[] = $case;
     foreach (compilerCliCases($runtime ?? [], $runtimeTypes) as $case) $runtimeCases[] = $case;
