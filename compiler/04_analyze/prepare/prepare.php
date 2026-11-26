@@ -968,6 +968,13 @@ final class Preparation
 		}
 	}
 
+	/** Only a bare variable can name lexical storage. Qualified data can share its final spelling. */
+	private function lexical_reference_slot(?ast_expression $value): ?ast_local_binding
+	{
+		return $value !== null && $value::class === ast_name_expression::class && !$value->constant_only
+			? $this->find_local($value->name) : null;
+	}
+
 	/** Publish a second lexical name for already-live storage without reading or copying it. */
 	private function local_alias(ast_local_alias $declaration): void
 	{
@@ -987,7 +994,7 @@ final class Preparation
 				throw new diagnostic($source, $target->byte_start(), 'Local alias call requires a reference return');
 			}
 		} else {
-			$origin = $target instanceof ast_name_expression && !$target->constant_only ? $this->find_local($target->name) : null;
+			$origin = $this->lexical_reference_slot($target);
 		}
 		$this->require_collection_available($target, $origin);
 		if ($origin instanceof ast_local_declaration && $origin->initializer instanceof ast_lambda_expression && $origin->initializer->borrows_selected_element()) {
@@ -1869,7 +1876,7 @@ final class Preparation
 			throw new diagnostic($argument->source(), $argument->byte_start(), 'Writable foreach element cannot bind a reference parameter');
 		}
 		if ($storage->type_def() !== $type) {
-			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type');
+			throw new diagnostic($argument->source(), $argument->byte_start(), 'Reference argument requires exact storage type ' . $type->name . ', received ' . $storage->type_def()->name);
 		}
 		if (!$readonly) {
 			Readonly_Access::require_writable($argument, $storage);
@@ -2052,7 +2059,7 @@ final class Preparation
 			$this->value($value);
 			$selected = $value->reference_origin();
 		} else {
-			$selected = $value instanceof ast_name_expression && !$value->constant_only ? $this->find_local($value->name) : null;
+			$selected = $this->lexical_reference_slot($value);
 		}
 		if ($selected !== $origin) {
 			throw new diagnostic($site->source(), $site->byte_start(), 'Reference return must originate in its writable parameter');

@@ -148,3 +148,26 @@ The following 33 tasks group related expressions under the decision a developer 
 4. **Choose the first PHP web conveniences based on application code.** Flat form/query decoding and context-specific HTML escaping have concrete callers here. Decide the input domain, malformed-input policy and output context first. Byte search, number formatting, typed traversal, stream append and database parameter execution already support practical paths.
 
 The evidence covers Linux native programs, a private MariaDB, FastCGI/Apache and selected stock PHP controls. The owning specs and focused regression suites remain the places to decide and enforce a language change.
+
+## Reference binding follow-up
+
+The PHP audit checked source-declared mutable and read-only parameters, a runtime
+output argument, and writable reference returns. A named slot binds by its
+declared type even while a nullable is empty. A cast, temporary or ordinary index
+read cannot supply that slot. An exact-type mismatch now names both the expected
+and supplied storage types. The scoped writable foreach element follows the
+existing direct free-function borrow rule.
+
+In the native fixture a readonly vector view sees an append through a second
+parameter bound to the same variable. A nullable slot survives clearing, binding
+again and writing zero through a reference returned via a reordered named call.
+The generated call stages the string argument and carries the slot and the
+result by reference. The four-argument str_replace writes the count on both
+a hit and a miss.
+
+An earlier origin lookup could confuse a static property selected through an
+expression with a same-named local or parameter. Lexical aliases and reference
+returns now require a bare lexical variable or a call with a proven surviving
+origin. The frontend rejects the qualified property at preparation. The audit
+used the existing source admission rules for readonly types and method returns.
+See the [reference safety contract](../native_reference_safety.md).

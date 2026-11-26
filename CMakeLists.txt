@@ -409,6 +409,8 @@ if(BUILD_TESTING)
     --fixture php_carrier_operators.php --cases php arithmetic bitwise)
   add_test(NAME compiler_php_carrier_operator_failures_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture php_carrier_operators.php --cases ordering spaceship concat)
+  add_test(NAME compiler_php_reference_binding_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_reference_binding.php --cases php)
   add_test(NAME compiler_php_carrier_implicit_matrix COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_carrier_implicit_matrix.php)
   add_test(NAME compiler_php_carrier_implicit_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture php_carrier_implicit.php --cases php)
