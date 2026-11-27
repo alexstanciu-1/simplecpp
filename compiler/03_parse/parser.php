@@ -1537,7 +1537,7 @@ final class Parser
 			return new ast_index_compound(new ast_index_expression($receiver, $index, $index_end), $value, $operator,
 				$this->cursor->take(token_kind::semicolon, ';') + 1);
 		}
-		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || ($index !== null && $receiver instanceof ast_index_expression))) {
+		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || $receiver instanceof ast_index_expression)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed assignment requires named or field storage');
 		}
 		$this->cursor->take(token_kind::assign, '=');

@@ -34,11 +34,6 @@ final class @class@ extends vector_type_definition@interfaces@
 		return $this->cpp_type() . '{}';
 	}
 
-	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string
-	{
-		return $this->lower_cpp_sequence_append($write->value, $write->conversion(), $receiver, $value, $adapters);
-	}
-
 	public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string
 	{
 		$value = @element@->lower_cpp_exact_argument($element, $conversion, $value, $adapters);

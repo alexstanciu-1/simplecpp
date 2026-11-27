@@ -1554,21 +1554,31 @@ CPP;
 				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$steps = [];
-				$receiver = $statement->receiver instanceof ast_field_expression
-					? $this->retained_place($statement->receiver, $global_references, $declarations, $required_headers, $steps)
-					: $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+				$root = ast_index_expression::nested_collection_root($statement->receiver);
+				if ($root !== null) {
+					$receiver = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
+				} else {
+					$receiver = $statement->receiver instanceof ast_field_expression
+						? $this->retained_place($statement->receiver, $global_references, $declarations, $required_headers, $steps)
+						: $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+				}
 				$before = $this->suspensions;
 				[$value, $rhs_steps] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
-				if ($before !== $this->suspensions) {
+				if ($root === null && $before !== $this->suspensions) {
 					$steps[] = 'auto&& write_target = ' . $receiver . ';';
 					$receiver = 'write_target';
-					array_push($steps, ...$rhs_steps);
 				}
+				array_push($steps, ...$rhs_steps);
 				$conversion = $statement->conversion();
-				foreach ($type->write_type()->conversion_headers($conversion) as $header) {
-					$required_headers[$header] = true;
+				$element = $type->write_type();
+				foreach ($element->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$value = $element->lower_cpp_exact_argument($statement->value, $conversion, $value, $this->inline_adapters);
+				if ($root !== null) {
+					$steps[] = 'auto append_value = ' . $value . ';';
+					$required_headers['utility'] = true;
+					$value = 'std::move(append_value)';
 				}
-				$append = $type->lower_cpp_append($statement, $receiver, $value, $this->inline_adapters) . ';';
+				$append = $type->lower_cpp_append_value($receiver, $value) . ';';
 				$lines[] = $this->async_statement($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {

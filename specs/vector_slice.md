@@ -25,6 +25,13 @@ entry. If any entry is still missing, write-back fails and the RHS effects remai
 visible. Standalone prefix and postfix increments and decrements likewise require
 an existing leaf. Keys retain the receiver's usual exact type requirements.
 
+For nested append, as in `groups[team][] = value;`, evaluate and save the path
+keys in source order, then evaluate and convert the value. Resolve the saved path
+in current storage and append to the selected vector or integer-keyed hash. If
+evaluation replaced the collection, the replacement receives the append. A missing
+parent raises its normal lookup error. A hash selects its next key from the live
+entries at append time under the [hash append rules](hash_slice.md#append-and-ordering).
+
 ## Representation and publication
 
 The vector metadata record binds the source family to private concrete buffer storage,

@@ -254,7 +254,7 @@ interface native_sequence_type extends counted_collection_type
 interface appendable_collection_type
 {
 	public function write_type(): type_definition;
-	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
+	public function lower_cpp_append_value(string $receiver, string $value): string;
 }
 
 /** Single-level keyed store; the receiver owns key admission and the destination type for its values. */

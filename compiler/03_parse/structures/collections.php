@@ -149,8 +149,8 @@ final class ast_index_expression extends ast_expression
 final class ast_append_statement extends ast_statement
 {
 	/** PROPERTIES */
-	/** Native owning receiver; preparation requires writable local or instance-field storage. */
-	public readonly ast_name_expression|ast_field_expression $receiver;
+	/** Native owning receiver; preparation requires a writable local, field or indexed local path. */
+	public readonly ast_name_expression|ast_field_expression|ast_index_expression $receiver;
 	/** Native owning appended value. */
 	public readonly ast_expression $value;
 
@@ -160,7 +160,7 @@ final class ast_append_statement extends ast_statement
 
 	/** CONSTRUCTOR */
 	/** $end: exclusive token position after the semicolon. */
-	public function __construct(ast_name_expression|ast_field_expression $receiver, ast_expression $value, int $end /** uint32 */)
+	public function __construct(ast_name_expression|ast_field_expression|ast_index_expression $receiver, ast_expression $value, int $end /** uint32 */)
 	{
 		parent::__construct($receiver->start, $end);
 		$this->receiver = $receiver;

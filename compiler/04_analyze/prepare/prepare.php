@@ -364,11 +364,14 @@ final class Preparation
 					$this->writable_property($statement->receiver, payload: true);
 				} else {
 					$this->value($statement->receiver);
-					if ($statement->receiver instanceof ast_name_expression) $this->require_collection_available($statement, $statement->receiver->local_binding());
-					Readonly_Access::write($statement->receiver, true);
-					if ($statement->receiver->local_binding() === null) {
+					$root = $statement->receiver instanceof ast_index_expression
+						? ast_index_expression::nested_collection_root($statement->receiver) : $statement->receiver;
+					$binding = $root?->local_binding();
+					if ($binding === null) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 					}
+					$this->require_collection_available($statement, $binding);
+					Readonly_Access::write($root, true);
 				}
 				$type = $statement->receiver->type_def();
 				if (!($type instanceof appendable_collection_type)) {
