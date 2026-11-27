@@ -39,6 +39,8 @@ final class Preparation
 	private array $take_status = [];
 	/** Status slots reachable through another name. @var bool[] */
 	private array $take_borrowed = [];
+	/** Allocated only for a body that contains a native retaining call. */
+	private ?Bound_Slots $bound_slots = null;
 	private bool $unknown_initializers = false;
 	private ?ast_lambda_expression $enclosing_lambda = null;
 	private bool $borrows_receiver = false;
@@ -124,7 +126,9 @@ final class Preparation
 			$this->body($syntax->statements, $syntax->source(),
 				($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target,
 				$syntax);
+			if ($this->bound_slots !== null) $this->bound_slots->verify($syntax);
 		} finally {
+			$this->bound_slots = null;
 			$this->guards = [];
 			$this->guard_reads = [];
 			$this->constructor_initialization = null;
@@ -2224,18 +2228,20 @@ final class Preparation
 	{
 		if ($call->unpacked ?? false) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
 		if ($runtime instanceof json_decoder_contract) $runtime = $this->record_decoder($call, $runtime);
-		if ($runtime instanceof runtime_function && $runtime->borrows_slots) {
+		if ($runtime instanceof runtime_function && $runtime->retained_slot_types !== []) {
 			if ($this->enclosing_lambda !== null || $this->owner->parent->is_async || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Bound parameter frame lifetime is unproven');
 			}
-			if (count($call->arguments) < 2) throw new diagnostic($call->source(), $call->byte_start(), 'bind_param requires a type string and at least one named slot');
+			$tail = array_slice($call->arguments, count($runtime->parameters) - 1);
+			if ($tail === []) throw new diagnostic($call->source(), $call->byte_start(), $runtime->name() . ' requires at least one retained slot');
 			$params = $runtime->parameters;
-			foreach (array_slice($call->arguments, 1) as $slot) {
+			foreach ($tail as $slot) {
 				$this->value($slot);
-				Bound_Slots::prove($call, $slot);
+				if (!isset($runtime->retained_slot_types[$slot->type_def()::class])) throw new diagnostic($slot->source(), $slot->byte_start(), 'Unsupported retained slot type');
 				$params[] = $slot->type_def();
 			}
-			$runtime = new borrowed_slot_function($runtime->name(), $params, $runtime->return_type_def(), $runtime->symbol, $runtime->header, const_reference_mask: 3, free_receiver: true);
+			($this->bound_slots ??= new Bound_Slots())->bind($call, $tail);
+			$runtime = new borrowed_slot_function($runtime, $params);
 		}
 		$slots = null;
 		if ($call instanceof ast_named_call) {
@@ -2315,7 +2321,7 @@ final class Preparation
 					$runtime = $runtime->with_inputs($parameters, $rule_group->rule_header);
 				}
 			}
-			elseif ($argument !== $prepared && $argument !== $call->receiver && !($runtime instanceof borrowed_slot_function && $index >= 2)) {
+			elseif ($argument !== $prepared && $argument !== $call->receiver && !($runtime instanceof borrowed_slot_function && $runtime->is_reference($index))) {
 				$this->value($argument, destination: $labels === [] || $typed ? $type : null);
 			}
 			if ($argument === $call->receiver && $argument->member_borrow !== null && $type === $argument->member_type()) {
