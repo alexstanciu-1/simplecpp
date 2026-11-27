@@ -23,6 +23,9 @@ if($none!=="null" || $zero!=="0" || $boolean!=="false" || $text!=="\"\"" || $num
 $i string=json_encode(3); $u string=json_encode(true); $q string=json_encode("a\0b"); $z string=json_encode(0.5);
 if($i!=="3" || $u!=="true" || $z!=="0.5" || $q!=="\"a\\u0000b\""){return 7;}
 $diag ?json_parse_error=null;
+$checked=json_document_parse("[]",$diag);
+$checkedKind string=json_node_kind(json_document_root($checked));
+if($checkedKind!=="array"){return 49;}
 $doc json_document=json_document_parse("{\"items\":[1e0,true,\"a\\u0000b\"],\"0\":null}",$diag);
 if(isset($diag)){return 8;}
 $root json_node=json_document_root($doc);
@@ -38,6 +41,7 @@ $leaf json_node=json_node_member($root,"0"); $kind string=json_node_kind($leaf);
 if($kind!=="null" || isset(json_node_member($root,"absent"))){return 11;}
 $failed=json_document_parse("{\"a\":0,\"\\u0061\":1}",$diag);
 if(isset($failed) || !isset($diag)){return 12;}
+if($diag->byte_offset!==7){return 52;}
 $err json_parse_error=$diag;
 if($err->byte_offset!==7 || $err->category!=="duplicate_key"){return 13;}
 $failed=json_document_parse("[[]]",$diag,1); if(isset($failed)){return 14;}
@@ -66,6 +70,18 @@ if($label!=="{\"label\":\"a\\u0000b\"}"){return 22;}
 $badFloat Reading={value:1.0e308 * 2.0}; $failedRecord=json_encode($badFloat);
 if(isset($failedRecord)){return 23;}
 $absent ?Box=null; $emptyOwner string=json_encode($absent); if($emptyOwner!=="null"){return 24;}
+$borrowed=readPacket("{\"version\":3,\"data\":[2]}");
+$old=$borrowed->data[replaceIndex($borrowed)];
+if($old!==2 || $borrowed->version!==70){return 57;}
+$borrowed->version=8;
+$borrowed->bump(2);
+if($borrowed->version!==10){return 53;}
+$selected=$borrowed->bump(replacePacket($borrowed));
+if($selected!==14 || $borrowed->version!==70){return 54;}
+$borrowed->version+=replacePacket($borrowed);
+if($borrowed->version!==70){return 55;}
+$borrowed->version=replacePacket($borrowed);
+if($borrowed->version!==4){return 56;}
 $read Packet=readPacket("{\"data\":[8,-2,7]}");
 if($read->version!==1 || $read->data[1]!==-2){return 25;}
 $reversed Packet=json_decode_as("{\"version\":9,\"data\":[]}",Packet::class);
@@ -106,7 +122,7 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
     deps = {'dependencies': {'runtime': {'modules': ['json']}}}
     manifest.write_text(json.dumps(dict(deps, general_api=True)))
     records = app/'records.php'
-    definitions = ('data struct Packet { public vector<int> $data; public int $version=1; }'
+    definitions = ('data struct Packet { public vector<int> $data; public int $version=1; public function bump(int $n):int { $this->version+=$n; return $this->version; } }'
                    'data class Box { public string $label; }'
                    'data struct Text { public string $label; public vector<string> $words; }'
                    'data class Pair { public Box $a; public Box $b; }'
@@ -138,7 +154,13 @@ return 0;""")
         (app/name).write_text(body)
     reader = app/'reader.php'
     decoder = ('function readPacket(string $text):result<Packet> {return json_decode_as($text,Packet::class);}'
+               r'function replacePacket(result<Packet> &$r):int { $r=readPacket("{\"data\":[],\"version\":70}"); return 4; }'
+               'function replaceIndex(result<Packet> &$r):int { replacePacket($r); return 0; }'
                'function snapshot(result<Packet> &$saved):Packet { $copy Packet=$saved; return $copy; }')
+    families = {'Nullable': '?vector<string>', 'Result': 'result<vector<string>>',
+                'Falseable': 'result_or_false<vector<string>>', 'Boolean': 'result_or_bool<vector<string>>'}
+    for name, carrier in families.items():
+        decoder += f'function grow{name}({carrier} &$slot):void {{ $slot->resize(2,"x"); }}'
     reader.write_text(decoder)
     (app/'writer.php').write_text('function encodeBox(Box $box):string {return json_encode($box);}'
                                   'function encodeLate():result<string> {'
@@ -150,6 +172,18 @@ return 0;""")
         assert 'error' not in result, result
         baseline = artifacts(out)
         units = b'\n'.join(v for k, v in baseline.items() if k.suffix == '.cpp')
+        assert b'((var_diag_' in units and b'.checked_ref()).byte_offset' in units
+        assert b'.checked_ref()).version = 8LL;' in units
+        assert b'.checked_ref()).version = replacePacket_' in units
+        assert b'auto receiver_owner_guard = ' in units and b'auto& compound_target = (*receiver_owner_guard).version;' in units
+        direct = next(line for line in units.splitlines() if b'_bump(' in line and b'2LL);' in line)
+        assert b'[&]' not in direct and b'.value()' not in direct, direct
+        for line in units.splitlines():
+            if b'.resize(' in line or (b'.at(' in line and b'replaceIndex_' in line):
+                assert b'[&]' not in line and b'.value()' not in line, line
+        assert b'.pin()).data).at(' in units
+        assert units.count(b'method_receiver.resize(') == 4
+        assert b'::scpp::json::document_root((var_checked_' in units
         assert units.count(b'Packet::encode(::scpp::Encoder& out) const') == 1
         assert b'encode_record(' not in units and b'encode_owned_record(' not in units
         assert b'Packet::decode(::scpp::Decoder& d)' in units
@@ -183,6 +217,23 @@ return 0;""")
         run = subprocess.run([work/'run'], check=True, capture_output=True)
         # Only the valid root reaches construction. Both documents contain a valid nested packet.
         assert run.stdout == b'root destroyed', run.stdout
+        # Removing the only pin demand changes Packet's generated result layout across units.
+        main.write_text(r'function useInt(int $n):int {return $n;} $r=readPacket("{\"data\":[]}"); '
+                        '$r->version+=1; return useInt($r->version);')
+        reduced = invoke(proc)
+        assert 'error' not in reduced, reduced
+        cold = service(app, work/'reduced')
+        try:
+            assert 'error' not in invoke(cold)
+            assert artifacts(work/'reduced') == artifacts(out)
+            reduced_units = artifacts(out)
+            header = next(data for data in reduced_units.values() if b'struct record_result_Packet {' in data)
+            assert b'std::shared_ptr<Value> payload' not in header and b'#include <memory>' not in header
+            entry = reduced_units[Path(bundle['sources']['app/main.php'])]
+            assert b'.pin()' not in entry and entry.count(b'.checked_ref()).version') == 2, entry
+        finally:
+            cold.stdin.close()
+            cold.wait()
         for target, diagnostic in [('Reading::class', 'No JSON decoder for Reading::$value'),
                                    ('UnknownRecord::class', 'concrete data record'), ('"Packet"', 'type marker')]:
             main.write_text('json_decode_as("{}",' + target + '); return 0;')

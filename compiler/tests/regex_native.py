@@ -153,12 +153,13 @@ $fields vector<string> = $parts;
 if (count($fields) !== 0) { return 24; }
 $parts = preg_split("/[/", "");
 if ($parts !== false) { return 25; }
-if (cli_argc() >= 5) {
+if ((cli_argc() >= 5 && cli_argc() <= 9) || cli_argc() === 12) {
     $n int = 99;
     $never function<string(vector<regex_offset_capture>)> = function(vector<regex_offset_capture> $r):string {
         echo "invoked"; return "wrong";
     };
     try {
+        if (cli_argc() === 12) { preg_replace_callback([], $never, "", -1, $n, 0); }
         if (cli_argc() === 5) { preg_replace_callback("/a/", $never, "a", -1, $n, PREG_UNMATCHED_AS_NULL); }
         if (cli_argc() === 6) {
             $emptyTable hash<function<string(vector<regex_offset_capture>)>,string> = [];
@@ -172,6 +173,14 @@ if (cli_argc() >= 5) {
         if (cli_argc() === 8) { preg_replace_callback("/a/", $identity, "a", -1, $n, 1); }
     } finally { echo $n; }
     return 150;
+}
+if (cli_argc() === 10 || cli_argc() === 11) {
+    $n int = 99;
+    try {
+        if (cli_argc() === 10) { preg_filter(["/x/", "/[/"], "!", "xx", -1, $n); }
+        else { preg_filter(["/x/", "/(*LIMIT_MATCH=20)a|(?:b+)+c/"], ["a","!"], "xbbbbbbbbbbbbbbbbd", -1, $n); }
+    } finally { echo $n; }
+    return 198;
 }
 if (cli_argc() === 3) { preg_filter("/[/", "", "", 0); return 55; }
 if (cli_argc() === 4) { preg_filter("/./u", "", string_byte_from_int(255)); return 56; }
@@ -395,6 +404,41 @@ if (isset($bad)) { return 20; }
             statements.append('$changed = 99; $failed = preg_filter("/[/", "!", $items, -1, $changed);')
             statements.append('if (isset($failed) || $changed !== 0) { return 136; }')
             statements.append('}')
+        for shape, keys in [
+            ('vector<string>', ['0', '1', '2']),
+            ('hash<string,int>', ['17', '2', '9']),
+            ('hash<string,string>', ['"z"', '"b"', '"a"']),
+        ]:
+            def subjects(values):
+                entries = values if shape == 'vector<string>' else [
+                    f'{key} => {value}' for key, value in zip(keys, values)]
+                return '[' + ', '.join(entries) + ']'
+
+            statements.append('{ $n int = 99;')
+            statements.append(f'$items {shape} = ' + subjects(['"aa"', '"miss"', '"a"']) + ';')
+            statements.append(f'$out {shape} = preg_replace("/a/", "", $items);')
+            statements.append(f'if (count($out) !== 3 || $out[{keys[0]}] !== "" || $out[{keys[1]}] !== "miss"'
+                              f' || $out[{keys[2]}] !== "") {{ return 170; }}')
+            statements.append('$seen string = ""; foreach ($out as $replaceKey => $replaceValue) { $seen .= (string)$replaceKey; }')
+            order = ''.join(key.strip('"') for key in keys)
+            statements.append(f'if ($seen !== "{order}") {{ return 171; }}')
+            statements.append('$out = preg_replace("/a/", "!", $items, 0);')
+            statements.append(f'if ($out[{keys[0]}] !== "aa" || $out[{keys[2]}] !== "a") {{ return 172; }}')
+            statements.append('$n = 1; $out = preg_replace("/a/", "!", $items, $n, $n);')
+            statements.append(f'if ($n !== 2 || $out[{keys[0]}] !== "!a" || $out[{keys[2]}] !== "!") {{ return 173; }}')
+            for pattern, limit, count in [('/a/', -1, 3), ('/z/', -1, 0), ('/a/', 0, 0)]:
+                statements.append(f'$n = 99; $out = preg_replace("{pattern}", "a", $items, {limit}, $n);')
+                statements.append(f'if ($n !== {count} || count($out) !== 3 || $out[{keys[0]}] !== "aa"'
+                                  f' || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "a") {{ return 174; }}')
+            for pattern, bad, count in [('/(*LIMIT_MATCH=20)a|(?:b+)+c/', '"abbbbbbbbbbbbbbbbd"', 3),
+                                        ('/./u', 'string_byte_from_int(255)', 2)]:
+                statements.append('$items = ' + subjects(['"aa"', bad, '"a"']) + ';')
+                statements.append(f'$n = 99; $failed = preg_replace("{pattern}", "!", $items, -1, $n);')
+                statements.append(f'if (isset($failed) || $n !== {count}) {{ return 175; }}')
+            statements.append('$items = []; $n = 99; $out = preg_replace("/a/", "!", $items, -1, $n);')
+            statements.append('if (count($out) !== 0 || $n !== 0) { return 176; }')
+            statements.append('$n = 99; $invalid = preg_replace("/[/", "!", $items, 0, $n);')
+            statements.append('if (isset($invalid) || $n !== 0) { return 177; } }')
         # PHP exposes one single-match row to either callback form. Compare all nine row types.
         for shape in ('vector', 'hash', 'mixed'):
             for cell, flags, offsets, nulls in [
@@ -434,6 +478,8 @@ if (isset($bad)) { return 20; }
                                f'$flags int = {flags}; $outCount int = 99;',
                                '$once string = preg_replace_callback($p, $f, "αé", -1, $outCount, $flags);',
                                'if ($once !== "α!" || $outCount !== 1) { return 147; }',
+                               '$once = preg_replace_callback([$p], $f, "αé", -1, $outCount, $flags);',
+                               'if ($once !== "α!" || $outCount !== 1) { return 200; }',
                                '$once = preg_replace_callback_array($t, "αé", -1, $outCount, $flags);',
                                'if ($once !== "α!" || $outCount !== 1) { return 148; }', '}']
         statements.append('''{
@@ -485,6 +531,150 @@ $n = 9;
 $text = preg_replace("/a/", "!", "aba", $n, $n);
 if ($n !== 2 || $text !== "!b!") { return 129; }
 }''')
+        statements.append('''
+class CallbackTrace {
+    public static string $log = "";
+    public static int $n = 0;
+}
+function orderedCapture(hash<string,string> $r):string {
+    CallbackTrace::$log .= $r["0"];
+    if ($r->has("first")) { return "X" . $r["2"]; }
+    if ($r->has("second")) { return "Y" . $r["2"]; }
+    return "wrong";
+}
+function firstRule(vector<string> $r):string {
+    CallbackTrace::$log .= $r[0];
+    return "X" . $r[1];
+}
+function secondRule(vector<string> $r):string {
+    CallbackTrace::$log .= $r[0];
+    return "";
+}
+function checkedRule(vector<string> $r):string {
+    CallbackTrace::$log .= $r[0];
+    if ($r[0] === "b") { CallbackTrace::$n = 707; throw new Exception("later row"); }
+    return $r[0];
+}
+''')
+        for shape, keys in [('vector<string>', ['0', '1', '2']), ('hash<string,int>', ['17', '2', '9']),
+                            ('hash<string,string>', ['"z"', '"b"', '"a"'])]:
+            def rows(values):
+                entries = values if shape == 'vector<string>' else [
+                    f'{key} => {value}' for key, value in zip(keys, values)]
+                return '[' + ', '.join(entries) + ']'
+
+            statements += ['{', f'$items {shape} = ' + rows(['"a1a1"', '"miss"', '"a2"']) + ';',
+                           '$rulesHere hash<function<string(vector<string>)>,string> = ["/a(.)/" => firstRule(...), "/X(.)/" => secondRule(...)];',
+                           'CallbackTrace::$log = ""; $n int = 1;',
+                           f'$out {shape} = preg_replace_callback_array($rulesHere, $items, $n, $n);',
+                           'if (CallbackTrace::$log !== "a1a2X1X2" || $n !== 4 || count($out) !== 3) { return 180; }',
+                           f'if ($out[{keys[0]}] !== "a1" || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "") {{ return 181; }}',
+                           '$order string = ""; foreach ($out as $cbKey => $cbValue) { $order .= (string)$cbKey; }',
+                           'if ($order !== "' + ''.join(key.strip('"') for key in keys) + '") { return 182; }',
+                           '$out = preg_replace_callback("/a(.)/", firstRule(...), $items, 1);',
+                           f'if ($out[{keys[0]}] !== "X1a1" || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "X2") {{ return 183; }}']
+            for patterns in ('["/(?<first>a)(.)/", "/(?<second>X)(.)/"]',
+                             '[8 => "/(?<first>a)(.)/", 2 => "/(?<second>X)(.)/"]',
+                             '["z" => "/(?<first>a)(.)/", "b" => "/(?<second>X)(.)/"]'):
+                statements += ['CallbackTrace::$log = ""; $n = 1;',
+                               f'$out = preg_replace_callback({patterns}, orderedCapture(...), $items, $n, $n);',
+                               'if (CallbackTrace::$log !== "a1X1a2X2" || $n !== 4 || count($out) !== 3) { return 201; }',
+                               f'if ($out[{keys[0]}] !== "Y1a1" || $out[{keys[1]}] !== "miss" || $out[{keys[2]}] !== "Y2") {{ return 202; }}']
+            statements += ['$items = ' + rows(['"aa"', '$hardSubject', '"a"']) + ';',
+                           'CallbackTrace::$log = ""; $n = 99;',
+                           '$failedPatterns = preg_replace_callback(["/a/", $hardPattern], checkedRule(...), $items, -1, $n);',
+                           'if (isset($failedPatterns) || CallbackTrace::$log !== "aaaaaa" || $n !== 6) { return 203; }',
+                           'CallbackTrace::$log = ""; $n = 99;',
+                           '$failedPatterns = preg_replace_callback(["/a/", "/[/"], checkedRule(...), $items, -1, $n);',
+                           'if (isset($failedPatterns) || CallbackTrace::$log !== "aa" || $n !== 2) { return 204; }',
+                           '$items = ' + rows(['"aa"', '"ab"', '"later"']) + ';',
+                           'CallbackTrace::$log = ""; $n = 99; $caught = false;',
+                           'try { $out = preg_replace_callback(["/a/", "/b/"], checkedRule(...), $items, -1, $n); }',
+                           'catch (Exception $failure) { $caught = $failure->get_message() === "later row"; }',
+                           'if (!$caught || CallbackTrace::$log !== "aaab" || $n !== 4) { return 205; }',
+                           '$out = preg_replace_callback([], checkedRule(...), $items, -1, $n);',
+                           f'if ($out[{keys[1]}] !== "ab" || $n !== 0) {{ return 206; }}',
+                           '$items = []; $n = 99;',
+                           '$failedPatterns = preg_replace_callback(["/a/", "/[/"], checkedRule(...), $items, 0, $n);',
+                           'if (isset($failedPatterns) || $n !== 0) { return 207; }']
+            for table in (False, True):
+                call = ('preg_replace_callback_array([$p => checkedRule(...)], $items' if table else
+                        'preg_replace_callback($p, checkedRule(...), $items') + ', -1, $n)'
+                statements += ['{', '$items = ' + rows(['"aa"', '$hardSubject', '"a"']) + ';',
+                               '$p string = $hardPattern; CallbackTrace::$log = ""; $n = 99;',
+                               f'$failed result_or_false<{shape}> = {call};',
+                               f'if (isset($failed) || CallbackTrace::$log !== "aaa" || $n !== {99 if table else 3}) {{ return 184; }}',
+                               '$items = ' + rows(['"aa"', '"b"', '"c"']) + ';',
+                               '$p = "/./"; CallbackTrace::$log = ""; $n = 99; $caught = false;',
+                               f'try {{ $out = {call}; }} catch (Exception $failure) {{ $caught = $failure->get_message() === "later row"; }}',
+                               f'if (!$caught || CallbackTrace::$log !== "aab" || CallbackTrace::$n !== 707 || $n !== {99 if table else 3}) {{ return 185; }}', '}']
+            statements += ['$items = []; $n = 99;',
+                           '$out = preg_replace_callback_array([], $items, -1, $n);',
+                           'if (count($out) !== 0 || $n !== 0) { return 186; }', '}']
+        statements.append('''{
+$cbSubjects vector<string> = ["ab", "cab"];
+$cbCount int = 99;
+$cbNamed function<string(hash<regex_offset_capture,string>)> = fn($r) => (string)$r["tag"]->byte_offset;
+$cbOut vector<string> = preg_replace_callback("/(?<tag>b)/", $cbNamed, $cbSubjects, -1, $cbCount, PREG_OFFSET_CAPTURE);
+if ($cbCount !== 2 || $cbOut[0] !== "a1" || $cbOut[1] !== "ca2") { return 187; }
+$capturePass function<string(hash<regex_offset_capture,string>)> = function(hash<regex_offset_capture,string> $r):string {
+    if ($r->has("first")) { return "éé"; }
+    return (string)$r["second"]->byte_offset;
+};
+$passText string = preg_replace_callback(["/^(?<first>x)/", "/(?<second>b)/"], $capturePass, "xab", -1, $cbCount, PREG_OFFSET_CAPTURE);
+if ($passText !== "ééa5" || $cbCount !== 2) { return 208; }
+$cbOut = preg_replace_callback_array(["/b/" => fn($r) => "!"], ["ab", "cab"]);
+if ($cbOut[0] !== "a!" || $cbOut[1] !== "ca!") { return 188; }
+CallbackTrace::$log = ""; $cbCount = 99;
+$cbFailure = preg_replace_callback_array(["/a(.)/" => firstRule(...), "/[/" => firstRule(...)], $cbSubjects, -1, $cbCount);
+if (isset($cbFailure) || $cbCount !== 99 || CallbackTrace::$log !== "abab") { return 189; }
+}''')
+        for helper in ('preg_replace', 'preg_filter'):
+            for patterns in ('["/a/", "/b/"]', '[9 => "/a/", 2 => "/b/"]', '["z" => "/a/", "a" => "/b/"]'):
+                for replacements in ('["b", "Z"]', '[2 => "b", 9 => "Z"]', '["a" => "b", "z" => "Z"]'):
+                    statements += ['{ $n int = 1;', f'$text string = {helper}({patterns}, {replacements}, "aa", $n, $n);',
+                                   'if ($text !== "Za" || $n !== 2) { return 190; } }']
+            for replacements, expected, count in [('["b"]', '', 2), ('["b","Z","unused"]', 'Z', 2), ('"b"', 'b', 2)]:
+                statements += ['{ $n int = 99;', f'$text string = {helper}(["/a/", "/b/"], {replacements}, "a", -1, $n);',
+                               f'if ($text !== "{expected}" || $n !== {count}) {{ return 191; }} }}']
+            for shape, keys in [('vector<string>', ['0','1','2']), ('hash<string,int>', ['17','2','9']),
+                                ('hash<string,string>', ['"z"','"b"','"a"'])] + ([('mixed',['17','"b"','9'])] if helper == 'preg_filter' else []):
+                def literal(values):
+                    entries = values if shape == 'vector<string>' else [
+                        f'{key} => {value}' for key, value in zip(keys, values)]
+                    return '[' + ', '.join(entries) + ']'
+                filtering = helper == 'preg_filter'
+                output = 'hash<string,int>' if filtering and shape == 'vector<string>' else shape
+                statements += ['{ $n int = 99;', f'$items {shape} = ' + literal(['"x"', '"miss"', '"x"']) + ';',
+                               '$p hash<string,int> = [7 => "/x/", 1 => "/a/"];',
+                               f'$out {output} = {helper}($p, ["a", "x"], $items, -1, $n);',
+                               f'if ($n !== 4 || count($out) !== {2 if filtering else 3} || (string)$out[{keys[2]}] !== "x") {{ return 192; }}',
+                               f'$out = {helper}([], [], $items, -1, $n);',
+                               f'if ($n !== 0 || count($out) !== {0 if filtering else 3}) {{ return 193; }}',
+                               '$items = ' + literal(['"x"', '"xbbbbbbbbbbbbbbbbd"', '"x"']) + ';',
+                               f'$failed = {helper}(["/x/", $hardPattern], ["a","!"], $items, -1, $n);',
+                               'if (isset($failed) || $n !== 4) { return 194; }',
+                               f'$failed = {helper}(["/x/", "/[/"], "!", $items, -1, $n);',
+                               'if (isset($failed) || $n !== 1) { return 195; }',
+                               f'$items = []; $failed = {helper}(["/x/", "/[/"], [], $items, 0, $n);',
+                               'if (isset($failed) || $n !== 0) { return 196; } }']
+        statements.append('''{
+$n int = 99;
+$failed = preg_replace(["/x/", $hardPattern], ["a","!"], "xbbbbbbbbbbbbbbbbd", -1, $n);
+if (isset($failed) || $n !== 2) { return 197; }
+}''')
+        statements.append('''
+function nextRules(int &$step): vector<string> {
+    $step += 1;
+    if ($step === 1) { return ["/a/"]; }
+    return ["z"];
+}
+{
+$step int = 0;
+$text string = preg_replace(nextRules($step), nextRules($step), "aa", -1, $step);
+if ($step !== 2 || $text !== "zz") { return 199; }
+}
+''')
         # Each row checks the same plain pieces and their absolute byte offsets.
         statements.append('$splitFlags int = PREG_SPLIT_DELIM_CAPTURE;')
         for pattern, subject, tail, expected in [
@@ -621,7 +811,8 @@ def prove(work, runtime, flavor):
             source_edit(source, 'preg_match("/a/", "a"); return 0;')
             assert 'requires module runtime-regex' in invoke(resident).get('error', '')
         source_edit(source, fixture(flavor))
-        assert 'requires module runtime-regex' in invoke(resident).get('error', '')
+        error = invoke(resident).get('error', '')
+        assert 'requires module runtime-regex' in error, error
         if flavor != 'cpp':
             source_edit(manifest, '{"dependencies":{"runtime":{"modules":["regex"]}}}')
             source_edit(source, 'regex_test("/a/", "a"); return 0;')
@@ -641,7 +832,13 @@ def prove(work, runtime, flavor):
         ok()
         if flavor == 'php':
             lowered = b'\n'.join(artifacts(output).values())
-            for target in ('preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
+            for helper in ('preg_replace', 'preg_filter'):
+                assert f'scpp/php/{helper}_rules.hpp'.encode() in lowered
+            for header in ('callback_row_vector_string_vector_string', 'callback_row_vector_string_hash_string_int64',
+                           'callback_row_vector_string_hash_string_string', 'callback_row_hash_regex_offset_capture_string_vector_string'):
+                assert f'scpp/regex/{header}.hpp'.encode() in lowered, header
+            for target in ('preg_replace_vector', 'preg_replace_int_keys', 'preg_replace_string_keys',
+                           'preg_filter_string', 'preg_filter_vector', 'preg_filter_int_keys',
                            'preg_filter_string_keys', 'preg_filter', 'preg_match_numbered', 'preg_match_all_numbered',
                            'preg_match_named', 'preg_match_all_named_rows', 'preg_match_all_named_columns',
                            'preg_match_all_set_order_named', 'preg_match_all_pattern_order_named',
@@ -651,6 +848,8 @@ def prove(work, runtime, flavor):
                 ('preg_replace_callback("/a/", fn($row) => "!", "a", 1, 99);', 'Reference argument requires stable'),
                 ('$rules hash<function<string(mixed)>,string> = []; $s string = ""; preg_replace_callback_array($rules, "a", 1, $s);',
                  'Reference argument requires exact storage type'),
+                ('preg_filter("/a/", ["!"], "a");', 'replacement collection requires a pattern collection'),
+                ('preg_replace("/a/", ["!"], "a");', 'replacement collection requires a pattern collection'),
                 ('preg_filter("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
                 ('$n string = ""; preg_filter("/a/", "!", ["a"], -1, $n);', 'argument 5 (count) requires writable'),
                 ('preg_replace("/a/", "!", "a", -1, 99);', 'argument 5 (count) requires a writable'),
@@ -730,9 +929,12 @@ def prove(work, runtime, flavor):
             subprocess.run([executable], check=True)
         failed = subprocess.run([first_build['executable'], 'failed-split'], capture_output=True, text=True)
         assert failed.returncode == 1 and failed.stderr.strip() == 'carrier_no_value', failed
-        for argc in (5, 6, 7, 8, 9):
+        for argc in (5, 6, 7, 8, 9, 12):
             failed = subprocess.run([first_build['executable'], *(['flags'] * (argc - 1))], capture_output=True, text=True)
             assert failed.returncode == 1 and 'flags' in failed.stderr and failed.stdout.strip() == '99', failed
+        for argc, message in [(10, 'invalid pattern'), (11, 'matching failed')]:
+            failed = subprocess.run([first_build['executable'], *(['pattern'] * (argc - 1))], capture_output=True, text=True)
+            assert failed.returncode == 1 and message in failed.stderr and failed.stdout.strip() == '2', failed
         for args, message in [(['invalid', 'pattern'], 'preg_filter: invalid pattern'),
                               (['invalid', 'utf', 'subject'], 'preg_filter: matching failed')]:
             failed = subprocess.run([first_build['executable'], *args], capture_output=True, text=True)

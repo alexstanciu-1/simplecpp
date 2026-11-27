@@ -284,6 +284,18 @@ final class Parser
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
+		if ($this->take_start()) {
+			$value = $this->take_expression();
+			return new ast_take_statement($value, $this->statement_end(token_kind::semicolon));
+		}
+		$name_kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+		if ($this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::assign)) {
+			$start = $this->cursor->position();
+			$tokens = $this->cursor->tokens->tokens;
+			if (($tokens[$start + 2]->kind ?? null) === $name_kind && ($tokens[$start + 3]->kind ?? null) === token_kind::assign) {
+				return $this->assignment_chain($collector, $name_kind);
+			}
+		}
 		if ($grammar instanceof Python_Grammar) return $this->python_statement($grammar, $collector);
 		if ($this->cursor->keyword('unset') || $this->cursor->keyword('clean')) {
 			$start = $this->cursor->position();
@@ -342,7 +354,6 @@ final class Parser
 			}
 			return $this->call_statement($value);
 		}
-		$name_kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
 		if ($this->property_statement_start()) {
 			$target = $this->primary(field_target: true);
 			if ($target instanceof ast_call_expression) {
@@ -369,6 +380,7 @@ final class Parser
 	private function python_statement(Python_Grammar $grammar, Body_Collection $collector): ast_statement
 	{
 		$c = $this->cursor;
+		if ($c->is(token_kind::identifier) && $c->next_is(token_kind::comma)) return $this->python_parallel_assignment($collector);
 		if ($c->is(token_kind::indent)) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Unexpected Python indentation');
 		}
@@ -1525,7 +1537,7 @@ final class Parser
 			return new ast_index_compound(new ast_index_expression($receiver, $index, $index_end), $value, $operator,
 				$this->cursor->take(token_kind::semicolon, ';') + 1);
 		}
-		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || ($index !== null && $receiver instanceof ast_index_expression))) {
+		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || $receiver instanceof ast_index_expression)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed assignment requires named or field storage');
 		}
 		$this->cursor->take(token_kind::assign, '=');
@@ -1924,10 +1936,50 @@ final class Parser
 		return new ast_inline_job(new ast_lambda_expression($start, $parameters, null, $body), $inputs, $binding_kinds, $iteration);
 	}
 
+	/** Recognize output assignment without reserving ordinary calls to a function named take. */
+	private function take_start(): bool
+	{
+		$c = $this->cursor;
+		if ($c->tokens->source->flavor !== flavor::php) return false;
+		$named = $c->keyword('take') && $c->next_is(token_kind::lparen);
+		if (!$named && !($c->is(token_kind::lparen) && $c->next_is(token_kind::variable)
+			&& ($c->tokens->tokens[$c->position() + 2]->kind ?? null) === token_kind::comma)) return false;
+		$pos = $c->position() + ($named ? 2 : 1);
+		while (($c->tokens->tokens[$pos]->kind ?? null) === token_kind::variable) {
+			if (($c->tokens->tokens[++$pos]->kind ?? null) !== token_kind::comma) break;
+			++$pos;
+		}
+		return ($c->tokens->tokens[$pos]->kind ?? null) === token_kind::rparen
+			&& ($c->tokens->tokens[$pos + 1]->kind ?? null) === token_kind::assign;
+	}
+
+	/** Collect output slots in order and parse their single source expression. */
+	private function take_expression(): ast_take_expression
+	{
+		$c = $this->cursor;
+		$start = $c->position();
+		if ($this->lexical === null || $this->arrow !== null) throw new diagnostic($c->tokens->source, $c->offset(), 'take outputs require a statement scope');
+		if ($c->keyword('take')) $c->take_keyword('take');
+		$c->take(token_kind::lparen, '(');
+		$outputs = [];
+		do {
+			if ($outputs !== []) $c->take(token_kind::comma, ',');
+			$at = $c->position();
+			$name = $c->binding_name(token_kind::variable);
+			if (isset($outputs[$name])) throw new diagnostic($c->tokens->source, $c->offset(), 'take requires distinct output slots');
+			$outputs[$name] = $this->lexical->has_local($name) ? new ast_name_expression($name, $at, $at + 1)
+				: $this->lexical->produced_binding($name, $at, true);
+		} while ($c->is(token_kind::comma));
+		$c->take(token_kind::rparen, ') after take outputs');
+		$c->take(token_kind::assign, '= after take outputs');
+		return new ast_take_expression($start, $this->value(), array_values($outputs));
+	}
+
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(bool $argument_operand = false): ast_expression
 	{
 		$c = $this->cursor;
+		if ($this->take_start()) return $this->take_expression();
 		$block = $this->keyword_block_start();
 		if ($block !== null) return $this->keyword_block($block);
 		if ($c->keyword('await')) return $this->await_expression();
@@ -2270,6 +2322,94 @@ final class Parser
 			return null;
 		}
 		return $kind === null ? null : binary_operator::compound($kind);
+	}
+
+	/** Flat name lists have a statically known arity, including an explicit singleton with a trailing comma. */
+	private function python_parallel_assignment(Body_Collection $collector): ast_block_statement
+	{
+		$c = $this->cursor;
+		$targets = [];
+		do {
+			$at = $c->position();
+			$name = $c->binding_name(token_kind::identifier);
+			if (!$collector->has_local($name)) {
+				throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset, 'Parallel assignment requires an existing local: ' . $name);
+			}
+			$targets[] = [$at, $name];
+			if (!$c->is(token_kind::comma)) break;
+			$c->take(token_kind::comma, ',');
+		} while (!$c->is(token_kind::assign));
+		$c->take(token_kind::assign, '=');
+		$values = [$this->assignment_value()];
+		if (!$c->is(token_kind::comma)) {
+			throw new diagnostic($c->tokens->source, $c->offset(), 'Parallel assignment requires an explicit list of RHS expressions');
+		}
+		while ($c->is(token_kind::comma)) {
+			$c->take(token_kind::comma, ',');
+			if ($c->is(token_kind::newline)) break;
+			$values[] = $this->assignment_value();
+		}
+		if (count($values) !== count($targets)) throw new diagnostic($c->tokens->source, $c->offset(), 'Parallel assignment target and value counts differ');
+		return $this->python_assignment_block($collector, $targets, $values);
+	}
+
+	/** Snapshot expressions in source order before any write. A chain shares one snapshot across its targets.
+	 * @param array<int,array{int,string}> $targets
+	 * @param ast_expression[] $values */
+	private function python_assignment_block(Body_Collection $collector, array $targets, array $values): ast_block_statement
+	{
+		$end = $this->statement_end(token_kind::newline);
+		$statements = [];
+		foreach ($values as $i => $value) {
+			[$position, $destination] = $targets[$i];
+			$statements[] = new ast_assignment_snapshot($position, $value->end, $destination, $value);
+		}
+		$single = count($values) === 1;
+		foreach ($targets as $i => [$position, $name]) {
+			$snapshot = $statements[$single ? 0 : $i];
+			$value = $snapshot->initializer;
+			$read = new ast_name_expression($snapshot->short_name, $value->start, $value->end);
+			$statements[] = new ast_assignment_statement($position, $end, $name, $read, assignment_intent::existing_binding);
+		}
+		$child = $collector->child();
+		foreach ($statements as $i => $statement) $child->statement($statement, $i);
+		return new ast_block_statement($child->block($targets[0][0], $end, $statements));
+	}
+
+	/** Collect standalone chain targets before constructing the ordered writes for this flavor. */
+	private function assignment_chain(Body_Collection $collector, token_kind $name_kind): ast_block_statement
+	{
+		$cursor = $this->cursor;
+		$start = $cursor->position();
+		$targets = [];
+		while (true) {
+			$position = $cursor->position();
+			$name = $cursor->binding_name($name_kind);
+			if (!$collector->has_local($name)) {
+				throw new diagnostic($cursor->tokens->source, $cursor->tokens->tokens[$position]->offset, 'Chained assignment requires an existing local: ' . $cursor->tokens->text_at($position));
+			}
+			if (!$cursor->next_is($name_kind) || ($cursor->tokens->tokens[$cursor->position() + 2]->kind ?? null) !== token_kind::assign) break;
+			$targets[] = [$position, $name];
+			$cursor->take(token_kind::assign, '=');
+		}
+		if ($cursor->tokens->source->flavor === flavor::python) {
+			$targets[] = [$position, $name];
+			$cursor->take(token_kind::assign, '=');
+			return $this->python_assignment_block($collector, $targets, [$this->assignment_value()]);
+		}
+		$write = $this->assignment($position, $name, assignment_intent::existing_binding);
+		$end = $write->end;
+		$writes = [$write];
+		while ($targets !== []) {
+			[$outer, $destination] = array_pop($targets);
+			$read = new ast_name_expression($name, $position, $position + 1);
+			$writes[] = new ast_assignment_statement($outer, $position + 1, $destination, $read, assignment_intent::existing_binding);
+			$name = $destination;
+			$position = $outer;
+		}
+		$child = $collector->child();
+		foreach ($writes as $i => $statement) $child->statement($statement, $i);
+		return new ast_block_statement($child->block($start, $end, $writes));
 	}
 
 	/** $start: token position. */

@@ -2,6 +2,8 @@
 
 Doc Status: planning
 
+**Priority: later.** Further Python-specific parity work is deferred after flat parallel assignment to existing locals. When the Python backlog resumes, the next candidate is unpacking a typed vector into existing locals. The assessments below record feasibility independently of scheduling.
+
 Audited v0.2/develop-php at `9309e7572` after paired hash traversal. This is a backlog for the typed Python source flavor. The comparison baseline is the Python 3.15 language reference. The audit covers language families and meaningful subcases, including behavior behind accepted syntax. It excludes library APIs, built-in function inventories, tooling and CPython interoperability. An entry describes the active v0.2 compiler. A feature of upstream PHP, ECMAScript or ISO C++ alone supplies no implementation evidence. [Python reference](https://docs.python.org/3.15/reference/index.html) · [Grammar](https://docs.python.org/3.15/reference/grammar.html) · [Flavor contract](../compiler_frontends.md#python-syntax-flavor-in-v02)
 
 ## How to read the decisions
@@ -81,7 +83,7 @@ Evidence: [preparation and capability dispatch](../../compiler/04_analyze/prepar
 | Python feature | Closest implemented peer | Decision and reason |
 | --- | --- | --- |
 | First-write inference, annotation without initializer, function-wide binding | PHP declare-or-assign; cpp/js inferred declarations | **Discuss first.** Inference itself is cheap. Choosing block scope or Python function scope changes shadowing, branch joins, unbound reads and incremental dependencies. Annotation without a value needs definite-initialization rules. |
-| Chained assignment, parallel assignment, swap, nested and starred targets | Single assignments and paired foreach slots | **Discuss.** RHS once, unpack failure, shared identity and target write order are observable. The loop key/value slots do not model arbitrary targets. |
+| Iterable unpacking, nested and starred targets | Flat parallel assignment and swaps between existing locals evaluate all explicit RHS expressions before ordered writes. Standalone chains retain one original RHS. Paired foreach slots also work. | **Discuss.** Unpack failure, shared identity and target write order are observable. The loop key/value slots do not model arbitrary targets. |
 | Walrus expression | Peer assignment in a condition | **Discuss.** Existing condition assignment is bounded. Python also permits named expressions in value contexts and comprehensions. Choose a bounded context and binding rule. |
 | Augmented updates on attributes and subscripts | Peer indexed compounds and field writes | **Discuss.** Receiver/key evaluation once, old-value capture, mutating RHS and write-back differ by target. Python plain field statements currently request simple assignment. |
 | Arbitrary expression statements and docstrings | Discarded calls are supported | **Discuss.** Decide discardable expressions and diagnostics. Runtime docstrings/metadata have **no peer**. |

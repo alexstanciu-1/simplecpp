@@ -33,7 +33,7 @@ readonly class runtime_function implements callable_signature
 	 * @param string[]|null $parameter_names Published named-call labels in declaration order.
 	 * @param string[] $php_argument_labels Diagnostic labels for slots with a published PHP admission policy.
 	 */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false, bool $retains_receiver = true, bool $type_qualified = false, public ?string $required_module = null, public ?string $full_arity_argument = null, public ?array $parameter_names /** list<string>|null */ = null, public bool $exact_arguments = false, public bool $free_receiver = false, public bool $borrows_slots = false, public array $php_argument_labels /** list<string> */ = [], public int $php_typed_inputs /** uint32 */ = 0)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false, bool $retains_receiver = true, bool $type_qualified = false, public ?string $required_module = null, public ?string $full_arity_argument = null, public ?array $parameter_names /** list<string>|null */ = null, public bool $exact_arguments = false, public bool $free_receiver = false, public bool $borrows_slots = false, public array $php_argument_labels /** list<string> */ = [], public int $php_exact_inputs /** uint32 */ = 0)
 	{
 		$this->retains_receiver = $retains_receiver;
 		$this->type_qualified = $type_qualified;
@@ -61,9 +61,21 @@ readonly class runtime_function implements callable_signature
 		return ($this->const_reference_mask & (1 << $index)) !== 0;
 	}
 
+	/** A PHP value parameter is typed unless its publication requires an exact operand or writable slot. */
+	public function php_value_input(int $slot): bool
+	{
+		return !$this->is_reference($slot) && ($this->php_exact_inputs & (1 << $slot)) === 0;
+	}
+
 	public function name(): string
 	{
 		return $this->source_name;
+	}
+
+	/** Preserve the native ownership and writable-slot policy. @param type_definition[] $parameters */
+	public function with_inputs(array $parameters /** list<type_definition> */, string $header): self
+	{
+		return clone($this, ['parameters' => $parameters, 'header' => $header]);
 	}
 
 	public function return_type_def(): type_definition
@@ -90,6 +102,19 @@ readonly class runtime_overloads
 	}
 }
 
+/** A subject overload can also take ordered pattern and replacement collections. */
+final readonly class rewrite_rule_overloads extends runtime_overloads
+{
+	/** @param array<int,array<class-string<type_definition>,runtime_function>> $by_arity
+	 * @param array<class-string<type_definition>,type_definition> $rule_types
+	 */
+	public function __construct(array $by_arity, int $argument_index, type_definition $list_context, bool $project_selector,
+		string $required_module, public array $rule_types, public string $rule_header)
+	{
+		parent::__construct($by_arity, $argument_index, list_context: $list_context, required_module: $required_module, project_selector: $project_selector);
+	}
+}
+
 /** Published leaf encoders also define the admissible fields of a data record. */
 final readonly class json_encoder_overloads extends runtime_overloads
 {
@@ -113,11 +138,8 @@ final readonly class record_encode_function extends runtime_function
 /** Published scalar and sequence readers for a typed record destination. */
 final readonly class json_decoder_contract extends runtime_overloads
 {
-	/**
-	 * @param array<class-string<type_definition>,string> $leaves
-	 * @param array<class-string<type_definition>,string> $sequences
-	 */
-	public function __construct(public array $leaves, public string $header, public array $sequences = [])
+	/** @param array<class-string<type_definition>,string> $sequences */
+	public function __construct(public string $header, public array $sequences = [])
 	{
 		parent::__construct([], required_module: 'runtime-json');
 	}
@@ -161,18 +183,24 @@ enum runtime_factory
 /** Published PHP callback row types, keyed by canonical source type name. */
 final readonly class regex_callback_overloads extends runtime_overloads
 {
-	/** @param array<string,array{type_definition,string,int}> $rows */
-	public function __construct(private string $name, public bool $table, private int $allowed_flags, private array $rows)
+	/** @param array<string,array{type_definition,array<class-string,string>,int}> $rows
+	 * @param array<class-string,type_definition> $subjects Subject class to falseable result.
+	 * @param array<class-string,type_definition> $pattern_inputs
+	 */
+	public function __construct(private string $name, public bool $table, private int $allowed_flags, private array $rows, private array $subjects, public array $pattern_inputs)
 	{
-		parent::__construct([], argument_index: $table ? 0 : 1, required_module: 'runtime-regex');
+		parent::__construct([], argument_index: $table ? 0 : 1,
+			list_context: isset($subjects[type_vector_string::class]) ? type_vector_string::instance() : null, required_module: 'runtime-regex');
 	}
 
 	/** Resolve a concrete adapter from the row type of its single string-producing callback. */
-	public function binding(?type_definition $row, ast_expression $site): regex_callback_function
+	public function binding(?type_definition $row, ast_expression $site, ?type_definition $subject = null, ?type_definition $pattern = null): regex_callback_function
 	{
 		$variant = $this->rows[$row?->name ?? ''] ?? null;
 		if ($variant === null) throw new diagnostic($site->source(), $site->byte_start(), 'Unsupported callback row for ' . $this->name);
-		return new regex_callback_function($this->name, $variant[0], $this->table, $variant[1], true, $variant[2], $this->allowed_flags);
+		$subject ??= type_string::instance();
+		$result = $this->subjects[$subject::class] ?? throw new diagnostic($site->source(), $site->byte_start(), 'Unsupported subject type for ' . $this->name);
+		return new regex_callback_function($this->name, $variant[0], $this->table, $variant[1][$subject::class], true, $variant[2], $this->allowed_flags, $subject, $result, $pattern);
 	}
 }
 
@@ -182,19 +210,20 @@ final readonly class regex_callback_function extends runtime_function
 	public owned_callable_type $callback;
 
 	/** Resolve the canonical capture callback and the ordered hash used by the array form. */
-	public function __construct(string $name, type_definition $input, private bool $table, string $header, bool $count_output = false, private ?int $capture_flags = null, private int $allowed_flags = 0)
+	public function __construct(string $name, type_definition $input, private bool $table, string $header, bool $count_output = false, private ?int $capture_flags = null, private int $allowed_flags = 0, ?type_definition $subject = null, ?type_definition $result = null, ?type_definition $pattern = null)
 	{
 		$string = type_string::instance();
 		$this->callback = callable_signature_index::element(new callback_type_definition($string, [$input]));
+		$subject ??= $string;
 		$parameters = $table
-			? [Type_Resolution::collection('hash', $this->callback, $string), $string]
-			: [$string, $this->callback, $string];
+			? [Type_Resolution::collection('hash', $this->callback, $string), $subject]
+			: [$pattern ?? $string, $this->callback, $subject];
 		$required = count($parameters);
 		$parameters[] = type_int64::instance();
 		$count_mask = $count_output ? 1 << count($parameters) : 0;
 		if ($count_output) $parameters[] = type_int64::instance();
 		if ($capture_flags !== null) $parameters[] = type_int64::instance();
-		parent::__construct($name, $parameters, type_result_or_false_string::instance(), ($capture_flags === null ? '::scpp::regex::replace_callback' : '::scpp::regex::replace_capture_callback'), $header,
+		parent::__construct($name, $parameters, $result ?? type_result_or_false_string::instance(), ($capture_flags === null ? '::scpp::regex::replace_callback' : '::scpp::regex::replace_capture_callback'), $header,
 			required_parameters: $required, reference_mask: $count_mask, const_reference_mask: (1 << $required) - 1, required_module: 'runtime-regex');
 	}
 
@@ -228,6 +257,8 @@ final readonly class regex_callback_function extends runtime_function
 				$invalid = $this->capture_flags < 0 ? "($flags & ~{$this->allowed_flags}LL) != 0" : "$flags != $this->capture_flags";
 				$body .= "\tif ($invalid) throw scpp::ValueError(\"capture flags do not match callback row\");\n";
 			}
+			$result = $this->return_type_def()->cpp_type();
+			$subject = $this->parameters[1]->cpp_type();
 			$body .= ($limit === 'limit' ? "\tif (limit < -1) throw scpp::ValueError(\"regex limit must be -1 or nonnegative\");\n" : '')
 				. "\tauto current = subject;\n\tscpp::int64 pos = 0;\n\tauto stop = table.iteration_limit();\n\tscpp::string pattern;\n"
 				. "\t" . $this->parameters[0]->cpp_type() . "::iteration_output callback;\n"
@@ -237,8 +268,8 @@ final readonly class regex_callback_function extends runtime_function
 				. "\t\tif (!replaced.has_value()) return replaced;\n"
 				. ($counted ? "\t\ttotal += pattern_count;\n" : '')
 				. "\t\tcurrent = replaced.value();\n\t}\n"
-				. ($counted ? "\tauto result = scpp::result_or_false_string{static_cast<scpp::string&&>(current)};\n\tcount = total;\n\treturn result;\n"
-					: "\treturn scpp::result_or_false_string{static_cast<scpp::string&&>(current)};\n");
+				. ($counted ? "\tauto result = {$result}{static_cast<{$subject}&&>(current)};\n\tcount = total;\n\treturn result;\n"
+					: "\treturn {$result}{static_cast<{$subject}&&>(current)};\n");
 		} else {
 			$body .= "\treturn {$this->symbol}(pattern, &callback, invoke, subject, $limit$count_argument);\n";
 		}

@@ -7,6 +7,31 @@ Current representation: [native scalar aliases](native_scalar_aliases.md) supers
 Scope: runtime and physical API preparation inside v0.2. Source type resolution,
 evaluation order and contextual conversions remain compiler-owned.
 
+## Nested local collection writes
+
+In the PHP, C++ and JavaScript flavors, a writable local can be indexed through
+any sequence of typed vectors and hashes, as in `groups[team][i][name] = value;`.
+Evaluate and save each key once in source order, then evaluate and convert the
+value. Follow the saved keys from the current root. Each intermediate hash key
+must exist and each vector index must be in bounds. A final hash store inserts
+or replaces the entry. A lookup failure prevents the store and preserves earlier
+operand effects. Intermediate collections are accessed in place.
+
+For a compound such as `groups[team][name] += rhs()`, read the existing leaf
+before evaluating the RHS. Compute from that saved value, then check the entire
+path again at write-back. An initial lookup failure skips the RHS. If the RHS
+removes and reinserts an entry, write-back follows the saved key into its current
+entry. If any entry is still missing, write-back fails and the RHS effects remain
+visible. Standalone prefix and postfix increments and decrements likewise require
+an existing leaf. Keys retain the receiver's usual exact type requirements.
+
+For nested append, as in `groups[team][] = value;`, evaluate and save the path
+keys in source order, then evaluate and convert the value. Resolve the saved path
+in current storage and append to the selected vector or integer-keyed hash. If
+evaluation replaced the collection, the replacement receives the append. A missing
+parent raises its normal lookup error. A hash selects its next key from the live
+entries at append time under the [hash append rules](hash_slice.md#append-and-ordering).
+
 ## Representation and publication
 
 The vector metadata record binds the source family to private concrete buffer storage,

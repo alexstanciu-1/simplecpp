@@ -208,9 +208,10 @@ final class Cpp_Emitter
 		$result_declaration = '';
 		if ($node->kind === record_kind::structure && $this->record_demand($node, dependency_use::record_result)) {
 			$result_declaration = $this->result_declaration($node->definition, $includes);
-			if ($this->record_demand($node, dependency_use::record_decode)) {
-				$layout[] = "\tstatic " . Cpp_Identifier::source($node->short_name) . ' ' . self::decode_method($node->definition) . '(::scpp::Decoder&);';
-			}
+		}
+		if ($node->kind === record_kind::structure && $this->record_demand($node, dependency_use::record_decode)) {
+			$includes['scpp/decoder.hpp'] = true;
+			$layout[] = "\tstatic " . Cpp_Identifier::source($node->short_name) . ' ' . self::decode_method($node->definition) . '(::scpp::Decoder&);';
 		}
 		if ($this->record_demand($node, dependency_use::record_encode)) {
 			$includes['scpp/encoder.hpp'] = true;
@@ -507,9 +508,10 @@ final class Cpp_Emitter
 		$result = '';
 		if ($payload->default_type() instanceof shared_record_type_definition && $this->record_demand($payload->declaration, dependency_use::record_result)) {
 			$result = $this->result_declaration($payload, $includes);
-			if ($this->record_demand($payload->declaration, dependency_use::record_decode)) {
-				$factory_declaration .= "\tstatic $owner " . self::decode_method($payload) . "(::scpp::Decoder&);\n";
-			}
+		}
+		if ($payload->default_type() instanceof shared_record_type_definition && $this->record_demand($payload->declaration, dependency_use::record_decode)) {
+			$includes['scpp/decoder.hpp'] = true;
+			$factory_declaration .= "\tstatic $owner " . self::decode_method($payload) . "(::scpp::Decoder&);\n";
 		}
 		if ($this->record_demand($payload->declaration, dependency_use::record_json_encode)) {
 			$includes['scpp/encoder.hpp'] = true;
@@ -1049,6 +1051,9 @@ CPP;
 		foreach ($type->condition_headers() as $header) {
 			$headers[$header] = true;
 		}
+		if ($type instanceof carrier_type_definition && $type->payload_type instanceof runtime_handle_type && $type->false_only_sentinel()) {
+			return $type->lower_cpp_presence($operand);
+		}
 		return $type->lower_cpp_condition($operand, $negated);
 	}
 
@@ -1101,6 +1106,17 @@ CPP;
 			$this->destination = $this->destination_plans[$function->name()] ?? null;
 		}
 		$lines = [];
+		foreach ($body->scope->declarations as $slot) {
+			if (!$slot instanceof ast_produced_binding || !$slot->parent instanceof ast_take_expression) continue;
+			$type = $slot->type_def();
+			foreach ($type->cpp_headers() as $header) $required_headers[$header] = true;
+			if ($slot === $slot->parent->outputs[0]) {
+				$required_headers['optional'] = true;
+				$lines[] = "\tstd::optional<" . $type->cpp_type() . '> take_slot_' . $slot->id . ';';
+			} else {
+				$lines[] = "\t[[maybe_unused]] " . $type->cpp_type() . ' ' . $this->name($slot) . '{};';
+			}
+		}
 		if ($resume !== null) $resume->scopes[] = $body;
 		foreach ($body->statements as $statement)
 		{
@@ -1111,6 +1127,10 @@ CPP;
 					$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 					$lines[] = "\t" . $this->concrete_collections->destination_append($statement->receiver->type_def(), $writes, $receiver, $inputs) . ';';
 				}
+				continue;
+			}
+			if ($statement instanceof ast_take_statement) {
+				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
 				continue;
 			}
 			if ($statement instanceof ast_base_statement) continue;
@@ -1473,6 +1493,23 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
+				if (($root = ast_index_expression::nested_collection_root($statement->receiver)) !== null) {
+					$steps = [];
+					$row_place = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
+					[$inner, $before_inner] = $this->staged_operand($statement->index, $global_references, $declarations, $required_headers);
+					array_push($steps, ...$before_inner);
+					$steps[] = 'const auto element_index = ' . $type->lower_cpp_key($statement->index, $inner) . ';';
+					[$value, $before_value] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
+					array_push($steps, ...$before_value);
+					$element = $type->write_type();
+					foreach ($element->conversion_headers($statement->conversion()) as $header) $required_headers[$header] = true;
+					$value = $element->lower_cpp_exact_argument($statement->value, $statement->conversion(), $value, $this->inline_adapters);
+					$steps[] = 'auto element_value = ' . $value . ';';
+					$required_headers['utility'] = true;
+					$steps[] = $type->lower_cpp_write($row_place, 'element_index', 'std::move(element_value)') . ';';
+					$lines[] = $this->async_statement('{ ' . implode(' ', $steps) . ' }');
+					continue;
+				}
 				if ($type instanceof boxed_type_definition && $statement->source()->flavor === flavor::python) {
 					// Python evaluates the RHS before the subscript target. Keep the selected dynamic owner through key effects.
 					[$value, $steps] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
@@ -1517,21 +1554,31 @@ CPP;
 				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$steps = [];
-				$receiver = $statement->receiver instanceof ast_field_expression
-					? $this->retained_place($statement->receiver, $global_references, $declarations, $required_headers, $steps)
-					: $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+				$root = ast_index_expression::nested_collection_root($statement->receiver);
+				if ($root !== null) {
+					$receiver = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
+				} else {
+					$receiver = $statement->receiver instanceof ast_field_expression
+						? $this->retained_place($statement->receiver, $global_references, $declarations, $required_headers, $steps)
+						: $this->value($statement->receiver, $global_references, $declarations, $required_headers);
+				}
 				$before = $this->suspensions;
 				[$value, $rhs_steps] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
-				if ($before !== $this->suspensions) {
+				if ($root === null && $before !== $this->suspensions) {
 					$steps[] = 'auto&& write_target = ' . $receiver . ';';
 					$receiver = 'write_target';
-					array_push($steps, ...$rhs_steps);
 				}
+				array_push($steps, ...$rhs_steps);
 				$conversion = $statement->conversion();
-				foreach ($type->write_type()->conversion_headers($conversion) as $header) {
-					$required_headers[$header] = true;
+				$element = $type->write_type();
+				foreach ($element->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$value = $element->lower_cpp_exact_argument($statement->value, $conversion, $value, $this->inline_adapters);
+				if ($root !== null) {
+					$steps[] = 'auto append_value = ' . $value . ';';
+					$required_headers['utility'] = true;
+					$value = 'std::move(append_value)';
 				}
-				$append = $type->lower_cpp_append($statement, $receiver, $value, $this->inline_adapters) . ';';
+				$append = $type->lower_cpp_append_value($receiver, $value) . ';';
 				$lines[] = $this->async_statement($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
@@ -1908,6 +1955,9 @@ CPP;
 	/** Read a selected element or identify the native local storage. */
 	private function name(ast_local_binding $binding, bool $reference = false): string
 	{
+		if ($binding instanceof ast_produced_binding && $binding->is_take_payload()) {
+			return '(*take_slot_' . $binding->id . ')';
+		}
 		if ($binding instanceof ast_writable_element) {
 			$loop = $binding->parent;
 			$source = $loop->source_value;
@@ -1944,8 +1994,7 @@ CPP;
 		$property = $statement instanceof ast_property_compound;
 		$destination = $property ? $statement->target : $statement->local_def();
 		$type = $destination->type_def();
-		$simple_rhs = $statement->value instanceof ast_integer_expression || ($statement->value instanceof ast_name_expression
-			&& $statement->value->local_binding() !== null);
+		$simple_rhs = $statement->simple_compound_rhs();
 		$steps = [];
 		if ($destination instanceof ast_qualified_data) {
 			$steps[] = $this->discard_qualifier($destination->receiver, $global_references, $declarations, $headers) . ';';
@@ -2055,10 +2104,10 @@ CPP;
 	{
 		$target = $statement->target;
 		$steps = [];
-		$key = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
+		[$place, $key] = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
 		/** @var indexed_mutation_type $collection */
 		$collection = $target->receiver->type_def();
-		$old = $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key);
+		$old = $collection->lower_cpp_mutation_read($target->index, $place, $key);
 		$steps[] = 'const auto compound_previous = ' . $this->compound_left($statement, $target->type_def(), $old, $headers) . ';';
 		[$right, $rhs_steps] = $this->staged_operand($statement->value, $globals, $declarations, $headers);
 		array_push($steps, ...$rhs_steps);
@@ -2067,13 +2116,34 @@ CPP;
 		$result = 'static_cast<' . $target->type_def()->cpp_type() . '>(' . $result . ')';
 		// Existing-element compounds must not recreate a key removed by RHS replacement.
 		$steps[] = 'const auto compound_result = ' . $result . ';';
-		$steps[] = '(void)' . $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key) . ';';
-		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'compound_result');
+		$steps[] = '(void)' . $collection->lower_cpp_mutation_read($target->index, $place, $key) . ';';
+		$steps[] = $collection->lower_cpp_replace($target->index, $place, $key, 'compound_result');
 		return '{ ' . implode(' ', $steps) . ' }';
+	}
+
+	/** Stage indices from the root outward. The returned slot expression rechecks the path at each access.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 * @param string[] $steps
+	 */
+	private function nested_collection_place(ast_name_expression $root, ast_index_expression $row, array &$globals,
+		array &$declarations, array &$headers, array &$steps): string
+	{
+		$owner = $row->receiver;
+		$place = $owner instanceof ast_index_expression
+			? $this->nested_collection_place($root, $owner, $globals, $declarations, $headers, $steps)
+			: $this->value($root, $globals, $declarations, $headers);
+		[$outer, $before_outer] = $this->staged_operand($row->index, $globals, $declarations, $headers);
+		array_push($steps, ...$before_outer);
+		$key = 'row_index_' . $row->end;
+		$steps[] = 'const auto ' . $key . ' = ' . $owner->type_def()->lower_cpp_key($row->index, $outer) . ';';
+		return $owner->type_def()->lower_cpp_slot($place, $key);
 	}
 
 	/**
 	 * Share owner retention and single key evaluation for indexed compounds and updates.
+	 * @return array{string,string} Collection place and saved element key.
 	 * @param ast_global_declaration[] $globals
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
@@ -2081,17 +2151,23 @@ CPP;
 	 */
 	private function indexed_place(ast_index_expression $target, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
-		array &$steps /** list<string> */): string
+		array &$steps /** list<string> */): array
 	{
-		$place = $this->write_receiver($target->receiver, $globals, $declarations, $headers, $steps);
-		$steps[] = 'auto&& compound_collection = ' . $place . ';';
+		$root = ast_index_expression::nested_collection_root($target->receiver);
+		if ($root !== null) {
+			$place = $this->nested_collection_place($root, $target->receiver, $globals, $declarations, $headers, $steps);
+		} else {
+			$receiver = $this->write_receiver($target->receiver, $globals, $declarations, $headers, $steps);
+			$steps[] = 'auto&& compound_collection = ' . $receiver . ';';
+			$place = 'compound_collection';
+		}
 		[$key, $key_steps] = $this->staged_operand($target->index, $globals, $declarations, $headers);
 		array_push($steps, ...$key_steps);
 		if (!($target->index instanceof ast_integer_expression)) {
 			$steps[] = 'const auto compound_key = ' . $key . ';';
 			$key = 'compound_key';
 		}
-		return $key;
+		return [$place, $key];
 	}
 
 	/**
@@ -2127,12 +2203,12 @@ CPP;
 	{
 		$target = $statement->target;
 		$steps = [];
-		$key = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
+		[$place, $key] = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
 		/** @var indexed_mutation_type $collection */
 		$collection = $target->receiver->type_def();
-		$steps[] = 'auto updated_element = ' . $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key) . ';';
+		$steps[] = 'auto updated_element = ' . $collection->lower_cpp_mutation_read($target->index, $place, $key) . ';';
 		$steps[] = $target->type_def()->lower_cpp_update($statement->operator, 'updated_element', $statement->postfix) . ';';
-		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'updated_element');
+		$steps[] = $collection->lower_cpp_replace($target->index, $place, $key, 'updated_element');
 		return '{ ' . implode(' ', $steps) . ' }';
 	}
 
@@ -2324,7 +2400,8 @@ CPP;
 			$type = $statement->local_def()->type_def();
 			$conversion = $statement->conversion();
 			$value = $statement->value;
-			$prefix = $this->name($statement->local_def());
+			$slot = $statement->local_def();
+			$prefix = $slot instanceof ast_produced_binding && $slot->is_take_payload() ? 'take_slot_' . $slot->id : $this->name($slot);
 			if (($conversion === value_conversion::identity) && ($value instanceof ast_name_expression)
 				&& $value->refers_to($statement->local_def())) {
 				return '(void)' . $prefix;
@@ -2512,6 +2589,17 @@ CPP;
 		}
 		$reorderable = false;
 		$value_type = $value->type_def();
+		if ($value instanceof ast_take_expression) {
+			$input = $this->value($value->input, $global_references, $declarations, $required_headers);
+			$slot = $value->slots[0];
+			$store = $slot instanceof ast_produced_binding && $slot->is_take_payload()
+				? 'take_slot_' . $slot->id . '.emplace(source.value());' : $this->name($slot) . ' = source.value();';
+			$body = 'const auto ok = source.has_value(); if (ok) ' . $store;
+			$count = count($value->slots);
+			if ($count === 3) $body .= ' ' . $this->name($value->slots[1]) . ' = ok ? scpp::error_t{} : source.error();';
+			if ($count > 1) $body .= ' ' . $this->name($value->slots[$count - 1]) . ' = ok;';
+			return '([&](const auto& source) { ' . $body . ' return ok; }(' . $input . '))';
+		}
 		if ($value_type instanceof record_result_type_definition) {
 			$payload = $value_type->payload_type;
 			if ($payload instanceof shared_record_type_definition) $declarations[$payload->name] = $payload;
@@ -2630,22 +2718,22 @@ CPP;
 				$steps = [];
 				return $this->retained_place($value, $global_references, $declarations, $required_headers, $steps, full_expression: true);
 			}
-			if ($value->receiver instanceof ast_name_expression && $value->receiver->type_def() instanceof shared_record_type_definition
+			if ($value->receiver instanceof ast_name_expression && $value->receiver->member_type() instanceof shared_record_type_definition
 				&& ($local = $value->receiver->local_binding()) !== null && $local->type_def() instanceof class_union_type_definition) {
 				$pointer = $this->union_pointer($value->receiver, $local, $declarations);
 				if ($pointer !== null) return $pointer . '->' . Cpp_Identifier::source($value->field);
 			}
-			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
-			if ($value->receiver->type_def() instanceof runtime_handle_type) {
-				$property = runtime_functions::resolve($value->source()->flavor->name . ':property:' . $value->receiver->type_def()->name . ':' . $value->field);
+			$receiver = $this->member_operand($value->receiver, $global_references, $declarations, $required_headers);
+			if ($value->receiver->member_type() instanceof runtime_handle_type) {
+				$property = runtime_functions::resolve($value->source()->flavor->name . ':property:' . $value->receiver->member_type()->name . ':' . $value->field);
 				if ($property instanceof runtime_function) {
 					$required_headers[$property->header] = true;
 					return $property->symbol . '(' . $receiver . ')';
 				}
 			}
-			$access = $value->receiver->type_def() instanceof shared_record_type_definition ? '->' : '.';
+			$access = $value->receiver->member_type() instanceof shared_record_type_definition ? '->' : '.';
 			return '(' . $receiver . ')' . $access . Cpp_Identifier::source($value->field)
-				. ($value->receiver->type_def() instanceof runtime_field_getters ? '()' : '');
+				. ($value->receiver->member_type() instanceof runtime_field_getters ? '()' : '');
 		}
 		if (($value instanceof ast_collection_expression || $value instanceof ast_keyed_collection_expression) && $value->record_call !== null) {
 			$record = $value_type instanceof shared_record_type_definition ? $value_type->payload : $value_type;
@@ -2761,7 +2849,14 @@ CPP;
 				$python_box = $type instanceof boxed_type_definition && $value->source()->flavor === flavor::python;
 				$steps[] = ($python_box ? 'const auto ' : 'auto&& ') . $receiver . ' = ' . $place . ';';
 				array_push($this->async_steps, ...$steps, ...$key_steps);
-			} else $receiver = $this->value($field, $global_references, $declarations, $required_headers);
+			} else {
+				$base = $field;
+				while ($base instanceof ast_field_expression && $base->member_borrow === null) $base = $base->receiver;
+				$steps = [];
+				$receiver = $base->member_borrow !== null && !$value->index->is_effect_free_literal()
+					? $this->retained_place($field, $global_references, $declarations, $required_headers, $steps, full_expression: true)
+					: $this->value($field, $global_references, $declarations, $required_headers);
+			}
 			return $type->lower_cpp_index($value->index, $receiver, $index);
 		}
 		if ($value instanceof ast_interpolated_string) {
@@ -3045,7 +3140,10 @@ CPP;
 					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
-				if ($value->suspending_operands || $value instanceof ast_named_call) {
+				$borrow_receiver = $value->receiver?->member_borrow !== null;
+				$stage_receiver = $borrow_receiver && $value->has_nonliteral_arguments();
+				if ($stage_receiver || $value->suspending_operands || $value instanceof ast_named_call
+					|| ($function->receiver_method && $value->has_runtime_conversions())) {
 					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 				}
 				$operands = $value->runtime_operands();
@@ -3061,7 +3159,7 @@ CPP;
 					}
 					$steps = [];
 					$receiver = $direct
-						? $this->value($operands[0], $global_references, $declarations, $required_headers)
+						? $this->member_operand($operands[0], $global_references, $declarations, $required_headers)
 						: $this->retained_place($operands[0], $global_references, $declarations, $required_headers, $steps);
 					if ($steps !== []) {
 						// Retain the selected shared allocation if argument evaluation can replace its owner.
@@ -3074,7 +3172,8 @@ CPP;
 					return self::staged_call($call, $steps, '', $statement_setup);
 				}
 				if (count($operands) === 1 && !$function->overloaded_first) {
-					$operand = $this->value($operands[0], $global_references, $declarations, $required_headers);
+					$operand = $borrow_receiver ? $this->member_operand($operands[0], $global_references, $declarations, $required_headers)
+						: $this->value($operands[0], $global_references, $declarations, $required_headers);
 					$conversion = $value->conversion(0);
 					if ($conversion !== value_conversion::identity) {
 						$type = $function->parameters[0];
@@ -3093,7 +3192,8 @@ CPP;
 				foreach ($operands as $index => $argument) {
 					$operand_records_before = $this->record_expressions;
 					$safe = false;
-					$operand = $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					$operand = $borrow_receiver && $index === 0 ? $this->member_operand($argument, $global_references, $declarations, $required_headers)
+						: $this->value($argument, $global_references, $declarations, $required_headers, $safe);
 					$conversion = $value->conversion($index);
 					if ($conversion !== value_conversion::identity) {
 						$type = $function->parameters[$index];
@@ -3308,6 +3408,13 @@ CPP;
 		return '([&]() { ' . implode(' ', $steps) . ' return ' . $result . '; }())';
 	}
 
+	/** Emit a direct checked borrow at a source member access. @param bool[] $headers @param ast_global_declaration[] $globals @param ast_function_declaration[] $declarations */
+	private function member_operand(ast_expression $receiver, array &$globals, array &$declarations, array &$headers): string
+	{
+		$raw = $this->value($receiver, $globals, $declarations, $headers, borrow_result: true);
+		return $receiver->member_borrow?->lower_cpp_borrow($raw) ?? $raw;
+	}
+
 	/**
 	 * Select a receiver or writable field and retain its nearest enclosing allocation across operand effects.
 	 * @param ast_global_declaration[] $globals
@@ -3327,8 +3434,7 @@ CPP;
 		}
 		$fields = [];
 		$base = $receiver;
-		while ($base instanceof ast_field_expression && !($base->type_def() instanceof shared_record_type_definition)
-			&& !($base->receiver->type_def() instanceof runtime_handle_type)) {
+		while ($base instanceof ast_field_expression && $base->shares_receiver_storage()) {
 			$fields[] = Cpp_Identifier::source($base->field);
 			$base = $base->receiver;
 		}
@@ -3337,12 +3443,23 @@ CPP;
 		$inline_storage = $base->type_def() instanceof record_type_definition
 			&& ($base instanceof ast_this_expression || ($base instanceof ast_name_expression
 				&& $base->local_binding() !== null));
-		$operand = $this->value($base, $globals, $declarations, $headers);
-		if ($base->type_def() instanceof shared_record_type_definition) {
+		if ($base->retain_member_borrow) {
+			// Hold the selected storage through later operands, even if they replace its carrier.
+			$raw = $this->value($base, $globals, $declarations, $headers, borrow_result: true);
+			$pin = '(' . $raw . ').pin()';
+			if (!$full_expression) {
+				$steps[] = 'auto ' . $owner_name . '_guard = ' . $pin . ';';
+				$pin = $owner_name . '_guard';
+			}
+			$operand = '(*' . $pin . ')';
+		} else {
+			$operand = $this->member_operand($base, $globals, $declarations, $headers);
+		}
+		if ($base->member_type() instanceof shared_record_type_definition) {
 			$owner = $owner_name;
 			if ($full_expression) {
 				// Keep the payload alive through the final index or array copy in this expression.
-				$owner = $base->type_def()->cpp_type() . '(' . $operand . ')';
+				$owner = $base->member_type()->cpp_type() . '(' . $operand . ')';
 			} else {
 				$steps[] = 'auto ' . $owner_name . ' = ' . $operand . ';';
 			}
@@ -3402,7 +3519,12 @@ CPP;
 				break;
 			}
 		}
-		if ($runtime && $method) {
+		if ($runtime && $function->free_receiver && $value->receiver?->member_borrow !== null) {
+			$place = $this->retained_place($operands[0], $global_references, $declarations, $required_headers, $steps, owner_name: 'receiver_owner' . $suffix);
+			$steps[] = 'auto&& method_receiver' . $suffix . ' = ' . $place . ';';
+			$arguments[] = 'method_receiver' . $suffix;
+			unset($operands[0], $parameters[0]);
+		} elseif ($runtime && $method) {
 			$receiver = $this->retained_place($operands[0], $global_references, $declarations, $required_headers, $steps, owner_name: 'receiver_owner' . $suffix);
 			$place = 'method_receiver' . $suffix;
 			$steps[] = 'auto&& ' . $place . ' = ' . $receiver . ';';
@@ -3410,14 +3532,19 @@ CPP;
 			unset($operands[0], $parameters[0]);
 		} elseif ($method && $function->parent instanceof ast_enum_declaration) {
 			// Enum receivers are values; capture only when argument evaluation cannot be emitted directly.
-			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers, $receiver_reorderable);
+			$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers, $receiver_reorderable, borrow_result: true);
+			if ($value->receiver->member_borrow !== null) {
+				$receiver = $value->receiver->member_borrow->lower_cpp_borrow($receiver);
+				$receiver_reorderable = false;
+			}
 			if ($function->parameters === []) return $name . '(' . $receiver . ')';
 			$arguments[] = $receiver;
 		} elseif ($method) {
 			$inline_storage = $value->ancestor_dispatch;
-			$place = $value->ancestor_dispatch ? 'scpp_self'
-				: $this->retained_place($value->receiver, $global_references, $declarations, $required_headers, $steps, $inline_storage, 'receiver_owner' . $suffix);
-			if (!$inline_storage) {
+			$direct_borrow = $value->receiver?->member_borrow !== null && !$value->has_nonliteral_arguments();
+			$place = $value->ancestor_dispatch ? 'scpp_self' : $this->retained_place($value->receiver,
+				$global_references, $declarations, $required_headers, $steps, $inline_storage, 'receiver_owner' . $suffix, full_expression: $direct_borrow);
+			if (!$inline_storage && !$direct_borrow) {
 				$steps[] = 'auto&& receiver_payload' . $suffix . ' = ' . $place . ';';
 				$place = 'receiver_payload' . $suffix;
 			}

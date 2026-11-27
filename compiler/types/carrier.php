@@ -29,6 +29,12 @@ abstract class carrier_type_definition extends type_definition implements presen
 	abstract public function lower_cpp_extract(string $value): string;
 	abstract public function lower_cpp_presence(string $value): string;
 
+	/** A checked member receiver denotes the stored payload for this use. */
+	public function lower_cpp_borrow(string $value): string
+	{
+		return '(' . $value . ').checked_ref()';
+	}
+
 	/** A false-only alternate state is published by result_or_false specializations. */
 	final public function false_only_sentinel(): bool
 	{
@@ -149,6 +155,7 @@ abstract class carrier_type_definition extends type_definition implements presen
 	/** Conditions preserve alternate states; only successful payload truthiness delegates to T. */
 	public function prepare_condition(ast_expression $value): void
 	{
+		if ($value->source()->flavor === flavor::php && $this->payload_type instanceof runtime_handle_type && $this->false_only_sentinel()) return;
 		$this->payload_type->prepare_condition($value);
 	}
 
@@ -203,6 +210,11 @@ final class nullable_enum_type_definition extends carrier_type_definition
 	public function __construct(enum_type_definition $payload)
 	{
 		parent::__construct('nullable', $payload);
+	}
+
+	public function lower_cpp_borrow(string $value): string
+	{
+		return '(' . $value . ').value()';
 	}
 
 	public function dispatch_label_type(): type_definition
@@ -300,7 +312,7 @@ final class record_result_type_definition extends carrier_type_definition
 	/** @return string[] */
 	public function cpp_headers(): array /** list<string> */
 	{
-		return type_result_dynamic::instance()->cpp_headers();
+		return [type_registry::RECORD_RESULT_HEADER];
 	}
 }
 
@@ -331,5 +343,48 @@ abstract class carrier_sentinel_type_definition extends type_definition
 	public function lower_cpp_literal(ast_expression $syntax): string
 	{
 		return 'nullptr';
+	}
+}
+
+/** The diagnostic output of a structured result. */
+final class type_take_error extends type_definition
+{
+	public function cpp_type(): string
+	{
+		return 'scpp::error_t';
+	}
+	/** @return string[] */
+	public function cpp_headers(): array
+	{
+		return ['scpp/carriers.hpp'];
+	}
+	public function prepare_condition(ast_expression $value): void
+	{
+	}
+
+	public function supports_inferred_local(): bool
+	{
+		return true;
+	}
+	public function lower_cpp_condition(string $value, bool $negated = false): string
+	{
+		return '(' . $value . ').has_error()';
+	}
+
+	/** Expose the runtime diagnostic accessors to a source caller. */
+	public function runtime_method(string $name): ?runtime_function
+	{
+		$type = match ($name) {
+			'get_message', 'get_file' => type_registry::string(),
+			'get_line' => type_registry::integer(),
+			default => null,
+		};
+		return $type === null ? null : new runtime_function($name, [$this], $type, $name, 'scpp/carriers.hpp', receiver_method: true);
+	}
+
+	public static function instance(): self
+	{
+		static $type = null;
+		return $type ??= new self('error_t');
 	}
 }

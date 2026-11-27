@@ -61,27 +61,18 @@ function renderJson(array $plan, array &$files): void {
     }
     if (in_array('decode', array_column($module['operations'], 'id'), true)) {
         $recordHeader = moduleOperationHeader($module['header'], 'decode_record');
-        $declarations = $definitions = '';
-        foreach (JSON_RECORD_READERS as $type => $method) {
-            if ($type !== 'string' && !hasType($plan, $type) && !hasValue($plan, $type)) continue;
-            $declarations .= "    virtual $type $method() = 0;\n";
+        $definitions = '';
+        foreach ($plan['structural_decoder'] as $type => $method) {
             $body = $type === 'string'
                 ? "return cursor.$method(copy_string, take_string);"
                 : "return cursor.$method();";
             $definitions .= "    $type $method() override { $body }\n";
         }
-        $includes = includeHeader($plan['string']['header']);
         foreach (jsonVectorReaders($plan) as $vector => [$method, $element]) {
-            $export = typeExport($plan['submodules'], $vector);
-            $includes .= includeHeader(providerHeader($plan['submodules'], $export['provider']));
-            $scalar = JSON_RECORD_READERS[$element];
             $adapters = $element === 'string' ? 'copy_string, take_string, ' : '';
-            $declarations .= "    virtual void $method($vector& values) {\n"
-                . "        begin_array();\n        while (next_element()) values.append($scalar());\n    }\n";
             $definitions .= "    void $method($vector& values) override {\n"
                 . "        cursor.$method({$adapters}[&]($element value) { values.append(std::move(value)); });\n    }\n";
         }
-        $files['public/scpp/decoder.hpp'] = BANNER . template('json/decoder', compact('includes', 'declarations'));
         $files['public/' . $recordHeader] = BANNER . template('json/record_decoder', ['includes' => includeHeader($plan['carriers_header'])]);
         $implementationHeaders .= includeHeader($recordHeader) . includeHeader('structural_reader.hpp');
         $d .= template('json/record_reader_impl', compact('definitions', 'count'));

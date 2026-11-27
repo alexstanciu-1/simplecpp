@@ -154,3 +154,45 @@ Provider assembly derives dependencies from actual payloads. A legacy publicatio
 is accepted only when it agrees with provider placement. No ABI or lifetime algorithm
 changes accompany this integration. See [compiler carrier types](../compiler/docs/carrier_types.md)
 for supported payloads, incremental proofs and the boundary before source value operations.
+
+### PHP take outputs
+
+`take($value) = expression` evaluates the result expression once and yields a
+bool. Success means the result contains a payload, including zero or false.
+On success it assigns the exact payload type to `$value`. On failure an existing
+value survives and a fresh output stays uninitialized. A fresh output requires
+no default instance of its payload type.
+
+| Result family | Additional outputs | Failure |
+| --- | --- | --- |
+| `result_or_false<T>`, `result_or_bool<T>` | `take($value, $ok)` | Each boolean sentinel sets `$ok` to false. |
+| `result<T>` | `take($value, $error, $ok)` | Sets the diagnostic and clears `$ok`. Success clears the diagnostic. |
+
+The multi-output forms may omit `take`, as in `($value, $ok) = call();`.
+All outputs must be distinct writable variables of the exact output types.
+The error supports a condition and `get_message()`, `get_file()`, and `get_line()`.
+
+A direct success test admits a read of a fresh payload on that path. A failure
+branch that returns or throws leaves only the initialized path at the join.
+Overwriting a flag or passing it by mutable reference discards its evidence.
+Once initialized, the payload remains usable independently of that flag.
+An unconditional assignment also initializes the payload. This slice admits
+extraction as a standalone statement, an assignment or declaration initializer,
+a direct `if` test (including negation), or a return expression. Generators and
+loop headers are deferred. Across loops and exception regions, preparation
+conservatively keeps payloads already proven initialized on entry.
+
+For a PHP falseable runtime handle such as the return of `mysqli::prepare`,
+a boolean guard tests payload presence.
+
+Member access through `->` on a nullable or result carrier resolves fields and
+methods on its declared payload type. The receiver is evaluated once. Access
+checks for a present payload and borrows it with the receiver's readonly or
+writable access. Absence, failure and either boolean sentinel raise an error
+before the selected member is used. A prior condition is optional.
+
+Borrowing preserves the identity of the selected payload. When a method
+argument or the RHS of a compound field update replaces the carrier, the
+operation finishes on the originally selected payload. A plain field store
+evaluates its RHS before selecting the destination. These rules also apply
+when the receiver comes from a call or a nested field.

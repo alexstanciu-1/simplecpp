@@ -205,8 +205,8 @@ def verify_named(work, exe, cxx, linker, adapter, service):
     (app/'main.php').write_text('return caller();')
     (app/'caller.php').write_text('function caller(): int { return pick(7, 11); }')
     pick, named = app/'pick.php', app/'labeled.php'
-    pick.write_text('function pick(int $first, int $second): int { return $second; }')
-    named.write_text('function labeled(): int { return pick(second: 13, first: 5); }')
+    pick.write_text('function pick(int $data, int $second): int { return $second; }')
+    named.write_text('function labeled(): int { return pick(second: 13, data: 5); }')
     generated = app/'generated'
     facts = Path(adapter).parent/'native-layout/facts.json'
 
@@ -232,7 +232,11 @@ def verify_named(work, exe, cxx, linker, adapter, service):
         rejected = subprocess.run(['php', ROOT/'compiler/main.php', 'project', app, facts, work/'production'],
                                   text=True, capture_output=True)
         assert rejected.returncode and 'Unknown named argument: second' in rejected.stderr, rejected.stderr
-        named.write_text(named.read_text().replace('second:', 'result:'))
+        repaired = named.read_text().replace('second:', 'result:')
+        named.write_text(repaired.replace('function labeled', 'function while'))
+        assert request('lower') == 'labeled.php:9: Expected function name|||'
+        assert snapshot(generated) == saved
+        named.write_text(repaired)
         status, worklist, emitted, written = request('lower').split('|')
         assert status == 'ok' and 'caller.php' not in (worklist + emitted), (status, worklist, emitted)
         assert written == '' and snapshot(generated) == saved
@@ -243,7 +247,7 @@ def verify_named(work, exe, cxx, linker, adapter, service):
         with service(exe, cold) as fresh_request:
             assert fresh_request('lower').startswith('ok|') and snapshot(cold/'generated') == saved
         # Both types stay int. The named call must follow the labels to their new slots.
-        pick.write_text('function pick(int $result, int $first): int { return $first; }')
+        pick.write_text('function pick(int $result, int $data): int { return $data; }')
         status, worklist, emitted, written = request('lower').split('|')
         assert status == 'ok' and 'caller.php' not in (worklist + emitted), (status, worklist, emitted)
         compare({'labeled'}, 5)

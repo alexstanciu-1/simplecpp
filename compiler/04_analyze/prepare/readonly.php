@@ -8,7 +8,8 @@ final class Readonly_Access
 {
 	public static function field(ast_field_expression $site): ast_instance_field
 	{
-		$type = $site->receiver->type_def();
+		$type = $site->receiver->member_type();
+		if ($type instanceof runtime_field_type) throw new diagnostic($site->source(), $site->byte_start(), 'Runtime properties are read-only');
 		if ($type instanceof type_segment_range) throw new diagnostic($site->source(), $site->byte_start(), 'Cannot modify a segment_range field');
 		if ($type instanceof shared_record_type_definition) $type = $type->payload;
 		return $type->field($site->field) ?? throw new \LogicException('Unresolved field');
@@ -51,7 +52,7 @@ final class Readonly_Access
 	/** Validate a mutation path; only a direct, approved constructor initialization can bypass its own field. */
 	public static function write(ast_expression $site, bool $payload = false, ?ast_instance_field $initializing = null): void
 	{
-		if ($payload && $site->type_def()->mutates_referenced_value()) return;
+		if ($payload && $site->member_type()->mutates_referenced_value()) return;
 		$target = $site;
 		while ($site instanceof ast_field_expression) {
 			$field = self::field($site);
@@ -59,7 +60,7 @@ final class Readonly_Access
 				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot modify readonly property ' . $field->short_name);
 			}
 			$site = $site->receiver;
-			if ($site->type_def()->mutates_referenced_value()) return;
+			if ($site->member_type()->mutates_referenced_value()) return;
 		}
 		$storage = $site instanceof ast_index_expression ? $site->receiver : $site;
 		if ($storage->type_def() instanceof segment_type && $storage->type_def()->read_only)

@@ -820,8 +820,8 @@
     "callbacks": {
       "regex_replace_callback": {"surface": "general", "input": "vector_string", "table": false},
       "regex_replace_callback_array": {"surface": "general", "input": "vector_string", "table": true},
-      "preg_replace_callback": {"surface": "php", "input": "mixed", "table": false, "optional_output": "int64", "capture_rows": ["numbered", "named"]},
-      "preg_replace_callback_array": {"surface": "php", "input": "mixed", "table": true, "optional_output": "int64", "capture_rows": ["numbered", "named"]}
+      "preg_replace_callback": {"surface": "php", "pattern_inputs": ["vector_string", "hash_string_int64", "hash_string_string"], "input": "mixed", "table": false, "optional_output": "int64", "capture_rows": ["numbered", "named"], "subjects": ["string", "vector_string", "hash_string_int64", "hash_string_string"]},
+      "preg_replace_callback_array": {"surface": "php", "input": "mixed", "table": true, "optional_output": "int64", "capture_rows": ["numbered", "named"], "subjects": ["string", "vector_string", "hash_string_int64", "hash_string_string"]}
     },
     "capture_modes": {
       "offset": {"cell": "regex_offset_capture", "offset": true, "nullable": false},
@@ -842,20 +842,18 @@
     "php_constants": {"PREG_OFFSET_CAPTURE": 256, "PREG_UNMATCHED_AS_NULL": 512, "PREG_PATTERN_ORDER": 1, "PREG_SET_ORDER": 2, "PREG_SPLIT_NO_EMPTY": 1, "PREG_SPLIT_DELIM_CAPTURE": 2, "PREG_SPLIT_OFFSET_CAPTURE": 4},
     "surface": "general",
     "php_overloads": {
-      "preg_match_all_pattern_order": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["offset", "exact"]]},
-      "preg_match_all_set_order": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["offset", "exact"]]},
-      "preg_match_all": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["flags", "exact"], ["offset", "exact"]]},
-      "preg_match": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["flags", "exact"], ["offset", "exact"]]},
-      "preg_filter": {"selector": 2, "list_context": "mixed", "arguments": [["pattern", "typed"], ["replacement", "typed"], ["subject", "typed"], ["limit", "typed"], ["count", "writable"]]},
+      "preg_match_all_pattern_order": {"selector": 2, "arguments": [["pattern", "typed"], ["subject", "typed"], ["matches", "writable"], ["offset", "typed"]]},
+      "preg_match_all_set_order": {"selector": 2, "arguments": [["pattern", "typed"], ["subject", "typed"], ["matches", "writable"], ["offset", "typed"]]},
+      "preg_match_all": {"selector": 2, "arguments": [["pattern", "typed"], ["subject", "typed"], ["matches", "writable"], ["flags", "typed"], ["offset", "typed"]]},
+      "preg_match": {"selector": 2, "arguments": [["pattern", "typed"], ["subject", "typed"], ["matches", "writable"], ["flags", "typed"], ["offset", "typed"]]},
+      "preg_replace": {"rule_inputs": ["vector_string", "hash_string_int64", "hash_string_string"], "keep_rows": "all", "selector": 2, "list_context": "vector_string", "arguments": [["pattern", "typed"], ["replacement", "typed"], ["subject", "typed"], ["limit", "typed"], ["count", "writable"]]},
+      "preg_filter": {"rule_inputs": ["vector_string", "hash_string_int64", "hash_string_string"], "keep_rows": "matched", "selector": 2, "list_context": "mixed", "arguments": [["pattern", "typed"], ["replacement", "typed"], ["subject", "typed"], ["limit", "typed"], ["count", "writable"]]},
       "preg_grep": {"selector": 1, "list_context": "mixed", "arguments": [["pattern", "typed"], ["input", "typed"]]}
     },
     "php_exposures": {
       "preg_split": {"target": "regex_split"},
       "preg_quote": {"target": "regex_quote"},
-      "preg_replace": {
-        "target": "regex_replace", "optional_output": "int64",
-        "arguments": [["pattern", "exact"], ["replacement", "exact"], ["subject", "exact"], ["limit", "exact"], ["count", "writable"]]
-      },
+      "preg_replace": {"target": "regex_replace", "optional_output": "int64", "overload": "preg_replace"},
       "preg_jit_available": {"target": "regex_jit_available"}
     },
     "functions": {
@@ -956,6 +954,21 @@
         "native_name": "preg_filter_string", "flavor": "php", "overload": "preg_filter", "required_parameters": 3,
         "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "reference"}],
         "result": "nullable_string"
+      },
+      "preg_replace_vector": {
+        "native_name": "preg_replace_vector", "flavor": "php", "overload": "preg_replace", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "vector_string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "reference"}],
+        "result": "result_or_false_vector_string"
+      },
+      "preg_replace_int_keys": {
+        "native_name": "preg_replace_int_keys", "flavor": "php", "overload": "preg_replace", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "hash_string_int64", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "reference"}],
+        "result": "result_or_false_hash_string_int64"
+      },
+      "preg_replace_string_keys": {
+        "native_name": "preg_replace_string_keys", "flavor": "php", "overload": "preg_replace", "required_parameters": 3,
+        "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "hash_string_string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "reference"}],
+        "result": "result_or_false_hash_string_string"
       },
       "preg_filter_vector": {
         "native_name": "preg_filter_vector", "flavor": "php", "overload": "preg_filter", "required_parameters": 3,

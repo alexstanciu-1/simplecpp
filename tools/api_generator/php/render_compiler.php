@@ -37,7 +37,7 @@ function compilerPhpAdmission(array $policies, string $name, int $arity, array $
     if ($allowPrefix) $slots = array_slice($slots, 0, $arity);
     requireThat(count($slots) === $arity, "Wrong PHP admission arity for $name");
     $labels = [];
-    $typed = 0;
+    $exact = 0;
     foreach ($slots as $i => $slot) {
         requireThat(is_array($slot) && count($slot) === 2, "Invalid PHP admission slot for $name");
         [$label, $mode] = $slot;
@@ -46,9 +46,9 @@ function compilerPhpAdmission(array $policies, string $name, int $arity, array $
         requireThat(in_array($mode, ['typed', 'exact', 'writable'], true)
             && ($mode === 'writable') === in_array($i, $references, true), "Invalid PHP argument mode for $name");
         $labels[$label] = var_export($label, true);
-        if ($mode === 'typed') $typed |= 1 << $i;
+        if ($mode === 'exact') $exact |= 1 << $i;
     }
-    return ', php_argument_labels: [' . implode(', ', $labels) . "], php_typed_inputs: $typed";
+    return ', php_argument_labels: [' . implode(', ', $labels) . "], php_exact_inputs: $exact";
 }
 
 /** Generate the supported core scalar definitions; module membership determines availability. */
@@ -133,6 +133,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $keyContract = $runtime['hashes']['key_contracts'][$identity] ?? null;
         $typeTraits = $keyContract === null ? '' : "\tuse hash_key_specializations;\n\tuse concrete_value_storage;\n\n";
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($output[$identity] ?? null) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
+        if (isset($runtime['structural_decoder'][$identity])) {
+            $reader = $runtime['structural_decoder'][$identity];
+            $methods .= "\n\tpublic function structural_reader(): ?string { return '$reader'; }\n";
+        }
         if (isset($definition['constant_dispatch'])) {
             $methods .= "\n\tpublic function constant_dispatch(): constant_dispatch { return constant_dispatch::" . $definition['constant_dispatch'] . "; }\n";
         }
@@ -317,9 +321,24 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             foreach ($binding['rows'] as $row => $header) {
                 $type = $runtimeTypes[$row];
                 $flags = $runtime['regex']['callback_rows'][$row]['flags'];
-                $rows[] = "type_$type::instance()->name => [type_$type::instance(), '$header', $flags]";
+                $headers = [];
+                foreach ($binding['subjects'] as $subject => $_) {
+                    $provider = $runtime['regex']['callback_rows'][$row]['subjects'][$subject];
+                    $headers[] = "type_{$runtimeTypes[$subject]}::class => '$provider'";
+                }
+                $rows[] = "type_$type::instance()->name => [type_$type::instance(), [" . implode(', ', $headers) . "], $flags]";
             }
-            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_overloads('$name', $table, $allowed, [" . implode(', ', $rows) . "]),";
+            $subjects = [];
+            foreach ($binding['subjects'] as $subject => $result) {
+                $type = $runtimeTypes[$subject];
+                $subjects[] = "type_$type::class => type_{$runtimeTypes[$result]}::instance()";
+            }
+            $patterns = [];
+            foreach ($binding['pattern_inputs'] ?? [] as $pattern) {
+                $type = $runtimeTypes[$pattern];
+                $patterns[] = "type_$type::class => type_$type::instance()";
+            }
+            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_overloads('$name', $table, $allowed, [" . implode(', ', $rows) . "], [" . implode(', ', $subjects) . "], [" . implode(', ', $patterns) . "]),";
             continue;
         }
         $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}', $countOutput),";
@@ -356,7 +375,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                     $runtimeCases[] = "\t\t\t'php:func:$name' => \$bindings[\$key] ??= $function$policy),";
                     $keys = "'general:func:$name'";
                 }
-                $runtimeCases[] = "\t\t\t$keys => \$bindings['mixed:$name'] ??= new runtime_overloads([1 => [type_mixed::class => $function)]]),";
+                $runtimeCases[] = "\t\t\t$keys => \$bindings['mixed:$name'] ??= new runtime_overloads([1 => [type_mixed::class => $function, php_exact_inputs: 1)]]),";
             }
         }
         foreach ($family['source_collection']['methods'] as $name => $binding) {
@@ -371,7 +390,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 $referenceMask = $name === 'remove' ? 1 : 0;
                 $constMask = $name === 'has' ? 1 : 0;
                 if ($keyType === 'string') $constMask |= 2;
-                $variants[] = "type_$keyClass::class => new runtime_function('$name', [type_$source::instance(), type_$keyClass::instance()], type_bool::instance(), '$binding', '$header', reference_mask: $referenceMask, const_reference_mask: $constMask, receiver_method: true)";
+                $variants[] = "type_$keyClass::class => new runtime_function('$name', [type_$source::instance(), type_$keyClass::instance()], type_bool::instance(), '$binding', '$header', reference_mask: $referenceMask, const_reference_mask: $constMask, receiver_method: true, php_exact_inputs: 2)";
             }
             $keys = array_map(static fn($flavor) => var_export("$flavor:$source:$name", true), ['php', 'cpp', 'js']);
             $runtimeCases[] = "\t\t\t" . implode(', ', $keys) . " => \$bindings['$source:$name'] ??= new runtime_overloads([2 => [" . implode(', ', $variants) . "]], argument_index: 1, receiver_method: true),";
@@ -533,6 +552,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
     }
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
+        '@record_result_header@' => isset($runtime['structural_decoder'])
+            ? 'public const ?string RECORD_RESULT_HEADER = ' . var_export($runtime['carriers_header'] ?? null, true) . ";\n\t" : '',
         '@mt_available@' => ($runtime['mt_segments'] ?? false) ? 'true' : 'false',
         '@async_available@' => ($runtime['async_frames'] ?? false) ? 'true' : 'false',
         '@async_value_types@' => implode(', ', [...$asyncTypes, 'type_void::class']),

@@ -70,7 +70,14 @@ def proof(work):
         header = plan['submodules']['nodes'][provider]['header']
         assert json.loads(run(['php', runner, compiler])) == ['nullable<int64>', 'scpp::nullable_int64', [header]]
         after = {p.name: p.read_bytes() for p in (compiler / 'types').glob('*.php')}
-        assert {k:v for k,v in before.items() if k != 'carriers.php'} == {k:v for k,v in after.items() if k != 'carriers.php'}
+        # Record decoding also consumes the relocated result provider through the registry.
+        old_header = default['carriers_header']
+        old_constant = f"public const ?string RECORD_RESULT_HEADER = '{old_header}';".encode()
+        new_constant = f"public const ?string RECORD_RESULT_HEADER = '{header}';".encode()
+        assert before['registry.php'].count(old_constant) == 1
+        expected = before.copy()
+        expected['registry.php'] = before['registry.php'].replace(old_constant, new_constant)
+        assert {k:v for k,v in expected.items() if k != 'carriers.php'} == {k:v for k,v in after.items() if k != 'carriers.php'}
         assert not (runtime / 'public/scpp/carriers.hpp').exists()
         consumer = work / 'consumer.cpp'
         consumer.write_text(f'#include <{header}>\nvoid f(scpp::nullable_int64, scpp::result_string, scpp::result_or_false_bool_t, scpp::result_or_bool_vector_string) {{}}\n')

@@ -150,7 +150,21 @@ $v vector<int> = [4,5]; echo sum(...$v),":",sum(); return 0;''', output='9:0'),
     Probe('json-pointer', '''$r=json_decode('{"user":{"name":"Ana"}}'); $v dynamic=$r; $name string=$v->user->name; echo $name; return 0;''', modules=('json',), reject='Member reads are not supported in this slice for type dynamic'),
     Probe('json-index-path', '''$r=json_decode('{"user":{"name":"Ana"}}'); $v dynamic=$r; $name string=$v["user"]["name"]; echo $name; return 0;''', modules=('json',), reject='Nested boxed indexing is deferred'),
     Probe('json-direct-chain', '''$diag ?json_parse_error=null; $doc=json_document_parse("[]",$diag);
-if (isset($doc)) { $root=json_document_root($doc); } return 0;''', general=True, modules=('json',), reject='json_document_root requires json_document'),
+$kind string=json_node_kind(json_document_root($doc)); echo $kind; return 0;''', general=True, modules=('json',), output='array'),
+    Probe('builtin-carried-aliases', '''$s result<string> =" /docs/name "; $v vector<string> = ["a","b"]; $rows result<vector<string>> = $v;
+echo basename(trim($s)),":",implode(",",$rows); return 0;''', modules=('filesystem',), output='name:a,b'),
+    Probe('json-exact-or-carried', '''$none ?int=null; $number result<int> =7;
+$a string=json_encode($none); $b string=json_encode($number); echo $a,":",$b; return 0;''',
+          modules=('json',), output='null:7'),
+    Probe('regex-carried-inputs', '''$s result<string> = "ab"; $p result<string> = "/a/"; $m vector<string> = [];
+$n int=preg_match($p,$s,$m); $out string=preg_replace_callback($p,fn(vector<string> $row)=>"!",$s);
+echo $n,":",$m[0],":",$out; return 0;''', modules=('regex',), output='1:a:!b'),
+    Probe('regex-carried-failure', '''$s=hex2bin("x");
+$out=preg_replace_callback("/a/",fn(vector<string> $row)=>"!",$s); echo "after"; return 0;''',
+          modules=('regex',), runtime_error='carrier_no_value'),
+    Probe('json-failed-chain', '''$diag ?json_parse_error=null;
+$doc=json_document_parse("{",$diag); $root=json_document_root($doc); echo "after"; return 0;''',
+          general=True, modules=('json',), runtime_error='carrier_no_value'),
     Probe('predicate-family', '''$r=json_decode("true"); $v dynamic=$r; echo is_bool($v)?"bool":"other"; return 0;''', modules=('json',), reject='is_bool argument 1 (value) requires exact mixed'),
     Probe('missing-or-null', '''$record mixed=["limit"=>null]; echo (int)$record->has("limit"),(int)$record->has("absent"); return 0;''', output='10'),
     Probe('try-message', '''try { throw new Exception("declined"); } catch (Exception $e) { echo $e->getMessage(); } return 0;''', reject='Member calls: unknown method getMessage on Exception'),

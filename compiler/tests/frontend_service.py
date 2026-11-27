@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import signal
+import socket
 import subprocess
 import tempfile
 import time
@@ -39,17 +40,36 @@ def prove_idle(app):
                              str(compiler / 'host/frontend_service.php'), str(app)], env=env,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
-        for _ in range(100):
-            if (app / '.scpp/compiler.sock').exists(): break
+        endpoint = app / '.scpp/compiler.sock'
+        ready_deadline = time.monotonic() + 5
+        while not endpoint.exists():
+            assert idle.poll() is None and time.monotonic() < ready_deadline, 'Idle service failed to start'
             time.sleep(.01)
-        assert invoke(app, 'status')['idle_seconds'] == 1
-        time.sleep(.65)
-        assert invoke(app, 'status')['running'] is True  # refreshes inactivity
-        time.sleep(.65)
-        assert idle.poll() is None
-        stdout, stderr = idle.communicate(timeout=3)
+
+        def status():
+            with socket.socket(socket.AF_UNIX) as peer:
+                peer.settimeout(3)
+                peer.connect(str(endpoint))
+                peer.sendall(b'{"command":"status"}\n')
+                with peer.makefile('rb') as stream:
+                    reply = json.loads(stream.readline())
+            assert reply['running'] is True and reply['pid'] == idle.pid, reply
+            return reply
+
+        idle_seconds = status()['idle_seconds']
+        assert idle_seconds == 1
+        original_deadline = time.monotonic() + idle_seconds
+        while True:
+            time.sleep(.1)
+            sent = time.monotonic()
+            status()
+            if sent >= original_deadline:
+                break
+
+        _, stderr = idle.communicate(timeout=idle_seconds + 3)
         assert idle.returncode == 0, stderr
-        assert not (app / '.scpp/compiler.sock').exists()
+        assert time.monotonic() - sent >= idle_seconds, 'Service expired before its final idle interval'
+        assert not endpoint.exists()
         assert invoke(app, 'status') == {'running': False}
     finally:
         if idle.poll() is None:

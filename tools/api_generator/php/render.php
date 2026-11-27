@@ -184,6 +184,19 @@ function render(array $plan): array {
         $includes = implode('', $scalarHeaders);
         $files['public/scpp/encoder.hpp'] = BANNER . template('structure/encoder', compact('includes', 'forwards', 'declarations'));
     }
+    if (isset($plan['structural_decoder'])) {
+        $declarations = '';
+        foreach ($plan['structural_decoder'] as $type => $method) $declarations .= "    virtual $type $method() = 0;\n";
+        $includes = includeHeader($plan['string']['header']);
+        foreach (jsonVectorReaders($plan) as $vector => [$method, $element]) {
+            $scalar = $plan['structural_decoder'][$element];
+            $export = typeExport($plan['submodules'], $vector);
+            $includes .= includeHeader(providerHeader($plan['submodules'], $export['provider']));
+            $declarations .= "    virtual void $method($vector& values) {\n"
+                . "        begin_array();\n        while (next_element()) values.append($scalar());\n    }\n";
+        }
+        $files['public/scpp/decoder.hpp'] = BANNER . template('structure/decoder', compact('includes', 'declarations'));
+    }
     renderJson($plan, $files);
     renderResourceModules($plan, $files);
     renderRegexCaptureTypes($plan, $files, $groups);

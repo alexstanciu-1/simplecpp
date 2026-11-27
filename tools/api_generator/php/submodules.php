@@ -256,6 +256,12 @@ function needsStructuralEncoder(mixed $publication): bool {
     return $requested || array_filter(names($publication->json->operations ?? []), fn($id) => str_starts_with($id, 'encode_')) !== [];
 }
 
+function needsStructuralDecoder(mixed $publication): bool {
+    $requested = $publication->structural_decoder ?? false;
+    requireThat(is_bool($requested), 'Invalid structural Decoder selection');
+    return $requested || in_array('decode', names($publication->json->operations ?? []), true);
+}
+
 /** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
 function publicationProviderHeaders(mixed $metadata, mixed $publication): array {
     $plan = submodulePlan($metadata);
@@ -290,6 +296,7 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         $headers[] = textHelperHeader($name);
         if ($name === 'string_byte_find') $headers[] = 'scpp/value_error.hpp';
     }
+    if (needsStructuralDecoder($publication)) $headers[] = 'scpp/decoder.hpp';
     if (needsStructuralEncoder($publication)) $headers[] = 'scpp/encoder.hpp';
     if (isset($publication->json)) {
         foreach (['document', 'pull_reader'] as $feature) {
@@ -297,7 +304,6 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         }
         if (in_array('decode', names($publication->json->operations), true)) {
             $headers[] = moduleOperationHeader($publication->json->header, 'decode_record');
-            $headers[] = 'scpp/decoder.hpp';
         }
         if (array_filter(names($publication->json->operations), fn($id) => str_starts_with($id, 'encode_'))) {
             $headers[] = moduleOperationHeader($publication->json->header, 'encode_record');
@@ -339,6 +345,10 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
             }
         }
         if ($family === 'regex') {
+            foreach (array_merge($publication->regex->functions, $publication->regex->php_exposures ?? []) as $operation) {
+                $group = $catalog->functions->$operation->overload ?? $catalog->php_exposures->$operation->overload ?? null;
+                if ($group !== null && isset($catalog->php_overloads->$group->rule_inputs)) $headers[] = "scpp/php/{$group}_rules.hpp";
+            }
             $variants = regexModeVariants($catalog, $publication->regex);
             if ($variants) {
                 $headers[] = 'scpp/php/regex_hash_isset.hpp';
@@ -348,8 +358,11 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
                 if ($base !== null) $headers[] = moduleOperationHeader($header, $name);
             }
             foreach ($publication->regex->callbacks ?? [] as $callback) {
-                foreach (regexCallbackRows($catalog, $publication->regex, at($catalog->callbacks, $callback)) as $row => $_)
-                    $headers[] = moduleOperationHeader($header, 'callback_row_' . $row);
+                $definition = at($catalog->callbacks, $callback);
+                foreach (regexCallbackRows($catalog, $publication->regex, $definition) as $row => $_) {
+                    foreach (names(at($definition, 'subjects')) as $subject)
+                        $headers[] = moduleOperationHeader($header, 'callback_row_' . $row . ($subject === 'string' ? '' : '_' . $subject));
+                }
             }
         }
         foreach (names($publication->{$family}->functions) as $name) {

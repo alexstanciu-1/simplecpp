@@ -254,7 +254,7 @@ interface native_sequence_type extends counted_collection_type
 interface appendable_collection_type
 {
 	public function write_type(): type_definition;
-	public function lower_cpp_append(ast_append_statement $write, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
+	public function lower_cpp_append_value(string $receiver, string $value): string;
 }
 
 /** Single-level keyed store; the receiver owns key admission and the destination type for its values. */
@@ -272,6 +272,14 @@ interface indexed_mutation_type extends indexed_collection_type, index_write_typ
 {
 	public function lower_cpp_mutation_read(ast_expression $key, string $receiver, string $index): string;
 	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string;
+}
+
+/** A keyed write can descend through an existing slot, rechecking its saved key after user code. */
+interface nested_index_storage_type extends indexed_mutation_type
+{
+	public function lower_cpp_key(ast_expression $syntax, string $key): string;
+	public function lower_cpp_slot(string $receiver, string $key): string;
+	public function lower_cpp_write(string $receiver, string $key, string $value): string;
 }
 
 /** Collections whose normal read already rejects missing elements reuse that check for mutations. */
@@ -374,6 +382,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Published Decoder operation for a scalar leaf. */
+	public function structural_reader(): ?string
+	{
+		return null;
+	}
+
 	/** Canonical types match by identity. Callable contracts also compare their signature components. */
 	public function matches(type_definition $other): bool
 	{

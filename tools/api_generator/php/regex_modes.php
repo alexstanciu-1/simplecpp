@@ -224,15 +224,25 @@ function renderRegexModeBindings(array $plan): string {
     }
     foreach ($plan['regex']['callback_rows'] ?? [] as $row => $shape) {
         $named = $shape['named'] ? 'true' : 'false';
-        $code .= "result_or_false_string replace_capture_callback(const string& pattern, const void* ctx, callback_row_$row invoke, "
-            . "const string& subject, int64 limit, int64* count, int64 flags) {\n";
-        if ($row === 'mixed') {
-            $code .= "    return mixed_callback(pattern, ctx, invoke, subject, limit, count, flags);\n";
-        } else {
-            $code .= "    if (flags != {$shape['flags']}) throw ValueError(\"capture flags do not match callback row\");\n"
-                . "    return capture_callback<{$shape['flags']}, $named, {$shape['cell']}, $row>(pattern, ctx, invoke, subject, limit, count);\n";
+        foreach ($shape['subjects'] as $subject => $_) {
+            $result = 'result_or_false_' . $subject;
+            foreach (['string', ...array_keys($shape['pattern_inputs'][$subject] ?? [])] as $pattern) {
+                $code .= "$result replace_capture_callback(const $pattern& pattern, const void* ctx, callback_row_$row invoke, "
+                    . "const $subject& subject, int64 limit, int64* count, int64 flags) {\n";
+                $input = 'pattern';
+                if ($pattern !== 'string') {
+                    $code .= "    auto patterns = snapshot_callback_patterns(pattern);\n";
+                    $input = 'patterns';
+                }
+                if ($row === 'mixed') {
+                    $code .= "    return mixed_callback<$result>($input, ctx, invoke, subject, limit, count, flags);\n";
+                } else {
+                    $code .= "    if (flags != {$shape['flags']}) throw ValueError(\"capture flags do not match callback row\");\n"
+                        . "    return capture_callback<{$shape['flags']}, $named, {$shape['cell']}, $row, $result>($input, ctx, invoke, subject, limit, count);\n";
+                }
+                $code .= "}\n";
+            }
         }
-        $code .= "}\n";
     }
     return $code . "}\n";
 }

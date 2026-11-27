@@ -21,9 +21,11 @@ enum dependency_use: int
 	case async_wait = 16;
 	case async_task = 32;
 	case record_decode = 256;
+	case record_json_decode = 2048;
 	case record_encode = 512;
 	case record_json_encode = 1024;
 	case record_result = 128;
+	case record_borrow_storage = 4096;
 	case reordered_base = 64;
 	case enum_try_from_value = 8;
 

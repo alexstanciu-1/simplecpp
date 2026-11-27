@@ -1,5 +1,7 @@
 // The callback and the count output can refer to the same caller storage.
 #include <scpp/regex/callback_mixed.hpp>
+#include <scpp/regex/callback_row_mixed.hpp>
+#include <scpp/vectors.hpp>
 #include <cassert>
 
 int main() {
@@ -23,4 +25,15 @@ int main() {
     count = 99;
     assert(regex::replace_callback(string{"/a/"}, &state, mutate, string{"a"}, -1, count).has_value());
     assert(count == 1);
+
+    vector_string patterns;
+    patterns.append("/a/");
+    patterns.append("/!/");
+    count = 99;
+    try {
+        (void)regex::replace_capture_callback(patterns, &state, mutate, string{"a"}, -1, &count, 0);
+        assert(false);
+    } catch (const Stop&) {
+        assert(count == 2);
+    }
 }

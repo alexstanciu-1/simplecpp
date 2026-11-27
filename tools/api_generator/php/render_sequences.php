@@ -542,6 +542,10 @@ function renderCarrier(array $plan, array $c): array {
         $d .= "if (!storage_) return $p{}; ";
     }
     $d .= "if (!storage_) throw std::runtime_error(\"carrier_no_value\"); return storage_->content.value(); }\n$n::operator $p() const { return value(); }\n";
+    $missingRead = $result ? "static const $p empty{}; return empty;" : 'throw std::runtime_error("carrier_no_value");';
+    $missingWrite = $result ? "storage_ = new storage{storage::content_type{" . $p . "{}}};" : $missingRead;
+    $d .= "const $p& $n::checked_ref() const { if (!storage_) { $missingRead } return storage_->content.checked_ref(); }\n";
+    $d .= "$p& $n::checked_ref() { if (!storage_) { $missingWrite } return storage_->content.checked_ref(); }\n";
     if($nullable) {
         $class .= "    explicit $n(null_t) noexcept;\n";
         $d .= "$n::$n(null_t) noexcept {}\n";
@@ -556,7 +560,7 @@ function renderCarrier(array $plan, array $c): array {
     }
     else {
         $class .= "    void reset() noexcept;\n";
-        $d .= "void $n::reset() noexcept { delete storage_; storage_ = nullptr; }\n";
+        $d .= "void $n::reset() noexcept { if (storage_) storage_->release(); storage_ = nullptr; }\n";
         if(!$nullable) {
             $class .= "    static $n from_false() noexcept;\n    bool_t is_false() const noexcept;\n";
             $d .= template('carriers/carrier_false_definition', $vars);
@@ -566,6 +570,6 @@ function renderCarrier(array $plan, array $c): array {
             $d .= template('carriers/carrier_true_definition', $vars);
         }
     }
-    $class .= "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
+    $class .= "private:\n    storage* storage_ = nullptr;\n};\n";
     return [$class, $d];
 }

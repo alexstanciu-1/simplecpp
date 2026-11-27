@@ -81,16 +81,8 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
         $functions[$name]['required_parameters'] = $required;
         if (isset($function->overload)) {
             $group = textValue($function->overload);
-            requireThat($flavor === 'php' && preg_match('/^[a-z][a-z_0-9]*$/D', $group), 'Invalid PHP overload group');
-            $policy = at(at($catalog, 'php_overloads'), $group);
-            fields($policy, ['selector', 'list_context', 'arguments']);
-            $selector = at($policy, 'selector');
-            requireThat(is_int($selector) && isset($parameters[$selector])
-                && (isset($policy->list_context) === !(bool)($reference_mask & (1 << $selector))), 'Invalid module overload selector');
-            $functions[$name]['overload'] = $group;
-            $functions[$name]['selector'] = $selector;
-            $functions[$name]['list_context'] = isset($policy->list_context) ? textValue($policy->list_context) : null;
-            $functions[$name]['arguments'] = listValue(at($policy, 'arguments'));
+            requireThat($flavor === 'php', 'Invalid PHP overload group');
+            applyModuleOverload($catalog, $group, $functions[$name]);
         }
         if ($surface === 'general') {
             if ($flavor === null) $functions[$name]['surface'] = 'general';
@@ -112,7 +104,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     $plan[$family] = compact('provider', 'header', 'module', 'namespace', 'requires', 'functions');
     foreach (names($publication->{$family}->callbacks ?? [], 'Duplicate regex callback') as $name) {
         $item = at(at($catalog, 'callbacks'), $name);
-        fields($item, ['input', 'surface', 'table', 'optional_output', 'capture_rows']);
+        fields($item, ['input', 'surface', 'table', 'optional_output', 'capture_rows', 'subjects', 'pattern_inputs']);
         $input = textValue(at($item, 'input'));
         $callbackSurface = textValue(at($item, 'surface'));
         requireThat($family === 'regex' && in_array($input, ['mixed', 'vector_string'], true)
@@ -128,12 +120,29 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             $includes[] = providerHeader($plan['submodules'], $export['provider']);
         }
         $plan[$family]['callbacks'][$name] = compact('input', 'table', 'callbackSurface', 'callbackHeader', 'includes', 'countOutput');
+        $patterns = names($item->pattern_inputs ?? []);
+        if ($patterns !== []) {
+            requireThat(!$table && isset($item->capture_rows), 'Pattern collections require a single PHP capture callback');
+            foreach ($patterns as $type) {
+                requireThat(in_array($type, ['vector_string', 'hash_string_int64', 'hash_string_string'], true), 'Invalid callback pattern collection');
+                moduleFunctionTypeExport($plan, $type);
+            }
+            $plan[$family]['callbacks'][$name]['pattern_inputs'] = $patterns;
+        }
         if (isset($item->capture_rows)) {
             requireThat($countOutput, 'PHP capture flags follow the count output');
             foreach (regexCallbackRows($catalog, $publication->regex, $item) as $row => $shape) {
                 moduleFunctionTypeExport($plan, $row);
                 $rowHeader = moduleOperationHeader($header, 'callback_row_' . $row);
-                $plan[$family]['callback_rows'][$row] = $shape + ['header' => $rowHeader];
+                $plan[$family]['callback_rows'][$row] ??= $shape + ['header' => $rowHeader];
+                foreach (names(at($item, 'subjects')) as $subject) {
+                    $result = 'result_or_false_' . $subject;
+                    moduleFunctionTypeExport($plan, $result);
+                    $subjectHeader = $subject === 'string' ? $rowHeader : moduleOperationHeader($header, "callback_row_{$row}_$subject");
+                    $plan[$family]['callback_rows'][$row]['subjects'][$subject] = $subjectHeader;
+                    foreach ($patterns as $type) $plan[$family]['callback_rows'][$row]['pattern_inputs'][$subject][$type] = true;
+                    $plan[$family]['callbacks'][$name]['subjects'][$subject] = $result;
+                }
                 $plan[$family]['callbacks'][$name]['rows'][$row] = $rowHeader;
             }
         }
@@ -144,7 +153,7 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
     }
     foreach (names($publication->{$family}->php_exposures ?? [], 'Duplicate PHP exposure') as $name) {
         $alias = at(at($catalog, 'php_exposures'), $name);
-        fields($alias, ['target', 'native_name', 'false_result', 'optional_output', 'arguments']);
+        fields($alias, ['target', 'native_name', 'false_result', 'optional_output', 'arguments', 'overload']);
         requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid PHP function name');
         requireThat($surface === 'general' && !isset($functions[$name]), 'Expected a distinct PHP exposure of a general function');
         $target = textValue(at($alias, 'target'));
@@ -170,7 +179,8 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             }
             $symbol = "scpp::php::$name";
         }
-        requireThat(isset($alias->optional_output) === isset($alias->arguments), 'An optional output requires PHP argument admission');
+        requireThat((!isset($alias->arguments) || isset($alias->optional_output))
+            && (!isset($alias->optional_output) || isset($alias->arguments) !== isset($alias->overload)), 'An optional output requires PHP argument admission');
         if (isset($alias->optional_output)) {
             requireThat(!isset($alias->false_result) && !isset($alias->native_name), 'An optional output requires a direct native target');
             $out = moduleFunctionTypeExport($plan, textValue($alias->optional_output));
@@ -178,15 +188,35 @@ function prepareModuleFunctions(string $family, mixed $metadata, mixed $publicat
             requireThat($slot < 32, 'Too many module function parameters');
             $binding['reference_mask'] |= 1 << $slot;
             $binding['parameters'][] = ['type' => $out['identity'], 'native' => $out['symbol'] . '&'];
-            $binding['arguments'] = listValue($alias->arguments);
+            if (isset($alias->arguments)) $binding['arguments'] = listValue($alias->arguments);
             $binding['output_overload'] = true;
             $binding['includes'] = [$binding['header'], providerHeader($plan['submodules'], $out['provider'])];
             $binding['header'] = "scpp/php/$name.hpp";
             checkHeader($plan, $binding['header']);
         }
+        if (isset($alias->overload)) applyModuleOverload($catalog, textValue($alias->overload), $binding);
         $binding['symbol'] = $symbol;
         $plan[$family]['php_exposures'][$name] = $binding;
     }
+}
+
+function applyModuleOverload(object $catalog, string $group, array &$binding): void {
+    requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $group) === 1, 'Invalid PHP overload group');
+    $policy = at(at($catalog, 'php_overloads'), $group);
+    fields($policy, ['selector', 'list_context', 'arguments', 'rule_inputs', 'keep_rows']);
+    if (isset($policy->rule_inputs)) {
+        $binding['rule_inputs'] = names($policy->rule_inputs);
+        $binding['keep_rows'] = textValue(at($policy, 'keep_rows'));
+        requireThat($binding['rule_inputs'] !== [] && in_array($binding['keep_rows'], ['all', 'matched'], true), 'Invalid rewrite rule publication');
+        $binding['rule_header'] = "scpp/php/{$group}_rules.hpp";
+    }
+    $selector = at($policy, 'selector');
+    requireThat(is_int($selector) && isset($binding['parameters'][$selector])
+        && (isset($policy->list_context) === !(bool)($binding['reference_mask'] & (1 << $selector))), 'Invalid module overload selector');
+    $binding['overload'] = $group;
+    $binding['selector'] = $selector;
+    $binding['list_context'] = isset($policy->list_context) ? textValue($policy->list_context) : null;
+    $binding['arguments'] = listValue(at($policy, 'arguments'));
 }
 
 /** Resolve the concrete public export and guard against unpublished scalar identities. */
@@ -285,15 +315,58 @@ function renderModuleFunctions(string $family, array $plan, array &$files, array
         $includes = [providerHeader($plan['submodules'], $export['provider'])];
         foreach (['string', 'int64', 'result_or_false_string'] as $type)
             $includes[] = providerHeader($plan['submodules'], moduleFunctionTypeExport($plan, $type)['provider']);
-        $declaration = "using callback_row_$row = string (*)(const void*, $row);\n"
-            . "result_or_false_string replace_capture_callback(const string&, const void*, callback_row_$row, const string&, int64, int64*, int64);\n";
-        $files['public/' . $shape['header']] = moduleHeaderBody($includes, $module['namespace'], $declaration);
-        $bridge .= includeHeader($shape['header']);
+        foreach ($shape['subjects'] as $subject => $subjectHeader) {
+            $result = 'result_or_false_' . $subject;
+            $providers = $subject === 'string' ? $includes : [$shape['header']];
+            foreach ([$subject, $result] as $type)
+                $providers[] = providerHeader($plan['submodules'], moduleFunctionTypeExport($plan, $type)['provider']);
+            $declaration = $subject === 'string' ? "using callback_row_$row = string (*)(const void*, $row);\n" : '';
+            $forward = '';
+            foreach (['string', ...array_keys($shape['pattern_inputs'][$subject] ?? [])] as $pattern) {
+                if ($pattern !== 'string') $forward .= "namespace scpp { class $pattern; }\n";
+                $declaration .= "$result replace_capture_callback(const $pattern&, const void*, callback_row_$row, const $subject&, int64, int64*, int64);\n";
+            }
+            $files['public/' . $subjectHeader] = moduleHeaderBody($providers, $module['namespace'], $declaration, $forward);
+            $bridge .= includeHeader($subjectHeader);
+        }
     }
     if ($family === 'regex') {
-        $files['private/regex_capture_bindings.hpp'] = renderRegexModeBindings($plan);
+        $definitions = renderRegexRuleInputs($module, $plan, $files, $bridge);
+        $files['private/regex_capture_bindings.hpp'] = renderRegexModeBindings($plan) . $definitions;
     }
     $files["private/{$family}_provider.hpp"] = $bridge;
+}
+
+/** Publish ordered-rule signatures separately so single-rule callers retain their narrow header. */
+function renderRegexRuleInputs(array $module, array $plan, array &$files, string &$bridge): string {
+    $groups = [];
+    $definitions = '';
+    foreach (array_merge($module['functions'], $module['php_exposures'] ?? []) as $binding) {
+        if (!isset($binding['rule_inputs'])) continue;
+        $header = $binding['rule_header'];
+        $subject = $binding['parameters'][2]['type'];
+        $result = $binding['result'];
+        $name = $binding['native_name'];
+        $filter = $binding['keep_rows'] === 'matched' ? 'true' : 'false';
+        foreach ([...$binding['rule_inputs'], 'string', 'int64', $subject, $result] as $type) {
+            $export = moduleFunctionTypeExport($plan, $type);
+            $groups[$header]['includes'][] = providerHeader($plan['submodules'], $export['provider']);
+        }
+        foreach ($binding['rule_inputs'] as $patterns) {
+            foreach (['string', ...$binding['rule_inputs']] as $replacements) {
+                $prefix = "$result $name(const $patterns& patterns, const $replacements& replacements, const $subject& subject, int64 limit";
+                $groups[$header]['declarations'][] = "[[nodiscard]] $prefix = -1);\n[[nodiscard]] $prefix, int64& total);\n";
+                $definitions .= "$prefix, int64& total) {\n"
+                    . "    return apply_rules<$filter, $result>(make_rules(patterns, replacements, limit), subject, limit, total);\n}\n"
+                    . "$prefix) {\n    int64 total;\n    return $name(patterns, replacements, subject, limit, total);\n}\n";
+            }
+        }
+    }
+    foreach ($groups as $header => $group) {
+        $files['public/' . $header] = moduleHeaderBody($group['includes'], $module['namespace'], implode('', $group['declarations']));
+        $bridge .= includeHeader($header);
+    }
+    return "namespace {$module['namespace']} {\n$definitions}\n";
 }
 
 /** Build PHP overload tables alongside ordinary module bindings from the same native signatures. */
@@ -339,6 +412,10 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
                     requireThat(!isset($overloads[$key]['variants'][$arity][$type]), "Duplicate overload selector for $key");
                     $overloads[$key]['variants'][$arity][$type] = 'type_' . $runtimeTypes[$type] . "::class => $call";
                 }
+                if (isset($binding['rule_inputs'])) {
+                    $overloads[$key]['rule_inputs'] = $binding['rule_inputs'];
+                    $overloads[$key]['rule_header'] = $binding['rule_header'];
+                }
                 $overloads[$key]['index'] = $index;
                 $overloads[$key]['context'] = $binding['list_context'];
             } else $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= $call,";
@@ -351,7 +428,13 @@ function compilerModuleFunctionCases(?array $runtime, array $runtimeTypes): arra
                 $rows[] = "$arity => [" . implode(', ', $variants) . ']';
             }
             $selection = $context === null ? '' : ", list_context: type_{$runtimeTypes[$context]}::instance(), project_selector: true";
-            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new runtime_overloads([" . implode(', ', $rows)
+            $class = 'runtime_overloads';
+            if (isset($group['rule_inputs'])) {
+                $class = 'rewrite_rule_overloads';
+                $inputs = array_map(fn($t) => "type_{$runtimeTypes[$t]}::class => type_{$runtimeTypes[$t]}::instance()", $group['rule_inputs']);
+                $selection .= ", rule_types: [" . implode(', ', $inputs) . "], rule_header: '{$group['rule_header']}'";
+            }
+            $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new $class([" . implode(', ', $rows)
                 . "], argument_index: {$group['index']}$selection, required_module: $module),";
         }
     }

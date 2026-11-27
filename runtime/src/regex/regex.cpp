@@ -5,6 +5,7 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -354,8 +355,8 @@ nullable_string preg_filter_string(const string& pattern, const string& replacem
 }
 
 namespace {
-template<class Key, class Input, class Keep>
-bool filter_rows(const string& pattern, const string& replacement, const Input& input, int64 limit, int64& total, Keep keep) {
+template<bool KeepMisses, class Key, class Input, class Keep>
+bool rewrite_rows(const string& pattern, const string& replacement, const Input& input, int64 limit, int64& total, Keep keep) {
     validate_limit(limit);
     total = 0;
     capture_pattern compiled(pattern);
@@ -371,14 +372,15 @@ bool filter_rows(const string& pattern, const string& replacement, const Input& 
         total += changed;
         if (!ok) return false;
         if (changed) keep(key, owned(row));
+        else if constexpr (KeepMisses) keep(key, std::move(subject));
     }
     return true;
 }
 
-template<class Key, class Hash, class Result, class Input>
-Result filter_keyed(const string& pattern, const string& replacement, const Input& input, int64 limit, int64& total) {
+template<bool KeepMisses, class Key, class Hash, class Result, class Input>
+Result rewrite_keyed(const string& pattern, const string& replacement, const Input& input, int64 limit, int64& total) {
     Hash output;
-    if (!filter_rows<Key>(pattern, replacement, input, limit, total, [&](const Key& key, string value) {
+    if (!rewrite_rows<KeepMisses, Key>(pattern, replacement, input, limit, total, [&](const Key& key, string value) {
         output.set(key, std::move(value));
     })) return Result::from_false();
     return Result{std::move(output)};
@@ -388,7 +390,7 @@ Result filter_keyed(const string& pattern, const string& replacement, const Inpu
 result_or_false_vector_string filter(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
     vector_string output;
     int64 total;
-    if (!filter_rows<int64>(pattern, replacement, input, limit, total, [&](int64, string value) {
+    if (!rewrite_rows<false, int64>(pattern, replacement, input, limit, total, [&](int64, string value) {
         output.append(std::move(value));
     })) return result_or_false_vector_string::from_false();
     return result_or_false_vector_string{std::move(output)};
@@ -398,8 +400,51 @@ result_or_false_vector_string filter(const string& pattern, const string& replac
     return filter(pattern, replacement, input, -1);
 }
 
+result_or_false_vector_string preg_replace_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit, int64& changed) {
+    vector_string output;
+    if (!rewrite_rows<true, int64>(pattern, replacement, input, limit, changed, [&](int64, string value) {
+        output.append(std::move(value));
+    })) return result_or_false_vector_string::from_false();
+    return result_or_false_vector_string{std::move(output)};
+}
+
+result_or_false_vector_string preg_replace_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
+    int64 changed;
+    return preg_replace_vector(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_vector_string preg_replace_vector(const string& pattern, const string& replacement, const vector_string& input) {
+    return preg_replace_vector(pattern, replacement, input, -1);
+}
+
+result_or_false_hash_string_int64 preg_replace_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit, int64& changed) {
+    return rewrite_keyed<true, int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_hash_string_int64 preg_replace_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit) {
+    int64 changed;
+    return preg_replace_int_keys(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_hash_string_int64 preg_replace_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input) {
+    return preg_replace_int_keys(pattern, replacement, input, -1);
+}
+
+result_or_false_hash_string_string preg_replace_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit, int64& changed) {
+    return rewrite_keyed<true, string, hash_string_string, result_or_false_hash_string_string>(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_hash_string_string preg_replace_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit) {
+    int64 changed;
+    return preg_replace_string_keys(pattern, replacement, input, limit, changed);
+}
+
+result_or_false_hash_string_string preg_replace_string_keys(const string& pattern, const string& replacement, const hash_string_string& input) {
+    return preg_replace_string_keys(pattern, replacement, input, -1);
+}
+
 result_or_false_hash_string_int64 preg_filter_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit, int64& changed) {
-    return filter_keyed<int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
+    return rewrite_keyed<false, int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
 }
 
 result_or_false_hash_string_int64 preg_filter_vector(const string& pattern, const string& replacement, const vector_string& input, int64 limit) {
@@ -412,7 +457,7 @@ result_or_false_hash_string_int64 preg_filter_vector(const string& pattern, cons
 }
 
 result_or_false_hash_string_int64 preg_filter_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit, int64& changed) {
-    return filter_keyed<int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
+    return rewrite_keyed<false, int64, hash_string_int64, result_or_false_hash_string_int64>(pattern, replacement, input, limit, changed);
 }
 
 result_or_false_hash_string_int64 preg_filter_int_keys(const string& pattern, const string& replacement, const hash_string_int64& input, int64 limit) {
@@ -425,7 +470,7 @@ result_or_false_hash_string_int64 preg_filter_int_keys(const string& pattern, co
 }
 
 result_or_false_hash_string_string preg_filter_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit, int64& changed) {
-    return filter_keyed<string, hash_string_string, result_or_false_hash_string_string>(pattern, replacement, input, limit, changed);
+    return rewrite_keyed<false, string, hash_string_string, result_or_false_hash_string_string>(pattern, replacement, input, limit, changed);
 }
 
 result_or_false_hash_string_string preg_filter_string_keys(const string& pattern, const string& replacement, const hash_string_string& input, int64 limit) {
@@ -959,51 +1004,127 @@ result_or_false_string replace_with_callback(const string& pattern, const string
     })) return result_or_false_string::from_false();
     return result_or_false_string{owned(output)};
 }
-template<int Flags, bool Named, class Cell, class Row, class Invoke>
-result_or_false_string capture_callback(const string& pattern, const void* context, Invoke invoke,
-                                        const string& subject, int64 limit, int64* count) {
-    validate_limit(limit);
-    capture_pattern compiled(pattern);
-    int64 completed = 0;
-    if (compiled.data) {
-        const auto names = Named ? names_by_group(compiled) : std::vector<string>{};
-        const auto groups = pcre2_get_ovector_count(compiled.data.get());
-        const auto text = bytes(subject);
-        std::string output;
-        const bool ok = rewrite(compiled, text, limit, output, completed, [&](std::string& out, int matched) {
-            auto row = capture_container<Row>();
-            const auto* pairs = pcre2_get_ovector_pointer(compiled.data.get());
-            const size_t width = Flags & unmatched_as_null ? groups : matched;
-            for (size_t i = 0; i < width; ++i) {
-                const auto* bounds = i < static_cast<size_t>(matched) ? pairs + i * 2 : nullptr;
-                write_capture<Named>(row, i, names, bounds && bounds[0] != PCRE2_UNSET, capture_value<Flags, Cell>(text, bounds));
-            }
-            auto invoke_row = [&] {
-                try {
-                    return invoke(context, std::move(row));
-                } catch (...) {
-                    if (count) *count = completed + 1;
-                    throw;
-                }
-            };
-            out.append(bytes(invoke_row()));
-        });
-        if (ok) {
-            if (count) *count = completed;
-            return result_or_false_string{owned(output)};
-        }
+struct prepared_callback_pattern {
+    capture_pattern compiled;
+    std::vector<string> names;
+    size_t groups;
+    prepared_callback_pattern(const string& text, bool named)
+        : compiled(text), names(named && compiled.data ? names_by_group(compiled) : std::vector<string>{}),
+          groups(compiled.data ? pcre2_get_ovector_count(compiled.data.get()) : 0) {}
+};
+
+struct callback_pattern_entry {
+    string text;
+    std::optional<prepared_callback_pattern> prepared;
+
+    bool prepare(bool named) {
+        if (!prepared) prepared.emplace(text, named);
+        return prepared->compiled.data != nullptr;
     }
-    if (count) *count = completed;
-    return result_or_false_string::from_false();
+};
+
+template<class Input>
+std::vector<callback_pattern_entry> snapshot_callback_patterns(const Input& input) {
+    std::vector<callback_pattern_entry> patterns;
+    patterns.reserve(input.size());
+    int64 position = 0;
+    const auto stop = input.iteration_limit();
+    string text;
+    while (input.iteration_next(position, stop, text)) patterns.push_back({std::move(text), std::nullopt});
+    return patterns;
 }
 
-result_or_false_string mixed_callback(const string& pattern, const void* context, render_mixed invoke,
-                                      const string& subject, int64 limit, int64* count, int64 flags) {
+template<int Flags, bool Named, class Cell, class Row, class Invoke>
+bool rewrite_callback_pass(const prepared_callback_pattern& pattern, const void* context, Invoke invoke,
+                           string& value, int64 limit, int64& total, int64* count) {
+    const auto text = bytes(value);
+    int64 changed = 0;
+    std::string output;
+    const bool ok = rewrite(pattern.compiled, text, limit, output, changed, [&](std::string& out, int matched) {
+        auto row = capture_container<Row>();
+        const auto* pairs = pcre2_get_ovector_pointer(pattern.compiled.data.get());
+        const size_t width = Flags & unmatched_as_null ? pattern.groups : matched;
+        for (size_t i = 0; i < width; ++i) {
+            const auto* bounds = i < static_cast<size_t>(matched) ? pairs + i * 2 : nullptr;
+            write_capture<Named>(row, i, pattern.names, bounds && bounds[0] != PCRE2_UNSET, capture_value<Flags, Cell>(text, bounds));
+        }
+        ++total;
+        try {
+            out.append(bytes(invoke(context, std::move(row))));
+        } catch (...) {
+            if (count) *count = total;
+            throw;
+        }
+    });
+    if (ok && changed) value = owned(output);
+    return ok;
+}
+
+template<class Result, class Subject, class Rewrite>
+Result rewrite_callback_rows(const Subject& subject, int64& total, int64* count, Rewrite rewrite_one) {
+    // A callback may mutate the caller's subject. Each pass owns its working value.
+    Subject output = subject;
+    bool ok = true;
+    if constexpr (std::is_same_v<Subject, string>) {
+        ok = rewrite_one(output);
+    } else {
+        int64 position = 0;
+        const auto stop = output.iteration_limit();
+        std::conditional_t<std::is_same_v<Subject, hash_string_string>, string, int64> key{};
+        string value;
+        while (output.iteration_next(position, stop, key, value)) {
+            const int64 before = total;
+            if (!rewrite_one(value)) {
+                ok = false;
+                break;
+            }
+            if (total != before) output.set(key, std::move(value));
+        }
+    }
+    if (count) *count = total;
+    if (!ok) return Result::from_false();
+    return Result{std::move(output)};
+}
+
+template<int Flags, bool Named, class Cell, class Row, class Result, class Subject, class Invoke, class Patterns>
+Result capture_callback(Patterns& patterns, const void* context, Invoke invoke,
+                        const Subject& subject, int64 limit, int64* count) {
+    validate_limit(limit);
+    int64 total = 0;
+    auto invalid = [&] {
+        if (count) *count = total;
+        return Result::from_false();
+    };
+    auto apply = [&](const prepared_callback_pattern& pattern, string& value) {
+        return rewrite_callback_pass<Flags, Named, Cell, Row>(pattern, context, invoke, value, limit, total, count);
+    };
+    if constexpr (std::is_same_v<std::remove_cv_t<Patterns>, string>) {
+        prepared_callback_pattern pattern(patterns, Named);
+        if (!pattern.compiled.data) return invalid();
+        return rewrite_callback_rows<Result>(subject, total, count, [&](string& value) { return apply(pattern, value); });
+    } else {
+        if constexpr (!std::is_same_v<Subject, string>) {
+            if (subject.empty()) {
+                for (auto& rule : patterns) if (!rule.prepare(Named)) return invalid();
+            }
+        }
+        return rewrite_callback_rows<Result>(subject, total, count, [&](string& value) {
+            for (auto& rule : patterns) {
+                if (!rule.prepare(Named) || !apply(*rule.prepared, value)) return false;
+            }
+            return true;
+        });
+    }
+}
+
+template<class Result = result_or_false_string, class Subject, class Patterns>
+Result mixed_callback(Patterns& pattern, const void* context, render_mixed invoke,
+                      const Subject& subject, int64 limit, int64* count, int64 flags) {
     switch (flags) {
-        case 0: return capture_callback<0, true, mixed, mixed>(pattern, context, invoke, subject, limit, count);
-        case capture_offsets: return capture_callback<capture_offsets, true, mixed, mixed>(pattern, context, invoke, subject, limit, count);
-        case unmatched_as_null: return capture_callback<unmatched_as_null, true, mixed, mixed>(pattern, context, invoke, subject, limit, count);
-        case capture_modifiers: return capture_callback<capture_modifiers, true, mixed, mixed>(pattern, context, invoke, subject, limit, count);
+        case 0: return capture_callback<0, true, mixed, mixed, Result>(pattern, context, invoke, subject, limit, count);
+        case capture_offsets: return capture_callback<capture_offsets, true, mixed, mixed, Result>(pattern, context, invoke, subject, limit, count);
+        case unmatched_as_null: return capture_callback<unmatched_as_null, true, mixed, mixed, Result>(pattern, context, invoke, subject, limit, count);
+        case capture_modifiers: return capture_callback<capture_modifiers, true, mixed, mixed, Result>(pattern, context, invoke, subject, limit, count);
         default: throw ValueError("unsupported regex callback capture flags");
     }
 }
@@ -1023,6 +1144,109 @@ result_or_false_string replace_callback(const string& pattern, const void* conte
 result_or_false_string replace_callback(const string& pattern, const void* context, render_mixed invoke,
                                         const string& subject, int64 limit, int64& count) {
     return mixed_callback(pattern, context, invoke, subject, limit, &count, 0);
+}
+}
+
+namespace scpp::regex {
+namespace {
+struct replacement_rule {
+    string pattern;
+    string replacement;
+    std::optional<capture_pattern> compiled;
+
+    bool prepare() {
+        if (!compiled) compiled.emplace(pattern);
+        return compiled->data != nullptr;
+    }
+};
+
+template<class Patterns, class Replacements>
+std::vector<replacement_rule> make_rules(const Patterns& patterns, const Replacements& replacements, int64 limit) {
+    validate_limit(limit);
+    std::vector<replacement_rule> rules;
+    rules.reserve(patterns.size());
+    int64 pattern_pos = 0, replacement_pos = 0;
+    const auto stop = patterns.iteration_limit();
+    string pattern;
+    while (patterns.iteration_next(pattern_pos, stop, pattern)) {
+        string replacement;
+        if constexpr (std::is_same_v<Replacements, string>) replacement = replacements;
+        else replacements.iteration_next(replacement_pos, replacements.iteration_limit(), replacement);
+        rules.push_back({std::move(pattern), std::move(replacement), std::nullopt});
+    }
+    return rules;
+}
+
+// Compile on first use. An error in a later rule leaves the earlier counts observable.
+outcome rewrite_rule_row(std::vector<replacement_rule>& rules, string& value, int64 limit, int64& total) {
+    const int64 before = total;
+    for (auto& rule : rules) {
+        if (!rule.prepare()) return outcome::invalid_pattern;
+        int64 changed = 0;
+        std::string rewritten;
+        const bool ok = rewrite_string(*rule.compiled, rule.replacement, value, limit, rewritten, changed);
+        total += changed;
+        if (!ok) return outcome::engine_error;
+        if (changed) value = owned(rewritten);
+    }
+    return total == before ? outcome::miss : outcome::match;
+}
+
+template<bool Filter, class Result, class Subject>
+Result apply_rules(std::vector<replacement_rule> rules, const Subject& subject, int64 limit, int64& total) {
+    total = 0;
+    if constexpr (std::is_same_v<Subject, string>) {
+        string value = subject;
+        const auto status = rewrite_rule_row(rules, value, limit, total);
+        if constexpr (Filter) {
+            if (status == outcome::invalid_pattern) throw ValueError("preg_filter: invalid pattern");
+            if (status == outcome::engine_error) throw ValueError("preg_filter: matching failed");
+            if (status == outcome::miss) return nullable_string{};
+        } else if (status == outcome::invalid_pattern || status == outcome::engine_error) return Result::from_false();
+        return Result{std::move(value)};
+    } else {
+        int64 position = 0;
+        // Empty collections have no first row on which to validate the patterns.
+        bool empty;
+        if constexpr (std::is_same_v<Subject, mixed>) empty = subject.kind() != boxed_kind::container || !subject.container_size();
+        else empty = subject.empty();
+        if (empty && !std::all_of(rules.begin(), rules.end(), [](auto& rule) { return rule.prepare(); }))
+            return Result::from_false();
+        if constexpr (std::is_same_v<Subject, mixed>) {
+            auto output = mixed::container();
+            if (!rules.empty() && !empty) {
+                int64 numeric_key;
+                string text_key;
+                mixed entry;
+                const auto stop = subject.iteration_limit();
+                while (subject.iteration_next(position, stop, numeric_key, text_key, entry)) {
+                    auto value = boxed_mixed_explicit_cast_string(entry);
+                    const auto status = rewrite_rule_row(rules, value, limit, total);
+                    if (status == outcome::invalid_pattern || status == outcome::engine_error) return Result::from_false();
+                    if (status == outcome::miss) continue;
+                    entry = mixed::from_string(std::move(value));
+                    if (numeric_key < 0) output.set(text_key, entry);
+                    else output.set(numeric_key, entry);
+                }
+            }
+            return Result{std::move(output)};
+        } else {
+            using Output = std::conditional_t<Filter && std::is_same_v<Subject, vector_string>, hash_string_int64, Subject>;
+            Output output;
+            std::conditional_t<std::is_same_v<Subject, hash_string_string>, string, int64> key{};
+            string value;
+            const auto stop = subject.iteration_limit();
+            while (subject.iteration_next(position, stop, key, value)) {
+                const auto status = rewrite_rule_row(rules, value, limit, total);
+                if (status == outcome::invalid_pattern || status == outcome::engine_error) return Result::from_false();
+                if (Filter && status == outcome::miss) continue;
+                if constexpr (std::is_same_v<Output, vector_string>) output.append(std::move(value));
+                else output.set(key, std::move(value));
+            }
+            return Result{std::move(output)};
+        }
+    }
+}
 }
 }
 

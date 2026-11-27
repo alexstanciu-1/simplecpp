@@ -448,6 +448,19 @@ class ast_call_expression extends ast_expression
 		return $this->function_symbol instanceof called_method_instance ? $this->function_symbol->implementation : $this->function_def();
 	}
 
+	/** Later arguments may observe or replace a checked receiver. */
+	public function has_nonliteral_arguments(): bool
+	{
+		foreach ($this->arguments as $argument) if (!$argument->is_effect_free_literal()) return true;
+		return false;
+	}
+
+	/** Runtime calls keep the conversion list empty when every operand passes directly. */
+	public function has_runtime_conversions(): bool
+	{
+		return $this->conversions !== [];
+	}
+
 	/** $index: argument ordinal. */
 	public function conversion(int $index /** uint32 */): int /** uint16 */
 	{

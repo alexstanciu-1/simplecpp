@@ -138,6 +138,37 @@ the declaration's initializer facts. Unknown values retain required runtime chec
 Direct global writes, assignment expressions and member/index writes remain deferred.
 The bounded compound-statement extension is defined below. PHP first-write declarations follow the local inference rules below.
 
+### PHP, C++ and JavaScript chained assignment statements
+
+In PHP, `$a = $b = compute();` is equivalent to `$b = compute(); $a = $b;`
+when both names are existing writable locals. C++ and JavaScript spell the same statement
+`a = b = compute();`. Longer chains follow the same
+right-to-left order. Each write uses ordinary assignment conversion and the
+next write reads the value actually stored. If the RHS throws, none of the
+writes in the chain runs. A failure during a later write preserves completed
+inner writes. This spelling applies to standalone statements with plain local
+targets.
+
+### Python chained assignment statements
+
+For `a = b = compute()`, evaluate the RHS once and retain its original
+value until the statement completes. Assign from that value to each existing
+writable local in source order. Each target applies its ordinary assignment
+conversion independently. A contextual collection literal takes its construction
+type from the first target. Shared handles retain the same object identity.
+If evaluating the RHS fails, no write occurs. If a target conversion fails,
+earlier writes remain visible and subsequent targets keep their previous values.
+
+### Python flat parallel assignment
+
+For `a, b = left(), right()`, evaluate the explicit RHS expressions once each,
+from left to right, before writing any target. A contextual literal uses the
+corresponding target's type. Then assign the retained values to existing writable
+locals in target order, applying ordinary assignment conversion at each write.
+If an RHS throws, none of the target writes runs. A conversion failure preserves
+completed writes. Repeated target names are permitted. The lists must have equal
+length. A trailing comma is permitted, including `a, = value,`.
+
 ## Initializer-based local inference
 
 PHP `$value = initializer;` declares a local on its first write in the current body.
@@ -242,7 +273,7 @@ the update once before any assignment conversion and store. When the assignment
 targets the same local, prefix stores the updated value and postfix restores the
 original value. The existing signed-overflow policy applies.
 This amendment is limited to ordinary local statements, with parameter, property,
-and indexed operands, loop headers, compound and chained assignments, and
+and indexed operands, loop headers, compound assignments, and
 update results inside larger expressions deferred.
 
 ## Discarded-value int64 updates — 2026-11-05
@@ -754,6 +785,13 @@ by-value user parameter. `strlen` takes one typed string. `str_replace` takes
 three typed strings and optionally binds its replacement count to exact writable
 int64 storage. Each input is evaluated and converted once in source order where
 ordering matters. A failed input conversion prevents the call and its count write.
+
+A declared PHP value parameter uses the same argument checker for source functions,
+methods and runtime bindings, including opt-in general API calls. Its declared
+type supplies the conversion context for literals, boxes and carriers. Explicit
+exact inspection and writable-slot metadata override the value default. Native
+const-reference passing describes the C++ representation. Overload selection
+preserves an exact carrier overload, such as the nullable JSON encoder.
 
 The PHP `is_bool` predicate inspects an exact mixed operand. A plain bool, a
 dynamic box and a result carrying a bool cannot supply this argument. A mixed

@@ -26,10 +26,39 @@ trait Cpp_Record_Decoder
 		$includes['scpp/decoder.hpp'] = $includes['new'] = $includes['stdexcept'] = $includes['utility'] = true;
 		$name = $result->cpp_type();
 		$value = $record->default_type()->cpp_type();
-		$decode = $this->record_demand($record->declaration, dependency_use::record_decode);
+		$decode = $this->record_demand($record->declaration, dependency_use::record_json_decode);
 		$text = $decode ? "    static $name from_text(const ::scpp::string&);\n" : '';
 		$cursor = !$decode || type_registry::resolve('json_pull_reader') === null ? '' : "    static Value from_cursor(const ::scpp::json_pull_reader&);\n";
 		if ($cursor !== '') foreach (type_json_pull_reader::instance()->cpp_headers() as $header) $includes[$header] = true;
+		if ($this->record_demand($record->declaration, dependency_use::record_borrow_storage)) {
+			$includes['memory'] = true;
+			return <<<CPP
+struct $name {
+    using Value = $value;
+    $name() = default;
+    explicit $name(Value input) : payload(std::make_shared<Value>(std::move(input))) {}
+    explicit $name(::scpp::error_t error) : failure(std::move(error)) {}
+    $name(const $name& other) : payload(other.payload ? std::make_shared<Value>(*other.payload) : nullptr), failure(other.failure) {}
+    $name($name&&) = default;
+    $name& operator=($name other) { payload.swap(other.payload); failure = std::move(other.failure); return *this; }
+    bool has_value() const noexcept { return bool(payload); }
+    bool has_error() const noexcept { return failure.has_error(); }
+    ::scpp::error_t error() const { if (!has_error()) throw std::runtime_error("result_no_error"); return failure; }
+    Value& checked_ref() { check(); return *payload; }
+    const Value& checked_ref() const { check(); return *payload; }
+    auto pin() { check(); return payload; }
+    std::shared_ptr<const Value> pin() const { check(); return payload; }
+    const Value& value() const & { return checked_ref(); }
+    Value value() && { return std::move(checked_ref()); }
+$text$cursor
+private:
+    std::shared_ptr<Value> payload;
+    ::scpp::error_t failure;
+    void check() const { if (!payload) throw std::runtime_error("carrier_no_value"); }
+};
+
+CPP;
+		}
 		return <<<CPP
 struct $name {
     using Value = $value;
@@ -55,7 +84,9 @@ struct $name {
         if (!has_error()) throw std::runtime_error("result_no_error");
         return failure;
     }
-    const Value& value() const & { check(); return payload; }
+    Value& checked_ref() { check(); return payload; }
+    const Value& checked_ref() const { check(); return payload; }
+    const Value& value() const & { return checked_ref(); }
     Value value() && { check(); return std::move(payload); }
 $text$cursor
 private:
@@ -72,13 +103,11 @@ CPP;
 	/** Emit one definition in the schema's owning unit. @param mixed[] $declarations @param bool[] $headers */
 	private function decode_definition(record_type_definition $record, array &$declarations, array &$headers): string
 	{
-		$contract = runtime_functions::resolve('php:func:json_decode_as');
-		$headers[$contract->header] = true;
 		$value = $record->default_type();
 		if ($value instanceof shared_record_type_definition) $declarations[$value->name] = $value;
 		$name = $value->cpp_type();
-		$result = $record->record_result()->cpp_type();
 		$text_reader = 'read_leaf_record';
+		$contract = runtime_functions::resolve('php:func:json_decode_as');
 		$locals = $lookup = $cases = $finish = $arguments = [];
 		foreach ($record->declaration->data_constructor->parameters as $i => $field) {
 			$type = $field->storage_type();
@@ -94,7 +123,7 @@ CPP;
 				$declarations[$nested->declaration->symbol_key()] = $nested->declaration;
 				if ($leaf instanceof shared_record_type_definition) $declarations[$leaf->name] = $leaf;
 				$read = $leaf->cpp_type() . '::' . self::decode_method($nested) . '(d)';
-			} else $read = 'd.' . $contract->leaves[$leaf::class] . '()';
+			} else $read = 'd.' . $leaf->structural_reader() . '()';
 			if ($nested instanceof record_type_definition && $type === $leaf) {
 				$storage = $nested->record_result()->cpp_type();
 				$locals[] = "$storage $slot;";
@@ -139,8 +168,14 @@ CPP;
 			'return scpp_escape_from_data(' . implode(', ', $arguments) . ');'];
 		$method = self::decode_method($record);
 		$code = "$name {$name}::{$method}(::scpp::Decoder& d) {\n    " . implode("\n    ", $lines) . "\n}\n";
+		if (!$this->record_demand($record->declaration, dependency_use::record_json_decode)) return $code;
+		$result = $record->record_result()->cpp_type();
+		$headers[runtime_functions::resolve('php:func:json_decode_as')->header] = true;
+		$initialize = $this->record_demand($record->declaration, dependency_use::record_borrow_storage)
+			? "slot.payload = std::make_shared<Value>($name::{$method}(d));"
+			: "new (&slot.payload) Value($name::{$method}(d)); slot.present = true;";
 		$consume = "[](void* out, ::scpp::Decoder& d) { auto& slot = *static_cast<$result*>(out); "
-			. "new (&slot.payload) Value($name::{$method}(d)); slot.present = true; }";
+			. "$initialize }";
 		$code .= "$result {$result}::from_text(const ::scpp::string& text) {\n    $result result;\n"
 			. "    auto error = ::scpp::json::{$text_reader}(text, &result, $consume);\n"
 			. "    if (error.has_error()) return $result(std::move(error));\n    return result;\n}\n";

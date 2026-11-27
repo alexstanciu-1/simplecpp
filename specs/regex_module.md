@@ -139,6 +139,26 @@ preg_replace_callback_array applies the limit independently per pattern and
 publishes the sum only on success, including zero for an empty table. On failure
 or exception the table helper leaves any callback writes to the count slot intact.
 
+Both PHP callback helpers also accept `vector<string>`, `hash<string,int>` and
+`hash<string,string>`. The result is a falseable collection of the subject type.
+Each pattern visits all rows in iteration order, preserving keys, misses and empty
+replacement strings. Each row gets the full limit for that pattern. A table
+finishes one pass before starting the next. The first regex failure discards
+the collection and returns false. A throwing invocation propagates immediately.
+The single helper counts invocations across rows through failure or throw.
+The table publishes count only after every pass succeeds.
+
+PHP `preg_replace_callback` accepts an ordered vector of patterns or an integer-
+or string-keyed hash of patterns. For each subject row it visits the pattern
+values in iteration order, passing each successive result to the next pattern.
+One callback receives the selected capture type throughout. Group names, widths
+and byte offsets belong to the current pattern and its current input. The limit
+resets for each pattern on each row. Regex failure discards partial output and
+publishes the number of callback invocations so far. An exception publishes the
+count including the throwing invocation and propagates immediately. Empty rules
+preserve the subject and write zero. Empty subject collections still validate
+each pattern. Flag and limit validation precede callbacks and count writes.
+
 Replacement limits are per subject and per pattern. The optional limit is a
 value argument even when the caller supplies a writable integer. Minus one
 means unlimited. Zero replacements still validates the pattern. A negative
@@ -150,3 +170,23 @@ completed replacement counts once, including identity replacements. On regex
 failure the call returns false and the slot retains the number completed before
 failure. An invalid pattern, miss or zero limit writes zero. When the same slot
 supplies limit and count, its incoming value determines the limit.
+
+PHP `preg_replace` also accepts a vector of strings or an integer- or
+string-keyed hash of strings. The result is a falseable collection of the same
+type. Success preserves every key in iteration order, including misses and
+replacements yielding an empty string. Each row gets the full limit. On the
+first failed row, the call returns false and discards the output collection.
+Count includes completed replacements in earlier rows and in the failed row.
+An invalid pattern returns false even for an empty collection.
+
+PHP `preg_replace` and `preg_filter` also accept a vector of string patterns or a
+hash of string patterns with integer or string keys. A string replacement applies
+to every pattern. A vector or either hash of replacements requires a pattern
+collection. The two collections pair by iteration position, ignoring keys.
+Missing replacements supply the empty string and surplus replacements are ignored.
+For each subject in order, all rules run in order on successive outputs. The limit
+resets for each rule on each row. Filter keeps a row if any replacement completed,
+including when the final text equals the input. Empty rules perform no replacements.
+With empty input all patterns are still validated. A later invalid pattern or match
+error stops the call immediately, with the scalar and collection failure states
+above and count including completed replacements through the failing rule.

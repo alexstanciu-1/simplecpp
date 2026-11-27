@@ -36,7 +36,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             'Compiler hash requires canonical const key-presence binding');
         $presence = "\t\t\$this->presence_binding = new runtime_function('hash_contains', [\$this, $key::instance()], type_"
             . $definitions[$has['result']]['class'] . "::instance(), " . var_export($has['name'], true)
-            . ", \$this->cpp_headers()[0], const_reference_mask: 3, receiver_method: true);\n";
+            . ", \$this->cpp_headers()[0], const_reference_mask: 3, receiver_method: true, php_exact_inputs: 2);\n";
         $carrier = null;
         foreach ($runtime['carriers'] ?? [] as $candidate) {
             if ($candidate['name'] === ($find['result'] ?? null) && $candidate['family'] === 'nullable'
@@ -48,7 +48,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
                 'Compiler hash requires copied lookup with a published nullable payload');
             $lookup = "\t\t\$this->lookup_binding = new runtime_function('hash_find', [\$this, $key::instance()], type_"
                 . $carrier['name'] . "::instance(), " . var_export($find['name'], true)
-                . ", \$this->cpp_headers()[0], const_reference_mask: 3, receiver_method: true);\n";
+                . ", \$this->cpp_headers()[0], const_reference_mask: 3, receiver_method: true, php_exact_inputs: 2);\n";
         }
         $export = typeExport($runtime['submodules'], $hash['name']);
         $initialization = '';

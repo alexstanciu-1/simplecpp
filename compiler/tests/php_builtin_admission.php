@@ -9,6 +9,7 @@ $compile = static function (string $body): string {
 	return (new Cpp_Emitter())->emit($program);
 };
 $source = <<<'SCPP'
+class LengthCheck { public function measure(string $s):int { return strlen($s); } }
 function length(string $s): int { return strlen($s); }
 function first(mixed &$s): string { echo "F"; $s = "changed"; return "Y"; }
 function fail_early(?string $s, mixed &$peer, int &$n): void { str_replace($s, first($peer), "X", $n); }
@@ -25,12 +26,22 @@ $subject result_or_false<string> = "zz";
 echo str_replace($key, $replace, $subject);
 $flag mixed = false;
 echo (int)is_bool($flag);
+$check=new LengthCheck();
+$text mixed = " ab ";
+echo length($text), $check->measure($text), trim($text);
+$v vector<int> = [1,2];
+$index result<int> = 1;
+$v->remove($index);
+echo count($v);
 return 8;
 SCPP;
 $cpp = $compile($source);
 foreach (['scpp::str::byte_length(var_s_0)', 'scpp::boxed_mixed_typed_destination_string(', '::scpp::is_bool(',
-	'scpp::str::byte_length((var_s_1).value())', 'var_n_3)'] as $fragment) {
+	'scpp::str::byte_length((var_s_1).value())', 'var_n_3)', 'method_receiver.remove((var_index_10).value())'] as $fragment) {
 	if (!str_contains($cpp, $fragment)) throw new RuntimeException('Missing builtin lowering: ' . $fragment);
+}
+if (substr_count($cpp, 'scpp::boxed_mixed_typed_destination_string(var_text_8)') !== 3) {
+	throw new RuntimeException('Expected one mixed string extraction each for a source function, method and builtin');
 }
 $cpp = "int check_builtins();\n" . str_replace('::App::scpp_entry_body,', '::check_builtins,', $cpp) . <<<'CPP'
 
@@ -65,4 +76,4 @@ foreach ([
 	}
 	throw new RuntimeException('Unexpected builtin admission: ' . $expression);
 }
-file_put_contents($argv[1], json_encode(['php' => ['cpp' => $cpp, 'stdout_hex' => bin2hex('320L!!2++1')]], JSON_THROW_ON_ERROR));
+file_put_contents($argv[1], json_encode(['php' => ['cpp' => $cpp, 'stdout_hex' => bin2hex('320L!!2++144ab1')]], JSON_THROW_ON_ERROR));
