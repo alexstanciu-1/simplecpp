@@ -12,6 +12,7 @@ import subprocess
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('bin', type=Path)
 mode = parser.add_mutually_exclusive_group()
+mode.add_argument('--dispatch', action='store_true', help='compare word8 with runtime AVX2 dispatch')
 mode.add_argument('--scanner', action='store_true', help='compare bulk and integrated word8 builds')
 mode.add_argument('--production', action='store_true', help='compare batched, bulk, scanner-only and combined builds')
 mode.add_argument('--check-pair', nargs=2, metavar=('BASE', 'CANDIDATE'), help='check scalar and vector parity without timing')
@@ -19,6 +20,8 @@ args = parser.parse_args()
 bins = args.bin.resolve()
 if args.check_pair:
     variants = tuple(args.check_pair)
+elif args.dispatch:
+    variants = ('word8', 'dispatch')
 elif args.scanner:
     variants = ('bulk', 'word8')
 elif args.production:
@@ -90,6 +93,8 @@ if args.check_pair:
     print(json.dumps(result))
     raise SystemExit
 sizes = [3, 7, 8, 9, 129, 4096] if args.scanner else [8, 129, 4096]
+if args.dispatch:
+    sizes = [3, 7, 8, 9, 31, 32, 33, 129, 4096]
 cases = [(size, position) for size in sizes for position in ['first','middle','last','plain']]
 rng.shuffle(cases)
 for size,position in cases:

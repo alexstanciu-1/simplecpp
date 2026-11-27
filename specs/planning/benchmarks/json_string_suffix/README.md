@@ -92,3 +92,29 @@ The guarded-page scanner test covers every byte value at every position for leng
 Build the shared typed_json_strings drivers with --batched for both checkouts, put the executables in bin/bulk and bin/word8, then run `taskset -c 7 python3 run.py bin --scanner` on dev002.
 
 [Raw paired measurements](scanner.dev002.json)
+
+## Runtime-dispatched AVX2 against the committed eight-byte scanner
+
+The reference is the qualified selective-reserve decoder at `ae9eff851`. Apply [the candidate patch](dispatch.patch) to that commit for the dispatch build. On x86-64 with GCC or Clang it checks AVX2 availability and scans complete 32-byte blocks for a quote, backslash or control byte. Only the scanner function targets AVX2. Other builds, CPUs without AVX2, spans below 32 bytes and final partial blocks use the committed eight-byte scanner with its scalar tail. The length check sees the remaining JSON input, so an early short string in a vector can take the AVX2 path.
+
+Median throughput in decimal MB of wire JSON per second, **eight-byte baseline → AVX2 dispatch**. Each document has 16 strings. A single Unicode escape at the indicated position preserves the decoded contents. Eleven shuffled rounds ran on CPU 7 of dev002 (Ryzen 9 5950X). Allocation counts and allocated bytes matched in every pair.
+
+| Decoded bytes/string | Plain | Escape first | Escape middle | Escape last |
+|---:|---:|---:|---:|---:|
+| 3 | 203 → 202 | 198 → 190 | 192 → 182 | 211 → 201 |
+| 7 | 292 → 322 | 251 → 248 | 247 → 239 | 272 → 264 |
+| 8 | 356 → 356 | 262 → 260 | 257 → 251 | 283 → 278 |
+| 9 | 385 → 369 | 292 → 280 | 263 → 262 | 312 → 293 |
+| 31 | 533 → 583 | 424 → 441 | 403 → 427 | 453 → 476 |
+| 32 | 568 → 585 | 433 → 450 | 428 → 436 | 407 → 423 |
+| 33 | 568 → 593 | 463 → 460 | 445 → 440 | 499 → 494 |
+| 129 | 1,246 → 1,416 | 1,080 → 1,152 | 989 → 1,056 | 1,112 → 1,203 |
+| 4096 | 2,759 → 3,656 | 2,535 → 3,479 | 2,586 → 3,462 | 2,663 → 3,529 |
+
+The 4,096-byte cases gained 32–37% across escape placements. At 129 bytes the gain was 7–14%. At 3–9 bytes, each escaped case was slower, with a largest median loss of 6.1%. The 31–33-byte cases ranged from a 1.2% loss to a 9.6% gain.
+
+The AVX2 build and a separate build with `-DSCPP_JSON_PORTABLE_SCAN_ONLY=1` each matched the committed decoder on 390 valid and 422 malformed scalar documents and the same counts for vectors. Valid decoded bytes also matched the independent oracle. Malformed documents produced identical diagnostic messages including byte offsets and paths. Both builds passed the guarded-page scanner test for lengths 0–96. The fallback check ran on the same AVX2-capable host. The AVX2 candidate passed all 425 tests in the default suite on dev002.
+
+Build the typed_json_strings drivers with `--batched` for all three builds with JSON enabled and selective reserve qualified. Put their binaries in `bin/word8`, `bin/dispatch` and `bin/portable`. Run `python3 run.py bin --check-pair word8 portable` and `taskset -c 7 python3 run.py bin --dispatch`.
+
+[Raw paired measurements](dispatch.dev002.json)

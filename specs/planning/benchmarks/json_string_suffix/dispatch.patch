@@ -1,0 +1,54 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -2,6 +2,11 @@
+ #pragma once
+ #if defined(SCPP_JSON_MEASURED_CAPACITY_8) && SCPP_JSON_MEASURED_CAPACITY_8
+ #include "string_capacity.hpp"
++#endif
++#if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__)) && !defined(SCPP_JSON_PORTABLE_SCAN_ONLY)
++#define SCPP_JSON_TRY_AVX2 1
++#include <bit>
++#include <immintrin.h>
+ #endif
+ #include <cstdint>
+ #include <cstring>
+@@ -24,7 +29,7 @@
+ }
+ 
+ // Ordinary bytes have identical spelling in the input and the decoded string.
+-[[nodiscard]] inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
++[[nodiscard]] inline std::size_t portable_string_prefix(std::string_view bytes) noexcept {
+ 	std::size_t size = 0;
+ 	// XOR makes matching quote/backslash lanes zero. Masking the high three
+ 	// bits makes control-byte lanes zero. Only the presence of a zero matters.
+@@ -46,6 +51,30 @@
+ 	}
+ 	return size;
+ }
++
++#ifdef SCPP_JSON_TRY_AVX2
++[[nodiscard]] __attribute__((target("avx2"))) inline std::size_t avx2_string_prefix(std::string_view bytes) noexcept {
++	std::size_t size = 0;
++	while (bytes.size() - size >= 32) {
++		const auto block = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(bytes.data() + size));
++		const auto quote = _mm256_cmpeq_epi8(block, _mm256_set1_epi8(0x22));
++		const auto slash = _mm256_cmpeq_epi8(block, _mm256_set1_epi8(0x5c));
++		const auto controls = _mm256_cmpeq_epi8(_mm256_min_epu8(block, _mm256_set1_epi8(31)), block);
++		const auto mask = static_cast<unsigned>(_mm256_movemask_epi8(_mm256_or_si256(controls, _mm256_or_si256(quote, slash))));
++		if (mask) return size + std::countr_zero(mask);
++		size += 32;
++	}
++	return size + portable_string_prefix(bytes.substr(size));
++}
++#endif
++
++[[nodiscard]] inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
++#ifdef SCPP_JSON_TRY_AVX2
++	if (bytes.size() >= 32 && __builtin_cpu_supports("avx2")) return avx2_string_prefix(bytes);
++#endif
++	return portable_string_prefix(bytes);
++}
++#undef SCPP_JSON_TRY_AVX2
+ 
+ [[nodiscard]] inline bool is_ascii_digit(const char ch) noexcept {
+ 	return ch >= '0' && ch <= '9';
