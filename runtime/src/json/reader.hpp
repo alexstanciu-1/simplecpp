@@ -1,5 +1,8 @@
 // Adapted lexical reader from the v0.1 JSON donor at 2f39e536d.
 #pragma once
+#if defined(SCPP_JSON_MEASURED_CAPACITY_8) && SCPP_JSON_MEASURED_CAPACITY_8
+#include "string_capacity.hpp"
+#endif
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
@@ -151,7 +154,19 @@ protected:
 	}
 
 	[[nodiscard]] std::string parse_string_tail(std::size_t start, std::string_view prefix) {
+#if defined(SCPP_JSON_MEASURED_CAPACITY_8) && SCPP_JSON_MEASURED_CAPACITY_8
+		auto out = [this, prefix] {
+			if (predicted_full_prefix(prefix.size()) && peek() == '\\') {
+				std::string buffer;
+				buffer.reserve(prefix.size() + 1);
+				buffer.append(prefix);
+				return buffer;
+			}
+			return std::string(prefix);
+		}();
+#else
 		std::string out(prefix);
+#endif
 		while (!at_end()) {
 			const char ch = get();
 			if (ch == '"') {

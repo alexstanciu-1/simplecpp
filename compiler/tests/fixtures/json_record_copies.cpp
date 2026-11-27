@@ -101,6 +101,21 @@ int main() {
         if (packet.version != 9 || packet.data.size() != 4 || packet.data.at(3) != 4) std::abort();
     });
     if (snapshot_error.has_error()) return 55;
+    // The owning callback may replace the source before decoding a full prefix and its escape.
+    const std::string prefix(4095, 'x');
+    const std::string document = R"({"text":")" + prefix + R"(\u0000"})";
+    scpp::string wire(document.c_str());
+    struct StringRead { scpp::string& wire; scpp::string decoded; } string_read{wire, {}};
+    auto string_error = scpp::json::read_record(wire, &string_read, [](void* context, scpp::Decoder& decoder) {
+        auto& state = *static_cast<StringRead*>(context);
+        state.wire.clear();
+        decoder.begin_object();
+        if (!decoder.next_field() || decoder.field_name() != "text") std::abort();
+        state.decoded = decoder.read_string();
+        if (decoder.next_field()) std::abort();
+    });
+    if (string_error.has_error() || string_read.decoded.size() != 4096
+        || std::string_view(string_read.decoded.data(), 4095) != prefix || string_read.decoded.data()[4095] != 0) return 56;
     VersionReader reader;
     auto decoded = App::scpp_records::Packet::decode(reader);
     if (decoded.version != 6 || decoded.data.size() != 2 || decoded.data.at(1) != 2) return 38;

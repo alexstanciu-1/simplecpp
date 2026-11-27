@@ -23,5 +23,5 @@ text = text.replace(append, '''
                     capacity_before = before;
                     capacity_after = out.capacity();''')
 (out/'reader.hpp').write_text(text)
-subprocess.run(['clang++', '-std=c++23', '-stdlib=libc++', '-O3', '-DNDEBUG', *flags, '-I', out,
+subprocess.run(['clang++', '-std=c++23', '-stdlib=libc++', '-O3', '-DNDEBUG', *flags, '-I', out, '-I', reader.parent,
                 Path(__file__).with_name('probe.cpp'), '-o', out/'probe'], check=True)

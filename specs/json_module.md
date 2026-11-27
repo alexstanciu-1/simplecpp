@@ -188,7 +188,15 @@ bytes in one span and leaves the next quote, backslash or control byte for the
 string grammar. The scanner skips complete eight-byte blocks of ordinary bytes.
 A scalar scan locates the first marker in a candidate block and handles inputs
 with fewer than eight bytes remaining. Short results fit inline and long results take ownership of the
-decoded buffer. For published string and int64 vectors, generated decode requests
+decoded buffer. Native builds probe the active standard library's string
+capacity before enabling selective reserve. For a measured full prefix of
+1,024–65,536 bytes followed by an escape, the reader reserves room for one
+decoded byte before copying the prefix. Cross builds, failed qualifications,
+and builds configured with `SCPP_QUALIFY_JSON_STRING_RESERVE=OFF` use ordinary
+string construction. Input ownership and error reporting follow the same rules
+in both builds.
+
+For published string and int64 vectors, generated decode requests
 the complete array in one operation. The JSON provider appends in source order,
 constructs each owned string with the same scalar string rules, and resumes scalar
 traversal from the delimiter on malformed input. Other decoder providers inherit

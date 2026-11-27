@@ -109,3 +109,32 @@ The 4,096-byte baseline samples in the first run ranged from 43.6 to 63.8 µs. A
 | 4,097 | 25.012 | 25.032 | 24.999 | +0.1% | 8/15 |
 
 All 425 JSON-enabled default tests passed in each of the qualified and fallback builds. [Boundary repeat measurements](recheck.dev002.json)
+
+## Integrated reserve policy
+
+The production native configuration probes the compiler and standard library before enabling reserve on the JSON library target. The probe and reader share the measured bounds and prediction. Each predicted full length also has to accept the extra byte without growth after reserving. With qualification disabled, unsuccessful, or unavailable for a cross build, the same reader constructs its ordinary owning output string directly from the prefix.
+
+On dev002 the reference executable was the verified borrowing decoder at `c1c12d66b`. The qualified and forced-fallback builds used the production source. Times are median microseconds per document of 16 strings with one final ASCII character spelled as a Unicode escape. The first run shuffled binaries for eleven paired rounds on CPU 7.
+
+| Decoded bytes/string | Reference µs | Forced fallback µs | Qualified µs | Qualified time saved | Final append moves per 100,000, reference → qualified |
+|---:|---:|---:|---:|---:|---:|
+| 8 | 1.000 | 0.997 | 0.946 | +5.3% | 0 → 0 |
+| 23 | 1.416 | 1.418 | 1.394 | +1.5% | 100,000 → 100,000 |
+| 129 | 1.932 | 1.912 | 1.952 | -1.0% | 0 → 0 |
+| 4,095 | 24.126 | 24.162 | 24.057 | +0.3% | 0 → 0 |
+| 4,096 | 26.247 | 26.208 | 24.208 | +7.8% | 100,000 → 0 |
+| 4,097 | 24.217 | 24.358 | 24.180 | +0.2% | 0 → 0 |
+
+A second run shuffled all three neighboring sizes and binaries for fifteen rounds of 1,500 documents per timing sample.
+
+| Decoded bytes/string | Reference µs | Forced fallback µs | Qualified µs | Qualified time saved | Qualified faster in paired rounds |
+|---:|---:|---:|---:|---:|---:|
+| 4,095 | 24.339 | 24.505 | 24.349 | 0.0% | 11/15 |
+| 4,096 | 26.299 | 26.348 | 24.453 | +7.0% | 15/15 |
+| 4,097 | 24.005 | 24.186 | 24.354 | -1.5% | 9/15 |
+
+For each build 780 valid typed scalar/vector documents matched the byte oracle and 844 malformed diagnostics matched the reference byte for byte. All 425 JSON-enabled default tests passed in each build. The owning callback regression also cleared the original source before decoding a 4,095-byte prefix and a final escaped NUL. The input-overwrite ownership probe passed. The forced fallback had the same observed capacities and final-append movement as the reference at all six sizes. A separate native Clang/libstdc++ configuration compiled the production probe, observed a mismatch, omitted the qualification and decoded the boundary case successfully.
+
+To reproduce the two builds, use the normal JSON-enabled default preset and configure the fallback copy with `-DSCPP_QUALIFY_JSON_STRING_RESERVE=OFF`. Use the same drivers, CPU affinity, append instrumentation and two timing commands as the preceding study.
+
+[Production raw samples](production.dev002.json) · [Production boundary repeat](production-recheck.dev002.json)
