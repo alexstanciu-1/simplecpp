@@ -317,7 +317,7 @@ final class Preparation
 				if ($receiver instanceof ast_index_expression) {
 					$this->value($receiver);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
-					$collection_root ??= ast_index_expression::boxed_path_root($statement->receiver);
+					$collection_root ??= ast_index_expression::boxed_path_root($statement->receiver, allow_field: true);
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
 					if ($collection_root !== null) $this->require_index_write_available($collection_root);
 					$root = $collection_root ?? $receiver;

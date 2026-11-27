@@ -135,13 +135,14 @@ final class ast_index_expression extends ast_expression
 	}
 
 	/** STATIC METHODS */
-	/** Two-key boxed mutations reselect the child from this local at write-back. */
-	public static function boxed_path_root(ast_expression $row): ?ast_name_expression
+	/** Plain writes also allow stable instance fields; other boxed mutations require locals. */
+	public static function boxed_path_root(ast_expression $row, bool $allow_field = false): ast_name_expression|ast_field_expression|null
 	{
 		if (!($row instanceof ast_index_expression) || $row->source()->flavor === flavor::python) return null;
 		$root = $row->receiver;
-		return $root instanceof ast_name_expression && $root->local_binding() !== null
-			&& $root->type_def() instanceof boxed_type_definition ? $root : null;
+		if (!($root->type_def() instanceof boxed_type_definition)) return null;
+		if ($root instanceof ast_field_expression && !$allow_field) return null;
+		return self::collection_storage_root($root);
 	}
 
 	/** Find local or instance-field storage reached through checked collection slots. */
@@ -154,6 +155,12 @@ final class ast_index_expression extends ast_expression
 			$root = $root->receiver;
 		} while ($root instanceof ast_index_expression);
 		if (!($root->type_def() instanceof nested_index_storage_type)) return null;
+		return self::collection_storage_root($root);
+	}
+
+	/** Keep inline paths rooted in local storage or in a retainable receiver. */
+	private static function collection_storage_root(ast_expression $root): ast_name_expression|ast_field_expression|null
+	{
 		$base = $root;
 		while ($base instanceof ast_field_expression && $base->shares_receiver_storage()) {
 			$base = $base->receiver;

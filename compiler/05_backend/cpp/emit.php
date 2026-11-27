@@ -1497,12 +1497,12 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
-				$boxed_root = ast_index_expression::boxed_path_root($statement->receiver);
+				$boxed_root = ast_index_expression::boxed_path_root($statement->receiver, allow_field: true);
 				$root = $boxed_root ?? ast_index_expression::nested_collection_root($statement->receiver);
 				if ($root !== null) {
 					$steps = [];
 					if ($boxed_root !== null) {
-						$container = $this->value($boxed_root, $global_references, $declarations, $required_headers);
+						$container = $this->collection_root_place($boxed_root, $global_references, $declarations, $required_headers, $steps);
 						$this->boxed_path_keys($statement->receiver, $statement->index, $global_references, $declarations, $required_headers, $steps);
 					} else {
 						$row_place = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
@@ -2135,6 +2135,23 @@ CPP;
 		return '{ ' . implode(' ', $steps) . ' }';
 	}
 
+	/** Select the field before key effects and keep its owner alive through write-back.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 * @param string[] $steps
+	 */
+	private function collection_root_place(ast_name_expression|ast_field_expression $root, array &$globals,
+		array &$declarations, array &$headers, array &$steps): string
+	{
+		if ($root instanceof ast_field_expression) {
+			$field = $this->retained_place($root, $globals, $declarations, $headers, $steps);
+			$steps[] = 'auto& collection_field = ' . $field . ';';
+			return 'collection_field';
+		}
+		return $this->value($root, $globals, $declarations, $headers);
+	}
+
 	/** Stage indices from the root outward. The returned slot expression rechecks the path at each access.
 	 * @param ast_global_declaration[] $globals
 	 * @param ast_function_declaration[] $declarations
@@ -2147,12 +2164,8 @@ CPP;
 		$owner = $row->receiver;
 		if ($owner instanceof ast_index_expression) {
 			$place = $this->nested_collection_place($root, $owner, $globals, $declarations, $headers, $steps);
-		} elseif ($root instanceof ast_field_expression) {
-			$field = $this->retained_place($root, $globals, $declarations, $headers, $steps);
-			$steps[] = 'auto& collection_field = ' . $field . ';';
-			$place = 'collection_field';
 		} else {
-			$place = $this->value($root, $globals, $declarations, $headers);
+			$place = $this->collection_root_place($root, $globals, $declarations, $headers, $steps);
 		}
 		[$outer, $before_outer] = $this->staged_operand($row->index, $globals, $declarations, $headers);
 		array_push($steps, ...$before_outer);

@@ -139,6 +139,12 @@ table, so existing aliases of that child observe the change. If the RHS replaces
 the child, the replacement receives the write. Failed lookup leaves earlier
 operand effects visible.
 
+Plain two-key assignment also accepts a writable instance-field path under the typed
+collection receiver-lifetime rule. Select the field and retain its owner before evaluating
+either key. Rebinding the holder leaves the selected field on the original owner. Replacing
+the contents of that field during key or RHS evaluation makes the write use its current
+group. Missing-group errors and mixed/dynamic ownership follow the local rules above.
+
 ## Source cardinality and keyed methods
 
 All three flavors support `count(box)`, `empty(box)`, and receiver methods `has(key)`
