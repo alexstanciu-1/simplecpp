@@ -13,8 +13,8 @@ $queries vector<string> = [
 foreach ($queries as $query) {
     $outcome = $db->query($query);
     if ($outcome === false) { echo "error\n"; continue; }
-    if ($outcome === true) { echo "command\n"; continue; }
-    $rows mysqli_result = $outcome;
+    take($rows, $has_rows) = $outcome;
+    if (!$has_rows) { echo "command\n"; continue; }
     $row = $rows->fetch_assoc();
     $n int = $row["n"];
     echo "count ", $n, "\n";
