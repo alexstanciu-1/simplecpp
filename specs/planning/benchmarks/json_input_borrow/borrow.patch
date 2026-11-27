@@ -1,0 +1,98 @@
+--- a/runtime/src/json/structural_reader.hpp
++++ b/runtime/src/json/structural_reader.hpp
+@@ -135,10 +135,7 @@
+ 		pos_ = checkpoint;
+ 		while (next_element()) scalar();
+ 	}
+-public:
+-	explicit pull_reader(std::string text, std::string file, std::int64_t limit)
+-		: json_reader({}), source_(std::move(text)), file_(std::move(file)), limit_(0) {
+-		input_ = source_;
++	void validate_input(std::int64_t limit) {
+ 		checked([&] {
+ 			if (limit < 1 || limit > 256)
+ 				reader_detail::fail_json_parse("max_depth must be 1..256", 0, "invalid_limit");
+@@ -150,6 +147,17 @@
+ 				i += width;
+ 			}
+ 		});
++	}
++public:
++	explicit pull_reader(std::string text, std::string file, std::int64_t limit)
++		: json_reader({}), source_(std::move(text)), file_(std::move(file)) {
++		input_ = source_;
++		validate_input(limit);
++	}
++	struct borrow_input {};
++	pull_reader(borrow_input, std::string_view text, std::string file, std::int64_t limit)
++		: json_reader(text), file_(std::move(file)) {
++		validate_input(limit);
+ 	}
+ 	pull_reader(const pull_reader &) = delete;
+ 	pull_reader &operator=(const pull_reader &) = delete;
+--- a/tools/api_generator/templates/json/record_reader_impl.cpp.tpl
++++ b/tools/api_generator/templates/json/record_reader_impl.cpp.tpl
+@@ -36,9 +36,10 @@
+     bool next_element() override { return cursor.next_element(); }
+     void reject(const char* message) override { cursor.reject(message); }
+ @definitions@};
+-error_t read_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
++template<class MakeCursor>
++static error_t consume_record(void* out, void (*consume)(void*, Decoder&), MakeCursor make_cursor) {
+     try {
+-        detail::json::pull_reader cursor{std::string(text.data(), text.size()), "", 128};
++        auto cursor = make_cursor();
+         record_reader reader{cursor};
+         consume(out, reader);
+         return {};
+@@ -47,3 +48,14 @@
+         return error_t{string{message.data(), detail::checked_integer_cast<@count@>(message.size())}};
+     }
+ }
++error_t read_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
++    return consume_record(out, consume, [&] {
++        return detail::json::pull_reader{std::string(text.data(), text.size()), "", 128};
++    });
++}
++error_t read_leaf_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
++    return consume_record(out, consume, [&] {
++        return detail::json::pull_reader{detail::json::pull_reader::borrow_input{},
++            std::string_view(text.data(), static_cast<std::size_t>(text.size())), "", 128};
++    });
++}
+--- a/tools/api_generator/templates/json/record_decoder.cpp.tpl
++++ b/tools/api_generator/templates/json/record_decoder.cpp.tpl
+@@ -4,4 +4,6 @@
+ 
+ namespace scpp::json {
+ error_t read_record(const string&, void*, void (*)(void*, Decoder&));
++// Generated leaf consumers finish reading before invoking authored code.
++error_t read_leaf_record(const string&, void*, void (*)(void*, Decoder&));
+ }
+--- a/compiler/05_backend/cpp/record_decoder.php
++++ b/compiler/05_backend/cpp/record_decoder.php
+@@ -78,6 +78,7 @@
+ 		if ($value instanceof shared_record_type_definition) $declarations[$value->name] = $value;
+ 		$name = $value->cpp_type();
+ 		$result = $record->record_result()->cpp_type();
++		$text_reader = 'read_leaf_record';
+ 		$locals = $lookup = $cases = $finish = $arguments = [];
+ 		foreach ($record->declaration->data_constructor->parameters as $i => $field) {
+ 			$type = $field->storage_type();
+@@ -88,6 +89,7 @@
+ 			$body = [];
+ 			$native = $type->cpp_type();
+ 			if ($nested instanceof record_type_definition) {
++				$text_reader = 'read_record';
+ 				$declarations[$nested->declaration->symbol_key()] = $nested->declaration;
+ 				if ($leaf instanceof shared_record_type_definition) $declarations[$leaf->name] = $leaf;
+ 				$read = $leaf->cpp_type() . '::' . self::decode_method($nested) . '(d)';
+@@ -139,7 +141,7 @@
+ 		$consume = "[](void* out, ::scpp::Decoder& d) { auto& slot = *static_cast<$result*>(out); "
+ 			. "new (&slot.payload) Value($name::{$method}(d)); slot.present = true; }";
+ 		$code .= "$result {$result}::from_text(const ::scpp::string& text) {\n    $result result;\n"
+-			. "    auto error = ::scpp::json::read_record(text, &result, $consume);\n"
++			. "    auto error = ::scpp::json::{$text_reader}(text, &result, $consume);\n"
+ 			. "    if (error.has_error()) return $result(std::move(error));\n    return result;\n}\n";
+ 		if (type_registry::resolve('json_pull_reader') !== null) {
+ 			$code .= "$name {$result}::from_cursor(const ::scpp::json_pull_reader& reader) {\n    $result result;\n"

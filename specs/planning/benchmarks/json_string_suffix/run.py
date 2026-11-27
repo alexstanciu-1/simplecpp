@@ -14,9 +14,12 @@ parser.add_argument('bin', type=Path)
 mode = parser.add_mutually_exclusive_group()
 mode.add_argument('--scanner', action='store_true', help='compare bulk and integrated word8 builds')
 mode.add_argument('--production', action='store_true', help='compare batched, bulk, scanner-only and combined builds')
+mode.add_argument('--check-pair', nargs=2, metavar=('BASE', 'CANDIDATE'), help='check scalar and vector parity without timing')
 args = parser.parse_args()
 bins = args.bin.resolve()
-if args.scanner:
+if args.check_pair:
+    variants = tuple(args.check_pair)
+elif args.scanner:
     variants = ('bulk', 'word8')
 elif args.production:
     variants = ('batched', 'bulk', 'scan_only', 'word8')
@@ -83,6 +86,9 @@ if 'node' not in timed:
     result['scalar_valid'], result['scalar_invalid'] = verify('scalar')
 else:
     result['node_version'] = subprocess.check_output(['node','--version'],text=True).strip()
+if args.check_pair:
+    print(json.dumps(result))
+    raise SystemExit
 sizes = [3, 7, 8, 9, 129, 4096] if args.scanner else [8, 129, 4096]
 cases = [(size, position) for size in sizes for position in ['first','middle','last','plain']]
 rng.shuffle(cases)
