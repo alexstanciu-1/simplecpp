@@ -1984,8 +1984,7 @@ CPP;
 		$property = $statement instanceof ast_property_compound;
 		$destination = $property ? $statement->target : $statement->local_def();
 		$type = $destination->type_def();
-		$simple_rhs = $statement->value instanceof ast_integer_expression || ($statement->value instanceof ast_name_expression
-			&& $statement->value->local_binding() !== null);
+		$simple_rhs = $statement->simple_compound_rhs();
 		$steps = [];
 		if ($destination instanceof ast_qualified_data) {
 			$steps[] = $this->discard_qualifier($destination->receiver, $global_references, $declarations, $headers) . ';';
@@ -3132,8 +3131,7 @@ CPP;
 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				$borrow_receiver = $value->receiver?->member_borrow !== null;
-				$stage_receiver = $borrow_receiver && $value->arguments !== []
-					&& array_filter($value->arguments, static fn(ast_expression $arg): bool => !$arg->is_effect_free_literal()) !== [];
+				$stage_receiver = $borrow_receiver && $value->has_nonliteral_arguments();
 				if ($stage_receiver || $value->suspending_operands || $value instanceof ast_named_call
 					|| ($function->receiver_method && $value->has_runtime_conversions())) {
 					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
@@ -3426,8 +3424,7 @@ CPP;
 		}
 		$fields = [];
 		$base = $receiver;
-		while ($base instanceof ast_field_expression && $base->member_borrow === null && !($base->member_type() instanceof shared_record_type_definition)
-			&& !($base->receiver->member_type() instanceof runtime_field_type)) {
+		while ($base instanceof ast_field_expression && $base->shares_receiver_storage()) {
 			$fields[] = Cpp_Identifier::source($base->field);
 			$base = $base->receiver;
 		}
@@ -3436,8 +3433,7 @@ CPP;
 		$inline_storage = $base->type_def() instanceof record_type_definition
 			&& ($base instanceof ast_this_expression || ($base instanceof ast_name_expression
 				&& $base->local_binding() !== null));
-		$borrow = $base->member_borrow;
-		if ($borrow !== null && !($base->member_type() instanceof shared_record_type_definition) && !($borrow instanceof nullable_enum_type_definition)) {
+		if ($base->retain_member_borrow) {
 			// Hold the selected storage through later operands, even if they replace its carrier.
 			$raw = $this->value($base, $globals, $declarations, $headers, borrow_result: true);
 			$pin = '(' . $raw . ').pin()';
@@ -3535,8 +3531,7 @@ CPP;
 			$arguments[] = $receiver;
 		} elseif ($method) {
 			$inline_storage = $value->ancestor_dispatch;
-			$direct_borrow = $value->receiver?->member_borrow !== null
-				&& array_filter($value->arguments, static fn(ast_expression $arg): bool => !$arg->is_effect_free_literal()) === [];
+			$direct_borrow = $value->receiver?->member_borrow !== null && !$value->has_nonliteral_arguments();
 			$place = $value->ancestor_dispatch ? 'scpp_self' : $this->retained_place($value->receiver,
 				$global_references, $declarations, $required_headers, $steps, $inline_storage, 'receiver_owner' . $suffix, full_expression: $direct_borrow);
 			if (!$inline_storage && !$direct_borrow) {

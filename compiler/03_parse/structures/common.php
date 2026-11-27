@@ -480,6 +480,13 @@ class ast_assignment_statement extends ast_storage_write
 	}
 
 	/** METHODS */
+	/** A literal integer or a direct local read permits the simple compound lowering. */
+	public function simple_compound_rhs(): bool
+	{
+		return $this->value instanceof ast_integer_expression || ($this->value instanceof ast_name_expression
+			&& $this->value->local_binding() !== null);
+	}
+
 	public function settle_assignment(ast_local_binding $local, int $conversion /** uint16 */): void
 	{
 		$this->settle_binding($local);

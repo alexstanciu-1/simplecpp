@@ -192,14 +192,19 @@ return 0;""")
         # Only the valid root reaches construction. Both documents contain a valid nested packet.
         assert run.stdout == b'root destroyed', run.stdout
         # Removing the only pin demand changes Packet's generated result layout across units.
-        main.write_text(r'$r=readPacket("{\"data\":[]}"); return $r->version;')
+        main.write_text(r'function useInt(int $n):int {return $n;} $r=readPacket("{\"data\":[]}"); '
+                        '$r->version+=1; return useInt($r->version);')
         reduced = invoke(proc)
         assert 'error' not in reduced, reduced
         cold = service(app, work/'reduced')
         try:
             assert 'error' not in invoke(cold)
             assert artifacts(work/'reduced') == artifacts(out)
-            assert all(b'std::shared_ptr<Value> payload' not in data for data in artifacts(out).values())
+            reduced_units = artifacts(out)
+            header = next(data for data in reduced_units.values() if b'struct record_result_Packet {' in data)
+            assert b'std::shared_ptr<Value> payload' not in header and b'#include <memory>' not in header
+            entry = reduced_units[Path(bundle['sources']['app/main.php'])]
+            assert b'.pin()' not in entry and entry.count(b'.checked_ref()).version') == 2, entry
         finally:
             cold.stdin.close()
             cold.wait()

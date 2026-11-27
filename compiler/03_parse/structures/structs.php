@@ -305,6 +305,13 @@ final class ast_field_expression extends ast_expression
 		$receiver->attach($this);
 	}
 
+	/** Inline fields share the lifetime of their receiver up to the nearest owner or runtime getter. */
+	public function shares_receiver_storage(): bool
+	{
+		return $this->member_borrow === null && !($this->member_type() instanceof shared_record_type_definition)
+			&& !($this->receiver->member_type() instanceof runtime_field_type);
+	}
+
 	public function settle_field(type_definition $type): void
 	{
 		$this->settle_value($type, null);

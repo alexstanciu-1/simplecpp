@@ -269,6 +269,8 @@ abstract class ast_expression extends ast_node
 {
 	/** Prepared fact: checked projection selected for this occurrence as an arrow receiver. */
 	public ?carrier_type_definition $member_borrow = null;
+	/** Prepared fact: the selected payload must stay alive after its carrier can change or expire. */
+	public bool $retain_member_borrow = false;
 
 	/** Prepared fact: canonical value type; null until preparation succeeds. */
 	protected ?type_definition $type_def = null;
@@ -334,6 +336,7 @@ abstract class ast_expression extends ast_node
 	public function reset_preparation(): void
 	{
 		$this->member_borrow = null;
+		$this->retain_member_borrow = false;
 		$this->type_def = null;
 		$this->constant = null;
 		$this->constant_known = false;

@@ -287,9 +287,14 @@ final class Preparation
 			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
 				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment);
 				$type = $statement->target->type_def();
+				$before = $this->suspension_count;
 				$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
-				if ($statement instanceof ast_property_compound) $statement->prepare_storage_compound($type);
+				if ($statement instanceof ast_property_compound) {
+					$statement->prepare_storage_compound($type);
+					if (!$statement->simple_compound_rhs() || $type instanceof carrier_type_definition) $this->retain_member_place($statement->target);
+				}
 				else {
+					if ($before !== $this->suspension_count && $statement->target instanceof ast_field_expression) $this->retain_member_place($statement->target->receiver);
 					if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
 					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 				}
@@ -303,6 +308,7 @@ final class Preparation
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
 				}
 				$this->value($statement->value);
+				$this->retain_member_place($receiver);
 				$statement->prepare_storage_compound($statement->target->type_def());
 			}
 			elseif ($statement instanceof ast_index_assignment) {
@@ -348,6 +354,7 @@ final class Preparation
 				$this->value($statement->index);
 				$type->prepare_key($statement->index);
 				$this->collection_element($statement->value, $type->write_type(), null);
+				$this->retain_member_place($receiver);
 				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
 				if ($binding instanceof ast_local_binding) $this->latest_writes[$binding->storage_id()] = null;
 			}
@@ -367,6 +374,7 @@ final class Preparation
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires an appendable collection');
 				}
 				$this->collection_element($statement->value, $type->write_type(), null);
+				$this->retain_member_place($statement->receiver);
 				$statement->settle_append($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
 			}
 			elseif ($statement instanceof ast_storage_write) {
@@ -850,6 +858,7 @@ final class Preparation
 		statement_return_target $function): int /** uint8 */
 	{
 		$this->value($statement->source_value);
+		$this->retain_member_place($statement->source_value);
 		$source_type = $statement->source_value->type_def();
 		$collection = null;
 		if ($statement->value instanceof ast_writable_element) {
@@ -1264,18 +1273,19 @@ final class Preparation
 		return true;
 	}
 
-	/** Publish the payload lookup and any stable storage required across intervening effects. */
-	private function member_receiver(ast_expression $receiver): void
+	/** A retained field or indexed place borrows through inline fields up to its nearest owner. */
+	private function retain_member_place(ast_expression $place): void
 	{
-		$receiver->prepare_member_borrow();
-		$type = $receiver->member_borrow;
-		if (!$type instanceof record_result_type_definition || !$type->payload_type instanceof record_type_definition) return;
-		$site = $receiver->parent;
-		while ($site instanceof ast_field_expression) $site = $site->parent;
-		if ($site instanceof ast_echo_statement || $site instanceof ast_return_statement || $site instanceof ast_local_declaration
-			|| $site instanceof ast_field_assignment && !$this->owner->parent->is_async
-			|| $site instanceof ast_binary_expression && $site->operator !== binary_operator::coalesce) return;
-		$this->dependencies?->watch($this->symbols->entry($type->payload_type->declaration->symbol_key()), $this->owner, dependency_use::record_borrow_storage->value);
+		while ($place instanceof ast_index_expression) $place = $place->receiver;
+		while ($place instanceof ast_field_expression && $place->shares_receiver_storage()) {
+			$place = $place->receiver;
+		}
+		$borrow = $place->member_borrow;
+		if ($borrow === null || $borrow instanceof nullable_enum_type_definition || $borrow->payload_type instanceof shared_record_type_definition) return;
+		$place->retain_member_borrow = true;
+		if ($borrow instanceof record_result_type_definition) {
+			$this->dependencies?->watch($this->symbols->entry($borrow->payload_type->declaration->symbol_key()), $this->owner, dependency_use::record_borrow_storage->value);
+		}
 	}
 
 	/** Check writable instance paths and qualified static members for all property writes. */
@@ -1336,6 +1346,7 @@ final class Preparation
 		if ($statement instanceof ast_index_update) {
 			$this->value($statement->target);
 			$this->require_index_mutation_place($statement->target->receiver);
+			$this->retain_member_place($statement->target->receiver);
 			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a mutable collection');
 			}
@@ -1712,7 +1723,7 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_field_expression) {
 			$this->value($syntax->receiver, $initializing);
-			if (in_array($syntax->source()->flavor, [flavor::php, flavor::cpp], true)) $this->member_receiver($syntax->receiver);
+			if (in_array($syntax->source()->flavor, [flavor::php, flavor::cpp], true)) $syntax->receiver->prepare_member_borrow();
 			$type = $syntax->receiver->member_type();
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
 			if ($type instanceof runtime_field_type) {
@@ -1767,6 +1778,7 @@ final class Preparation
 			}
 			$this->value($syntax->index, $initializing);
 			$type->prepare_index($syntax);
+			if (!$syntax->index->is_effect_free_literal()) $this->retain_member_place($syntax->receiver);
 			return;
 		}
 		if ($syntax instanceof ast_interpolated_string) {
@@ -1811,6 +1823,7 @@ final class Preparation
 			$this->value($syntax->operand, $initializing);
 			$type = $syntax->operand->type_def();
 			$entry = $syntax->operand;
+			if ($entry instanceof ast_index_expression && $type instanceof owned_callable_type) $this->retain_member_place($entry);
 			if ($syntax->source()->flavor === flavor::php && $entry instanceof ast_index_expression
 				&& $entry->receiver instanceof ast_name_expression && $entry->receiver->local_binding() !== null
 				&& $entry->receiver->type_def() instanceof hash_type_definition
@@ -1865,6 +1878,7 @@ final class Preparation
 				if (!($syntax->right instanceof ast_throw_expression) && $syntax->right->type_def() !== $carrier->payload_type) {
 					throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type');
 				}
+				$this->retain_member_place($syntax->left);
 				$syntax->settle_binary($carrier->payload_type);
 				return;
 			}
@@ -2325,6 +2339,10 @@ final class Preparation
 		}
 		if ($writes !== []) $this->invalidate_references($call, $writes);
 		$call->settle_runtime($runtime, $conversions);
+		if ($call->receiver !== null && ($runtime->receiver_method || $runtime->free_receiver)
+			&& ($call->suspending_operands || $call->has_runtime_conversions() || $call->has_nonliteral_arguments())) {
+			$this->retain_member_place($call->receiver);
+		}
 	}
 
 	/** Resolve the marker without evaluating it and watch the schema used by the native reader. */
@@ -2733,7 +2751,7 @@ final class Preparation
 				if ($static) $record = $this->static_qualifier($receiver, $initializing);
 				else {
 					$this->value($receiver, $initializing);
-					if ($call->member_separator === token_kind::member) $this->member_receiver($receiver);
+					if ($call->member_separator === token_kind::member) $receiver->prepare_member_borrow();
 					$record = $receiver->member_type();
 					if ($record instanceof shared_record_type_definition) $record = $record->payload;
 				}
@@ -2762,6 +2780,7 @@ final class Preparation
 						throw new diagnostic($call->source(), $call->byte_start(), $message . $method->name());
 					}
 					if (!$static) {
+						$this->retain_member_place($receiver);
 						Readonly_Access::write($receiver, true);
 						if ($receiver instanceof ast_this_expression) $this->constructor_initialization?->complete($call);
 					}
@@ -3219,6 +3238,7 @@ final class Preparation
 		}
 		$output = ($filter || $input instanceof boxed_type_definition) ? $input : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
 		if ($output === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable collection result for ' . $operation->name);
+		$this->retain_member_place($source);
 		$call->settle_runtime(new collection_transform_function($operation, $input, $type, $output, $filter));
 	}
 
