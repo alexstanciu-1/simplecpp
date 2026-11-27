@@ -62,8 +62,8 @@ $row[0] = $inner;
 $rows[0] = $row;
 ```
 
-For a local vector of vectors, a [nested write](../../specs/vector_slice.md#nested-local-vector-writes)
-updates the checked row directly. Ordinary value copies stay independent; shared objects
+For local typed vectors and hashes, a [nested write](../../specs/vector_slice.md#nested-local-collection-writes)
+updates the selected slot directly. Ordinary value copies stay independent; shared objects
 inside copied values retain their existing shared identity.
 
 ## Verification

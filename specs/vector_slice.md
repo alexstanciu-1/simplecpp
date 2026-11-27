@@ -7,22 +7,23 @@ Current representation: [native scalar aliases](native_scalar_aliases.md) supers
 Scope: runtime and physical API preparation inside v0.2. Source type resolution,
 evaluation order and contextual conversions remain compiler-owned.
 
-## Nested local vector writes
+## Nested local collection writes
 
-In the PHP, C++ and JavaScript flavors, a writable local of nested vector type
-accepts writes such as `cube[i][j][k] = value;` at any vector depth. Evaluate
-each index once in source order, then evaluate and convert the element value.
-Starting at the current root, check each index and replace the final slot.
-Replacing an intermediate vector during operand evaluation changes the destination.
-A bounds failure at any level prevents the store. Earlier operand effects remain
-visible. The store takes no copy of the intermediate vectors.
+In the PHP, C++ and JavaScript flavors, a writable local can be indexed through
+any sequence of typed vectors and hashes, as in `groups[team][i][name] = value;`.
+Evaluate and save each key once in source order, then evaluate and convert the
+value. Follow the saved keys from the current root. Each intermediate hash key
+must exist and each vector index must be in bounds. A final hash store inserts
+or replaces the entry. A lookup failure prevents the store and preserves earlier
+operand effects. Intermediate collections are accessed in place.
 
-For a compound such as `cube[i][j][k] += rhs()`, save all indices in source order
-and read the checked element before running the RHS. Compute from that saved
-value, then check the same indices in the current matrix at write-back. An
-initial bounds failure skips the RHS. If the RHS removes the destination,
-write-back fails and the RHS effects remain visible. Standalone prefix and
-postfix increments and decrements also update the checked element in place.
+For a compound such as `groups[team][name] += rhs()`, read the existing leaf
+before evaluating the RHS. Compute from that saved value, then check the entire
+path again at write-back. An initial lookup failure skips the RHS. If the RHS
+removes and reinserts an entry, write-back follows the saved key into its current
+entry. If any entry is still missing, write-back fails and the RHS effects remain
+visible. Standalone prefix and postfix increments and decrements likewise require
+an existing leaf. Keys retain the receiver's usual exact type requirements.
 
 ## Representation and publication
 

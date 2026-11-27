@@ -316,14 +316,15 @@ final class Preparation
 				$receiver = $statement->receiver;
 				if ($receiver instanceof ast_index_expression) {
 					$this->value($receiver);
-					$vector_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_vector_root($receiver);
-					$binding = $vector_root?->local_binding();
-					$root = $vector_root ?? $receiver;
+					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
+					$binding = $collection_root?->local_binding();
+					if ($collection_root !== null) $this->require_index_write_available($collection_root);
+					$root = $collection_root ?? $receiver;
 					while ($root instanceof ast_index_expression) {
 						$owner = $root->receiver->type_def();
 						if (!($owner instanceof fixed_array_type) && !($source->flavor === flavor::python
 							&& $owner instanceof boxed_type_definition && $owner->mutates_referenced_value())) {
-							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage, a local nested vector, or a shared Python container');
+							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage, a local typed vector/hash path, or a shared Python container');
 						}
 						$root = $root->receiver;
 					}
@@ -1054,15 +1055,16 @@ final class Preparation
 	/** A mutation through a value-copy row requires a path back to writable storage. */
 	private function require_index_mutation_place(ast_expression $receiver): void
 	{
-		$root = ast_index_expression::nested_vector_root($receiver);
+		$root = ast_index_expression::nested_collection_root($receiver);
 		if ($root !== null) {
+			$this->require_index_write_available($root);
 			Readonly_Access::write($root, true);
 			$this->latest_writes[$root->local_binding()->storage_id()] = null;
 			return;
 		}
 		if ($receiver instanceof ast_index_expression && !$receiver->type_def()->mutates_referenced_value()
-			&& ($receiver->receiver->type_def() instanceof vector_type_definition || $receiver->receiver->type_def() instanceof hash_type_definition)) {
-			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested indexed update requires a writable local vector of vectors');
+			&& $receiver->receiver->type_def() instanceof nested_index_storage_type) {
+			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested indexed update requires a writable local typed vector/hash path');
 		}
 		$this->require_index_write_available($receiver);
 		Readonly_Access::write($receiver, true);

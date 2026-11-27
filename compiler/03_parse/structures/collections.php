@@ -131,17 +131,17 @@ final class ast_index_expression extends ast_expression
 		$this->settle_value($type, null);
 	}
 
-	/** Find the writable path candidate rooted in a named local through vector indices alone. */
-	public static function nested_vector_root(ast_expression $row): ?ast_name_expression
+	/** Find the writable path candidate rooted in a named local through checked collection slots. */
+	public static function nested_collection_root(ast_expression $row): ?ast_name_expression
 	{
 		if (!($row instanceof ast_index_expression)) return null;
 		$root = $row;
 		do {
-			if (!($root->type_def() instanceof vector_type_definition)) return null;
+			if (!($root->type_def() instanceof nested_index_storage_type)) return null;
 			$root = $root->receiver;
 		} while ($root instanceof ast_index_expression);
 		return $root instanceof ast_name_expression && $root->local_binding() !== null
-			&& $root->type_def() instanceof vector_type_definition ? $root : null;
+			&& $root->type_def() instanceof nested_index_storage_type ? $root : null;
 	}
 }
 

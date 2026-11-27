@@ -1493,9 +1493,9 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
-				if (($root = ast_index_expression::nested_vector_root($statement->receiver)) !== null) {
+				if (($root = ast_index_expression::nested_collection_root($statement->receiver)) !== null) {
 					$steps = [];
-					$row_place = $this->nested_vector_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
+					$row_place = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
 					[$inner, $before_inner] = $this->staged_operand($statement->index, $global_references, $declarations, $required_headers);
 					array_push($steps, ...$before_inner);
 					$steps[] = 'const auto element_index = ' . $type->lower_cpp_key($statement->index, $inner) . ';';
@@ -2117,12 +2117,12 @@ CPP;
 	 * @param bool[] $headers
 	 * @param string[] $steps
 	 */
-	private function nested_vector_place(ast_name_expression $root, ast_index_expression $row, array &$globals,
+	private function nested_collection_place(ast_name_expression $root, ast_index_expression $row, array &$globals,
 		array &$declarations, array &$headers, array &$steps): string
 	{
 		$owner = $row->receiver;
 		$place = $owner instanceof ast_index_expression
-			? $this->nested_vector_place($root, $owner, $globals, $declarations, $headers, $steps)
+			? $this->nested_collection_place($root, $owner, $globals, $declarations, $headers, $steps)
 			: $this->value($root, $globals, $declarations, $headers);
 		[$outer, $before_outer] = $this->staged_operand($row->index, $globals, $declarations, $headers);
 		array_push($steps, ...$before_outer);
@@ -2143,9 +2143,9 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
 		array &$steps /** list<string> */): array
 	{
-		$root = ast_index_expression::nested_vector_root($target->receiver);
+		$root = ast_index_expression::nested_collection_root($target->receiver);
 		if ($root !== null) {
-			$place = $this->nested_vector_place($root, $target->receiver, $globals, $declarations, $headers, $steps);
+			$place = $this->nested_collection_place($root, $target->receiver, $globals, $declarations, $headers, $steps);
 		} else {
 			$receiver = $this->write_receiver($target->receiver, $globals, $declarations, $headers, $steps);
 			$steps[] = 'auto&& compound_collection = ' . $receiver . ';';

@@ -41,8 +41,12 @@ private implementation templates never enter the public include closure.
   bool_t indicating whether removal occurred. clear() releases storage and is noexcept.
 - append(Value) exists only for int64 keys and returns the assigned int64 key.
 - Reads/probes and unsuccessful removal never materialize empty storage.
-- No public element reference, native iterator, operator[], implicit condition,
-  std-container accessor or blanket native-argument overload is provided.
+- Generated code uses `checked_slot(key)` on an lvalue hash to follow an existing
+  intermediate key during a [nested write](vector_slice.md#nested-local-collection-writes).
+  It checks for absence with the same error as `at`. The compiler uses the slot
+  during the access and saves keys across user code. Source indexed reads return values.
+- Native iterators, operator[], implicit conditions, std-container accessors and
+  blanket native-argument overloads remain outside the API.
 
 Copies own independent keys/values; copy assignment prepares a replacement first.
 Moves transfer storage and leave empty reusable sources; self-copy/self-move preserve

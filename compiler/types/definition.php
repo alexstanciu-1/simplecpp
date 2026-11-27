@@ -274,6 +274,14 @@ interface indexed_mutation_type extends indexed_collection_type, index_write_typ
 	public function lower_cpp_replace(ast_expression $key, string $receiver, string $index, string $value): string;
 }
 
+/** A keyed write can descend through an existing slot, rechecking its saved key after user code. */
+interface nested_index_storage_type extends indexed_mutation_type
+{
+	public function lower_cpp_key(ast_expression $syntax, string $key): string;
+	public function lower_cpp_slot(string $receiver, string $key): string;
+	public function lower_cpp_write(string $receiver, string $key, string $value): string;
+}
+
 /** Collections whose normal read already rejects missing elements reuse that check for mutations. */
 trait checked_indexed_mutation
 {
