@@ -46,6 +46,7 @@ def prove(work, flavor, library, cxx_flags=()):
         for revision, (target, body, error) in enumerate([
             (path, choose, None), (path, choose, None), (path, choose.replace('rightArm()', 'rightArm() + 1'), None),
             (path, choose.replace('rightArm()', '"wrong"'), arm_error),
+            (path, choose.replace('leftArm()', '"wrong"'), arm_error) if flavor == 'php' else
             (path, choose.replace('leftArm()', ''), 'requires a true branch'),
             (path, choose, None), (path, choose, None),
             (api_path, api.replace(fn('rightArm', 'int', [], 'echo "R";return 7;'),

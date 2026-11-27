@@ -1577,7 +1577,13 @@ final class Preparation
 		$status = $this->take_status;
 		$this->take_paths($value->condition, $otherwise);
 		$type = $return_type;
-		$value->true_conversion = $this->ternary_arm($value->when_true, $return_type, $type, $initializing);
+		if ($value->when_true !== null) {
+			$value->true_conversion = $this->ternary_arm($value->when_true, $return_type, $type, $initializing);
+		} elseif ($return_type !== null) {
+			$value->true_conversion = $this->prepared_return_conversion($value->condition, $return_type);
+		} else {
+			$this->prepared_selection_result($value->condition, $type, 'Ternary');
+		}
 		$yes_ready = $this->take_ready;
 		$yes_status = $this->take_status;
 		$this->take_ready = $otherwise;
@@ -1600,6 +1606,12 @@ final class Preparation
 	private function selection_result(ast_expression $branch, ?type_definition &$result, ?string $initializing, string $construct): void
 	{
 		$this->value($branch, $initializing);
+		$this->prepared_selection_result($branch, $result, $construct);
+	}
+
+	/** Join an already prepared arm, including the saved operand of a PHP short ternary. */
+	private function prepared_selection_result(ast_expression $branch, ?type_definition &$result, string $construct): void
+	{
 		if ($branch instanceof ast_throw_expression) return;
 		$type = $branch->type_def();
 		if (!$type->supports_inferred_local() || $type instanceof generator_type_definition) throw new diagnostic($branch->source(), $branch->byte_start(), $construct . ' arm requires a supported value result');
@@ -2591,6 +2603,12 @@ final class Preparation
 			return value_conversion::identity;
 		}
 		$this->value($value, destination: $result);
+		return $this->prepared_return_conversion($value, $result);
+	}
+
+	/** Apply the return contract to a settled value without evaluating its syntax again. */
+	private function prepared_return_conversion(ast_expression $value, type_definition $result): int /** uint16 */
+	{
 		if ($result === type_void::instance()) {
 			if ($value->type_def() !== $result) throw new diagnostic($value->source(), $value->byte_start(), 'Void function cannot return a value');
 			return value_conversion::identity;

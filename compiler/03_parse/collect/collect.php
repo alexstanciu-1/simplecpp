@@ -181,7 +181,7 @@ final class Body_Collection
 		}
 		if ($value instanceof ast_ternary_expression) {
 			$this->expression($value->condition);
-			$this->expression($value->when_true);
+			if ($value->when_true !== null) $this->expression($value->when_true);
 			$this->expression($value->when_false);
 			return;
 		}
