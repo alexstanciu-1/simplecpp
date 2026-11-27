@@ -1,4 +1,4 @@
-"""PHP and C++ chain writes observe the stored value, including across a foreign RHS signature edit."""
+"""PHP, C++ and JS chain writes observe the stored value, including across a foreign RHS signature edit."""
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -23,8 +23,23 @@ a=bridge=small;
 echo a;
 return 8;
 """
-    direct_byte = ('a=bridge=small;', 'a=small;')
-    chain, inner_missing, outer_missing = 'outer=b=source;', 'outer=missing=source;', 'missing=b=source;'
+elif flavor == 'js':
+    signature = 'function compute(fail: bool): int'
+    bad_signature = 'function compute(fail: bool): string'
+    flag = 'fail'
+    caller = """
+let a: int=1; let b: int=2; let c: int=3;
+try { a=b=c=compute(true); } catch (e: Exception) { echo a,b,c; }
+a=b=c=compute(false);
+echo a,b,c;
+let source: mixed=9; let outer: dynamic=0;
+outer=b=source;
+echo (int)outer,b;
+let small: byte=4; let bridge: mixed=0;
+a=bridge=small;
+echo a;
+return 8;
+"""
 else:
     assert flavor == 'php'
     signature, bad_signature = 'function compute(bool $fail):int', 'function compute(bool $fail):string'
@@ -42,6 +57,11 @@ $a=$bridge=$byte;
 echo $a;
 return 8;
 '''
+
+if flavor != 'php':
+    direct_byte = ('a=bridge=small;', 'a=small;')
+    chain, inner_missing, outer_missing = 'outer=b=source;', 'outer=missing=source;', 'missing=b=source;'
+else:
     direct_byte = ('$a=$bridge=$byte;', '$a=$byte;')
     chain, inner_missing, outer_missing = '$outer=$b=$source;', '$outer=$missing=$source;', '$missing=$b=$source;'
 

@@ -362,8 +362,7 @@ final class Parser
 			$receiver = new ast_name_expression($name, $start, $start + 1);
 			return $this->indexed_write($receiver);
 		}
-		if (($grammar instanceof Php_Grammar || $grammar instanceof Cpp_Grammar)
-			&& $this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::assign)) {
+		if ($this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::assign)) {
 			$start = $this->cursor->position();
 			$tokens = $this->cursor->tokens->tokens;
 			if (($tokens[$start + 2]->kind ?? null) === $name_kind && ($tokens[$start + 3]->kind ?? null) === token_kind::assign) {
