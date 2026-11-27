@@ -2856,19 +2856,19 @@ CPP;
 		}
 		if ($value instanceof ast_nullsafe_member) {
 			$member = $value->operand;
-			$receiver = $value->guarded_member()->receiver;
+			$receiver = $value->guarded_member->receiver;
 			$owner = $receiver->type_def();
 			$operand = $this->value($receiver, $global_references, $declarations, $required_headers);
 			foreach ($value_type->conversion_headers($value->conversion) as $header) $required_headers[$header] = true;
 			$test = $owner->lower_cpp_condition('owner');
 			$result_type = $value_type->cpp_type();
-			if (!$value->has_suffix && $member instanceof ast_field_expression) {
+			if (!$value->has_suffix() && $member instanceof ast_field_expression) {
 				$present = $this->conversion($value_type, $value->conversion, 'owner->' . Cpp_Identifier::source($member->field), $member);
 				return '([](const ' . $owner->cpp_type() . "& owner) -> $result_type { if ($test) return $present; return {}; }($operand))";
 			}
 			$before = $this->suspensions;
 			$start = count($this->async_steps);
-			if ($value->has_suffix) {
+			if ($value->has_suffix()) {
 				$outer_receiver = $this->guarded_receiver;
 				$this->guarded_receiver = $receiver;
 				try {

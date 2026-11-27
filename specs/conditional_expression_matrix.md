@@ -47,12 +47,16 @@ A field or a by-value method can supply the shared owner for the next hop.
 Preparation checks every member against its receiver type, even on paths that
 can short-circuit.
 
-One ordinary field read or synchronous by-value instance call can follow the
-guarded member. In `findTeam()?->captain->scoreFor(key())`, an absent team
-skips the entire suffix, including `key()`. With a present team, ordinary
-member access applies. An empty captain raises the ordinary empty-owner failure
-before evaluating `key()`. With both owners present, a score of zero stays
-present. The same rule applies when a method supplies the intermediate owner.
+PHP field reads and synchronous by-value instance calls can mix `->` and
+`?->` in any order. Each `?->` evaluates its receiver once. An absent
+receiver skips every remaining member and argument in the chain and yields
+absence. When the guard succeeds, ordinary hops keep their usual receiver
+checks. A later guard tests the owner produced by the preceding run.
+
+For `$team?->captain->club?->coach->score(key())`, an absent team or club
+yields absence. An empty captain or coach raises the ordinary empty-owner
+failure. All four paths skip `key()`. With every owner present, `key()` and
+`score()` each run once, and a score of zero stays present.
 
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 

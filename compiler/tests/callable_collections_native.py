@@ -109,13 +109,42 @@ def nullsafe_index(work, selection):
           expected_stdout=trace, exception_type='std::out_of_range')
 
 
+def awaited_argument(work, selection):
+    api = """
+    class Holder {public hash<function<int(int)>,string> $ops;}
+    function key():string {echo "K"; return "run";}
+    function first(int $x):int {echo "A";return $x+10;}
+    function second(int $x):int {echo "B";return $x+20;}
+    async function replaceAndReturnArg(Holder $holder):int {
+        echo "H"; await async_sleep_ms(1); echo "R";
+        $holder->ops["run"]=fn($x)=>second($x);return 6;
+    }
+    async function run(Holder $holder):int {
+        $pending=$holder->ops[key()](await replaceAndReturnArg($holder));
+        $next=$holder->ops["run"](6);
+        echo "|",$pending,"/",$next;return 8;
+    }
+    """
+    setup = '$holder=new Holder(); $ops hash<function<int(int)>,string> = ["decoy"=>fn($x)=>0]; $holder->ops=$ops;'
+    entry = 'return await run($holder);'
+    if selection == 'present':
+        source = api + setup + '$holder->ops["run"]=fn($x)=>first($x);' + entry
+        revisions(work, 'php', {'main': source}, [(None, None, b'KHRAB|16/26')])
+    else:
+        guard(work, 'php', 'missing', api + setup + entry, 'hash_missing_key',
+              exception_type='std::out_of_range', expected_stdout=b'K')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--quick', action='store_true')
     parser.add_argument('--nullsafe-index', choices=('direct', 'fallback'))
+    parser.add_argument('--awaited-argument', choices=('present', 'missing'))
     args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-callable-collections-') as directory:
         if args.nullsafe_index:
             nullsafe_index(Path(directory), args.nullsafe_index)
+        elif args.awaited_argument:
+            awaited_argument(Path(directory), args.awaited_argument)
         else:
             prove(Path(directory), args.quick)
