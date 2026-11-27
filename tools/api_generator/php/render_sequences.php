@@ -538,6 +538,10 @@ function renderCarrier(array $plan, array $c): array {
     if ($result) $constructors[] = ['error_t'];
     $class = template('carriers/carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
     $d .= template('carriers/carrier_storage', $vars) . template('carriers/carrier_value_definition', $vars) . ' ';
+    if (!$nullable) {
+        $success = array_key_exists('true', $c['states']) ? '!is_false()' : 'has_value()';
+        $class .= "    bool_t is_success() const noexcept { return $success; }\n";
+    }
     if($result) {
         $d .= "if (!storage_) return $p{}; ";
     }

@@ -131,8 +131,8 @@ final class ast_index_expression extends ast_expression
 		$this->settle_value($type, null);
 	}
 
-	/** Find the writable path candidate rooted in a named local through checked collection slots. */
-	public static function nested_collection_root(ast_expression $row): ?ast_name_expression
+	/** Find local or instance-field storage reached through checked collection slots. */
+	public static function nested_collection_root(ast_expression $row): ast_name_expression|ast_field_expression|null
 	{
 		if (!($row instanceof ast_index_expression)) return null;
 		$root = $row;
@@ -140,8 +140,14 @@ final class ast_index_expression extends ast_expression
 			if (!($root->type_def() instanceof nested_index_storage_type)) return null;
 			$root = $root->receiver;
 		} while ($root instanceof ast_index_expression);
-		return $root instanceof ast_name_expression && $root->local_binding() !== null
-			&& $root->type_def() instanceof nested_index_storage_type ? $root : null;
+		if (!($root->type_def() instanceof nested_index_storage_type)) return null;
+		$base = $root;
+		while ($base instanceof ast_field_expression && $base->shares_receiver_storage()) {
+			$base = $base->receiver;
+		}
+		if ($root instanceof ast_field_expression && ($base instanceof ast_this_expression
+			|| $base->member_type() instanceof shared_record_type_definition)) return $root;
+		return $base instanceof ast_name_expression && $base->local_binding() !== null ? $root : null;
 	}
 }
 

@@ -32,11 +32,11 @@ for append, so a key/RHS call may replace the original owner without destroying 
 selected field mid-operation. No raw element reference escapes. Property reference
 arguments remain rejected; only named locals/parameters bind writable references.
 
-The only AST type adjustment widens ast_append_statement.receiver from a name to a
-name-or-field, including its constructor. No new fields, prepared facts, queues or runtime
-ABI changes. Canonical family definitions admit instance storage; declaration preparation
-resolves each field once and body preparation reuses existing conversion/type checks.
-Preparation never traverses collection elements. Application C++ remains template-free.
+[Nested writes](../../specs/vector_slice.md#nested-collection-writes) use the same
+receiver retention. The generated statement binds the collection field before
+evaluating the keys and resolves the saved path in that field at write-back.
+Preparation checks the field's visibility and read-only access through inline
+storage. The path uses the existing vector and hash checked-slot operations.
 
 Tests: collection_fields.php and collection_fields_native.py cover the six published
 specializations in three flavors, empty defaults, nested records, this writes, independent

@@ -317,14 +317,14 @@ final class Preparation
 				if ($receiver instanceof ast_index_expression) {
 					$this->value($receiver);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
-					$binding = $collection_root?->local_binding();
+					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
 					if ($collection_root !== null) $this->require_index_write_available($collection_root);
 					$root = $collection_root ?? $receiver;
 					while ($root instanceof ast_index_expression) {
 						$owner = $root->receiver->type_def();
 						if (!($owner instanceof fixed_array_type) && !($source->flavor === flavor::python
 							&& $owner instanceof boxed_type_definition && $owner->mutates_referenced_value())) {
-							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage, a local typed vector/hash path, or a shared Python container');
+							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage, a typed vector/hash path on local or instance-field storage, or a shared Python container');
 						}
 						$root = $root->receiver;
 					}
@@ -366,8 +366,8 @@ final class Preparation
 					$this->value($statement->receiver);
 					$root = $statement->receiver instanceof ast_index_expression
 						? ast_index_expression::nested_collection_root($statement->receiver) : $statement->receiver;
-					$binding = $root?->local_binding();
-					if ($binding === null) {
+					$binding = $root instanceof ast_name_expression ? $root->local_binding() : null;
+					if ($binding === null && !($root instanceof ast_field_expression)) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 					}
 					$this->require_collection_available($statement, $binding);
@@ -1062,12 +1062,12 @@ final class Preparation
 		if ($root !== null) {
 			$this->require_index_write_available($root);
 			Readonly_Access::write($root, true);
-			$this->latest_writes[$root->local_binding()->storage_id()] = null;
+			if ($root instanceof ast_name_expression) $this->latest_writes[$root->local_binding()->storage_id()] = null;
 			return;
 		}
 		if ($receiver instanceof ast_index_expression && !$receiver->type_def()->mutates_referenced_value()
 			&& $receiver->receiver->type_def() instanceof nested_index_storage_type) {
-			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested indexed update requires a writable local typed vector/hash path');
+			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested indexed update requires a writable local or instance-field vector/hash path');
 		}
 		$this->require_index_write_available($receiver);
 		Readonly_Access::write($receiver, true);
@@ -1926,9 +1926,7 @@ final class Preparation
 				if ($carrier instanceof carrier_type_definition
 					&& $literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)
 					&& $carrier->sentinel_factory($literal->word) !== null
-					&& ($carrier->payload_type instanceof runtime_handle_type
-						|| ($syntax->source()->flavor === flavor::php && $literal->word === 'false'
-							&& $carrier->false_only_sentinel()))) {
+					&& $carrier->payload_type instanceof runtime_handle_type && $syntax->source()->flavor !== flavor::php) {
 					$syntax->settle_binary(type_bool::instance(), $carrier);
 					return;
 				}
@@ -1945,6 +1943,10 @@ final class Preparation
 			if ($carrier instanceof carrier_type_definition) {
 				$comparison = peer_equality_binding($left, $right, $syntax->source()->flavor, $syntax->operator);
 				if ($comparison !== null) {
+					if ($comparison->observation === result_observation::null_payload) {
+						if ($comparison->operator !== binary_operator::identical) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Use strict comparison to test for a null result payload');
+						if (!$carrier->can_hold_null_payload()) throw new diagnostic($syntax->source(), $syntax->byte_start(), $carrier->name . ' cannot contain null; compare with false to test failure');
+					}
 					$execution = $comparison->execution;
 					if ($execution !== null && ($execution->binary_result($comparison->operator, $execution) !== type_bool::instance()
 						|| !$execution->binary_syntax_allowed($comparison->operator, $syntax))) {

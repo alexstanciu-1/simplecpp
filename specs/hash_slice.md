@@ -42,7 +42,7 @@ private implementation templates never enter the public include closure.
 - append(Value) exists only for int64 keys and returns the assigned int64 key.
 - Reads/probes and unsuccessful removal never materialize empty storage.
 - Generated code uses `checked_slot(key)` on an lvalue hash to follow an existing
-  intermediate key during a [nested write](vector_slice.md#nested-local-collection-writes).
+  intermediate key during a [nested write](vector_slice.md#nested-collection-writes).
   It checks for absence with the same error as `at`. The compiler uses the slot
   during the access and saves keys across user code. Source indexed reads return values.
 - Native iterators, operator[], implicit conditions, std-container accessors and

@@ -42,6 +42,7 @@ struct $name {
     $name($name&&) = default;
     $name& operator=($name other) { payload.swap(other.payload); failure = std::move(other.failure); return *this; }
     bool has_value() const noexcept { return bool(payload); }
+    bool is_success() const noexcept { return has_value(); }
     bool has_error() const noexcept { return failure.has_error(); }
     ::scpp::error_t error() const { if (!has_error()) throw std::runtime_error("result_no_error"); return failure; }
     Value& checked_ref() { check(); return *payload; }
@@ -79,6 +80,7 @@ struct $name {
         return *this;
     }
     bool has_value() const noexcept { return present; }
+    bool is_success() const noexcept { return has_value(); }
     bool has_error() const noexcept { return failure.has_error(); }
     ::scpp::error_t error() const {
         if (!has_error()) throw std::runtime_error("result_no_error");

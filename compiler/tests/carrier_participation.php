@@ -8,6 +8,7 @@ $source = <<<'SCPP'
 function replace_slot(?int &$slot): int { echo "R"; $slot = 0; return 0; }
 function change_plain(int &$slot): result<int> { echo "P"; $slot = 4; return 4; }
 function fail_left(): ?int { throw new Exception("left"); }
+function replace_result(result_or_false<int> &$slot): bool { echo "S"; $slot=5; return false; }
 function right_plain(): int { echo "unexpected"; return 0; }
 $empty ?int = null;
 $value ?int = 0;
@@ -33,7 +34,7 @@ foreach ([
 	['plain', 'value', true], ['plain', 'empty', false], ['plain', 'ok', true],
 	['plain', 'hit', true], ['plain', 'miss', false], ['plain', 'present', true],
 	['plain', 'truth', false], ['negative', 'present', false],
-	['flag', 'bool_value', true], ['flag', 'bool_miss', false],
+	['flag', 'bool_value', false], ['flag', 'bool_miss', true], ['flag', 'truth', false], ['flag', 'absent', true],
 ] as [$left, $right, $equal]) {
 	foreach ([[$left, $right], [$right, $left]] as [$a, $b]) {
 		foreach (['==', '!=', '===', '!=='] as $op) {
@@ -52,6 +53,8 @@ $text ?string = "a\0b";
 $other result_or_bool<string> = "a\0c";
 echo (int)($text !== $other), (int)("a\0b" === $text);
 try { echo (int)(fail_left() === right_plain()); } catch (Exception $e) { echo $e->get_message(); }
+$failed result_or_false<int> = false_sentinel;
+echo (int)($failed === replace_result($failed)), (int)($failed !== false);
 return 8;
 SCPP;
 $program = (new Source_Frontend())->prepare(new source_file('peers', $source, flavor::php), new entry_target(31));
@@ -63,4 +66,4 @@ foreach (['(var_hit_4).has_value() && ((var_hit_4).value() == var_plain_8)',
 	if (!str_contains($cpp, $fragment)) throw new RuntimeException('Missing lowered comparison: ' . $fragment);
 }
 file_put_contents($argv[1], json_encode(['php' => ['cpp' => $cpp,
-	'stdout_hex' => bin2hex($expected . '100110R01P0110111left')]], JSON_THROW_ON_ERROR));
+	'stdout_hex' => bin2hex($expected . '101010R01P0110111leftS11')]], JSON_THROW_ON_ERROR));

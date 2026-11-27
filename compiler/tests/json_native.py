@@ -13,6 +13,8 @@ source = r'''
 $r=json_decode("false"); if(!isset($r)){return 1;}
 $d dynamic=$r; $f string=json_encode($d); if($f!=="false"){return 2;}
 $n=json_decode_mixed("null"); if(!isset($n)){return 3;}
+if($n!==null || null!==json_decode("null") || json_decode("false")===null){return 59;}
+if(json_decode("{")===null || null===json_decode_mixed("{") || json_decode("{")!==false){return 60;}
 $m mixed=$n; $s string=json_encode($m); if($s!=="null"){return 4;}
 $bad=json_decode("{"); if(isset($bad)){return 5;}
 $x ?int=null; $none string=json_encode($x); $x=0; $zero string=json_encode($x);
@@ -75,7 +77,7 @@ $old=$borrowed->data[replaceIndex($borrowed)];
 if($old!==2 || $borrowed->version!==70){return 57;}
 $borrowed->version=8;
 $borrowed->bump(2);
-if($borrowed->version!==10){return 53;}
+if($borrowed->version!==10 || $borrowed!==true){return 53;}
 $selected=$borrowed->bump(replacePacket($borrowed));
 if($selected!==14 || $borrowed->version!==70){return 54;}
 $borrowed->version+=replacePacket($borrowed);
