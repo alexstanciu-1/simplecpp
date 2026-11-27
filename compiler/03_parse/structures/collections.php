@@ -111,11 +111,13 @@ final class ast_keyed_collection_expression extends ast_expression
 /** Value-copy indexed read, e.g. values[0]; owns its receiver and index, never represents mutable element storage. */
 final class ast_index_expression extends ast_expression
 {
+	/** PROPERTIES */
 	/** Native owning receiver expression. */
 	public readonly ast_expression $receiver;
 	/** Native owning index expression. */
 	public readonly ast_expression $index;
 
+	/** CONSTRUCTOR */
 	/** $end: exclusive token position after ]. */
 	public function __construct(ast_expression $receiver, ast_expression $index, int $end /** uint32 */)
 	{
@@ -126,9 +128,20 @@ final class ast_index_expression extends ast_expression
 		$index->attach($this);
 	}
 
+	/** METHODS */
 	public function settle_element(type_definition $type): void
 	{
 		$this->settle_value($type, null);
+	}
+
+	/** STATIC METHODS */
+	/** Two-key boxed mutations reselect the child from this local at write-back. */
+	public static function boxed_path_root(ast_expression $row): ?ast_name_expression
+	{
+		if (!($row instanceof ast_index_expression) || $row->source()->flavor === flavor::python) return null;
+		$root = $row->receiver;
+		return $root instanceof ast_name_expression && $root->local_binding() !== null
+			&& $root->type_def() instanceof boxed_type_definition ? $root : null;
 	}
 
 	/** Find local or instance-field storage reached through checked collection slots. */
@@ -221,16 +234,6 @@ final class ast_index_assignment extends ast_statement
 	}
 
 	/** METHODS */
-	/** A plain two-key boxed write reselects its child from this local after RHS evaluation. */
-	public function boxed_path_root(): ?ast_name_expression
-	{
-		$row = $this->receiver;
-		if (!($row instanceof ast_index_expression) || $this->source()->flavor === flavor::python) return null;
-		$root = $row->receiver;
-		return $root instanceof ast_name_expression && $root->local_binding() !== null
-			&& $root->type_def() instanceof boxed_type_definition ? $root : null;
-	}
-
 	public function settle_write(int $conversion /** uint16 */): void
 	{
 		$this->conversion = $conversion;

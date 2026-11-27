@@ -172,7 +172,11 @@ value is copied, the scalar operation is selected from existing metadata using i
 kind, and write-back validates presence after RHS effects. No raw element reference escapes.
 Arithmetic results retain the boxed family; ordering returns bool. String compounds use
 PHP `.=` versus C++/JS `+=`; PHP numeric `+=` rejects string payloads. Scalar division,
-shift and power guards remain in effect. Nested compound assignments and updates remain deferred. These additions
+shift and power guards remain in effect. On two-key local paths, compounds and standalone prefix or postfix updates save both
+normalized keys before requiring the existing leaf. Compounds then evaluate the RHS and
+apply the operator to the saved value. Write-back requires the same keys in the current root
+and follows the mixed or dynamic ownership rule above. A missing leaf suppresses RHS
+evaluation on the initial read and prevents reinsertion at write-back. These additions
 introduce no public object layout or additional boxed kinds.
 
 ## Exact mixed type predicates

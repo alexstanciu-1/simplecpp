@@ -32,10 +32,15 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		}
 	}
 
+	/** Admit nested boxed subscripts only for the prepared local mutation target outside Python. */
 	public function prepare_index(ast_index_expression $value): void
 	{
 		if ($value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python) {
-			throw new diagnostic($value->source(), $value->byte_start(), 'Nested boxed indexing is deferred');
+			$parent = $value->parent;
+			if (!(($parent instanceof ast_index_compound || $parent instanceof ast_index_update) && $parent->target === $value
+				&& ast_index_expression::boxed_path_root($value->receiver) !== null)) {
+				throw new diagnostic($value->source(), $value->byte_start(), 'Nested boxed indexing is deferred');
+			}
 		}
 		$this->prepare_key($value->index);
 		$value->settle_element($this);
@@ -85,11 +90,21 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $receiver . '.source_set(' . $key . ', ' . $value . ')';
 	}
 
-	/** Resolve an existing child after both keys and the converted value have been saved. */
-	public function lower_cpp_child_store(string $root, string $parent_key, string $key, string $value): string
+	private function lower_cpp_child_lookup(string $root, string $parent_key): string
 	{
-		$store = "$root.source_check_container(); auto boxed_child = $root.source_require($parent_key); "
-			. 'boxed_child.source_check_container(); ' . $this->lower_cpp_write('boxed_child', $key, $value) . ';';
+		return "$root.source_check_container(); auto boxed_child = $root.source_require($parent_key); boxed_child.source_check_container(); ";
+	}
+
+	public function lower_cpp_child_read(string $root, string $parent_key, string $key): string
+	{
+		return '([&]() { ' . $this->lower_cpp_child_lookup($root, $parent_key) . "return boxed_child.source_require($key); }())";
+	}
+
+	public function lower_cpp_child_store(string $root, string $parent_key, string $key, string $value, bool $require_leaf = false): string
+	{
+		$store = $this->lower_cpp_child_lookup($root, $parent_key);
+		if ($require_leaf) $store .= "(void)boxed_child.source_require($key); ";
+		$store .= $this->lower_cpp_write('boxed_child', $key, $value) . ';';
 		if (!$this->mutates_referenced_value()) $store .= ' ' . $this->lower_cpp_write($root, $parent_key, 'boxed_child') . ';';
 		return $store;
 	}

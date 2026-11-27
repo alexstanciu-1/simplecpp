@@ -40,7 +40,7 @@ decisions for mixed copy-on-write and dynamic shared identity. Existing-value ha
 updates through a second name would need an operation or proof that excludes
 insertion. These are possible extensions, not prerequisites for rows 3–5.
 
-Fixed arrays are tracked separately. Expressions and access now covers [nested writes to local and instance-field vectors and hashes](../vector_slice.md#nested-collection-writes). Nested append follows the same paths into vectors and integer-keyed hashes. Plain [two-key assignment on boxed locals](../boxed_slice.md#plain-two-key-assignment-on-boxed-locals) is implemented. Deeper boxed paths, field roots, nested append and compound updates remain open for boxed containers. Typed-to-boxed conversion belongs to structured conversion, and
+Fixed arrays are tracked separately. Expressions and access now covers [nested writes to local and instance-field vectors and hashes](../vector_slice.md#nested-collection-writes). Nested append follows the same paths into vectors and integer-keyed hashes. [Two-key assignment on boxed locals](../boxed_slice.md#plain-two-key-assignment-on-boxed-locals) supports plain writes, compounds and standalone updates. Deeper boxed paths, field roots and nested append remain open for boxed containers. Typed-to-boxed conversion belongs to structured conversion, and
 additional library helpers to the libraries backlog. Those areas may eventually
 consume an element-borrow contract.
 

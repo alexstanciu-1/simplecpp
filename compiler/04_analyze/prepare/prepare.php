@@ -317,7 +317,7 @@ final class Preparation
 				if ($receiver instanceof ast_index_expression) {
 					$this->value($receiver);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
-					$collection_root ??= $statement->boxed_path_root();
+					$collection_root ??= ast_index_expression::boxed_path_root($statement->receiver);
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
 					if ($collection_root !== null) $this->require_index_write_available($collection_root);
 					$root = $collection_root ?? $receiver;
@@ -1059,7 +1059,7 @@ final class Preparation
 	/** A mutation through a value-copy row requires a path back to writable storage. */
 	private function require_index_mutation_place(ast_expression $receiver): void
 	{
-		$root = ast_index_expression::nested_collection_root($receiver);
+		$root = ast_index_expression::nested_collection_root($receiver) ?? ast_index_expression::boxed_path_root($receiver);
 		if ($root !== null) {
 			$this->require_index_write_available($root);
 			Readonly_Access::write($root, true);
