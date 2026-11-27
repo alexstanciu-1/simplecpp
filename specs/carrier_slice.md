@@ -157,6 +157,10 @@ for supported payloads, incremental proofs and the boundary before source value 
 
 ### PHP take outputs
 
+PHP reserves `take` for result families. For `?T`, test `$value !== null` for presence
+or `$value === null` for absence. A present zero, false, or empty string passes the
+presence test.
+
 `take($value) = expression` evaluates the result expression once and yields a
 bool. Success means the result contains a payload, including zero or false.
 On success it assigns the exact payload type to `$value`. On failure an existing
