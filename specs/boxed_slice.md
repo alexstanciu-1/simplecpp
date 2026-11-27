@@ -119,6 +119,12 @@ flavors. Keys have static type int64 or string. A read returns a same-family val
 writes use ordinary same-family copies or scalar boxing. A plain indexed write through nested boxed containers follows the rules below.
 Native traversal follows the [common protocol](collection_traversal.md); the [compiler foreach slice](../compiler/docs/foreach.md) consumes it. See [validation](boxed_slice_validation.md).
 
+## Named dynamic keys
+
+In the PHP and Simple C++ flavors, `d->name` on a `dynamic` receiver selects the literal string key `"name"`. JavaScript uses `d.name` for the same operation. Python dictionaries use brackets for keys and reserve dot syntax for attributes. Named and bracket keys may be combined in a read or writable path. A missing key reads as boxed null. A plain write inserts or replaces the final key. The nested write rules below require every intermediate key to exist and hold a container. Saved keys resolve in current storage after the RHS, including when the RHS replaces a child. Append, compound assignment and standalone updates use the corresponding indexed operation.
+
+On a declared record, the receiver type selects its declared field as usual. Thus `holder->data->name` can select a real field followed by a dynamic key. A call such as `d->remove("name")` resolves the published method, while `d->remove` reads the data key. PHP, Simple C++ and JavaScript also admit consecutive bracket reads on dynamic.
+
 ## Plain two-key assignment on boxed locals
 
 For `data[group][key] = value` in PHP, C++ and JavaScript, evaluate and normalize

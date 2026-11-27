@@ -1466,6 +1466,30 @@ CPP;
 				}
 				while ($nested_else_blocks-- > 0) $lines[] = "\t}";
 			}
+			elseif (($statement instanceof ast_index_assignment && $statement->boxed_root !== null)
+				|| ($statement instanceof ast_field_assignment && $statement->target instanceof ast_field_expression && $statement->target->key_write_root !== null)) {
+				if ($statement instanceof ast_index_assignment) {
+					$root = $statement->boxed_root;
+					$receiver = $statement->receiver;
+					$key = $statement->index;
+					$conversion = $statement->conversion();
+				} else {
+					$root = $statement->target->key_write_root;
+					$receiver = $statement->target->receiver;
+					$key = $statement->target->field;
+					$conversion = $statement->conversion;
+				}
+				$type = $receiver->type_def();
+				$steps = [];
+				$place = $this->collection_root_place($root, $global_references, $declarations, $required_headers, $steps);
+				$parents = $this->boxed_path_keys($receiver, $key, $global_references, $declarations, $required_headers, $steps);
+				[$rhs, $before_rhs] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
+				array_push($steps, ...$before_rhs);
+				foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+				$steps[] = 'auto element_value = ' . $type->lower_cpp_exact_argument($statement->value, $conversion, $rhs, $this->inline_adapters) . ';';
+				$steps[] = $type->lower_cpp_path_store($place, $parents, 'element_index', 'element_value');
+				$lines[] = $this->async_statement('{ ' . implode(' ', $steps) . ' }');
+			}
 			elseif ($statement instanceof ast_field_assignment) {
 				$before = $this->suspensions;
 				[$value, $rhs_steps] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
@@ -1497,19 +1521,13 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
-				$boxed_root = $statement->boxed_root;
-				$root = $boxed_root ?? ast_index_expression::nested_collection_root($statement->receiver);
+				$root = ast_index_expression::nested_collection_root($statement->receiver);
 				if ($root !== null) {
 					$steps = [];
-					if ($boxed_root !== null) {
-						$container = $this->collection_root_place($boxed_root, $global_references, $declarations, $required_headers, $steps);
-						$parent_keys = $this->boxed_path_keys($statement->receiver, $statement->index, $global_references, $declarations, $required_headers, $steps);
-					} else {
-						$row_place = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
-						[$inner, $before_inner] = $this->staged_operand($statement->index, $global_references, $declarations, $required_headers);
-						array_push($steps, ...$before_inner);
-						$steps[] = 'const auto element_index = ' . $type->lower_cpp_key($statement->index, $inner) . ';';
-					}
+					$row_place = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
+					[$inner, $before_inner] = $this->staged_operand($statement->index, $global_references, $declarations, $required_headers);
+					array_push($steps, ...$before_inner);
+					$steps[] = 'const auto element_index = ' . $type->lower_cpp_key($statement->index, $inner) . ';';
 					[$value, $before_value] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
 					array_push($steps, ...$before_value);
 					$element = $type->write_type();
@@ -1517,9 +1535,7 @@ CPP;
 					$value = $element->lower_cpp_exact_argument($statement->value, $statement->conversion(), $value, $this->inline_adapters);
 					$steps[] = 'auto element_value = ' . $value . ';';
 					$required_headers['utility'] = true;
-					$steps[] = $boxed_root !== null
-						? $type->lower_cpp_path_store($container, $parent_keys, 'element_index', 'element_value')
-						: $type->lower_cpp_write($row_place, 'element_index', 'std::move(element_value)') . ';';
+					$steps[] = $type->lower_cpp_write($row_place, 'element_index', 'std::move(element_value)') . ';';
 					$lines[] = $this->async_statement('{ ' . implode(' ', $steps) . ' }');
 					continue;
 				}
@@ -2008,7 +2024,7 @@ CPP;
 		array &$global_references /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */, ?string &$snapshot, string $snapshot_name = 'compound_previous'): string
 	{
-		if ($statement instanceof ast_index_compound) return $this->indexed_compound($statement, $global_references, $declarations, $headers);
+		if ($statement instanceof ast_index_compound || ($statement instanceof ast_property_compound && $statement->target instanceof ast_field_expression && $statement->target->key_write_root !== null)) return $this->indexed_compound($statement, $global_references, $declarations, $headers);
 		$property = $statement instanceof ast_property_compound;
 		$destination = $property ? $statement->target : $statement->local_def();
 		$type = $destination->type_def();
@@ -2117,7 +2133,7 @@ CPP;
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
 	 */
-	private function indexed_compound(ast_index_compound $statement, array &$globals /** array<string,ast_global_declaration> */,
+	private function indexed_compound(ast_index_compound|ast_property_compound $statement, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
 		$target = $statement->target;
@@ -2181,20 +2197,26 @@ CPP;
 	 * @param bool[] $headers
 	 * @param string[] $steps
 	 */
-	private function boxed_path_keys(ast_index_expression $row, ?ast_expression $leaf, array &$globals,
+	private function boxed_path_keys(ast_expression $row, ast_expression|string|null $leaf, array &$globals,
 		array &$declarations, array &$headers, array &$steps): array
 	{
-		$keys = ['parent_key' => $row->index];
-		for ($parent = $row->receiver; $parent instanceof ast_index_expression; $parent = $parent->receiver) {
-			$keys['parent_key_' . $parent->end] = $parent->index;
+		$keys = [];
+		while ($row instanceof ast_index_expression || ($row instanceof ast_field_expression && $row->is_dynamic_key())) {
+			$keys['parent_key_' . $row->end] = $row instanceof ast_index_expression ? $row->index : $row->field;
+			$row = $row->receiver;
 		}
 		$keys = array_reverse($keys, true);
 		$parent_keys = array_keys($keys);
 		if ($leaf !== null) $keys['element_index'] = $leaf;
 		foreach ($keys as $name => $index) {
-			[$key, $before] = $this->staged_operand($index, $globals, $declarations, $headers);
-			array_push($steps, ...$before);
-			$steps[] = "const auto $name = " . $row->type_def()->lower_cpp_key($index, $key) . ';';
+			if (is_string($index)) {
+				$key = self::dynamic_field_key($index);
+			} else {
+				[$operand, $before] = $this->staged_operand($index, $globals, $declarations, $headers);
+				array_push($steps, ...$before);
+				$key = $row->type_def()->lower_cpp_key($index, $operand);
+			}
+			$steps[] = "const auto $name = $key;";
 		}
 		return $parent_keys;
 	}
@@ -2207,16 +2229,16 @@ CPP;
 	 * @param bool[] $headers
 	 * @param string[] $steps
 	 */
-	private function indexed_mutation(ast_index_compound|ast_index_update $statement, string $result, bool $recheck, array &$globals /** array<string,ast_global_declaration> */,
+	private function indexed_mutation(ast_index_compound|ast_index_update|ast_property_compound|ast_property_update $statement, string $result, bool $recheck, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
 		array &$steps /** list<string> */): array
 	{
 		$target = $statement->target;
 		$collection = $target->receiver->type_def();
-		$boxed_root = $statement->boxed_root;
+		$boxed_root = $target instanceof ast_field_expression ? $target->key_write_root : $statement->boxed_root;
 		if ($boxed_root !== null) {
 			$place = $this->collection_root_place($boxed_root, $globals, $declarations, $headers, $steps);
-			$parent_keys = $this->boxed_path_keys($target->receiver, $target->index, $globals, $declarations, $headers, $steps);
+			$parent_keys = $this->boxed_path_keys($target->receiver, $target instanceof ast_field_expression ? $target->field : $target->index, $globals, $declarations, $headers, $steps);
 			return [$collection->lower_cpp_path_read($place, $parent_keys, 'element_index'),
 				$collection->lower_cpp_path_store($place, $parent_keys, 'element_index', $result, true)];
 		}
@@ -2267,7 +2289,7 @@ CPP;
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
 	 */
-	private function indexed_update(ast_index_update $statement, array &$globals /** array<string,ast_global_declaration> */,
+	private function indexed_update(ast_index_update|ast_property_update $statement, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */): string
 	{
 		$target = $statement->target;
@@ -2413,7 +2435,7 @@ CPP;
 		if (($statement instanceof ast_assignment_statement) && $statement->calculates_value()) {
 			return $this->compound($statement, $global_references, $declarations, $headers, $snapshot, $snapshot_name);
 		}
-		if ($statement instanceof ast_index_update) {
+		if ($statement instanceof ast_index_update || ($statement instanceof ast_property_update && $statement->target instanceof ast_field_expression && $statement->target->key_write_root !== null)) {
 			return $this->indexed_update($statement, $global_references, $declarations, $headers);
 		}
 		if ($statement instanceof ast_property_update) {
@@ -2789,6 +2811,10 @@ CPP;
 				$global_references, $declarations, $required_headers);
 		}
 		if ($value instanceof ast_field_expression) {
+			if ($value->is_dynamic_key()) {
+				$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);
+				return '(' . $receiver . ').source_read(' . self::dynamic_field_key($value->field) . ')';
+			}
 			if ($value_type instanceof fixed_array_type) {
 				$steps = [];
 				return $this->retained_place($value, $global_references, $declarations, $required_headers, $steps, full_expression: true);
@@ -4226,6 +4252,11 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	private static function dynamic_field_key(string $name): string
+	{
+		return 'scpp::boxed_key(scpp::string{' . Cpp_String_Literals::bytes($name) . '})';
+	}
+
 	/** @param list<string> $steps @param ?list<string> $statement_setup */
 	private static function staged_call(string $call, array $steps, string $return_clause, ?array &$statement_setup): string
 	{

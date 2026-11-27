@@ -138,9 +138,12 @@ final class ast_index_expression extends ast_expression
 	/** A boxed mutation requires a local or stable instance field. */
 	public static function boxed_path_root(ast_expression $row): ast_name_expression|ast_field_expression|null
 	{
-		if (!($row instanceof ast_index_expression) || $row->source()->flavor === flavor::python) return null;
-		$root = $row->receiver;
-		while ($root instanceof ast_index_expression) $root = $root->receiver;
+		if ($row->source()->flavor === flavor::python) return null;
+		$root = $row;
+		while ($root instanceof ast_index_expression || ($root instanceof ast_field_expression && $root->is_dynamic_key())) {
+			$root = $root->receiver;
+		}
+		if ($root === $row) return null;
 		if (!($root->type_def() instanceof boxed_type_definition)) return null;
 		return self::collection_storage_root($root);
 	}

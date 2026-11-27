@@ -65,7 +65,8 @@ def prove(work,flavor):
             try:result=invoke(proc)
             finally:proc.stdin.close();proc.wait()
             accepted='error' not in result
-            assert accepted==(feature in ['keyed foreach','count','empty','has','remove','clear','append','instance field','indexed compound','indexed update','two-key write','two-key update','two-key compound','three-key write','deep append','deep compound']),(flavor,family,feature,result)
+            nested_read = family == "dynamic" and feature in ("two-key read", "nested RHS read")
+            assert accepted==(nested_read or feature in ['keyed foreach','count','empty','has','remove','clear','append','instance field','indexed compound','indexed update','two-key write','two-key update','two-key compound','three-key write','deep append','deep compound']),(flavor,family,feature,result)
             rows[family][feature]='accepted' if accepted else result['error'].split(': ',1)[-1]
     return rows
 

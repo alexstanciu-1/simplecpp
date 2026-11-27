@@ -35,7 +35,8 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 	/** The deep write context follows only receiver links. Keys and RHS expressions retain read semantics. */
 	public function prepare_index(ast_index_expression $value, bool $deep_path = false): void
 	{
-		if (!$deep_path && $value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python) {
+		if (!$deep_path && $value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python
+			&& !($this instanceof type_dynamic)) {
 			throw new diagnostic($value->source(), $value->byte_start(), 'Nested boxed indexing is deferred');
 		}
 		$this->prepare_key($value->index);
@@ -93,7 +94,7 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 	private function lower_cpp_path_lookup(string $root, array $parent_keys, bool $write): array
 	{
 		$place = $root;
-		$lookup = "$root.source_check_container(); ";
+		$lookup = $parent_keys === [] ? '' : "$root.source_check_container(); ";
 		$publish = [];
 		foreach ($parent_keys as $i => $parent_key) {
 			$child = 'boxed_child_' . $i;

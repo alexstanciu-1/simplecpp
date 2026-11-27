@@ -348,7 +348,8 @@ final class Parser
 		if ($this->expression_statement_start()) {
 			$value = $this->primary(field_target: true);
 			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
-			if ($value instanceof ast_called_type_name || $value instanceof ast_qualified_data) return $this->property_write($value);
+			if ($value instanceof ast_called_type_name || $value instanceof ast_qualified_data
+				|| ($value instanceof ast_field_expression && $this->cursor->tokens->source->flavor !== flavor::python)) return $this->property_write($value);
 			if (!($value instanceof ast_call_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 			}
@@ -1509,20 +1510,9 @@ final class Parser
 		}
 		if ($index !== null && (($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lparen)) || $this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
-			$php = $this->cursor->tokens->source->flavor === flavor::php;
-			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), field_target: $php);
-			if ($php && $this->cursor->is(token_kind::lbracket)) {
-				if ($target instanceof ast_field_expression) {
-					$this->cursor->take(token_kind::lbracket, '[');
-					$key = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
-					$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-					if ($key === null || $this->cursor->is(token_kind::assign)) return $this->index_store($target, $key, $terminator);
-					$mutation = $this->indexed_mutation($target, $key, $end);
-					if ($mutation !== null) return $mutation;
-					$target = new ast_index_expression($target, $key, $end);
-				}
-				$target = $this->postfix($target, false);
-			}
+			$field_target = $this->cursor->tokens->source->flavor !== flavor::python;
+			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), field_target: $field_target);
+			if ($field_target && $this->cursor->is(token_kind::lbracket)) return $this->indexed_write($target, $terminator);
 			if ($target instanceof ast_field_expression && $terminator === token_kind::newline) {
 				$this->cursor->take(token_kind::assign, '= after Python field');
 				$value = $this->assignment_value();

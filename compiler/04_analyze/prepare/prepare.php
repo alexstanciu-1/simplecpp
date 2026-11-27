@@ -292,15 +292,20 @@ final class Preparation
 				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment);
 				$type = $statement->target->type_def();
 				$before = $this->suspension_count;
-				$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
-				if ($statement instanceof ast_property_compound) {
-					$statement->prepare_storage_compound($type);
-					if (!$statement->simple_compound_rhs() || $type instanceof carrier_type_definition) $this->retain_member_place($statement->target);
-				}
-				else {
-					if ($before !== $this->suspension_count && $statement->target instanceof ast_field_expression) $this->retain_member_place($statement->target->receiver);
-					if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
-					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
+				if ($statement instanceof ast_field_assignment && $statement->target instanceof ast_field_expression && $statement->target->key_write_root !== null) {
+					$this->collection_element($statement->value, $type, null);
+					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::typed_destination);
+				} else {
+					$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
+					if ($statement instanceof ast_property_compound) {
+						$statement->prepare_storage_compound($type);
+						if (!$statement->simple_compound_rhs() || $type instanceof carrier_type_definition) $this->retain_member_place($statement->target);
+					}
+					else {
+						if ($before !== $this->suspension_count && $statement->target instanceof ast_field_expression) $this->retain_member_place($statement->target->receiver);
+						if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
+						$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
+					}
 				}
 				if ($initializing_field !== null) $this->constructor_initialization->states[$initializing_field->short_name] = 1;
 			}
@@ -343,6 +348,7 @@ final class Preparation
 				}
 				elseif ($receiver instanceof ast_field_expression) {
 					$this->writable_property($receiver, payload: true);
+					$boxed_root = $receiver->key_write_root;
 				} else {
 					$this->value($receiver);
 					$binding = $receiver->declaration();
@@ -371,6 +377,7 @@ final class Preparation
 				$boxed_root = null;
 				if ($statement->receiver instanceof ast_field_expression) {
 					$this->writable_property($statement->receiver, payload: true);
+					$boxed_root = $statement->receiver->key_write_root;
 				} else {
 					$this->value($statement->receiver, deep_write_path: true);
 					$root = $statement->receiver;
@@ -1339,7 +1346,15 @@ final class Preparation
 			$this->static_destination($root);
 			return null;
 		}
-		$this->value($root);
+		$this->value($root, deep_write_path: true);
+		if ($root->is_dynamic_key()) {
+			$place = ast_index_expression::boxed_path_root($root);
+			if ($place === null) throw new diagnostic($root->source(), $root->byte_start(), 'Dynamic key write requires local or instance-field storage');
+			Readonly_Access::write($place, true);
+			$this->retain_member_place($place);
+			$root->key_write_root = $place;
+			return null;
+		}
 		$field = $initialize ? $this->constructor_initialization?->assignment($root, $this->loop !== null) : null;
 		Readonly_Access::write($root, $payload, $field);
 		if ($payload && $this->check_indexed_field_owner($root)) return $field;
@@ -1797,7 +1812,11 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_field_expression) {
-			$this->value($syntax->receiver, $initializing);
+			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
+			if ($syntax->is_dynamic_key() && $syntax->source()->flavor !== flavor::python) {
+				$syntax->settle_field($syntax->receiver->type_def());
+				return;
+			}
 			if (in_array($syntax->source()->flavor, [flavor::php, flavor::cpp], true)) $syntax->receiver->prepare_member_borrow();
 			$type = $syntax->receiver->member_type();
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
