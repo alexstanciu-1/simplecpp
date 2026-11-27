@@ -43,9 +43,9 @@ class json_parser final : private reader_detail::json_reader {
 private:
 	[[nodiscard]] Value parse_number() {
 		const std::size_t start = pos_;
-		const auto token = parse_number_token();
-		const bool is_float = token.find_first_of(".eE") != std::string_view::npos;
-		if (!is_float) {
+		bool integer_token;
+		const auto token = parse_number_token(&integer_token);
+		if (integer_token) {
 			std::int64_t value = 0;
 			auto result = std::from_chars(token.data(), token.data() + token.size(), value);
 			if (result.ec == std::errc{} && result.ptr == token.data() + token.size()) {

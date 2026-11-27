@@ -262,7 +262,7 @@ protected:
 		return parse_string_tail(start, parse_string_prefix());
 	}
 
-	[[nodiscard]] std::string_view parse_number_token() {
+	[[nodiscard]] std::string_view parse_number_token(bool* integer_token = nullptr) {
 		const std::size_t start = pos_;
 		if (peek() == '-') {
 			++pos_;
@@ -284,6 +284,7 @@ protected:
 			}
 		}
 
+		const auto integer_end = pos_;
 		if (!at_end() && peek() == '.') {
 			++pos_;
 			if (at_end() || !is_ascii_digit(peek())) {
@@ -306,6 +307,7 @@ protected:
 			}
 		}
 
+		if (integer_token) *integer_token = pos_ == integer_end;
 		return input_.substr(start, pos_ - start);
 	}
 
