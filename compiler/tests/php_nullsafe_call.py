@@ -171,7 +171,7 @@ def indexed_callable(work, case):
     """
     setup = '$ops hash<function<int(int)>,string> = ["fallback"=>fn($n)=>byFallback($n)];'
     method = '$ops["method"]=fn($n)=>byMethod($n);'
-    if case == 'chained_indexed_callable':
+    if case in ('chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         api += """
         class Router {
             public ?Selector $target;
@@ -184,6 +184,18 @@ def indexed_callable(work, case):
             echo "|",$value,";";
         }
         """
+        if case != 'chained_indexed_callable':
+            api = api.replace('?->pick(keyArg())', '->pick(keyArg())')
+            if case == 'ordinary_indexed_empty':
+                guard(work, 'php', 'empty_selector', api + setup + method + 'invokeRoute(new Router(),$ops);return 8;',
+                      'ownership_empty_access', expected_stdout=b'PRS')
+                return
+            main = setup + method + """
+            invokeRoute(null,$ops);
+            $router=new Router(); $router->target=new Selector(); invokeRoute($router,$ops); return 8;
+            """
+            revisions(work, 'php', dict(api=api, main=main), [(None, None, b'PFCB|26;PRSKMCA|16;')])
+            return
         main = setup + method + """
         invokeRoute(null,$ops);
         $router=new Router(); invokeRoute($router,$ops);
@@ -207,7 +219,7 @@ def indexed_callable(work, case):
 
 with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     case = sys.argv[1]
-    if case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable'):
+    if case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
         {'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
