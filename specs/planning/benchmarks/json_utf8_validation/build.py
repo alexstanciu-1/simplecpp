@@ -22,9 +22,14 @@ assert 'error' not in json.loads(generated.stdout), generated.stdout
 manifest = json.loads((out/'manifest.json').read_text())
 unit = out/manifest['sources']['app/records.php']
 native = root/'runtime/src/json'
-reader = (native/'structural_reader.hpp').read_text().split('void validate_input(', 1)[1]
-start = reader.index('\t\t\tfor (std::size_t i = 0;')
-body = textwrap.dedent(reader[start:reader.index('\n\t\t});', start)])
+reader = (native/'structural_reader.hpp').read_text()
+if 'static void validate_bytes(' in reader:
+    section = reader.split('static void validate_bytes(', 1)[1].split('\n\t}', 1)[0]
+    body = textwrap.dedent(section.split('{\n', 1)[1])
+else:
+    section = reader.split('void validate_input(', 1)[1]
+    start = section.index('\t\t\tfor (std::size_t i = 0;')
+    body = textwrap.dedent(section[start:section.index('\n\t\t});', start)])
 isolated = work/'isolated.cpp'
 isolated.write_text('#include "structural_reader.hpp"\nusing namespace scpp::detail;\n'
                     'using namespace scpp::detail::json;\n'

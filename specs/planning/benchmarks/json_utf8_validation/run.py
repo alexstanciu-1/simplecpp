@@ -12,8 +12,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('bin', type=Path)
 parser.add_argument('--seed', type=int, default=8407)
 parser.add_argument('--leading', action='store_true', help='include the first-byte-gated candidate')
+parser.add_argument('--dense', nargs='+', choices=('retry64', 'remainder', 'width', 'separate'),
+                    help='compare scalar fallback policies with the committed decoder and eight-byte check')
 args = parser.parse_args()
 modes = ('base', 'ascii8', 'leading') if args.leading else ('base', 'ascii8')
+
+if args.dense:
+    modes = ('base', 'ascii8', *args.dense)
 
 def wire(value, escaped=False):
     return json.dumps({'value': value}, ensure_ascii=escaped, separators=(',', ':')).encode()
@@ -48,6 +53,15 @@ def check(shape):
         invalid.append((broken + b'\xff', len(broken)))
         invalid.append((prefix + b'\x00' + closing, None))
         invalid.append((prefix + br'\q' + closing, None))
+    if args.dense:
+        for pad in range(72):
+            head = opening + 'é'.encode() + b'a'*pad
+            for char in ('¢', '水', '😀'):
+                valid.append(head + char.encode() + b'b'*80 + closing)
+            for bad in (b'\xff', b'\xc2', b'\xe2\x82', b'\xf0\x9f\x98', b'\xed\xa0\x80'):
+                invalid.append((head + bad, len(head)))
+            broken = b'!' + head
+            invalid.append((broken + b'\xff', len(broken)))
     docs = valid + [d for d,_ in invalid]
     output = invoke('base',shape,docs)
     assert len(output)==len(docs)
@@ -71,6 +85,13 @@ fixtures = [
     ('words-short','words',['abcdefg']*16), ('words-long','words',['a'*4096]*16),
     ('numbers-3','numbers',list(range(3))), ('numbers-4096','numbers',list(range(4096))),
 ]
+if args.dense:
+    fixtures.extend([
+        ('unicode-then-ascii','scalar','é'+'a'*4094),
+        ('ascii-then-unicode','scalar','a'*2048+'😀'*512),
+        ('alternating','scalar','a水'*1024),
+        ('mixed-width-dense','scalar','é水😀'*455),
+    ])
 rng=random.Random(args.seed)
 rng.shuffle(fixtures)
 result={'host':platform.node(),'cpu':sorted(os.sched_getaffinity(0)), 'seed':args.seed,

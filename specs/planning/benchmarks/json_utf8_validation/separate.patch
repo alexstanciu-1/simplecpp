@@ -1,0 +1,43 @@
+--- a/runtime/src/json/structural_reader.hpp
++++ b/runtime/src/json/structural_reader.hpp
+@@ -136,24 +136,27 @@
+ 		pos_ = checkpoint;
+ 		while (next_element()) scalar();
+ 	}
++	[[gnu::noinline]] static void validate_bytes(std::string_view input_) {
++		for (std::size_t i = 0; i < input_.size();) {
++			if (input_.size() - i >= sizeof(std::uint64_t)) {
++				std::uint64_t word;
++				std::memcpy(&word, input_.data() + i, sizeof(word));
++				if ((word & 0x8080808080808080ULL) == 0) {
++					i += sizeof(word);
++					continue;
++				}
++			}
++			const auto width = utf8::validated_width(input_.substr(i));
++			if (!width) reader_detail::fail_json_parse("invalid UTF-8", i, "utf8");
++			i += width;
++		}
++	}
+ 	void validate_input(std::int64_t limit) {
+ 		checked([&] {
+ 			if (limit < 1 || limit > 256)
+ 				reader_detail::fail_json_parse("max_depth must be 1..256", 0, "invalid_limit");
+ 			limit_ = static_cast<std::size_t>(limit);
+-			for (std::size_t i = 0; i < input_.size();) {
+-				if (input_.size() - i >= sizeof(std::uint64_t)) {
+-					std::uint64_t word;
+-					std::memcpy(&word, input_.data() + i, sizeof(word));
+-					if ((word & 0x8080808080808080ULL) == 0) {
+-						i += sizeof(word);
+-						continue;
+-					}
+-				}
+-				const auto width = utf8::validated_width(input_.substr(i));
+-				if (!width) reader_detail::fail_json_parse("invalid UTF-8", i, "utf8");
+-				i += width;
+-			}
++			validate_bytes(input_);
+ 		});
+ 	}
+ public:

@@ -1,0 +1,36 @@
+--- a/runtime/src/json/structural_reader.hpp
++++ b/runtime/src/json/structural_reader.hpp
+@@ -4,6 +4,7 @@
+ #include "../sequence/utf8_codepoints.hpp"
+ #include <array>
+ #include <charconv>
++#include <cstring>
+ #include <unordered_set>
+ #include <vector>
+ 
+@@ -141,10 +142,21 @@
+ 				reader_detail::fail_json_parse("max_depth must be 1..256", 0, "invalid_limit");
+ 			limit_ = static_cast<std::size_t>(limit);
+ 			for (std::size_t i = 0; i < input_.size();) {
+-				std::uint32_t scalar;
+-				const auto width = utf8::decode(input_.substr(i), scalar);
+-				if (!width) reader_detail::fail_json_parse("invalid UTF-8", i, "utf8");
+-				i += width;
++				if (input_.size() - i >= sizeof(std::uint64_t)) {
++					std::uint64_t word;
++					std::memcpy(&word, input_.data() + i, sizeof(word));
++					if ((word & 0x8080808080808080ULL) == 0) {
++						i += sizeof(word);
++						continue;
++					}
++				}
++				const auto stop = input_.size();
++				do {
++					std::uint32_t scalar;
++					const auto width = utf8::decode(input_.substr(i), scalar);
++					if (!width) reader_detail::fail_json_parse("invalid UTF-8", i, "utf8");
++					i += width;
++				} while (i < stop);
+ 			}
+ 		});
+ 	}
