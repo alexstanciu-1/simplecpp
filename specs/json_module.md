@@ -185,9 +185,11 @@ A typed string field owns its decoded bytes. A plain string is constructed
 directly from the quoted input's contents. An escaped string uses the same
 escape parser. After each escape, the reader appends the following ordinary
 bytes in one span and leaves the next quote, backslash or control byte for the
-string grammar. The scanner skips complete eight-byte blocks of ordinary bytes.
-A scalar scan locates the first marker in a candidate block and handles inputs
-with fewer than eight bytes remaining. Short results fit inline and long results take ownership of the
+string grammar. On x86-64 GCC and Clang builds, the reader checks CPU support
+before calling the AVX2 scanner on 32 or more remaining input bytes. Each
+complete 32-byte block yields a mask locating its first marker. The portable
+scanner handles other CPUs, shorter spans and tails using eight-byte blocks
+and a final scalar scan. Short results fit inline and long results take ownership of the
 decoded buffer. Native builds probe the active standard library's string
 capacity before enabling selective reserve. For a measured full prefix of
 1,024–65,536 bytes followed by an escape, the reader reserves room for one

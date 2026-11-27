@@ -142,3 +142,25 @@ Across the three builds, 780 valid scalar and vector documents matched the indep
 For the candidate apply [dispatch.patch](dispatch.patch), then [first8.patch](first8.patch). Build the batched typed_json_strings drivers for all three configurations. With executables under `bin/word8`, `bin/dispatch` and `bin/first8`, run `taskset -c 7 python3 run.py bin --first8`.
 
 [Raw three-way measurements](first8.dev002.json)
+
+## Integrated direct AVX2 scanner
+
+The integrated reader checks the x86-64 runtime CPU feature before calling the AVX2 function on at least 32 remaining input bytes. Short strings within a vector can still enter that function because the span extends through the document. The portable implementation handles unsupported CPUs and tails. The guarded-page test exercises both the selected scanner and the portable implementation against expected marker positions.
+
+Median throughput in decimal MB/s of wire JSON, **committed eight-byte decoder → integrated decoder**. The comparison used the qualified selective-reserve baseline from `ae9eff851` and the integrated source on top of `435013fd1`. Each document contains 16 strings. Eleven shuffled rounds ran on dev002 CPU 7. Allocation counts and bytes matched for all 36 fixtures.
+
+| Decoded bytes/string | Plain | Escape first | Escape middle | Escape last |
+|---:|---:|---:|---:|---:|
+| 3 | 206 → 205 | 193 → 185 | 188 → 178 | 208 → 196 |
+| 7 | 285 → 318 | 245 → 242 | 248 → 240 | 263 → 256 |
+| 8 | 361 → 342 | 260 → 257 | 252 → 246 | 278 → 273 |
+| 9 | 373 → 359 | 282 → 270 | 258 → 260 | 310 → 291 |
+| 31 | 518 → 566 | 413 → 429 | 394 → 416 | 438 → 465 |
+| 32 | 557 → 571 | 409 → 423 | 416 → 430 | 402 → 421 |
+| 33 | 574 → 591 | 435 → 433 | 448 → 444 | 480 → 477 |
+| 129 | 1,223 → 1,396 | 1,037 → 1,133 | 958 → 1,017 | 1,112 → 1,206 |
+| 4,096 | 2,734 → 3,660 | 2,560 → 3,532 | 2,539 → 3,392 | 2,650 → 3,524 |
+
+The default suite passed on the integrated dev002 build. Both the integrated build and a separate build compiled with `SCPP_JSON_PORTABLE_SCAN_ONLY=1` passed the guarded-page scanner test and matched the portable baseline on 780 valid scalar/vector documents and 844 malformed documents, including diagnostic messages, byte offsets and paths. Both builds ran on the same AVX2-capable Ryzen 9 5950X.
+
+[Raw paired measurements](integrated-avx2.dev002.json)
