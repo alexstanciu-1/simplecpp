@@ -239,3 +239,9 @@ closes that container. Finish with finish_document after consuming the root,
 or fail the cursor explicitly through reject(message). A failed read is
 terminal; restart requires a fresh handle. Documents use the same private
 structural reader, with independent public feature selection.
+
+After checking the depth limit, the structural reader validates the complete
+wire input before parsing JSON syntax. Invalid UTF-8 is reported at the start
+of the malformed sequence. The reader skips complete leading 32-byte ASCII
+blocks, then uses eight-byte ASCII checks and validates multibyte widths. Each
+load stays within the input, including on unaligned and partial final blocks.

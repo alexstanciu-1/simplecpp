@@ -52,3 +52,33 @@ taskset -c 7 python3 run.py bin --dense width ascii_head --seed 91703 --work-fac
 ```
 
 [One-check run](one_bound-35121.dev002.json) · [One-check recheck](one_bound-69743.dev002.json)
+
+## Production verification
+
+The two runtime headers built from the integration diff matched the qualified candidate byte for byte. A new default test compares validated widths with the scalar decoder and verifies invalid-sequence offsets across leading ASCII blocks. The forced-portable build disables the AVX2 JSON string scanner; the UTF-8 block checks themselves use portable loads. Both builds passed the scalar/vector oracle and diagnostic corpus. An independent ownership probe overwrote and destroyed the input before observing the decoded fields.
+
+Median full typed throughput change, two fresh shuffled runs on dev002 CPU 7. The columns use the committed, original ASCII and width-only controls respectively.
+
+| Fixture | Against production at 56800977e | Against original eight-byte check | Against width-only |
+|---|---:|---:|---:|
+| alternating | +16.9% / +17.2% | +26.2% / +27.3% | -0.7% / -0.8% |
+| ascii-4096 | +223.5% / +225.5% | +41.4% / +41.8% | +71.9% / +72.2% |
+| ascii-then-unicode | +69.8% / +69.8% | +51.3% / +52.1% | +10.3% / +10.4% |
+| dense-2byte | +83.6% / +83.4% | +86.9% / +87.3% | -0.1% / -0.5% |
+| dense-3byte | +43.8% / +43.8% | +49.6% / +50.5% | -0.3% / -0.9% |
+| dense-4byte | +43.2% / +42.6% | +53.1% / +53.3% | -0.9% / -0.6% |
+| empty | +2.2% / +2.8% | +0.4% / +1.7% | +1.1% / +3.1% |
+| escaped-unicode | +14.3% / +13.6% | +6.2% / +6.2% | +3.5% / +3.0% |
+| mixed-width-dense | +51.9% / +51.5% | +60.8% / +60.6% | -0.3% / -0.4% |
+| numbers-3 | +6.4% / +5.1% | +5.3% / +1.8% | +3.3% / +3.1% |
+| numbers-4096 | +6.6% / +6.5% | +0.1% / +0.1% | +3.1% / +2.1% |
+| short-ascii | +4.1% / +3.1% | +0.4% / +2.2% | +1.4% / +1.8% |
+| short-unicode | +5.8% / +4.7% | +2.2% / -0.6% | +1.2% / +0.9% |
+| sparse-4096 | +48.2% / +47.4% | -11.7% / -11.8% | -0.5% / -0.2% |
+| unicode-then-ascii | +86.4% / +86.1% | -19.5% / -19.3% | -1.3% / -1.9% |
+| words-long | +289.5% / +295.0% | +55.2% / +56.6% | +95.1% / +97.6% |
+| words-short | +10.1% / +11.9% | +4.4% / +6.3% | +4.0% / +4.9% |
+
+[Integrated run](integrated-73139.dev002.json) · [Integrated recheck](integrated-37237.dev002.json) · [Forced-portable verification](portable-verification.json)
+
+All 426 default tests passed on the final dev002 run. On the first parallel run the compiler frontend service idle test failed its timing-sensitive status check, then passed immediately in isolation. Both complete integration measurements exceeded production throughput on all 17 fixtures; short-input medians vary with shared-host load. The final result retains the dense gains while materially exceeding the original ASCII control on long all-ASCII input. The other new candidates remain experimental.

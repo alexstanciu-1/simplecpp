@@ -1,0 +1,18 @@
+{
+  "host": "tf-dev002",
+  "cpu": [
+    7
+  ],
+  "seed": 8407,
+  "diagnostics": {
+    "scalar": {
+      "valid": 504,
+      "invalid": 976
+    },
+    "words": {
+      "valid": 504,
+      "invalid": 976
+    }
+  },
+  "cases": {}
+}

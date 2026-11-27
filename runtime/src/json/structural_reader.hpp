@@ -4,10 +4,23 @@
 #include "../sequence/utf8_codepoints.hpp"
 #include <array>
 #include <charconv>
+#include <cstring>
 #include <unordered_set>
 #include <vector>
 
 namespace scpp::detail::json {
+// Skip complete leading blocks; the validator checks the first mixed block.
+inline std::size_t ascii_block_prefix(std::string_view input) noexcept {
+	std::size_t size = 0;
+	while (input.size() - size >= 32) {
+		std::array<std::uint64_t, 4> words;
+		std::memcpy(words.data(), input.data() + size, 32);
+		if ((words[0] | words[1] | words[2] | words[3]) & 0x8080808080808080ULL) break;
+		size += 32;
+	}
+	return size;
+}
+
 // A failed reader is terminal. Consumers publish only after finish_document().
 class read_error final : public std::runtime_error {
 public:
@@ -140,9 +153,16 @@ class pull_reader final : private reader_detail::json_reader {
 			if (limit < 1 || limit > 256)
 				reader_detail::fail_json_parse("max_depth must be 1..256", 0, "invalid_limit");
 			limit_ = static_cast<std::size_t>(limit);
-			for (std::size_t i = 0; i < input_.size();) {
-				std::uint32_t scalar;
-				const auto width = utf8::decode(input_.substr(i), scalar);
+			for (std::size_t i = ascii_block_prefix(input_); i < input_.size();) {
+				if (input_.size() - i >= sizeof(std::uint64_t)) {
+					std::uint64_t word;
+					std::memcpy(&word, input_.data() + i, sizeof(word));
+					if ((word & 0x8080808080808080ULL) == 0) {
+						i += sizeof(word);
+						continue;
+					}
+				}
+				const auto width = utf8::validated_width(input_.substr(i));
 				if (!width) reader_detail::fail_json_parse("invalid UTF-8", i, "utf8");
 				i += width;
 			}

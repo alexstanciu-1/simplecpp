@@ -24,6 +24,10 @@ The [UTF-8 study](benchmarks/json_utf8_validation/README.md#dense-unicode-follow
 - Bound exploration to diagnosis and up to three new, materially different candidates for this goal. Historical failed placements do not need another run without new evidence. Close with the best verified result if the tradeoff persists. Record any proposed change to the acceptance criteria for the user to decide.
 - The final report identifies commits, exact baseline, representative throughput with ranges, regressions, correctness evidence, raw measurements and any remaining open question.
 
+## First goal outcome
+
+The [qualification and production report](benchmarks/json_utf8_validation/goal.md#production-verification) records the selected document-entry scan, its Unicode width checks and the two fresh integration runs. Both exceeded the previous production decoder on every timed fixture. Rebaseline future work on the integrated decoder. The other investigated placements and SSE2 string experiments remain study patches.
+
 ## Subsequent goals
 
 Use the same loop for one measured bottleneck at a time. After prevalidation, profile the committed decoder on the existing [typed records and integer vectors](benchmarks/typed_json_decode/README.md), [record arrays](benchmarks/json_record_arrays/README.md) and [string vectors](benchmarks/json_string_batches/README.md). Rank hotspots by their share of complete decode time and the workloads affected. Choose the next bounded goal from those measurements. Rebaseline after each integration so gains are measured on the decoder users actually run.

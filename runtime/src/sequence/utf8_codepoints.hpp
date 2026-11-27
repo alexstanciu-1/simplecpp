@@ -28,6 +28,25 @@ inline unsigned decode(std::string_view bytes, std::uint32_t& scalar) noexcept {
     return width;
 }
 
+// Return the width of a valid encoding without materializing the scalar.
+inline unsigned validated_width(std::string_view bytes) noexcept {
+    if (bytes.empty()) return 0;
+    const auto lead = static_cast<unsigned char>(bytes[0]);
+    if (lead < 0x80) return 1;
+    if (lead < 0xc2 || lead > 0xf4 || bytes.size() < 2) return 0;
+    const auto second = static_cast<unsigned char>(bytes[1]);
+    if ((second & 0xc0) != 0x80) return 0;
+    if (lead < 0xe0) return 2;
+    if (bytes.size() < 3 || (static_cast<unsigned char>(bytes[2]) & 0xc0) != 0x80) return 0;
+    if (lead < 0xf0) {
+        if ((lead == 0xe0 && second < 0xa0) || (lead == 0xed && second >= 0xa0)) return 0;
+        return 3;
+    }
+    if (bytes.size() < 4 || (static_cast<unsigned char>(bytes[3]) & 0xc0) != 0x80) return 0;
+    if ((lead == 0xf0 && second < 0x90) || (lead == 0xf4 && second >= 0x90)) return 0;
+    return 4;
+}
+
 struct sequence {
     std::string_view bytes;
     std::size_t count = 0;
