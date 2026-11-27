@@ -292,22 +292,26 @@ final class Preparation
 				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment);
 				$type = $statement->target->type_def();
 				$before = $this->suspension_count;
-				$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
-				if ($statement instanceof ast_property_compound) {
-					$statement->prepare_storage_compound($type);
-					if (!$statement->simple_compound_rhs() || $type instanceof carrier_type_definition) $this->retain_member_place($statement->target);
-				}
-				else {
-					if ($before !== $this->suspension_count && $statement->target instanceof ast_field_expression) $this->retain_member_place($statement->target->receiver);
-					if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
-					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
+				if ($statement instanceof ast_field_assignment && $statement->target instanceof ast_field_expression && $statement->target->key_write_root !== null) {
+					$this->collection_element($statement->value, $type, null);
+					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::typed_destination);
+				} else {
+					$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
+					if ($statement instanceof ast_property_compound) {
+						$statement->prepare_storage_compound($type);
+						if (!$statement->simple_compound_rhs() || $type instanceof carrier_type_definition) $this->retain_member_place($statement->target);
+					}
+					else {
+						if ($before !== $this->suspension_count && $statement->target instanceof ast_field_expression) $this->retain_member_place($statement->target->receiver);
+						if ($type instanceof class_union_type_definition) $this->watch_union_source($statement->value);
+						$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
+					}
 				}
 				if ($initializing_field !== null) $this->constructor_initialization->states[$initializing_field->short_name] = 1;
 			}
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
-				$this->value($statement->target);
-				$this->require_index_mutation_place($receiver);
+				$this->prepare_index_mutation($statement);
 				if (!($receiver->type_def() instanceof indexed_mutation_type)) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
 				}
@@ -323,7 +327,7 @@ final class Preparation
 					$this->value($receiver, deep_write_path: true);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
 					if ($collection_root === null) {
-						$boxed_root = ast_index_expression::boxed_path_root($receiver, deep_path: true);
+						$boxed_root = ast_index_expression::boxed_path_root($receiver);
 						$collection_root = $boxed_root;
 					}
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
@@ -344,6 +348,7 @@ final class Preparation
 				}
 				elseif ($receiver instanceof ast_field_expression) {
 					$this->writable_property($receiver, payload: true);
+					$boxed_root = $receiver->key_write_root;
 				} else {
 					$this->value($receiver);
 					$binding = $receiver->declaration();
@@ -372,11 +377,12 @@ final class Preparation
 				$boxed_root = null;
 				if ($statement->receiver instanceof ast_field_expression) {
 					$this->writable_property($statement->receiver, payload: true);
+					$boxed_root = $statement->receiver->key_write_root;
 				} else {
 					$this->value($statement->receiver, deep_write_path: true);
 					$root = $statement->receiver;
 					if ($root instanceof ast_index_expression) {
-						$boxed_root = ast_index_expression::boxed_path_root($root, deep_path: true);
+						$boxed_root = ast_index_expression::boxed_path_root($root);
 						$root = $boxed_root ?? ast_index_expression::nested_collection_root($root);
 					}
 					$binding = $root instanceof ast_name_expression ? $root->local_binding() : null;
@@ -1074,9 +1080,17 @@ final class Preparation
 	}
 
 	/** A mutation through a value-copy row requires a path back to writable storage. */
-	private function require_index_mutation_place(ast_expression $receiver): void
+	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): void
 	{
-		$root = ast_index_expression::nested_collection_root($receiver) ?? ast_index_expression::boxed_path_root($receiver);
+		$receiver = $statement->target->receiver;
+		$this->value($statement->target, deep_write_path: true);
+		if ($receiver instanceof ast_field_expression) $this->check_indexed_field_owner($receiver);
+		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver);
+		if ($receiver instanceof ast_index_expression && $receiver->type_def() instanceof boxed_type_definition
+			&& $statement->boxed_root === null && $statement->source()->flavor !== flavor::python) {
+			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested boxed update requires a local or instance-field boxed root');
+		}
+		$root = $statement->boxed_root ?? ast_index_expression::nested_collection_root($receiver);
 		if ($root !== null) {
 			$this->require_index_write_available($root);
 			Readonly_Access::write($root, true);
@@ -1311,6 +1325,18 @@ final class Preparation
 		}
 	}
 
+	/** A checked lookup yields an independent handle that field lowering retains through the write. */
+	private function check_indexed_field_owner(ast_field_expression $field): bool
+	{
+		$owner = $field->receiver;
+		if (!($owner instanceof ast_index_expression) || $field->source()->flavor !== flavor::php
+			|| !($owner->receiver->type_def() instanceof readonly_index_lookup_type)) return false;
+		if (!$owner->type_def()->mutates_referenced_value()) {
+			throw new diagnostic($field->source(), $field->byte_start(), 'Field assignment requires writable local storage');
+		}
+		return true;
+	}
+
 	/** Check writable instance paths and qualified static members for all property writes. */
 	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
 	{
@@ -1320,9 +1346,18 @@ final class Preparation
 			$this->static_destination($root);
 			return null;
 		}
-		$this->value($root);
+		$this->value($root, deep_write_path: true);
+		if ($root->is_dynamic_key()) {
+			$place = ast_index_expression::boxed_path_root($root);
+			if ($place === null) throw new diagnostic($root->source(), $root->byte_start(), 'Dynamic key write requires local or instance-field storage');
+			Readonly_Access::write($place, true);
+			$this->retain_member_place($place);
+			$root->key_write_root = $place;
+			return null;
+		}
 		$field = $initialize ? $this->constructor_initialization?->assignment($root, $this->loop !== null) : null;
 		Readonly_Access::write($root, $payload, $field);
+		if ($payload && $this->check_indexed_field_owner($root)) return $field;
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
 		if ($root instanceof ast_index_expression && $root->receiver->type_def() instanceof segment_type) return $field;
@@ -1367,8 +1402,7 @@ final class Preparation
 	private function write(ast_storage_write $statement, bool $consumes_result = false): void
 	{
 		if ($statement instanceof ast_index_update) {
-			$this->value($statement->target);
-			$this->require_index_mutation_place($statement->target->receiver);
+			$this->prepare_index_mutation($statement);
 			$this->retain_member_place($statement->target->receiver);
 			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a mutable collection');
@@ -1778,7 +1812,11 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_field_expression) {
-			$this->value($syntax->receiver, $initializing);
+			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
+			if ($syntax->is_dynamic_key() && $syntax->source()->flavor !== flavor::python) {
+				$syntax->settle_field($syntax->receiver->type_def());
+				return;
+			}
 			if (in_array($syntax->source()->flavor, [flavor::php, flavor::cpp], true)) $syntax->receiver->prepare_member_borrow();
 			$type = $syntax->receiver->member_type();
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;

@@ -40,7 +40,7 @@ decisions for mixed copy-on-write and dynamic shared identity. Existing-value ha
 updates through a second name would need an operation or proof that excludes
 insertion. These are possible extensions, not prerequisites for rows 3–5.
 
-Fixed arrays are tracked separately. Expressions and access now covers [nested writes to local and instance-field vectors and hashes](../vector_slice.md#nested-collection-writes). Nested append follows the same paths into vectors and integer-keyed hashes. [Two-key assignment on boxed locals](../boxed_slice.md#plain-two-key-assignment-on-boxed-locals) supports plain writes, nested append, compounds and standalone updates. All four operations also support instance fields. Plain assignment and append support deeper boxed paths. Deeper compounds and standalone updates remain open. Typed-to-boxed conversion belongs to structured conversion, and
+Fixed arrays are tracked separately. Expressions and access now covers [nested writes to local and instance-field vectors and hashes](../vector_slice.md#nested-collection-writes). Nested append follows the same paths into vectors and integer-keyed hashes. [Two-key assignment on boxed locals](../boxed_slice.md#plain-two-key-assignment-on-boxed-locals) supports plain writes, nested append, compounds and standalone updates. All four operations support deeper boxed paths on locals and instance fields. Typed-to-boxed conversion belongs to structured conversion, and
 additional library helpers to the libraries backlog. Those areas may eventually
 consume an element-borrow contract.
 
@@ -48,24 +48,19 @@ consume an element-borrow contract.
 
 Doc Status: planning
 
-The grouping-dependent parser diagnostic from the audit at `9b9626589` was reproduced
-at `aef175d70`. The [PHP regression](../../compiler/tests/indexed_owner_target.py) now
-checks that both `$owners[0]->values[0] = 7` and `($owners[0])->values[0] = 7` reach
-preparation and report `Field assignment requires writable local storage`.
-Here `$owners` is a vector of shared class handles. Reading the chain prints 3;
-saving the selected handle to a local and writing through it changes the original holder to 7.
-
-Direct-write admission remains a language decision. If admitted, test single evaluation
-and retained shared-owner lifetime through RHS effects. An inline struct element needs
-its own write-back rule.
+The grouping-dependent diagnostic observed at `9b9626589` and `aef175d70` is resolved.
+PHP admits both `$owners[0]->values[0] = 7` and `($owners[0])->values[0] = 7`
+when a checked vector or hash lookup yields a shared class handle. Both receiver spellings also accept
+field append, indexed compounds and standalone prefix/postfix updates. They retain
+the selected owner across key and RHS evaluation. The [native regression](../../compiler/tests/indexed_owner_target.py)
+covers single evaluation, missing hash keys, removal and reinsertion of an owner, the last owner's destructor,
+readonly rejection, and incremental recovery. Indexed inline struct elements remain deferred.
+See the [vector contract](../vector_slice.md#nested-collection-writes).
 
 **Writable-path classification.** For nested keyed stores, append, compounds and updates,
 [preparation](../../compiler/04_analyze/prepare/prepare.php) uses `nested_collection_root`
-and `boxed_path_root` to identify writable storage and check access. Plain keyed stores and append now retain the checked boxed root and the
-value conversion in statement preparation; reset clears both. [Lowering](../../compiler/05_backend/cpp/emit.php)
-uses that root when staging keys and emitting boxed write-back. Typed slot stores,
-compounds and updates still consult the path helpers during lowering. The original indexed-owner diagnostic occurs during
-field preparation, before any lowering strategy is selected.
+and `boxed_path_root` to identify writable storage and check access. All four boxed mutations retain the checked root in statement preparation and clear it on reset. [Lowering](../../compiler/05_backend/cpp/emit.php)
+uses that root when staging keys and emitting boxed write-back. Typed slot mutations still consult the path helpers during lowering.
 
 ### Compiler debt for inferred read-only borrows
 

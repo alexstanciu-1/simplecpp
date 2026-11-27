@@ -348,7 +348,8 @@ final class Parser
 		if ($this->expression_statement_start()) {
 			$value = $this->primary(field_target: true);
 			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
-			if ($value instanceof ast_called_type_name || $value instanceof ast_qualified_data) return $this->property_write($value);
+			if ($value instanceof ast_called_type_name || $value instanceof ast_qualified_data
+				|| ($value instanceof ast_field_expression && $this->cursor->tokens->source->flavor !== flavor::python)) return $this->property_write($value);
 			if (!($value instanceof ast_call_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 			}
@@ -1509,18 +1510,9 @@ final class Parser
 		}
 		if ($index !== null && (($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lparen)) || $this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
-			$php = $this->cursor->tokens->source->flavor === flavor::php;
-			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), field_target: $php);
-			if ($php && $this->cursor->is(token_kind::lbracket)) {
-				if ($target instanceof ast_field_expression) {
-					$this->cursor->take(token_kind::lbracket, '[');
-					$key = $this->value();
-					$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-					if ($this->cursor->is(token_kind::assign)) return $this->index_store($target, $key, $terminator);
-					$target = new ast_index_expression($target, $key, $end);
-				}
-				$target = $this->postfix($target, false);
-			}
+			$field_target = $this->cursor->tokens->source->flavor !== flavor::python;
+			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), field_target: $field_target);
+			if ($field_target && $this->cursor->is(token_kind::lbracket)) return $this->indexed_write($target, $terminator);
 			if ($target instanceof ast_field_expression && $terminator === token_kind::newline) {
 				$this->cursor->take(token_kind::assign, '= after Python field');
 				$value = $this->assignment_value();
@@ -1534,24 +1526,30 @@ final class Parser
 		if ($receiver instanceof ast_qualified_data) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed expression-qualified static property writes are deferred');
 		}
-		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
-			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed update requires a key');
-			$operator = $this->take_update_operator();
-			return new ast_index_update($receiver->start, $this->cursor->take(token_kind::semicolon, ';') + 1,
-				new ast_index_expression($receiver, $index, $index_end), $operator, true);
-		}
-		$operator = $this->compound_operator();
-		if ($operator !== null) {
-			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed compound requires a key');
-			$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
-			$value = $this->assignment_value();
-			return new ast_index_compound(new ast_index_expression($receiver, $index, $index_end), $value, $operator,
-				$this->cursor->take(token_kind::semicolon, ';') + 1);
-		}
+		$mutation = $this->indexed_mutation($receiver, $index, $index_end);
+		if ($mutation !== null) return $mutation;
 		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || $receiver instanceof ast_index_expression)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed assignment requires named or field storage');
 		}
 		return $this->index_store($receiver, $index, $terminator);
+	}
+
+	/** Consume a compound or postfix update after a subscript, leaving other continuations to the caller. */
+	private function indexed_mutation(ast_expression $receiver, ?ast_expression $index, int $end /** uint32 */): ?ast_statement
+	{
+		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
+			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed update requires a key');
+			$target = new ast_index_expression($receiver, $index, $end);
+			$operator = $this->take_update_operator();
+			return new ast_index_update($target->start, $this->cursor->take(token_kind::semicolon, ';') + 1, $target, $operator, true);
+		}
+		$operator = $this->compound_operator();
+		if ($operator === null) return null;
+		if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed compound requires a key');
+		$target = new ast_index_expression($receiver, $index, $end);
+		$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
+		$value = $this->assignment_value();
+		return new ast_index_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
 	}
 
 	private function index_store(ast_name_expression|ast_field_expression|ast_index_expression $receiver, ?ast_expression $index,
@@ -1604,8 +1602,10 @@ final class Parser
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
 			if ($flavor === flavor::python && !$this->cursor->is(token_kind::dot) && !$this->cursor->is(token_kind::lbracket)) break;
-			if ($flavor === flavor::php && $value instanceof ast_index_expression && $this->cursor->is(token_kind::lparen)) {
-				$value = $this->call_arguments($value->start, 'indexed callable', null, $value, call_qualifier::stored_value);
+			if ($flavor === flavor::php && $this->cursor->is(token_kind::lparen)
+				&& ($value instanceof ast_index_expression || $value instanceof ast_call_expression)) {
+				$name = $value instanceof ast_index_expression ? 'indexed callable' : 'call result';
+				$value = $this->call_arguments($value->start, $name, null, $value, call_qualifier::stored_value);
 				continue;
 			}
 			if ($this->cursor->is(token_kind::scope)) {
@@ -2156,6 +2156,10 @@ final class Parser
 			$c->take(token_kind::rparen, ')');
 			if ($c->tokens->source->flavor === flavor::php && $c->is(token_kind::lparen)) {
 				if ($value instanceof ast_field_expression) return $this->call_arguments($start, $value->field, null, $value, call_qualifier::stored_value);
+				if ($value instanceof ast_name_expression && $value->end === $value->start + 1
+					&& $c->tokens->tokens[$value->start]->kind === token_kind::variable) {
+					return $this->call_arguments($start, $value->name, null, null, call_qualifier::local);
+				}
 				// Every PHP static property read ends in :: followed by a variable token.
 				if ($value instanceof ast_name_expression && !$value->constant_only && $value->end - $value->start >= 3
 					&& $c->tokens->tokens[$value->end - 2]->kind === token_kind::scope) {

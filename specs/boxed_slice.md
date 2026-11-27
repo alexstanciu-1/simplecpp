@@ -119,6 +119,12 @@ flavors. Keys have static type int64 or string. A read returns a same-family val
 writes use ordinary same-family copies or scalar boxing. A plain indexed write through nested boxed containers follows the rules below.
 Native traversal follows the [common protocol](collection_traversal.md); the [compiler foreach slice](../compiler/docs/foreach.md) consumes it. See [validation](boxed_slice_validation.md).
 
+## Named dynamic keys
+
+In the PHP and Simple C++ flavors, `d->name` on a `dynamic` receiver selects the literal string key `"name"`. JavaScript uses `d.name` for the same operation. Python dictionaries use brackets for keys and reserve dot syntax for attributes. Named and bracket keys may be combined in a read or writable path. A missing key reads as boxed null. A plain write inserts or replaces the final key. The nested write rules below require every intermediate key to exist and hold a container. Saved keys resolve in current storage after the RHS, including when the RHS replaces a child. Append, compound assignment and standalone updates use the corresponding indexed operation.
+
+On a declared record, the receiver type selects its declared field as usual. Thus `holder->data->name` can select a real field followed by a dynamic key. A call such as `d->remove("name")` resolves the published method, while `d->remove` reads the data key. PHP, Simple C++ and JavaScript also admit consecutive bracket reads on dynamic.
+
 ## Plain two-key assignment on boxed locals
 
 For `data[group][key] = value` in PHP, C++ and JavaScript, evaluate and normalize
@@ -144,7 +150,7 @@ table, so existing aliases of that child observe the change. If the RHS replaces
 the child, the replacement receives the write. Failed lookup leaves earlier
 operand effects visible.
 
-Plain assignment and append at any depth, two-key compounds and standalone updates also accept a writable instance-field path under the typed
+Plain assignment, append, compounds and standalone updates at any depth accept a writable instance-field path under the typed
 collection receiver-lifetime rule. Select the field and retain its owner before evaluating
 the group key. Rebinding the holder leaves the selected field on the original owner. Replacing
 the contents of that field during key or RHS evaluation makes the write use its current
@@ -188,8 +194,8 @@ value is copied, the scalar operation is selected from existing metadata using i
 kind, and write-back validates presence after RHS effects. No raw element reference escapes.
 Arithmetic results retain the boxed family; ordering returns bool. String compounds use
 PHP `.=` versus C++/JS `+=`; PHP numeric `+=` rejects string payloads. Scalar division,
-shift and power guards remain in effect. On two-key local and instance-field paths, compounds and standalone prefix or postfix updates save both
-normalized keys before requiring the existing leaf. Compounds then evaluate the RHS and
+shift and power guards remain in effect. On local and instance-field paths of any depth, compounds and standalone prefix or postfix updates save all
+normalized keys in source order before requiring the existing leaf. Compounds then evaluate the RHS and
 apply the operator to the saved value. Write-back requires the same keys in the current root
 and follows the mixed or dynamic ownership rule above. A missing leaf suppresses RHS
 evaluation on the initial read and prevents reinsertion at write-back. These additions

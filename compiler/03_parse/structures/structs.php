@@ -293,10 +293,16 @@ final class ast_new_expression extends ast_construction_expression
 /** Whole-value field access, e.g. $p->x or p.x. */
 final class ast_field_expression extends ast_expression
 {
+	/** PROPERTIES */
 	/** Native owning receiver. */
 	public readonly ast_expression $receiver;
 	public readonly string $field;
 
+	/** PREP FACTS */
+	/** Prepared fact: destination for a named dynamic store, cleared on incremental reset. */
+	public ast_name_expression|ast_field_expression|null $key_write_root = null;
+
+	/** CONSTRUCTOR */
 	public function __construct(ast_expression $receiver, string $field, int $end /** uint32 */)
 	{
 		parent::__construct($receiver->start, $end);
@@ -305,10 +311,22 @@ final class ast_field_expression extends ast_expression
 		$receiver->attach($this);
 	}
 
+	/** METHODS */
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->key_write_root = null;
+	}
+
+	public function is_dynamic_key(): bool
+	{
+		return $this->receiver->type_def() instanceof type_dynamic;
+	}
+
 	/** Inline fields share the lifetime of their receiver up to the nearest owner or runtime getter. */
 	public function shares_receiver_storage(): bool
 	{
-		return $this->member_borrow === null && !($this->member_type() instanceof shared_record_type_definition)
+		return !$this->is_dynamic_key() && $this->member_borrow === null && !($this->member_type() instanceof shared_record_type_definition)
 			&& !($this->receiver->member_type() instanceof runtime_field_type);
 	}
 
