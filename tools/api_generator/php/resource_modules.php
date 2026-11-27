@@ -37,7 +37,7 @@ function prepareResourceModules(object $publication, array &$plan): void {
         }
         $ops = [];
         foreach (listValue(at($catalog, 'operations')) as $row) {
-            fields($row, ['native','general','php','parameters','result','required','dispatch','method','constructor','property','slot_pack','mutable_parameters']);
+            fields($row, ['native','general','php','parameters','result','required','dispatch','method','constructor','property','slot_pack','fresh_owner','retains_receiver','retains_slots','mutable_parameters']);
             $native = textValue(at($row, 'native'));
             requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $native) === 1 && !isset($ops[$native]), 'Invalid or duplicate module operation');
             $params = listValue(at($row, 'parameters'));
@@ -74,6 +74,13 @@ function prepareResourceModules(object $publication, array &$plan): void {
             $slotPack = $row->slot_pack ?? false;
             requireThat(is_bool($slotPack) && (!$slotPack || ($module === 'mysqli' && $native === 'bind_param'
                 && $params === ['mysqli_stmt','string'] && $result === 'bool_t')), 'Unknown borrowed-slot signature');
+            $freshOwner = $row->fresh_owner ?? false;
+            $retainsReceiver = $row->retains_receiver ?? true;
+            $retainsSlots = listValue($row->retains_slots ?? []);
+            requireThat(is_bool($freshOwner) && (!$freshOwner || isset($plan['resource_carriers'][$result]) || isset($plan['resource_types'][$result])), 'Fresh owner requires a resource result');
+            requireThat(is_bool($retainsReceiver) && ($retainsReceiver || isset($row->method)), 'Receiver effect requires a method');
+            requireThat($slotPack === ($retainsSlots !== []) && count(array_unique($retainsSlots)) === count($retainsSlots), 'Slot pack requires retained slot types');
+            foreach ($retainsSlots as $type) moduleFunctionTypeExport($plan, $type);
             if (isset($row->method) || isset($row->property)) {
                 requireThat(isset($types[$params[0] ?? '']), 'Receiver must belong to the module');
             }
@@ -96,7 +103,7 @@ function prepareResourceModules(object $publication, array &$plan): void {
             requireThat($surfaces !== [], 'Missing module operation surface');
             $dispatch = $row->dispatch ?? null;
             requireThat($dispatch === null || (is_int($dispatch) && $dispatch >= 0 && $dispatch < $required), 'Invalid module overload index');
-            $ops[$native] = compact('params','result','mutable','mask','header','includes','required','surfaces','dispatch','slotPack');
+            $ops[$native] = compact('params','result','mutable','mask','header','includes','required','surfaces','dispatch','slotPack','freshOwner','retainsReceiver','retainsSlots');
         }
         $constants = object($catalog->constants ?? (object)[]);
         foreach ($constants as $name => $value) requireThat(preg_match('/^[A-Z][A-Z0-9_]*$/D', $name) && is_int($value), 'Invalid module constant');
@@ -176,7 +183,12 @@ function compilerResourceCases(?array $runtime, array $types): array {
                 $name = substr($key, strrpos($key, ':') + 1);
                 $member = str_starts_with($key, 'php:') && !str_starts_with($key, 'php:func:') && !str_starts_with($key, 'php:new:') ? ', free_receiver: true' : '';
                 if ($op['mutable']) $member .= ", reference_mask: {$op['mutable']}";
-                if ($op['slotPack']) $member .= ', borrows_slots: true';
+                if ($op['freshOwner']) $member .= ', fresh_owner: true';
+                if (!$op['retainsReceiver'] && str_starts_with($member, ', free_receiver: true')) $member .= ', retains_receiver: false';
+                if ($op['retainsSlots']) {
+                    $accepted = array_map(fn($t) => "type_{$types[$t]}::class => true", $op['retainsSlots']);
+                    $member .= ', retained_slot_types: [' . implode(', ', $accepted) . ']';
+                }
                 $call = "new runtime_function('$name', [" . implode(', ', $args) . "], type_{$types[$op['result']]}::instance(), '::scpp::$namespace::$native', '{$op['header']}', required_parameters: {$op['required']}, const_reference_mask: {$op['mask']}, required_module: 'runtime-$module'$member)";
                 $groups[$key][] = [$op, $call];
             }

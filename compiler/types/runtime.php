@@ -25,15 +25,16 @@ readonly class runtime_function implements callable_signature
 	public int $required_parameters /** uint32 */;
 	/** One bit per mutable reference argument in the generated signature. */
 	private int $reference_mask /** uint32 */;
-	private int $const_reference_mask /** uint32 */;
+	protected int $const_reference_mask /** uint32 */;
 
 	/** CONSTRUCTOR */
 	/**
 	 * @param type_definition[] $parameters
 	 * @param string[]|null $parameter_names Published named-call labels in declaration order.
+	 * @param array<class-string,bool> $retained_slot_types Eligible exact types in a variadic tail retained by the receiver.
 	 * @param string[] $php_argument_labels Diagnostic labels for slots with a published PHP admission policy.
 	 */
-	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false, bool $retains_receiver = true, bool $type_qualified = false, public ?string $required_module = null, public ?string $full_arity_argument = null, public ?array $parameter_names /** list<string>|null */ = null, public bool $exact_arguments = false, public bool $free_receiver = false, public bool $borrows_slots = false, public array $php_argument_labels /** list<string> */ = [], public int $php_exact_inputs /** uint32 */ = 0)
+	public function __construct(string $name, array $parameters /** list<type_definition> */, type_definition $result, string $symbol, string $header, ?string $adapter_flavor = null, ?int $required_parameters /** uint32 */ = null, int $reference_mask /** uint32 */ = 0, bool $overloaded_first = false, int $const_reference_mask /** uint32 */ = 0, bool $receiver_method = false, bool $retains_receiver = true, bool $type_qualified = false, public ?string $required_module = null, public ?string $full_arity_argument = null, public ?array $parameter_names /** list<string>|null */ = null, public bool $exact_arguments = false, public bool $free_receiver = false, public bool $fresh_owner = false, public array $retained_slot_types /** array<class-string,bool> */ = [], public array $php_argument_labels /** list<string> */ = [], public int $php_exact_inputs /** uint32 */ = 0)
 	{
 		$this->retains_receiver = $retains_receiver;
 		$this->type_qualified = $type_qualified;
@@ -282,8 +283,18 @@ final readonly class regex_callback_function extends runtime_function
 /** The variadic tail consists of exact caller slots whose lifetime preparation has proven. */
 final readonly class borrowed_slot_function extends runtime_function
 {
+	private int $tail_start /** uint32 */;
+
+	/** @param type_definition[] $parameters Fixed published operands followed by the prepared slots. */
+	public function __construct(runtime_function $signature, array $parameters /** list<type_definition> */)
+	{
+		$this->tail_start = count($signature->parameters);
+		parent::__construct($signature->name(), $parameters, $signature->return_type_def(), $signature->symbol, $signature->header,
+			const_reference_mask: $signature->const_reference_mask, free_receiver: true, retains_receiver: $signature->retains_receiver);
+	}
+
 	public function is_reference(int $index /** uint32 */): bool
 	{
-		return $index >= 2;
+		return $index >= $this->tail_start;
 	}
 }

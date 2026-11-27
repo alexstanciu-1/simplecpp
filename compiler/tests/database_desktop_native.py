@@ -58,7 +58,16 @@ def database(work, clang):
     text = (fixtures/'mysqli.php').read_text().replace('@SOCKET@', str(sock))
     start = '$db=new mysqli(); $id=1; $s mysqli_stmt=$db->prepare("SELECT ?"); '
     bind = '$ok=$s->bind_param("i",$id); '
+    confined = '$r=$db->prepare("SELECT ?"); $s mysqli_stmt=$r; $id=1; '
+    escaped = 'function leak(mysqli $db): mysqli_stmt {'+confined
+    keep = 'function publish(mysqli_stmt $s): void {} '
     compile_app(work,'mysqli',text,clang,[
+        (escaped+bind+'return $s;} return 0;', 'must stay confined'),
+        (escaped+bind+'return $r;} return 0;', 'must stay confined'),
+        (keep+'function use_local(mysqli $db): int {'+confined+'publish($r); '+bind+'return 0;} return 0;', 'must stay confined'),
+        (start+'$s->bind_param("i",$db->errno); return 0;', 'stable typed slot'),
+        (start+bind+'$action=fn(): bool => $s->execute(); return 0;', 'must stay confined'),
+        (start+bind+'$s=$db->prepare("SELECT 1"); return 0;', 'must stay confined'),
         (start+bind+'$copy=$s; return 0;', 'without aliases'),
         (start+'$copy=$s; '+bind+'return 0;', 'without aliases'),
         (start+'if(true){$tmp=1;$s->bind_param("i",$tmp);} return 0;', 'may expire'),

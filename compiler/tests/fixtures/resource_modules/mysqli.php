@@ -17,7 +17,8 @@ if($guardedRows->fetch_row()===null){return 24;}
 $invalid=$db->prepare("SELECT FROM");
 if($invalid){return 22;}
 $id=1;$payload="a\0b";
-$stmt mysqli_stmt=$db->prepare("INSERT INTO proof VALUES (?,?)");
+$insert=$db->prepare("INSERT INTO proof VALUES (?,?)");
+$stmt mysqli_stmt=$insert;
 if(!$stmt->bind_param("ib",$id,$payload)){return 6;}
 if(!$db->begin_transaction() || !$stmt->execute() || !$db->rollback()){return 7;}
 $id=2;
@@ -26,6 +27,7 @@ $res=$db->query("SELECT id,data,NULL AS nothing FROM proof");
 $row=$res->fetch_assoc(); $n int=$row["id"]; $bytes string=$row["data"];
 if($n!==2 || $bytes!=="a\0b" || $row["nothing"]!==null || $res->fetch_assoc()!==null){return 9;}
 $select=$db->prepare("SELECT data FROM proof WHERE id=?");
+if($select===false){return 25;}
 if(!$select->bind_param("i",$id) || !$select->execute()){return 10;}
 $kept mysqli_result=$select->get_result();
 $id=3;
