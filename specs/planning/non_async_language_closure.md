@@ -48,22 +48,17 @@ consume an element-borrow contract.
 
 Doc Status: planning
 
-The grouping-dependent parser diagnostic from the audit at `9b9626589` was reproduced
-at `aef175d70`. The [PHP regression](../../compiler/tests/indexed_owner_target.py) now
-checks that both `$owners[0]->values[0] = 7` and `($owners[0])->values[0] = 7` reach
-preparation and report `Field assignment requires writable local storage`.
-Here `$owners` is a vector of shared class handles. Reading the chain prints 3;
-saving the selected handle to a local and writing through it changes the original holder to 7.
-
-Direct-write admission remains a language decision. If admitted, test single evaluation
-and retained shared-owner lifetime through RHS effects. An inline struct element needs
-its own write-back rule.
+The grouping-dependent diagnostic observed at `9b9626589` and `aef175d70` is resolved.
+PHP admits both `$owners[0]->values[0] = 7` and `($owners[0])->values[0] = 7`
+when the typed vector contains shared class handles. The [native regression](../../compiler/tests/indexed_owner_target.py)
+covers single evaluation, replacement of the owner slot, the last owner's destructor,
+readonly rejection, and incremental recovery. Indexed inline struct elements remain deferred.
+See the [vector contract](../vector_slice.md#nested-collection-writes).
 
 **Writable-path classification.** For nested keyed stores, append, compounds and updates,
 [preparation](../../compiler/04_analyze/prepare/prepare.php) uses `nested_collection_root`
 and `boxed_path_root` to identify writable storage and check access. All four boxed mutations retain the checked root in statement preparation and clear it on reset. [Lowering](../../compiler/05_backend/cpp/emit.php)
-uses that root when staging keys and emitting boxed write-back. Typed slot mutations still consult the path helpers during lowering. The original indexed-owner diagnostic occurs during
-field preparation, before any lowering strategy is selected.
+uses that root when staging keys and emitting boxed write-back. Typed slot mutations still consult the path helpers during lowering.
 
 ### Compiler debt for inferred read-only borrows
 

@@ -24,6 +24,15 @@ on that same receiver, follow the saved keys into its current collection. Inline
 struct copies retain their independent storage. Field visibility and read-only
 checks apply to nested writes, updates and append.
 
+In PHP, a plain keyed store can select its field receiver from a typed vector
+of shared class handles: `$owners[i()]->values[j()] = rhs();`. Parentheses around
+`$owners[i()]` have the same meaning. Evaluate the owner index once and retain
+the selected handle through the field store. If the RHS replaces the vector entry,
+the original object receives the write. Its destructor can observe the stored
+value even when the vector held its last handle. Field access checks and the
+destination collection's key and value rules apply. Inline struct elements still
+require a separate write-back rule.
+
 For a compound such as `groups[team][name] += rhs()`, read the existing leaf
 before evaluating the RHS. Compute from that saved value, then check the entire
 path again at write-back. An initial lookup failure skips the RHS. If the RHS

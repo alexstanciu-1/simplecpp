@@ -1,5 +1,6 @@
-"""Grouping an indexed shared owner preserves the preparation diagnostic."""
+"""PHP keyed stores retain an indexed shared owner through write-back."""
 from pathlib import Path
+import sys
 from tempfile import TemporaryDirectory
 
 from collection_goal_native import revisions
@@ -14,10 +15,47 @@ call = ('function witness(int $n):int { echo $n; return $n; } '
         '$boxes vector<Box> = [$box]; $boxes[0]->ops[0](6);')
 controls = setup + 'echo $owners[0]->values[0];' + call
 diagnostic = 'Field assignment requires writable local storage'
-local = controls + '$o=$owners[0]; $o->values[0]=7; echo $h->values[0]; return 8;'
+local = '$o=$owners[0]; $o->values[0]=7; echo $h->values[0]; return 8;'
+
+
+def targets(work):
+    store = ('function writeBoth(vector<Holder> $owners):void { $owners[0]->values[0]=4; '
+             'echo $owners[0]->values[0]; ($owners[0])->values[0]=5; }')
+    main = controls + 'writeBoth($owners); echo $h->values[0];' + local
+    revisions(work, 'php', {'main': main, 'api': store, 'model': model}, [(None, None, b'36457')])
+
+
+def replacement(work):
+    api = ('function ownerIndex():int { echo "O"; return 0; } '
+           'function valueIndex(int &$calls):int { $calls+=1; return 0; } '
+           'function swap(vector<Holder> &$owners, Holder $next):int { echo "R"; $owners[0]=$next; return 7; }')
+    main = setup + '$calls=0; $next=new Holder(); $next->values=[90];'
+    main += '$owners[ownerIndex()]->values[valueIndex($calls)]=swap($owners,$next);'
+    main += 'echo $calls,":",$h->values[0],"/",$owners[0]->values[0]; return 8;'
+    revisions(work, 'php', {'main': main, 'api': api, 'model': model}, [(None, None, b'OR1:7/90')])
+
+
+def lifetime(work):
+    tracked = ('class Holder { public vector<int> $values; '
+               'public function __destruct() { echo "D",$this->values[0]; } }')
+    api = ('function make(int $n):Holder { $h=new Holder(); $h->values=[$n]; return $h; } '
+           'function swap(vector<Holder> &$owners):int { $owners[0]=make(90); echo "R"; return 7; }')
+    main = '$owners vector<Holder> = [make(3)]; $owners[0]->values[0]=swap($owners); echo "E"; return 8;'
+    revisions(work, 'php', {'main': main, 'api': api, 'model': tracked}, [(None, None, b'RD7ED90')])
+
+
+def admission(work):
+    store = 'function store(vector<Holder> $owners):void { $owners[0]->values[0]=7; }'
+    grouped = store.replace('$owners[0]->', '($owners[0])->')
+    inline = 'struct Holder { public vector<int> $values; }'
+    readonly = ('class Holder { public readonly vector<int> $values; '
+                'public function __construct(vector<int> $v) { $this->values=$v; } }')
+    revisions(work, 'php', {'main': 'return 8;', 'api': store, 'model': inline}, [
+        (None, None, diagnostic), ('api', grouped, diagnostic),
+        ('model', readonly, 'Cannot modify readonly property values'),
+        ('model', model, b'')])
+
 
 with TemporaryDirectory(prefix='indexed-owner-target-') as tmp:
-    revisions(Path(tmp), 'php', {'main': setup + '$owners[0]->values[0]=7; return 8;', 'model': model}, [
-        (None, None, diagnostic),
-        ('main', setup + '($owners[0])->values[0]=7; return 8;', diagnostic),
-        ('main', local, b'367')])
+    cases = {'targets': targets, 'replacement': replacement, 'lifetime': lifetime, 'admission': admission}
+    cases[sys.argv[1] if len(sys.argv) > 1 else 'targets'](Path(tmp))
