@@ -12,8 +12,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('bin', type=Path)
 parser.add_argument('--seed', type=int, default=8407)
 parser.add_argument('--leading', action='store_true', help='include the first-byte-gated candidate')
-parser.add_argument('--dense', nargs='+', choices=('retry64', 'remainder', 'width', 'separate'),
+parser.add_argument('--dense', nargs='+', choices=('retry64', 'remainder', 'width', 'separate', 'ascii_run', 'ascii_head', 'one_bound', 'integrated', 'portable'),
                     help='compare scalar fallback policies with the committed decoder and eight-byte check')
+parser.add_argument('--diagnose', action='store_true', help='measure reference TSC ticks in the actual leaf reader constructor path')
+parser.add_argument('--fixtures', nargs='+', help='repeat selected fixtures on a busy host')
+parser.add_argument('--work-factor', type=int, default=1, help='scale the per-round iteration count')
+parser.add_argument('--verify-only', action='store_true', help='run the oracle and diagnostic checks without timing')
 args = parser.parse_args()
 modes = ('base', 'ascii8', 'leading') if args.leading else ('base', 'ascii8')
 
@@ -27,6 +31,8 @@ def invoke(mode, shape, docs, loops=None):
     command = [args.bin / mode / 'driver', shape]
     if loops is not None:
         command.append(str(loops))
+        if args.diagnose:
+            command.append('ticks')
     return subprocess.check_output(command, input=''.join(d.hex()+'\n' for d in docs),
                                    text=True).splitlines()
 
@@ -92,6 +98,11 @@ if args.dense:
         ('alternating','scalar','a水'*1024),
         ('mixed-width-dense','scalar','é水😀'*455),
     ])
+if args.diagnose:
+    fixtures = [x for x in fixtures if x[0] in ('ascii-4096','dense-2byte','mixed-width-dense','words-long')]
+if args.fixtures:
+    fixtures = [x for x in fixtures if x[0] in args.fixtures]
+    assert {x[0] for x in fixtures} == set(args.fixtures)
 rng=random.Random(args.seed)
 rng.shuffle(fixtures)
 result={'host':platform.node(),'cpu':sorted(os.sched_getaffinity(0)), 'seed':args.seed,
@@ -100,9 +111,11 @@ for name,shape,value in fixtures:
     doc=wire(value,escaped=name=='escaped-unicode')
     for m in modes:
         assert invoke(m,shape,[doc])==[oracle(doc)]
-    loops=min(150000,max(256,24000000//len(doc)))
+    if args.verify_only:
+        continue
+    loops=args.work_factor*min(150000,max(256,24000000//len(doc)))
     case=result['cases'][name]={'wire_bytes':len(doc),'loops':loops}
-    for phase in ('validate',shape):
+    for phase in (('validate','construct',shape) if args.diagnose else ('validate',shape)):
         measurements={m:[] for m in modes}
         for _ in range(11):
             order=list(modes)
@@ -110,8 +123,9 @@ for name,shape,value in fixtures:
             for m in order:
                 ns,total=invoke(m,phase,[doc],loops)[0].split()
                 expected=len(doc) if phase=='validate' else len(value.encode() if shape=='scalar' else value)
-                assert int(total)==loops*expected
+                assert int(total)==loops*(1 if phase=='construct' else expected)
                 measurements[m].append(float(ns))
-        case['validate' if phase=='validate' else 'typed']={
-            m:{'samples_ns':v,'median_ns':median(v)} for m,v in measurements.items()}
+        unit = 'ticks' if args.diagnose else 'ns'
+        case['typed' if phase==shape else phase]={
+            m:{'samples_'+unit:v,'median_'+unit:median(v)} for m,v in measurements.items()}
 print(json.dumps(result,indent=2))

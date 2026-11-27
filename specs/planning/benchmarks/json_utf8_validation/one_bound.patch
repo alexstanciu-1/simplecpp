@@ -1,0 +1,54 @@
+--- a/runtime/src/json/structural_reader.hpp
++++ b/runtime/src/json/structural_reader.hpp
+@@ -9,6 +9,18 @@
+ #include <vector>
+ 
+ namespace scpp::detail::json {
++// Skip complete leading blocks; the validator checks the first mixed block.
++inline std::size_t ascii_block_prefix(std::string_view input) noexcept {
++	std::size_t size = 0;
++	while (input.size() - size >= 32) {
++		std::array<std::uint64_t, 4> words;
++		std::memcpy(words.data(), input.data() + size, 32);
++		if ((words[0] | words[1] | words[2] | words[3]) & 0x8080808080808080ULL) break;
++		size += 32;
++	}
++	return size;
++}
++
+ // A failed reader is terminal. Consumers publish only after finish_document().
+ class read_error final : public std::runtime_error {
+ public:
+@@ -141,7 +153,7 @@
+ 			if (limit < 1 || limit > 256)
+ 				reader_detail::fail_json_parse("max_depth must be 1..256", 0, "invalid_limit");
+ 			limit_ = static_cast<std::size_t>(limit);
+-			for (std::size_t i = 0; i < input_.size();) {
++			for (std::size_t i = ascii_block_prefix(input_); i < input_.size();) {
+ 				if (input_.size() - i >= sizeof(std::uint64_t)) {
+ 					std::uint64_t word;
+ 					std::memcpy(&word, input_.data() + i, sizeof(word));
+--- a/runtime/src/sequence/utf8_codepoints.hpp
++++ b/runtime/src/sequence/utf8_codepoints.hpp
+@@ -33,16 +33,18 @@
+     if (bytes.empty()) return 0;
+     const auto lead = static_cast<unsigned char>(bytes[0]);
+     if (lead < 0x80) return 1;
+-    if (lead < 0xc2 || lead > 0xf4 || bytes.size() < 2) return 0;
++    if (lead < 0xc2 || lead > 0xf4) return 0;
++    const unsigned width = lead < 0xe0 ? 2 : lead < 0xf0 ? 3 : 4;
++    if (bytes.size() < width) return 0;
+     const auto second = static_cast<unsigned char>(bytes[1]);
+     if ((second & 0xc0) != 0x80) return 0;
+     if (lead < 0xe0) return 2;
+-    if (bytes.size() < 3 || (static_cast<unsigned char>(bytes[2]) & 0xc0) != 0x80) return 0;
++    if ((static_cast<unsigned char>(bytes[2]) & 0xc0) != 0x80) return 0;
+     if (lead < 0xf0) {
+         if ((lead == 0xe0 && second < 0xa0) || (lead == 0xed && second >= 0xa0)) return 0;
+         return 3;
+     }
+-    if (bytes.size() < 4 || (static_cast<unsigned char>(bytes[3]) & 0xc0) != 0x80) return 0;
++    if ((static_cast<unsigned char>(bytes[3]) & 0xc0) != 0x80) return 0;
+     if ((lead == 0xf0 && second < 0x90) || (lead == 0xf4 && second >= 0x90)) return 0;
+     return 4;
+ }

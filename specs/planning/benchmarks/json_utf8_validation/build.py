@@ -28,7 +28,7 @@ if 'static void validate_bytes(' in reader:
     body = textwrap.dedent(section.split('{\n', 1)[1])
 else:
     section = reader.split('void validate_input(', 1)[1]
-    start = section.index('\t\t\tfor (std::size_t i = 0;')
+    start = section.index('\t\t\tfor (std::size_t i =')
     body = textwrap.dedent(section[start:section.index('\n\t\t});', start)])
 isolated = work/'isolated.cpp'
 isolated.write_text('#include "structural_reader.hpp"\nusing namespace scpp::detail;\n'

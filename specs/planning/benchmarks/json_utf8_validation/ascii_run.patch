@@ -1,0 +1,15 @@
+--- a/runtime/src/json/structural_reader.hpp
++++ b/runtime/src/json/structural_reader.hpp
+@@ -147,6 +147,12 @@
+ 					std::memcpy(&word, input_.data() + i, sizeof(word));
+ 					if ((word & 0x8080808080808080ULL) == 0) {
+ 						i += sizeof(word);
++						while (input_.size() - i >= 32) {
++							std::array<std::uint64_t, 4> words;
++							std::memcpy(words.data(), input_.data() + i, 32);
++							if ((words[0] | words[1] | words[2] | words[3]) & 0x8080808080808080ULL) break;
++							i += 32;
++						}
+ 						continue;
+ 					}
+ 				}
