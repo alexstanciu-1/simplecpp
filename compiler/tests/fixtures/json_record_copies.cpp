@@ -9,6 +9,8 @@
 
 namespace App {
 using Result = record_result_Packet;
+scpp::int64 forwardedPacketLine_(scpp::result_string);
+scpp::int64 forwardedTextLine_(scpp::result_string);
 Result readPacket_(scpp::string);
 scpp_records::Packet snapshot_(Result&);
 scpp::result_string encodeLate_();
@@ -108,6 +110,13 @@ static bool checked_growth(Carrier& slot, void (*grow)(Carrier&), bool present) 
 }
 
 int main() {
+    for (auto forward : {App::forwardedPacketLine_, App::forwardedTextLine_}) {
+        if (forward(scpp::result_string{scpp::error_t{scpp::string{}, scpp::int64{37}}}) != 37) return 61;
+        try { (void)forward(scpp::result_string{scpp::string{}}); return 62; }
+        catch (const std::invalid_argument& e) {
+            if (std::string_view(e.what()) != "result_requires_real_error") return 63;
+        }
+    }
     scpp::nullable_vector_string empty;
     scpp::result_vector_string success;
     auto failed = App::readPacket_(scpp::string{"{"});

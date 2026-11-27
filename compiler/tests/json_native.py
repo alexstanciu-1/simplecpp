@@ -159,6 +159,12 @@ return 0;""")
                r'function replacePacket(result<Packet> &$r):int { $r=readPacket("{\"data\":[],\"version\":70}"); return 4; }'
                'function replaceIndex(result<Packet> &$r):int { replacePacket($r); return 0; }'
                'function snapshot(result<Packet> &$saved):Packet { $copy Packet=$saved; return $copy; }')
+    # Packet requires a pinned payload in this program. Text uses inline record storage.
+    for record in ('Packet', 'Text'):
+        decoder += (f'function forward{record}(result<string> $r):result<{record}> {{'
+                    'take($v,$e,$ok)=$r; return $e; }'
+                    f'function forwarded{record}Line(result<string> $r):int {{'
+                    f'take($v,$e,$ok)=forward{record}($r); return $e->get_line(); }}')
     families = {'Nullable': '?vector<string>', 'Result': 'result<vector<string>>',
                 'Falseable': 'result_or_false<vector<string>>', 'Boolean': 'result_or_bool<vector<string>>'}
     for name, carrier in families.items():
@@ -242,6 +248,10 @@ return 0;""")
             failure = invoke(proc)
             assert diagnostic in failure.get('error', ''), failure
         main.write_text(source)
+        assert 'error' not in invoke(proc) and artifacts(out) == baseline
+        reader.write_text(decoder.replace('forwardText(result<string> $r):result<Text>', 'forwardText(result<string> $r):int'))
+        assert 'Returning a structured error requires result<T>' in invoke(proc).get('error', '')
+        reader.write_text(decoder)
         assert 'error' not in invoke(proc) and artifacts(out) == baseline
         records.write_text(definitions.replace('int $version=1', 'hash<int,int> $version'))
         failed = invoke(proc)

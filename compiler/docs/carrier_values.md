@@ -110,6 +110,9 @@ PHP `take` extracts an exact payload and can expose the structured error from
 access through `->` borrows a present payload. See the [PHP extraction and
 member-access contract](../../specs/carrier_slice.md#php-take-outputs).
 
+A PHP function returning `result<T>` can explicitly forward the diagnostic with
+`return $error;`. The result constructor checks that the diagnostic is present.
+
 Source construction of structured errors and automatic error propagation remain
 deferred. PHP numeric carrier writes and string concatenation writes follow the
 checked write contract. Direct carrier echo, general nested carriers and further

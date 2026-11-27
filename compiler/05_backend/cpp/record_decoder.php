@@ -37,7 +37,9 @@ struct $name {
     using Value = $value;
     $name() = default;
     explicit $name(Value input) : payload(std::make_shared<Value>(std::move(input))) {}
-    explicit $name(::scpp::error_t error) : failure(std::move(error)) {}
+    explicit $name(::scpp::error_t error) : failure(std::move(error)) {
+        if (!failure.has_error()) throw std::invalid_argument("result_requires_real_error");
+    }
     $name(const $name& other) : payload(other.payload ? std::make_shared<Value>(*other.payload) : nullptr), failure(other.failure) {}
     $name($name&&) = default;
     $name& operator=($name other) { payload.swap(other.payload); failure = std::move(other.failure); return *this; }
@@ -65,7 +67,9 @@ struct $name {
     using Value = $value;
     $name() {}
     explicit $name(Value value) : payload(std::move(value)), present(true) {}
-    explicit $name(::scpp::error_t error) : failure(std::move(error)) {}
+    explicit $name(::scpp::error_t error) : failure(std::move(error)) {
+        if (!failure.has_error()) throw std::invalid_argument("result_requires_real_error");
+    }
     ~$name() { clear(); }
     $name(const $name& other) : failure(other.failure) {
         if (other.present) { new (&payload) Value(other.payload); present = true; }

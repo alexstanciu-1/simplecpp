@@ -2502,6 +2502,10 @@ final class Preparation
 			return value_conversion::identity;
 		}
 		if ($result instanceof class_union_type_definition) $this->watch_union_source($value);
+		if ($value->type_def() instanceof type_take_error && $value->source()->flavor === flavor::php) {
+			if ($result instanceof carrier_type_definition && $result->family === 'result') return value_conversion::forwarded_error;
+			throw new diagnostic($value->source(), $value->byte_start(), 'Returning a structured error requires result<T>');
+		}
 		return $result->prepare_conversion($value, conversion_context::typed_destination);
 	}
 

@@ -172,6 +172,13 @@ The multi-output forms may omit `take`, as in `($value, $ok) = call();`.
 All outputs must be distinct writable variables of the exact output types.
 The error supports a condition and `get_message()`, `get_file()`, and `get_line()`.
 
+In PHP, a value return to a declared `result<T>` accepts the structured diagnostic
+from `take`. Returning a present diagnostic constructs the failure state with its
+original message, file and line, even when the message is empty. Returning a
+cleared diagnostic raises `result_requires_real_error`. This conversion is
+specific to a result return. Other typed destinations and ordinary arguments
+retain their existing admission rules.
+
 A direct success test admits a read of a fresh payload on that path. A failure
 branch that returns or throws leaves only the initialized path at the join.
 Overwriting a flag or passing it by mutable reference discards its evidence.
