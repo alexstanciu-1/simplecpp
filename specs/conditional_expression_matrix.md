@@ -21,7 +21,7 @@ less tightly. Nested ternaries associate to the right. PHP also accepts
 uses that value as the true arm. Only a false test evaluates the fallback.
 Both arms follow the full ternary's inferred and declared-return result rules.
 
-## PHP nullsafe field reads
+## PHP single-hop nullsafe access
 
 `findPlayer()?->score` evaluates the optional shared receiver once. Absence
 returns an empty optional. Presence reads the declared field and returns its
@@ -31,9 +31,15 @@ value, and a shared-handle field preserves object identity. Errors from
 evaluating the receiver propagate.
 
 Preparation resolves the field and checks visibility even when the receiver
-can be absent. The field must have a supported optional representation. This
-form is a single field read. Nullsafe method calls, write targets and chained
-access remain deferred.
+can be absent. The field must have a supported optional representation.
+
+For `findPlayer()?->scoreFor(key())`, absence skips the arguments and the call.
+Presence retains the selected owner through argument evaluation and invocation.
+Arguments bind and execute as for an ordinary instance call, including named
+arguments in written order and dispatch through the declared receiver type.
+A synchronous method returning by value uses the same optional result rule as
+a field. Exceptions from selected arguments and the method propagate. Write
+targets and longer nullsafe chains remain deferred.
 
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 

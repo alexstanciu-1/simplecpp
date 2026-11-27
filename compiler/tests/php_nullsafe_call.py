@@ -1,0 +1,82 @@
+"""Single-hop PHP method calls bind normally and stage arguments only for a present owner."""
+from pathlib import Path
+import sys
+from tempfile import TemporaryDirectory
+
+from collection_goal_native import revisions
+
+
+def named(work):
+    player = """
+        class Player {
+            public function score(int $left,int $right):int {echo "M";return $left*10+$right;}
+            public function bonus(int $n):nullable<int> {if ($n) {return 0;} return null;}
+        }
+    """
+    main = """
+        function key(int $n):int {echo $n;return $n;}
+        function fail():int {echo "X";throw Exception::make("arg");}
+        function pick(?Player $p):?Player {echo "P";return $p;}
+        function check(?Player $p):void {
+            echo pick($p)?->score(right:key(2),left:key(1)) ?? 9;
+            echo $p?->bonus(0) ?? 9,$p?->bonus(1) ?? 9;
+        }
+        $empty ?Player=null;$empty?->score(fail(),fail());
+        check(null);check(new Player());
+        $present ?Player=new Player();
+        try {$present?->score(fail(),key(4));} catch (Exception $e) {echo "C";}
+        return 8;
+    """
+    trace = b'P999P21M1290XC'
+    revisions(work, 'php', dict(main=main, player=player), [
+        (None, None, trace), ('player', player.replace('$right', '$offset'), 'Unknown named argument: right'),
+        ('player', player, trace)])
+
+
+def dispatch(work):
+    main = """
+        class Base {public virtual function score(int $left):int {return $left;}}
+        class Player extends Base {public override function score(int $n):int {return $n+3;}}
+        function read(?Base $p):int {return $p?->score(left:4) ?? 0;}
+        echo read(null),read(new Player());return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'07')])
+
+
+def admission(work):
+    main = '$p ?Player=null;$n=0;$p?->score($n);return 8;'
+    method = 'class Player {public function score(int &$n):int {return $n;}}'
+    denied = 'Nullsafe call requires an instance method returning a value'
+    revisions(work, 'php', dict(main=main, player=method), [
+        ('player', method.replace('function score', 'final function &score'), denied),
+        ('player', method.replace(':int {return $n;', ':void {return;'), 'Void call cannot be used as a value'),
+        ('player', method, b'')])
+
+
+def lifetime(work):
+    main = """
+        class Player {
+            public int $n;
+            public function __construct(int $n) {$this->n=$n;}
+            public function score(int $i):int {echo "M",$this->n;return $i+$this->n;}
+            public function __destruct() {echo "D",$this->n;}
+        }
+        function swap(?Player &$p):int {$p=new Player(90);echo "R";return 2;}
+        $p ?Player=new Player(3);
+        $r=$p?->score(swap($p));echo "E",$r ?? 0,"/",$p->n;return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'RM3D3E5/90D90')])
+
+
+def suspended(work):
+    main = """
+        class Player {public function score(int $n):int {echo "M";return $n;}}
+        async function key():int {await async_sleep_ms(1);echo "K";return 7;}
+        async function run(?Player $p):int {$r=$p?->score(await key());return $r ?? 9;}
+        echo await run(null),await run(new Player());return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'9KM7')])
+
+
+with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
+    {'named': named, 'lifetime': lifetime, 'suspended': suspended, 'dispatch': dispatch, 'admission': admission}[sys.argv[1]](Path(tmp))

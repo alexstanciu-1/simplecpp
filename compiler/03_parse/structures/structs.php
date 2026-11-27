@@ -336,13 +336,13 @@ final class ast_field_expression extends ast_expression
 	}
 }
 
-/** PHP $owner?->field is a value. Its owned field read supplies normal lookup and access checks. */
-final class ast_nullsafe_field extends ast_expression
+/** A single PHP ?-> guards an ordinary field read or instance call. */
+final class ast_nullsafe_member extends ast_expression
 {
-	public readonly ast_field_expression $operand;
+	public readonly ast_field_expression|ast_call_expression $operand;
 	public int $conversion /** uint16 */ = value_conversion::identity;
 
-	public function __construct(ast_field_expression $operand)
+	public function __construct(ast_field_expression|ast_call_expression $operand)
 	{
 		parent::__construct($operand->start, $operand->end);
 		$this->operand = $operand;

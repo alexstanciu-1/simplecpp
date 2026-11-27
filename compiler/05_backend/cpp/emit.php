@@ -1694,7 +1694,7 @@ CPP;
 				$required_headers['scpp/async_timer.hpp'] = true;
 				$lines[] = $this->async_statement('co_await ::scpp::async::delay_ms(' . $this->value($statement->value, $global_references, $declarations, $required_headers) . ');');
 			}
-			elseif ($statement instanceof ast_call_statement || $statement instanceof ast_await_statement) {
+			elseif ($statement instanceof ast_call_statement || $statement instanceof ast_discard_statement) {
 				// A discarded owning result can outlive the staged operands in expression form.
 				$type = $statement->value->type_def();
 				$setup = $statement instanceof ast_call_statement && ($type === type_void::instance() || $type->cpp_trivial_value()) ? [] : null;
@@ -2846,14 +2846,35 @@ CPP;
 			return $this->invocation($value, $constructor, $factory, $type,
 				$global_references, $declarations, $required_headers);
 		}
-		if ($value instanceof ast_nullsafe_field) {
-			$field = $value->operand;
-			$owner = $field->receiver->type_def();
-			$operand = $this->value($field->receiver, $global_references, $declarations, $required_headers);
+		if ($value instanceof ast_nullsafe_member) {
+			$member = $value->operand;
+			$owner = $member->receiver->type_def();
+			$operand = $this->value($member->receiver, $global_references, $declarations, $required_headers);
 			foreach ($value_type->conversion_headers($value->conversion) as $header) $required_headers[$header] = true;
-			$present = $this->conversion($value_type, $value->conversion, 'owner->' . Cpp_Identifier::source($field->field), $field);
-			return '([](const ' . $owner->cpp_type() . '& owner) -> ' . $value_type->cpp_type() . ' { if ('
-				. $owner->lower_cpp_condition('owner') . ') return ' . $present . '; return {}; }(' . $operand . '))';
+			$test = $owner->lower_cpp_condition('owner');
+			$result_type = $value_type->cpp_type();
+			if ($member instanceof ast_field_expression) {
+				$present = $this->conversion($value_type, $value->conversion, 'owner->' . Cpp_Identifier::source($member->field), $member);
+				return '([](const ' . $owner->cpp_type() . "& owner) -> $result_type { if ($test) return $present; return {}; }($operand))";
+			}
+			$method = $member->implementation();
+			$name = self::function_name($method);
+			$declarations[$name] = $method;
+			$before = $this->suspensions;
+			$start = count($this->async_steps);
+			$call = $this->invocation($member, $method, $name, $member->type_def(), $global_references, $declarations, $required_headers,
+				selected_receiver: '*owner.operator->()');
+			$present = $this->conversion($value_type, $value->conversion, $call, $member);
+			$argument_steps = implode(' ', array_splice($this->async_steps, $start));
+			if ($before === $this->suspensions) {
+				return '([&](' . $owner->cpp_type() . " owner) -> $result_type { if ($test) { $argument_steps return $present; } return {}; }($operand))";
+			}
+			$result = $destination ?? new Cpp_Staged_Result($value_type, 'nullsafe_' . $value->start . '_' . $value->end);
+			if ($destination === null) $this->async_steps[] = $result->declaration($required_headers);
+			$this->async_steps[] = "{ auto owner = $operand; if ($test) { $argument_steps " . $result->initialize($present)
+				. ' } else { ' . $result->initialize($result_type . '{}') . ' } }';
+			if (!$value_type->cpp_trivial_value()) ++$this->async_owned_steps;
+			return $destination === null ? $result->operand() : '';
 		}
 		if ($value instanceof ast_field_expression) {
 			if ($value->is_dynamic_key()) {
@@ -3641,7 +3662,8 @@ CPP;
 	 */
 	private function invocation(ast_call_expression|ast_construction_expression $value, ast_function_declaration|ast_lambda_expression|callback_type_definition|runtime_function|data_constructor_signature $function,
 		string $name, type_definition $result, array &$global_references /** array<string,ast_global_declaration> */,
-		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null, ?array &$statement_setup = null): string
+		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */, ?string $native_result = null, ?array &$statement_setup = null,
+		?string $selected_receiver = null): string
 	{
 		$steps = [];
 		$arguments = [];
@@ -3706,9 +3728,9 @@ CPP;
 		} elseif ($method) {
 			$inline_storage = $value->ancestor_dispatch;
 			$direct_borrow = $value->receiver?->member_borrow !== null && !$value->has_nonliteral_arguments();
-			$place = $value->ancestor_dispatch ? 'scpp_self' : $this->retained_place($value->receiver,
-				$global_references, $declarations, $required_headers, $steps, $inline_storage, 'receiver_owner' . $suffix, full_expression: $direct_borrow);
-			if (!$inline_storage && !$direct_borrow) {
+			$place = $selected_receiver ?? ($value->ancestor_dispatch ? 'scpp_self' : $this->retained_place($value->receiver,
+				$global_references, $declarations, $required_headers, $steps, $inline_storage, 'receiver_owner' . $suffix, full_expression: $direct_borrow));
+			if ($selected_receiver === null && !$inline_storage && !$direct_borrow) {
 				$steps[] = 'auto&& receiver_payload' . $suffix . ' = ' . $place . ';';
 				$place = 'receiver_payload' . $suffix;
 			}

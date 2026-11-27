@@ -63,12 +63,12 @@ final class ast_await_expression extends ast_expression
 	}
 }
 
-/** Complete an awaited call and discard its result, as in await flush(); */
-final class ast_await_statement extends ast_statement
+/** Discard an awaited call or a single-hop nullsafe invocation at a statement boundary. */
+final class ast_discard_statement extends ast_statement
 {
-	public readonly ast_await_expression $value;
+	public readonly ast_await_expression|ast_nullsafe_member $value;
 
-	public function __construct(ast_await_expression $value, int $end /** uint32 */)
+	public function __construct(ast_await_expression|ast_nullsafe_member $value, int $end /** uint32 */)
 	{
 		parent::__construct($value->start, $end);
 		$this->value = $value;

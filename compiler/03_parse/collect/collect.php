@@ -99,7 +99,7 @@ final class Body_Collection
 			$value = $statement->value;
 		}
 		elseif (($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)
-			|| ($statement instanceof ast_delay_statement) || ($statement instanceof ast_await_statement) || ($statement instanceof ast_take_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
+			|| ($statement instanceof ast_delay_statement) || ($statement instanceof ast_discard_statement) || ($statement instanceof ast_take_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 			$value = $statement->value;
 		}
 		elseif ($statement instanceof ast_throw_statement) {
@@ -211,7 +211,7 @@ final class Body_Collection
 			return;
 		}
 		if (($value instanceof ast_await_expression) || ($value instanceof ast_object_access_expression) || ($value instanceof ast_ownership_expression) || ($value instanceof ast_isset_expression) || ($value instanceof ast_not_expression) || ($value instanceof ast_cast_expression)
-			|| ($value instanceof ast_nullsafe_field) || ($value instanceof ast_unary_expression) || ($value instanceof ast_throw_expression)) {
+			|| ($value instanceof ast_nullsafe_member) || ($value instanceof ast_unary_expression) || ($value instanceof ast_throw_expression)) {
 			$this->expression($value->operand);
 		}
 		if ($value instanceof ast_field_expression || $value instanceof ast_qualified_data) {

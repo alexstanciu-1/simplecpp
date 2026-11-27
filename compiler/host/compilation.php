@@ -159,7 +159,7 @@ final class Compilation_Inspection
 				$statements[] = ['kind' => 'append', 'receiver' => self::value($statement->receiver),
 					'value' => self::value($statement->value), 'conversion' => value_conversion::name($statement->conversion())];
 			}
-			elseif ($statement instanceof ast_await_statement) {
+			elseif ($statement instanceof ast_discard_statement) {
 				$statements[] = ['kind' => 'discard', 'value' => self::value($statement->value)];
 			}
 			elseif ($statement instanceof ast_base_statement) {
@@ -283,7 +283,7 @@ final class Compilation_Inspection
 			$row['operator'] = $value instanceof ast_isset_expression ? 'isset' : 'logical_not';
 			$row['operand'] = self::value($value->operand);
 		}
-		if ($value instanceof ast_nullsafe_field) $row['operand'] = self::value($value->operand);
+		if ($value instanceof ast_nullsafe_member) $row['operand'] = self::value($value->operand);
 		if ($value instanceof ast_field_expression) {
 			$row['field'] = $value->field;
 			$row['receiver'] = self::value($value->receiver);

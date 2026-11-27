@@ -350,14 +350,11 @@ final class Parser
 			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
 			if ($value instanceof ast_called_type_name || $value instanceof ast_qualified_data
 				|| ($value instanceof ast_field_expression && $this->cursor->tokens->source->flavor !== flavor::python)) return $this->property_write($value);
-			if (!($value instanceof ast_call_expression)) {
-				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
-			}
 			return $this->call_statement($value);
 		}
 		if ($this->property_statement_start()) {
 			$target = $this->primary(field_target: true);
-			if ($target instanceof ast_call_expression) {
+			if ($target instanceof ast_call_expression || $target instanceof ast_nullsafe_member) {
 				return $this->call_statement($target);
 			}
 			if (!($target instanceof ast_field_expression) && !($target instanceof ast_name_expression)) {
@@ -978,8 +975,12 @@ final class Parser
 	}
 
 	/** Finish a discarded ordinary or member call. */
-	private function call_statement(ast_call_expression $call, token_kind $terminator = token_kind::semicolon): ast_call_statement
+	private function call_statement(ast_expression $call, token_kind $terminator = token_kind::semicolon): ast_statement
 	{
+		if ($call instanceof ast_nullsafe_member && $call->operand instanceof ast_call_expression) {
+			return new ast_discard_statement($call, $this->statement_end($terminator));
+		}
+		if (!($call instanceof ast_call_expression)) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
 		$end = $this->statement_end($terminator);
 		return new ast_call_statement($call->start, $end, $call);
 	}
@@ -1510,7 +1511,7 @@ final class Parser
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python indexed write requires one key and =');
 		}
 		if ($index !== null && (($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lparen)) || $this->cursor->is(token_kind::scope)
-			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
+			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::nullsafe_member) || $this->cursor->is(token_kind::dot))) {
 			$field_target = $this->cursor->tokens->source->flavor !== flavor::python;
 			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), field_target: $field_target);
 			if ($field_target && $this->cursor->is(token_kind::lbracket)) return $this->indexed_write($target, $terminator);
@@ -1520,8 +1521,7 @@ final class Parser
 				return new ast_field_assignment($target, $value, $this->statement_end($terminator));
 			}
 			if ($target instanceof ast_qualified_data || $target instanceof ast_field_expression) return $this->property_write($target);
-			if ($target instanceof ast_call_expression) return $this->call_statement($target);
-			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected call statement');
+			return $this->call_statement($target);
 		}
 		if ($receiver instanceof ast_called_type_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed late-static property writes are deferred');
 		if ($receiver instanceof ast_qualified_data) {
@@ -1621,7 +1621,11 @@ final class Parser
 			if ($this->cursor->is(token_kind::nullsafe_member)) {
 				$this->cursor->take(token_kind::nullsafe_member, '?->');
 				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
-				return new ast_nullsafe_field(new ast_field_expression($value, $name, $this->cursor->position()));
+				if ($this->cursor->is(token_kind::lparen)) {
+					$call = $this->call_arguments($value->start, $name, token_kind::member, $value);
+					return new ast_nullsafe_member($call);
+				}
+				return new ast_nullsafe_member(new ast_field_expression($value, $name, $this->cursor->position()));
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				$this->cursor->take(token_kind::member, '->');
@@ -1815,7 +1819,7 @@ final class Parser
 			return new ast_delay_statement($start, $this->statement_end($terminator), $duration);
 		}
 		$value = $this->await_expression();
-		return new ast_await_statement($value, $this->statement_end($terminator));
+		return new ast_discard_statement($value, $this->statement_end($terminator));
 	}
 
 	/** Parse direct task consumption in either expression or statement position. */
@@ -2277,6 +2281,7 @@ final class Parser
 					|| ($this->cursor->next_is(token_kind::lparen) && $this->cursor->keyword('weak'))))
 			|| ($flavor !== flavor::cpp && $this->cursor->is($flavor === flavor::php ? token_kind::variable : token_kind::identifier)
 				&& $this->cursor->next_is(token_kind::scope))
+			|| ($flavor === flavor::php && $this->cursor->is(token_kind::variable) && $this->cursor->next_is(token_kind::nullsafe_member))
 			|| ($flavor === flavor::cpp && $this->cursor->is(token_kind::identifier) && $this->cursor->next_is(token_kind::dot));
 	}
 

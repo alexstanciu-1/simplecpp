@@ -207,7 +207,7 @@ final class Preparation
 			}
 			if ($generator instanceof generator_type_definition
 				&& !($statement instanceof ast_yield_statement || $statement instanceof ast_echo_statement
-					|| $statement instanceof ast_call_statement || $statement instanceof ast_return_statement
+					|| $statement instanceof ast_call_statement || ($statement instanceof ast_discard_statement && $statement->value instanceof ast_nullsafe_member) || $statement instanceof ast_return_statement
 					|| $statement instanceof ast_local_declaration || $statement instanceof ast_storage_write
 					|| $statement instanceof ast_block_statement || $statement instanceof ast_foreach_statement || $statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
 					|| $statement instanceof ast_break_statement || $statement instanceof ast_continue_statement)) {
@@ -413,7 +413,7 @@ final class Preparation
 					}
 				}
 			}
-			elseif ($statement instanceof ast_await_statement) {
+			elseif ($statement instanceof ast_discard_statement) {
 				$this->value($statement->value);
 			}
 			elseif ($statement instanceof ast_delay_statement) {
@@ -1833,16 +1833,23 @@ final class Preparation
 			$this->construction($syntax, $payload->required, $initializing);
 			return;
 		}
-		if ($syntax instanceof ast_nullsafe_field) {
-			$field = $syntax->operand;
-			$this->value($field, $initializing);
-			$owner = $field->receiver->type_def();
+		if ($syntax instanceof ast_nullsafe_member) {
+			$member = $syntax->operand;
+			$this->value($member, $initializing);
+			$kind = $member instanceof ast_call_expression ? 'method call' : 'field read';
+			$owner = $member->receiver->type_def();
 			if (!($owner instanceof shared_record_type_definition) || $owner->required) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe field read requires an optional shared owner');
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe ' . $kind . ' requires an optional shared owner');
 			}
-			$payload = $field->type_def();
+			$payload = $member->type_def();
+			if ($member instanceof ast_call_expression) {
+				$method = $member->function_def();
+				if (!($method instanceof ast_function_declaration) || !$method->has_receiver() || $method->returns_reference || $payload === type_void::instance()) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe call requires an instance method returning a value');
+				}
+			}
 			$result = $payload instanceof carrier_type_definition && $payload->family === 'nullable' ? $payload : Type_Resolution::nullable_value($payload);
-			if ($result === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'No optional representation for field type ' . $payload->name);
+			if ($result === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'No optional representation for ' . ($member instanceof ast_call_expression ? 'method result' : 'field type') . ' ' . $payload->name);
 			$syntax->settle_optional($result);
 			return;
 		}
@@ -2116,7 +2123,7 @@ final class Preparation
 			if ($suspends) ++$this->suspension_count;
 			$target = $this->async_producer($syntax->operand, $initializing,
 				$suspends ? dependency_use::async_task : dependency_use::async_wait, $syntax);
-			if ($target->return_type_def() === type_void::instance() && $destination !== type_void::instance() && !($syntax->parent instanceof ast_await_statement)) {
+			if ($target->return_type_def() === type_void::instance() && $destination !== type_void::instance() && !($syntax->parent instanceof ast_discard_statement)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
 			}
 			$syntax->settle($suspends);
