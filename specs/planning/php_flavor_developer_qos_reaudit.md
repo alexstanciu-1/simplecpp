@@ -2,11 +2,11 @@
 
 Doc Status: planning
 
-The [original field report](php_flavor_developer_qos.md) describes the experience at `356b6ff15`. The first full replay used `4e035377d`. On November 27 we reran the full study on dev002 with the PHP onboarding changes based on `bbd2d9663`. The unit of assessment is the developer's task. **Fixed** means the original blocking operation now works under its intended v0.2 contract. **Still reproducible** means at least one concrete usability issue remains for discussion, including misleading diagnostics. **Intentional difference** means the tested behavior follows a language or library boundary we can explain to a PHP developer. A reproducible inconvenience is evidence for discussion, not a commitment to implement PHP compatibility.
+The [original field report](php_flavor_developer_qos.md) describes the experience at `356b6ff15`. The first full replay used `4e035377d`. On November 27 we reran the full study on dev002 with the PHP onboarding changes, then repeated it on the merged compiler at `da940c179`. The unit of assessment is the developer's task. **Fixed** means the original blocking operation now works under its intended v0.2 contract. **Still reproducible** means at least one concrete usability issue remains for discussion, including misleading diagnostics. **Intentional difference** means the tested behavior follows a language or library boundary we can explain to a PHP developer. A reproducible inconvenience is evidence for discussion, not a commitment to implement PHP compatibility.
 
 ## Evidence
 
-On dev002, all ten [study drivers](../../samples/php-developer-qos/) completed successfully with PHP 8.5.12 and Clang 18.1.3. All 250 isolated snippets matched their recorded observations. Of these, 129 ran and printed the expected output, 107 reported the expected compiler error, and 14 raised the expected runtime failure. An expected rejection can still be an onboarding issue. The default compiler and runtime suite passed all 618 tests after correcting the style annotation on the PHP entry fallthrough fact.
+On dev002, all ten [study drivers](../../samples/php-developer-qos/) completed successfully with PHP 8.5.12 and Clang 18.1.3. All 250 isolated snippets matched their recorded observations. Of these, 129 ran and printed the expected output, 107 reported the expected compiler error, and 14 raised the expected runtime failure. An expected rejection can still be an onboarding issue. The default compiler and runtime suite passed all 618 tests before integration and all 629 on the merged revision.
 
 | Replay | Observed on dev002 |
 |---|---|
