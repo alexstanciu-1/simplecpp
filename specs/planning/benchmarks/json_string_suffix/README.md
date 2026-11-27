@@ -242,3 +242,39 @@ All three candidates matched the committed decoder on the 780 valid and 844 malf
 Apply each candidate patch to the reference separately and build the typed_json_strings drivers with `--batched`. Place the binaries in bin/close_tail (committed), bin/word8 (portable), bin/escape_prefix, bin/suffix_quote and bin/both_quotes. On dev002 run `taskset -c 7 python3 run.py bin --nonempty` and `taskset -c 7 python3 run.py bin --nonempty-recheck both_quotes`.
 
 [Five-way timings](nonempty.dev002.json) · [Independent recheck](nonempty-recheck.dev002.json)
+
+## First-block scanning around a middle escape
+
+The production reference is the closing-quote decoder at `56800977e`. The combined patch from the preceding study stays separate. In a 3–9-byte string with a single middle escape, each ordinary run is at most four bytes, but either scan can enter the out-of-line AVX2 function because the available input extends into subsequent array elements.
+
+The [scanner placement patch](middle_scan.patch) tests one 16-byte SSE2 comparison inline at the initial prefix, the suffix following a decoded escape, or both. It checks for quotes, backslashes and control bytes. If the block has no marker, scanning resumes at byte 16 with the committed dispatcher. The helper uses the portable scanner when a full block is unavailable or the x86 SIMD path is disabled. Escape decoding and decoded-byte ownership follow the production path in all builds.
+
+The comparison uses the committed decoder and the earlier eight-byte portable decoder as controls. Each fixture contains 16 strings. The short middle group includes lengths 3, 7, 8 and 9, with one Unicode escape or one escaped slash. The seven 4,096-byte fixtures cover plain strings and both spellings at the beginning, middle and end. All rates use the complete wire size. Each median comes from eleven shuffled rounds on dev002 CPU 7.
+
+| First-block check placement | Median change vs. committed on short escape-middle | Fixtures faster than committed |
+|---|---:|---:|
+| Initial scan only | +1.7% | 7/8 |
+| Post-escape scan only | +1.9% | 7/8 |
+| Both scans | +4.9% | 8/8 |
+
+Long-string samples in the first run were variable on the shared host. In the 4,096-byte Unicode escape-first fixture the slowest committed-decoder sample took 2.3 times as long as the fastest. The independent recheck used a different shuffle seed and only the two controls and the both-scans build. It doubled each timed loop count for the shorter fixtures and quadrupled it for the 4,096-byte fixtures.
+
+In the longer recheck, using both checks gained 3.8–6.3% on all eight short escape-middle cases (median +4.3%). It beat the portable control in seven of eight. However, every 4,096-byte fixture lost 0.8–1.7% against committed AVX2, although each remained 32.0–37.5% faster than portable.
+
+A [bounded-span follow-up](middle_window.patch) applies on top of the placement patch. With both placements enabled, it sends spans over 512 bytes directly to the existing dispatcher. The cutoff is an experimental choice that separates the short 16-string documents from the long documents in this matrix. It uses remaining JSON bytes, so the follow-up also measures a 256-element vector of seven-byte strings with a middle escape. Most elements in that control have more than 512 bytes left in the document.
+
+Median percentage change (minimum to maximum) for the bounded candidate in a separate longer-duration three-way run:
+
+| Fixture group | Against committed decoder | Against portable |
+|---|---:|---:|
+| Short, escape middle | +4.1% (+2.8% to +8.3%) | +2.4% (-1.1% to +14.1%) |
+| 129 bytes | +0.6% (+0.0% to +1.8%) | +9.0% (+6.6% to +14.7%) |
+| 4,096 bytes | -1.4% (-3.9% to -0.7%) | +33.2% (+29.4% to +36.9%) |
+
+In the 256-element control the bounded candidate gained 3.1% over the committed decoder for the middle Unicode escape and 6.3% for the escaped slash. The 512-byte rule still trailed the committed decoder in every 4,096-byte fixture. Keep the production dispatcher while exact long-string performance is a requirement. The unbounded two-scan result narrows the investigation to scans on both sides of the escape, but the end-to-end measurements cannot attribute the entire gap to dispatch overhead.
+
+Across the four candidates, 822 valid scalar/vector documents matched the independent value oracle and 900 malformed documents produced byte-identical diagnostics to the committed decoder, including byte offsets and paths. Allocation counts and allocated bytes matched the controls on every timed fixture. The unbounded and bounded both-scans builds each passed all 425 default tests on dev002. A guarded-page probe directly exercised the helper locally for every byte value at every offset in spans of 0–96 bytes, also with SIMD disabled. The bounded version additionally passed at lengths 510–515.
+
+To reproduce, apply middle_scan.patch to the committed reader. Build the batched typed_json_strings drivers with SCPP_STUDY_PREFIX16, SCPP_STUDY_SUFFIX16, or both definitions enabled in the runtime build. For window16, apply middle_window.patch as well and enable both definitions. Place the drivers under bin/prefix16, bin/suffix16, bin/both16 and bin/window16. Use bin/close_tail for the committed baseline and bin/word8 for the portable reference. Pin run.py to CPU 7 and pass `bin --middle-scan prefix16 suffix16 both16`, then `bin --middle-scan both16` and `bin --middle-scan window16`.
+
+[Placement comparison](middle-scan.dev002.json) · [Both-scans recheck](middle-scan-recheck.dev002.json) · [Bounded-span follow-up](middle-window.dev002.json)

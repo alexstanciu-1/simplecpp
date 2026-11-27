@@ -1,0 +1,10 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -77,6 +77,7 @@
+ }
+ [[nodiscard]] inline std::size_t first_block_string_prefix(std::string_view bytes) noexcept {
+ #ifdef SCPP_JSON_TRY_AVX2
++	if (bytes.size() > 512) return plain_string_prefix(bytes);
+ 	if (bytes.size() >= 16) {
+ 		const auto block = _mm_loadu_si128(reinterpret_cast<const __m128i*>(bytes.data()));
+ 		const auto quote = _mm_cmpeq_epi8(block, _mm_set1_epi8('"'));

@@ -12,6 +12,8 @@ import subprocess
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('bin', type=Path)
 mode = parser.add_mutually_exclusive_group()
+mode.add_argument('--middle-scan', nargs='+', choices=('prefix16', 'suffix16', 'both16', 'window16'),
+                  help='compare selected first-block scanner placements against both controls')
 mode.add_argument('--nonempty', action='store_true', help='compare empty-prefix and nonempty-suffix shortcuts')
 mode.add_argument('--nonempty-recheck', choices=('escape_prefix', 'suffix_quote', 'both_quotes'),
                   help='remeasure a candidate against the committed and portable controls')
@@ -26,6 +28,8 @@ args = parser.parse_args()
 bins = args.bin.resolve()
 if args.check_pair:
     variants = tuple(args.check_pair)
+elif args.middle_scan:
+    variants = ('close_tail', 'word8', *args.middle_scan)
 elif args.nonempty:
     variants = ('close_tail', 'word8', 'escape_prefix', 'suffix_quote', 'both_quotes')
 elif args.nonempty_recheck:
@@ -46,7 +50,8 @@ else:
     variants = ('fused', 'bulk', 'word8', 'avx2')
 timed = (*variants, 'node') if 'avx2' in variants else variants
 node = Path(__file__).with_name('node.js')
-rng = random.Random(91357 if args.close_recheck or args.nonempty_recheck else 32768)
+middle_recheck = args.middle_scan and len(args.middle_scan) == 1
+rng = random.Random(91357 if args.close_recheck or args.nonempty_recheck or middle_recheck else 32768)
 
 
 def invoke(mode, binary, docs, *args, shape='vector'):
@@ -62,7 +67,7 @@ def oracle(wire):
     return 'ok' + ''.join(' '+s.encode().hex() for s in values)
 
 
-def fixture(size, position):
+def fixture(size, position, elements=16):
     value = (string.ascii_lowercase * ((size+25)//26))[:size]
     if position == 'plain':
         spelling = value
@@ -72,7 +77,7 @@ def fixture(size, position):
         i = {'first':0, 'middle':size//2, 'last':size-1}[position]
         escape = r'\/' if simple else ('\\u%04x' % ord(value[i]))
         spelling = value[:i] + escape + value[i+1:]
-    return ('{"value":[' + ','.join(['"'+spelling+'"']*16) + ']}').encode()
+    return ('{"value":[' + ','.join(['"'+spelling+'"']*elements) + ']}').encode()
 
 
 def verify(shape):
@@ -115,18 +120,23 @@ sizes = [3, 7, 8, 9, 129, 4096] if args.scanner else [8, 129, 4096]
 if args.dispatch or args.first8:
     sizes = [3, 7, 8, 9, 31, 32, 33, 129, 4096]
 cases = [(size, position) for size in sizes for position in ['first','middle','last','plain']]
-if args.short_escapes or args.close_recheck or args.nonempty or args.nonempty_recheck:
+if args.short_escapes or args.close_recheck or args.nonempty or args.nonempty_recheck or args.middle_scan:
     positions = ['plain', 'first', 'middle', 'last', 'slash-first', 'slash-middle', 'slash-last']
     cases = [(size, position) for size in [3, 7, 8, 9, 129, 4096] for position in positions]
+if args.middle_scan == ['window16']:
+    cases.extend((7, 'large-array-' + position) for position in ('middle', 'slash-middle'))
 rng.shuffle(cases)
 for size,position in cases:
-    wire = fixture(size,position)
+    elements = 256 if position.startswith('large-array-') else 16
+    wire = fixture(size, position.removeprefix('large-array-'), elements)
     loops = min(100000,max(160,8000000//len(wire)))
+    if middle_recheck:
+        loops *= 4 if size == 4096 else 2
     case = result['cases'][f'{size}-{position}'] = dict(bytes=len(wire),loops=loops)
     for mode in variants:
         assert invoke(mode,'time',[wire]) == [oracle(wire)]
         _,calls,allocated,checksum = invoke(mode,'counts',[wire],1)[0].split()
-        assert int(checksum)==16
+        assert int(checksum)==elements
         case[mode]=dict(allocations=int(calls),allocated_bytes=int(allocated),ns=[])
     if 'node' in timed:
         case['node']=dict(ns=[])
@@ -138,7 +148,7 @@ for size,position in cases:
                 ns = subprocess.check_output(['node',node,'16',str(size),str(loops)],input=wire).strip()
             else:
                 ns,_,_,checksum=invoke(mode,'time',[wire],loops)[0].split()
-                assert int(checksum)==16*loops
+                assert int(checksum)==elements*loops
             case[mode]['ns'].append(float(ns))
     for mode in timed:
         median=statistics.median(case[mode]['ns'])
