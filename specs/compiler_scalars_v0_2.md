@@ -138,10 +138,11 @@ the declaration's initializer facts. Unknown values retain required runtime chec
 Direct global writes, assignment expressions and member/index writes remain deferred.
 The bounded compound-statement extension is defined below. PHP first-write declarations follow the local inference rules below.
 
-### PHP chained assignment statements
+### PHP and C++ chained assignment statements
 
 In PHP, `$a = $b = compute();` is equivalent to `$b = compute(); $a = $b;`
-when both names are existing writable locals. Longer chains follow the same
+when both names are existing writable locals. C++ spells the same statement
+`a = b = compute();`. Longer chains follow the same
 right-to-left order. Each write uses ordinary assignment conversion and the
 next write reads the value actually stored. If the RHS throws, none of the
 writes in the chain runs. A failure during a later write preserves completed
