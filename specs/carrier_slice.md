@@ -195,8 +195,15 @@ mutable alias, or passing it by mutable reference discards its evidence.
 Once initialized, the payload remains usable independently of that flag.
 An unconditional assignment also initializes the payload. This slice admits
 extraction as a standalone statement, an assignment or declaration initializer,
-a direct `if` or ternary test (including negation), or a return expression. Generators and
-loop headers are deferred. Across loops and exception regions, preparation
+a direct `if` or ternary test (including negation), a return expression, or the
+direct positive condition of a PHP `while`. Both `while (take($row) = next_row())`
+and `while (($row,$ok) = next_row())` evaluate the producer once per test.
+The body may read the exact payload, including zero and empty strings.
+A miss preserves the payload slot and writes any status outputs.
+`continue` repeats the test and `break` exits with the current outputs.
+After the loop, status outputs and previously initialized payloads can be read.
+A fresh payload gains no post-loop initialization proof. Other loop headers
+and generators remain deferred. Across loops and exception regions, preparation
 conservatively keeps payloads already proven initialized on entry.
 
 A ternary admits a fresh payload read on the success edge. On failure, it may

@@ -1017,7 +1017,11 @@ final class Preparation
 						$this->call($test);
 					} else $this->value($test);
 				}
-			} else $this->condition($statement->condition);
+			} else {
+				$this->condition($statement->condition);
+				// Entry to the body follows a hit. The loop barrier restores entry readiness at exit.
+				if ($statement->condition instanceof ast_take_expression) $this->take_ready[spl_object_id($statement->condition->slots[0])] = true;
+			}
 			$this->forget_values();
 		}
 		$this->local_frames[] = [];
@@ -1634,11 +1638,12 @@ final class Preparation
 		while ($test->parent instanceof ast_not_expression) $test = $test->parent;
 		$site = $test->parent;
 		$ternary_test = $site instanceof ast_ternary_expression && $site->condition === $test;
+		$while_test = $site instanceof ast_while_statement && $site->condition === $take;
 		if (!($site instanceof ast_take_statement || $site instanceof ast_local_declaration || $site instanceof ast_assignment_statement
-			|| $site instanceof ast_if_arm || $site instanceof ast_return_statement || $ternary_test)) {
-			throw new diagnostic($take->source(), $take->byte_start(), 'Use take as a statement, assignment, return or direct if/ternary condition');
+			|| $site instanceof ast_if_arm || $site instanceof ast_return_statement || $ternary_test || $while_test)) {
+			throw new diagnostic($take->source(), $take->byte_start(), 'Use take as a statement, assignment, return or direct if/ternary condition or positive while condition');
 		}
-		for ($ancestor = $site; $ancestor !== null && !$ancestor instanceof ast_statement_block; $ancestor = $ancestor->parent) {
+		for ($ancestor = $while_test ? $site->parent : $site; $ancestor !== null && !$ancestor instanceof ast_statement_block; $ancestor = $ancestor->parent) {
 			if ($ancestor instanceof ast_for_statement || $ancestor instanceof ast_tested_loop) {
 				throw new diagnostic($take->source(), $take->byte_start(), 'Use take in the loop body');
 			}

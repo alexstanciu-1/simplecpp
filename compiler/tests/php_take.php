@@ -91,6 +91,34 @@ function bool_state(result_or_bool<int> $r): int {
     ($n,$ok)=$r;
     return $ok ? $n : -1;
 }
+function next_number(int &$calls, int $hits): result_or_false<int> {
+    $calls++; if ($calls > $hits) {return false_sentinel;} return $calls - 1;
+}
+function fresh_loop(int &$calls, int $hits, bool $stop): int {
+    $sum = 0;
+    while (take($row) = next_number($calls, $hits)) {
+        $sum += $row;
+        if ($stop) { break; }
+        if ($row === 0) { continue; }
+        $sum += 10;
+    }
+    return $sum;
+}
+function next_text(int &$calls, int $hits): result<string> {
+    $calls++;
+    if ($calls > $hits) {return new Exception("end");}
+    if ($calls === 1) {return "";}
+    return "last";
+}
+function existing_loop(int &$calls, int $hits, bool $stop): string {
+    $row = "seed";
+    while (($row,$error,$ok) = next_text($calls,$hits)) {
+        if ($stop) {break;}
+    }
+    if ($error) {return $error->get_message() . ":" . $row;}
+    if ($ok) {return "hit:" . $row;}
+    return "bad status";
+}
 $falsePayload result_or_false<bool> = false;
 echo falsy($falsePayload);
 $calls int = 0;
@@ -125,6 +153,18 @@ int verify_take() {
     if (App::length_or_error_(empty).value() != 0) return 93;
     if (App::diagnostic_guard_(empty).value() != 0 || App::diagnostic_arm_(empty).value() != 0) return 87;
     scpp::int64 calls = 0, hits = 0;
+    if (App::fresh_loop_(calls, 0, false) != 0 || calls != 1) return 70;
+    calls = 0;
+    if (App::fresh_loop_(calls, 3, false) != 23 || calls != 4) return 71;
+    calls = 0;
+    if (App::fresh_loop_(calls, 3, true) != 0 || calls != 1) return 72;
+    calls = 0;
+    if (App::existing_loop_(calls, 0, false) != scpp::string{"end:seed"} || calls != 1) return 73;
+    calls = 0;
+    if (App::existing_loop_(calls, 3, false) != scpp::string{"end:last"} || calls != 4) return 74;
+    calls = 0;
+    if (App::existing_loop_(calls, 3, true) != scpp::string{"hit:"} || calls != 1) return 75;
+    calls = 0;
     if (App::position_(scpp::string{"abc"}, calls, hits) != 0 ||
         App::position_(scpp::string{"zzz"}, calls, hits) != -1 || calls != 2 || hits != 1) return 97;
     if (App::bool_state_(scpp::result_or_bool_int64::from_true()) != -1 ||
@@ -179,6 +219,12 @@ foreach ([
 }
 $prefix = 'function overwrite(bool &$ok): void { $ok = true; } $r result_or_false<int> = false_sentinel; ';
 foreach ([
+	'while (take($v)=$r) {break;} echo $v;',
+	'while (($v,$ok)=$r) {continue;} echo $v;',
+	'while (!(take($v)=$r)) {break;}',
+	'while ((take($v)=$r) && true) {break;}',
+	'do {break;} while (take($v)=$r);',
+	'for (;take($v)=$r;) {break;}',
 	'$n=(take($v)=$r) ? 1 : $v;',
 	'$n=!(take($v)=$r) ? $v : 1;',
 	'$n=(take($v)=$r) ? $v : 0; echo $v;',
