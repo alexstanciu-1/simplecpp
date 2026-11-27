@@ -23,6 +23,9 @@ if($none!=="null" || $zero!=="0" || $boolean!=="false" || $text!=="\"\"" || $num
 $i string=json_encode(3); $u string=json_encode(true); $q string=json_encode("a\0b"); $z string=json_encode(0.5);
 if($i!=="3" || $u!=="true" || $z!=="0.5" || $q!=="\"a\\u0000b\""){return 7;}
 $diag ?json_parse_error=null;
+$checked=json_document_parse("[]",$diag);
+$checkedKind string=json_node_kind(json_document_root($checked));
+if($checkedKind!=="array"){return 49;}
 $doc json_document=json_document_parse("{\"items\":[1e0,true,\"a\\u0000b\"],\"0\":null}",$diag);
 if(isset($diag)){return 8;}
 $root json_node=json_document_root($doc);
@@ -131,6 +134,7 @@ return 0;""")
         assert 'error' not in result, result
         baseline = artifacts(out)
         units = b'\n'.join(v for k, v in baseline.items() if k.suffix == '.cpp')
+        assert b'::scpp::json::document_root((var_checked_' in units
         assert units.count(b'Packet::encode(::scpp::Encoder& out) const') == 1
         assert b'encode_record(' not in units and b'encode_owned_record(' not in units
         assert b'Packet::decode(::scpp::Decoder& d)' in units

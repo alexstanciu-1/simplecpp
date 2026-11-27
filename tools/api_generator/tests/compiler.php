@@ -114,7 +114,7 @@ requireThat(str_contains($registry, "'func:count_bytes'") && str_contains($regis
 $admissionMeta = unserialize(serialize($functionMetadata));
 $admissionMeta->compiler->php_builtin_admission->count_bytes = [['text', 'typed']];
 $registry = renderCompiler($admissionMeta, $facts, $functionPlan)['types/registry.php'];
-requireThat(str_contains($registry, "php_argument_labels: ['text'], php_typed_inputs: 1"), 'Missing published PHP input policy');
+requireThat(str_contains($registry, "php_argument_labels: ['text'], php_exact_inputs: 0"), 'Missing published PHP input policy');
 $admissionMeta->compiler->php_builtin_admission->count_bytes = [['text', 'writable']];
 try {
     renderCompiler($admissionMeta, $facts, $functionPlan);

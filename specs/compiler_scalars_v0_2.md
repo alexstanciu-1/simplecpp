@@ -755,6 +755,13 @@ three typed strings and optionally binds its replacement count to exact writable
 int64 storage. Each input is evaluated and converted once in source order where
 ordering matters. A failed input conversion prevents the call and its count write.
 
+A declared PHP value parameter uses the same argument checker for source functions,
+methods and runtime bindings, including opt-in general API calls. Its declared
+type supplies the conversion context for literals, boxes and carriers. Explicit
+exact inspection and writable-slot metadata override the value default. Native
+const-reference passing describes the C++ representation. Overload selection
+preserves an exact carrier overload, such as the nullable JSON encoder.
+
 The PHP `is_bool` predicate inspects an exact mixed operand. A plain bool, a
 dynamic box and a result carrying a bool cannot supply this argument. A mixed
 value of any kind is a valid argument. The predicate returns true precisely for

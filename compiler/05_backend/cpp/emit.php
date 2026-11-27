@@ -3047,7 +3047,8 @@ CPP;
 					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
-				if ($value->suspending_operands || $value instanceof ast_named_call) {
+				if ($value->suspending_operands || $value instanceof ast_named_call
+					|| ($function->receiver_method && $value->has_runtime_conversions())) {
 					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
 				}
 				$operands = $value->runtime_operands();

@@ -2058,6 +2058,7 @@ final class Preparation
 		}
 		$operands = $call->runtime_operands($runtime instanceof runtime_function ? $runtime : null);
 		$prepared ??= $call->receiver;
+		$php = $call->source()->flavor === flavor::php;
 		$rule_group = $runtime instanceof rewrite_rule_overloads ? $runtime : null;
 		$callback_group = $runtime instanceof regex_callback_overloads ? $runtime : null;
 		if ($callback_group !== null) {
@@ -2079,6 +2080,12 @@ final class Preparation
 					$prepared = $selected;
 				}
 				$selector = $runtime->project_selector ? $selected->value_type() : $selected->type_def();
+				if ($php && $selector instanceof carrier_type_definition && !isset($variants[$selector::class]) && ($payload = carrier_operand_payload($selector)) !== null) {
+					$candidate = $variants[$payload::class] ?? null;
+					if ($candidate?->php_value_input($selection_index) || ($candidate === null && $runtime instanceof json_encoder_overloads)) {
+						$selector = $payload;
+					}
+				}
 				$runtime = $variants[$selector::class] ?? ($runtime instanceof json_encoder_overloads
 					? $this->record_encoder($runtime, $selector, $selected) : null);
 				if ($runtime === null) {
@@ -2097,14 +2104,16 @@ final class Preparation
 			$slot = $slots[$index] ?? $index;
 			if ($callback_group !== null && $index === $callback_group->argument_index + 1) {
 				$this->value($argument, destination: $argument instanceof ast_collection_expression ? $callback_group->list_context : null);
-				$runtime = $callback_group->binding($runtime->callback->signature->inputs[0], $argument, $argument->type_def(), $pattern_type);
+				$subject = $argument->type_def();
+				if ($php) $subject = carrier_operand_payload($subject) ?? $subject;
+				$runtime = $callback_group->binding($runtime->callback->signature->inputs[0], $argument, $subject, $pattern_type);
 				$prepared = $argument;
 			}
 			$type = $runtime->parameters[$slot];
-			$typed = $labels !== [] && ($runtime->php_typed_inputs & (1 << $slot)) !== 0;
+			$typed = $php && $runtime->php_value_input($slot);
 			$label = $labels === [] ? '' : $call->name . ' argument ' . ($slot + 1) . ' (' . $labels[$slot] . ') ';
 			if ($slot === 0 && $callback_group !== null && $callback_group->pattern_inputs !== []) {
-				$type = $pattern_type = $this->rewrite_input($callback_group->pattern_inputs, $argument, false);
+				$type = $pattern_type = $this->rewrite_input($callback_group->pattern_inputs, $argument, $typed);
 			}
 			elseif ($rule_group !== null && $slot < 2) {
 				$type = $this->rewrite_input($rule_group->rule_types, $argument, $typed);
@@ -2130,19 +2139,11 @@ final class Preparation
 			elseif ($runtime->is_reference($slot)) {
 				$this->bind_reference($argument, $type, $writes, label: $label);
 			}
-			elseif ($typed && $argument->type_def() !== $type) {
-				if ($conversions === []) $conversions = array_fill(0, count($operands), value_conversion::identity);
-				try {
-					$conversions[$index] = $type->prepare_conversion($argument, conversion_context::value_argument);
-				} catch (diagnostic) {
-					$message = $label . 'requires ' . $type->name . ', received ' . $argument->type_def()->name;
-					try {
-						$type->prepare_conversion($argument, conversion_context::explicit_cast);
-						$message .= '. Use an explicit (' . $type->name . ') cast for this conversion';
-					} catch (diagnostic) {
-						// The explicit conversion is unavailable as well.
-					}
-					throw new diagnostic($argument->source(), $argument->byte_start(), $message);
+			elseif ($typed) {
+				$conversion = $this->value_argument($argument, $type, $label === '' ? $call->name . ' ' : $label);
+				if ($conversion !== value_conversion::identity) {
+					if ($conversions === []) $conversions = array_fill(0, count($operands), value_conversion::identity);
+					$conversions[$index] = $conversion;
 				}
 			}
 			elseif ($type instanceof owned_callable_type) {
@@ -2725,7 +2726,7 @@ final class Preparation
 					throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires an integer');
 				}
 				$binding = $enum->definition->helper_function($use);
-				$conversion = $binding->parameters[0]->prepare_conversion($argument, conversion_context::value_argument);
+				$conversion = $this->value_argument($argument, $binding->parameters[0]);
 				$call->settle_runtime($binding, [$conversion]);
 				return;
 			}
@@ -3158,29 +3159,46 @@ final class Preparation
 				$conversions[] = value_conversion::identity;
 			}
 			else {
-				if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
-				if ($type instanceof class_union_type_definition) $this->watch_union_source($argument);
-				if ($type instanceof intersection_type_definition && $argument instanceof ast_name_expression
-					&& ($local = $argument->local_binding()) !== null
-					&& isset($this->guards[$local->storage_id()])) {
-					$id = $local->storage_id();
-					$guard = $this->guards[$id];
-					$from = $local->type_def();
-					if ($from instanceof shared_record_type_definition && $from->payload->derives_from($type->base->payload)
-						&& $guard->target_type()->payload->derives_from($type->capability->payload)
-						&& (!$from->required || !$from->payload->derives_from($type->capability->payload))) {
-						$argument->settle_guard($guard);
-						$this->guard_reads[$id] ??= $argument->start;
-						$conversions[] = value_conversion::guarded_intersection;
-						continue;
-					}
-				}
-				$conversions[] = $type->prepare_conversion($argument, conversion_context::value_argument);
+				$conversions[] = $this->value_argument($argument, $type);
 			}
 		}
 		// Invocation follows every argument evaluation. Preserve earlier snapshots, invalidate future reads.
 		if ($writes !== []) $this->invalidate_references($call, $writes);
 		return $conversions;
+	}
+
+	/** Prepare one declared by-value argument for native and source calls, including guarded object conversions. */
+	private function value_argument(ast_expression $argument, type_definition $type, string $label = ''): int /** uint16 */
+	{
+		if ($type instanceof record_type_definition) $this->require_inline_cleanup($type, $argument);
+		if ($type instanceof class_union_type_definition) $this->watch_union_source($argument);
+		if ($type instanceof intersection_type_definition && $argument instanceof ast_name_expression
+			&& ($local = $argument->local_binding()) !== null
+			&& isset($this->guards[$local->storage_id()])) {
+			$id = $local->storage_id();
+			$guard = $this->guards[$id];
+			$from = $local->type_def();
+			if ($from instanceof shared_record_type_definition && $from->payload->derives_from($type->base->payload)
+				&& $guard->target_type()->payload->derives_from($type->capability->payload)
+				&& (!$from->required || !$from->payload->derives_from($type->capability->payload))) {
+				$argument->settle_guard($guard);
+				$this->guard_reads[$id] ??= $argument->start;
+				return value_conversion::guarded_intersection;
+			}
+		}
+		try {
+			return $type->prepare_conversion($argument, conversion_context::value_argument);
+		} catch (diagnostic $error) {
+			if ($label === '') throw $error;
+			$message = $label . 'requires ' . $type->name . ', received ' . $argument->type_def()->name;
+			try {
+				$type->prepare_conversion($argument, conversion_context::explicit_cast);
+				$message .= '. Use an explicit (' . $type->name . ') cast for this conversion';
+			} catch (diagnostic) {
+				// No explicit cast is available either.
+			}
+			throw new diagnostic($argument->source(), $argument->byte_start(), $message);
+		}
 	}
 
 	/** Prevent C++ implicit scalar conversions from widening the supported echo/entry contracts. */

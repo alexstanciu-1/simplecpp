@@ -3,7 +3,7 @@
 Doc Status: planning
 Date: 2026-11-14
 Status: deferred for discussion when the user is back at the desk
-Last reminded (Europe/Bucharest): 2026-11-26
+Last reminded (Europe/Bucharest): 2026-11-27
 
 The user requested a daily reminder to return to this audit. At the first active
 compiler-work interaction each calendar day, briefly remind them once and update the

@@ -842,11 +842,11 @@
     "php_constants": {"PREG_OFFSET_CAPTURE": 256, "PREG_UNMATCHED_AS_NULL": 512, "PREG_PATTERN_ORDER": 1, "PREG_SET_ORDER": 2, "PREG_SPLIT_NO_EMPTY": 1, "PREG_SPLIT_DELIM_CAPTURE": 2, "PREG_SPLIT_OFFSET_CAPTURE": 4},
     "surface": "general",
     "php_overloads": {
-      "preg_match_all_pattern_order": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["offset", "exact"]]},
-      "preg_match_all_set_order": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["offset", "exact"]]},
-      "preg_match_all": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["flags", "exact"], ["offset", "exact"]]},
-      "preg_match": {"selector": 2, "arguments": [["pattern", "exact"], ["subject", "exact"], ["matches", "writable"], ["flags", "exact"], ["offset", "exact"]]},
-      "preg_replace": {"rule_inputs": ["vector_string", "hash_string_int64", "hash_string_string"], "keep_rows": "all", "selector": 2, "list_context": "vector_string", "arguments": [["pattern", "exact"], ["replacement", "exact"], ["subject", "exact"], ["limit", "exact"], ["count", "writable"]]},
+      "preg_match_all_pattern_order": {"selector": 2, "arguments": [["pattern", "typed"], ["subject", "typed"], ["matches", "writable"], ["offset", "typed"]]},
+      "preg_match_all_set_order": {"selector": 2, "arguments": [["pattern", "typed"], ["subject", "typed"], ["matches", "writable"], ["offset", "typed"]]},
+      "preg_match_all": {"selector": 2, "arguments": [["pattern", "typed"], ["subject", "typed"], ["matches", "writable"], ["flags", "typed"], ["offset", "typed"]]},
+      "preg_match": {"selector": 2, "arguments": [["pattern", "typed"], ["subject", "typed"], ["matches", "writable"], ["flags", "typed"], ["offset", "typed"]]},
+      "preg_replace": {"rule_inputs": ["vector_string", "hash_string_int64", "hash_string_string"], "keep_rows": "all", "selector": 2, "list_context": "vector_string", "arguments": [["pattern", "typed"], ["replacement", "typed"], ["subject", "typed"], ["limit", "typed"], ["count", "writable"]]},
       "preg_filter": {"rule_inputs": ["vector_string", "hash_string_int64", "hash_string_string"], "keep_rows": "matched", "selector": 2, "list_context": "mixed", "arguments": [["pattern", "typed"], ["replacement", "typed"], ["subject", "typed"], ["limit", "typed"], ["count", "writable"]]},
       "preg_grep": {"selector": 1, "list_context": "mixed", "arguments": [["pattern", "typed"], ["input", "typed"]]}
     },
