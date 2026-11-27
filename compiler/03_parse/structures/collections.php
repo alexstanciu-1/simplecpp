@@ -131,11 +131,15 @@ final class ast_index_expression extends ast_expression
 		$this->settle_value($type, null);
 	}
 
-	/** A two-index vector store resolves the row in this named local only after its operands finish. */
+	/** Find the writable path candidate rooted in a named local through vector indices alone. */
 	public static function nested_vector_root(ast_expression $row): ?ast_name_expression
 	{
-		if (!($row instanceof ast_index_expression) || !($row->type_def() instanceof vector_type_definition)) return null;
-		$root = $row->receiver;
+		if (!($row instanceof ast_index_expression)) return null;
+		$root = $row;
+		do {
+			if (!($root->type_def() instanceof vector_type_definition)) return null;
+			$root = $root->receiver;
+		} while ($root instanceof ast_index_expression);
 		return $root instanceof ast_name_expression && $root->local_binding() !== null
 			&& $root->type_def() instanceof vector_type_definition ? $root : null;
 	}

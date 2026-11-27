@@ -7,17 +7,17 @@ Current representation: [native scalar aliases](native_scalar_aliases.md) supers
 Scope: runtime and physical API preparation inside v0.2. Source type resolution,
 evaluation order and contextual conversions remain compiler-owned.
 
-## Two-index local replacement
+## Nested local vector writes
 
-In the PHP, C++ and JavaScript flavors, a writable local of type
-`vector<vector<T>>` accepts `rows[i][j] = value;`. Evaluate the outer index,
-inner index and converted element value once each, in that order. Then check
-the outer index against the current matrix and replace the element at the
-checked inner index in that row. Replacing the matrix during operand evaluation
-therefore changes the destination. Either bounds failure prevents the store.
-Earlier operand effects remain visible. The store takes no copy of the row.
+In the PHP, C++ and JavaScript flavors, a writable local of nested vector type
+accepts writes such as `cube[i][j][k] = value;` at any vector depth. Evaluate
+each index once in source order, then evaluate and convert the element value.
+Starting at the current root, check each index and replace the final slot.
+Replacing an intermediate vector during operand evaluation changes the destination.
+A bounds failure at any level prevents the store. Earlier operand effects remain
+visible. The store takes no copy of the intermediate vectors.
 
-For a compound such as `rows[i][j] += rhs()`, save both indices in source order
+For a compound such as `cube[i][j][k] += rhs()`, save all indices in source order
 and read the checked element before running the RHS. Compute from that saved
 value, then check the same indices in the current matrix at write-back. An
 initial bounds failure skips the RHS. If the RHS removes the destination,

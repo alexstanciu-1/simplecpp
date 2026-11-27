@@ -1,4 +1,4 @@
-"""Two checked dimensions on writable local vectors, including reentrant replacement."""
+"""Checked paths of nested dimensions on writable local vectors, including reentrant replacement."""
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -18,14 +18,18 @@ def check(work, case):
         api += index
         bad_api += index
         main = declaration(case, 'rows', 'vector<vector<int>>', '[[1], [2]]')
+        main += declaration(case, 'deep', 'vector<vector<vector<vector<int>>>>', '[[], [[[1], [3]]]]')
+        deep_slot = f'{v}deep[1][0][1][0]'
+        path = f'{v}deep[indexOf(1)][indexOf(0)][indexOf(1)][indexOf(0)]'
+        main += f'{path} = element(); {path} += element(); ++{deep_slot}; echo {deep_slot}; {deep_slot}--; echo {deep_slot};'
         main += f['infer']('original', v+'rows')
         slot = f'{v}rows[1][0]'
         main += f'{v}rows[indexOf(1)][indexOf(0)] += element(); echo {slot};'
         main += f'{slot}++; echo {slot}; --{slot}; echo {slot}; ++{slot}; echo {slot}; {slot}--; echo {slot};'
         main += f'{v}rows[indexOf(1)][indexOf(0)] = element(); echo {v}original[1][0]; return {v}rows[1][0];'
         revisions(work, case, {'main': main, 'api': api}, [
-            (None, None, b'10V101110111010V2'), ('api', None, 'Unknown function'),
-            ('api', bad_api, None), ('api', api, b'10V101110111010V2')])
+            (None, None, b'1010V1010V171610V101110111010V2'), ('api', None, 'Unknown function'),
+            ('api', bad_api, None), ('api', api, b'1010V1010V171610V101110111010V2')])
         return
 
     helpers = """
@@ -38,6 +42,11 @@ def check(work, case):
             clean($rows);
             echo "C";
             return 8;
+        }
+        function replaceMiddle(vector<vector<vector<int>>> &$cube, int $drop): int {
+            echo "M";
+            if ($drop) { $cube[0] = []; } else { $cube[0] = [[41,42]]; }
+            return 6;
         }
         function value(): int { echo "V"; return 8; }
     """
@@ -52,18 +61,22 @@ def check(work, case):
             echo $rows[1][0],$rows[1][1];
             $rows[0][replaceRows($rows,0)] += 3;
             echo $rows[0][0];
+            $cube vector<vector<vector<int>>> = [[[1,2]]];
+            $cube[0][0][1] += replaceMiddle($cube,0);
+            echo $cube[0][0][0],$cube[0][0][1];
             return 8;
         """
         revisions(work, 'php', {'main': main, 'api': helpers}, [
-            (None, None, b'R417R52R1452R44'),
+            (None, None, b'R417R52R1452R44M418'),
             ('main', 'function bad(const vector<vector<int>> &$rows):void { $rows[0][0]=8; }' + main,
              'Cannot write through read-only reference'),
             *[('main', 'function bad(const vector<vector<int>> &$rows):void {' + op + ';}' + main,
                'Cannot write through read-only reference') for op in ('$rows[0][0] += 1', '++$rows[0][0]')],
-            ('main', '$cube vector<vector<vector<int>>> = [[[1]]]; $cube[0][0][0]++; return 8;',
-             'Nested indexed update requires')])
+            ('main', '''function bad(const vector<vector<vector<int>>> &$cube):void { $cube[0][0][0]++; } return 8;''',
+             'Cannot write through read-only reference')])
         return
     failure, trace = {
+        'middle_removed': ('$cube vector<vector<vector<int>>> = [[[1]]]; $cube[0][0][0] += replaceMiddle($cube,1);', b'M'),
         'compound_outer': ('$rows[1][0] += value();', b''),
         'compound_inner': ('$rows[0][-1] += value();', b''),
         'compound_cleared': ('$rows[0][0] += clearRows($rows);', b'C'),

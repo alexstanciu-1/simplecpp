@@ -2112,7 +2112,7 @@ CPP;
 		return '{ ' . implode(' ', $steps) . ' }';
 	}
 
-	/** Save the row index; the returned C++ expression rechecks it at each access.
+	/** Stage indices from the root outward. The returned slot expression rechecks the path at each access.
 	 * @param ast_global_declaration[] $globals
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
@@ -2121,11 +2121,15 @@ CPP;
 	private function nested_vector_place(ast_name_expression $root, ast_index_expression $row, array &$globals,
 		array &$declarations, array &$headers, array &$steps): string
 	{
-		$matrix = $this->value($root, $globals, $declarations, $headers);
+		$owner = $row->receiver;
+		$place = $owner instanceof ast_index_expression
+			? $this->nested_vector_place($root, $owner, $globals, $declarations, $headers, $steps)
+			: $this->value($root, $globals, $declarations, $headers);
 		[$outer, $before_outer] = $this->staged_operand($row->index, $globals, $declarations, $headers);
 		array_push($steps, ...$before_outer);
-		$steps[] = 'const auto row_index = ' . $root->type_def()->lower_cpp_key($row->index, $outer) . ';';
-		return $root->type_def()->lower_cpp_slot($matrix, 'row_index');
+		$key = 'row_index_' . $row->end;
+		$steps[] = 'const auto ' . $key . ' = ' . $owner->type_def()->lower_cpp_key($row->index, $outer) . ';';
+		return $owner->type_def()->lower_cpp_slot($place, $key);
 	}
 
 	/**
