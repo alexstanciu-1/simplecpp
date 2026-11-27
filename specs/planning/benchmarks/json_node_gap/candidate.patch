@@ -1,0 +1,73 @@
+--- a/runtime/src/json/structural_reader.hpp
++++ b/runtime/src/json/structural_reader.hpp
+@@ -2,6 +2,9 @@
+ #pragma once
+ #include "reader.hpp"
+ #include "../sequence/utf8_codepoints.hpp"
++#if defined(__x86_64__) && !defined(SCPP_JSON_PORTABLE_SCAN_ONLY)
++#include <emmintrin.h>
++#endif
+ #include <array>
+ #include <charconv>
+ #include <cstring>
+@@ -20,6 +23,30 @@
+ 	}
+ 	return size;
+ }
++
++#if defined(__x86_64__) && !defined(SCPP_JSON_PORTABLE_SCAN_ONLY)
++// Consume complete groups of valid two- or four-byte encodings.
++inline std::size_t unicode_run(std::string_view text, unsigned width) noexcept {
++	if (width != 2 && width != 4) return 0;
++	const auto low = width == 2 ? _mm_set1_epi16(static_cast<short>(0x80c2)) : _mm_set1_epi32(0x808080f0u);
++	const auto high = width == 2 ? _mm_set1_epi16(static_cast<short>(0xbfdf)) : _mm_set1_epi32(0xbfbfbff4u);
++	std::size_t i = 0;
++	while (text.size() - i >= 16) {
++		const auto b = _mm_loadu_si128(reinterpret_cast<const __m128i*>(text.data() + i));
++		const auto clipped = _mm_min_epu8(high, _mm_max_epu8(low, b));
++		if (_mm_movemask_epi8(_mm_cmpeq_epi8(b, clipped)) != 0xffff) break;
++		if (width == 4) {
++			const auto second = _mm_srli_epi32(b, 8);
++			const auto below90 = _mm_cmpgt_epi8(_mm_set1_epi8(static_cast<char>(0x90)), second);
++			const auto f0 = _mm_cmpeq_epi8(b, _mm_set1_epi8(static_cast<char>(0xf0)));
++			const auto f4 = _mm_cmpeq_epi8(b, _mm_set1_epi8(static_cast<char>(0xf4)));
++			if (_mm_movemask_epi8(_mm_or_si128(_mm_and_si128(f0, below90), _mm_andnot_si128(below90, f4)))) break;
++		}
++		i += 16;
++	}
++	return i;
++}
++#endif
+ 
+ // A failed reader is terminal. Consumers publish only after finish_document().
+ class read_error final : public std::runtime_error {
+@@ -165,6 +192,9 @@
+ 				const auto width = utf8::validated_width(input_.substr(i));
+ 				if (!width) reader_detail::fail_json_parse("invalid UTF-8", i, "utf8");
+ 				i += width;
++#if defined(__x86_64__) && !defined(SCPP_JSON_PORTABLE_SCAN_ONLY)
++				if (width > 1) i += unicode_run(input_.substr(i), width);
++#endif
+ 			}
+ 		});
+ 	}
+@@ -236,6 +266,19 @@
+ 		read_array([&] {
+ 			const char* first = input_.data() + pos_;
+ 			const char* end = input_.data() + input_.size();
++			// Most compact array elements are short positive decimals.
++			if (end - first >= 5 && *first >= '1' && *first <= '9') {
++				auto cursor = first + 1;
++				unsigned small = *first - '0';
++				while (cursor < first + 4 && reader_detail::is_ascii_digit(*cursor)) {
++					small = 10 * small + static_cast<unsigned>(*cursor++ - '0');
++				}
++				if (*cursor == ',' || *cursor == ']') {
++					pos_ += static_cast<std::size_t>(cursor - first);
++					append(static_cast<std::int64_t>(small));
++					return true;
++				}
++			}
+ 			std::int64_t value;
+ 			const auto parsed = std::from_chars(first, end, value);
+ 			if (parsed.ec != std::errc{}) return false;

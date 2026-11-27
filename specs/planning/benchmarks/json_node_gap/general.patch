@@ -1,0 +1,77 @@
+--- a/runtime/src/json/structural_reader.hpp
++++ b/runtime/src/json/structural_reader.hpp
+@@ -2,6 +2,10 @@
+ #pragma once
+ #include "reader.hpp"
+ #include "../sequence/utf8_codepoints.hpp"
++#if defined(__x86_64__) && !defined(SCPP_JSON_PORTABLE_SCAN_ONLY)
++#include <emmintrin.h>
++#endif
++#include <bit>
+ #include <array>
+ #include <charconv>
+ #include <cstring>
+@@ -20,6 +24,37 @@
+ 	}
+ 	return size;
+ }
++
++#if defined(__x86_64__) && !defined(SCPP_JSON_PORTABLE_SCAN_ONLY)
++inline std::size_t unicode_blocks(std::string_view input) noexcept {
++	std::size_t i = 0;
++	const auto mask = [](__m128i b) { return static_cast<unsigned>(_mm_movemask_epi8(b)); };
++	while (input.size() - i >= 16) {
++		const auto b = _mm_loadu_si128(reinterpret_cast<const __m128i*>(input.data() + i));
++		const auto high = mask(b);
++		if (!high) break;
++		const auto byte = [](unsigned v) { return _mm_set1_epi8(static_cast<char>(v)); };
++		const auto eq = [&](unsigned v) { return _mm_cmpeq_epi8(b, byte(v)); };
++		const auto top = [&](unsigned bits) { return mask(_mm_cmpeq_epi8(_mm_and_si128(b, byte(bits)), byte(bits))); };
++		const auto lead = top(0xc0);
++		const auto three = top(0xe0);
++		const auto four = top(0xf0);
++		const unsigned expected = (lead << 1) | (three << 2) | (four << 3);
++		if ((expected & 0xffff) != (high ^ lead)) break;
++		const auto overlong = _mm_cmpeq_epi8(_mm_and_si128(b, byte(0xfe)), byte(0xc0));
++		if (mask(overlong) || mask(_mm_cmpeq_epi8(b, _mm_min_epu8(b, byte(0xf4)))) != 0xffff) break;
++		const auto next = _mm_srli_si128(b, 1);
++		const auto below_a0 = _mm_cmpgt_epi8(byte(0xa0), next);
++		const auto below_90 = _mm_cmpgt_epi8(byte(0x90), next);
++		const auto bad3 = _mm_or_si128(_mm_and_si128(eq(0xe0), below_a0), _mm_andnot_si128(below_a0, eq(0xed)));
++		const auto bad4 = _mm_or_si128(_mm_and_si128(eq(0xf0), below_90), _mm_andnot_si128(below_90, eq(0xf4)));
++		if (mask(_mm_or_si128(bad3, bad4)) & 0x7fff) break;
++		// Defer an incomplete final code point, including its restricted second byte.
++		i += (expected >> 16) ? std::bit_width(lead) - 1 : 16;
++	}
++	return i;
++}
++#endif
+ 
+ // A failed reader is terminal. Consumers publish only after finish_document().
+ class read_error final : public std::runtime_error {
+@@ -165,6 +200,9 @@
+ 				const auto width = utf8::validated_width(input_.substr(i));
+ 				if (!width) reader_detail::fail_json_parse("invalid UTF-8", i, "utf8");
+ 				i += width;
++#if defined(__x86_64__) && !defined(SCPP_JSON_PORTABLE_SCAN_ONLY)
++				if (width > 1) i += unicode_blocks(input_.substr(i));
++#endif
+ 			}
+ 		});
+ 	}
+@@ -236,6 +274,15 @@
+ 		read_array([&] {
+ 			const char* first = input_.data() + pos_;
+ 			const char* end = input_.data() + input_.size();
++			if (end - first >= 5 && (first[4] == ',' || first[4] == ']') &&
++				first[0] >= '1' && first[0] <= '9' && reader_detail::is_ascii_digit(first[1]) &&
++				reader_detail::is_ascii_digit(first[2]) && reader_detail::is_ascii_digit(first[3])) {
++				const int small = (first[0] - '0') * 1000 + (first[1] - '0') * 100
++					+ (first[2] - '0') * 10 + (first[3] - '0');
++				pos_ += 4;
++				append(static_cast<std::int64_t>(small));
++				return true;
++			}
+ 			std::int64_t value;
+ 			const auto parsed = std::from_chars(first, end, value);
+ 			if (parsed.ec != std::errc{}) return false;
