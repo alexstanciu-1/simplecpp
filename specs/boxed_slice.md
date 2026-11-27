@@ -116,9 +116,23 @@ Generated dispatch selects the ordinary scalar rule for the observed kind. The a
 links the prebuilt runtime. The boxed storage API above can also be published separately.
 Typed local `[]`, single-level indexed reads and keyed writes are available in all three
 flavors. Keys have static type int64 or string. A read returns a same-family value and
-writes use ordinary same-family copies or scalar boxing. Append, boxed key expressions,
-populated literals, nested writes and explicit family crossing remain deferred.
+writes use ordinary same-family copies or scalar boxing. A plain two-key write on a local follows the rules below.
 Native traversal follows the [common protocol](collection_traversal.md); the [compiler foreach slice](../compiler/docs/foreach.md) consumes it. See [validation](boxed_slice_validation.md).
+
+## Plain two-key assignment on boxed locals
+
+For `data[group][key] = value` in PHP, C++ and JavaScript, evaluate and normalize
+each key once in source order, then evaluate and box the RHS once. After those
+steps, look up the saved group key in the current root. A missing entry raises
+`boxed_missing_key`. The root and the selected child must both be containers;
+a non-container raises `boxed_expected_container`, including a present null child.
+The final key may be inserted or replaced.
+
+Mixed writes publish the updated child back into the root, preserving the old
+contents of other copies. Dynamic writes mutate the selected child's shared
+table, so existing aliases of that child observe the change. If the RHS replaces
+the child, the replacement receives the write. Failed lookup leaves earlier
+operand effects visible.
 
 ## Source cardinality and keyed methods
 
@@ -158,7 +172,7 @@ value is copied, the scalar operation is selected from existing metadata using i
 kind, and write-back validates presence after RHS effects. No raw element reference escapes.
 Arithmetic results retain the boxed family; ordering returns bool. String compounds use
 PHP `.=` versus C++/JS `+=`; PHP numeric `+=` rejects string payloads. Scalar division,
-shift and power guards remain in effect. Nested indexing remains deferred. These additions
+shift and power guards remain in effect. Nested compound assignments and updates remain deferred. These additions
 introduce no public object layout or additional boxed kinds.
 
 ## Exact mixed type predicates

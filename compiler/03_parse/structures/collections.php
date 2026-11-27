@@ -221,6 +221,16 @@ final class ast_index_assignment extends ast_statement
 	}
 
 	/** METHODS */
+	/** A plain two-key boxed write reselects its child from this local after RHS evaluation. */
+	public function boxed_path_root(): ?ast_name_expression
+	{
+		$row = $this->receiver;
+		if (!($row instanceof ast_index_expression) || $this->source()->flavor === flavor::python) return null;
+		$root = $row->receiver;
+		return $root instanceof ast_name_expression && $root->local_binding() !== null
+			&& $root->type_def() instanceof boxed_type_definition ? $root : null;
+	}
+
 	public function settle_write(int $conversion /** uint16 */): void
 	{
 		$this->conversion = $conversion;

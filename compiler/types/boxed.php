@@ -85,6 +85,15 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $receiver . '.source_set(' . $key . ', ' . $value . ')';
 	}
 
+	/** Resolve an existing child after both keys and the converted value have been saved. */
+	public function lower_cpp_child_store(string $root, string $parent_key, string $key, string $value): string
+	{
+		$store = "$root.source_check_container(); auto boxed_child = $root.source_require($parent_key); "
+			. 'boxed_child.source_check_container(); ' . $this->lower_cpp_write('boxed_child', $key, $value) . ';';
+		if (!$this->mutates_referenced_value()) $store .= ' ' . $this->lower_cpp_write($root, $parent_key, 'boxed_child') . ';';
+		return $store;
+	}
+
 	public function supports_inferred_local(): bool
 	{
 		return true;

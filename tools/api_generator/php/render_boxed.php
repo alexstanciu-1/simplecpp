@@ -18,7 +18,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
     $unionIncludes = '';
     $d = includeHeader($box['header']) . includeHeader('boxed_conversion.hpp') . includeHeader('ownership_semantics.hpp') . includeHeader('scalar_semantics.hpp') . includeHeader('packed_key.hpp') . "namespace scpp {\n";
     if ($split) {
-        $d = str_replace("namespace scpp {\n", includeHeader('source_key.hpp') . implode('', array_map(__NAMESPACE__ . '\\includeHeader', $plan['boxed_dispatch']['headers'])) . "namespace scpp {\n", $d);
+        $d = "#include <stdexcept>\n" . str_replace("namespace scpp {\n", includeHeader('source_key.hpp') . implode('', array_map(__NAMESPACE__ . '\\includeHeader', $plan['boxed_dispatch']['headers'])) . "namespace scpp {\n", $d);
         $d .= "int64 boxed_key(int64 key) { return detail::packed_key::integer(key); }\n"
             . "boxed_text_key boxed_key(string key) {\n"
             . "    const auto index = detail::source_key_index({key.data(), static_cast<std::size_t>(key.size())});\n"
@@ -63,6 +63,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         $fences .= scalarInputFences($plan, 'set', [['int64', $n], ['const string&', $n]]);
         $sourceMembers = $split ? "    $n source_read(int64 key) const { return read(key); }\n"
             . "    $n source_read(const boxed_text_key& key) const;\n"
+            . "    void source_check_container() const;\n"
             . "    $n source_require(int64 key) const;\n"
             . "    $n source_require(const boxed_text_key& key) const;\n"
             . "    void source_set(int64 key, const $n& value) { set(key, value); }\n"
@@ -114,7 +115,8 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
             if ($recordExport) $forward .= 'class Encoder; ';
             $groups[] = ['provider' => $provider, 'system' => [], 'declarations' =>
                 includeHeader('scpp/boxed_key.hpp') . includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $literalEntry . $api . $predicates . "}\n"];
-            $d .= $impl . "$n $n::source_read(const boxed_text_key& key) const { return key.index < 0 ? read(key.text) : read(key.index); }\n"
+            $d .= $impl . "void $n::source_check_container() const { if (kind() != boxed_kind::container) throw std::runtime_error(\"boxed_expected_container\"); }\n"
+                . "$n $n::source_read(const boxed_text_key& key) const { return key.index < 0 ? read(key.text) : read(key.index); }\n"
                 . "void $n::source_set(const boxed_text_key& key, const $n& value) { if (key.index < 0) set(key.text, value); else set(key.index, value); }\n";
         } else {
             $h .= $decl . $predicates;

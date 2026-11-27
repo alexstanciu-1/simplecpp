@@ -185,7 +185,7 @@ $word string=$matches[1]; echo $found,":",$word; return 0;''', modules=('regex',
     Probe('utf8-width', '$s="é😀"; echo strlen($s),"|",string_utf8_codepoint_count($s); return 0;', general=True, output='6|2'),
     Probe('json-intermediate', '''$r=json_decode('{"user":{"name":"Ana"}}'); $v dynamic=$r; $user dynamic=$v["user"];
 $name string=$user["name"]; echo $name; return 0;''', modules=('json',), output='Ana'),
-    Probe('boxed-nested-write', '''$row mixed=["user"=>["name"=>"Ana"]]; $row["user"]["name"]="Jo"; return 0;''', reject='Nested indexed write requires inline fixed-array storage'),
+    Probe('boxed-nested-write', '''$row mixed=["user"=>["name"=>"Ana"]]; $row["user"]["name"]="Jo"; $child=$row["user"]; echo (string)$child["name"]; return 0;''', output='Jo'),
     Probe('mixed-writeback', '''$base mixed=["user"=>["name"=>"Ana"]]; $edit=$base; $child mixed=$edit["user"];
 $child["name"]="Jo"; $edit["user"]=$child; $old mixed=$base["user"]; $name string=$old["name"]; echo $name; return 0;''', output='Ana'),
     Probe('mixed-key-types', '''$row mixed=["n"=>1]; $row[0]="zero"; echo (int)$row->has("0"),(int)$row->has(0); return 0;''', output='11'),

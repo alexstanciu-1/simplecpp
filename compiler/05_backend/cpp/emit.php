@@ -1497,9 +1497,18 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
-				if (($root = ast_index_expression::nested_collection_root($statement->receiver)) !== null) {
+				$boxed_root = $statement->boxed_path_root();
+				$root = $boxed_root ?? ast_index_expression::nested_collection_root($statement->receiver);
+				if ($root !== null) {
 					$steps = [];
-					$row_place = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
+					if ($boxed_root !== null) {
+						$container = $this->value($boxed_root, $global_references, $declarations, $required_headers);
+						$outer_key = $statement->receiver->index;
+						[$outer, $steps] = $this->staged_operand($outer_key, $global_references, $declarations, $required_headers);
+						$steps[] = 'const auto parent_key = ' . $type->lower_cpp_key($outer_key, $outer) . ';';
+					} else {
+						$row_place = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
+					}
 					[$inner, $before_inner] = $this->staged_operand($statement->index, $global_references, $declarations, $required_headers);
 					array_push($steps, ...$before_inner);
 					$steps[] = 'const auto element_index = ' . $type->lower_cpp_key($statement->index, $inner) . ';';
@@ -1510,7 +1519,9 @@ CPP;
 					$value = $element->lower_cpp_exact_argument($statement->value, $statement->conversion(), $value, $this->inline_adapters);
 					$steps[] = 'auto element_value = ' . $value . ';';
 					$required_headers['utility'] = true;
-					$steps[] = $type->lower_cpp_write($row_place, 'element_index', 'std::move(element_value)') . ';';
+					$steps[] = $boxed_root !== null
+						? $type->lower_cpp_child_store($container, 'parent_key', 'element_index', 'element_value')
+						: $type->lower_cpp_write($row_place, 'element_index', 'std::move(element_value)') . ';';
 					$lines[] = $this->async_statement('{ ' . implode(' ', $steps) . ' }');
 					continue;
 				}
