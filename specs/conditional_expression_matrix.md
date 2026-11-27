@@ -45,8 +45,14 @@ Consecutive `?->` hops compose from left to right. In
 once. If either owner is absent, the result is absent and `key()` is skipped.
 A field or a by-value method can supply the shared owner for the next hop.
 Preparation checks every member against its receiver type, even on paths that
-can short-circuit. Nullsafe write targets and chains mixing `?->` with a
-following unguarded `->` remain deferred.
+can short-circuit.
+
+One ordinary field read or synchronous by-value instance call can follow the
+guarded member. In `findTeam()?->captain->scoreFor(key())`, an absent team
+skips the entire suffix, including `key()`. With a present team, ordinary
+member access applies. An empty captain raises the ordinary empty-owner failure
+before evaluating `key()`. With both owners present, a score of zero stays
+present. The same rule applies when a method supplies the intermediate owner.
 
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 

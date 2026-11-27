@@ -62,6 +62,57 @@ def chain(work):
         (None, None, trace), ('team', scalar, 'unknown method score on nullable<int64>'), ('team', team, trace)])
 
 
+PLAYERS = """
+    class Player {
+        public int $points;
+        public function score(int $n):int {echo "M";return $this->points;}
+    }
+    class Other {}
+"""
+TEAM = """
+    class Team {
+        public ?Player $captain;
+        public function pick(int $n):?Player {echo "S";return $this->captain;}
+    }
+"""
+PROBES = """
+    function probe(?Team $t):?Team {echo "P";return $t;}
+    function key():int {echo "K";return 1;}
+"""
+
+
+def ordinary_suffix(work):
+    main = PROBES + """
+        function check(?Team $t):void {
+            echo probe($t)?->pick(key())->score(key()) ?? 9;
+            echo probe($t)?->captain->points ?? 9;
+        }
+        check(null);$t=new Team();$t->captain=new Player();check($t);return 8;
+    """
+    trace = b'P9P9PKSKM0P0'
+    changed = TEAM.replace(':?Player {echo "S";return $this->captain;', ':?Other {return null;')
+    revisions(work, 'php', dict(main=main, team=TEAM, players=PLAYERS), [
+        (None, None, trace), ('team', changed, 'Unknown method Other::score'), ('team', TEAM, trace)])
+
+
+def suspended_suffix(work):
+    main = PROBES + """
+        async function keyLater():int {await async_sleep_ms(1);return key();}
+        async function check(?Team $t):int {
+            return probe($t)?->pick(await keyLater())->score(await keyLater()) ?? 9;
+        }
+        echo await check(null);$t=new Team();$t->captain=new Player();echo await check($t);return 8;
+    """
+    revisions(work, 'php', dict(main=main, team=TEAM, players=PLAYERS), [(None, None, b'P9PKSKM0')])
+
+
+def empty_intermediate(work):
+    setup = PLAYERS + TEAM + PROBES + '$t=new Team();'
+    for name, access, trace in [('field', 'captain->points', b'P'), ('method', 'pick(key())->score(key())', b'PKS')]:
+        guard(work, 'php', name, setup + 'echo probe($t)?->' + access + ' ?? 9;return 8;',
+              'ownership_empty_access', expected_stdout=trace)
+
+
 def dispatch(work):
     main = """
         class Base {public virtual function score(int $left):int {return $left;}}
@@ -140,4 +191,5 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
         indexed_callable(Path(tmp), case)
     else:
         {'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
-         'dispatch': dispatch, 'admission': admission}[case](Path(tmp))
+         'dispatch': dispatch, 'admission': admission, 'ordinary_suffix': ordinary_suffix,
+         'empty_intermediate': empty_intermediate, 'suspended_suffix': suspended_suffix}[case](Path(tmp))

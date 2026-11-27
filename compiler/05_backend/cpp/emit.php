@@ -35,6 +35,8 @@ final class Cpp_Emitter
 	private bool $qualified_adapters = false;
 	/** Non-owning field whose checked descriptor is live in the current emitted function. */
 	private ?ast_field_expression $byte_view = null;
+	/** Non-owning receiver already evaluated by the enclosing nullsafe test. */
+	private ?ast_expression $guarded_receiver = null;
 	/** Count record/handle expressions during the existing walk to preserve observable temporary destruction. */
 	private int $record_expressions = 0;
 	/** Incremented when this recursive lowering walk emits a native suspension. */
@@ -2688,6 +2690,10 @@ CPP;
 		array &$declarations /** array<string,ast_function_declaration> */, array &$required_headers /** array<string,bool> */,
 		bool &$reorderable = false, bool $typed_initializer = false, bool $logical_root = false, bool $bare_comparison = false, bool $borrow_result = false, bool $inside_scope = false, ?Cpp_Staged_Result $destination = null, ?array &$statement_setup = null): string
 	{
+		if ($value === $this->guarded_receiver) {
+			$reorderable = true;
+			return 'owner';
+		}
 		if ($this->async_body && !$inside_scope && ($value->parent instanceof ast_expression || $value->parent instanceof ast_foreach_statement)
 			&& ($value instanceof ast_call_expression || $value instanceof ast_binary_expression || $value instanceof ast_await_expression || $value instanceof ast_construction_expression)) {
 			return $this->scoped_async_operand($value, $global_references, $declarations, $required_headers, $reorderable,
@@ -2848,23 +2854,34 @@ CPP;
 		}
 		if ($value instanceof ast_nullsafe_member) {
 			$member = $value->operand;
-			$owner = $member->receiver->type_def();
-			$operand = $this->value($member->receiver, $global_references, $declarations, $required_headers);
+			$receiver = $value->guarded_member()->receiver;
+			$owner = $receiver->type_def();
+			$operand = $this->value($receiver, $global_references, $declarations, $required_headers);
 			foreach ($value_type->conversion_headers($value->conversion) as $header) $required_headers[$header] = true;
 			$test = $owner->lower_cpp_condition('owner');
 			$result_type = $value_type->cpp_type();
-			if ($member instanceof ast_field_expression) {
+			if (!$value->has_suffix && $member instanceof ast_field_expression) {
 				$present = $this->conversion($value_type, $value->conversion, 'owner->' . Cpp_Identifier::source($member->field), $member);
 				return '([](const ' . $owner->cpp_type() . "& owner) -> $result_type { if ($test) return $present; return {}; }($operand))";
 			}
-			$method = $member->implementation();
-			$name = self::function_name($method);
-			$declarations[$name] = $method;
 			$before = $this->suspensions;
 			$start = count($this->async_steps);
-			$call = $this->invocation($member, $method, $name, $member->type_def(), $global_references, $declarations, $required_headers,
-				selected_receiver: '*owner.operator->()');
-			$present = $this->conversion($value_type, $value->conversion, $call, $member);
+			if ($value->has_suffix) {
+				$outer_receiver = $this->guarded_receiver;
+				$this->guarded_receiver = $receiver;
+				try {
+					$selected = $this->value($member, $global_references, $declarations, $required_headers);
+				} finally {
+					$this->guarded_receiver = $outer_receiver;
+				}
+			} else {
+				$method = $member->implementation();
+				$name = self::function_name($method);
+				$declarations[$name] = $method;
+				$selected = $this->invocation($member, $method, $name, $member->type_def(), $global_references, $declarations, $required_headers,
+					selected_receiver: '*owner.operator->()');
+			}
+			$present = $this->conversion($value_type, $value->conversion, $selected, $member);
 			$argument_steps = implode(' ', array_splice($this->async_steps, $start));
 			if ($before === $this->suspensions) {
 				return '([&](' . $owner->cpp_type() . " owner) -> $result_type { if ($test) { $argument_steps return $present; } return {}; }($operand))";
