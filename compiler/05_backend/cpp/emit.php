@@ -1567,8 +1567,12 @@ CPP;
 				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$steps = [];
-				$root = ast_index_expression::nested_collection_root($statement->receiver);
-				if ($root !== null) {
+				$boxed_root = ast_index_expression::boxed_path_root($statement->receiver);
+				$root = $boxed_root ?? ast_index_expression::nested_collection_root($statement->receiver);
+				if ($boxed_root !== null) {
+					$receiver = $this->value($boxed_root, $global_references, $declarations, $required_headers);
+					$this->boxed_path_keys($statement->receiver, null, $global_references, $declarations, $required_headers, $steps);
+				} elseif ($root !== null) {
 					$receiver = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
 				} else {
 					$receiver = $statement->receiver instanceof ast_field_expression
@@ -1591,7 +1595,8 @@ CPP;
 					$required_headers['utility'] = true;
 					$value = 'std::move(append_value)';
 				}
-				$append = $type->lower_cpp_append_value($receiver, $value) . ';';
+				$append = $boxed_root !== null ? $type->lower_cpp_child_store($receiver, 'parent_key', null, $value)
+					: $type->lower_cpp_append_value($receiver, $value) . ';';
 				$lines[] = $this->async_statement($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
@@ -2162,10 +2167,12 @@ CPP;
 	 * @param bool[] $headers
 	 * @param string[] $steps
 	 */
-	private function boxed_path_keys(ast_index_expression $row, ast_expression $leaf, array &$globals,
+	private function boxed_path_keys(ast_index_expression $row, ?ast_expression $leaf, array &$globals,
 		array &$declarations, array &$headers, array &$steps): void
 	{
-		foreach (['parent_key' => $row->index, 'element_index' => $leaf] as $name => $index) {
+		$keys = ['parent_key' => $row->index];
+		if ($leaf !== null) $keys['element_index'] = $leaf;
+		foreach ($keys as $name => $index) {
 			[$key, $before] = $this->staged_operand($index, $globals, $declarations, $headers);
 			array_push($steps, ...$before);
 			$steps[] = "const auto $name = " . $row->type_def()->lower_cpp_key($index, $key) . ';';

@@ -128,6 +128,11 @@ steps, look up the saved group key in the current root. A missing entry raises
 a non-container raises `boxed_expected_container`, including a present null child.
 The final key may be inserted or replaced.
 
+For `data[group][] = value`, save the normalized group key, evaluate and box the RHS,
+then require a container at that key in the current root. Append using that child's
+next integer key. A replacement child supplies its own next key. A missing group raises
+`boxed_missing_key`; a null or scalar child raises `boxed_expected_container`.
+
 Mixed writes publish the updated child back into the root, preserving the old
 contents of other copies. Dynamic writes mutate the selected child's shared
 table, so existing aliases of that child observe the change. If the RHS replaces

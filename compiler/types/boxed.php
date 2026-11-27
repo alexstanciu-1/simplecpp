@@ -100,11 +100,12 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return '([&]() { ' . $this->lower_cpp_child_lookup($root, $parent_key) . "return boxed_child.source_require($key); }())";
 	}
 
-	public function lower_cpp_child_store(string $root, string $parent_key, string $key, string $value, bool $require_leaf = false): string
+	/** A null key appends using the current child's next integer key. */
+	public function lower_cpp_child_store(string $root, string $parent_key, ?string $key, string $value, bool $require_leaf = false): string
 	{
 		$store = $this->lower_cpp_child_lookup($root, $parent_key);
 		if ($require_leaf) $store .= "(void)boxed_child.source_require($key); ";
-		$store .= $this->lower_cpp_write('boxed_child', $key, $value) . ';';
+		$store .= ($key === null ? $this->lower_cpp_append_value('boxed_child', $value) : $this->lower_cpp_write('boxed_child', $key, $value)) . ';';
 		if (!$this->mutates_referenced_value()) $store .= ' ' . $this->lower_cpp_write($root, $parent_key, 'boxed_child') . ';';
 		return $store;
 	}
