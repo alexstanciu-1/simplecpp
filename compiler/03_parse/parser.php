@@ -1509,7 +1509,18 @@ final class Parser
 		}
 		if ($index !== null && (($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lparen)) || $this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::dot))) {
-			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), false);
+			$php = $this->cursor->tokens->source->flavor === flavor::php;
+			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), field_target: $php);
+			if ($php && $this->cursor->is(token_kind::lbracket)) {
+				if ($target instanceof ast_field_expression) {
+					$this->cursor->take(token_kind::lbracket, '[');
+					$key = $this->value();
+					$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
+					if ($this->cursor->is(token_kind::assign)) return $this->index_store($target, $key, $terminator);
+					$target = new ast_index_expression($target, $key, $end);
+				}
+				$target = $this->postfix($target, false);
+			}
 			if ($target instanceof ast_field_expression && $terminator === token_kind::newline) {
 				$this->cursor->take(token_kind::assign, '= after Python field');
 				$value = $this->assignment_value();
@@ -1540,6 +1551,12 @@ final class Parser
 		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || $receiver instanceof ast_index_expression)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed assignment requires named or field storage');
 		}
+		return $this->index_store($receiver, $index, $terminator);
+	}
+
+	private function index_store(ast_name_expression|ast_field_expression|ast_index_expression $receiver, ?ast_expression $index,
+		token_kind $terminator): ast_statement
+	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
 		$end = $this->statement_end($terminator);

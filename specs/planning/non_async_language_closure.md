@@ -44,6 +44,31 @@ Fixed arrays are tracked separately. Expressions and access now covers [nested w
 additional library helpers to the libraries backlog. Those areas may eventually
 consume an element-borrow contract.
 
+### G01 indexed shared owners in PHP write targets
+
+Doc Status: planning
+
+The grouping-dependent parser diagnostic from the audit at `9b9626589` was reproduced
+at `aef175d70`. The [PHP regression](../../compiler/tests/indexed_owner_target.py) now
+checks that both `$owners[0]->values[0] = 7` and `($owners[0])->values[0] = 7` reach
+preparation and report `Field assignment requires writable local storage`.
+Here `$owners` is a vector of shared class handles. Reading the chain prints 3;
+saving the selected handle to a local and writing through it changes the original holder to 7.
+
+Direct-write admission remains a language decision. If admitted, test single evaluation
+and retained shared-owner lifetime through RHS effects. An inline struct element needs
+its own write-back rule.
+
+**Writable-path classification.** For nested keyed stores, append, compounds and updates,
+[preparation](../../compiler/04_analyze/prepare/prepare.php) uses `nested_collection_root`
+and `boxed_path_root` to identify writable storage and check access. For a plain keyed store,
+`settle_write` retains the value conversion. [Lowering](../../compiler/05_backend/cpp/emit.php)
+calls the root helpers again to select typed slot access or boxed write-back, then selects
+and retains a field when required. Before extending path depth, consider retaining that
+choice on the mutation statement. Test invalidation and recovery on a field-type edit
+before relying on a cached choice. The original indexed-owner diagnostic occurs during
+field preparation, before any lowering strategy is selected.
+
 ### Compiler debt for inferred read-only borrows
 
 Doc Status: planning
