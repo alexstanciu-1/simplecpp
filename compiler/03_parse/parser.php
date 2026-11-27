@@ -288,6 +288,14 @@ final class Parser
 			$value = $this->take_expression();
 			return new ast_take_statement($value, $this->statement_end(token_kind::semicolon));
 		}
+		$name_kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
+		if ($this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::assign)) {
+			$start = $this->cursor->position();
+			$tokens = $this->cursor->tokens->tokens;
+			if (($tokens[$start + 2]->kind ?? null) === $name_kind && ($tokens[$start + 3]->kind ?? null) === token_kind::assign) {
+				return $this->assignment_chain($collector, $name_kind);
+			}
+		}
 		if ($grammar instanceof Python_Grammar) return $this->python_statement($grammar, $collector);
 		if ($this->cursor->keyword('unset') || $this->cursor->keyword('clean')) {
 			$start = $this->cursor->position();
@@ -346,7 +354,6 @@ final class Parser
 			}
 			return $this->call_statement($value);
 		}
-		$name_kind = $this->cursor->tokens->source->flavor === flavor::php ? token_kind::variable : token_kind::identifier;
 		if ($this->property_statement_start()) {
 			$target = $this->primary(field_target: true);
 			if ($target instanceof ast_call_expression) {
@@ -365,13 +372,6 @@ final class Parser
 			$name = $this->cursor->name($name_kind);
 			$receiver = new ast_name_expression($name, $start, $start + 1);
 			return $this->indexed_write($receiver);
-		}
-		if ($this->cursor->is($name_kind) && $this->cursor->next_is(token_kind::assign)) {
-			$start = $this->cursor->position();
-			$tokens = $this->cursor->tokens->tokens;
-			if (($tokens[$start + 2]->kind ?? null) === $name_kind && ($tokens[$start + 3]->kind ?? null) === token_kind::assign) {
-				return $this->assignment_chain($collector, $name_kind);
-			}
 		}
 		return $this->update_start() ? $this->update_statement(token_kind::semicolon, true) : $grammar->statement($this, $collector);
 	}
@@ -2323,7 +2323,7 @@ final class Parser
 		return $kind === null ? null : binary_operator::compound($kind);
 	}
 
-	/** Collect ordinary writes in execution order. Each outer RHS reads the preceding destination. */
+	/** Collect standalone chain targets before constructing the ordered writes for this flavor. */
 	private function assignment_chain(Body_Collection $collector, token_kind $name_kind): ast_block_statement
 	{
 		$cursor = $this->cursor;
@@ -2339,15 +2339,28 @@ final class Parser
 			$targets[] = [$position, $name];
 			$cursor->take(token_kind::assign, '=');
 		}
-		$write = $this->assignment($position, $name, assignment_intent::existing_binding);
-		$end = $write->end;
-		$writes = [$write];
-		while ($targets !== []) {
-			[$outer, $destination] = array_pop($targets);
-			$read = new ast_name_expression($name, $position, $position + 1);
-			$writes[] = new ast_assignment_statement($outer, $position + 1, $destination, $read, assignment_intent::existing_binding);
-			$name = $destination;
-			$position = $outer;
+		if ($cursor->tokens->source->flavor === flavor::python) {
+			$targets[] = [$position, $name];
+			$cursor->take(token_kind::assign, '=');
+			$value = $this->assignment_value();
+			$end = $this->statement_end(token_kind::newline);
+			$snapshot = new ast_chain_value($start, $end, $targets[0][1], $value);
+			$writes = [$snapshot];
+			foreach ($targets as [$position, $name]) {
+				$read = new ast_name_expression($snapshot->short_name, $value->start, $value->end);
+				$writes[] = new ast_assignment_statement($position, $end, $name, $read, assignment_intent::existing_binding);
+			}
+		} else {
+			$write = $this->assignment($position, $name, assignment_intent::existing_binding);
+			$end = $write->end;
+			$writes = [$write];
+			while ($targets !== []) {
+				[$outer, $destination] = array_pop($targets);
+				$read = new ast_name_expression($name, $position, $position + 1);
+				$writes[] = new ast_assignment_statement($outer, $position + 1, $destination, $read, assignment_intent::existing_binding);
+				$name = $destination;
+				$position = $outer;
+			}
 		}
 		$child = $collector->child();
 		foreach ($writes as $i => $statement) $child->statement($statement, $i);

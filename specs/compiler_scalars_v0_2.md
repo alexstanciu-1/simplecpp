@@ -149,6 +149,16 @@ writes in the chain runs. A failure during a later write preserves completed
 inner writes. This spelling applies to standalone statements with plain local
 targets.
 
+### Python chained assignment statements
+
+For `a = b = compute()`, evaluate the RHS once and retain its original
+value until the statement completes. Assign from that value to each existing
+writable local in source order. Each target applies its ordinary assignment
+conversion independently. A contextual collection literal takes its construction
+type from the first target. Shared handles retain the same object identity.
+If evaluating the RHS fails, no write occurs. If a target conversion fails,
+earlier writes remain visible and subsequent targets keep their previous values.
+
 ## Initializer-based local inference
 
 PHP `$value = initializer;` declares a local on its first write in the current body.

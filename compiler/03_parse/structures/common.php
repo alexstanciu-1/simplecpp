@@ -373,6 +373,15 @@ class ast_local_declaration extends ast_statement implements ast_local_binding
 
 }
 
+/** Statement-scoped original RHS, inaccessible by a source identifier. */
+final class ast_chain_value extends ast_local_declaration
+{
+	public function __construct(int $start /** uint32 */, int $end /** uint32 */, public readonly string $first_target, ast_expression $value)
+	{
+		parent::__construct($start, $end, ':chain_rhs', null, $value);
+	}
+}
+
 /** Lexical alias declaration. Preparation publishes the original binding under this name. */
 final class ast_local_alias extends ast_local_declaration
 {
