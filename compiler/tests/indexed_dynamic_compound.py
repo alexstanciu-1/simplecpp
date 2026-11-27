@@ -1,4 +1,4 @@
-"""An indexed holder stays selected while a dynamic compound rechecks its child after the RHS."""
+"""Trace dynamic compound selection when either the index or the RHS replaces a child."""
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -16,7 +16,7 @@ $original=new Holder(); $other=new Holder();
 $root dynamic=[]; $child dynamic=[];
 $child["n"]=3; $root->child=$child; $original->data=$root;
 $freshRoot dynamic=[]; $fresh dynamic=[];
-$fresh["n"]=90; $freshRoot->child=$fresh; $other->data=$freshRoot;
+$freshRoot->child=$fresh; $other->data=$freshRoot;
 $owners hash<Holder,string> = []; $owners["A"]=$original;
 """
 TARGET = '$owners[ownerKey()]->data->child[leafKey()] += rhs($owners,$other);'
@@ -39,7 +39,7 @@ CASES = {
 def run(work, case):
     effect, expected = CASES[case]
     rhs = 'function rhs(hash<Holder,string> &$owners, Holder $other):int { echo "R";' + effect + 'return 7; }'
-    source = MODEL + rhs + SETUP
+    source = MODEL + rhs + SETUP + '$fresh["n"]=90;'
     if case == 'remove_leaf':
         source += 'try {' + TARGET + '} finally {' + PRESENCE + '} return 0;'
         guard(work, 'php', case, source, 'boxed_missing_key', expected_stdout=expected)
@@ -48,6 +48,30 @@ def run(work, case):
         revisions(work, 'php', {'main': source}, [(None, None, expected)])
 
 
+def index_replacement(work, case):
+    source = MODEL + """
+    function replaceChildAndReturnKey(Holder $holder, dynamic $fresh):string {
+        echo "K"; $holder->data->child=$fresh; return "n";
+    }
+    function rhs():int { echo "R"; return 7; }
+    """ + SETUP
+    target = '$owners[ownerKey()]->data->child[replaceChildAndReturnKey($original,$fresh)] += rhs();'
+    if case == 'index_replace_present':
+        source += '$fresh["n"]=90;' + target + VALUES + 'return 8;'
+        revisions(work, 'php', {'main': source}, [(None, None, b'OKR|97/97/3/97')])
+    else:
+        check = """
+        echo "|", $owners["A"]->data->child->has("n") ? 1 : 0, "/", $fresh->has("n") ? 1 : 0,
+             "/", (int)$child["n"];
+        """
+        source += 'try {' + target + '} finally {' + check + '} return 0;'
+        guard(work, 'php', case, source, 'boxed_missing_key', expected_stdout=b'OK|0/0/3')
+
+
 if __name__ == '__main__':
     with TemporaryDirectory(prefix='indexed-dynamic-compound-') as tmp:
-        run(Path(tmp), sys.argv[1])
+        case = sys.argv[1]
+        if case in ('index_replace_present', 'index_replace_missing'):
+            index_replacement(Path(tmp), case)
+        else:
+            run(Path(tmp), case)
