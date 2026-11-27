@@ -63,7 +63,7 @@ final class ast_await_expression extends ast_expression
 	}
 }
 
-/** Discard an awaited call or a single-hop nullsafe invocation at a statement boundary. */
+/** Discard an awaited call or a nullsafe invocation at a statement boundary. */
 final class ast_discard_statement extends ast_statement
 {
 	public readonly ast_await_expression|ast_nullsafe_member $value;

@@ -21,7 +21,7 @@ less tightly. Nested ternaries associate to the right. PHP also accepts
 uses that value as the true arm. Only a false test evaluates the fallback.
 Both arms follow the full ternary's inferred and declared-return result rules.
 
-## PHP single-hop nullsafe access
+## PHP nullsafe access
 
 `findPlayer()?->score` evaluates the optional shared receiver once. Absence
 returns an empty optional. Presence reads the declared field and returns its
@@ -38,8 +38,21 @@ Presence retains the selected owner through argument evaluation and invocation.
 Arguments bind and execute as for an ordinary instance call, including named
 arguments in written order and dispatch through the declared receiver type.
 A synchronous method returning by value uses the same optional result rule as
-a field. Exceptions from selected arguments and the method propagate. Write
-targets and longer nullsafe chains remain deferred.
+a field. Exceptions from selected arguments and the method propagate.
+
+Consecutive `?->` hops compose from left to right. In
+`findTeam()?->captain?->scoreFor(key())`, each selected receiver is evaluated
+once. If either owner is absent, the result is absent and `key()` is skipped.
+A field or a by-value method can supply the shared owner for the next hop.
+Preparation checks every member against its receiver type, even on paths that
+can short-circuit.
+
+One ordinary field read or synchronous by-value instance call can follow the
+guarded member. In `findTeam()?->captain->scoreFor(key())`, an absent team
+skips the entire suffix, including `key()`. With a present team, ordinary
+member access applies. An empty captain raises the ordinary empty-owner failure
+before evaluating `key()`. With both owners present, a score of zero stays
+present. The same rule applies when a method supplies the intermediate owner.
 
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 

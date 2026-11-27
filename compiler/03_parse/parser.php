@@ -1601,6 +1601,14 @@ final class Parser
 		return $this->postfix($this->atom($argument_operand), $field_target);
 	}
 
+	/** Read the field or method after a consumed instance access operator. */
+	private function instance_member(ast_expression $receiver): ast_field_expression|ast_call_expression
+	{
+		$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
+		return $this->cursor->is(token_kind::lparen) ? $this->call_arguments($receiver->start, $name, token_kind::member, $receiver)
+			: new ast_field_expression($receiver, $name, $this->cursor->position());
+	}
+
 	/** Continue member calls and indexing on the expression already parsed. */
 	private function postfix(ast_expression $value, bool $field_target, bool $stop_before_items = false): ast_expression
 	{
@@ -1623,19 +1631,20 @@ final class Parser
 				continue;
 			}
 			if ($this->cursor->is(token_kind::nullsafe_member)) {
-				$this->cursor->take(token_kind::nullsafe_member, '?->');
-				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
-				if ($this->cursor->is(token_kind::lparen)) {
-					$call = $this->call_arguments($value->start, $name, token_kind::member, $value);
-					return new ast_nullsafe_member($call);
-				}
-				return new ast_nullsafe_member(new ast_field_expression($value, $name, $this->cursor->position()));
+				do {
+					$this->cursor->take(token_kind::nullsafe_member, '?->');
+					$member = $this->instance_member($value);
+					if ($this->cursor->is(token_kind::member)) {
+						$this->cursor->take(token_kind::member, '->');
+						return new ast_nullsafe_member($this->instance_member($member), has_suffix: true);
+					}
+					$value = new ast_nullsafe_member($member);
+				} while ($this->cursor->is(token_kind::nullsafe_member));
+				return $value;
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				$this->cursor->take(token_kind::member, '->');
-				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
-				$value = $this->cursor->is(token_kind::lparen) ? $this->call_arguments($value->start, $name, token_kind::member, $value)
-					: new ast_field_expression($value, $name, $this->cursor->position());
+				$value = $this->instance_member($value);
 				continue;
 			}
 			if ($this->cursor->tokens->source->flavor !== flavor::php && $this->cursor->is(token_kind::dot)) {

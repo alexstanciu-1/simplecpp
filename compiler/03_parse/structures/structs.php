@@ -339,14 +339,23 @@ final class ast_field_expression extends ast_expression
 /** A single PHP ?-> guards an ordinary field read or instance call. */
 final class ast_nullsafe_member extends ast_expression
 {
+	/** PROPERTIES */
 	public readonly ast_field_expression|ast_call_expression $operand;
 	public int $conversion /** uint16 */ = value_conversion::identity;
 
-	public function __construct(ast_field_expression|ast_call_expression $operand)
+	/** CONSTRUCTOR */
+	public function __construct(ast_field_expression|ast_call_expression $operand, public readonly bool $has_suffix = false)
 	{
 		parent::__construct($operand->start, $operand->end);
 		$this->operand = $operand;
 		$operand->attach($this);
+	}
+
+	/** METHODS */
+	/** The member immediately after ?-> supplies the receiver for the presence test. */
+	public function guarded_member(): ast_field_expression|ast_call_expression
+	{
+		return $this->has_suffix ? $this->operand->receiver : $this->operand;
 	}
 
 	public function settle_optional(type_definition $type): void

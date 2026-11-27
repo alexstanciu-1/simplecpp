@@ -85,9 +85,37 @@ def prove(work, quick=False):
           expected_stdout=b'A', exception_type='std::bad_function_call', exception_header='functional')
 
 
+def nullsafe_index(work, selection):
+    api = """
+    class Selector { public nullable<string> $key; }
+    function probe(?Selector $s):?Selector { echo "P"; return $s; }
+    function fallbackKey():string { echo "F"; return "run"; }
+    function first(int $n):int {echo "A"; return $n+10;}
+    function second(int $n):int {echo "B"; return $n+20;}
+    function replaceSelected(hash<function<int(int)>,string> &$ops):int {
+        echo "R"; $ops["run"]=fn($n)=>second($n); return 6;
+    }
+    """
+    selector, trace = {
+        'direct': ('$selector=new Selector(); $selector->key="run";', b'P'),
+        'fallback': ('$selector ?Selector=null;', b'PF'),
+    }[selection]
+    setup = api + '$ops hash<function<int(int)>,string> = ["decoy"=>fn($n)=>0];' + selector
+    call = '$ops[probe($selector)?->key ?? fallbackKey()](replaceSelected($ops))'
+    present = setup + '$ops["run"]=fn($n)=>first($n); $pending=' + call + ';'
+    present += '$next=$ops["run"](6); echo "|",$pending,"/",$next; return 8;'
+    revisions(work, 'php', {'main': present}, [(None, None, trace + b'RAB|16/26')])
+    guard(work, 'php', 'missing', setup + '$pending=' + call + '; return 0;', 'hash_missing_key',
+          expected_stdout=trace, exception_type='std::out_of_range')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--quick', action='store_true')
+    parser.add_argument('--nullsafe-index', choices=('direct', 'fallback'))
     args = parser.parse_args()
     with TemporaryDirectory(prefix='scpp-callable-collections-') as directory:
-        prove(Path(directory), args.quick)
+        if args.nullsafe_index:
+            nullsafe_index(Path(directory), args.nullsafe_index)
+        else:
+            prove(Path(directory), args.quick)

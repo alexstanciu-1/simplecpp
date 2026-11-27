@@ -1835,18 +1835,15 @@ final class Preparation
 		if ($syntax instanceof ast_nullsafe_member) {
 			$member = $syntax->operand;
 			$this->value($member, $initializing);
-			$kind = $member instanceof ast_call_expression ? 'method call' : 'field read';
-			$owner = $member->receiver->type_def();
+			$guarded = $syntax->guarded_member();
+			$kind = $guarded instanceof ast_call_expression ? 'method call' : 'field read';
+			$owner = $guarded->receiver->type_def();
 			if (!($owner instanceof shared_record_type_definition) || $owner->required) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe ' . $kind . ' requires an optional shared owner');
 			}
 			$payload = $member->type_def();
-			if ($member instanceof ast_call_expression) {
-				$method = $member->function_def();
-				if (!($method instanceof ast_function_declaration) || !$method->has_receiver() || $method->returns_reference || $payload === type_void::instance()) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe call requires an instance method returning a value');
-				}
-			}
+			if ($guarded instanceof ast_call_expression) $this->check_nullsafe_method($guarded);
+			if ($syntax->has_suffix && $member instanceof ast_call_expression) $this->check_nullsafe_method($member);
 			$result = $payload instanceof carrier_type_definition && $payload->family === 'nullable' ? $payload : Type_Resolution::nullable_value($payload);
 			if ($result === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'No optional representation for ' . ($member instanceof ast_call_expression ? 'method result' : 'field type') . ' ' . $payload->name);
 			$syntax->settle_optional($result);
@@ -2147,6 +2144,15 @@ final class Preparation
 				$syntax->constant_only ? 'Unknown constant: ' . $name : 'Unknown or not-yet-initialized local/global: ' . $name);
 		}
 		throw new \LogicException('Unhandled expression preparation');
+	}
+
+	/** Only synchronous instance calls returning values participate in a guarded chain. */
+	private function check_nullsafe_method(ast_call_expression $call): void
+	{
+		$method = $call->function_def();
+		if (!($method instanceof ast_function_declaration) || !$method->has_receiver() || $method->returns_reference || $method->is_async || $call->type_def() === type_void::instance()) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Nullsafe call requires an instance method returning a value');
+		}
 	}
 
 	/** Watch each candidate symbol, including misses. Invalid bindings retain their own diagnostic. */

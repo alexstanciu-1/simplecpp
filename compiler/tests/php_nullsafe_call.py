@@ -1,9 +1,9 @@
-"""Single-hop PHP method calls bind normally and stage arguments only for a present owner."""
+"""Nullsafe PHP method calls bind normally and stage arguments only for a present owner."""
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 
-from collection_goal_native import revisions
+from collection_goal_native import guard, revisions
 
 
 def named(work):
@@ -31,6 +31,86 @@ def named(work):
     revisions(work, 'php', dict(main=main, player=player), [
         (None, None, trace), ('player', player.replace('$right', '$offset'), 'Unknown named argument: right'),
         ('player', player, trace)])
+
+
+def chain(work):
+    team = """
+        class Team {
+            public ?Player $captain;
+            public function select(int $n):?Player {echo "S";return $this->captain;}
+        }
+    """
+    main = """
+        class Player {
+            public int $points;
+            public function newPlayer():Player {echo "I";return new Player();}
+            public function score(int $n):int {echo "M";return $this->points;}
+        }
+        function probe(?Team $t):?Team {echo "P";return $t;}
+        function arg(int $n):int {echo $n;return $n;}
+        function check(?Team $t):void {
+            echo probe($t)?->select(arg(1))?->score(arg(2)) ?? 9;
+            echo $t?->captain?->points ?? 9;
+            $t?->captain?->newPlayer()?->score(arg(3));
+        }
+        check(null);$t=new Team();check($t);
+        $t->captain=new Player();check($t);return 8;
+    """
+    trace = b'P99P1S99P1S2M00I3M'
+    scalar = team.replace(':?Player {echo "S";return $this->captain;', ':int {return 0;')
+    revisions(work, 'php', dict(main=main, team=team), [
+        (None, None, trace), ('team', scalar, 'unknown method score on nullable<int64>'), ('team', team, trace)])
+
+
+PLAYERS = """
+    class Player {
+        public int $points;
+        public function score(int $n):int {echo "M";return $this->points;}
+    }
+    class Other {}
+"""
+TEAM = """
+    class Team {
+        public ?Player $captain;
+        public function pick(int $n):?Player {echo "S";return $this->captain;}
+    }
+"""
+PROBES = """
+    function probe(?Team $t):?Team {echo "P";return $t;}
+    function key():int {echo "K";return 1;}
+"""
+
+
+def ordinary_suffix(work):
+    main = PROBES + """
+        function check(?Team $t):void {
+            echo probe($t)?->pick(key())->score(key()) ?? 9;
+            echo probe($t)?->captain->points ?? 9;
+        }
+        check(null);$t=new Team();$t->captain=new Player();check($t);return 8;
+    """
+    trace = b'P9P9PKSKM0P0'
+    changed = TEAM.replace(':?Player {echo "S";return $this->captain;', ':?Other {return null;')
+    revisions(work, 'php', dict(main=main, team=TEAM, players=PLAYERS), [
+        (None, None, trace), ('team', changed, 'Unknown method Other::score'), ('team', TEAM, trace)])
+
+
+def suspended_suffix(work):
+    main = PROBES + """
+        async function keyLater():int {await async_sleep_ms(1);return key();}
+        async function check(?Team $t):int {
+            return probe($t)?->pick(await keyLater())->score(await keyLater()) ?? 9;
+        }
+        echo await check(null);$t=new Team();$t->captain=new Player();echo await check($t);return 8;
+    """
+    revisions(work, 'php', dict(main=main, team=TEAM, players=PLAYERS), [(None, None, b'P9PKSKM0')])
+
+
+def empty_intermediate(work):
+    setup = PLAYERS + TEAM + PROBES + '$t=new Team();'
+    for name, access, trace in [('field', 'captain->points', b'P'), ('method', 'pick(key())->score(key())', b'PKS')]:
+        guard(work, 'php', name, setup + 'echo probe($t)?->' + access + ' ?? 9;return 8;',
+              'ownership_empty_access', expected_stdout=trace)
 
 
 def dispatch(work):
@@ -78,5 +158,70 @@ def suspended(work):
     revisions(work, 'php', dict(main=main), [(None, None, b'9KM7')])
 
 
+def indexed_callable(work, case):
+    api = """
+    class Selector {
+        public function pick(string $key):string { echo "M"; return $key; }
+    }
+    function keyArg():string { echo "K"; return "method"; }
+    function fallbackKey():string { echo "F"; return "fallback"; }
+    function callArg():int { echo "C"; return 6; }
+    function byFallback(int $x):int { echo "B"; return $x+20; }
+    function byMethod(int $x):int { echo "A"; return $x+10; }
+    """
+    setup = '$ops hash<function<int(int)>,string> = ["fallback"=>fn($n)=>byFallback($n)];'
+    method = '$ops["method"]=fn($n)=>byMethod($n);'
+    if case in ('chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
+        api += """
+        class Router {
+            public ?Selector $target;
+            public function select(int $n):?Selector { echo "S"; return $this->target; }
+        }
+        function probe(?Router $r):?Router { echo "P"; return $r; }
+        function routeArg():int { echo "R"; return 1; }
+        function invokeRoute(?Router $router, hash<function<int(int)>,string> $ops):void {
+            $value=$ops[probe($router)?->select(routeArg())?->pick(keyArg()) ?? fallbackKey()](callArg());
+            echo "|",$value,";";
+        }
+        """
+        if case != 'chained_indexed_callable':
+            api = api.replace('?->pick(keyArg())', '->pick(keyArg())')
+            if case == 'ordinary_indexed_empty':
+                guard(work, 'php', 'empty_selector', api + setup + method + 'invokeRoute(new Router(),$ops);return 8;',
+                      'ownership_empty_access', expected_stdout=b'PRS')
+                return
+            main = setup + method + """
+            invokeRoute(null,$ops);
+            $router=new Router(); $router->target=new Selector(); invokeRoute($router,$ops); return 8;
+            """
+            revisions(work, 'php', dict(api=api, main=main), [(None, None, b'PFCB|26;PRSKMCA|16;')])
+            return
+        main = setup + method + """
+        invokeRoute(null,$ops);
+        $router=new Router(); invokeRoute($router,$ops);
+        $router->target=new Selector(); invokeRoute($router,$ops); return 8;
+        """
+        revisions(work, 'php', dict(api=api, main=main), [(None, None, b'PFCB|26;PRSFCB|26;PRSKMCA|16;')])
+        return
+    api += 'function probe(?Selector $s):?Selector { echo "P"; return $s; }'
+    call = '$value=$ops[probe($selector)?->pick(keyArg()) ?? fallbackKey()](callArg()); echo "|",$value;return 8;'
+    present = '$selector ?Selector=new Selector();'
+    absent = '$selector ?Selector=null;'
+    if case == 'indexed_callable_missing':
+        guard(work, 'php', 'missing', api + setup + present + call, 'hash_missing_key',
+              exception_type='std::out_of_range', expected_stdout=b'PKM')
+        return
+    revisions(work, 'php', dict(api=api, main=setup + method + absent + call), [
+        (None, None, b'PFCB|26'),
+        ('main', setup + method + present + call, b'PKMCA|16'),
+    ])
+
+
 with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
-    {'named': named, 'lifetime': lifetime, 'suspended': suspended, 'dispatch': dispatch, 'admission': admission}[sys.argv[1]](Path(tmp))
+    case = sys.argv[1]
+    if case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
+        indexed_callable(Path(tmp), case)
+    else:
+        {'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
+         'dispatch': dispatch, 'admission': admission, 'ordinary_suffix': ordinary_suffix,
+         'empty_intermediate': empty_intermediate, 'suspended_suffix': suspended_suffix}[case](Path(tmp))
