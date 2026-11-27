@@ -10,9 +10,7 @@ $compile = static function (string $source): string {
 };
 $source = <<<'SCPP'
 function length_or_error(result<string> $input): result<int> {
-    take($text, $diagnostic, $ok) = $input;
-    if (!$ok) { return $diagnostic; }
-    return strlen($text);
+    return (($text, $diagnostic) = $input) ? strlen($text) : $diagnostic;
 }
 function forward_unchecked(result<string> $input): result<int> {
     take($text, $diagnostic, $ok) = $input;
@@ -48,6 +46,22 @@ function falsy(result_or_false<bool> $r): int {
     if ($value) { return 1; }
     return 0;
 }
+function counted_position(string $s, int &$calls): result_or_false<int> {
+    $calls++;
+    return strpos($s, "a");
+}
+function position(string $s, int &$calls, int &$hits): int {
+    return (take($p) = counted_position($s, $calls)) ? bumped($p, $hits) : -1;
+}
+function bumped(int $p, int &$hits): int { $hits++; return $p; }
+function kept(result<string> $r): string {
+    $text = "fallback";
+    return !(($text,$error)=$r) ? $text : $text;
+}
+function bool_state(result_or_bool<int> $r): int {
+    ($n,$ok)=$r;
+    return $ok ? $n : -1;
+}
 $falsePayload result_or_false<bool> = false;
 echo falsy($falsePayload);
 $calls int = 0;
@@ -80,9 +94,15 @@ int verify_take() {
     if (App::structured_(scpp::result_int64{scpp::error_t{scpp::string{"failure"}, scpp::int64{37}}}) != 37) return 92;
     const scpp::result_string empty{scpp::string{}};
     if (App::length_or_error_(empty).value() != 0) return 93;
+    scpp::int64 calls = 0, hits = 0;
+    if (App::position_(scpp::string{"abc"}, calls, hits) != 0 ||
+        App::position_(scpp::string{"zzz"}, calls, hits) != -1 || calls != 2 || hits != 1) return 97;
+    if (App::bool_state_(scpp::result_or_bool_int64::from_true()) != -1 ||
+        App::bool_state_(scpp::result_or_bool_int64::from_false()) != -1) return 98;
     for (const auto& message : {scpp::string{"failure"}, scpp::string{}}) {
         scpp::error_t error{message, scpp::int64{37}, scpp::string{"input.php"}};
         const scpp::result_int64 expected{error};
+        if (App::kept_(scpp::result_string{error}) != scpp::string{"fallback"}) return 99;
         if (!App::length_or_error_(scpp::result_string{error}).same_error_identity(expected)) return 94;
     }
     try { (void)App::forward_unchecked_(empty); return 95; }
@@ -103,6 +123,12 @@ foreach (['int', '?int', 'result_or_false<int>', 'result_or_bool<int>'] as $dest
 }
 $prefix = 'function overwrite(bool &$ok): void { $ok = true; } $r result_or_false<int> = false_sentinel; ';
 foreach ([
+	'$n=(take($v)=$r) ? 1 : $v;',
+	'$n=!(take($v)=$r) ? $v : 1;',
+	'$n=(take($v)=$r) ? $v : 0; echo $v;',
+	'$ok=true; $skip=false && ((($v,$ok)=$r) ? true : false); if ($ok) {echo $v;}',
+	'($v,$ok)=$r; overwrite($ok); $n=$ok ? $v : 0;',
+	'$q ?int=null; $n=(take($v)=$q) ? $v : 0;',
 	'($v,$ok)=$r; echo $v;',
 	'($v,$ok)=$r; $ok=true; if (!$ok) { return 8; } echo $v;',
 	'($v,$ok)=$r; $alias =& $ok; $alias=true; if (!$ok) { return 8; } echo $v;',

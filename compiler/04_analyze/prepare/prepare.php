@@ -764,12 +764,7 @@ final class Preparation
 				$remaining = $this->guards;
 				$remaining_status = $this->take_status;
 				$remaining_ready = $this->take_ready;
-				$positive = true;
-				$proof = $this->take_guard($arm->condition, $positive);
-				if ($proof !== null) {
-					if ($positive) $this->take_ready[$proof] = true;
-					else $remaining_ready[$proof] = true;
-				}
+				$this->take_paths($arm->condition, $remaining_ready);
 				if ($surviving !== []) $surviving = array_intersect_key($surviving, $remaining);
 				$guard = $this->branch_guard($arm->condition, $function, $paired);
 				if ($guard !== null && $paired && ($union = $guard->operand->type_def()) instanceof class_union_type_definition) {
@@ -818,6 +813,16 @@ final class Preparation
 		$this->take_ready = $has_else ? ($ready_join ?? []) : ($ready_join === null ? $remaining_ready : array_intersect_key($ready_join, $remaining_ready));
 		$this->take_status = $has_else ? ($status_join ?? []) : ($status_join === null ? $remaining_status : array_intersect_assoc($status_join, $remaining_status));
 		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
+	}
+
+	/** Add the payload proof only on the edge where extraction succeeded. @param bool[] $otherwise */
+	private function take_paths(ast_expression $condition, array &$otherwise /** array<uint32,bool> */): void
+	{
+		$positive = true;
+		$proof = $this->take_guard($condition, $positive);
+		if ($proof === null) return;
+		if ($positive) $this->take_ready[$proof] = true;
+		else $otherwise[$proof] = true;
 	}
 
 	/** Follow a status test to the payload initialized on its success edge. */
@@ -1526,6 +1531,33 @@ final class Preparation
 		$throw->conversion = type_registry::exception()->prepare_conversion($operand, conversion_context::typed_destination);
 	}
 
+	/** Prepare each lazy arm with the initialization facts available on its own path. */
+	private function ternary(ast_ternary_expression $value, ?string $initializing, ?type_definition $return_type = null): void
+	{
+		$this->condition($value->condition, $initializing);
+		$otherwise = $this->take_ready;
+		$status = $this->take_status;
+		$this->take_paths($value->condition, $otherwise);
+		$type = $return_type;
+		$value->true_conversion = $this->ternary_arm($value->when_true, $return_type, $type, $initializing);
+		$yes_ready = $this->take_ready;
+		$yes_status = $this->take_status;
+		$this->take_ready = $otherwise;
+		$this->take_status = $status;
+		$value->false_conversion = $this->ternary_arm($value->when_false, $return_type, $type, $initializing);
+		$this->take_ready = array_intersect_key($yes_ready, $this->take_ready);
+		$this->take_status = array_intersect_assoc($yes_status, $this->take_status);
+		$value->settle_result($type);
+	}
+
+	/** Each arm of a PHP value return has the ordinary return destination. */
+	private function ternary_arm(ast_expression $arm, ?type_definition $return_type, ?type_definition &$type, ?string $initializing): int /** uint16 */
+	{
+		if ($return_type !== null && !$arm instanceof ast_throw_expression) return $this->return_conversion($arm, $return_type);
+		$this->selection_result($arm, $type, $initializing, 'Ternary');
+		return value_conversion::identity;
+	}
+
 	/** Check one lazy arm without retaining a second result-type or branch-fact structure. */
 	private function selection_result(ast_expression $branch, ?type_definition &$result, ?string $initializing, string $construct): void
 	{
@@ -1548,23 +1580,29 @@ final class Preparation
 	/** Resolve exact output slots after evaluating the input and establish the status relation. */
 	private function prepare_take(ast_take_expression $take, ?string $initializing): void
 	{
-		$site = $take->parent;
-		while ($site instanceof ast_not_expression) $site = $site->parent;
+		$test = $take;
+		while ($test->parent instanceof ast_not_expression) $test = $test->parent;
+		$site = $test->parent;
+		$ternary_test = $site instanceof ast_ternary_expression && $site->condition === $test;
 		if (!($site instanceof ast_take_statement || $site instanceof ast_local_declaration || $site instanceof ast_assignment_statement
-			|| $site instanceof ast_if_arm || $site instanceof ast_return_statement)) {
-			throw new diagnostic($take->source(), $take->byte_start(), 'Use take as a statement, assignment, return or direct if condition');
+			|| $site instanceof ast_if_arm || $site instanceof ast_return_statement || $ternary_test)) {
+			throw new diagnostic($take->source(), $take->byte_start(), 'Use take as a statement, assignment, return or direct if/ternary condition');
 		}
-		if ($site->parent instanceof ast_for_statement) throw new diagnostic($take->source(), $take->byte_start(), 'Use take in the loop body');
+		for ($ancestor = $site; $ancestor !== null && !$ancestor instanceof ast_statement_block; $ancestor = $ancestor->parent) {
+			if ($ancestor instanceof ast_for_statement || $ancestor instanceof ast_tested_loop) {
+				throw new diagnostic($take->source(), $take->byte_start(), 'Use take in the loop body');
+			}
+		}
 		if ($this->owner->parent->return_type_def() instanceof generator_type_definition) throw new diagnostic($take->source(), $take->byte_start(), 'take outputs across generator suspension are unsupported');
 		$this->value($take->input, $initializing);
 		$type = $take->input->type_def();
 		$count = count($take->outputs);
 		if (!$type instanceof carrier_type_definition || !in_array($type->family, ['result','result_or_bool','result_or_false'], true)
-			|| ($count !== 1 && $count !== ($type->family === 'result' ? 3 : 2))) {
+			|| $count > ($type->family === 'result' ? 3 : 2)) {
 			throw new diagnostic($take->source(), $take->byte_start(), 'take requires a result and the output count for its family');
 		}
 		foreach ($take->outputs as $index => $output) {
-			$expected = $index === 0 ? $type->payload_type : ($index === $count - 1 ? type_bool::instance() : type_take_error::instance());
+			$expected = $index === 0 ? $type->payload_type : ($type->family === 'result' && $index === 1 ? type_take_error::instance() : type_bool::instance());
 			if ($output instanceof ast_produced_binding) {
 				$output->settle_type($expected);
 				$this->local_frames[array_key_last($this->local_frames)][$output->declaration_key()] = $output;
@@ -1580,7 +1618,10 @@ final class Preparation
 			if (in_array($slot, $take->slots, true)) throw new diagnostic($output->source(), $output->byte_start(), 'take requires distinct output slots');
 			$take->slots[] = $slot;
 		}
-		if ($count > 1) $this->track_take_status($take->slots[$count - 1], $take);
+		// A nested lazy operand can be skipped while a pre-existing status is still true.
+		if ($count > 1 && (!$ternary_test || $site->parent instanceof ast_statement)) {
+			$this->track_take_status($take->slots[$count - 1], $take);
+		}
 		$take->settle_take();
 	}
 
@@ -1626,11 +1667,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_ternary_expression) {
-			$this->condition($syntax->condition, $initializing);
-			$result = null;
-			$this->selection_result($syntax->when_true, $result, $initializing, 'Ternary');
-			$this->selection_result($syntax->when_false, $result, $initializing, 'Ternary');
-			$syntax->settle_result($result);
+			$this->ternary($syntax, $initializing);
 			return;
 		}
 		if ($syntax instanceof ast_match_expression) {
@@ -2505,6 +2542,11 @@ final class Preparation
 	/** Check the return operand once against the callable's declared result. */
 	private function return_conversion(ast_expression $value, type_definition $result): int /** uint16 */
 	{
+		if ($value instanceof ast_ternary_expression && $value->source()->flavor === flavor::php && $result !== type_void::instance()) {
+			++$this->expression_visits;
+			$this->ternary($value, null, $result);
+			return value_conversion::identity;
+		}
 		$this->value($value, destination: $result);
 		if ($result === type_void::instance()) {
 			if ($value->type_def() !== $result) throw new diagnostic($value->source(), $value->byte_start(), 'Void function cannot return a value');

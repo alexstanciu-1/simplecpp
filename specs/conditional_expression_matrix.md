@@ -7,9 +7,13 @@ Doc Status: normative
 All three flavors accept `condition ? when_true : when_false`. The condition uses
 the same type-directed truthiness as `if`. It runs once, followed by exactly one
 arm. Failure in the condition skips both arms. Failure in the selected arm propagates.
-Preparation checks both arms, including when the condition is a literal. They must
-have the same canonical value type admitted for a match result. The expression
-produces a value under that type's ordinary copy or shared-ownership semantics.
+Preparation checks both arms, including when the condition is a literal. An inferred
+selection requires the same canonical value type admitted for a match result,
+subject to the published handle joins below. In a declared PHP by-value return,
+each arm uses the declared return type and its return conversion. For example,
+a payload and a structured diagnostic can each return a `result<int>`. Only the
+selected conversion runs. A direct extraction test proves a fresh payload is
+initialized on its success edge. See [PHP take outputs](carrier_slice.md#php-take-outputs).
 
 In the common v0.2 grammar, `??` binds more tightly than ternary and `xor` binds
 less tightly. Nested full ternaries associate to the right. Shorthand `?:` and

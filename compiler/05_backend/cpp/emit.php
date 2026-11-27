@@ -2662,8 +2662,8 @@ CPP;
 				? 'take_slot_' . $slot->id . '.emplace(source.value());' : $this->name($slot) . ' = source.value();';
 			$body = 'const auto ok = source.has_value(); if (ok) ' . $store;
 			$count = count($value->slots);
-			if ($count === 3) $body .= ' ' . $this->name($value->slots[1]) . ' = ok ? scpp::error_t{} : source.error();';
-			if ($count > 1) $body .= ' ' . $this->name($value->slots[$count - 1]) . ' = ok;';
+			if ($count > 1 && $value->slots[1]->type_def() === type_take_error::instance()) $body .= ' ' . $this->name($value->slots[1]) . ' = ok ? scpp::error_t{} : source.error();';
+			if ($count > 1 && $value->slots[$count - 1]->type_def() === type_bool::instance()) $body .= ' ' . $this->name($value->slots[$count - 1]) . ' = ok;';
 			return '([&](const auto& source) { ' . $body . ' return ok; }(' . $input . '))';
 		}
 		if ($value_type instanceof record_result_type_definition) {
@@ -2714,19 +2714,27 @@ CPP;
 			if ($this->async_body) {
 				$outer_owned = $this->async_owned_steps;
 				$result = $destination ?? new Cpp_Staged_Result($value_type, 'selection_' . $value->start . '_' . $value->end);
-				[$yes, $true_steps] = $this->staged_operand($value->when_true, $global_references, $declarations, $required_headers, destination: $result);
-				[$no, $false_steps] = $this->staged_operand($value->when_false, $global_references, $declarations, $required_headers, destination: $result);
-				if ($true_steps !== [] || $false_steps !== []) {
-					if ($destination === null) $this->async_steps[] = $result->declaration($required_headers);
-					$true_steps[] = $result->initialize($yes);
-					$false_steps[] = $result->initialize($no);
-					$this->async_steps[] = "if ($test) { " . implode(' ', $true_steps) . ' } else { ' . implode(' ', $false_steps) . ' }';
-					$this->async_owned_steps = $outer_owned + ($value_type->cpp_trivial_value() ? 0 : 1);
-					return $destination === null ? $result->operand() : '';
-				}
+				[$yes, $true_steps] = $this->staged_operand($value->when_true, $global_references, $declarations, $required_headers, destination: $value->true_conversion === value_conversion::identity ? $result : null);
+				[$no, $false_steps] = $this->staged_operand($value->when_false, $global_references, $declarations, $required_headers, destination: $value->false_conversion === value_conversion::identity ? $result : null);
 			} else {
 				$yes = $this->value($value->when_true, $global_references, $declarations, $required_headers);
 				$no = $this->value($value->when_false, $global_references, $declarations, $required_headers);
+			}
+			if ($value->true_conversion !== value_conversion::identity) {
+				$yes = $this->conversion($value_type, $value->true_conversion, $yes, $value->when_true);
+				foreach ($value_type->conversion_headers($value->true_conversion) as $header) $required_headers[$header] = true;
+			}
+			if ($value->false_conversion !== value_conversion::identity) {
+				$no = $this->conversion($value_type, $value->false_conversion, $no, $value->when_false);
+				foreach ($value_type->conversion_headers($value->false_conversion) as $header) $required_headers[$header] = true;
+			}
+			if ($this->async_body && ($true_steps !== [] || $false_steps !== [])) {
+				if ($destination === null) $this->async_steps[] = $result->declaration($required_headers);
+				$true_steps[] = $result->initialize($yes);
+				$false_steps[] = $result->initialize($no);
+				$this->async_steps[] = "if ($test) { " . implode(' ', $true_steps) . ' } else { ' . implode(' ', $false_steps) . ' }';
+				$this->async_owned_steps = $outer_owned + ($value_type->cpp_trivial_value() ? 0 : 1);
+				return $destination === null ? $result->operand() : '';
 			}
 			$selection = '(' . $test . ' ? ' . $yes . ' : ' . $no . ')';
 			// Two native lvalue arms can yield a reference. Publish an owned value at an untyped use site.

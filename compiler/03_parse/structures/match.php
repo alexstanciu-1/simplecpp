@@ -37,6 +37,10 @@ final class ast_ternary_expression extends ast_selection_expression
 	/** Between xor and coalescing in the common expression grammar. */
 	public const int PRECEDENCE = 1;
 
+	/** Prepared arm conversions. Ordinary inferred selections use identity for both arms. */
+	public int $true_conversion /** uint16 */ = value_conversion::identity;
+	public int $false_conversion /** uint16 */ = value_conversion::identity;
+
 	public function __construct(public readonly ast_expression $condition, public readonly ast_expression $when_true,
 		public readonly ast_expression $when_false, int $start /** uint32 */, int $end /** uint32 */)
 	{

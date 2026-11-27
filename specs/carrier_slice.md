@@ -166,7 +166,7 @@ no default instance of its payload type.
 | Result family | Additional outputs | Failure |
 | --- | --- | --- |
 | `result_or_false<T>`, `result_or_bool<T>` | `take($value, $ok)` | Each boolean sentinel sets `$ok` to false. |
-| `result<T>` | `take($value, $error, $ok)` | Sets the diagnostic and clears `$ok`. Success clears the diagnostic. |
+| `result<T>` | `take($value, $error)` or `take($value, $error, $ok)` | Sets the diagnostic and clears the optional status. Success clears the diagnostic. |
 
 The multi-output forms may omit `take`, as in `($value, $ok) = call();`.
 All outputs must be distinct writable variables of the exact output types.
@@ -185,9 +185,19 @@ Overwriting a flag or passing it by mutable reference discards its evidence.
 Once initialized, the payload remains usable independently of that flag.
 An unconditional assignment also initializes the payload. This slice admits
 extraction as a standalone statement, an assignment or declaration initializer,
-a direct `if` test (including negation), or a return expression. Generators and
+a direct `if` or ternary test (including negation), or a return expression. Generators and
 loop headers are deferred. Across loops and exception regions, preparation
 conservatively keeps payloads already proven initialized on entry.
+
+A ternary admits a fresh payload read on the success edge. On failure, it may
+read a payload slot that was already initialized. Only the selected arm runs.
+In a declared PHP by-value return, each arm uses the ordinary return conversion.
+Parentheses place the extraction in the condition and keep the ternary outside
+the input expression:
+
+```php
+return (($text, $error) = fs_get($path)) ? strlen($text) : $error;
+```
 
 For a PHP falseable runtime handle such as the return of `mysqli::prepare`,
 a boolean guard tests payload presence.

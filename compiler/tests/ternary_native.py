@@ -42,13 +42,14 @@ def prove(work, flavor, library, cxx_flags=()):
     path = app / ('choose.' + flavor)
     try:
         api_path = app / ('api.' + flavor)
+        arm_error = 'Unsupported explicit conversion from string to int64' if flavor == 'php' else 'result types must be identical'
         for revision, (target, body, error) in enumerate([
             (path, choose, None), (path, choose, None), (path, choose.replace('rightArm()', 'rightArm() + 1'), None),
-            (path, choose.replace('rightArm()', '"wrong"'), 'result types must be identical'),
+            (path, choose.replace('rightArm()', '"wrong"'), arm_error),
             (path, choose.replace('leftArm()', ''), 'requires a true branch'),
             (path, choose, None), (path, choose, None),
             (api_path, api.replace(fn('rightArm', 'int', [], 'echo "R";return 7;'),
-                                   fn('rightArm', 'string', [], 'return "bad";')), 'result types must be identical'),
+                                   fn('rightArm', 'string', [], 'return "bad";')), arm_error),
             (api_path, api, None),
         ]):
             before = artifacts(out) if out.exists() else {}
