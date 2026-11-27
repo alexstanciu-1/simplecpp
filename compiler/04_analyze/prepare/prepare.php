@@ -1329,8 +1329,8 @@ final class Preparation
 		$this->value($root);
 		$field = $initialize ? $this->constructor_initialization?->assignment($root, $this->loop !== null) : null;
 		Readonly_Access::write($root, $payload, $field);
-		// A vector read copies the shared handle. Retained field lowering holds it through the keyed store.
-		if ($root->parent instanceof ast_index_assignment && $root->parent->receiver === $root
+		// A vector read copies the shared handle. Retained field lowering holds it through the store or append.
+		if (($root->parent instanceof ast_index_assignment || $root->parent instanceof ast_append_statement) && $root->parent->receiver === $root
 			&& $root->source()->flavor === flavor::php && $root->receiver instanceof ast_index_expression
 			&& $root->receiver->receiver->type_def() instanceof vector_type_definition
 			&& $root->receiver->type_def() instanceof shared_record_type_definition) return $field;

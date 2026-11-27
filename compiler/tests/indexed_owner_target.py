@@ -44,6 +44,31 @@ def lifetime(work):
     revisions(work, 'php', {'main': main, 'api': api, 'model': tracked}, [(None, None, b'RD7ED90')])
 
 
+def append(work):
+    holder = """
+        class Holder {
+            public vector<int> $values;
+            public function __construct(int $n) {$this->values=[$n];}
+            public function __destruct() {echo "D",count($this->values),"/",$this->values[count($this->values)-1];}
+        }
+    """
+    api = """
+        function slot(int &$calls):int {$calls+=1;echo "I";return 0;}
+        function swap(vector<Holder> &$owners):int {$owners[0]=new Holder(90);echo "R";return 7;}
+    """
+    body = """
+        $owners vector<Holder> = [new Holder(3)];$calls=0;
+        $owners[slot($calls)]->values[]=swap($owners);
+        echo "E",$calls,"/",count($owners[0]->values),"/",$owners[0]->values[0];
+    """
+    grouped = body.replace('$owners[slot($calls)]->', '($owners[slot($calls)])->')
+    main = 'function plain():void {' + body + '} function grouped():void {' + grouped + '} plain();grouped();return 8;'
+    trace = b'IRD2/7E1/1/90D1/90' * 2
+    readonly = holder.replace('public vector', 'public readonly vector')
+    revisions(work, 'php', dict(main=main, api=api, holder=readonly), [
+        (None, None, 'Cannot modify readonly property values'), ('holder', holder, trace)])
+
+
 def admission(work):
     store = 'function store(vector<Holder> $owners):void { $owners[0]->values[0]=7; }'
     grouped = store.replace('$owners[0]->', '($owners[0])->')
@@ -57,5 +82,5 @@ def admission(work):
 
 
 with TemporaryDirectory(prefix='indexed-owner-target-') as tmp:
-    cases = {'targets': targets, 'replacement': replacement, 'lifetime': lifetime, 'admission': admission}
+    cases = {'targets': targets, 'replacement': replacement, 'lifetime': lifetime, 'admission': admission, 'append': append}
     cases[sys.argv[1] if len(sys.argv) > 1 else 'targets'](Path(tmp))

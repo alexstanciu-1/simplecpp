@@ -1514,9 +1514,9 @@ final class Parser
 			if ($php && $this->cursor->is(token_kind::lbracket)) {
 				if ($target instanceof ast_field_expression) {
 					$this->cursor->take(token_kind::lbracket, '[');
-					$key = $this->value();
+					$key = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 					$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-					if ($this->cursor->is(token_kind::assign)) return $this->index_store($target, $key, $terminator);
+					if ($key === null || $this->cursor->is(token_kind::assign)) return $this->index_store($target, $key, $terminator);
 					$target = new ast_index_expression($target, $key, $end);
 				}
 				$target = $this->postfix($target, false);
