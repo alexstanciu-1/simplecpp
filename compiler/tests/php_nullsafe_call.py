@@ -1,4 +1,4 @@
-"""Single-hop PHP method calls bind normally and stage arguments only for a present owner."""
+"""Nullsafe PHP method calls bind normally and stage arguments only for a present owner."""
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
@@ -31,6 +31,35 @@ def named(work):
     revisions(work, 'php', dict(main=main, player=player), [
         (None, None, trace), ('player', player.replace('$right', '$offset'), 'Unknown named argument: right'),
         ('player', player, trace)])
+
+
+def chain(work):
+    team = """
+        class Team {
+            public ?Player $captain;
+            public function select(int $n):?Player {echo "S";return $this->captain;}
+        }
+    """
+    main = """
+        class Player {
+            public int $points;
+            public function newPlayer():Player {echo "I";return new Player();}
+            public function score(int $n):int {echo "M";return $this->points;}
+        }
+        function probe(?Team $t):?Team {echo "P";return $t;}
+        function arg(int $n):int {echo $n;return $n;}
+        function check(?Team $t):void {
+            echo probe($t)?->select(arg(1))?->score(arg(2)) ?? 9;
+            echo $t?->captain?->points ?? 9;
+            $t?->captain?->newPlayer()?->score(arg(3));
+        }
+        check(null);$t=new Team();check($t);
+        $t->captain=new Player();check($t);return 8;
+    """
+    trace = b'P99P1S99P1S2M00I3M'
+    scalar = team.replace(':?Player {echo "S";return $this->captain;', ':int {return 0;')
+    revisions(work, 'php', dict(main=main, team=team), [
+        (None, None, trace), ('team', scalar, 'unknown method score on nullable<int64>'), ('team', team, trace)])
 
 
 def dispatch(work):
@@ -79,4 +108,4 @@ def suspended(work):
 
 
 with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
-    {'named': named, 'lifetime': lifetime, 'suspended': suspended, 'dispatch': dispatch, 'admission': admission}[sys.argv[1]](Path(tmp))
+    {'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended, 'dispatch': dispatch, 'admission': admission}[sys.argv[1]](Path(tmp))

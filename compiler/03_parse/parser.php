@@ -1619,13 +1619,15 @@ final class Parser
 				continue;
 			}
 			if ($this->cursor->is(token_kind::nullsafe_member)) {
-				$this->cursor->take(token_kind::nullsafe_member, '?->');
-				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
-				if ($this->cursor->is(token_kind::lparen)) {
-					$call = $this->call_arguments($value->start, $name, token_kind::member, $value);
-					return new ast_nullsafe_member($call);
-				}
-				return new ast_nullsafe_member(new ast_field_expression($value, $name, $this->cursor->position()));
+				do {
+					$this->cursor->take(token_kind::nullsafe_member, '?->');
+					$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
+					$member = $this->cursor->is(token_kind::lparen)
+						? $this->call_arguments($value->start, $name, token_kind::member, $value)
+						: new ast_field_expression($value, $name, $this->cursor->position());
+					$value = new ast_nullsafe_member($member);
+				} while ($this->cursor->is(token_kind::nullsafe_member));
+				return $value;
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				$this->cursor->take(token_kind::member, '->');
