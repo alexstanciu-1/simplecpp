@@ -2131,13 +2131,19 @@ CPP;
 	 * @param bool[] $headers
 	 * @param string[] $steps
 	 */
-	private function nested_collection_place(ast_name_expression $root, ast_index_expression $row, array &$globals,
+	private function nested_collection_place(ast_name_expression|ast_field_expression $root, ast_index_expression $row, array &$globals,
 		array &$declarations, array &$headers, array &$steps): string
 	{
 		$owner = $row->receiver;
-		$place = $owner instanceof ast_index_expression
-			? $this->nested_collection_place($root, $owner, $globals, $declarations, $headers, $steps)
-			: $this->value($root, $globals, $declarations, $headers);
+		if ($owner instanceof ast_index_expression) {
+			$place = $this->nested_collection_place($root, $owner, $globals, $declarations, $headers, $steps);
+		} elseif ($root instanceof ast_field_expression) {
+			$field = $this->retained_place($root, $globals, $declarations, $headers, $steps);
+			$steps[] = 'auto& collection_field = ' . $field . ';';
+			$place = 'collection_field';
+		} else {
+			$place = $this->value($root, $globals, $declarations, $headers);
+		}
 		[$outer, $before_outer] = $this->staged_operand($row->index, $globals, $declarations, $headers);
 		array_push($steps, ...$before_outer);
 		$key = 'row_index_' . $row->end;

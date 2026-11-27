@@ -7,15 +7,22 @@ Current representation: [native scalar aliases](native_scalar_aliases.md) supers
 Scope: runtime and physical API preparation inside v0.2. Source type resolution,
 evaluation order and contextual conversions remain compiler-owned.
 
-## Nested local collection writes
+## Nested collection writes
 
-In the PHP, C++ and JavaScript flavors, a writable local can be indexed through
+In the PHP, C++ and JavaScript flavors, a writable local or instance field can be indexed through
 any sequence of typed vectors and hashes, as in `groups[team][i][name] = value;`.
 Evaluate and save each key once in source order, then evaluate and convert the
 value. Follow the saved keys from the current root. Each intermediate hash key
 must exist and each vector index must be in bounds. A final hash store inserts
 or replaces the entry. A lookup failure prevents the store and preserves earlier
 operand effects. Intermediate collections are accessed in place.
+
+For an instance field, select the receiver once before evaluating any keys.
+A shared receiver stays alive through write-back, including when an operand
+rebinds the variable that originally held it. If an operand replaces the field
+on that same receiver, follow the saved keys into its current collection. Inline
+struct copies retain their independent storage. Field visibility and read-only
+checks apply to nested writes, updates and append.
 
 For a compound such as `groups[team][name] += rhs()`, read the existing leaf
 before evaluating the RHS. Compute from that saved value, then check the entire

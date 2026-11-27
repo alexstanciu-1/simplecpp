@@ -62,7 +62,7 @@ $row[0] = $inner;
 $rows[0] = $row;
 ```
 
-For local typed vectors and hashes, a [nested write](../../specs/vector_slice.md#nested-local-collection-writes)
+For typed vectors and hashes held in locals or instance fields, a [nested write](../../specs/vector_slice.md#nested-collection-writes)
 updates the selected slot directly. Ordinary value copies stay independent; shared objects
 inside copied values retain their existing shared identity.
 
