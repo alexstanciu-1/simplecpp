@@ -1077,11 +1077,7 @@ final class Preparation
 	{
 		$receiver = $statement->target->receiver;
 		$this->value($statement->target, deep_write_path: true);
-		if ($receiver instanceof ast_field_expression && $receiver->source()->flavor === flavor::php
-			&& $receiver->receiver instanceof ast_index_expression && $receiver->receiver->receiver->type_def() instanceof nested_index_storage_type
-			&& !$receiver->receiver->type_def()->mutates_referenced_value()) {
-			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Field assignment requires writable local storage');
-		}
+		if ($receiver instanceof ast_field_expression) $this->check_indexed_field_owner($receiver);
 		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver);
 		if ($receiver instanceof ast_index_expression && $receiver->type_def() instanceof boxed_type_definition
 			&& $statement->boxed_root === null && $statement->source()->flavor !== flavor::python) {
@@ -1322,6 +1318,18 @@ final class Preparation
 		}
 	}
 
+	/** A checked lookup yields an independent handle that field lowering retains through the write. */
+	private function check_indexed_field_owner(ast_field_expression $field): bool
+	{
+		$owner = $field->receiver;
+		if (!($owner instanceof ast_index_expression) || $field->source()->flavor !== flavor::php
+			|| !($owner->receiver->type_def() instanceof readonly_index_lookup_type)) return false;
+		if (!$owner->type_def()->mutates_referenced_value()) {
+			throw new diagnostic($field->source(), $field->byte_start(), 'Field assignment requires writable local storage');
+		}
+		return true;
+	}
+
 	/** Check writable instance paths and qualified static members for all property writes. */
 	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
 	{
@@ -1334,11 +1342,7 @@ final class Preparation
 		$this->value($root);
 		$field = $initialize ? $this->constructor_initialization?->assignment($root, $this->loop !== null) : null;
 		Readonly_Access::write($root, $payload, $field);
-		// A vector read copies the shared handle. Retained field lowering holds it through the store or append.
-		if (($root->parent instanceof ast_index_assignment || $root->parent instanceof ast_append_statement) && $root->parent->receiver === $root
-			&& $root->source()->flavor === flavor::php && $root->receiver instanceof ast_index_expression
-			&& $root->receiver->receiver->type_def() instanceof vector_type_definition
-			&& $root->receiver->type_def() instanceof shared_record_type_definition) return $field;
+		if ($payload && $this->check_indexed_field_owner($root)) return $field;
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
 		if ($root instanceof ast_index_expression && $root->receiver->type_def() instanceof segment_type) return $field;

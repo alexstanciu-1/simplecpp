@@ -133,6 +133,56 @@ def mutation_access(work):
         ('model', holder, b'4')])
 
 
+def hash_reinsert(work):
+    holder = """
+        class Holder {
+            public vector<int> $values;
+            public function __construct(int $n) {$this->values=[$n];}
+            public function __destruct() {echo "D",count($this->values),"/",$this->values[count($this->values)-1];}
+        }
+    """
+    api = """
+        function key():string {echo "K";return "A";}
+        function reinsert(hash<Holder,string> &$owners,int $result):int {
+            $owners->remove("A");$owners["A"]=new Holder(90);echo "R";return $result;
+        }
+    """
+    functions, calls, trace = [], [], b''
+    for owner in ('$owners[key()]', '($owners[key()])'):
+        for operation, old in [('{}[0]=reinsert($owners,7)', '1/7'), ('{}[]=reinsert($owners,7)', '2/7'),
+                               ('{}[0]+=reinsert($owners,7)', '1/10'), ('{}[reinsert($owners,0)]++', '1/4')]:
+            name = 'write' + str(len(calls))
+            functions.append(f'function {name}():void {{$owners hash<Holder,string> = [];$owners["A"]=new Holder(3);'
+                             + operation.format(owner + '->values') + ';echo "E",$owners["A"]->values[0];}')
+            calls.append(name + '();')
+            trace += f'KRD{old}E90D1/90'.encode()
+    main = ''.join(functions + calls) + 'return 8;'
+    revisions(work, 'php', dict(main=main, api=api, model=holder), [
+        (None, None, trace), ('model', holder.replace('public vector', 'public readonly vector'), 'Cannot modify readonly property values'),
+        ('model', holder, trace)])
+
+
+def hash_inline(work):
+    holder = 'struct Holder { public vector<int> $values; }'
+    edits = []
+    for write in ('[0]=7', '[]=7', '[0]+=7', '[0]++'):
+        function = 'function edit(hash<Holder,string> &$owners):void {$owners["A"]->values' + write + ';}'
+        edits.append(('api', function, diagnostic))
+    revisions(work, 'php', dict(main='return 8;', model=holder), edits)
+
+
+def hash_missing(work):
+    source = model + """
+        function ownerKey():string {echo "K";return "absent";}
+        function leafKey():int {echo "L";return 0;}
+        function rhs():int {echo "R";return 7;}
+        $owners hash<Holder,string> = [];
+        $owners[ownerKey()]->values[leafKey()]=rhs();return 8;
+    """
+    guard(work, 'php', 'hash_missing', source, 'hash_missing_key', expected_stdout=b'K',
+          exception_type='std::out_of_range')
+
+
 def admission(work):
     store = 'function store(vector<Holder> $owners):void { $owners[0]->values[0]=7; }'
     grouped = store.replace('$owners[0]->', '($owners[0])->')
@@ -149,7 +199,7 @@ def admission(work):
 
 with TemporaryDirectory(prefix='indexed-owner-target-') as tmp:
     cases = {'targets': targets, 'replacement': replacement, 'lifetime': lifetime, 'admission': admission, 'append': append}
-    cases.update(mutations=mutations, mutation_access=mutation_access)
+    cases.update(mutations=mutations, mutation_access=mutation_access, hash_reinsert=hash_reinsert, hash_missing=hash_missing, hash_inline=hash_inline)
     case = sys.argv[1] if len(sys.argv) > 1 else 'targets'
     if case.startswith('missing_'):
         missing(Path(tmp), case)
