@@ -62,8 +62,8 @@ $row[0] = $inner;
 $rows[0] = $row;
 ```
 
-This slice does not introduce reference traversal, autovivification or new semantics for
-chained indexed write targets. Ordinary value copies stay independent; shared objects
+For a local vector of vectors, a [two-index write](../../specs/vector_slice.md#two-index-local-replacement)
+updates the checked row directly. Ordinary value copies stay independent; shared objects
 inside copied values retain their existing shared identity.
 
 ## Verification

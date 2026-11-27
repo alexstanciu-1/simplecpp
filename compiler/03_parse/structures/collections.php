@@ -130,6 +130,15 @@ final class ast_index_expression extends ast_expression
 	{
 		$this->settle_value($type, null);
 	}
+
+	/** A two-index vector store resolves the row in this named local only after its operands finish. */
+	public static function nested_vector_root(ast_expression $row): ?ast_name_expression
+	{
+		if (!($row instanceof ast_index_expression) || !($row->type_def() instanceof vector_type_definition)) return null;
+		$root = $row->receiver;
+		return $root instanceof ast_name_expression && $root->local_binding() !== null
+			&& $root->type_def() instanceof vector_type_definition ? $root : null;
+	}
 }
 
 /** Append statement, e.g. values[] = 8; owns operands and caches the approved element conversion. */

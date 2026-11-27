@@ -2,6 +2,8 @@
 
 Doc Status: planning
 
+**Priority: later.** Further Python-specific parity work is deferred after flat parallel assignment to existing locals. When the Python backlog resumes, the next candidate is unpacking a typed vector into existing locals. The assessments below record feasibility independently of scheduling.
+
 Audited v0.2/develop-php at `9309e7572` after paired hash traversal. This is a backlog for the typed Python source flavor. The comparison baseline is the Python 3.15 language reference. The audit covers language families and meaningful subcases, including behavior behind accepted syntax. It excludes library APIs, built-in function inventories, tooling and CPython interoperability. An entry describes the active v0.2 compiler. A feature of upstream PHP, ECMAScript or ISO C++ alone supplies no implementation evidence. [Python reference](https://docs.python.org/3.15/reference/index.html) · [Grammar](https://docs.python.org/3.15/reference/grammar.html) · [Flavor contract](../compiler_frontends.md#python-syntax-flavor-in-v02)
 
 ## How to read the decisions

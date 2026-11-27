@@ -298,8 +298,7 @@ final class Preparation
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
 				$this->value($statement->target);
-				$this->require_index_write_available($receiver);
-				Readonly_Access::write($receiver, true);
+				$this->require_index_mutation_place($receiver);
 				if (!($receiver->type_def() instanceof indexed_mutation_type)) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
 				}
@@ -311,12 +310,14 @@ final class Preparation
 				$receiver = $statement->receiver;
 				if ($receiver instanceof ast_index_expression) {
 					$this->value($receiver);
-					$root = $receiver;
+					$vector_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_vector_root($receiver);
+					$binding = $vector_root?->local_binding();
+					$root = $vector_root ?? $receiver;
 					while ($root instanceof ast_index_expression) {
 						$owner = $root->receiver->type_def();
 						if (!($owner instanceof fixed_array_type) && !($source->flavor === flavor::python
 							&& $owner instanceof boxed_type_definition && $owner->mutates_referenced_value())) {
-							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage or a shared Python container');
+							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage, a two-index local vector, or a shared Python container');
 						}
 						$root = $root->receiver;
 					}
@@ -1041,6 +1042,23 @@ final class Preparation
 		}
 	}
 
+	/** A mutation through a value-copy row requires a path back to writable storage. */
+	private function require_index_mutation_place(ast_expression $receiver): void
+	{
+		$root = ast_index_expression::nested_vector_root($receiver);
+		if ($root !== null) {
+			Readonly_Access::write($root, true);
+			$this->latest_writes[$root->local_binding()->storage_id()] = null;
+			return;
+		}
+		if ($receiver instanceof ast_index_expression && !$receiver->type_def()->mutates_referenced_value()
+			&& ($receiver->receiver->type_def() instanceof vector_type_definition || $receiver->receiver->type_def() instanceof hash_type_definition)) {
+			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested indexed update requires a writable local vector of vectors');
+		}
+		$this->require_index_write_available($receiver);
+		Readonly_Access::write($receiver, true);
+	}
+
 	/** A separate hash write could insert a key while the loop holds a selection. */
 	private function require_index_write_available(ast_expression $receiver): void
 	{
@@ -1317,8 +1335,7 @@ final class Preparation
 	{
 		if ($statement instanceof ast_index_update) {
 			$this->value($statement->target);
-			$this->require_index_write_available($statement->target->receiver);
-			Readonly_Access::write($statement->target->receiver, true);
+			$this->require_index_mutation_place($statement->target->receiver);
 			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a mutable collection');
 			}

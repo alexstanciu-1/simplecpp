@@ -7,6 +7,23 @@ Current representation: [native scalar aliases](native_scalar_aliases.md) supers
 Scope: runtime and physical API preparation inside v0.2. Source type resolution,
 evaluation order and contextual conversions remain compiler-owned.
 
+## Two-index local replacement
+
+In the PHP, C++ and JavaScript flavors, a writable local of type
+`vector<vector<T>>` accepts `rows[i][j] = value;`. Evaluate the outer index,
+inner index and converted element value once each, in that order. Then check
+the outer index against the current matrix and replace the element at the
+checked inner index in that row. Replacing the matrix during operand evaluation
+therefore changes the destination. Either bounds failure prevents the store.
+Earlier operand effects remain visible. The store takes no copy of the row.
+
+For a compound such as `rows[i][j] += rhs()`, save both indices in source order
+and read the checked element before running the RHS. Compute from that saved
+value, then check the same indices in the current matrix at write-back. An
+initial bounds failure skips the RHS. If the RHS removes the destination,
+write-back fails and the RHS effects remain visible. Standalone prefix and
+postfix increments and decrements also update the checked element in place.
+
 ## Representation and publication
 
 The vector metadata record binds the source family to private concrete buffer storage,

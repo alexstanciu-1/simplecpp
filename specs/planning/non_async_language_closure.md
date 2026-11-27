@@ -40,8 +40,7 @@ decisions for mixed copy-on-write and dynamic shared identity. Existing-value ha
 updates through a second name would need an operation or proof that excludes
 insertion. These are possible extensions, not prerequisites for rows 3–5.
 
-Fixed arrays are tracked separately. General nested indexed writes belong to
-expressions and access, typed-to-boxed conversion to structured conversion, and
+Fixed arrays are tracked separately. Expressions and access now covers [two-index writes to local typed vectors](../vector_slice.md#two-index-local-replacement). Other nested indexed writes remain open. Typed-to-boxed conversion belongs to structured conversion, and
 additional library helpers to the libraries backlog. Those areas may eventually
 consume an element-borrow contract.
 

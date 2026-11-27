@@ -1493,6 +1493,23 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
+				if (($root = ast_index_expression::nested_vector_root($statement->receiver)) !== null) {
+					$steps = [];
+					$row_place = $this->nested_vector_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
+					[$inner, $before_inner] = $this->staged_operand($statement->index, $global_references, $declarations, $required_headers);
+					array_push($steps, ...$before_inner);
+					$steps[] = 'const auto element_index = ' . $type->lower_cpp_key($statement->index, $inner) . ';';
+					[$value, $before_value] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
+					array_push($steps, ...$before_value);
+					$element = $type->write_type();
+					foreach ($element->conversion_headers($statement->conversion()) as $header) $required_headers[$header] = true;
+					$value = $element->lower_cpp_exact_argument($statement->value, $statement->conversion(), $value, $this->inline_adapters);
+					$steps[] = 'auto element_value = ' . $value . ';';
+					$required_headers['utility'] = true;
+					$steps[] = $type->lower_cpp_write($row_place, 'element_index', 'std::move(element_value)') . ';';
+					$lines[] = $this->async_statement('{ ' . implode(' ', $steps) . ' }');
+					continue;
+				}
 				if ($type instanceof boxed_type_definition && $statement->source()->flavor === flavor::python) {
 					// Python evaluates the RHS before the subscript target. Keep the selected dynamic owner through key effects.
 					[$value, $steps] = $this->staged_operand($statement->value, $global_references, $declarations, $required_headers);
@@ -2078,10 +2095,10 @@ CPP;
 	{
 		$target = $statement->target;
 		$steps = [];
-		$key = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
+		[$place, $key] = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
 		/** @var indexed_mutation_type $collection */
 		$collection = $target->receiver->type_def();
-		$old = $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key);
+		$old = $collection->lower_cpp_mutation_read($target->index, $place, $key);
 		$steps[] = 'const auto compound_previous = ' . $this->compound_left($statement, $target->type_def(), $old, $headers) . ';';
 		[$right, $rhs_steps] = $this->staged_operand($statement->value, $globals, $declarations, $headers);
 		array_push($steps, ...$rhs_steps);
@@ -2090,13 +2107,30 @@ CPP;
 		$result = 'static_cast<' . $target->type_def()->cpp_type() . '>(' . $result . ')';
 		// Existing-element compounds must not recreate a key removed by RHS replacement.
 		$steps[] = 'const auto compound_result = ' . $result . ';';
-		$steps[] = '(void)' . $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key) . ';';
-		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'compound_result');
+		$steps[] = '(void)' . $collection->lower_cpp_mutation_read($target->index, $place, $key) . ';';
+		$steps[] = $collection->lower_cpp_replace($target->index, $place, $key, 'compound_result');
 		return '{ ' . implode(' ', $steps) . ' }';
+	}
+
+	/** Save the row index; the returned C++ expression rechecks it at each access.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 * @param string[] $steps
+	 */
+	private function nested_vector_place(ast_name_expression $root, ast_index_expression $row, array &$globals,
+		array &$declarations, array &$headers, array &$steps): string
+	{
+		$matrix = $this->value($root, $globals, $declarations, $headers);
+		[$outer, $before_outer] = $this->staged_operand($row->index, $globals, $declarations, $headers);
+		array_push($steps, ...$before_outer);
+		$steps[] = 'const auto row_index = ' . $root->type_def()->lower_cpp_key($row->index, $outer) . ';';
+		return $root->type_def()->lower_cpp_slot($matrix, 'row_index');
 	}
 
 	/**
 	 * Share owner retention and single key evaluation for indexed compounds and updates.
+	 * @return array{string,string} Collection place and saved element key.
 	 * @param ast_global_declaration[] $globals
 	 * @param ast_function_declaration[] $declarations
 	 * @param bool[] $headers
@@ -2104,17 +2138,23 @@ CPP;
 	 */
 	private function indexed_place(ast_index_expression $target, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
-		array &$steps /** list<string> */): string
+		array &$steps /** list<string> */): array
 	{
-		$place = $this->write_receiver($target->receiver, $globals, $declarations, $headers, $steps);
-		$steps[] = 'auto&& compound_collection = ' . $place . ';';
+		$root = ast_index_expression::nested_vector_root($target->receiver);
+		if ($root !== null) {
+			$place = $this->nested_vector_place($root, $target->receiver, $globals, $declarations, $headers, $steps);
+		} else {
+			$receiver = $this->write_receiver($target->receiver, $globals, $declarations, $headers, $steps);
+			$steps[] = 'auto&& compound_collection = ' . $receiver . ';';
+			$place = 'compound_collection';
+		}
 		[$key, $key_steps] = $this->staged_operand($target->index, $globals, $declarations, $headers);
 		array_push($steps, ...$key_steps);
 		if (!($target->index instanceof ast_integer_expression)) {
 			$steps[] = 'const auto compound_key = ' . $key . ';';
 			$key = 'compound_key';
 		}
-		return $key;
+		return [$place, $key];
 	}
 
 	/**
@@ -2150,12 +2190,12 @@ CPP;
 	{
 		$target = $statement->target;
 		$steps = [];
-		$key = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
+		[$place, $key] = $this->indexed_place($target, $globals, $declarations, $headers, $steps);
 		/** @var indexed_mutation_type $collection */
 		$collection = $target->receiver->type_def();
-		$steps[] = 'auto updated_element = ' . $collection->lower_cpp_mutation_read($target->index, 'compound_collection', $key) . ';';
+		$steps[] = 'auto updated_element = ' . $collection->lower_cpp_mutation_read($target->index, $place, $key) . ';';
 		$steps[] = $target->type_def()->lower_cpp_update($statement->operator, 'updated_element', $statement->postfix) . ';';
-		$steps[] = $collection->lower_cpp_replace($target->index, 'compound_collection', $key, 'updated_element');
+		$steps[] = $collection->lower_cpp_replace($target->index, $place, $key, 'updated_element');
 		return '{ ' . implode(' ', $steps) . ' }';
 	}
 
