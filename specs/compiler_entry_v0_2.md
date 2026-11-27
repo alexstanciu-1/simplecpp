@@ -407,6 +407,11 @@ returns a callable that owns its snapshot of `$base`. The same ownership and
 signature checks apply when returning a concrete closure or an owned callable
 local. Returning an absent local preserves absence.
 
+PHP permits immediate invocation of the returned callable. In `makeOp()(arg())`,
+the factory runs once, before `arg()`. The returned signature governs argument
+binding and whether the caller can bind the result by reference. Grouping a
+local as `($f)(6)` preserves the argument and result rules of `$f(6)`.
+
 A required by-value parameter on these declarations can also use
 `function<R(Args...)>`. The argument receives the selected parameter's signature,
 including when the caller supplies a named argument. The callee owns its copy:

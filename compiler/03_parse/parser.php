@@ -1604,8 +1604,10 @@ final class Parser
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
 			if ($flavor === flavor::python && !$this->cursor->is(token_kind::dot) && !$this->cursor->is(token_kind::lbracket)) break;
-			if ($flavor === flavor::php && $value instanceof ast_index_expression && $this->cursor->is(token_kind::lparen)) {
-				$value = $this->call_arguments($value->start, 'indexed callable', null, $value, call_qualifier::stored_value);
+			if ($flavor === flavor::php && $this->cursor->is(token_kind::lparen)
+				&& ($value instanceof ast_index_expression || $value instanceof ast_call_expression)) {
+				$name = $value instanceof ast_index_expression ? 'indexed callable' : 'call result';
+				$value = $this->call_arguments($value->start, $name, null, $value, call_qualifier::stored_value);
 				continue;
 			}
 			if ($this->cursor->is(token_kind::scope)) {
@@ -2156,6 +2158,10 @@ final class Parser
 			$c->take(token_kind::rparen, ')');
 			if ($c->tokens->source->flavor === flavor::php && $c->is(token_kind::lparen)) {
 				if ($value instanceof ast_field_expression) return $this->call_arguments($start, $value->field, null, $value, call_qualifier::stored_value);
+				if ($value instanceof ast_name_expression && $value->end === $value->start + 1
+					&& $c->tokens->tokens[$value->start]->kind === token_kind::variable) {
+					return $this->call_arguments($start, $value->name, null, null, call_qualifier::local);
+				}
 				// Every PHP static property read ends in :: followed by a variable token.
 				if ($value instanceof ast_name_expression && !$value->constant_only && $value->end - $value->start >= 3
 					&& $c->tokens->tokens[$value->end - 2]->kind === token_kind::scope) {

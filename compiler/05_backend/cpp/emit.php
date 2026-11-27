@@ -3581,21 +3581,23 @@ CPP;
 		}
 		$before = $this->suspensions;
 		$suspending = $value instanceof ast_data_construction ? $value->parent->suspends : ($value instanceof ast_call_expression && $value->suspending_operands);
-		$suffix = $suspending ? '_' . $value->start . '_' . $value->end : '';
+		// An immediately invoked result shares its factory's start token in the coroutine frame.
+		$call_position = $suspending ? $value->start . '_' . $value->end : $value->start;
+		$suffix = $suspending ? '_' . $call_position : '';
 		$receiver_reorderable = true;
 		$method = $runtime ? $function->receiver_method : $function instanceof ast_function_declaration && $value instanceof ast_call_expression && $function->has_receiver() && !$function->is_constructor();
 		if (!$runtime && $value instanceof ast_call_expression && $value->expression_qualified()) {
 			$name = $this->qualified_operand($value->receiver, $name, $steps, $global_references, $declarations, $required_headers);
 		}
 		if ($callback && $value->qualifier === call_qualifier::stored_value) {
-			$selected = 'selected_callable_' . $value->start;
+			$selected = 'selected_callable_' . $call_position;
 			$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
 			$name = $selected;
 		} elseif ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
 			foreach ($operands as $index => $argument) {
 				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index] ?? $pack->element_type, $value->conversion($index))) continue;
 				// An argument can replace the slot through a closure that borrows it.
-				$selected = 'selected_callable_' . $value->start;
+				$selected = 'selected_callable_' . $call_position;
 				$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
 				$name = $selected;
 				break;
@@ -3665,7 +3667,7 @@ CPP;
 			$step_start = count($this->async_steps);
 			$destination = $this->async_body && count($parameters) > 1 && $by_value
 				&& !$type->cpp_trivial_value() && $conversion === value_conversion::identity && $argument->type_def() === $type
-				? new Cpp_Staged_Result($type, 'argument_' . $value->start . '_' . $index) : null;
+				? new Cpp_Staged_Result($type, 'argument_' . $call_position . '_' . $index) : null;
 			$operand = $by_value ? $this->value($argument, $global_references, $declarations, $required_headers, $operand_safe,
 				logical_root: $conversion === value_conversion::identity, destination: $destination) : $this->name($argument->local_def(), reference: true);
 			if (($variadic !== null || count($parameters) > 1 || $method || $steps !== []) && count($this->async_steps) !== $step_start) {
@@ -3720,7 +3722,7 @@ CPP;
 				continue;
 			}
 			// Position-derived names can shadow outer lambda snapshots during nested calls; use source positions.
-			$temporary = 'argument_' . $value->start . '_' . $index;
+			$temporary = 'argument_' . $call_position . '_' . $index;
 			$declaration = $type instanceof callback_type_definition ? $type->cpp_declarator($temporary) : $type->cpp_type() . ' ' . $temporary;
 			$steps[] = $declaration . ' = ' . $operand . ';';
 			if ($before !== $this->suspensions && !$type->cpp_trivial_value()) ++$this->async_owned_steps;
