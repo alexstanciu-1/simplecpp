@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 
-from collection_goal_native import revisions
+from collection_goal_native import guard, revisions
 
 
 model = 'class Holder { public vector<int> $values; }'
@@ -69,6 +69,70 @@ def append(work):
         (None, None, 'Cannot modify readonly property values'), ('holder', holder, trace)])
 
 
+def mutations(work):
+    tracked = """
+        class Holder {
+            public vector<int> $values;
+            public function __construct(int $n) {$this->values=[$n];}
+            public function __destruct() {echo "D",$this->values[0];}
+        }
+    """
+    api = """
+        function slot():int {echo "I";return 0;}
+        function key():int {echo "K";return 0;}
+        function replaceField(Holder $h):int {$h->values=[40,41];echo "F";return 7;}
+        function swap(vector<Holder> &$owners, int $result):int {
+            $owners[0]=new Holder(90);echo "R";return $result;
+        }
+    """
+    sources, calls, trace = [], [], b''
+    for owner in ('$owners[slot()]', '($owners[slot()])'):
+        for pattern, value in [('{}[key()]+=swap($owners,7)', 10), ('++{}[swap($owners,0)]', 4),
+                               ('{}[swap($owners,0)]++', 4), ('--{}[swap($owners,0)]', 2),
+                               ('{}[swap($owners,0)]--', 2)]:
+            name = 'check' + str(len(calls))
+            operation = pattern.format(owner + '->values')
+            sources.append(f'function {name}():void {{$owners vector<Holder> = [new Holder(3)];'
+                           + operation + ';echo "E",$owners[0]->values[0];}')
+            calls.append(name + '();')
+            trace += (b'IKR' if '+=' in pattern else b'IR') + f'D{value}E90D90'.encode()
+    main = ''.join(sources + calls) + """
+        $owners vector<Holder> = [new Holder(3)];
+        $owners[slot()]->values[key()]+=replaceField($owners[0]);
+        echo $owners[0]->values[0],"/",$owners[0]->values[1];return 8;
+    """
+    trace += b'IKF10/41D10'
+    revisions(work, 'php', dict(main=main, api=api, model=tracked), [(None, None, trace)])
+
+
+def missing(work, case):
+    api = """
+        function slot():int {echo "I";return 0;}
+        function key(int $n):int {echo "K";return $n;}
+        function clear(Holder $h):int {$h->values=[];echo "R";return 7;}
+    """
+    op, trace = {
+        'missing_before': ('$owners[slot()]->values[key(1)] += clear($h);', b'IK'),
+        'missing_after': ('($owners[slot()])->values[key(0)] += clear($h);', b'IKR'),
+        'missing_update': ('--($owners[slot()])->values[key(1)];', b'IK'),
+    }[case]
+    guard(work, 'php', case, model + api + setup + op + 'return 8;', 'sequence_index_out_of_range',
+          expected_stdout=trace, exception_type='std::out_of_range')
+
+
+def mutation_access(work):
+    holder = 'class Holder {public vector<int> $values; public function __construct() {$this->values=[3];}}'
+    readonly = holder.replace('public vector', 'public readonly vector')
+    start = '$owners vector<Holder> = [new Holder()];'
+    end = 'echo $owners[0]->values[0];return 8;'
+    compound = start + '$owners[0]->values[0]*=2;' + end
+    update = start + '++($owners[0])->values[0];' + end
+    denied = 'Cannot modify readonly property values'
+    revisions(work, 'php', dict(main=compound, model=holder), [
+        (None, None, b'6'), ('model', readonly, denied), ('main', update, denied),
+        ('model', holder, b'4')])
+
+
 def admission(work):
     store = 'function store(vector<Holder> $owners):void { $owners[0]->values[0]=7; }'
     grouped = store.replace('$owners[0]->', '($owners[0])->')
@@ -77,10 +141,17 @@ def admission(work):
                 'public function __construct(vector<int> $v) { $this->values=$v; } }')
     revisions(work, 'php', {'main': 'return 8;', 'api': store, 'model': inline}, [
         (None, None, diagnostic), ('api', grouped, diagnostic),
+        ('api', store.replace('=7;', '+=7;'), diagnostic),
+        ('api', grouped.replace('=7;', '++;'), diagnostic), ('api', store, diagnostic),
         ('model', readonly, 'Cannot modify readonly property values'),
         ('model', model, b'')])
 
 
 with TemporaryDirectory(prefix='indexed-owner-target-') as tmp:
     cases = {'targets': targets, 'replacement': replacement, 'lifetime': lifetime, 'admission': admission, 'append': append}
-    cases[sys.argv[1] if len(sys.argv) > 1 else 'targets'](Path(tmp))
+    cases.update(mutations=mutations, mutation_access=mutation_access)
+    case = sys.argv[1] if len(sys.argv) > 1 else 'targets'
+    if case.startswith('missing_'):
+        missing(Path(tmp), case)
+    else:
+        cases[case](Path(tmp))

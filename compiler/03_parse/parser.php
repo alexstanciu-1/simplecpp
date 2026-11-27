@@ -1517,6 +1517,8 @@ final class Parser
 					$key = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
 					$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
 					if ($key === null || $this->cursor->is(token_kind::assign)) return $this->index_store($target, $key, $terminator);
+					$mutation = $this->indexed_mutation($target, $key, $end);
+					if ($mutation !== null) return $mutation;
 					$target = new ast_index_expression($target, $key, $end);
 				}
 				$target = $this->postfix($target, false);
@@ -1534,24 +1536,30 @@ final class Parser
 		if ($receiver instanceof ast_qualified_data) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed expression-qualified static property writes are deferred');
 		}
-		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
-			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed update requires a key');
-			$operator = $this->take_update_operator();
-			return new ast_index_update($receiver->start, $this->cursor->take(token_kind::semicolon, ';') + 1,
-				new ast_index_expression($receiver, $index, $index_end), $operator, true);
-		}
-		$operator = $this->compound_operator();
-		if ($operator !== null) {
-			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed compound requires a key');
-			$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
-			$value = $this->assignment_value();
-			return new ast_index_compound(new ast_index_expression($receiver, $index, $index_end), $value, $operator,
-				$this->cursor->take(token_kind::semicolon, ';') + 1);
-		}
+		$mutation = $this->indexed_mutation($receiver, $index, $index_end);
+		if ($mutation !== null) return $mutation;
 		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || $receiver instanceof ast_index_expression)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed assignment requires named or field storage');
 		}
 		return $this->index_store($receiver, $index, $terminator);
+	}
+
+	/** Consume a compound or postfix update after a subscript, leaving other continuations to the caller. */
+	private function indexed_mutation(ast_expression $receiver, ?ast_expression $index, int $end /** uint32 */): ?ast_statement
+	{
+		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
+			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed update requires a key');
+			$target = new ast_index_expression($receiver, $index, $end);
+			$operator = $this->take_update_operator();
+			return new ast_index_update($target->start, $this->cursor->take(token_kind::semicolon, ';') + 1, $target, $operator, true);
+		}
+		$operator = $this->compound_operator();
+		if ($operator === null) return null;
+		if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed compound requires a key');
+		$target = new ast_index_expression($receiver, $index, $end);
+		$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
+		$value = $this->assignment_value();
+		return new ast_index_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
 	}
 
 	private function index_store(ast_name_expression|ast_field_expression|ast_index_expression $receiver, ?ast_expression $index,

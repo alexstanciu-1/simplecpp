@@ -51,7 +51,8 @@ Doc Status: planning
 The grouping-dependent diagnostic observed at `9b9626589` and `aef175d70` is resolved.
 PHP admits both `$owners[0]->values[0] = 7` and `($owners[0])->values[0] = 7`
 when the typed vector contains shared class handles. Both receiver spellings also accept
-field append, retaining the selected owner across RHS replacement. The [native regression](../../compiler/tests/indexed_owner_target.py)
+field append, indexed compounds and standalone prefix/postfix updates. They retain
+the selected owner across key and RHS evaluation. The [native regression](../../compiler/tests/indexed_owner_target.py)
 covers single evaluation, replacement of the owner slot, the last owner's destructor,
 readonly rejection, and incremental recovery. Indexed inline struct elements remain deferred.
 See the [vector contract](../vector_slice.md#nested-collection-writes).
