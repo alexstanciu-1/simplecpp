@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 
-from collection_goal_native import revisions
+from collection_goal_native import guard, revisions
 
 
 def named(work):
@@ -107,5 +107,37 @@ def suspended(work):
     revisions(work, 'php', dict(main=main), [(None, None, b'9KM7')])
 
 
+def indexed_callable(work, case):
+    api = """
+    class Selector {
+        public function pick(string $key):string { echo "M"; return $key; }
+    }
+    function probe(?Selector $s):?Selector { echo "P"; return $s; }
+    function keyArg():string { echo "K"; return "method"; }
+    function fallbackKey():string { echo "F"; return "fallback"; }
+    function callArg():int { echo "C"; return 6; }
+    function byFallback(int $x):int { echo "B"; return $x+20; }
+    function byMethod(int $x):int { echo "A"; return $x+10; }
+    """
+    setup = '$ops hash<function<int(int)>,string> = ["fallback"=>fn($n)=>byFallback($n)];'
+    method = '$ops["method"]=fn($n)=>byMethod($n);'
+    call = '$value=$ops[probe($selector)?->pick(keyArg()) ?? fallbackKey()](callArg()); echo "|",$value;return 8;'
+    present = '$selector ?Selector=new Selector();'
+    absent = '$selector ?Selector=null;'
+    if case == 'indexed_callable_missing':
+        guard(work, 'php', 'missing', api + setup + present + call, 'hash_missing_key',
+              exception_type='std::out_of_range', expected_stdout=b'PKM')
+        return
+    revisions(work, 'php', dict(api=api, main=setup + method + absent + call), [
+        (None, None, b'PFCB|26'),
+        ('main', setup + method + present + call, b'PKMCA|16'),
+    ])
+
+
 with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
-    {'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended, 'dispatch': dispatch, 'admission': admission}[sys.argv[1]](Path(tmp))
+    case = sys.argv[1]
+    if case in ('indexed_callable', 'indexed_callable_missing'):
+        indexed_callable(Path(tmp), case)
+    else:
+        {'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
+         'dispatch': dispatch, 'admission': admission}[case](Path(tmp))
