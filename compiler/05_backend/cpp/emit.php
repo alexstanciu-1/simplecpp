@@ -1567,11 +1567,11 @@ CPP;
 				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$steps = [];
-				$boxed_root = ast_index_expression::boxed_path_root($statement->receiver);
+				$boxed_root = $statement->boxed_root;
 				$root = $boxed_root ?? ast_index_expression::nested_collection_root($statement->receiver);
 				if ($boxed_root !== null) {
 					$receiver = $this->collection_root_place($boxed_root, $global_references, $declarations, $required_headers, $steps);
-					$this->boxed_path_keys($statement->receiver, null, $global_references, $declarations, $required_headers, $steps);
+					$parent_keys = $this->boxed_path_keys($statement->receiver, null, $global_references, $declarations, $required_headers, $steps);
 				} elseif ($root !== null) {
 					$receiver = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
 				} else {
@@ -1595,7 +1595,7 @@ CPP;
 					$required_headers['utility'] = true;
 					$value = 'std::move(append_value)';
 				}
-				$append = $boxed_root !== null ? $type->lower_cpp_path_store($receiver, ['parent_key'], null, $value)
+				$append = $boxed_root !== null ? $type->lower_cpp_path_store($receiver, $parent_keys, null, $value)
 					: $type->lower_cpp_append_value($receiver, $value) . ';';
 				$lines[] = $this->async_statement($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}

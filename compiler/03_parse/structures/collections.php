@@ -135,12 +135,12 @@ final class ast_index_expression extends ast_expression
 	}
 
 	/** STATIC METHODS */
-	/** A boxed mutation requires a local or stable instance field. Plain stores allow deeper paths. */
-	public static function boxed_path_root(ast_expression $row, bool $plain_store = false): ast_name_expression|ast_field_expression|null
+	/** A boxed mutation requires a local or stable instance field. Plain assignment and append allow deeper paths. */
+	public static function boxed_path_root(ast_expression $row, bool $deep_path = false): ast_name_expression|ast_field_expression|null
 	{
 		if (!($row instanceof ast_index_expression) || $row->source()->flavor === flavor::python) return null;
 		$root = $row->receiver;
-		if ($plain_store) {
+		if ($deep_path) {
 			while ($root instanceof ast_index_expression) $root = $root->receiver;
 		}
 		if (!($root->type_def() instanceof boxed_type_definition)) return null;
@@ -183,6 +183,8 @@ final class ast_append_statement extends ast_statement
 	public readonly ast_expression $value;
 
 	/** PREP FACTS */
+	/** Prepared fact: non-owning root of a checked boxed path; null after reset. */
+	public ast_name_expression|ast_field_expression|null $boxed_root = null;
 	/** Prepared fact: checked element conversion; null until preparation succeeds or after reset. */
 	protected ?int $conversion /** uint16 */ = null;
 
@@ -198,9 +200,10 @@ final class ast_append_statement extends ast_statement
 	}
 
 	/** METHODS */
-	public function settle_append(int $conversion /** uint16 */): void
+	public function settle_append(int $conversion /** uint16 */, ast_name_expression|ast_field_expression|null $boxed_root): void
 	{
 		$this->conversion = $conversion;
+		$this->boxed_root = $boxed_root;
 	}
 
 	public function conversion(): int /** uint16 */
@@ -211,6 +214,7 @@ final class ast_append_statement extends ast_statement
 	public function reset_preparation(): void
 	{
 		$this->conversion = null;
+		$this->boxed_root = null;
 	}
 }
 

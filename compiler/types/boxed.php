@@ -32,10 +32,10 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		}
 	}
 
-	/** The plain-store context follows only receiver links. Keys and RHS expressions retain read semantics. */
-	public function prepare_index(ast_index_expression $value, bool $plain_store = false): void
+	/** The deep write context follows only receiver links. Keys and RHS expressions retain read semantics. */
+	public function prepare_index(ast_index_expression $value, bool $deep_path = false): void
 	{
-		if (!$plain_store && $value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python) {
+		if (!$deep_path && $value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python) {
 			$parent = $value->parent;
 			if (!(($parent instanceof ast_index_compound || $parent instanceof ast_index_update) && $parent->target === $value
 				&& ast_index_expression::boxed_path_root($value->receiver) !== null)) {

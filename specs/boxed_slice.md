@@ -133,8 +133,8 @@ publish changed mixed children from leaf to root. For dynamic, update the shared
 container directly. A failed intermediate lookup preserves RHS effects and performs
 no part of the final store.
 
-For `data[group][] = value`, save the normalized group key, evaluate and box the RHS,
-then require a container at that key in the current root. Append using that child's
+For append, including `data[region][group][] = value`, save all normalized keys in source order, evaluate and box the RHS,
+then require a container at each saved key in the current root. Append using that child's
 next integer key. A replacement child supplies its own next key. A missing group raises
 `boxed_missing_key`; a null or scalar child raises `boxed_expected_container`.
 
@@ -144,7 +144,7 @@ table, so existing aliases of that child observe the change. If the RHS replaces
 the child, the replacement receives the write. Failed lookup leaves earlier
 operand effects visible.
 
-Plain assignment at any depth, two-key compounds and standalone updates, and single-group append also accept a writable instance-field path under the typed
+Plain assignment and append at any depth, two-key compounds and standalone updates also accept a writable instance-field path under the typed
 collection receiver-lifetime rule. Select the field and retain its owner before evaluating
 the group key. Rebinding the holder leaves the selected field on the original owner. Replacing
 the contents of that field during key or RHS evaluation makes the write use its current

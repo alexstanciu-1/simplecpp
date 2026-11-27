@@ -320,10 +320,10 @@ final class Preparation
 				$boxed_root = null;
 				$receiver = $statement->receiver;
 				if ($receiver instanceof ast_index_expression) {
-					$this->value($receiver, plain_store_path: true);
+					$this->value($receiver, deep_write_path: true);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
 					if ($collection_root === null) {
-						$boxed_root = ast_index_expression::boxed_path_root($receiver, plain_store: true);
+						$boxed_root = ast_index_expression::boxed_path_root($receiver, deep_path: true);
 						$collection_root = $boxed_root;
 					}
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
@@ -369,13 +369,16 @@ final class Preparation
 				if ($binding instanceof ast_local_binding) $this->latest_writes[$binding->storage_id()] = null;
 			}
 			elseif ($statement instanceof ast_append_statement) {
+				$boxed_root = null;
 				if ($statement->receiver instanceof ast_field_expression) {
 					$this->writable_property($statement->receiver, payload: true);
 				} else {
-					$this->value($statement->receiver);
-					$root = $statement->receiver instanceof ast_index_expression
-						? (ast_index_expression::nested_collection_root($statement->receiver) ?? ast_index_expression::boxed_path_root($statement->receiver))
-						: $statement->receiver;
+					$this->value($statement->receiver, deep_write_path: true);
+					$root = $statement->receiver;
+					if ($root instanceof ast_index_expression) {
+						$boxed_root = ast_index_expression::boxed_path_root($root, deep_path: true);
+						$root = $boxed_root ?? ast_index_expression::nested_collection_root($root);
+					}
 					$binding = $root instanceof ast_name_expression ? $root->local_binding() : null;
 					if ($binding === null && !($root instanceof ast_field_expression)) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
@@ -389,7 +392,7 @@ final class Preparation
 				}
 				$this->collection_element($statement->value, $type->write_type(), null);
 				$this->retain_member_place($statement->receiver);
-				$statement->settle_append($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
+				$statement->settle_append($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination), $boxed_root);
 			}
 			elseif ($statement instanceof ast_storage_write) {
 				$this->write($statement);
@@ -1592,7 +1595,7 @@ final class Preparation
 
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null,
-		bool $plain_store_path = false): void
+		bool $deep_write_path = false): void
 	{
 		if ($syntax instanceof ast_take_expression) {
 			$this->prepare_take($syntax, $initializing);
@@ -1783,7 +1786,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_index_expression) {
-			$this->value($syntax->receiver, $initializing, plain_store_path: $plain_store_path);
+			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
 			$type = $syntax->receiver->type_def();
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
@@ -1793,7 +1796,7 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash, or a boxed collection');
 			}
 			$this->value($syntax->index, $initializing);
-			if ($plain_store_path && $type instanceof boxed_type_definition) $type->prepare_index($syntax, plain_store: true);
+			if ($deep_write_path && $type instanceof boxed_type_definition) $type->prepare_index($syntax, deep_path: true);
 			else $type->prepare_index($syntax);
 			if (!$syntax->index->is_effect_free_literal()) $this->retain_member_place($syntax->receiver);
 			return;
