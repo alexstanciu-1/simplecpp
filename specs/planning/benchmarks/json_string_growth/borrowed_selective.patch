@@ -1,0 +1,47 @@
+--- a/cmake/Json.cmake
++++ b/cmake/Json.cmake
+@@ -1,3 +1,21 @@
++# Study only: qualify the exact native build before predicting string capacity.
++option(SCPP_STUDY_QUALIFY_RESERVE "Run the native JSON string capacity probe" OFF)
++if(SCPP_STUDY_QUALIFY_RESERVE AND NOT CMAKE_CROSSCOMPILING)
++  function(scpp_qualify_json_reserve)
++    set(CMAKE_TRY_COMPILE_CONFIGURATION "${CMAKE_BUILD_TYPE}")
++    unset(scpp_reserve_run CACHE)
++    unset(scpp_reserve_compiled CACHE)
++    try_run(scpp_reserve_run scpp_reserve_compiled "${CMAKE_BINARY_DIR}/reserve-probe"
++      "${PROJECT_SOURCE_DIR}/specs/planning/benchmarks/json_string_growth/check_capacity.cpp"
++      CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON RUN_OUTPUT_VARIABLE observation)
++    if(scpp_reserve_compiled AND "${scpp_reserve_run}" STREQUAL "0")
++      add_compile_definitions(SCPP_JSON_MEASURED_CAPACITY_8=1)
++      message(STATUS "Qualified JSON reserve: ${observation}")
++    endif()
++  endfunction()
++  scpp_qualify_json_reserve()
++endif()
++
+ # JSON depends on its publication's core; core never depends on JSON.
+ function(scpp_add_json target core generated)
+   add_library(${target} STATIC ${generated}/src/json.cpp
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -151,7 +151,20 @@
+ 	}
+ 
+ 	[[nodiscard]] std::string parse_string_tail(std::size_t start, std::string_view prefix) {
++#if defined(SCPP_JSON_MEASURED_CAPACITY_8) && SCPP_JSON_MEASURED_CAPACITY_8
++		auto out = [this, prefix] {
++			const auto n = prefix.size();
++			if (n >= 1024 && n <= 65536 && n % 8 == 7 && peek() == '\\') {
++				std::string buffer;
++				buffer.reserve(n + 1);
++				buffer.append(prefix);
++				return buffer;
++			}
++			return std::string(prefix);
++		}();
++#else
+ 		std::string out(prefix);
++#endif
+ 		while (!at_end()) {
+ 			const char ch = get();
+ 			if (ch == '"') {

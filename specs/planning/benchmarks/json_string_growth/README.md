@@ -76,3 +76,36 @@ taskset -c 7 python3 run.py "$suffix_study" "$work" "$third" > selective.dev002.
 ```
 
 [Three-way measurements](selective.dev002.json) · [Experimental patch](selective.patch)
+
+## Selective reserve after synchronous input borrowing
+
+The baseline is the verified input-borrowing decoder at `c1c12d66b`. Two isolated copies received borrowed_selective.patch. One ran the capacity qualification on dev002 with the same Release toolchain used for the candidate. The other skipped qualification and compiled the ordinary construction path. All three builds retain input borrowing, the eight-byte scanner, bulk suffix appends, and owning result fields.
+
+The experimental qualification is opt-in for a native build. CMake enables the capacity prediction only if the executable compiles, runs, and succeeds. Cross builds skip the probe. On dev002, all 64,513 tested prefix lengths from 1,024 through 65,536 agreed with the eight-byte rounding rule, including 8,064 full buffers. The candidate only predicts within that range and only when an escape follows the prefix. A focused native Clang/libstdc++ check returned a capacity mismatch, built the fallback without the optimization definition, and decoded the 4,095-byte prefix plus final escaped character correctly.
+
+Median microseconds per document of 16 equal-length strings, each ending with one ASCII character encoded as a Unicode escape. Positive time savings favor the qualified candidate. Each paired round shuffled the builds on CPU 7. The final column counts buffer moves per 100,000 final appends in the separate instrumented lexical reader.
+
+| Decoded bytes/string | Committed µs | Fallback µs | Qualified µs | Time saved vs committed | Moves, committed → qualified |
+|---:|---:|---:|---:|---:|---:|
+| 8 | 1.002 | 0.999 | 0.954 | +4.8% | 0 → 0 |
+| 23 | 1.432 | 1.445 | 1.417 | +1.0% | 100,000 → 100,000 |
+| 129 | 2.019 | 2.013 | 2.000 | +0.9% | 0 → 0 |
+| 4,095 | 26.438 | 26.464 | 26.729 | -1.1% | 0 → 0 |
+| 4,096 | 59.843 | 58.179 | 52.103 | +12.9% | 100,000 → 0 |
+| 4,097 | 56.096 | 55.858 | 55.840 | +0.5% | 0 → 0 |
+
+For each candidate the typed scalar and vector drivers matched the decoded-byte oracle on 780 valid documents and the baseline on all 844 malformed diagnostics, including offsets and paths. The ownership probe overwrote and destroyed the input before checking decoded values. The timing harness also checked lengths around the qualification cutoff, valid Unicode, malformed escapes, control bytes, invalid UTF-8 and truncation.
+
+To reproduce, apply borrowed_selective.patch to two clean copies of the baseline. Build both with the default Release preset and JSON enabled, passing `-DSCPP_STUDY_QUALIFY_RESERVE=ON` only for the qualified copy. Use the shared typed_json_strings builder with --batched to produce bin/base, bin/fallback and bin/selective. Use build_probe.py to build probe-base, probe-fallback and probe-selective from their corresponding reader headers. Pass `-DSCPP_JSON_MEASURED_CAPACITY_8=1` to the instrumented probe only when the qualified build reports a successful match. Run `taskset -c 7 python3 run.py --borrowed "$work"` on dev002.
+
+[Raw measurements including plain controls and per-append timings](borrowed.dev002.json) · [Qualified experiment patch](borrowed_selective.patch)
+
+The 4,096-byte baseline samples in the first run ranged from 43.6 to 63.8 µs. A second run interleaved all three lengths for 15 rounds, with 1,500 timed documents per sample. Both runs used the same executables and CPU. The timing delta includes allocator and system effects; the capacity and buffer-move observations came from the separate probe.
+
+| Bytes/string | Committed µs | Fallback µs | Qualified µs | Time saved vs committed | Qualified faster in paired rounds |
+|---:|---:|---:|---:|---:|---:|
+| 4,095 | 25.252 | 25.217 | 25.101 | +0.6% | 11/15 |
+| 4,096 | 27.296 | 27.316 | 25.178 | +7.8% | 14/15 |
+| 4,097 | 25.012 | 25.032 | 24.999 | +0.1% | 8/15 |
+
+All 425 JSON-enabled default tests passed in each of the qualified and fallback builds. [Boundary repeat measurements](recheck.dev002.json)

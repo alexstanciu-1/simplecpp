@@ -3,7 +3,8 @@ from pathlib import Path
 import subprocess
 import sys
 
-reader, out = map(Path, sys.argv[1:])
+reader, out = map(Path, sys.argv[1:3])
+flags = sys.argv[3:]
 out.mkdir(parents=True, exist_ok=True)
 text = reader.read_text()
 append = 'out += utf8_from_codepoint(high);'
@@ -22,5 +23,5 @@ text = text.replace(append, '''
                     capacity_before = before;
                     capacity_after = out.capacity();''')
 (out/'reader.hpp').write_text(text)
-subprocess.run(['clang++', '-std=c++23', '-stdlib=libc++', '-O3', '-DNDEBUG', '-I', out,
+subprocess.run(['clang++', '-std=c++23', '-stdlib=libc++', '-O3', '-DNDEBUG', *flags, '-I', out,
                 Path(__file__).with_name('probe.cpp'), '-o', out/'probe'], check=True)

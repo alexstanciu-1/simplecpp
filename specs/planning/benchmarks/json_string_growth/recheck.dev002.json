@@ -1,0 +1,275 @@
+{
+  "loops": 1500,
+  "rows": [
+    {
+      "size": 4096,
+      "base": 26908.9,
+      "fallback": 26809.5,
+      "selective": 25149.9
+    },
+    {
+      "size": 4095,
+      "selective": 25178.3,
+      "base": 25192.9,
+      "fallback": 25702.2
+    },
+    {
+      "size": 4097,
+      "fallback": 24843.7,
+      "selective": 24579.7,
+      "base": 24898.5
+    },
+    {
+      "size": 4095,
+      "selective": 34281.9,
+      "fallback": 25156.2,
+      "base": 26109.3
+    },
+    {
+      "size": 4096,
+      "selective": 24919.2,
+      "fallback": 27082.2,
+      "base": 27028.7
+    },
+    {
+      "size": 4097,
+      "base": 24832.8,
+      "selective": 24720.2,
+      "fallback": 25487.7
+    },
+    {
+      "size": 4095,
+      "fallback": 24302.9,
+      "selective": 24480.9,
+      "base": 24794.2
+    },
+    {
+      "size": 4096,
+      "base": 27295.6,
+      "selective": 24500.7,
+      "fallback": 27271.4
+    },
+    {
+      "size": 4097,
+      "selective": 24326.2,
+      "base": 24325.4,
+      "fallback": 24353.1
+    },
+    {
+      "size": 4095,
+      "fallback": 24386.3,
+      "selective": 24273.2,
+      "base": 24365.6
+    },
+    {
+      "size": 4097,
+      "selective": 24274.0,
+      "base": 24344.0,
+      "fallback": 24291.5
+    },
+    {
+      "size": 4096,
+      "base": 26757.8,
+      "fallback": 26976.6,
+      "selective": 24830.2
+    },
+    {
+      "size": 4096,
+      "selective": 25106.1,
+      "base": 27091.5,
+      "fallback": 28013.9
+    },
+    {
+      "size": 4095,
+      "base": 25560.7,
+      "fallback": 24560.0,
+      "selective": 39534.1
+    },
+    {
+      "size": 4097,
+      "base": 24825.1,
+      "selective": 25434.8,
+      "fallback": 25829.3
+    },
+    {
+      "size": 4095,
+      "fallback": 25268.0,
+      "base": 25176.9,
+      "selective": 25099.5
+    },
+    {
+      "size": 4097,
+      "base": 25083.2,
+      "selective": 25003.5,
+      "fallback": 24910.2
+    },
+    {
+      "size": 4096,
+      "fallback": 27390.3,
+      "selective": 25097.5,
+      "base": 27074.6
+    },
+    {
+      "size": 4097,
+      "base": 24854.9,
+      "selective": 25027.8,
+      "fallback": 24980.7
+    },
+    {
+      "size": 4096,
+      "selective": 25178.2,
+      "base": 27510.2,
+      "fallback": 27315.8
+    },
+    {
+      "size": 4095,
+      "base": 25031.9,
+      "selective": 25028.5,
+      "fallback": 25022.2
+    },
+    {
+      "size": 4097,
+      "selective": 24958.3,
+      "base": 25012.2,
+      "fallback": 25012.7
+    },
+    {
+      "size": 4096,
+      "selective": 25159.0,
+      "fallback": 27203.3,
+      "base": 27287.8
+    },
+    {
+      "size": 4095,
+      "base": 25031.2,
+      "selective": 24921.8,
+      "fallback": 25000.3
+    },
+    {
+      "size": 4095,
+      "fallback": 28705.1,
+      "base": 30323.2,
+      "selective": 25688.6
+    },
+    {
+      "size": 4096,
+      "selective": 26360.8,
+      "fallback": 27244.6,
+      "base": 27320.8
+    },
+    {
+      "size": 4097,
+      "base": 25022.4,
+      "fallback": 25032.1,
+      "selective": 24999.1
+    },
+    {
+      "size": 4096,
+      "fallback": 28022.5,
+      "base": 27285.9,
+      "selective": 25189.5
+    },
+    {
+      "size": 4095,
+      "selective": 25100.7,
+      "base": 24983.0,
+      "fallback": 25217.0
+    },
+    {
+      "size": 4097,
+      "selective": 24984.3,
+      "base": 24947.6,
+      "fallback": 25005.4
+    },
+    {
+      "size": 4097,
+      "selective": 24922.6,
+      "base": 25061.9,
+      "fallback": 25126.0
+    },
+    {
+      "size": 4096,
+      "selective": 25325.6,
+      "fallback": 27397.3,
+      "base": 27346.7
+    },
+    {
+      "size": 4095,
+      "fallback": 25152.0,
+      "base": 26409.6,
+      "selective": 25241.6
+    },
+    {
+      "size": 4097,
+      "selective": 25067.0,
+      "fallback": 25153.9,
+      "base": 25091.9
+    },
+    {
+      "size": 4095,
+      "selective": 25091.7,
+      "fallback": 25231.9,
+      "base": 25314.8
+    },
+    {
+      "size": 4096,
+      "fallback": 31621.4,
+      "selective": 33282.9,
+      "base": 28673.7
+    },
+    {
+      "size": 4096,
+      "fallback": 28700.3,
+      "selective": 25409.0,
+      "base": 27525.9
+    },
+    {
+      "size": 4095,
+      "selective": 25195.3,
+      "fallback": 25230.2,
+      "base": 25475.2
+    },
+    {
+      "size": 4097,
+      "selective": 26057.3,
+      "fallback": 25549.5,
+      "base": 25219.3
+    },
+    {
+      "size": 4097,
+      "fallback": 25145.5,
+      "selective": 25233.1,
+      "base": 25129.9
+    },
+    {
+      "size": 4096,
+      "fallback": 27422.9,
+      "base": 27381.4,
+      "selective": 25245.9
+    },
+    {
+      "size": 4095,
+      "selective": 25083.5,
+      "fallback": 25222.6,
+      "base": 25289.5
+    },
+    {
+      "size": 4097,
+      "selective": 25307.8,
+      "fallback": 25266.8,
+      "base": 25269.8
+    },
+    {
+      "size": 4095,
+      "fallback": 25326.7,
+      "selective": 25344.3,
+      "base": 25251.9
+    },
+    {
+      "size": 4096,
+      "base": 45878.2,
+      "fallback": 27297.4,
+      "selective": 25224.2
+    }
+  ]
+}

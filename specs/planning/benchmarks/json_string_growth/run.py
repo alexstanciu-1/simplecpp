@@ -1,4 +1,5 @@
 """Run pinned on dev002. Arguments are the previous suffix study and this build directory."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -6,17 +7,29 @@ import platform
 import random
 import string
 import subprocess
-import sys
 
-old, work, *extra = (Path(p).resolve() for p in sys.argv[1:])
-assert len(extra) <= 1
-modes = ('base', 'reserve')
-drivers = {'base': old/'bin/avx2', 'reserve': work/'bin/reserve'}
-probes = {m: work/('probe-'+m)/'probe' for m in modes}
-if extra:
-    modes += ('selective',)
-    drivers['selective'] = extra[0]/'bin/selective'
-    probes['selective'] = extra[0]/'probe-selective/probe'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('paths', nargs='+', type=Path)
+parser.add_argument('--borrowed', action='store_true', help='compare baseline, unqualified and qualified borrowing builds')
+args = parser.parse_args()
+paths = [p.resolve() for p in args.paths]
+if args.borrowed:
+    if len(paths) != 1:
+        parser.error('--borrowed takes the study work directory')
+    modes = ('base', 'fallback', 'selective')
+    drivers = {m: paths[0]/'bin'/m for m in modes}
+    probes = {m: paths[0]/('probe-'+m)/'probe' for m in modes}
+else:
+    if len(paths) not in (2, 3):
+        parser.error('expected suffix and growth directories, and optionally the selective directory')
+    old, work, *extra = paths
+    modes = ('base', 'reserve')
+    drivers = {'base': old/'bin/avx2', 'reserve': work/'bin/reserve'}
+    probes = {m: work/('probe-'+m)/'probe' for m in modes}
+    if extra:
+        modes += ('selective',)
+        drivers['selective'] = extra[0]/'bin/selective'
+        probes['selective'] = extra[0]/'probe-selective/probe'
 rng = random.Random(4096)
 sizes = [8, 23, 129, 4095, 4096, 4097]
 
@@ -50,7 +63,7 @@ docs = []
 for n in sizes:
     for suffix in [br'\u0061"', br'\u0000"', br'\uD83D\uDE03"', br'\u0061\q"', br'\u12x4"', b'\xff"', b'\x01"', b'']:
         docs.append(b'{"value":["' + b'a'*(n-1) + suffix + b']}')
-if extra:
+if 'selective' in modes:
     for n in [1023, 1024, 1031, 4095]:
         prefix = b'a'*n
         for tail in [br'\u0000', br'\u00e9', br'\uD83D\uDE03', br'\\', br'\"', br'\n',
