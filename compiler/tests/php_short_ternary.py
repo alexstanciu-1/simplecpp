@@ -4,6 +4,7 @@ import sys
 from tempfile import TemporaryDirectory
 
 from collection_goal_native import revisions
+from indexed_dynamic_compound import MODEL, SETUP, VALUES
 
 
 def selection(work):
@@ -40,5 +41,30 @@ def suspended(work):
     revisions(work, 'php', dict(main=main), [(None, None, b'P7PF8')])
 
 
+def index_key(work):
+    api = MODEL + """
+        function replaceChildAndReturnKey(Holder $holder, dynamic $fresh):string {
+            echo "F"; $holder->data->child=$fresh; return "n";
+        }
+        function rhs():int { echo "R"; return 7; }
+    """
+    main = SETUP + """
+        $fresh["n"]=90;
+        $owners[ownerKey()]->data->child[preferredKey() ?: replaceChildAndReturnKey($original,$fresh)] += rhs();
+    """ + VALUES + 'return 8;'
+
+    def preferred(value):
+        return f'function preferredKey():string {{ echo "P"; return "{value}"; }}'
+
+    original = b'OPR|10/10/10/90'
+    replacement = b'OPFR|97/97/3/97'
+    revisions(work, 'php', dict(main=main, api=api, preference=preferred('n')), [
+        (None, None, original),
+        ('preference', preferred(''), replacement),
+        ('preference', preferred('0'), replacement),
+        ('preference', preferred('n'), original),
+    ])
+
+
 with TemporaryDirectory(prefix='php-short-ternary-') as tmp:
-    {'selection': selection, 'inferred': inferred, 'suspended': suspended}[sys.argv[1]](Path(tmp))
+    {'selection': selection, 'inferred': inferred, 'suspended': suspended, 'index_key': index_key}[sys.argv[1]](Path(tmp))
