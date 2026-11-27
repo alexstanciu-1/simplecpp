@@ -188,7 +188,10 @@ retain their existing admission rules.
 
 A direct success test admits a read of a fresh payload on that path. A failure
 branch that returns or throws leaves only the initialized path at the join.
-Overwriting a flag or passing it by mutable reference discards its evidence.
+An empty diagnostic from the same structured extraction also proves success.
+For example, after `($value,$error) = read(); if ($error) { return $error; }`,
+the remaining path can read `$value`. Overwriting a status slot, taking a
+mutable alias, or passing it by mutable reference discards its evidence.
 Once initialized, the payload remains usable independently of that flag.
 An unconditional assignment also initializes the payload. This slice admits
 extraction as a standalone statement, an assignment or declaration initializer,

@@ -35,7 +35,7 @@ final class Preparation
 	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
 	/** Definitely initialized fresh payloads by binding identity. @var bool[] */
 	private array $take_ready = [];
-	/** Success flag storage ID to the payload it proves initialized. @var int[] */
+	/** Status storage ID to its payload. A true bool or an absent Exception proves initialization. @var int[] */
 	private array $take_status = [];
 	/** Status slots reachable through another name. @var bool[] */
 	private array $take_borrowed = [];
@@ -842,11 +842,15 @@ final class Preparation
 			$literal = $condition->right instanceof ast_keyword_expression ? $condition->right : $condition->left;
 			if (!$literal instanceof ast_keyword_expression || !in_array($literal->word, ['false', 'true'], true)) return null;
 			if (($literal->word === 'false') !== ($condition->operator === binary_operator::not_identical)) $positive = !$positive;
-			return $this->take_guard($condition->left === $literal ? $condition->right : $condition->left, $positive);
+			$operand = $condition->left === $literal ? $condition->right : $condition->left;
+			return $operand->type_def() === type_bool::instance() ? $this->take_guard($operand, $positive) : null;
 		}
 		if ($condition instanceof ast_take_expression) return spl_object_id($condition->slots[0]);
 		if (!$condition instanceof ast_name_expression || ($local = $condition->local_binding()) === null) return null;
-		return isset($this->take_borrowed[$local->storage_id()]) ? null : ($this->take_status[$local->storage_id()] ?? null);
+		$id = $local->storage_id();
+		if (!isset($this->take_status[$id]) || isset($this->take_borrowed[$id])) return null;
+		if ($local->type_def() instanceof type_exception) $positive = !$positive;
+		return $this->take_status[$id];
 	}
 
 	/** Recognize an interface or union-arm test on stable storage. */
@@ -1654,15 +1658,16 @@ final class Preparation
 		}
 		// A nested lazy operand can be skipped while a pre-existing status is still true.
 		if ($count > 1 && (!$ternary_test || $site->parent instanceof ast_statement)) {
-			$this->track_take_status($take->slots[$count - 1], $take);
+			for ($index = 1; $index < $count; ++$index) $this->track_take_status($take->slots[$index], $take);
 		}
 		$take->settle_take();
 	}
 
-	/** Only a private bool slot can witness initialization across subsequent statements. */
+	/** Only private status storage can witness initialization across subsequent statements. */
 	private function track_take_status(ast_local_binding $slot, ast_take_expression $take): void
 	{
-		if ($slot->type_def() !== type_bool::instance() || isset($this->take_borrowed[$slot->storage_id()])) return;
+		if (isset($this->take_borrowed[$slot->storage_id()])) return;
+		if ($slot->type_def() !== type_bool::instance() && !$slot->type_def() instanceof type_exception) return;
 		if ($slot instanceof ast_parameter_declaration && $slot->mode !== passing_mode::value) return;
 		if ($slot instanceof ast_closure_capture || ast_writable_element::origin($slot) !== null) return;
 		$this->take_status[$slot->storage_id()] = spl_object_id($take->slots[0]);

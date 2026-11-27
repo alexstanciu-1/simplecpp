@@ -31,6 +31,16 @@ if ($factory->get_line() !== 18 || $factory->get_file() !== "take") { return 86;
 function length_or_error(result<string> $input): result<int> {
     return (($text, $diagnostic) = $input) ? strlen($text) : $diagnostic;
 }
+function diagnostic_guard(result<string> $input): result<int> {
+    ($text, $error) = $input;
+    if ($error) { return $error; }
+    return strlen($text);
+}
+function diagnostic_arm(result<string> $input): result<int> {
+    ($text, $error, $ok) = $input;
+    $ok = false;
+    return !$error ? strlen($text) : $error;
+}
 function forward_unchecked(result<string> $input): result<int> {
     take($text, $diagnostic, $ok) = $input;
     return $diagnostic;
@@ -113,6 +123,7 @@ int verify_take() {
     if (App::structured_(scpp::result_int64{scpp::error_t{scpp::string{"failure"}, scpp::int64{37}}}) != 37) return 92;
     const scpp::result_string empty{scpp::string{}};
     if (App::length_or_error_(empty).value() != 0) return 93;
+    if (App::diagnostic_guard_(empty).value() != 0 || App::diagnostic_arm_(empty).value() != 0) return 87;
     scpp::int64 calls = 0, hits = 0;
     if (App::position_(scpp::string{"abc"}, calls, hits) != 0 ||
         App::position_(scpp::string{"zzz"}, calls, hits) != -1 || calls != 2 || hits != 1) return 97;
@@ -121,6 +132,8 @@ int verify_take() {
     for (const auto& message : {scpp::string{"failure"}, scpp::string{}}) {
         scpp::error_t error{message, scpp::int64{37}, scpp::string{"input.php"}};
         const scpp::result_int64 expected{error};
+        if (App::diagnostic_guard_(scpp::result_string{error}).error().ptr != error.ptr ||
+            App::diagnostic_arm_(scpp::result_string{error}).error().ptr != error.ptr) return 88;
         if (App::kept_(scpp::result_string{error}) != scpp::string{"fallback"}) return 99;
         if (!App::length_or_error_(scpp::result_string{error}).same_error_identity(expected)) return 94;
     }
@@ -145,6 +158,24 @@ try {
 	throw new RuntimeException('Unexpected result<Exception> specialization');
 } catch (diagnostic|diagnostic_group $e) {
 	if (!str_contains($e->getMessage(), 'Unavailable runtime specialization')) throw $e;
+}
+foreach ([
+	'($v,$e)=$r; $e=$other; if ($e) {return 0;}',
+	'($v,$e)=$r; if ($flag) {$e=$other;} if ($e) {return 0;}',
+	'($v,$e)=$r; $alias =& $e; $alias=$other; if ($e) {return 0;}',
+	'$e=$other; $alias =& $e; ($v,$e)=$r; $alias=$other; if ($e) {return 0;}',
+	'($v,$e)=$r; overwrite_error($e,$other); if ($e) {return 0;}',
+	'($v,$e)=$r; ($w,$e)=$r; if ($e) {return 0;}',
+	'($v,$e)=$r; if (!$e) {return 0;}',
+] as $body) {
+	try {
+		$compile('function overwrite_error(Exception &$slot, Exception $other): void { $slot=$other; } '
+			. 'function invalid(result<string> $r, Exception $other, bool $flag): int {' . $body . 'return strlen($v);} return 8;');
+	} catch (diagnostic|diagnostic_group $e) {
+		if (!str_contains($e->getMessage(), 'Check take success before using fresh output: v')) throw $e;
+		continue;
+	}
+	throw new RuntimeException('Stale diagnostic guard admitted: ' . $body);
 }
 $prefix = 'function overwrite(bool &$ok): void { $ok = true; } $r result_or_false<int> = false_sentinel; ';
 foreach ([
