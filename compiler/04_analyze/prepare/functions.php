@@ -157,6 +157,7 @@ final class Function_Preparation
 			return;
 		}
 		if ($value instanceof ast_ternary_expression) {
+			$value->true_conversion = $value->false_conversion = value_conversion::identity;
 			self::expression($value->condition);
 			self::expression($value->when_true);
 			self::expression($value->when_false);

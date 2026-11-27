@@ -172,6 +172,13 @@ with tempfile.TemporaryDirectory(prefix='scpp-filesystem-native-') as directory:
         invalid = local('badPath', 'result<int>', 'fs_put("published\\0ignored", "different")')
         empty_write = local('emptyWrite', 'int', 'fs_put("empty", "")')
         source = ('use function fs_get as read_file;' if flavor == 'php' else '') + '\n'.join(statements)
+        if flavor == 'php':
+            source += ('\nfunction file_length(string $path):result<int> {'
+                       'return (($text,$error)=fs_get($path)) ? strlen($text) : $error; }'
+                       '$len int=file_length("empty"); if ($len!==0) {return 10;}'
+                       '$len=file_length("bytes"); if ($len!==' + str(len(contents)) + ') {return 11;}'
+                       '$failedLength=file_length("missing"); '
+                       'if ($failedLength!==false) {return 12;}')
         source += (
             f'\nif (!isset({variable}empty) || isset({variable}missing) || isset({variable}invalid)) {{return 3;}}'
             f'''
