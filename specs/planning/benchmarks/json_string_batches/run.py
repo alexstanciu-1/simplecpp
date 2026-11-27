@@ -11,8 +11,9 @@ import subprocess
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('bin', type=Path, help='parent of baseline, grouped and fused driver directories')
 parser.add_argument('--check', action='store_true')
+parser.add_argument('--production', action='store_true', help='compare baseline and production drivers')
 args = parser.parse_args()
-variants = ('baseline', 'grouped', 'fused')
+variants = ('baseline', 'production') if args.production else ('baseline', 'grouped', 'fused')
 rng = random.Random(22064)
 
 

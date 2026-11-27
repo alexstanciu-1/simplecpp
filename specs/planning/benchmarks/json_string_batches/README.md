@@ -69,3 +69,24 @@ taskset -c 7 python3 run.py "$bin" > "$bin/dev002.json"
 ```
 
 [Raw measurements](dev002.json) · [Grouped-loop patch](grouped.patch) · [Fused-loop patch](fused.patch)
+
+## Production verification
+
+The production string-vector binding uses a shared array traversal with the existing integer reader. On a failed string scan the traversal restores the delimiter checkpoint and lets scalar traversal report the error. The native Decoder default implementation also uses scalar traversal. The four-flavor integration fixture verifies the generated batch call and the returned strings for each frontend.
+
+On dev002 CPU 7, the preserved scalar driver and the production driver decoded the same documents in eleven shuffled paired rounds. Each number below is median microseconds per complete document. The empty array took approximately four additional nanoseconds. All fourteen nonempty fixtures had lower production medians. Allocation counts were identical for every measured pair. The implementation uses the ordinary string scanner and existing output allocation policy.
+
+| Vector shape | Plain, scalar → batch | Escaped, scalar → batch |
+|---|---:|---:|
+| Empty | 0.153 → 0.157 | — |
+| 1 × 8 bytes | 0.250 → 0.211 | 0.296 → 0.248 |
+| 3 × 8 bytes | 0.392 → 0.268 | 0.487 → 0.357 |
+| 16 × 8 bytes | 1.310 → 0.636 | 1.861 → 1.145 |
+| 16 × 129 bytes | 4.496 → 3.380 | 8.147 → 7.002 |
+| 16 × 4,096 bytes | 77.061 → 64.246 | 174.319 → 159.237 |
+| 128 × 8 bytes | 9.001 → 3.434 | 12.519 → 7.053 |
+| 128 × 129 bytes | 34.666 → 25.477 | 63.729 → 54.382 |
+
+The ten valid differential cases and all timed fixtures matched the byte oracle. All 134 invalid documents produced the same full diagnostic as the scalar driver. Reproduce with the original scalar driver in bin/baseline, the production driver built with --batched in bin/production, and `taskset -c 7 python3 run.py bin --production`.
+
+[Raw production measurements](production.dev002.json)

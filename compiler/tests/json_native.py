@@ -120,8 +120,22 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
 $wide Wide=json_decode_as("{\"f0\":1,\"f63\":2,\"f64\":3}",Wide::class);
 if($wide->f0!==1 || $wide->f63!==2 || $wide->f64!==3){return 48;}
 $dup=json_decode_as("{\"f64\":1,\"f64\":2}",Wide::class);if(isset($dup)){return 49;}
+$wire="{\"words\":[\"x\\u0000y\"]}";
+$cwords CppWords=readCppWords($wire); $jwords JsWords=readJsWords($wire); $pwords PyWords=readPyWords($wire);
+if($cwords->words[0]!=="x\0y" || $jwords->words[0]!=="x\0y" || $pwords->words[0]!=="x\0y"){return 53;}
 return 0;""")
     records.write_text(definitions)
+    # Each frontend declares its own schema and calls its own generated decoder.
+    flavor_sources = {
+        'CppWords.cpp': ('data struct CppWords { vector<string> words; };'
+         'CppWords readCppWords(string s) { return json_decode_as(s,CppWords::class); }'),
+        'JsWords.js': ('data struct JsWords { words:vector<string>; }'
+         'function readJsWords(s:string):JsWords { return json_decode_as(s,JsWords.class); }'),
+        'PyWords.py': ('data class PyWords:\n    words: vector<string>\n'
+         'def readPyWords(s: string) -> PyWords:\n    return json_decode_as(s,PyWords)\n'),
+    }
+    for name, body in flavor_sources.items():
+        (app/name).write_text(body)
     reader = app/'reader.php'
     decoder = ('function readPacket(string $text):result<Packet> {return json_decode_as($text,Packet::class);}'
                'function snapshot(result<Packet> &$saved):Packet { $copy Packet=$saved; return $copy; }')
@@ -143,6 +157,9 @@ return 0;""")
         assert all(b'template<class scpp_escape_Field' not in data for data in baseline.values())
         assert b'decode_record<' not in units and b'record_result<' not in units
         bundle = json.loads((out/'manifest.json').read_text())
+        for source_name in ['records.php', 'CppWords.cpp', 'JsWords.js', 'PyWords.py']:
+            unit = out/bundle['sources']['app/'+source_name]
+            assert 'd.read_strings(' in unit.read_text(), source_name
         packet_header = next(out/h for h in bundle['headers'] if 'struct Packet {' in (out/h).read_text())
         sources = [out/u for u in bundle['translation_units'] if u != 'entry.cpp']
         sources.append(root/'compiler/tests/fixtures/json_record_copies.cpp')
@@ -180,6 +197,13 @@ return 0;""")
         finally:
             fresh.stdin.close()
             fresh.wait()
+        py = app/'PyWords.py'
+        py.write_text(flavor_sources[py.name].replace('s: string)', 's: string, PyWords: int)'))
+        assert 'type marker' in invoke(proc).get('error', '')
+        py.write_text(flavor_sources[py.name])
+        assert 'error' not in invoke(proc) and artifacts(out) == baseline
+        for name in flavor_sources:
+            (app/name).unlink()
         manifest.write_text(json.dumps(deps))
         assert 'Unknown function: json_decode_mixed' in invoke(proc).get('error','')
         main.write_text('json_encode(1); return 0;')
@@ -188,6 +212,8 @@ return 0;""")
         manifest.write_text('{}')
         assert 'requires module runtime-json' in invoke(proc).get('error','')
         manifest.write_text(json.dumps(dict(deps, general_api=True)))
+        for name, body in flavor_sources.items():
+            (app/name).write_text(body)
         reader.write_text(decoder)
         main.write_text(source)
         assert 'error' not in invoke(proc) and artifacts(out) == baseline

@@ -2119,7 +2119,9 @@ final class Preparation
 	private function record_decoder(ast_call_expression $call, json_decoder_contract $contract): runtime_function
 	{
 		$marker = $call->arguments[1] ?? null;
-		if (count($call->arguments) !== 2 || !($marker instanceof ast_type_marker)) {
+		$python_type_name = $call->source()->flavor === flavor::python && $marker instanceof ast_name_expression
+			&& !$this->resolve_value_name($marker, null, false);
+		if (count($call->arguments) !== 2 || !($marker instanceof ast_type_marker || $python_type_name)) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'json_decode_as requires text and a data record type marker');
 		}
 		$entry = $this->symbols->entry($marker->lexical_root()->type_key($marker->name));

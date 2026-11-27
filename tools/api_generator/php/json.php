@@ -62,9 +62,18 @@ function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
             'private_includes' => ['runtime/src/json', 'runtime/src/boxed', 'runtime/src/hash', 'runtime/src/ownership', 'runtime/src/numeric']]];
 }
 
-/** The typed array reader appends directly into the published int64 vector. */
-function jsonIntegerVector(array $plan): ?string {
-    return array_column($plan['vectors'] ?? [], 'name', 'element')['int64'] ?? null;
+/** Batch operations keyed by their published vector type. */
+function jsonVectorReaders(array $plan): array {
+    $readers = [];
+    foreach ($plan['vectors'] ?? [] as $vector) {
+        $method = match ($vector['element']) {
+            'int64' => 'read_integers',
+            'string' => 'read_strings',
+            default => null,
+        };
+        if ($method !== null) $readers[$vector['name']] = [$method, $vector['element']];
+    }
+    return $readers;
 }
 
 /** Select source signatures only when the active compiler also publishes their types. */
@@ -83,10 +92,12 @@ function compilerJsonCases(?array $runtime, array $types): array {
             foreach (JSON_RECORD_READERS as $id => $method) {
                 if (isset($types[$id])) $leaves[] = 'type_' . $types[$id] . "::class => '$method'";
             }
-            $vector = jsonIntegerVector($runtime);
-            $sequences = $vector !== null && isset($types[$vector]) ? "type_{$types[$vector]}::class => 'read_integers'" : '';
+            $sequences = [];
+            foreach (jsonVectorReaders($runtime) as $vector => [$method]) {
+                if (isset($types[$vector])) $sequences[] = "type_{$types[$vector]}::class => '$method'";
+            }
             $cases[] = "\t\t\t'php:func:json_decode_as', 'general:func:json_decode_as' => \$bindings[\$key] ??= new json_decoder_contract(["
-                . implode(', ', $leaves) . "], '" . moduleOperationHeader($runtime['json']['header'], 'decode_record') . "', [$sequences]),";
+                . implode(', ', $leaves) . "], '" . moduleOperationHeader($runtime['json']['header'], 'decode_record') . "', [" . implode(', ', $sequences) . "]),";
         }
         if ($name === 'json_encode') {
             $encoders[] = "$argument::class => $binding";

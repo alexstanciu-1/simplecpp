@@ -71,13 +71,15 @@ function renderJson(array $plan, array &$files): void {
             $definitions .= "    $type $method() override { $body }\n";
         }
         $includes = includeHeader($plan['string']['header']);
-        if (($vector = jsonIntegerVector($plan)) !== null) {
+        foreach (jsonVectorReaders($plan) as $vector => [$method, $element]) {
             $export = typeExport($plan['submodules'], $vector);
             $includes .= includeHeader(providerHeader($plan['submodules'], $export['provider']));
-            $declarations .= "    virtual void read_integers($vector& values) {\n"
-                . "        begin_array();\n        while (next_element()) values.append(read_integer());\n    }\n";
-            $definitions .= "    void read_integers($vector& values) override {\n"
-                . "        cursor.read_integers([&](int64 value) { values.append(value); });\n    }\n";
+            $scalar = JSON_RECORD_READERS[$element];
+            $adapters = $element === 'string' ? 'copy_string, take_string, ' : '';
+            $declarations .= "    virtual void $method($vector& values) {\n"
+                . "        begin_array();\n        while (next_element()) values.append($scalar());\n    }\n";
+            $definitions .= "    void $method($vector& values) override {\n"
+                . "        cursor.$method({$adapters}[&]($element value) { values.append(std::move(value)); });\n    }\n";
         }
         $files['public/scpp/decoder.hpp'] = BANNER . template('json/decoder', compact('includes', 'declarations'));
         $files['public/' . $recordHeader] = BANNER . template('json/record_decoder', ['includes' => includeHeader($plan['carriers_header'])]);

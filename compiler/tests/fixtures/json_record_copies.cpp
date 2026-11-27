@@ -37,7 +37,7 @@ public:
     void begin_array() override { element = 0; }
     bool next_element() override { return ++element <= 2; }
     bool read_boolean() override { reject("bool"); }
-    scpp::string read_string() override { reject("string"); }
+    scpp::string read_string() override { return scpp::string(element == 1 ? "first" : "second"); }
     [[noreturn]] void reject(const char* why) override { throw std::runtime_error(why); }
 };
 
@@ -96,6 +96,9 @@ int main() {
     VersionReader reader;
     auto decoded = App::scpp_records::Packet::decode(reader);
     if (decoded.version != 6 || decoded.data.size() != 2 || decoded.data.at(1) != 2) return 38;
+    scpp::vector_string words;
+    reader.read_strings(words);
+    if (words.size() != 2 || words.at(0) != scpp::string("first") || words.at(1) != scpp::string("second")) return 54;
     auto bad = App::readPacket_(scpp::string{R"({"data":[10,false,30]})"});
     if (!bad.has_error()) return 30;
     auto message = bad.error().get_message();

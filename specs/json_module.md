@@ -157,7 +157,8 @@ construction and codecs](data_initialization.md#native-codec-adapters-for-field-
 
 With the decode operation selected, PHP and the general API expose
 `json_decode_as($text, Packet::class)` returning `result<Packet>`. The marker
-must resolve to a concrete data class or struct with a generated data constructor.
+in Python flavor is the bare schema name, as in `json_decode_as(text, Packet)`.
+A value binding shadowing that name is rejected. The marker must resolve to a concrete data class or struct with a generated data constructor.
 Supported leaves are published signed int64, boolean and string values, including
 vector elements. The root must be one complete JSON object. Members may arrive
 in any order. Unknown members, duplicates, missing required inputs, malformed
@@ -176,12 +177,12 @@ Providers using ordinary field advancement can use the default schema lookup.
 A typed string field owns its decoded bytes. A plain string is constructed
 directly from the quoted input's contents. An escaped string uses the same
 escape parser. Short results fit inline and long results take ownership of the
-decoded buffer. A string
-vector reads each element through the same scalar operation.
-For a published int64 vector, generated decode requests the complete array in one
-operation. The JSON provider appends in order and uses scalar diagnostics at the
-first malformed element or delimiter. Other decoder providers can implement the
-operation through ordinary array advancement and integer reads.
+decoded buffer. For published string and int64 vectors, generated decode requests
+the complete array in one operation. The JSON provider appends in source order,
+constructs each owned string with the same scalar string rules, and resumes scalar
+traversal from the delimiter on malformed input. Other decoder providers inherit
+the default loop over ordinary array advancement and scalar reads. Other supported
+vector element types retain the generated scalar loop.
 A false result from `next_field()` closes the object.
 At the root it also guarantees document completion. A source call such as
 `Packet::decode($reader)` takes a started JSON pull reader and returns the

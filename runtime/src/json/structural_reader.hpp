@@ -108,6 +108,33 @@ class pull_reader final : private reader_detail::json_reader {
 	bool next(bool object) {
 		return next(object, [](frame& scope, const std::string& key) { return scope.insert_key(key); });
 	}
+	// Keep the common array index on success. Replay from the delimiter on a miss
+	// so scalar traversal owns diagnostic precedence, position and element path.
+	template<class TryElement, class ScalarElement> void read_array(TryElement fast, ScalarElement scalar) {
+		begin_array();
+		auto& scope = frames_.back();
+		std::size_t checkpoint;
+		for (;;) {
+			checkpoint = pos_;
+			skip_whitespace();
+			if (peek() == ']') {
+				++pos_;
+				path_ = scope.path;
+				frames_.pop_back();
+				return;
+			}
+			if (!scope.first) {
+				if (peek() != ',') break;
+				++pos_;
+				skip_whitespace();
+			}
+			if (!fast()) break;
+			scope.first = false;
+			++scope.index;
+		}
+		pos_ = checkpoint;
+		while (next_element()) scalar();
+	}
 public:
 	explicit pull_reader(std::string text, std::string file, std::int64_t limit)
 		: json_reader({}), source_(std::move(text)), file_(std::move(file)), limit_(0) {
@@ -177,41 +204,40 @@ public:
 			pending_ = false; return value;
 		});
 	}
-	// Consume a typed integer array without formatting a diagnostic path for each valid element.
 	template<class Append> void read_integers(Append append) {
-		begin_array();
-		auto& scope = frames_.back();
-		std::size_t checkpoint;
-		for (;;) {
-			checkpoint = pos_;
-			skip_whitespace();
-			if (peek() == ']') {
-				++pos_;
-				path_ = scope.path;
-				frames_.pop_back();
-				return;
-			}
-			if (!scope.first) {
-				if (peek() != ',') break;
-				++pos_;
-				skip_whitespace();
-			}
+		read_array([&] {
 			const char* first = input_.data() + pos_;
 			const char* end = input_.data() + input_.size();
 			std::int64_t value;
 			const auto parsed = std::from_chars(first, end, value);
-			if (parsed.ec != std::errc{}) break;
+			if (parsed.ec != std::errc{}) return false;
 			const char* digits = first + (*first == '-');
-			if (*digits == '0' && parsed.ptr - digits > 1) break;
-			if (parsed.ptr != end && (*parsed.ptr == '.' || *parsed.ptr == 'e' || *parsed.ptr == 'E')) break;
+			if (*digits == '0' && parsed.ptr - digits > 1) return false;
+			if (parsed.ptr != end && (*parsed.ptr == '.' || *parsed.ptr == 'e' || *parsed.ptr == 'E')) return false;
 			pos_ = static_cast<std::size_t>(parsed.ptr - input_.data());
-			scope.first = false;
-			++scope.index;
 			append(value);
-		}
-		// Replay from the delimiter so the scalar reader owns error precedence, offset and path.
-		pos_ = checkpoint;
-		while (next_element()) append(read_integer());
+			return true;
+		}, [&] { append(read_integer()); });
+	}
+	template<class Plain, class Owned, class Append> void read_strings(Plain plain, Owned owned, Append append) {
+		read_array([&] {
+			if (peek() != '"') return false;
+			const auto start = pos_;
+			const auto prefix = parse_string_prefix();
+			if (peek() == '"') {
+				++pos_;
+				append(plain(prefix));
+			} else {
+				std::string bytes;
+				try {
+					bytes = parse_string_tail(start, prefix);
+				} catch (const reader_detail::json_parse_failure&) {
+					return false;
+				}
+				append(owned(std::move(bytes)));
+			}
+			return true;
+		}, [&] { append(read_string(plain, owned)); });
 	}
 	bool read_boolean() {
 		return checked([&] { require_kind("boolean"); const bool value = peek() == 't'; expect_literal(value ? "true" : "false"); pending_ = false; return value; });
