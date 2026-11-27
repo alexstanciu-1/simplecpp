@@ -62,7 +62,7 @@ def failure(work, family, case, append=False):
 
 
 def field_type_edit(work):
-    main = ('$h=build(); $h->data["r"]["g"][0]=8; $h->data["r"]["g"][]=9; $region=$h->data["r"]; '
+    main = ('$h=build(); $h->data["r"]["g"][0]=8; $h->data["r"]["g"][]=9; $h->data["r"]["g"][0]+=2; --$h->data["r"]["g"][1]; $region=$h->data["r"]; '
             '$leaf=$region["g"]; echo (int)$leaf[0],(int)$leaf[1]; return 8;')
     boxed = ('class Holder { public mixed $data; } function build():Holder { $h=new Holder(); '
              '$root mixed=[]; $region mixed=[]; $leaf mixed=[]; $leaf[0]=2; $region["g"]=$leaf; '
@@ -71,7 +71,7 @@ def field_type_edit(work):
              'function build():Holder { $h=new Holder(); $region hash<vector<int>,string> = []; '
              '$region["g"]=[2]; $h->data["r"]=$region; return $h; }')
     revisions(work, 'php', {'main': main, 'model': boxed}, [
-        (None, None, b'89'), ('model', typed, b'89'), ('model', boxed, b'89')])
+        (None, None, b'108'), ('model', typed, b'108'), ('model', boxed, b'108')])
 
 
 with TemporaryDirectory(prefix='deep-boxed-store-') as tmp:

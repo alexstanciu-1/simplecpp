@@ -306,8 +306,7 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
-				$this->value($statement->target);
-				$this->require_index_mutation_place($receiver);
+				$this->prepare_index_mutation($statement);
 				if (!($receiver->type_def() instanceof indexed_mutation_type)) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
 				}
@@ -323,7 +322,7 @@ final class Preparation
 					$this->value($receiver, deep_write_path: true);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
 					if ($collection_root === null) {
-						$boxed_root = ast_index_expression::boxed_path_root($receiver, deep_path: true);
+						$boxed_root = ast_index_expression::boxed_path_root($receiver);
 						$collection_root = $boxed_root;
 					}
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
@@ -376,7 +375,7 @@ final class Preparation
 					$this->value($statement->receiver, deep_write_path: true);
 					$root = $statement->receiver;
 					if ($root instanceof ast_index_expression) {
-						$boxed_root = ast_index_expression::boxed_path_root($root, deep_path: true);
+						$boxed_root = ast_index_expression::boxed_path_root($root);
 						$root = $boxed_root ?? ast_index_expression::nested_collection_root($root);
 					}
 					$binding = $root instanceof ast_name_expression ? $root->local_binding() : null;
@@ -1074,9 +1073,16 @@ final class Preparation
 	}
 
 	/** A mutation through a value-copy row requires a path back to writable storage. */
-	private function require_index_mutation_place(ast_expression $receiver): void
+	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): void
 	{
-		$root = ast_index_expression::nested_collection_root($receiver) ?? ast_index_expression::boxed_path_root($receiver);
+		$receiver = $statement->target->receiver;
+		$this->value($statement->target, deep_write_path: true);
+		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver);
+		if ($receiver instanceof ast_index_expression && $receiver->type_def() instanceof boxed_type_definition
+			&& $statement->boxed_root === null && $statement->source()->flavor !== flavor::python) {
+			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested boxed update requires a local or instance-field boxed root');
+		}
+		$root = $statement->boxed_root ?? ast_index_expression::nested_collection_root($receiver);
 		if ($root !== null) {
 			$this->require_index_write_available($root);
 			Readonly_Access::write($root, true);
@@ -1367,8 +1373,7 @@ final class Preparation
 	private function write(ast_storage_write $statement, bool $consumes_result = false): void
 	{
 		if ($statement instanceof ast_index_update) {
-			$this->value($statement->target);
-			$this->require_index_mutation_place($statement->target->receiver);
+			$this->prepare_index_mutation($statement);
 			$this->retain_member_place($statement->target->receiver);
 			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a mutable collection');

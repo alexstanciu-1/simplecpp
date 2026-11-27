@@ -2122,7 +2122,7 @@ CPP;
 	{
 		$target = $statement->target;
 		$steps = [];
-		[$old, $store] = $this->indexed_mutation($target, 'compound_result', true, $globals, $declarations, $headers, $steps);
+		[$old, $store] = $this->indexed_mutation($statement, 'compound_result', true, $globals, $declarations, $headers, $steps);
 		$steps[] = 'const auto compound_previous = ' . $this->compound_left($statement, $target->type_def(), $old, $headers) . ';';
 		[$right, $rhs_steps] = $this->staged_operand($statement->value, $globals, $declarations, $headers);
 		array_push($steps, ...$rhs_steps);
@@ -2207,17 +2207,18 @@ CPP;
 	 * @param bool[] $headers
 	 * @param string[] $steps
 	 */
-	private function indexed_mutation(ast_index_expression $target, string $result, bool $recheck, array &$globals /** array<string,ast_global_declaration> */,
+	private function indexed_mutation(ast_index_compound|ast_index_update $statement, string $result, bool $recheck, array &$globals /** array<string,ast_global_declaration> */,
 		array &$declarations /** array<string,ast_function_declaration> */, array &$headers /** array<string,bool> */,
 		array &$steps /** list<string> */): array
 	{
+		$target = $statement->target;
 		$collection = $target->receiver->type_def();
-		$boxed_root = ast_index_expression::boxed_path_root($target->receiver);
+		$boxed_root = $statement->boxed_root;
 		if ($boxed_root !== null) {
 			$place = $this->collection_root_place($boxed_root, $globals, $declarations, $headers, $steps);
-			$this->boxed_path_keys($target->receiver, $target->index, $globals, $declarations, $headers, $steps);
-			return [$collection->lower_cpp_child_read($place, 'parent_key', 'element_index'),
-				$collection->lower_cpp_path_store($place, ['parent_key'], 'element_index', $result, true)];
+			$parent_keys = $this->boxed_path_keys($target->receiver, $target->index, $globals, $declarations, $headers, $steps);
+			return [$collection->lower_cpp_path_read($place, $parent_keys, 'element_index'),
+				$collection->lower_cpp_path_store($place, $parent_keys, 'element_index', $result, true)];
 		}
 		$root = ast_index_expression::nested_collection_root($target->receiver);
 		if ($root !== null) {
@@ -2271,7 +2272,7 @@ CPP;
 	{
 		$target = $statement->target;
 		$steps = [];
-		[$old, $store] = $this->indexed_mutation($target, 'updated_element', false, $globals, $declarations, $headers, $steps);
+		[$old, $store] = $this->indexed_mutation($statement, 'updated_element', false, $globals, $declarations, $headers, $steps);
 		$steps[] = 'auto updated_element = ' . $old . ';';
 		$steps[] = $target->type_def()->lower_cpp_update($statement->operator, 'updated_element', $statement->postfix) . ';';
 		$steps[] = $store;

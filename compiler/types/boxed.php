@@ -36,11 +36,7 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 	public function prepare_index(ast_index_expression $value, bool $deep_path = false): void
 	{
 		if (!$deep_path && $value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python) {
-			$parent = $value->parent;
-			if (!(($parent instanceof ast_index_compound || $parent instanceof ast_index_update) && $parent->target === $value
-				&& ast_index_expression::boxed_path_root($value->receiver) !== null)) {
-				throw new diagnostic($value->source(), $value->byte_start(), 'Nested boxed indexing is deferred');
-			}
+			throw new diagnostic($value->source(), $value->byte_start(), 'Nested boxed indexing is deferred');
 		}
 		$this->prepare_key($value->index);
 		$value->settle_element($this);
@@ -90,15 +86,31 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $receiver . '.source_set(' . $key . ', ' . $value . ')';
 	}
 
-	private function lower_cpp_child_lookup(string $root, string $parent_key, string $child): string
+	/** Emit checked container selections and optional mixed child publication, in reverse order.
+	 * @param string[] $parent_keys
+	 * @return array{string,string,string} Lookup statements, leaf container, publication statements.
+	 */
+	private function lower_cpp_path_lookup(string $root, array $parent_keys, bool $write): array
 	{
-		return "auto $child = $root.source_require($parent_key); $child.source_check_container(); ";
+		$place = $root;
+		$lookup = "$root.source_check_container(); ";
+		$publish = [];
+		foreach ($parent_keys as $i => $parent_key) {
+			$child = 'boxed_child_' . $i;
+			$lookup .= "auto $child = $place.source_require($parent_key); $child.source_check_container(); ";
+			if ($write && !$this->mutates_referenced_value()) $publish[] = $this->lower_cpp_write($place, $parent_key, $child) . ';';
+			$place = $child;
+		}
+		return [$lookup, $place, implode(' ', array_reverse($publish))];
 	}
 
-	public function lower_cpp_child_read(string $root, string $parent_key, string $key): string
+	/** Copy the existing leaf before any RHS effects.
+	 * @param string[] $parent_keys
+	 */
+	public function lower_cpp_path_read(string $root, array $parent_keys, string $key): string
 	{
-		return "([&]() { $root.source_check_container(); " . $this->lower_cpp_child_lookup($root, $parent_key, 'boxed_child')
-			. "return boxed_child.source_require($key); }())";
+		[$lookup, $place] = $this->lower_cpp_path_lookup($root, $parent_keys, false);
+		return "([&]() { $lookup return $place.source_require($key); }())";
 	}
 
 	/** Resolve the path after operand effects. Publish mixed children back from leaf to root.
@@ -106,18 +118,10 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 	 */
 	public function lower_cpp_path_store(string $root, array $parent_keys, ?string $key, string $value, bool $require_leaf = false): string
 	{
-		$place = $root;
-		$store = "$root.source_check_container(); ";
-		$publish = [];
-		foreach ($parent_keys as $i => $parent_key) {
-			$child = 'boxed_child_' . $i;
-			$store .= $this->lower_cpp_child_lookup($place, $parent_key, $child);
-			if (!$this->mutates_referenced_value()) $publish[] = $this->lower_cpp_write($place, $parent_key, $child) . ';';
-			$place = $child;
-		}
+		[$store, $place, $publish] = $this->lower_cpp_path_lookup($root, $parent_keys, true);
 		if ($require_leaf) $store .= "(void)$place.source_require($key); ";
 		$store .= ($key === null ? $this->lower_cpp_append_value($place, $value) : $this->lower_cpp_write($place, $key, $value)) . ';';
-		return $publish === [] ? $store : $store . ' ' . implode(' ', array_reverse($publish));
+		return $publish === '' ? $store : $store . ' ' . $publish;
 	}
 
 	public function supports_inferred_local(): bool

@@ -135,14 +135,12 @@ final class ast_index_expression extends ast_expression
 	}
 
 	/** STATIC METHODS */
-	/** A boxed mutation requires a local or stable instance field. Plain assignment and append allow deeper paths. */
-	public static function boxed_path_root(ast_expression $row, bool $deep_path = false): ast_name_expression|ast_field_expression|null
+	/** A boxed mutation requires a local or stable instance field. */
+	public static function boxed_path_root(ast_expression $row): ast_name_expression|ast_field_expression|null
 	{
 		if (!($row instanceof ast_index_expression) || $row->source()->flavor === flavor::python) return null;
 		$root = $row->receiver;
-		if ($deep_path) {
-			while ($root instanceof ast_index_expression) $root = $root->receiver;
-		}
+		while ($root instanceof ast_index_expression) $root = $root->receiver;
 		if (!($root->type_def() instanceof boxed_type_definition)) return null;
 		return self::collection_storage_root($root);
 	}
@@ -267,9 +265,24 @@ final class ast_index_assignment extends ast_statement
 	}
 }
 
+/** Non-owning prepared root shared by indexed compound and update statements. */
+trait prepared_boxed_mutation
+{
+	/** Prepared fact: storage selected before evaluating the keys. */
+	public ast_name_expression|ast_field_expression|null $boxed_root = null;
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->boxed_root = null;
+	}
+}
+
 /** Indexed compound, e.g. factory()->items[key()] += rhs(); reuses compound facts on one indexed target. */
 final class ast_index_compound extends ast_assignment_statement
 {
+	use prepared_boxed_mutation;
+
 	/** Native owning indexed target; its receiver is any prepared collection expression. */
 	public readonly ast_index_expression $target;
 
@@ -285,6 +298,8 @@ final class ast_index_compound extends ast_assignment_statement
 /** Discarded indexed update, e.g. factory()->items[key()]++; shares generated numeric update admission. */
 final class ast_index_update extends ast_update_statement
 {
+	use prepared_boxed_mutation;
+
 	/** Native owning indexed target; receiver and key are evaluated once. */
 	public readonly ast_index_expression $target;
 
