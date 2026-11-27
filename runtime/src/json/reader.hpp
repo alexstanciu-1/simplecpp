@@ -1,6 +1,7 @@
 // Adapted lexical reader from the v0.1 JSON donor at 2f39e536d.
 #pragma once
 #include <cstdint>
+#include <cstring>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -22,7 +23,21 @@ struct json_parse_failure final {
 // Ordinary bytes have identical spelling in the input and the decoded string.
 [[nodiscard]] inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
 	std::size_t size = 0;
-	for (const unsigned char byte : bytes) {
+	// XOR makes matching quote/backslash lanes zero. Masking the high three
+	// bits makes control-byte lanes zero. Only the presence of a zero matters.
+	constexpr std::uint64_t ones = 0x0101010101010101ULL;
+	const auto has_zero_byte = [](std::uint64_t word) {
+		return ((word - ones) & ~word & (ones * 0x80)) != 0;
+	};
+	while (bytes.size() - size >= sizeof(std::uint64_t)) {
+		std::uint64_t word;
+		std::memcpy(&word, bytes.data() + size, sizeof(word));
+		if (has_zero_byte(word ^ (ones * '"')) || has_zero_byte(word ^ (ones * '\\'))
+			|| has_zero_byte(word & (ones * 0xe0))) break;
+		size += sizeof(word);
+	}
+	// Resolve the first marker in memory order, or scan the final partial word.
+	for (const unsigned char byte : bytes.substr(size)) {
 		if (byte < 0x20 || byte == '"' || byte == '\\') break;
 		++size;
 	}

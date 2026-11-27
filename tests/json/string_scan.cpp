@@ -1,6 +1,5 @@
 // Linux probe: end every input immediately before a protected page.
 #include "reader.hpp"
-#include <algorithm>
 #include <cstring>
 #include <sys/mman.h>
 #include <unistd.h>

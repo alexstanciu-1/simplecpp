@@ -39,7 +39,7 @@ Start from f66b7b943 plus grouped.patch and fused.patch from the parent batching
 
 ```sh
 taskset -c 7 python3 run.py "$bin" > dev002.json
-clang++ -O3 -std=c++23 -I "$candidate/runtime/src/json" check_scan.cpp -o check_scan
+clang++ -O3 -std=c++23 -I "$candidate/runtime/src/json" ../../../../tests/json/string_scan.cpp -o check_scan
 ./check_scan
 ```
 
@@ -71,3 +71,24 @@ Both typed scalar and vector drivers matched the independent value oracle on 390
 Build each driver's time and counts executables using the typed_json_strings builder with --batched. Name the directories batched, bulk, scan_only and word8, then run `taskset -c 7 python3 run.py "$bin" --production`. Use the committed baseline for the batched and scanner-only builds, and the production bulk implementation for bulk and word8.
 
 [Raw four-way measurements](production.dev002.json)
+
+## Production eight-byte scanner
+
+The reference is the bulk suffix decoder at `b080b9fe4`. The candidate changes only the ordinary-byte prefix scan shared by plain and escaped strings. Each complete word is loaded with memcpy. The mask identifies a word containing a quote, backslash or control byte. The scalar loop finds the exact stopping byte in input order and handles spans shorter than eight bytes, including the final partial word.
+
+Throughput is decimal MB of complete wire JSON per second, shown as **bulk baseline → integrated scanner**. Eleven shuffled paired rounds ran on dev002 CPU 7. Each document contains 16 strings. For each decoded length, all escape placements produce identical contents.
+
+| Decoded bytes/string | Plain | Escape first | Escape middle | Escape last |
+|---:|---:|---:|---:|---:|
+| 3 | 201 → 203 | 196 → 197 | 189 → 187 | 210 → 208 |
+| 7 | 284 → 281 | 254 → 254 | 247 → 245 | 269 → 264 |
+| 8 | 296 → 337 | 264 → 262 | 255 → 253 | 280 → 276 |
+| 9 | 316 → 360 | 280 → 285 | 269 → 265 | 291 → 305 |
+| 129 | 646 → 1,068 | 586 → 900 | 548 → 830 | 600 → 951 |
+| 4,096 | 1,050 → 2,581 | 1,063 → 2,478 | 1,057 → 2,465 | 609 → 919 |
+
+The guarded-page scanner test covers every byte value at every position for lengths 0–96, including unaligned starts, partial tails and empty input. It runs as json_string_scan in the default Linux suite. The differential driver checked 390 valid and 422 malformed documents for each of the typed scalar and vector entry points. Both drivers agreed with the valid-byte oracle and produced byte-identical diagnostics on every malformed document.
+
+Build the shared typed_json_strings drivers with --batched for both checkouts, put the executables in bin/bulk and bin/word8, then run `taskset -c 7 python3 run.py bin --scanner` on dev002.
+
+[Raw paired measurements](scanner.dev002.json)

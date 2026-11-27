@@ -11,11 +11,18 @@ import subprocess
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('bin', type=Path)
-parser.add_argument('--production', action='store_true', help='compare batched, bulk, scanner-only and combined builds')
+mode = parser.add_mutually_exclusive_group()
+mode.add_argument('--scanner', action='store_true', help='compare bulk and integrated word8 builds')
+mode.add_argument('--production', action='store_true', help='compare batched, bulk, scanner-only and combined builds')
 args = parser.parse_args()
 bins = args.bin.resolve()
-variants = ('batched', 'bulk', 'scan_only', 'word8') if args.production else ('fused', 'bulk', 'word8', 'avx2')
-timed = variants if args.production else (*variants, 'node')
+if args.scanner:
+    variants = ('bulk', 'word8')
+elif args.production:
+    variants = ('batched', 'bulk', 'scan_only', 'word8')
+else:
+    variants = ('fused', 'bulk', 'word8', 'avx2')
+timed = (*variants, 'node') if 'avx2' in variants else variants
 node = Path(__file__).with_name('node.js')
 rng = random.Random(32768)
 
@@ -72,11 +79,12 @@ def verify(shape):
 
 valid, invalid = verify('vector')
 result = dict(host=platform.node(), cpu=sorted(os.sched_getaffinity(0)), valid=valid, invalid=invalid, cases={})
-if args.production:
+if 'node' not in timed:
     result['scalar_valid'], result['scalar_invalid'] = verify('scalar')
 else:
     result['node_version'] = subprocess.check_output(['node','--version'],text=True).strip()
-cases = [(size, position) for size in [8,129,4096] for position in ['first','middle','last','plain']]
+sizes = [3, 7, 8, 9, 129, 4096] if args.scanner else [8, 129, 4096]
+cases = [(size, position) for size in sizes for position in ['first','middle','last','plain']]
 rng.shuffle(cases)
 for size,position in cases:
     wire = fixture(size,position)
