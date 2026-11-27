@@ -135,10 +135,7 @@ class pull_reader final : private reader_detail::json_reader {
 		pos_ = checkpoint;
 		while (next_element()) scalar();
 	}
-public:
-	explicit pull_reader(std::string text, std::string file, std::int64_t limit)
-		: json_reader({}), source_(std::move(text)), file_(std::move(file)), limit_(0) {
-		input_ = source_;
+	void validate_input(std::int64_t limit) {
 		checked([&] {
 			if (limit < 1 || limit > 256)
 				reader_detail::fail_json_parse("max_depth must be 1..256", 0, "invalid_limit");
@@ -150,6 +147,17 @@ public:
 				i += width;
 			}
 		});
+	}
+public:
+	explicit pull_reader(std::string text, std::string file, std::int64_t limit)
+		: json_reader({}), source_(std::move(text)), file_(std::move(file)) {
+		input_ = source_;
+		validate_input(limit);
+	}
+	struct borrow_input {};
+	pull_reader(borrow_input, std::string_view text, std::string file, std::int64_t limit)
+		: json_reader(text), file_(std::move(file)) {
+		validate_input(limit);
 	}
 	pull_reader(const pull_reader &) = delete;
 	pull_reader &operator=(const pull_reader &) = delete;

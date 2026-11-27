@@ -36,3 +36,20 @@ python3 ../json_string_suffix/run.py bin --check-pair baseline borrow
 ```
 
 On dev002 both scalar and vector outputs matched the independent byte oracle on 390 valid suffix-corpus documents per shape. All 844 malformed scalar/vector diagnostics matched the baseline byte for byte, including paths and offsets. The explicit overwrite and callback-alias probe passed. All 425 JSON-enabled default tests passed in the experimental build. [Raw measurements and allocation counts](dev002.json)
+
+## Production verification
+
+The integrated decoder and the owning baseline at `29a000dcd` ran on dev002 CPU 7 in nine shuffled paired rounds. This is a fresh run using the production build. Each cell shows median microseconds per whole document, owning baseline → production. Each vector has sixteen strings.
+
+| Field | Bytes per string | Plain µs | Escaped µs |
+|---|---:|---:|---:|
+| Scalar | 8 | 0.150 → 0.136 | 0.198 → 0.166 |
+| Scalar | 129 | 0.213 → 0.201 | 0.264 → 0.245 |
+| Scalar | 4,096 | 2.691 → 1.698 | 1.734 → 1.693 |
+| Vector | 8 | 0.552 → 0.535 | 1.178 → 1.085 |
+| Vector | 129 | 2.024 → 1.740 | 2.700 → 2.222 |
+| Vector | 4,096 | 25.226 → 24.058 | 27.451 → 26.473 |
+
+The generated-code test checks borrowing for all four frontends, selection of the owning entry point for a nested schema, and incremental reselection when a leaf schema gains a nested field. The native callback test clears its source before consuming the object. The ownership probe overwrites and destroys input before reading short strings, long strings, escaped NULs, and string vectors. Both typed entry shapes matched the independent oracle on 390 valid documents each, and their complete diagnostics matched the owning baseline on 422 malformed documents each.
+
+[Raw production samples and allocation counts](production.dev002.json)

@@ -174,6 +174,13 @@ index. The JSON provider tracks those indices in a record-local bit mask, one
 64-bit word per 64 fields. Duplicate errors retain the original key spelling,
 path and opening-quote offset, and precede validation of the following colon.
 Providers using ordinary field advancement can use the default schema lookup.
+For synchronous decoding from text, a generated root whose fields are all
+scalar or vectors of scalars borrows the input until it finishes reading the
+document. Values and diagnostics own any bytes they retain. A root containing
+a nested record (including a vector of records) takes an input snapshot because
+nested construction can run before parsing finishes. The general native callback
+entry point and the persistent pull reader also retain an owned input snapshot.
+
 A typed string field owns its decoded bytes. A plain string is constructed
 directly from the quoted input's contents. An escaped string uses the same
 escape parser. After each escape, the reader appends the following ordinary

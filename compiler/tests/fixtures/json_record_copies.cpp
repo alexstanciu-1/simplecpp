@@ -1,6 +1,7 @@
 // The generated Packet header is supplied by the test runner.
 #include SCPP_PACKET_HEADER
 #include <scpp/json/encode_fields.hpp>
+#include <scpp/json/decode_record.hpp>
 #include <cstdlib>
 #include <string>
 #include <string_view>
@@ -93,6 +94,13 @@ int main() {
     if (const auto status = App::scpp_entry_body()) return status;
     for (auto bytes : {21u, 22u, 23u, 65536u})
         if (!check_publication(bytes)) return 47;
+    scpp::string input(R"({"version":9,"data":[1,2,3,4]})");
+    auto snapshot_error = scpp::json::read_record(input, &input, [](void* alias, scpp::Decoder& decoder) {
+        static_cast<scpp::string*>(alias)->clear();
+        auto packet = App::scpp_records::Packet::decode(decoder);
+        if (packet.version != 9 || packet.data.size() != 4 || packet.data.at(3) != 4) std::abort();
+    });
+    if (snapshot_error.has_error()) return 55;
     VersionReader reader;
     auto decoded = App::scpp_records::Packet::decode(reader);
     if (decoded.version != 6 || decoded.data.size() != 2 || decoded.data.at(1) != 2) return 38;

@@ -36,9 +36,10 @@ public:
     bool next_element() override { return cursor.next_element(); }
     void reject(const char* message) override { cursor.reject(message); }
 @definitions@};
-error_t read_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
+template<class MakeCursor>
+static error_t consume_record(void* out, void (*consume)(void*, Decoder&), MakeCursor make_cursor) {
     try {
-        detail::json::pull_reader cursor{std::string(text.data(), text.size()), "", 128};
+        auto cursor = make_cursor();
         record_reader reader{cursor};
         consume(out, reader);
         return {};
@@ -46,4 +47,15 @@ error_t read_record(const string& text, void* out, void (*consume)(void*, Decode
         const std::string_view message{error.what()};
         return error_t{string{message.data(), detail::checked_integer_cast<@count@>(message.size())}};
     }
+}
+error_t read_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
+    return consume_record(out, consume, [&] {
+        return detail::json::pull_reader{std::string(text.data(), text.size()), "", 128};
+    });
+}
+error_t read_leaf_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
+    return consume_record(out, consume, [&] {
+        return detail::json::pull_reader{detail::json::pull_reader::borrow_input{},
+            std::string_view(text.data(), static_cast<std::size_t>(text.size())), "", 128};
+    });
 }

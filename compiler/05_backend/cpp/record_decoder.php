@@ -78,6 +78,7 @@ CPP;
 		if ($value instanceof shared_record_type_definition) $declarations[$value->name] = $value;
 		$name = $value->cpp_type();
 		$result = $record->record_result()->cpp_type();
+		$text_reader = 'read_leaf_record';
 		$locals = $lookup = $cases = $finish = $arguments = [];
 		foreach ($record->declaration->data_constructor->parameters as $i => $field) {
 			$type = $field->storage_type();
@@ -88,6 +89,8 @@ CPP;
 			$body = [];
 			$native = $type->cpp_type();
 			if ($nested instanceof record_type_definition) {
+				// Nested construction can run authored code before the parent finishes reading.
+				$text_reader = 'read_record';
 				$declarations[$nested->declaration->symbol_key()] = $nested->declaration;
 				if ($leaf instanceof shared_record_type_definition) $declarations[$leaf->name] = $leaf;
 				$read = $leaf->cpp_type() . '::' . self::decode_method($nested) . '(d)';
@@ -139,7 +142,7 @@ CPP;
 		$consume = "[](void* out, ::scpp::Decoder& d) { auto& slot = *static_cast<$result*>(out); "
 			. "new (&slot.payload) Value($name::{$method}(d)); slot.present = true; }";
 		$code .= "$result {$result}::from_text(const ::scpp::string& text) {\n    $result result;\n"
-			. "    auto error = ::scpp::json::read_record(text, &result, $consume);\n"
+			. "    auto error = ::scpp::json::{$text_reader}(text, &result, $consume);\n"
 			. "    if (error.has_error()) return $result(std::move(error));\n    return result;\n}\n";
 		if (type_registry::resolve('json_pull_reader') !== null) {
 			$code .= "$name {$result}::from_cursor(const ::scpp::json_pull_reader& reader) {\n    $result result;\n"

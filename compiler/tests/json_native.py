@@ -159,7 +159,11 @@ return 0;""")
         bundle = json.loads((out/'manifest.json').read_text())
         for source_name in ['records.php', 'CppWords.cpp', 'JsWords.js', 'PyWords.py']:
             unit = out/bundle['sources']['app/'+source_name]
-            assert 'd.read_strings(' in unit.read_text(), source_name
+            code = unit.read_text()
+            assert 'd.read_strings(' in code and '::scpp::json::read_leaf_record(' in code, source_name
+        records_unit = out/bundle['sources']['app/records.php']
+        envelope = records_unit.read_text().split('record_result_Envelope::from_text(', 1)[1].split('slot.present', 1)[0]
+        assert '::scpp::json::read_record(' in envelope
         packet_header = next(out/h for h in bundle['headers'] if 'struct Packet {' in (out/h).read_text())
         sources = [out/u for u in bundle['translation_units'] if u != 'entry.cpp']
         sources.append(root/'compiler/tests/fixtures/json_record_copies.cpp')
@@ -198,6 +202,10 @@ return 0;""")
             fresh.stdin.close()
             fresh.wait()
         py = app/'PyWords.py'
+        py.write_text(flavor_sources[py.name].replace('    words:', '    nested: Packet\n    words:'))
+        assert 'error' not in invoke(proc)
+        updated = (out/bundle['sources']['app/PyWords.py']).read_text()
+        assert '::scpp::json::read_record(' in updated and '::scpp::json::read_leaf_record(' not in updated
         py.write_text(flavor_sources[py.name].replace('s: string)', 's: string, PyWords: int)'))
         assert 'type marker' in invoke(proc).get('error', '')
         py.write_text(flavor_sources[py.name])
