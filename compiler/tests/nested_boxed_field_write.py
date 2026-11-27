@@ -1,10 +1,10 @@
-"""Two saved keys write into the current field of the originally selected holder."""
+"""Indexed writes and appends select the current field of the original holder."""
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 
 from classes_native import fixture
-from collection_goal_native import revisions
+from collection_goal_native import guard, revisions
 from populated_vectors_native import declaration
 
 
@@ -45,12 +45,51 @@ def exercise(work, flavor):
         ('model', model, expected)])
 
 
+def append(work, flavor):
+    f = fixture(flavor)
+    v, access = f['v'], f['access']
+    model, main, expected = '', '', b''
+    api = f['function']('groupKey', 'string', [], 'echo "G"; return "team";')
+    for family in ('mixed', 'dynamic'):
+        holder = 'Holder' + family
+        model += f['klass'](holder, f['field']('data', family))
+        owner, saved, old, fresh, root, seen = [v + name + family for name in ('owner', 'saved', 'old', 'fresh', 'root', 'seen')]
+        for name in ('old', 'fresh', 'root'):
+            main += declaration(flavor, name + family, family, '[]')
+        main += f'{old}[2]=2; {fresh}[8]=8; {root}["team"]={old};'
+        main += f['infer']('owner' + family, 'new ' + holder + '()') + f'{owner}{access}data={root};'
+        main += f['infer']('saved' + family, owner)
+        main += declaration(flavor, 'replacement' + family, family, '[]')
+        replacement = v + 'replacement' + family
+        main += f'{replacement}["team"]={fresh};'
+        select, change = 'select' + family, 'change' + family
+        api += f['function'](select, holder, [('h', holder)], f'echo "H"; return {v}h;')
+        body = declaration(flavor, 'emptyRoot', family, '[]')
+        body += f'{v}h{access}data={v}replacement; {v}h=new {holder}(); {v}h{access}data={v}emptyRoot; echo "R"; return 7;'
+        api += f['function'](change, 'int', [('&h', holder), ('replacement', family)], body).replace('$&', '&$')
+        main += f'{select}({owner}){access}data[groupKey()][]={change}({owner},{replacement});'
+        main += declaration(flavor, 'seen' + family, family, f'{saved}{access}data["team"]')
+        main += f'echo (int){seen}[9],count({seen}),count({owner}{access}data),count({old}),count({fresh});'
+        expected += b'HGR7201' + (b'1' if family == 'mixed' else b'2')
+    revisions(work, flavor, {'main': main + 'return 8;', 'api': api, 'model': model}, [
+        (None, None, expected), ('model', model.replace('data', 'renamed'), 'Unknown field'), ('model', model, expected)])
+
+
+def removed(work, family):
+    model = f'class Holder {{ public {family} $data; }}'
+    api = 'function removeGroup(Holder $h):int { $items=$h->data; $items->remove("team"); $h->data=$items; echo "R"; return 7; }'
+    main = f'$h=new Holder(); $root {family}=[]; $row {family}=[]; $root["team"]=$row; $h->data=$root;'
+    main += 'try { $h->data["team"][]=removeGroup($h); } finally { echo count($h->data), count($row); }'
+    guard(work, 'php', family, model + api + main + 'return 0;', 'boxed_missing_key', expected_stdout=b'R00')
+
+
 def lifetime(work):
     model = 'class Holder { public mixed $data; public function __destruct() { echo "D"; } }'
     api = 'function rebind(Holder &$holder):int { $holder=new Holder(); echo "R"; return 6; }'
     main = '$holder=new Holder(); $root mixed=[]; $row mixed=[]; $root["team"]=$row; $holder->data=$root;'
     main += '$holder->data["team"][0]=rebind($holder); echo "E"; return 8;'
-    revisions(work, 'php', {'main': main, 'api': api, 'model': model}, [(None, None, b'RDED')])
+    revisions(work, 'php', {'main': main, 'api': api, 'model': model}, [
+        (None, None, b'RDED'), ('main', main.replace('[0]=rebind', '[]=rebind'), b'RDED')])
 
 
 def field_access(work):
@@ -65,14 +104,19 @@ def field_access(work):
     program = api + source
     revisions(work, 'php', {'main': program}, [
         (None, None, b'8'), ('main', program.replace('dynamic', 'mixed'), 'Cannot modify readonly property data'),
-        ('main', program.replace('[0]=8', '[]=8'), 'Append requires writable local storage'),
+        ('main', program.replace('[0]=8', '[]=8'), b'8'),
+        ('main', program.replace('[0]=8', '[]=8').replace('dynamic', 'mixed'), 'Cannot modify readonly property data'),
         ('main', program.replace('[0]=8', '[0]+=8'), 'Nested boxed indexing is deferred'),
         ('main', program.replace('[0]=8', '[0][1]=8'), 'Nested boxed indexing is deferred'),
         ('main', program, b'8')])
 
 
 with TemporaryDirectory(prefix='nested-boxed-field-') as tmp:
-    if sys.argv[1] == 'last_owner':
+    if sys.argv[1] == 'append':
+        append(Path(tmp), sys.argv[2])
+    elif sys.argv[1] == 'removed':
+        removed(Path(tmp), sys.argv[2])
+    elif sys.argv[1] == 'last_owner':
         lifetime(Path(tmp))
     elif sys.argv[1] == 'field_access':
         field_access(Path(tmp))

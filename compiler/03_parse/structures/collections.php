@@ -135,7 +135,7 @@ final class ast_index_expression extends ast_expression
 	}
 
 	/** STATIC METHODS */
-	/** Plain writes also allow stable instance fields; other boxed mutations require locals. */
+	/** Plain writes and appends also allow stable instance fields; other boxed mutations require locals. */
 	public static function boxed_path_root(ast_expression $row, bool $allow_field = false): ast_name_expression|ast_field_expression|null
 	{
 		if (!($row instanceof ast_index_expression) || $row->source()->flavor === flavor::python) return null;

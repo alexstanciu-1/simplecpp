@@ -1567,10 +1567,10 @@ CPP;
 				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$steps = [];
-				$boxed_root = ast_index_expression::boxed_path_root($statement->receiver);
+				$boxed_root = ast_index_expression::boxed_path_root($statement->receiver, allow_field: true);
 				$root = $boxed_root ?? ast_index_expression::nested_collection_root($statement->receiver);
 				if ($boxed_root !== null) {
-					$receiver = $this->value($boxed_root, $global_references, $declarations, $required_headers);
+					$receiver = $this->collection_root_place($boxed_root, $global_references, $declarations, $required_headers, $steps);
 					$this->boxed_path_keys($statement->receiver, null, $global_references, $declarations, $required_headers, $steps);
 				} elseif ($root !== null) {
 					$receiver = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
