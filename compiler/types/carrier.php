@@ -29,6 +29,12 @@ abstract class carrier_type_definition extends type_definition implements presen
 	abstract public function lower_cpp_extract(string $value): string;
 	abstract public function lower_cpp_presence(string $value): string;
 
+	/** A checked member receiver denotes the stored payload for this use. */
+	public function lower_cpp_borrow(string $value): string
+	{
+		return '(' . $value . ').checked_ref()';
+	}
+
 	/** A false-only alternate state is published by result_or_false specializations. */
 	final public function false_only_sentinel(): bool
 	{
@@ -204,6 +210,11 @@ final class nullable_enum_type_definition extends carrier_type_definition
 	public function __construct(enum_type_definition $payload)
 	{
 		parent::__construct('nullable', $payload);
+	}
+
+	public function lower_cpp_borrow(string $value): string
+	{
+		return '(' . $value . ').value()';
 	}
 
 	public function dispatch_label_type(): type_definition

@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <stdexcept>
 #include <utility>
 #include <variant>
@@ -26,10 +27,15 @@ public:
     bool has_error() const noexcept { return content_.index() == 2; }
     bool is_false() const noexcept { return content_.index() == 0 && !true_state_; }
     bool is_true() const noexcept { return content_.index() == 0 && true_state_; }
-    Payload value() const {
+    Payload& checked_ref() {
         if (!has_value()) throw std::runtime_error("carrier_no_value");
         return std::get<1>(content_);
     }
+    const Payload& checked_ref() const {
+        if (!has_value()) throw std::runtime_error("carrier_no_value");
+        return std::get<1>(content_);
+    }
+    Payload value() const { return checked_ref(); }
     const Error& error() const {
         if (!has_error()) throw std::runtime_error("result_no_error");
         return std::get<2>(content_);

@@ -1246,6 +1246,20 @@ final class Preparation
 		return true;
 	}
 
+	/** Publish the payload lookup and any stable storage required across intervening effects. */
+	private function member_receiver(ast_expression $receiver): void
+	{
+		$receiver->prepare_member_borrow();
+		$type = $receiver->member_borrow;
+		if (!$type instanceof record_result_type_definition || !$type->payload_type instanceof record_type_definition) return;
+		$site = $receiver->parent;
+		while ($site instanceof ast_field_expression) $site = $site->parent;
+		if ($site instanceof ast_echo_statement || $site instanceof ast_return_statement || $site instanceof ast_local_declaration
+			|| $site instanceof ast_field_assignment && !$this->owner->parent->is_async
+			|| $site instanceof ast_binary_expression && $site->operator !== binary_operator::coalesce) return;
+		$this->dependencies?->watch($this->symbols->entry($type->payload_type->declaration->symbol_key()), $this->owner, dependency_use::record_borrow_storage->value);
+	}
+
 	/** Check writable instance paths and qualified static members for all property writes. */
 	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
 	{
@@ -1681,7 +1695,8 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_field_expression) {
 			$this->value($syntax->receiver, $initializing);
-			$type = $syntax->receiver->type_def();
+			if (in_array($syntax->source()->flavor, [flavor::php, flavor::cpp], true)) $this->member_receiver($syntax->receiver);
+			$type = $syntax->receiver->member_type();
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
 			if ($type instanceof runtime_field_type) {
 				$field = $type->runtime_field($syntax->field);
@@ -2263,7 +2278,10 @@ final class Preparation
 			elseif ($argument !== $prepared && $argument !== $call->receiver && !($runtime instanceof borrowed_slot_function && $index >= 2)) {
 				$this->value($argument, destination: $labels === [] || $typed ? $type : null);
 			}
-			if ($index === 0 && $runtime->receiver_method && $call->receiver !== null) {
+			if ($argument === $call->receiver && $argument->member_borrow !== null && $type === $argument->member_type()) {
+				if ($runtime->is_reference($slot)) Readonly_Access::write($argument, true);
+			}
+			elseif ($index === 0 && $runtime->receiver_method && $call->receiver !== null) {
 				// Receiver preparation already checked field visibility; expression temporaries own their lifetime.
 				if ($runtime->is_reference(0)) Readonly_Access::write($argument, true);
 				if ($runtime->is_reference(0) && $argument instanceof ast_name_expression) {
@@ -2698,7 +2716,8 @@ final class Preparation
 				if ($static) $record = $this->static_qualifier($receiver, $initializing);
 				else {
 					$this->value($receiver, $initializing);
-					$record = $receiver->type_def();
+					if ($call->member_separator === token_kind::member) $this->member_receiver($receiver);
+					$record = $receiver->member_type();
 					if ($record instanceof shared_record_type_definition) $record = $record->payload;
 				}
 				if ($record instanceof record_type_definition || $record instanceof enum_type_definition) {
@@ -2733,14 +2752,8 @@ final class Preparation
 					$call->interface_dispatch = $interface_dispatch;
 					return;
 				}
-				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
-				$runtime = $receiver->type_def()->runtime_method($name) ?? runtime_functions::resolve($key);
-				$carrier = $receiver->type_def();
-				if ($runtime === null && $call->source()->flavor === flavor::php && $call->member_separator === token_kind::member
-					&& $carrier instanceof carrier_type_definition && $carrier->payload_type instanceof runtime_handle_type) {
-					$forward = runtime_functions::resolve('php:' . $carrier->payload_type->name . ':' . $name);
-					if ($forward instanceof runtime_function && $forward->free_receiver) $runtime = $forward;
-				}
+				$key = $call->source()->flavor->name . ':' . $receiver->member_type()->name . ':' . $name;
+				$runtime = $receiver->member_type()->runtime_method($name) ?? runtime_functions::resolve($key);
 				if ($runtime === null) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
 				}
@@ -3039,7 +3052,7 @@ final class Preparation
 		if ($result instanceof record_type_definition) $this->require_inline_cleanup($result, $call);
 		$receiver = null;
 		if ($function->is_protected && !$function->is_static) {
-			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->type_def();
+			$receiver = $ancestor_dispatch && $context instanceof ast_record_declaration ? $context->definition : $call->receiver?->member_type();
 			if ($receiver instanceof shared_record_type_definition) $receiver = $receiver->payload;
 		}
 		$function->require_access($context, $call, $receiver instanceof record_type_definition ? $receiver : null, $this->access_watcher());

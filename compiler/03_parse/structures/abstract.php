@@ -267,6 +267,9 @@ trait ast_declaration
  */
 abstract class ast_expression extends ast_node
 {
+	/** Prepared fact: checked projection selected for this occurrence as an arrow receiver. */
+	public ?carrier_type_definition $member_borrow = null;
+
 	/** Prepared fact: canonical value type; null until preparation succeeds. */
 	protected ?type_definition $type_def = null;
 	/** Prepared fact: scalar payload; constant_known distinguishes a known null from an unknown value. */
@@ -277,6 +280,17 @@ abstract class ast_expression extends ast_node
 	public function type_def(): type_definition
 	{
 		return $this->type_def ?? throw new \LogicException('Expression type is not settled');
+	}
+
+	public function member_type(): type_definition
+	{
+		return $this->member_borrow?->payload_type ?? $this->type_def();
+	}
+
+	public function prepare_member_borrow(): void
+	{
+		$type = $this->type_def();
+		if ($type instanceof carrier_type_definition) $this->member_borrow = $type;
 	}
 
 	/** A literal of a type whose plain value can be copied and destroyed without effects. */
@@ -319,6 +333,7 @@ abstract class ast_expression extends ast_node
 
 	public function reset_preparation(): void
 	{
+		$this->member_borrow = null;
 		$this->type_def = null;
 		$this->constant = null;
 		$this->constant_known = false;

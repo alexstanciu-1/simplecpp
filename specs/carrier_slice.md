@@ -183,5 +183,16 @@ loop headers are deferred. Across loops and exception regions, preparation
 conservatively keeps payloads already proven initialized on entry.
 
 For a PHP falseable runtime handle such as the return of `mysqli::prepare`,
-a boolean guard tests payload presence. A published free-function-backed method
-on the handle accepts the receiver through the ordinary checked argument projection.
+a boolean guard tests payload presence.
+
+Member access through `->` on a nullable or result carrier resolves fields and
+methods on its declared payload type. The receiver is evaluated once. Access
+checks for a present payload and borrows it with the receiver's readonly or
+writable access. Absence, failure and either boolean sentinel raise an error
+before the selected member is used. A prior condition is optional.
+
+Borrowing preserves the identity of the selected payload. When a method
+argument or the RHS of a compound field update replaces the carrier, the
+operation finishes on the originally selected payload. A plain field store
+evaluates its RHS before selecting the destination. These rules also apply
+when the receiver comes from a call or a nested field.

@@ -4,12 +4,17 @@
 #include <cstdlib>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 namespace App {
 using Result = record_result_Packet;
 Result readPacket_(scpp::string);
 scpp_records::Packet snapshot_(Result&);
 scpp::result_string encodeLate_();
+void growNullable_(scpp::nullable_vector_string&);
+void growResult_(scpp::result_vector_string&);
+void growFalseable_(scpp::result_or_false_vector_string&);
+void growBoolean_(scpp::result_or_bool_vector_string&);
 int scpp_entry_body();
 }
 
@@ -89,7 +94,28 @@ static bool check_publication(std::size_t bytes) {
     return value.is_inline() == small && std::string_view(value.data(), value.size()) == expected;
 }
 
+static_assert(!std::is_copy_assignable_v<scpp::result_vector_string::writable_borrow>);
+
+template<class Carrier>
+static bool checked_growth(Carrier& slot, void (*grow)(Carrier&), bool present) {
+    try {
+        grow(slot);
+        return present && slot.checked_ref().size() == 2;
+    } catch (const std::runtime_error& error) {
+        return !present && std::string_view(error.what()) == "carrier_no_value";
+    }
+}
+
 int main() {
+    scpp::nullable_vector_string empty;
+    scpp::result_vector_string success;
+    auto failed = App::readPacket_(scpp::string{"{"});
+    scpp::result_vector_string error(failed.error());
+    auto no = scpp::result_or_false_vector_string::from_false();
+    auto yes = scpp::result_or_bool_vector_string::from_true();
+    if (!checked_growth(empty, App::growNullable_, false) || !checked_growth(success, App::growResult_, true)
+        || !checked_growth(error, App::growResult_, false) || !checked_growth(no, App::growFalseable_, false)
+        || !checked_growth(yes, App::growBoolean_, false)) return 58;
     if (const auto status = App::scpp_entry_body()) return status;
     for (auto bytes : {21u, 22u, 23u, 65536u})
         if (!check_publication(bytes)) return 47;
