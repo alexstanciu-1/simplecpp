@@ -52,6 +52,9 @@ def prove(work,flavor):
             'two-key read':init+f'return (int){v}items["a"][0];',
             'two-key update':init+f'{v}items["a"][0]++;return 8;',
             'two-key compound':init+f'{v}items["a"][0]+=1;return 8;',
+            'deep compound':init+f'{v}items["a"][0][1]+=8;return 8;',
+            'deep append':init+f'{v}items["a"][0][]=8;return 8;',
+            'nested RHS read':init+f'{v}items["a"][0][1]={v}items["b"][0];return 8;',
             'three-key write':init+f'{v}items["a"][0][1]=8;return 8;',
             'keyed foreach':init+f'foreach ({v}items as {v}key => {v}value) {{echo (int){v}value;}}return 8;',
             'temporary reference':mutate+make+'mutate(make());return 8;',
@@ -62,7 +65,7 @@ def prove(work,flavor):
             try:result=invoke(proc)
             finally:proc.stdin.close();proc.wait()
             accepted='error' not in result
-            assert accepted==(feature in ['keyed foreach','count','empty','has','remove','clear','append','instance field','indexed compound','indexed update','two-key write','two-key update','two-key compound']),(flavor,family,feature,result)
+            assert accepted==(feature in ['keyed foreach','count','empty','has','remove','clear','append','instance field','indexed compound','indexed update','two-key write','two-key update','two-key compound','three-key write']),(flavor,family,feature,result)
             rows[family][feature]='accepted' if accepted else result['error'].split(': ',1)[-1]
     return rows
 

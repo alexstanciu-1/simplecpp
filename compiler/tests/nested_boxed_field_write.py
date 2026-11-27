@@ -138,7 +138,7 @@ def field_access(work):
         ('main', program.replace('[0]=8', '[]=8').replace('dynamic', 'mixed'), 'Cannot modify readonly property data'),
         ('main', program.replace('$row dynamic=[];', '$row dynamic=[]; $row[0]=2;').replace('[0]=8', '[0]+=8'), b'10'),
         ('main', program.replace('dynamic', 'mixed').replace('[0]=8', '[0]+=8'), 'Cannot modify readonly property data'),
-        ('main', program.replace('[0]=8', '[0][1]=8'), 'Nested boxed indexing is deferred'),
+        ('main', program.replace('[0]=8', '[0][1]+=8'), 'Nested boxed indexing is deferred'),
         ('main', program, b'8')])
 
 

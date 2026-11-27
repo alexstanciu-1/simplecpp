@@ -317,11 +317,15 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$binding = null;
+				$boxed_root = null;
 				$receiver = $statement->receiver;
 				if ($receiver instanceof ast_index_expression) {
-					$this->value($receiver);
+					$this->value($receiver, plain_store_path: true);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
-					$collection_root ??= ast_index_expression::boxed_path_root($statement->receiver);
+					if ($collection_root === null) {
+						$boxed_root = ast_index_expression::boxed_path_root($receiver, plain_store: true);
+						$collection_root = $boxed_root;
+					}
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
 					if ($collection_root !== null) $this->require_index_write_available($collection_root);
 					$root = $collection_root ?? $receiver;
@@ -361,7 +365,7 @@ final class Preparation
 				$type->prepare_key($statement->index);
 				$this->collection_element($statement->value, $type->write_type(), null);
 				$this->retain_member_place($receiver);
-				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination));
+				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination), $boxed_root);
 				if ($binding instanceof ast_local_binding) $this->latest_writes[$binding->storage_id()] = null;
 			}
 			elseif ($statement instanceof ast_append_statement) {
@@ -1587,7 +1591,8 @@ final class Preparation
 	}
 
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
-	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null): void
+	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null,
+		bool $plain_store_path = false): void
 	{
 		if ($syntax instanceof ast_take_expression) {
 			$this->prepare_take($syntax, $initializing);
@@ -1778,7 +1783,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_index_expression) {
-			$this->value($syntax->receiver, $initializing);
+			$this->value($syntax->receiver, $initializing, plain_store_path: $plain_store_path);
 			$type = $syntax->receiver->type_def();
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
@@ -1788,7 +1793,8 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash, or a boxed collection');
 			}
 			$this->value($syntax->index, $initializing);
-			$type->prepare_index($syntax);
+			if ($plain_store_path && $type instanceof boxed_type_definition) $type->prepare_index($syntax, plain_store: true);
+			else $type->prepare_index($syntax);
 			if (!$syntax->index->is_effect_free_literal()) $this->retain_member_place($syntax->receiver);
 			return;
 		}

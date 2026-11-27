@@ -32,10 +32,10 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		}
 	}
 
-	/** Admit nested boxed subscripts only for the prepared local mutation target outside Python. */
-	public function prepare_index(ast_index_expression $value): void
+	/** The plain-store context follows only receiver links. Keys and RHS expressions retain read semantics. */
+	public function prepare_index(ast_index_expression $value, bool $plain_store = false): void
 	{
-		if ($value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python) {
+		if (!$plain_store && $value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python) {
 			$parent = $value->parent;
 			if (!(($parent instanceof ast_index_compound || $parent instanceof ast_index_update) && $parent->target === $value
 				&& ast_index_expression::boxed_path_root($value->receiver) !== null)) {
@@ -90,24 +90,34 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $receiver . '.source_set(' . $key . ', ' . $value . ')';
 	}
 
-	private function lower_cpp_child_lookup(string $root, string $parent_key): string
+	private function lower_cpp_child_lookup(string $root, string $parent_key, string $child): string
 	{
-		return "$root.source_check_container(); auto boxed_child = $root.source_require($parent_key); boxed_child.source_check_container(); ";
+		return "auto $child = $root.source_require($parent_key); $child.source_check_container(); ";
 	}
 
 	public function lower_cpp_child_read(string $root, string $parent_key, string $key): string
 	{
-		return '([&]() { ' . $this->lower_cpp_child_lookup($root, $parent_key) . "return boxed_child.source_require($key); }())";
+		return "([&]() { $root.source_check_container(); " . $this->lower_cpp_child_lookup($root, $parent_key, 'boxed_child')
+			. "return boxed_child.source_require($key); }())";
 	}
 
-	/** A null key appends using the current child's next integer key. */
-	public function lower_cpp_child_store(string $root, string $parent_key, ?string $key, string $value, bool $require_leaf = false): string
+	/** Resolve the path after operand effects. Publish mixed children back from leaf to root.
+	 * @param string[] $parent_keys Saved C++ key names in source order.
+	 */
+	public function lower_cpp_path_store(string $root, array $parent_keys, ?string $key, string $value, bool $require_leaf = false): string
 	{
-		$store = $this->lower_cpp_child_lookup($root, $parent_key);
-		if ($require_leaf) $store .= "(void)boxed_child.source_require($key); ";
-		$store .= ($key === null ? $this->lower_cpp_append_value('boxed_child', $value) : $this->lower_cpp_write('boxed_child', $key, $value)) . ';';
-		if (!$this->mutates_referenced_value()) $store .= ' ' . $this->lower_cpp_write($root, $parent_key, 'boxed_child') . ';';
-		return $store;
+		$place = $root;
+		$store = "$root.source_check_container(); ";
+		$publish = [];
+		foreach ($parent_keys as $i => $parent_key) {
+			$child = 'boxed_child_' . $i;
+			$store .= $this->lower_cpp_child_lookup($place, $parent_key, $child);
+			if (!$this->mutates_referenced_value()) $publish[] = $this->lower_cpp_write($place, $parent_key, $child) . ';';
+			$place = $child;
+		}
+		if ($require_leaf) $store .= "(void)$place.source_require($key); ";
+		$store .= ($key === null ? $this->lower_cpp_append_value($place, $value) : $this->lower_cpp_write($place, $key, $value)) . ';';
+		return $publish === [] ? $store : $store . ' ' . implode(' ', array_reverse($publish));
 	}
 
 	public function supports_inferred_local(): bool

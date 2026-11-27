@@ -116,7 +116,7 @@ Generated dispatch selects the ordinary scalar rule for the observed kind. The a
 links the prebuilt runtime. The boxed storage API above can also be published separately.
 Typed local `[]`, single-level indexed reads and keyed writes are available in all three
 flavors. Keys have static type int64 or string. A read returns a same-family value and
-writes use ordinary same-family copies or scalar boxing. A plain two-key write on a local follows the rules below.
+writes use ordinary same-family copies or scalar boxing. A plain indexed write through nested boxed containers follows the rules below.
 Native traversal follows the [common protocol](collection_traversal.md); the [compiler foreach slice](../compiler/docs/foreach.md) consumes it. See [validation](boxed_slice_validation.md).
 
 ## Plain two-key assignment on boxed locals
@@ -126,7 +126,12 @@ each key once in source order, then evaluate and box the RHS once. After those
 steps, look up the saved group key in the current root. A missing entry raises
 `boxed_missing_key`. The root and the selected child must both be containers;
 a non-container raises `boxed_expected_container`, including a present null child.
-The final key may be inserted or replaced.
+The final key may be inserted or replaced. Plain assignment extends this rule to any
+number of intermediate keys on a local or stable instance field. Save every key before
+the RHS, then descend through existing containers in the current root. On success,
+publish changed mixed children from leaf to root. For dynamic, update the shared leaf
+container directly. A failed intermediate lookup preserves RHS effects and performs
+no part of the final store.
 
 For `data[group][] = value`, save the normalized group key, evaluate and box the RHS,
 then require a container at that key in the current root. Append using that child's
@@ -139,7 +144,7 @@ table, so existing aliases of that child observe the change. If the RHS replaces
 the child, the replacement receives the write. Failed lookup leaves earlier
 operand effects visible.
 
-Plain two-key assignment, nested append, compounds and standalone updates also accept a writable instance-field path under the typed
+Plain assignment at any depth, two-key compounds and standalone updates, and single-group append also accept a writable instance-field path under the typed
 collection receiver-lifetime rule. Select the field and retain its owner before evaluating
 the group key. Rebinding the holder leaves the selected field on the original owner. Replacing
 the contents of that field during key or RHS evaluation makes the write use its current

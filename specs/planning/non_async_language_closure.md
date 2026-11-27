@@ -40,7 +40,7 @@ decisions for mixed copy-on-write and dynamic shared identity. Existing-value ha
 updates through a second name would need an operation or proof that excludes
 insertion. These are possible extensions, not prerequisites for rows 3–5.
 
-Fixed arrays are tracked separately. Expressions and access now covers [nested writes to local and instance-field vectors and hashes](../vector_slice.md#nested-collection-writes). Nested append follows the same paths into vectors and integer-keyed hashes. [Two-key assignment on boxed locals](../boxed_slice.md#plain-two-key-assignment-on-boxed-locals) supports plain writes, nested append, compounds and standalone updates. All four operations also support instance fields. Deeper boxed paths remain open. Typed-to-boxed conversion belongs to structured conversion, and
+Fixed arrays are tracked separately. Expressions and access now covers [nested writes to local and instance-field vectors and hashes](../vector_slice.md#nested-collection-writes). Nested append follows the same paths into vectors and integer-keyed hashes. [Two-key assignment on boxed locals](../boxed_slice.md#plain-two-key-assignment-on-boxed-locals) supports plain writes, nested append, compounds and standalone updates. All four operations also support instance fields. Plain assignment supports deeper boxed paths. Deeper append, compounds and standalone updates remain open. Typed-to-boxed conversion belongs to structured conversion, and
 additional library helpers to the libraries backlog. Those areas may eventually
 consume an element-borrow contract.
 
@@ -61,12 +61,10 @@ its own write-back rule.
 
 **Writable-path classification.** For nested keyed stores, append, compounds and updates,
 [preparation](../../compiler/04_analyze/prepare/prepare.php) uses `nested_collection_root`
-and `boxed_path_root` to identify writable storage and check access. For a plain keyed store,
-`settle_write` retains the value conversion. [Lowering](../../compiler/05_backend/cpp/emit.php)
-calls the root helpers again to select typed slot access or boxed write-back, then selects
-and retains a field when required. Before extending path depth, consider retaining that
-choice on the mutation statement. Test invalidation and recovery on a field-type edit
-before relying on a cached choice. The original indexed-owner diagnostic occurs during
+and `boxed_path_root` to identify writable storage and check access. Plain keyed stores now retain the checked boxed root and the
+value conversion in `settle_write`; reset clears both. [Lowering](../../compiler/05_backend/cpp/emit.php)
+uses that root when staging keys and emitting boxed write-back. Typed slot stores, append,
+compounds and updates still consult the path helpers during lowering. The original indexed-owner diagnostic occurs during
 field preparation, before any lowering strategy is selected.
 
 ### Compiler debt for inferred read-only borrows
