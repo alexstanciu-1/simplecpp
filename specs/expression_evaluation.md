@@ -541,19 +541,24 @@ pairs admitted by both operators, strict identity implies ordinary equality.
 strict normalization. Literal null/sentinel routes must preserve the same invariant
 under their separately admitted comparison rules.
 
-In PHP flavor, strict comparison of a published `result_or_false<T>` with the
-literal `false` tests the false sentinel in either operand order. Evaluate the
-carrier expression once. `===` succeeds only for the sentinel; `!==` succeeds
-for every payload, including integer zero, an empty string and a boolean false.
-This literal rule does not extend to a variable holding false or to loose equality.
+For PHP equality, a plain boolean peer selects a success observation on
+`result<T>`, `result_or_false<T>` or `result_or_bool<T>`. All four equality
+operators accept either operand order and any boolean expression. A payload
+(including false or zero) and the true sentinel project to true. A structured
+error and the false sentinel project to false. Evaluate each expression once
+and observe the left operand before evaluating the right. Explicit boolean
+casts keep their checked payload conversion.
 
-In PHP, operand participation projects a published carrier to its payload type and a
-plain operand to its own type. Equality consumes this rule when at least one operand
-is a carrier and the scalar comparison metadata admits the projected types. The four carrier families can compare
-across families or with a plain payload in either order, using `==`, `!=`, `===`
-and `!==` when the corresponding payload comparator is admitted. Explicit literal
-state guards take precedence. A plain boolean variable always contributes a payload.
-The catalog selects ordinary or strict payload comparison and its inverse.
+Strict comparison with null is admitted for a result whose source payload
+type can hold null. It tests for a present null payload; failures and sentinels
+compare unequal to null. Reject a result with a non-nullable payload against
+null, and reject loose result/null equality. Nullable comparisons with null
+retain their presence rules.
+
+For remaining PHP equality pairs, operand participation projects a published
+carrier to its payload type and a plain operand to its own type. The four carrier
+families can compare across families or with a plain payload in either order
+when the corresponding payload comparator is admitted. The catalog selects ordinary or strict payload comparison and its inverse.
 Capture the left state before evaluating the right. Matching absent states compare
 equal. A payload differs from absence, including a successful boolean false.
 Two matching payload types use the selected comparator for `T`. Mixed numeric pairs use the published scalar promotion. For int/float,

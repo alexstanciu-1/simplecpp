@@ -723,6 +723,7 @@
     },
     "peer_equality": {
       "flavor": "php",
+      "result_observations": {"families": ["result", "result_or_false", "result_or_bool"], "boolean": "success", "strict_null": "present_null_payload"},
       "operands": "operand_participation",
       "payloads": {"matching_types": true, "scalar_pairs": "admitted_scalar_comparisons"},
       "evaluation": "snapshot_left_then_right",

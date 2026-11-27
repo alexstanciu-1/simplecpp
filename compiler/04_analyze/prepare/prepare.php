@@ -1926,9 +1926,7 @@ final class Preparation
 				if ($carrier instanceof carrier_type_definition
 					&& $literal instanceof ast_keyword_expression && in_array($literal->word, ['true','false'], true)
 					&& $carrier->sentinel_factory($literal->word) !== null
-					&& ($carrier->payload_type instanceof runtime_handle_type
-						|| ($syntax->source()->flavor === flavor::php && $literal->word === 'false'
-							&& $carrier->false_only_sentinel()))) {
+					&& $carrier->payload_type instanceof runtime_handle_type && $syntax->source()->flavor !== flavor::php) {
 					$syntax->settle_binary(type_bool::instance(), $carrier);
 					return;
 				}
@@ -1945,6 +1943,10 @@ final class Preparation
 			if ($carrier instanceof carrier_type_definition) {
 				$comparison = peer_equality_binding($left, $right, $syntax->source()->flavor, $syntax->operator);
 				if ($comparison !== null) {
+					if ($comparison->observation === result_observation::null_payload) {
+						if ($comparison->operator !== binary_operator::identical) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Use strict comparison to test for a null result payload');
+						if (!$carrier->can_hold_null_payload()) throw new diagnostic($syntax->source(), $syntax->byte_start(), $carrier->name . ' cannot contain null; compare with false to test failure');
+					}
 					$execution = $comparison->execution;
 					if ($execution !== null && ($execution->binary_result($comparison->operator, $execution) !== type_bool::instance()
 						|| !$execution->binary_syntax_allowed($comparison->operator, $syntax))) {

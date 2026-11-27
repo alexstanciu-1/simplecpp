@@ -115,6 +115,22 @@ final class ast_comparison_chain extends ast_expression
 	}
 }
 
+/** Compare a result state with a plain PHP boolean or null. */
+enum result_observation: int
+{
+	case success = 1;
+	case null_payload = 2;
+
+	/** Observe each operand before evaluation of its sibling can replace its storage. */
+	public function lower_operand(ast_expression $syntax, string $operand): string
+	{
+		$type = $syntax->type_def();
+		if ($type instanceof carrier_type_definition) return $type->lower_result_observation($this, $operand);
+		if ($type === type_null::instance()) return $syntax instanceof ast_keyword_expression ? 'true' : '((void)(' . $operand . '), true)';
+		return $operand;
+	}
+}
+
 /** Scalar operation to perform only inside the two-payload branch of a carrier comparison.
  * A null execution type denotes unequal scalar kinds under the strict identity policy. */
 final readonly class prepared_peer_equality
@@ -125,7 +141,8 @@ final readonly class prepared_peer_equality
 	public int $right_conversion /** uint16 */;
 
 	public function __construct(binary_operator $operator, ?type_definition $execution,
-		int $left_conversion = value_conversion::identity, int $right_conversion = value_conversion::identity)
+		int $left_conversion = value_conversion::identity, int $right_conversion = value_conversion::identity,
+		public ?result_observation $observation = null)
 	{
 		$this->operator = $operator;
 		$this->execution = $execution;

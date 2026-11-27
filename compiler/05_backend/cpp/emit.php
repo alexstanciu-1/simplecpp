@@ -117,6 +117,10 @@ final class Cpp_Emitter
 		}
 		$comparison = $value->peer_equality;
 		if ($comparison !== null) {
+			if ($comparison->observation !== null) {
+				$left = $comparison->observation->lower_operand($value->left, $left);
+				$right = $comparison->observation->lower_operand($value->right, $right);
+			}
 			$type = $comparison->execution;
 			if ($type === null) return;
 			foreach ([$comparison->left_conversion, $comparison->right_conversion] as $conversion) {
@@ -3141,7 +3145,9 @@ CPP;
 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
 				}
 				$borrow_receiver = $value->receiver?->member_borrow !== null;
-				$stage_receiver = $borrow_receiver && $value->has_nonliteral_arguments();
+				// Slot binding only takes addresses after the format. A literal format can share the call expression with the pin.
+				$inline_pin = $borrow_receiver && $function instanceof borrowed_slot_function && $value->arguments[0] instanceof ast_string_expression;
+				$stage_receiver = $borrow_receiver && !$inline_pin && $value->has_nonliteral_arguments();
 				if ($stage_receiver || $value->suspending_operands || $value instanceof ast_named_call
 					|| ($function->receiver_method && $value->has_runtime_conversions())) {
 					return $this->invocation($value, $function, $symbol, $function->return_type_def(), $global_references, $declarations, $required_headers, statement_setup: $statement_setup);
@@ -3192,8 +3198,13 @@ CPP;
 				foreach ($operands as $index => $argument) {
 					$operand_records_before = $this->record_expressions;
 					$safe = false;
-					$operand = $borrow_receiver && $index === 0 ? $this->member_operand($argument, $global_references, $declarations, $required_headers)
-						: $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					if ($inline_pin && $index === 0) {
+						$steps = [];
+						$operand = $this->retained_place($argument, $global_references, $declarations, $required_headers, $steps, full_expression: true);
+					} else {
+						$operand = $borrow_receiver && $index === 0 ? $this->member_operand($argument, $global_references, $declarations, $required_headers)
+							: $this->value($argument, $global_references, $declarations, $required_headers, $safe);
+					}
 					$conversion = $value->conversion($index);
 					if ($conversion !== value_conversion::identity) {
 						$type = $function->parameters[$index];

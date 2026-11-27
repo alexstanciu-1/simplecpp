@@ -25,7 +25,7 @@ if(!$db->begin_transaction() || !$stmt->execute() || $stmt->affected_rows!==1 ||
 $res=$db->query("SELECT id,data,NULL AS nothing FROM proof");
 $row=$res->fetch_assoc(); $n int=$row["id"]; $bytes string=$row["data"];
 if($n!==2 || $bytes!=="a\0b" || $row["nothing"]!==null || $res->fetch_assoc()!==null){return 9;}
-$select mysqli_stmt=$db->prepare("SELECT data FROM proof WHERE id=?");
+$select=$db->prepare("SELECT data FROM proof WHERE id=?");
 if(!$select->bind_param("i",$id) || !$select->execute()){return 10;}
 $kept mysqli_result=$select->get_result();
 $id=3;

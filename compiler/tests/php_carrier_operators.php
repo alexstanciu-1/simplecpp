@@ -31,8 +31,8 @@ foreach ([
 	'$i << $j' => 28, '$i >> $j' => 1, '$i < $f' => 0, '$i <= $j' => 0, '$i > $f' => 1,
 	'$i >= $j' => 1, '$j <=> $f' => -1, '$s <=> "a\0c"' => -1,
 	'$i === $s' => 0, '$s === $b' => 0, '$b === $true_int' => 1, '$true_int !== $b' => 0,
-	'$miss === $false_text' => 1, '$false_text === $miss' => 1, '$b === true' => 0,
-	'$empty === $n' => 1, '$n !== $empty' => 0, '$miss === null' => 0, 'null !== $miss' => 1,
+	'$miss === $false_text' => 1, '$false_text === $miss' => 1, '$b === true' => 1,
+	'$empty === $n' => 1, '$n !== $empty' => 0, '$miss === false' => 1, 'true !== $miss' => 1,
 	'!$b' => 0, '$miss && skipped()' => 0, '$b || skipped()' => 1, '($b xor $empty)' => 1,
 	'$empty ? 1 : 2' => 2, 'isset($b)' => 1, '$i ?? 9' => 7,
 ] as $expression => $answer) {

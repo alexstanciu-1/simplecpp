@@ -62,6 +62,28 @@ abstract class carrier_type_definition extends type_definition implements presen
 		return $this->lower_cpp_presence($value);
 	}
 
+	/** A source-level null box, optional value or optional owner can inhabit a successful result. */
+	public function can_hold_null_payload(): bool
+	{
+		$type = $this->payload_type;
+		return $type instanceof boxed_type_definition || ($type instanceof carrier_type_definition && $type->accepts_empty())
+			|| ($type instanceof shared_record_type_definition && !$type->required);
+	}
+
+	/** Project before operand staging so a mutating RHS only requires a boolean snapshot. */
+	public function lower_result_observation(result_observation $observation, string $value): string
+	{
+		if ($observation === result_observation::success) return '(' . $value . ').is_success()';
+		$type = $this->payload_type;
+		$null = match (true) {
+			$type instanceof boxed_type_definition => 'r.checked_ref().kind() == scpp::boxed_kind::null',
+			$type instanceof carrier_type_definition => '!' . $type->lower_cpp_presence('r.checked_ref()'),
+			$type instanceof shared_record_type_definition => '!' . $type->lower_cpp_condition('r.checked_ref()'),
+			default => throw new \LogicException('Expected a null-capable result payload'),
+		};
+		return '([](const auto& r) { return r.has_value() && (' . $null . '); }(' . $value . '))';
+	}
+
 	/** Match shared alternate states and compare present payloads using the prepared scalar conversions. */
 	private function lower_peer_equality(ast_binary_expression $expr, string $left, string $right): string
 	{
@@ -99,6 +121,10 @@ abstract class carrier_type_definition extends type_definition implements presen
 	public function lower_prepared_binary(ast_binary_expression $expr, string $left, string $right, bool $typed_initializer = false,
 		bool $bare_comparison = false): string
 	{
+		if ($expr->peer_equality?->observation !== null) {
+			$bool = type_bool::instance();
+			return $bool->lower_cpp_binary($expr->operator, $left, $right, $bool);
+		}
 		if ($expr->peer_equality !== null) {
 			$equal = $this->lower_peer_equality($expr, $left, $right);
 			return $expr->operator !== $expr->peer_equality->operator ? '!' . $equal : $equal;
@@ -116,7 +142,8 @@ abstract class carrier_type_definition extends type_definition implements presen
 	/** Two local reads need no snapshots. Stage effectful pairs before inspecting either state. */
 	public function cpp_direct_binary(ast_binary_expression $expr, bool $operands_safe, bool $same_spelling): bool
 	{
-		return $expr->peer_equality === null
+		return ($expr->peer_equality?->observation !== null && ($expr->left instanceof ast_keyword_expression || $expr->right instanceof ast_keyword_expression))
+			|| $expr->peer_equality === null
 			|| (!($expr->left instanceof ast_string_expression) && !($expr->right instanceof ast_string_expression)
 				&& self::stable_cpp_operand($expr->left) && self::stable_cpp_operand($expr->right));
 	}

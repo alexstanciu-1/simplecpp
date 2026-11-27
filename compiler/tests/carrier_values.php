@@ -82,9 +82,14 @@ echo (int)($flag === false), (int)(false !== $flag), (int)($zero !== false),
 return 8;
 SCPP;
 		$cpp = (new Cpp_Emitter())->emit($prepare($guard));
-		verify(substr_count($cpp, '.is_false()') === 5 && !str_contains($cpp, '.value()'),
-			'Strict PHP false guards must inspect the sentinel directly');
+		verify(substr_count($cpp, '.is_success()') === 5 && !str_contains($cpp, '.value()'),
+			'PHP false comparisons must observe success without extracting the payload');
 		$fixtures['php-false-guards'] = ['cpp' => $cpp, 'stdout_hex' => bin2hex('0111once1')];
+		foreach (['result<int>', 'result_or_false<int>', 'result_or_bool<int>'] as $type) {
+			foreach (['$r === null', 'null !== $r'] as $test) {
+				rejects(fn() => $prepare("function check($type \$r):bool {return $test;} return 8;"), 'cannot contain null');
+			}
+		}
 		$pairs = <<<'SCPP'
 function lookup(string $tag, string $needle): result_or_false<int> {
     echo $tag; return strpos("abc", $needle);

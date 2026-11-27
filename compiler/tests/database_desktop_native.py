@@ -28,6 +28,10 @@ def compile_app(work, module, text, clang, negatives=()):
         response = invoke(compiler)
         assert 'error' not in response, response
         expected = artifacts(out)
+        if module == 'mysqli':
+            units = b'\n'.join(data for path, data in expected.items() if path.suffix == '.cpp')
+            assert b'::scpp::mysqli_api::bind_param((*(var_select_' in units
+            assert b').pin()), scpp::string{"i", 1}, var_id_' in units
         for source, diagnostic in negatives:
             main.write_text(source)
             result = invoke(compiler)

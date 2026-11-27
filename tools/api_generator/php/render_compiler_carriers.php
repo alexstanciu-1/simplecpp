@@ -118,7 +118,7 @@ function compilerPeerEquality(mixed $carriers, array $definitions, array $promot
     $template = strtr($template, ['@families@' => $familyArm, '@writes@' => $writes, '@shared_states@' => implode("\n", $shared)]);
     if ($rule === null) return str_replace('@dispatch@', "\treturn null;", $template);
     requireThat($published !== [], 'Equality requires published carrier operands');
-    fields($rule, ['flavor', 'operands', 'payloads', 'evaluation', 'states', 'operators']);
+    fields($rule, ['flavor', 'operands', 'payloads', 'evaluation', 'states', 'operators', 'result_observations']);
     literals($rule, ['operands' => 'operand_participation',
         'evaluation' => 'snapshot_left_then_right', 'states' => 'match_alternate_state']);
     $flavor = textValue(at($rule, 'flavor'));
@@ -132,9 +132,25 @@ function compilerPeerEquality(mixed $carriers, array $definitions, array $promot
     requireThat($arms !== [], 'Empty peer equality rule');
     ksort($arms, SORT_STRING);
     $mixed = compilerMixedPeerBindings(at($rule, 'payloads'), $operators, $definitions, $promotions, $binary);
+    $observations = '';
+    if (isset($rule->result_observations)) {
+        $obs = $rule->result_observations;
+        fields($obs, ['families', 'boolean', 'strict_null']);
+        literals($obs, ['boolean' => 'success', 'strict_null' => 'present_null_payload']);
+        $resultFamilies = names(at($obs, 'families'));
+        requireThat(array_diff($resultFamilies, ['result', 'result_or_false', 'result_or_bool']) === [], 'Success comparison requires result families');
+        $families = array_intersect($published, array_map(static fn($f) => var_export($f, true), $resultFamilies));
+        $list = implode(', ', $families);
+        $observations = "\t\$carrier = \$left instanceof carrier_type_definition ? \$left : \$right;\n"
+            . "\tif (\$carrier instanceof carrier_type_definition && in_array(\$carrier->family, [$list], true)) {\n"
+            . "\t\t\$peer = \$carrier === \$left ? \$right : \$left;\n"
+            . "\t\tif (\$peer === type_bool::instance()) return new prepared_peer_equality(\$comparator, type_bool::instance(), observation: result_observation::success);\n"
+            . "\t\tif (\$peer === type_null::instance()) return new prepared_peer_equality(\$comparator, type_bool::instance(), observation: result_observation::null_payload);\n\t}\n";
+    }
     $dispatch = "\tif (\$flavor !== flavor::$flavor) return null;\n"
         . "\t\$comparator = match (\$operator) {\n" . implode("\n", $arms) . "\n\t\tdefault => null,\n\t};\n"
         . "\tif (\$comparator === null) return null;\n"
+        . $observations
         . "\t\$left = carrier_operand_payload(\$left);\n\t\$right = carrier_operand_payload(\$right);\n"
         . "\tif (\$left !== null && \$left === \$right) return new prepared_peer_equality(\$comparator, \$left);\n"
         . implode("\n", $mixed) . "\n\treturn null;";
