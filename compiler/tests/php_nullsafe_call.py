@@ -163,7 +163,6 @@ def indexed_callable(work, case):
     class Selector {
         public function pick(string $key):string { echo "M"; return $key; }
     }
-    function probe(?Selector $s):?Selector { echo "P"; return $s; }
     function keyArg():string { echo "K"; return "method"; }
     function fallbackKey():string { echo "F"; return "fallback"; }
     function callArg():int { echo "C"; return 6; }
@@ -172,6 +171,27 @@ def indexed_callable(work, case):
     """
     setup = '$ops hash<function<int(int)>,string> = ["fallback"=>fn($n)=>byFallback($n)];'
     method = '$ops["method"]=fn($n)=>byMethod($n);'
+    if case == 'chained_indexed_callable':
+        api += """
+        class Router {
+            public ?Selector $target;
+            public function select(int $n):?Selector { echo "S"; return $this->target; }
+        }
+        function probe(?Router $r):?Router { echo "P"; return $r; }
+        function routeArg():int { echo "R"; return 1; }
+        function invokeRoute(?Router $router, hash<function<int(int)>,string> $ops):void {
+            $value=$ops[probe($router)?->select(routeArg())?->pick(keyArg()) ?? fallbackKey()](callArg());
+            echo "|",$value,";";
+        }
+        """
+        main = setup + method + """
+        invokeRoute(null,$ops);
+        $router=new Router(); invokeRoute($router,$ops);
+        $router->target=new Selector(); invokeRoute($router,$ops); return 8;
+        """
+        revisions(work, 'php', dict(api=api, main=main), [(None, None, b'PFCB|26;PRSFCB|26;PRSKMCA|16;')])
+        return
+    api += 'function probe(?Selector $s):?Selector { echo "P"; return $s; }'
     call = '$value=$ops[probe($selector)?->pick(keyArg()) ?? fallbackKey()](callArg()); echo "|",$value;return 8;'
     present = '$selector ?Selector=new Selector();'
     absent = '$selector ?Selector=null;'
@@ -187,7 +207,7 @@ def indexed_callable(work, case):
 
 with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     case = sys.argv[1]
-    if case in ('indexed_callable', 'indexed_callable_missing'):
+    if case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable'):
         indexed_callable(Path(tmp), case)
     else:
         {'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
