@@ -44,3 +44,30 @@ clang++ -O3 -std=c++23 -I "$candidate/runtime/src/json" check_scan.cpp -o check_
 ```
 
 [Raw measurements](dev002.json) · [Intel instruction reference for extracting per-byte masks](https://cdrdv2-public.intel.com/671110/325383-sdm-vol-2abcd.pdf)
+
+## Production bulk suffix verification
+
+The baseline is the committed batched string-vector decoder at `5eb9b4945`. The production candidate appends each nonempty ordinary run after an escape in one operation. A scanner-only executable applies word8.patch directly to the baseline. A fourth executable applies the scanner to the production candidate. All four use the same string storage policy, scalar escape grammar, UTF-8 validator and typed consumer.
+
+Decimal MB of complete wire JSON per second on dev002, measured in eleven shuffled rounds on CPU 7. Each document holds 16 strings with the same decoded contents for all four escape placements.
+
+| Decoded bytes/string | Escape | Batched baseline | Bulk append | 8-byte scanner only | Bulk + 8-byte scanner |
+|---:|---|---:|---:|---:|---:|
+| 8 | plain | 281.4 | 285.8 | 320.6 | 330.7 |
+| 8 | first | 218.8 | 255.6 | 211.9 | 245.7 |
+| 8 | middle | 237.6 | 246.1 | 231.6 | 236.6 |
+| 8 | last | 270.6 | 269.9 | 260.9 | 269.7 |
+| 129 | plain | 633.1 | 630.6 | 1,037.1 | 1,043.2 |
+| 129 | first | 212.5 | 572.9 | 211.1 | 878.9 |
+| 129 | middle | 307.7 | 533.9 | 335.0 | 804.2 |
+| 129 | last | 577.0 | 590.2 | 902.6 | 935.0 |
+| 4,096 | plain | 1,039.0 | 1,012.0 | 2,523.8 | 2,526.8 |
+| 4,096 | first | 217.2 | 1,008.3 | 216.0 | 2,397.4 |
+| 4,096 | middle | 410.6 | 1,020.4 | 457.2 | 2,390.9 |
+| 4,096 | last | 590.2 | 582.6 | 883.2 | 895.2 |
+
+Both typed scalar and vector drivers matched the independent value oracle on 390 valid documents per shape. All three candidates matched the batched baseline's full error text, byte offset and path on 422 malformed documents per shape. The guarded-page scanner probe passed. The JSON-enabled default suite passed all 424 tests on the production bulk build and again on the bulk-plus-scanner build.
+
+Build each driver's time and counts executables using the typed_json_strings builder with --batched. Name the directories batched, bulk, scan_only and word8, then run `taskset -c 7 python3 run.py "$bin" --production`. Use the committed baseline for the batched and scanner-only builds, and the production bulk implementation for bulk and word8.
+
+[Raw four-way measurements](production.dev002.json)

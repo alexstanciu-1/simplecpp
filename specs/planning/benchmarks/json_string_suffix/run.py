@@ -1,4 +1,5 @@
 """Measure string suffix scanning on dev002 with the fused decoder as the reference."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -7,26 +8,29 @@ import random
 import statistics
 import string
 import subprocess
-import sys
 
-bins = Path(sys.argv[1]).resolve()
-variants = ('fused', 'bulk', 'word8', 'avx2')
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('bin', type=Path)
+parser.add_argument('--production', action='store_true', help='compare batched, bulk, scanner-only and combined builds')
+args = parser.parse_args()
+bins = args.bin.resolve()
+variants = ('batched', 'bulk', 'scan_only', 'word8') if args.production else ('fused', 'bulk', 'word8', 'avx2')
+timed = variants if args.production else (*variants, 'node')
 node = Path(__file__).with_name('node.js')
 rng = random.Random(32768)
 
 
-def invoke(mode, binary, docs, *args):
-    cmd = [bins/mode/binary, 'vector', *map(str, args)]
+def invoke(mode, binary, docs, *args, shape='vector'):
+    cmd = [bins/mode/binary, shape, *map(str, args)]
     return subprocess.run(cmd, input=''.join(doc.hex()+'\n' for doc in docs),
                           capture_output=True, text=True, check=True).stdout.splitlines()
 
 
-def doc(token):
-    return b'{"value":["previous",'+token+b',"next"]}'
-
-
 def oracle(wire):
-    return 'ok' + ''.join(' '+s.encode().hex() for s in json.loads(wire)['value'])
+    values = json.loads(wire)['value']
+    if isinstance(values, str):
+        values = [values]
+    return 'ok' + ''.join(' '+s.encode().hex() for s in values)
 
 
 def fixture(size, position):
@@ -39,25 +43,39 @@ def fixture(size, position):
     return ('{"value":[' + ','.join(['"'+spelling+'"']*16) + ']}').encode()
 
 
-valid, invalid = [], []
-for offset in range(65):
-    prefix = b'p'*offset
-    for suffix in [b'x'*offset, '😂é'.encode(), br'\uD83D\uDE03', br'\\', br'\"', br'\u0000']:
-        valid.append(doc(b'"'+prefix+br'\u0061'+suffix+b'"'))
-    for bad in [b'\x1f', br'\q', br'\u12x4', br'\uD800x', b'\xff']:
-        invalid.append(doc(b'"'+prefix+br'\u0061'+prefix+bad+b'"'))
-    invalid.append(b'{"value":["'+br'\u0061'+prefix)
-for char in range(32):
-    invalid.append(doc(br'"\u0061'+b'x'*31+bytes([char])+b'"'))
-corpus = valid + invalid
-reference = invoke('fused','time',corpus)
-assert reference[:len(valid)] == [oracle(v) for v in valid]
-assert len(reference) == len(corpus) and all(x.startswith('error ') for x in reference[len(valid):])
-for mode in variants[1:]:
-    assert invoke(mode,'time',corpus) == reference
+def verify(shape):
+    opening = b'{"value":' if shape == 'scalar' else b'{"value":["previous",'
+    closing = b'}' if shape == 'scalar' else b',"next"]}'
 
-result = dict(host=platform.node(), cpu=sorted(os.sched_getaffinity(0)), node_version=subprocess.check_output(
-    ['node','--version'],text=True).strip(), valid=len(valid), invalid=len(invalid), cases={})
+    def wrap(token):
+        return opening + token + closing
+
+    truncated = b'{"value":' if shape == 'scalar' else b'{"value":['
+    valid, invalid = [], []
+    for offset in range(65):
+        prefix = b'p'*offset
+        for suffix in [b'x'*offset, '😂é'.encode(), br'\uD83D\uDE03', br'\\', br'\"', br'\u0000']:
+            valid.append(wrap(b'"'+prefix+br'\u0061'+suffix+b'"'))
+        for bad in [b'\x1f', br'\q', br'\u12x4', br'\uD800x', b'\xff']:
+            invalid.append(wrap(b'"'+prefix+br'\u0061'+prefix+bad+b'"'))
+        invalid.append(truncated + b'"' + br'\u0061'+prefix)
+    for char in range(32):
+        invalid.append(wrap(br'"\u0061'+b'x'*31+bytes([char])+b'"'))
+    corpus = valid + invalid
+    reference = invoke(variants[0],'time',corpus,shape=shape)
+    assert reference[:len(valid)] == [oracle(v) for v in valid]
+    assert len(reference) == len(corpus) and all(x.startswith('error ') for x in reference[len(valid):])
+    for mode in variants[1:]:
+        assert invoke(mode,'time',corpus,shape=shape) == reference
+    return len(valid), len(invalid)
+
+
+valid, invalid = verify('vector')
+result = dict(host=platform.node(), cpu=sorted(os.sched_getaffinity(0)), valid=valid, invalid=invalid, cases={})
+if args.production:
+    result['scalar_valid'], result['scalar_invalid'] = verify('scalar')
+else:
+    result['node_version'] = subprocess.check_output(['node','--version'],text=True).strip()
 cases = [(size, position) for size in [8,129,4096] for position in ['first','middle','last','plain']]
 rng.shuffle(cases)
 for size,position in cases:
@@ -69,9 +87,10 @@ for size,position in cases:
         _,calls,allocated,checksum = invoke(mode,'counts',[wire],1)[0].split()
         assert int(checksum)==16
         case[mode]=dict(allocations=int(calls),allocated_bytes=int(allocated),ns=[])
-    case['node']=dict(ns=[])
+    if 'node' in timed:
+        case['node']=dict(ns=[])
     for _ in range(11):
-        order = [*variants,'node']
+        order = list(timed)
         rng.shuffle(order)
         for mode in order:
             if mode == 'node':
@@ -80,7 +99,7 @@ for size,position in cases:
                 ns,_,_,checksum=invoke(mode,'time',[wire],loops)[0].split()
                 assert int(checksum)==16*loops
             case[mode]['ns'].append(float(ns))
-    for mode in [*variants,'node']:
+    for mode in timed:
         median=statistics.median(case[mode]['ns'])
         case[mode]['median_ns']=median
         case[mode]['MB_s']=1000*len(wire)/median

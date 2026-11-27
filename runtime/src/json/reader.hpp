@@ -145,11 +145,7 @@ protected:
 			if (static_cast<unsigned char>(ch) < 0x20u) {
 				fail_json_parse("control character in string", pos_ - 1);
 			}
-			if (ch != '\\') {
-				out.push_back(ch);
-				continue;
-			}
-
+			// The prefix scan stops only at a quote, control byte or backslash.
 			if (at_end()) {
 				fail_json_parse("unfinished escape sequence", pos_);
 			}
@@ -185,6 +181,12 @@ protected:
 				}
 				default:
 					fail_json_parse("invalid escape sequence", pos_ - 1);
+			}
+			const auto remaining = input_.substr(pos_);
+			const auto count = plain_string_prefix(remaining);
+			if (count != 0) {
+				out.append(remaining.data(), count);
+				pos_ += count;
 			}
 		}
 

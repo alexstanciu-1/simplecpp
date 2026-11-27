@@ -176,7 +176,9 @@ path and opening-quote offset, and precede validation of the following colon.
 Providers using ordinary field advancement can use the default schema lookup.
 A typed string field owns its decoded bytes. A plain string is constructed
 directly from the quoted input's contents. An escaped string uses the same
-escape parser. Short results fit inline and long results take ownership of the
+escape parser. After each escape, the reader appends the following ordinary
+bytes in one span and leaves the next quote, backslash or control byte for the
+string grammar. Short results fit inline and long results take ownership of the
 decoded buffer. For published string and int64 vectors, generated decode requests
 the complete array in one operation. The JSON provider appends in source order,
 constructs each owned string with the same scalar string rules, and resumes scalar
