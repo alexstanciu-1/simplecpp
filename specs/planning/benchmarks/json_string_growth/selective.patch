@@ -1,0 +1,17 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -149,3 +149,13 @@
+ 	[[nodiscard]] std::string parse_string_tail(std::size_t start, std::string_view prefix) {
+-		std::string out(prefix);
++		auto out = [prefix] {
++			// dev002 libc++ rounds long char buffers, including their terminator, to eight bytes.
++			constexpr std::size_t long_prefix = 1024;
++			if (prefix.size() >= long_prefix && prefix.size() % 8 == 7) {
++				std::string buffer;
++				buffer.reserve(prefix.size() + 1);
++				buffer.append(prefix);
++				return buffer;
++			}
++			return std::string(prefix);
++		}();
+ 		while (!at_end()) {

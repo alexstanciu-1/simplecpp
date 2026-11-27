@@ -46,3 +46,33 @@ taskset -c 7 python3 allocator.py "$suffix_study" "$work" > allocator.json
 The lexical probe measures capacity and data address immediately around the actual Unicode append. It times only appending the already decoded byte with steady_clock. Both timings include clock overhead, and repeated single-string parsing reuses warm allocator storage. The document drivers have no probe instrumentation. They decode a typed vector of 16 strings, observe its length and destroy the result each iteration. Eleven rounds shuffle original/reserve order for each measurement. The correctness check compares both drivers on 48 valid and malformed boundary documents plus 12 timing fixtures, checking decoded bytes against Python and comparing diagnostics verbatim. Fault counts include startup, 375 warmups and 3,000 timed decodes per process, divided by 3,375. Raw results include the plain controls and every timing sample.
 
 [Paired measurements](dev002.json) · [Allocator control](allocator.json)
+
+## Selective reserve for long, full prefixes
+
+On dev002, reserving one extra byte only for long prefixes that would fill their buffer recovered the 4,096-byte gain in all eleven paired rounds. At 4,095 and 4,097 bytes median decode time moved by at most 0.2%. Short-string medians ranged from 0.4% faster to 1.7% slower than the original.
+
+| Decoded bytes per string | Original µs/doc | Always reserve µs/doc | Selective µs/doc | Selective time change vs original |
+|---:|---:|---:|---:|---:|
+| 8 | 0.957 | 1.051 | 0.953 | −0.4% |
+| 23 | 1.369 | 1.494 | 1.373 | +0.3% |
+| 129 | 2.114 | 2.357 | 2.151 | +1.7% |
+| 4,095 | 19.526 | 19.762 | 19.554 | +0.1% |
+| 4,096 | 65.375 | 19.824 | 19.922 | −69.5% |
+| 4,097 | 19.553 | 19.769 | 19.599 | +0.2% |
+
+Each document has 16 strings ending in a single ASCII character spelled as a Unicode escape. The three drivers ran in shuffled order on CPU 7. At 4,096 bytes, selective reserve sustained 3,297 MB/s. The probe observed zero moves in 100,000 final appends per round, with capacity staying at 4,103. At 23 bytes it retained the original inline-to-heap transition. The 4,096-byte plain control differed by 0.1% in median time.
+
+The experiment defines a long prefix as at least 1,024 bytes. It inspects the prefix length before constructing the string. In dev002's libc++, allocation for a long string rounds the requested bytes including its terminator up to a multiple of eight. The prototype uses this to detect a full buffer without allocating it first. The capacity probe compared the prediction against actual string construction at each of 64,513 lengths from 1,024 through 65,536 inclusive. All matched, including 8,064 full buffers. The cutoff is an experimental choice and the rounding rule needs qualification on any other standard-library build.
+
+All 424 JSON-enabled default tests passed on dev002 with the selective prototype. All three drivers agreed on 58 valid documents and on all 54 invalid-document diagnostics, including error text, byte offset and path. The corpus exercises prefixes on both sides of the cutoff, escaped NUL, supplementary characters, multiple escapes, malformed escapes, invalid UTF-8, control bytes and truncation.
+
+To reproduce, apply selective.patch to a fresh AVX2 baseline and build the batched drivers in the third work directory under bin/selective. Run the capacity check and build the append probe with the same toolchain. Pass the third directory to the study runner to compare all three variants.
+
+```sh
+clang++ -stdlib=libc++ -std=c++23 -O3 check_capacity.cpp -o "$third/check_capacity"
+"$third/check_capacity"
+python3 build_probe.py "$selective/runtime/src/json/reader.hpp" "$third/probe-selective"
+taskset -c 7 python3 run.py "$suffix_study" "$work" "$third" > selective.dev002.json
+```
+
+[Three-way measurements](selective.dev002.json) · [Experimental patch](selective.patch)
