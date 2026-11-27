@@ -7,6 +7,12 @@ $missing=$db->query("SELECT * FROM no_such_scpp_table");
 if($missing!==false || $db->errno===0 || $db->error===""){return 4;}
 $res mysqli_result=$db->query("SELECT id FROM proof");
 if($res->num_rows!==0 || $res->fetch_row()!==null){return 5;}
+$guarded=$db->prepare("SELECT 1");
+if(!$guarded){return 20;}
+if(!$guarded->execute()){return 21;}
+$guarded->close();
+$invalid=$db->prepare("SELECT FROM");
+if($invalid){return 22;}
 $id=1;$payload="a\0b";
 $stmt mysqli_stmt=$db->prepare("INSERT INTO proof VALUES (?,?)");
 if(!$stmt->bind_param("ib",$id,$payload)){return 6;}

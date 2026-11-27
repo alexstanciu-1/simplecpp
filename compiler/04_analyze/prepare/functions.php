@@ -123,7 +123,7 @@ final class Function_Preparation
 				}
 			}
 			elseif (($statement instanceof ast_return_statement)
-				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_delay_statement) || ($statement instanceof ast_await_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
+				|| ($statement instanceof ast_assignment_statement) || ($statement instanceof ast_delay_statement) || ($statement instanceof ast_await_statement) || ($statement instanceof ast_take_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 				if ($statement->value !== null) {
 					self::expression($statement->value);
 				}
@@ -135,6 +135,12 @@ final class Function_Preparation
 	private static function expression(ast_expression $value): void
 	{
 		$value->reset_preparation();
+		if ($value instanceof ast_take_expression) {
+			$value->slots = [];
+			foreach ($value->outputs as $output) $output->reset_preparation();
+			self::expression($value->input);
+			return;
+		}
 		if ($value instanceof ast_lambda_expression) {
 			foreach ($value->parameters as $parameter) $parameter->reset_preparation();
 			foreach ($value->captures as $capture) {

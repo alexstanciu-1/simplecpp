@@ -1051,6 +1051,9 @@ CPP;
 		foreach ($type->condition_headers() as $header) {
 			$headers[$header] = true;
 		}
+		if ($type instanceof carrier_type_definition && $type->payload_type instanceof runtime_handle_type && $type->false_only_sentinel()) {
+			return $type->lower_cpp_presence($operand);
+		}
 		return $type->lower_cpp_condition($operand, $negated);
 	}
 
@@ -1103,6 +1106,17 @@ CPP;
 			$this->destination = $this->destination_plans[$function->name()] ?? null;
 		}
 		$lines = [];
+		foreach ($body->scope->declarations as $slot) {
+			if (!$slot instanceof ast_produced_binding || !$slot->parent instanceof ast_take_expression) continue;
+			$type = $slot->type_def();
+			foreach ($type->cpp_headers() as $header) $required_headers[$header] = true;
+			if ($slot === $slot->parent->outputs[0]) {
+				$required_headers['optional'] = true;
+				$lines[] = "\tstd::optional<" . $type->cpp_type() . '> take_slot_' . $slot->id . ';';
+			} else {
+				$lines[] = "\t[[maybe_unused]] " . $type->cpp_type() . ' ' . $this->name($slot) . '{};';
+			}
+		}
 		if ($resume !== null) $resume->scopes[] = $body;
 		foreach ($body->statements as $statement)
 		{
@@ -1113,6 +1127,10 @@ CPP;
 					$receiver = $this->value($statement->receiver, $global_references, $declarations, $required_headers);
 					$lines[] = "\t" . $this->concrete_collections->destination_append($statement->receiver->type_def(), $writes, $receiver, $inputs) . ';';
 				}
+				continue;
+			}
+			if ($statement instanceof ast_take_statement) {
+				$lines[] = "\t" . $this->value($statement->value, $global_references, $declarations, $required_headers) . ';';
 				continue;
 			}
 			if ($statement instanceof ast_base_statement) continue;
@@ -1910,6 +1928,9 @@ CPP;
 	/** Read a selected element or identify the native local storage. */
 	private function name(ast_local_binding $binding, bool $reference = false): string
 	{
+		if ($binding instanceof ast_produced_binding && $binding->is_take_payload()) {
+			return '(*take_slot_' . $binding->id . ')';
+		}
 		if ($binding instanceof ast_writable_element) {
 			$loop = $binding->parent;
 			$source = $loop->source_value;
@@ -2326,7 +2347,8 @@ CPP;
 			$type = $statement->local_def()->type_def();
 			$conversion = $statement->conversion();
 			$value = $statement->value;
-			$prefix = $this->name($statement->local_def());
+			$slot = $statement->local_def();
+			$prefix = $slot instanceof ast_produced_binding && $slot->is_take_payload() ? 'take_slot_' . $slot->id : $this->name($slot);
 			if (($conversion === value_conversion::identity) && ($value instanceof ast_name_expression)
 				&& $value->refers_to($statement->local_def())) {
 				return '(void)' . $prefix;
@@ -2514,6 +2536,17 @@ CPP;
 		}
 		$reorderable = false;
 		$value_type = $value->type_def();
+		if ($value instanceof ast_take_expression) {
+			$input = $this->value($value->input, $global_references, $declarations, $required_headers);
+			$slot = $value->slots[0];
+			$store = $slot instanceof ast_produced_binding && $slot->is_take_payload()
+				? 'take_slot_' . $slot->id . '.emplace(source.value());' : $this->name($slot) . ' = source.value();';
+			$body = 'const auto ok = source.has_value(); if (ok) ' . $store;
+			$count = count($value->slots);
+			if ($count === 3) $body .= ' ' . $this->name($value->slots[1]) . ' = ok ? scpp::error_t{} : source.error();';
+			if ($count > 1) $body .= ' ' . $this->name($value->slots[$count - 1]) . ' = ok;';
+			return '([&](const auto& source) { ' . $body . ' return ok; }(' . $input . '))';
+		}
 		if ($value_type instanceof record_result_type_definition) {
 			$payload = $value_type->payload_type;
 			if ($payload instanceof shared_record_type_definition) $declarations[$payload->name] = $payload;

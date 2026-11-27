@@ -33,6 +33,12 @@ final class Preparation
 	 */
 	private array $local_frames /** list<array<string,ast_local_binding>> */ = [];
 	/** Initializer facts are unavailable after a branch barrier unless re-established by a local write. */
+	/** Definitely initialized fresh payloads by binding identity. @var bool[] */
+	private array $take_ready = [];
+	/** Success flag storage ID to the payload it proves initialized. @var int[] */
+	private array $take_status = [];
+	/** Status slots reachable through another name. @var bool[] */
+	private array $take_borrowed = [];
 	private bool $unknown_initializers = false;
 	private ?ast_lambda_expression $enclosing_lambda = null;
 	private bool $borrows_receiver = false;
@@ -104,6 +110,7 @@ final class Preparation
 	{
 		$this->symbols = $symbols;
 		$this->owner = $syntax;
+		$this->take_ready = $this->take_status = $this->take_borrowed = [];
 		$this->dependencies = $dependencies;
 		$dependencies?->forget($syntax);
 		Function_Preparation::reset_body($syntax);
@@ -203,6 +210,11 @@ final class Preparation
 				throw new diagnostic($source, $statement->byte_start(), 'Yield slice supports locals, writes, conditionals, loops, yields, echo, calls and bare return only');
 			}
 			$next = statement_completion::fallthrough;
+			$barrier = $statement instanceof ast_repeating_statement || $statement instanceof ast_try_statement || $statement instanceof ast_switch_statement;
+			if ($barrier) {
+				$outer_ready = $this->take_ready;
+				$this->take_status = [];
+			}
 			if ($statement instanceof ast_yield_statement) {
 				if (!($generator instanceof generator_type_definition)) {
 					throw new diagnostic($source, $statement->byte_start(), 'Yield requires an Iterator return contract');
@@ -378,6 +390,9 @@ final class Preparation
 				$this->value($statement->value);
 				if ($statement->value->type_def() !== type_registry::integer()) throw new diagnostic($source, $statement->byte_start(), 'Async timer requires int64 milliseconds');
 			}
+			elseif ($statement instanceof ast_take_statement) {
+				$this->value($statement->value);
+			}
 			elseif ($statement instanceof ast_call_statement) {
 				$this->expression_visits++;
 				$this->call($statement->value);
@@ -423,6 +438,10 @@ final class Preparation
 			}
 			else {
 				throw new \LogicException('Unhandled statement preparation');
+			}
+			if ($barrier) {
+				$this->take_ready = $outer_ready;
+				$this->take_status = [];
 			}
 			$completion = ($completion & ~statement_completion::fallthrough) | $next;
 		}
@@ -631,11 +650,14 @@ final class Preparation
 	private function lexical_block(ast_block $body, ?entry_target $target, statement_return_target $function,
 		?ast_produced_binding $binding = null): int /** uint8 */
 	{
+		$ready = $this->take_ready;
 		$this->local_frames[] = $binding === null ? [] : [$binding->declaration_key() => $binding];
 		try {
 			return $this->sequence($body->statements, $body->source(), $target, $function);
 		} finally {
 			array_pop($this->local_frames);
+			$this->take_ready = $ready;
+			$this->take_status = [];
 			$this->forget_values();
 		}
 	}
@@ -695,11 +717,16 @@ final class Preparation
 		$joined = null;
 		$remaining = $this->guards;
 		$surviving = $remaining;
+		$remaining_ready = $this->take_ready;
+		$remaining_status = $this->take_status;
+		$ready_join = $status_join = null;
 		$paired = count($statement->arms) === 2 && $statement->arms[1]->condition === null;
 		foreach ($statement->arms as $arm) {
 			if ($before !== null) $this->constructor_initialization->states = $before;
 			$this->forget_values();
 			$this->guards = $remaining;
+			$this->take_ready = $remaining_ready;
+			$this->take_status = $remaining_status;
 			$guard = null;
 			if ($arm->condition !== null) {
 				$this->guard_reads = [];
@@ -709,6 +736,14 @@ final class Preparation
 					throw new diagnostic($source, $arm->condition->byte_start(), 'A callback view condition requires its by-value bool parameter');
 				}
 				$remaining = $this->guards;
+				$remaining_status = $this->take_status;
+				$remaining_ready = $this->take_ready;
+				$positive = true;
+				$proof = $this->take_guard($arm->condition, $positive);
+				if ($proof !== null) {
+					if ($positive) $this->take_ready[$proof] = true;
+					else $remaining_ready[$proof] = true;
+				}
 				if ($surviving !== []) $surviving = array_intersect_key($surviving, $remaining);
 				$guard = $this->branch_guard($arm->condition, $function, $paired);
 				if ($guard !== null && $paired && ($union = $guard->operand->type_def()) instanceof class_union_type_definition) {
@@ -728,6 +763,8 @@ final class Preparation
 			array_pop($this->local_frames);
 			$completion |= $arm_completion;
 			if (($arm_completion & statement_completion::fallthrough) !== 0) {
+				$ready_join = $ready_join === null ? $this->take_ready : array_intersect_key($ready_join, $this->take_ready);
+				$status_join = $status_join === null ? $this->take_status : array_intersect_assoc($status_join, $this->take_status);
 				foreach ($surviving as $id => $previous) {
 					if (($this->guards[$id] ?? null) !== $previous) unset($surviving[$id]);
 				}
@@ -752,10 +789,30 @@ final class Preparation
 		}
 		$this->forget_values();
 		$this->guards = $surviving;
+		$this->take_ready = $has_else ? ($ready_join ?? []) : ($ready_join === null ? $remaining_ready : array_intersect_key($ready_join, $remaining_ready));
+		$this->take_status = $has_else ? ($status_join ?? []) : ($status_join === null ? $remaining_status : array_intersect_assoc($status_join, $remaining_status));
 		return $completion | ($has_else ? 0 : statement_completion::fallthrough);
 	}
 
-	/** Recognize a direct interface or union-arm test on storage whose owner cannot be rebound through an alias. */
+	/** Follow a status test to the payload initialized on its success edge. */
+	private function take_guard(ast_expression $condition, bool &$positive): ?int
+	{
+		if ($condition instanceof ast_not_expression) {
+			$positive = !$positive;
+			return $this->take_guard($condition->operand, $positive);
+		}
+		if ($condition instanceof ast_binary_expression && in_array($condition->operator, [binary_operator::identical, binary_operator::not_identical], true)) {
+			$literal = $condition->right instanceof ast_keyword_expression ? $condition->right : $condition->left;
+			if (!$literal instanceof ast_keyword_expression || !in_array($literal->word, ['false', 'true'], true)) return null;
+			if (($literal->word === 'false') !== ($condition->operator === binary_operator::not_identical)) $positive = !$positive;
+			return $this->take_guard($condition->left === $literal ? $condition->right : $condition->left, $positive);
+		}
+		if ($condition instanceof ast_take_expression) return spl_object_id($condition->slots[0]);
+		if (!$condition instanceof ast_name_expression || ($local = $condition->local_binding()) === null) return null;
+		return isset($this->take_borrowed[$local->storage_id()]) ? null : ($this->take_status[$local->storage_id()] ?? null);
+	}
+
+	/** Recognize an interface or union-arm test on stable storage. */
 	private function branch_guard(ast_expression $condition, statement_return_target $function, bool $paired): ?ast_object_access_expression
 	{
 		$test = $condition instanceof ast_not_expression ? $condition->operand : $condition;
@@ -835,6 +892,7 @@ final class Preparation
 		}
 		$destination = $this->find_local($statement->value->short_name);
 		if ($destination !== null) {
+			$this->require_take_ready($statement, $destination);
 			$this->require_collection_available($statement, $destination);
 			if ($collection !== null || ast_writable_element::origin($destination) !== null) {
 				throw new diagnostic($source, $statement->value->byte_start(), 'Writable foreach requires a fresh element binding');
@@ -1035,9 +1093,13 @@ final class Preparation
 		$reference_parameter = $origin instanceof ast_parameter_declaration && $origin->mode !== passing_mode::value
 			&& ($origin->mode === passing_mode::readonly_reference || $this->enclosing_lambda !== null
 				|| !($this->owner->parent->parent instanceof ast_method_owner) || $this->owner->parent->is_direct_final_method());
-		if (!($origin instanceof ast_local_declaration) && !$reference_parameter && !($origin instanceof ast_parameter_declaration && $origin->is_readonly_pack())) {
+		$take_slot = $origin instanceof ast_produced_binding && $origin->parent instanceof ast_take_expression;
+		if ($take_slot) $this->require_take_ready($target, $origin);
+		if (!($origin instanceof ast_local_declaration) && !$take_slot && !$reference_parameter && !($origin instanceof ast_parameter_declaration && $origin->is_readonly_pack())) {
 			throw new diagnostic($source, $target->byte_start(), 'Local alias requires a previously initialized named local or a writable parameter of a free function or final instance method');
 		}
+		$this->take_borrowed[$origin->storage_id()] = true;
+		unset($this->take_status[$origin->storage_id()]);
 		$type = $origin->type_def();
 		if ($declaration->type_reference !== null) {
 			$written = Type_Resolution::local($declaration->type_reference, $this->symbols, $this->owner, $this->dependencies);
@@ -1102,6 +1164,7 @@ final class Preparation
 		$conversion = $this->prepare_local_initialization($declaration, $type);
 		$declaration->settle_type($type, $type->evaluate_constant($conversion, $declaration->initializer), true, $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
+		if ($declaration->initializer instanceof ast_take_expression) $this->track_take_status($declaration, $declaration->initializer);
 		if ($type instanceof lambda_type_definition) $this->has_lambda_local = true;
 		if ($this->unknown_initializers) {
 			$this->latest_writes[$declaration->storage_id()] = $declaration;
@@ -1217,6 +1280,9 @@ final class Preparation
 			throw new diagnostic($site->source(), $site->byte_start(),
 				'Assignment requires an existing local; global writes are deferred: ' . $name);
 		}
+		if (!$site->parent instanceof ast_take_expression && !($site instanceof ast_assignment_statement && !$site->calculates_value())) {
+			$this->require_take_ready($site, $local);
+		}
 		$this->require_collection_available($site, $local);
 		Readonly_Access::require_writable($site, $local);
 		return $local;
@@ -1225,7 +1291,8 @@ final class Preparation
 	/** A conditional write may be skipped, so it cannot publish a latest-value proof. */
 	private function record_assignment(ast_local_binding $local, ?ast_assignment_statement $write): void
 	{
-		unset($this->guards[$local->storage_id()]);
+		unset($this->guards[$local->storage_id()], $this->take_status[$local->storage_id()]);
+		if ($write?->value instanceof ast_take_expression && !$write->calculates_value()) $this->track_take_status($local, $write->value);
 		// A separately indexed write can change the slot before the next binding read.
 		$this->latest_writes[$local->storage_id()] = ast_writable_element::origin($local) !== null ? null : $write;
 	}
@@ -1262,7 +1329,7 @@ final class Preparation
 			}
 			$statement->require_update_type($type);
 			$statement->settle_update($local);
-			$this->latest_writes[$local->storage_id()] = null;
+			$this->record_assignment($local, null);
 			return;
 		}
 		$this->value($statement->value, destination: $statement->calculates_value() ? null : $type);
@@ -1277,6 +1344,7 @@ final class Preparation
 		if (!$statement->calculates_value()) {
 			$conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 			$statement->settle_assignment($local, $conversion);
+			if ($local instanceof ast_produced_binding && $local->is_take_payload()) $this->take_ready[spl_object_id($local)] = true;
 		}
 		else {
 			$source = $statement->source();
@@ -1408,9 +1476,69 @@ final class Preparation
 		$result = $type;
 	}
 
+	/** Reject uses of conditional storage on a path where it may still be empty. */
+	private function require_take_ready(ast_node $site, ast_local_binding $binding): void
+	{
+		if ($binding instanceof ast_produced_binding && $binding->is_take_payload() && !isset($this->take_ready[spl_object_id($binding)])) {
+			throw new diagnostic($site->source(), $site->byte_start(), 'Check take success before using fresh output: ' . $binding->declaration_key());
+		}
+	}
+
+	/** Resolve exact output slots after evaluating the input and establish the status relation. */
+	private function prepare_take(ast_take_expression $take, ?string $initializing): void
+	{
+		$site = $take->parent;
+		while ($site instanceof ast_not_expression) $site = $site->parent;
+		if (!($site instanceof ast_take_statement || $site instanceof ast_local_declaration || $site instanceof ast_assignment_statement
+			|| $site instanceof ast_if_arm || $site instanceof ast_return_statement)) {
+			throw new diagnostic($take->source(), $take->byte_start(), 'Use take as a statement, assignment, return or direct if condition');
+		}
+		if ($site->parent instanceof ast_for_statement) throw new diagnostic($take->source(), $take->byte_start(), 'Use take in the loop body');
+		if ($this->owner->parent->return_type_def() instanceof generator_type_definition) throw new diagnostic($take->source(), $take->byte_start(), 'take outputs across generator suspension are unsupported');
+		$this->value($take->input, $initializing);
+		$type = $take->input->type_def();
+		$count = count($take->outputs);
+		if (!$type instanceof carrier_type_definition || !in_array($type->family, ['result','result_or_bool','result_or_false'], true)
+			|| ($count !== 1 && $count !== ($type->family === 'result' ? 3 : 2))) {
+			throw new diagnostic($take->source(), $take->byte_start(), 'take requires a result and the output count for its family');
+		}
+		foreach ($take->outputs as $index => $output) {
+			$expected = $index === 0 ? $type->payload_type : ($index === $count - 1 ? type_bool::instance() : type_take_error::instance());
+			if ($output instanceof ast_produced_binding) {
+				$output->settle_type($expected);
+				$this->local_frames[array_key_last($this->local_frames)][$output->declaration_key()] = $output;
+				$slot = $output;
+			} else {
+				$slot = $this->assignment_local($output, $output->name);
+				if (ast_writable_element::origin($slot) !== null) throw new diagnostic($output->source(), $output->byte_start(), 'take requires whole-variable output storage');
+				if ($index !== 0) $this->require_take_ready($output, $slot);
+				if ($slot->type_def() !== $expected) throw new diagnostic($output->source(), $output->byte_start(), 'take output requires exact ' . $expected->name);
+				$output->settle_local($slot, unknown: true);
+				$this->record_assignment($slot, null);
+			}
+			if (in_array($slot, $take->slots, true)) throw new diagnostic($output->source(), $output->byte_start(), 'take requires distinct output slots');
+			$take->slots[] = $slot;
+		}
+		if ($count > 1) $this->track_take_status($take->slots[$count - 1], $take);
+		$take->settle_take();
+	}
+
+	/** Only a private bool slot can witness initialization across subsequent statements. */
+	private function track_take_status(ast_local_binding $slot, ast_take_expression $take): void
+	{
+		if ($slot->type_def() !== type_bool::instance() || isset($this->take_borrowed[$slot->storage_id()])) return;
+		if ($slot instanceof ast_parameter_declaration && $slot->mode !== passing_mode::value) return;
+		if ($slot instanceof ast_closure_capture || ast_writable_element::origin($slot) !== null) return;
+		$this->take_status[$slot->storage_id()] = spl_object_id($take->slots[0]);
+	}
+
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
 	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null): void
 	{
+		if ($syntax instanceof ast_take_expression) {
+			$this->prepare_take($syntax, $initializing);
+			return;
+		}
 		if ($syntax instanceof ast_type_marker) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type marker is only valid as an enum lookup, object_cast or json_decode_as target');
 		$this->expression_visits++;
 		if ($syntax instanceof ast_throw_expression) {
@@ -1856,6 +1984,11 @@ final class Preparation
 		}
 		$binding = $syntax->constant_only ? null : $this->find_local($name);
 		if ($binding !== null) {
+			$this->require_take_ready($syntax, $binding);
+			if ($syntax->parent instanceof ast_closure_capture && $syntax->parent->by_reference) {
+				$this->take_borrowed[$binding->storage_id()] = true;
+				unset($this->take_status[$binding->storage_id()]);
+			}
 			$type = $binding->type_def();
 			if ($type instanceof lambda_type_definition && $type->has_borrow && $binding->initializer->borrows_selected_element()) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'A closure borrowing a foreach element requires direct local invocation');
@@ -2005,7 +2138,7 @@ final class Preparation
 			if ($read !== null && ($read < $call->start || $read >= $call->end)) {
 				throw new diagnostic($call->source(), $call->byte_start(), 'Separate guarded argument use and mutable reference access into different expressions');
 			}
-			unset($this->guards[$id]);
+			unset($this->guards[$id], $this->take_status[$id]);
 			$this->latest_writes[$id] = null;
 		}
 	}
@@ -2601,6 +2734,12 @@ final class Preparation
 				}
 				$key = $call->source()->flavor->name . ':' . $receiver->type_def()->name . ':' . $name;
 				$runtime = $receiver->type_def()->runtime_method($name) ?? runtime_functions::resolve($key);
+				$carrier = $receiver->type_def();
+				if ($runtime === null && $call->source()->flavor === flavor::php && $call->member_separator === token_kind::member
+					&& $carrier instanceof carrier_type_definition && $carrier->payload_type instanceof runtime_handle_type) {
+					$forward = runtime_functions::resolve('php:' . $carrier->payload_type->name . ':' . $name);
+					if ($forward instanceof runtime_function && $forward->free_receiver) $runtime = $forward;
+				}
 				if ($runtime === null) {
 					throw new diagnostic($call->source(), $call->byte_start(), 'Member calls: unknown method ' . $name . ' on ' . $receiver->type_def()->name);
 				}

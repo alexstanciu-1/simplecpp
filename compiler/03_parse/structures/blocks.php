@@ -158,6 +158,12 @@ class ast_produced_binding extends ast_expression implements ast_local_binding
 		return 'var:' . $this->declaration_key();
 	}
 
+	/** Only a take payload is conditionally initialized in its lexical block. */
+	public function is_take_payload(): bool
+	{
+		return $this->parent instanceof ast_take_expression && $this === $this->parent->outputs[0];
+	}
+
 	public function settle_type(type_definition $type): void
 	{
 		$this->settle_value($type, null);
@@ -268,5 +274,35 @@ final class ast_try_statement extends ast_statement
 		$body->attach($this);
 		foreach ($handlers as $handler) $handler->attach($this);
 		$finalizer?->attach($this);
+	}
+}
+
+/** A PHP take expression owns its source and output occurrences. */
+final class ast_take_expression extends ast_expression
+{
+	/** Prepared destinations in source order. @var ast_local_binding[] */
+	public array $slots = [];
+
+	/** @param (ast_name_expression|ast_produced_binding)[] $outputs */
+	public function __construct(int $start, public readonly ast_expression $input, public readonly array $outputs)
+	{
+		parent::__construct($start, $input->end);
+		$input->attach($this);
+		foreach ($outputs as $output) $output->attach($this);
+	}
+
+	public function settle_take(): void
+	{
+		$this->settle_value(type_bool::instance(), null);
+	}
+}
+
+/** Standalone extraction whose status may also be written to a named slot. */
+final class ast_take_statement extends ast_statement
+{
+	public function __construct(public readonly ast_take_expression $value, int $end)
+	{
+		parent::__construct($value->start, $end);
+		$value->attach($this);
 	}
 }

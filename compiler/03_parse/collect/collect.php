@@ -99,7 +99,7 @@ final class Body_Collection
 			$value = $statement->value;
 		}
 		elseif (($statement instanceof ast_return_statement) || ($statement instanceof ast_assignment_statement)
-			|| ($statement instanceof ast_delay_statement) || ($statement instanceof ast_await_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
+			|| ($statement instanceof ast_delay_statement) || ($statement instanceof ast_await_statement) || ($statement instanceof ast_take_statement) || ($statement instanceof ast_call_statement) || ($statement instanceof ast_base_statement)) {
 			$value = $statement->value;
 		}
 		elseif ($statement instanceof ast_throw_statement) {
@@ -169,6 +169,11 @@ final class Body_Collection
 	/** Collect nested argument references without resolving declarations or inspecting foreign bodies. */
 	private function expression(ast_expression $value): void
 	{
+		if ($value instanceof ast_take_expression) {
+			$this->expression($value->input);
+			foreach ($value->outputs as $output) if ($output instanceof ast_name_expression) $this->expression($output);
+			return;
+		}
 		if ($value instanceof ast_condition_assignment) {
 			$this->expression($value->target);
 			$this->expression($value->value);

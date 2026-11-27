@@ -438,6 +438,8 @@ if(BUILD_TESTING)
     --fixture php_carrier_implicit.php --cases php)
   add_test(NAME compiler_php_carrier_casts_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture php_carrier_casts.php --cases php)
+  add_test(NAME compiler_php_take_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
+    --fixture php_take.php --cases php)
   add_test(NAME compiler_php_carrier_writes_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py
     --fixture php_carrier_writes.php --cases php)
   add_test(NAME compiler_php_carrier_write_failures_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py

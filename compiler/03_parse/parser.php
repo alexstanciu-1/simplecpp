@@ -284,6 +284,10 @@ final class Parser
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
+		if ($this->take_start()) {
+			$value = $this->take_expression();
+			return new ast_take_statement($value, $this->statement_end(token_kind::semicolon));
+		}
 		if ($grammar instanceof Python_Grammar) return $this->python_statement($grammar, $collector);
 		if ($this->cursor->keyword('unset') || $this->cursor->keyword('clean')) {
 			$start = $this->cursor->position();
@@ -1931,10 +1935,50 @@ final class Parser
 		return new ast_inline_job(new ast_lambda_expression($start, $parameters, null, $body), $inputs, $binding_kinds, $iteration);
 	}
 
+	/** Recognize output assignment without reserving ordinary calls to a function named take. */
+	private function take_start(): bool
+	{
+		$c = $this->cursor;
+		if ($c->tokens->source->flavor !== flavor::php) return false;
+		$named = $c->keyword('take') && $c->next_is(token_kind::lparen);
+		if (!$named && !($c->is(token_kind::lparen) && $c->next_is(token_kind::variable)
+			&& ($c->tokens->tokens[$c->position() + 2]->kind ?? null) === token_kind::comma)) return false;
+		$pos = $c->position() + ($named ? 2 : 1);
+		while (($c->tokens->tokens[$pos]->kind ?? null) === token_kind::variable) {
+			if (($c->tokens->tokens[++$pos]->kind ?? null) !== token_kind::comma) break;
+			++$pos;
+		}
+		return ($c->tokens->tokens[$pos]->kind ?? null) === token_kind::rparen
+			&& ($c->tokens->tokens[$pos + 1]->kind ?? null) === token_kind::assign;
+	}
+
+	/** Collect output slots in order and parse their single source expression. */
+	private function take_expression(): ast_take_expression
+	{
+		$c = $this->cursor;
+		$start = $c->position();
+		if ($this->lexical === null || $this->arrow !== null) throw new diagnostic($c->tokens->source, $c->offset(), 'take outputs require a statement scope');
+		if ($c->keyword('take')) $c->take_keyword('take');
+		$c->take(token_kind::lparen, '(');
+		$outputs = [];
+		do {
+			if ($outputs !== []) $c->take(token_kind::comma, ',');
+			$at = $c->position();
+			$name = $c->binding_name(token_kind::variable);
+			if (isset($outputs[$name])) throw new diagnostic($c->tokens->source, $c->offset(), 'take requires distinct output slots');
+			$outputs[$name] = $this->lexical->has_local($name) ? new ast_name_expression($name, $at, $at + 1)
+				: $this->lexical->produced_binding($name, $at, true);
+		} while ($c->is(token_kind::comma));
+		$c->take(token_kind::rparen, ') after take outputs');
+		$c->take(token_kind::assign, '= after take outputs');
+		return new ast_take_expression($start, $this->value(), array_values($outputs));
+	}
+
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(bool $argument_operand = false): ast_expression
 	{
 		$c = $this->cursor;
+		if ($this->take_start()) return $this->take_expression();
 		$block = $this->keyword_block_start();
 		if ($block !== null) return $this->keyword_block($block);
 		if ($c->keyword('await')) return $this->await_expression();
