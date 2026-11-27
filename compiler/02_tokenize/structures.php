@@ -80,6 +80,7 @@ enum token_kind: int /** uint8 */
 	case dedent = 67;
 	case at_sign = 68;
 	case double_slash = 69;
+	case nullsafe_member = 70;
 
 	/** Keep presentation and punctuation spellings independent of the numeric IDs. */
 	public function label(): string
@@ -108,6 +109,7 @@ enum token_kind: int /** uint8 */
 				self::greater_equal => '>=',
 				self::arrow => '=>',
 				self::member => '->',
+				self::nullsafe_member => '?->',
 				self::scope => '::',
 				self::coalesce => '??',
 				self::coalesce_assign => '??=',

@@ -1828,6 +1828,19 @@ final class Preparation
 			$this->construction($syntax, $payload->required, $initializing);
 			return;
 		}
+		if ($syntax instanceof ast_nullsafe_field) {
+			$field = $syntax->operand;
+			$this->value($field, $initializing);
+			$owner = $field->receiver->type_def();
+			if (!($owner instanceof shared_record_type_definition) || $owner->required) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe field read requires an optional shared owner');
+			}
+			$payload = $field->type_def();
+			$result = $payload instanceof carrier_type_definition && $payload->family === 'nullable' ? $payload : Type_Resolution::nullable_value($payload);
+			if ($result === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'No optional representation for field type ' . $payload->name);
+			$syntax->settle_optional($result);
+			return;
+		}
 		if ($syntax instanceof ast_field_expression) {
 			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
 			if ($syntax->is_dynamic_key() && $syntax->source()->flavor !== flavor::python) {

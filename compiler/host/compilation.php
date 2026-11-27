@@ -283,6 +283,7 @@ final class Compilation_Inspection
 			$row['operator'] = $value instanceof ast_isset_expression ? 'isset' : 'logical_not';
 			$row['operand'] = self::value($value->operand);
 		}
+		if ($value instanceof ast_nullsafe_field) $row['operand'] = self::value($value->operand);
 		if ($value instanceof ast_field_expression) {
 			$row['field'] = $value->field;
 			$row['receiver'] = self::value($value->receiver);

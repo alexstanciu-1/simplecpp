@@ -1618,6 +1618,11 @@ final class Parser
 					: new ast_qualified_data($value, $name, $this->cursor->position(), $flavor === flavor::php && !$property);
 				continue;
 			}
+			if ($this->cursor->is(token_kind::nullsafe_member)) {
+				$this->cursor->take(token_kind::nullsafe_member, '?->');
+				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);
+				return new ast_nullsafe_field(new ast_field_expression($value, $name, $this->cursor->position()));
+			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				$this->cursor->take(token_kind::member, '->');
 				$name = $this->cursor->name($this->cursor->keyword('data') ? token_kind::keyword : token_kind::identifier);

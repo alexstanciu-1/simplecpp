@@ -336,6 +336,32 @@ final class ast_field_expression extends ast_expression
 	}
 }
 
+/** PHP $owner?->field is a value. Its owned field read supplies normal lookup and access checks. */
+final class ast_nullsafe_field extends ast_expression
+{
+	public readonly ast_field_expression $operand;
+	public int $conversion /** uint16 */ = value_conversion::identity;
+
+	public function __construct(ast_field_expression $operand)
+	{
+		parent::__construct($operand->start, $operand->end);
+		$this->operand = $operand;
+		$operand->attach($this);
+	}
+
+	public function settle_optional(type_definition $type): void
+	{
+		$this->conversion = $type->prepare_conversion($this->operand, conversion_context::typed_destination);
+		$this->settle_value($type, null);
+	}
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->conversion = value_conversion::identity;
+	}
+}
+
 /** Plain property write to an instance field or type-owned storage, e.g. Point::$count = 3; */
 final class ast_field_assignment extends ast_statement
 {
