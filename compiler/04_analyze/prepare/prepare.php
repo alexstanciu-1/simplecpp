@@ -1836,15 +1836,16 @@ final class Preparation
 		if ($syntax instanceof ast_nullsafe_member) {
 			$member = $syntax->operand;
 			$this->value($member, $initializing);
-			$guarded = $syntax->guarded_member();
+			$guarded = $syntax->guarded_member;
 			$kind = $guarded instanceof ast_call_expression ? 'method call' : 'field read';
 			$owner = $guarded->receiver->type_def();
 			if (!($owner instanceof shared_record_type_definition) || $owner->required) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe ' . $kind . ' requires an optional shared owner');
 			}
 			$payload = $member->type_def();
-			if ($guarded instanceof ast_call_expression) $this->check_nullsafe_method($guarded);
-			if ($syntax->has_suffix && $member instanceof ast_call_expression) $this->check_nullsafe_method($member);
+			for ($hop = $member; $hop !== $guarded->receiver; $hop = $hop->receiver) {
+				if ($hop instanceof ast_call_expression) $this->check_nullsafe_method($hop);
+			}
 			$result = $payload instanceof carrier_type_definition && $payload->family === 'nullable' ? $payload : Type_Resolution::nullable_value($payload);
 			if ($result === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'No optional representation for ' . ($member instanceof ast_call_expression ? 'method result' : 'field type') . ' ' . $payload->name);
 			$syntax->settle_optional($result);

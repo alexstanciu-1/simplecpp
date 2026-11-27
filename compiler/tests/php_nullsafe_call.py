@@ -113,6 +113,61 @@ def empty_intermediate(work):
               'ownership_empty_access', expected_stdout=trace)
 
 
+LEAGUE = """
+    class Team {public ?Captain $captain;}
+    class Club {public ?Player $coach;}
+"""
+CAPTAIN = """
+    class Captain {
+        public ?Club $club;
+        public function getClub(int $n):?Club {echo "C";return $this->club;}
+    }
+"""
+MIXED_READ = """
+    function read(?Team $t):int {
+        return probe($t)?->captain->club?->coach->score(key()) ?? 9;
+    }
+"""
+
+
+def mixed_chain(work):
+    main = PROBES + MIXED_READ + """
+        function longRun(?Team $t):int {
+            return probe($t)?->captain->getClub(key())->coach->score(key()) ?? 9;
+        }
+        echo read(null),longRun(null);
+        $t=new Team();$captain=new Captain();$t->captain=$captain;
+        echo read($t);
+        $club=new Club();$club->coach=new Player();$captain->club=$club;
+        echo read($t),longRun($t);return 8;
+    """
+    trace = b'P9P9P9PKM0PKCKM0'
+    changed = CAPTAIN.replace('?Club', '?Other')
+    revisions(work, 'php', dict(main=main, captain=CAPTAIN, league=LEAGUE, players=PLAYERS), [
+        (None, None, trace), ('captain', changed, 'Unknown field Other.coach'), ('captain', CAPTAIN, trace)])
+
+
+def mixed_suspended(work):
+    main = PROBES + """
+        async function later():int {await async_sleep_ms(1);return key();}
+        async function read(?Team $t):int {
+            return probe($t)?->captain->getClub(await later())?->coach->score(await later()) ?? 9;
+        }
+        echo await read(null);
+        $t=new Team();$c=new Captain();$t->captain=$c;echo await read($t);
+        $club=new Club();$club->coach=new Player();$c->club=$club;echo await read($t);return 8;
+    """
+    revisions(work, 'php', dict(main=main, captain=CAPTAIN, league=LEAGUE, players=PLAYERS), [
+        (None, None, b'P9PKC9PKCKM0')])
+
+
+def mixed_failure(work):
+    setup = LEAGUE + CAPTAIN + PLAYERS + PROBES + MIXED_READ + '$t=new Team();'
+    for name, init in [('captain', ''), ('coach', '$c=new Captain();$t->captain=$c;$c->club=new Club();')]:
+        guard(work, 'php', name, setup + init + 'echo read($t);return 8;',
+              'ownership_empty_access', expected_stdout=b'P')
+
+
 def dispatch(work):
     main = """
         class Base {public virtual function score(int $left):int {return $left;}}
@@ -222,6 +277,7 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     if case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
-        {'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
+        {'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
+         'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
          'dispatch': dispatch, 'admission': admission, 'ordinary_suffix': ordinary_suffix,
          'empty_intermediate': empty_intermediate, 'suspended_suffix': suspended_suffix}[case](Path(tmp))

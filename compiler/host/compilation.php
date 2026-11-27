@@ -285,7 +285,10 @@ final class Compilation_Inspection
 		}
 		if ($value instanceof ast_nullsafe_member) {
 			$row['operand'] = self::value($value->operand);
-			if ($value->has_suffix) $row['ordinary_suffix'] = true;
+			if ($value->has_suffix()) {
+				$row['ordinary_suffix'] = true;
+				$row['guarded_end'] = $value->guarded_member->end;
+			}
 		}
 		if ($value instanceof ast_field_expression) {
 			$row['field'] = $value->field;
