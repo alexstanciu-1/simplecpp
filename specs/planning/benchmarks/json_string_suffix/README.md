@@ -211,3 +211,34 @@ Across the seven 4,096-byte fixtures (plain and both escape spellings at three p
 The integrated build passed all 425 default tests on dev002. Scalar and vector differential checks matched the baseline diagnostics byte for byte on 844 malformed documents and matched the value oracle on 780 valid documents. An additional check around adjacent escapes, closing quotes, missing terminators and malformed delimiters matched on 56 malformed and 42 valid documents. Reproduce the timings with the typed_json_strings batched drivers in bin/dispatch, bin/word8 and bin/close_tail and the benchmark runner's `--close-recheck` mode.
 
 [Raw integration measurements](integrated-close.dev002.json)
+
+## Short strings with an escape first or in the middle
+
+The reference is the committed closing-quote decoder at `56800977e`. An escape in the first position has an empty initial prefix. An escape in the middle has ordinary bytes on both sides. With a single escape in either position, the suffix scanner locates the closing quote, then the parser copies the ordinary bytes and makes another trip through its escape loop to consume that quote.
+
+The dev002 comparison applies each patch independently to the reference:
+
+- [Initial backslash check](escape_prefix.patch) returns an empty prefix when the first input byte after the opening quote is a backslash. It leaves escape validation to the existing parser.
+- [Quote after a nonempty suffix](suffix_quote.patch) consumes the quote when the scanner has found a nonempty ordinary suffix and the next byte is a closing quote. Subsequent escapes and malformed endings still use the existing loop.
+- [Combined checks](both_quotes.patch) applies both changes. The portable eight-byte decoder provides a separate throughput reference for the original regression and the long-string gains.
+
+Each fixture is a typed vector of 16 strings. Each run takes the median of eleven shuffled rounds on dev002 CPU 7. The two escape spellings are a six-byte Unicode escape and an escaped slash. Compare throughput within a fixture because their wire lengths differ.
+
+Median percentage change in throughput against the committed decoder, taken across the per-fixture changes. The first, middle and last columns each summarize eight fixtures (lengths 3, 7, 8 and 9 for both escape spellings). The plain column summarizes four fixtures.
+
+| Build | Escape first | Escape middle | Escape last | Plain |
+|---|---:|---:|---:|---:|
+| Portable eight-byte control | +3.1% | +2.2% | -1.7% | +2.4% |
+| Initial backslash check | +1.6% | -2.4% | -1.6% | -0.3% |
+| Quote after nonempty suffix | +0.6% | +0.9% | +0.6% | -1.3% |
+| Combined checks | +4.6% | +1.4% | +1.1% | +1.6% |
+
+The initial backslash check alone improved escape-first throughput unevenly and slowed all eight escape-middle fixtures. The suffix quote check alone gave smaller gains. Together they improved every escape-first fixture in both runs. A three-way recheck with a different shuffle seed measured +2.6% to +6.1% (median +5.1%) against the committed decoder for escape-first and −0.4% to +3.1% (median +1.9%) for escape-middle. The patches interact in the compiled decoder. End-to-end timings do not establish the exact instruction cost behind that interaction.
+
+In the recheck, the seven 129-byte fixtures changed by −0.8% to +0.6%. All seven 4,096-byte fixtures retained a substantial gain over portable (+31.6% to +37.9%), and all seven were slower than the committed decoder (−2.0% to −0.2%, median −0.8%). The five-way run showed the same tradeoff. The experiment supports the combined changes for workloads dominated by short escape-first strings. It leaves a measurable long-string cost and a residual gap on some short escape-middle fixtures.
+
+All three candidates matched the committed decoder on the 780 valid and 844 malformed scalar/vector documents in the differential harness. An additional 42 valid and 56 malformed documents covered adjacent escapes, closing quotes, truncation and invalid delimiters. Valid values matched the independent oracle and diagnostics matched byte for byte, including offsets and paths. Allocation counts and bytes matched for all 42 timed fixtures. The combined build passed all 425 default tests on dev002.
+
+Apply each candidate patch to the reference separately and build the typed_json_strings drivers with `--batched`. Place the binaries in bin/close_tail (committed), bin/word8 (portable), bin/escape_prefix, bin/suffix_quote and bin/both_quotes. On dev002 run `taskset -c 7 python3 run.py bin --nonempty` and `taskset -c 7 python3 run.py bin --nonempty-recheck both_quotes`.
+
+[Five-way timings](nonempty.dev002.json) · [Independent recheck](nonempty-recheck.dev002.json)

@@ -1,0 +1,13 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -251,6 +251,10 @@
+ 			if (count != 0) {
+ 				out.append(remaining.data(), count);
+ 				pos_ += count;
++				if (peek() == '"') {
++					++pos_;
++					return out;
++				}
+ 			}
+ 		}
+ 

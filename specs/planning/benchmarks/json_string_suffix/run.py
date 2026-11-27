@@ -12,6 +12,9 @@ import subprocess
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('bin', type=Path)
 mode = parser.add_mutually_exclusive_group()
+mode.add_argument('--nonempty', action='store_true', help='compare empty-prefix and nonempty-suffix shortcuts')
+mode.add_argument('--nonempty-recheck', choices=('escape_prefix', 'suffix_quote', 'both_quotes'),
+                  help='remeasure a candidate against the committed and portable controls')
 mode.add_argument('--close-recheck', action='store_true', help='repeat the closing-quote comparison in a different order')
 mode.add_argument('--short-escapes', action='store_true', help='compare isolated post-escape scanning changes')
 mode.add_argument('--first8', action='store_true', help='compare word8, direct AVX2 dispatch and portable-first AVX2')
@@ -23,6 +26,10 @@ args = parser.parse_args()
 bins = args.bin.resolve()
 if args.check_pair:
     variants = tuple(args.check_pair)
+elif args.nonempty:
+    variants = ('close_tail', 'word8', 'escape_prefix', 'suffix_quote', 'both_quotes')
+elif args.nonempty_recheck:
+    variants = ('close_tail', 'word8', args.nonempty_recheck)
 elif args.close_recheck:
     variants = ('dispatch', 'word8', 'close_tail')
 elif args.short_escapes:
@@ -39,7 +46,7 @@ else:
     variants = ('fused', 'bulk', 'word8', 'avx2')
 timed = (*variants, 'node') if 'avx2' in variants else variants
 node = Path(__file__).with_name('node.js')
-rng = random.Random(91357 if args.close_recheck else 32768)
+rng = random.Random(91357 if args.close_recheck or args.nonempty_recheck else 32768)
 
 
 def invoke(mode, binary, docs, *args, shape='vector'):
@@ -108,7 +115,7 @@ sizes = [3, 7, 8, 9, 129, 4096] if args.scanner else [8, 129, 4096]
 if args.dispatch or args.first8:
     sizes = [3, 7, 8, 9, 31, 32, 33, 129, 4096]
 cases = [(size, position) for size in sizes for position in ['first','middle','last','plain']]
-if args.short_escapes or args.close_recheck:
+if args.short_escapes or args.close_recheck or args.nonempty or args.nonempty_recheck:
     positions = ['plain', 'first', 'middle', 'last', 'slash-first', 'slash-middle', 'slash-last']
     cases = [(size, position) for size in [3, 7, 8, 9, 129, 4096] for position in positions]
 rng.shuffle(cases)

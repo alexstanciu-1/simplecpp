@@ -1,0 +1,10 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -178,6 +178,7 @@
+ 		}
+ 
+ 		const auto remaining = input_.substr(pos_);
++		if (!remaining.empty() && remaining.front() == '\\') return remaining.substr(0, 0);
+ 		const auto prefix = plain_string_prefix(remaining);
+ 		pos_ += prefix;
+ 		return remaining.substr(0, prefix);
