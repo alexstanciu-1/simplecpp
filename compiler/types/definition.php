@@ -856,6 +856,7 @@ abstract class type_definition
 			return 'scpp::boxed_' . $source->name . '_' . $context . '_' . $this->name . '(' . $value . ')';
 		}
 		if ($this instanceof carrier_type_definition) {
+			if ($conversion === value_conversion::forwarded_error) return $this->cpp_type() . '{' . $value . '}';
 			if ($conversion === value_conversion::sentinel_carrier) {
 				if (!($source instanceof carrier_sentinel_type_definition)) {
 					throw new \LogicException('Sentinel conversion requires its source identity');

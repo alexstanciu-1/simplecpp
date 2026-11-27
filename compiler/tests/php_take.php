@@ -9,6 +9,15 @@ $compile = static function (string $source): string {
 	return (new Cpp_Emitter())->emit($program);
 };
 $source = <<<'SCPP'
+function length_or_error(result<string> $input): result<int> {
+    take($text, $diagnostic, $ok) = $input;
+    if (!$ok) { return $diagnostic; }
+    return strlen($text);
+}
+function forward_unchecked(result<string> $input): result<int> {
+    take($text, $diagnostic, $ok) = $input;
+    return $diagnostic;
+}
 function hit(int &$calls): result_or_false<int> { $calls++; return 0; }
 function guarded(result_or_false<int> $r): int {
     ($value, $ok) = $r;
@@ -61,17 +70,37 @@ echo $next;
 return 8;
 SCPP;
 $cpp = $compile($source);
-foreach (['.emplace(source.value())', 'source.has_value()', 'source.error()', 'var_previous_', ' = source.value();'] as $fragment) {
+foreach (['.emplace(source.value())', 'source.has_value()', 'source.error()', 'var_previous_', 'scpp::result_int64{var_diagnostic_', ' = source.value();'] as $fragment) {
 	if (!str_contains($cpp, $fragment)) throw new RuntimeException('Missing take lowering: ' . $fragment);
 }
-$cpp = "int verify_take();\n" . str_replace('::App::scpp_entry_body,', '::verify_take,', $cpp) . <<<'CPP'
+$cpp = "#include <stdexcept>\n#include <string_view>\nint verify_take();\n" . str_replace('::App::scpp_entry_body,', '::verify_take,', $cpp) . <<<'CPP'
 
 int verify_take() {
     if (App::structured_(scpp::result_int64{scpp::int64{0}}) != 0) return 91;
     if (App::structured_(scpp::result_int64{scpp::error_t{scpp::string{"failure"}, scpp::int64{37}}}) != 37) return 92;
+    const scpp::result_string empty{scpp::string{}};
+    if (App::length_or_error_(empty).value() != 0) return 93;
+    for (const auto& message : {scpp::string{"failure"}, scpp::string{}}) {
+        scpp::error_t error{message, scpp::int64{37}, scpp::string{"input.php"}};
+        const scpp::result_int64 expected{error};
+        if (!App::length_or_error_(scpp::result_string{error}).same_error_identity(expected)) return 94;
+    }
+    try { (void)App::forward_unchecked_(empty); return 95; }
+    catch (const std::invalid_argument& error) {
+        if (std::string_view(error.what()) != "result_requires_real_error") return 96;
+    }
     return App::scpp_entry_body();
 }
 CPP;
+foreach (['int', '?int', 'result_or_false<int>', 'result_or_bool<int>'] as $destination) {
+	try {
+		$compile('function bad(result<string> $r): ' . $destination . ' { take($v,$e,$ok)=$r; return $e; } return 8;');
+	} catch (diagnostic|diagnostic_group $e) {
+		if (!str_contains($e->getMessage(), 'Returning a structured error requires result<T>')) throw $e;
+		continue;
+	}
+	throw new RuntimeException('Unexpected diagnostic return to ' . $destination);
+}
 $prefix = 'function overwrite(bool &$ok): void { $ok = true; } $r result_or_false<int> = false_sentinel; ';
 foreach ([
 	'($v,$ok)=$r; echo $v;',
