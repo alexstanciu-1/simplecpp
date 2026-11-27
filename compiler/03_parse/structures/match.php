@@ -41,12 +41,12 @@ final class ast_ternary_expression extends ast_selection_expression
 	public int $true_conversion /** uint16 */ = value_conversion::identity;
 	public int $false_conversion /** uint16 */ = value_conversion::identity;
 
-	public function __construct(public readonly ast_expression $condition, public readonly ast_expression $when_true,
+	public function __construct(public readonly ast_expression $condition, public readonly ?ast_expression $when_true,
 		public readonly ast_expression $when_false, int $start /** uint32 */, int $end /** uint32 */)
 	{
 		parent::__construct($start, $end);
 		$condition->attach($this);
-		$when_true->attach($this);
+		$when_true?->attach($this);
 		$when_false->attach($this);
 	}
 }

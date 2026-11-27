@@ -16,8 +16,10 @@ selected conversion runs. A direct extraction test proves a fresh payload is
 initialized on its success edge. See [PHP take outputs](carrier_slice.md#php-take-outputs).
 
 In the common v0.2 grammar, `??` binds more tightly than ternary and `xor` binds
-less tightly. Nested full ternaries associate to the right. Shorthand `?:` and
-implicit joins between different arm types remain outside this slice.
+less tightly. Nested ternaries associate to the right. PHP also accepts
+`left ?: fallback` at the same precedence. It tests the left value once and
+uses that value as the true arm. Only a false test evaluates the fallback.
+Both arms follow the full ternary's inferred and declared-return result rules.
 
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 

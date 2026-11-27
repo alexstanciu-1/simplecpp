@@ -172,7 +172,7 @@ final class Syntax_Inspection
 		}
 		if ($expression instanceof ast_ternary_expression) {
 			return ['kind' => 'ternary', 'condition' => self::expression($expression->condition),
-				'when_true' => self::expression($expression->when_true), 'when_false' => self::expression($expression->when_false),
+				'when_true' => $expression->when_true === null ? null : self::expression($expression->when_true), 'when_false' => self::expression($expression->when_false),
 				'span' => self::span($expression)];
 		}
 		if ($expression instanceof ast_match_expression) {

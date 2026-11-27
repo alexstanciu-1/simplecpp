@@ -261,7 +261,7 @@ final class Compilation_Inspection
 				'conversion' => value_conversion::name($value->conversion), 'value' => self::value($value->value)];
 		}
 		if ($value instanceof ast_ternary_expression) {
-			$row += ['condition' => self::value($value->condition), 'when_true' => self::value($value->when_true), 'when_false' => self::value($value->when_false)];
+			$row += ['condition' => self::value($value->condition), 'when_true' => $value->when_true === null ? null : self::value($value->when_true), 'when_false' => self::value($value->when_false)];
 		}
 		if ($value instanceof ast_match_expression) {
 			$row['subject'] = self::value($value->subject);

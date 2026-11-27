@@ -1244,10 +1244,11 @@ final class Parser
 			$kind = $this->cursor->tokens->tokens[$this->cursor->position()]->kind;
 			if ($kind === token_kind::question && $minimum_precedence <= ast_ternary_expression::PRECEDENCE) {
 				$this->cursor->take(token_kind::question, '?');
-				if ($this->cursor->is(token_kind::colon)) {
+				$short = $this->cursor->is(token_kind::colon);
+				if ($short && $this->cursor->tokens->source->flavor !== flavor::php) {
 					throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Full ternary requires a true branch');
 				}
-				$when_true = $this->value();
+				$when_true = $short ? null : $this->value();
 				$this->cursor->take(token_kind::colon, ': after ternary true branch');
 				$when_false = $this->value(ast_ternary_expression::PRECEDENCE);
 				$left = new ast_ternary_expression($left, $when_true, $when_false, $start, $this->cursor->position());
