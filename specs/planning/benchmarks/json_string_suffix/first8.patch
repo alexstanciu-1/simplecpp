@@ -1,0 +1,17 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -70,7 +70,13 @@
+ 
+ [[nodiscard]] inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
+ #ifdef SCPP_JSON_TRY_AVX2
+-	if (bytes.size() >= 32 && __builtin_cpu_supports("avx2")) return avx2_string_prefix(bytes);
++	if (bytes.size() >= 40) {
++		const auto first = portable_string_prefix(bytes.substr(0, 8));
++		if (first < 8) return first;
++		const auto rest = bytes.substr(8);
++		if (__builtin_cpu_supports("avx2")) return 8 + avx2_string_prefix(rest);
++		return 8 + portable_string_prefix(rest);
++	}
+ #endif
+ 	return portable_string_prefix(bytes);
+ }

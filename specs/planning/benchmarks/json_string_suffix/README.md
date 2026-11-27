@@ -118,3 +118,27 @@ The AVX2 build and a separate build with `-DSCPP_JSON_PORTABLE_SCAN_ONLY=1` each
 Build the typed_json_strings drivers with `--batched` for all three builds with JSON enabled and selective reserve qualified. Put their binaries in `bin/word8`, `bin/dispatch` and `bin/portable`. Run `python3 run.py bin --check-pair word8 portable` and `taskset -c 7 python3 run.py bin --dispatch`.
 
 [Raw paired measurements](dispatch.dev002.json)
+
+## Scanning eight bytes before AVX2 dispatch
+
+This dev002 run remeasures the committed portable decoder (`ae9eff851`), the direct AVX2 study (`5444519be`), and a candidate that checks eight bytes portably first. With at least 40 bytes of JSON input remaining, the candidate looks for a marker in the first eight. If all eight are ordinary and the CPU supports AVX2, it starts the 32-byte scanner at offset eight. Shorter spans, unsupported targets and tails use the portable implementation. Remaining input can extend beyond the current string.
+
+Median decimal MB/s of complete JSON input, **portable / direct AVX2 / eight-byte-first AVX2**. Each vector contains 16 strings with identical decoded contents across escape positions. All three binaries ran in shuffled order over eleven rounds on CPU 7 of dev002 (Ryzen 9 5950X), using the same qualified selective reserve.
+
+| Decoded bytes/string | Plain | Escape first | Escape middle | Escape last |
+|---:|---:|---:|---:|---:|
+| 3 | 209 / 209 / 209 | 199 / 191 / 193 | 192 / 181 / 182 | 212 / 199 / 203 |
+| 7 | 294 / 327 / 308 | 255 / 252 / 249 | 252 / 245 / 242 | 271 / 264 / 265 |
+| 8 | 371 / 357 / 346 | 267 / 263 / 264 | 259 / 254 / 251 | 284 / 279 / 279 |
+| 9 | 384 / 388 / 370 | 294 / 281 / 277 | 271 / 267 / 264 | 314 / 296 / 294 |
+| 31 | 531 / 578 / 558 | 423 / 439 / 432 | 403 / 424 / 417 | 452 / 478 / 466 |
+| 32 | 576 / 590 / 585 | 438 / 457 / 445 | 426 / 435 / 427 | 412 / 430 / 422 |
+| 33 | 580 / 605 / 593 | 464 / 459 / 455 | 455 / 447 / 440 | 491 / 491 / 489 |
+| 129 | 1,248 / 1,439 / 1,404 | 1,063 / 1,159 / 1,132 | 996 / 1,065 / 1,037 | 1,141 / 1,239 / 1,237 |
+| 4096 | 2,750 / 3,673 / 3,681 | 2,588 / 3,574 / 3,551 | 2,549 / 3,407 / 3,398 | 2,692 / 3,581 / 3,585 |
+
+Across the three builds, 780 valid scalar and vector documents matched the independent value oracle, and 844 malformed documents produced byte-identical diagnostics including offsets and paths. Allocation counts and bytes matched across all 36 timed fixtures. The candidate passed the default suite on dev002, including the protected-page test for every byte at every offset in spans of length 0–96. A local build forcing the portable fallback also passed the protected-page test.
+
+For the candidate apply [dispatch.patch](dispatch.patch), then [first8.patch](first8.patch). Build the batched typed_json_strings drivers for all three configurations. With executables under `bin/word8`, `bin/dispatch` and `bin/first8`, run `taskset -c 7 python3 run.py bin --first8`.
+
+[Raw three-way measurements](first8.dev002.json)
