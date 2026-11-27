@@ -228,12 +228,19 @@ final class Type_Resolution
 		$child = $syntax->first_child;
 		$target = self::named($child, $symbols, $namespace, $watcher, $dependencies)
 			?? throw new diagnostic($child->source(), $child->byte_start(), 'Unknown or unsupported type: ' . $child->spelling());
-		if ($target instanceof shared_record_type_definition && $target->required) return $target->payload->shared;
-		if ($target instanceof record_handle_definition || $target instanceof record_type_definition) {
+		if (($target instanceof record_handle_definition || $target instanceof record_type_definition)
+			&& !($target instanceof shared_record_type_definition && $target->required)) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullable record spelling requires a bare class type');
 		}
+		return self::nullable_value($target) ?? throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unavailable runtime specialization: ' . $syntax->spelling());
+	}
+
+	/** Select a resolved payload's published optional representation. */
+	public static function nullable_value(type_definition $target): ?type_definition
+	{
+		if ($target instanceof shared_record_type_definition) return $target->payload->shared;
 		if ($target instanceof enum_type_definition) return $target->nullable;
-		return self::specialize($syntax, $target);
+		return type_registry::specialize('nullable', $target);
 	}
 
 	/** Subscribe to the stable nominal key, including a missing declaration that may be added later. */

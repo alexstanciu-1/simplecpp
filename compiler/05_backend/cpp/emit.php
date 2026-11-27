@@ -2846,6 +2846,15 @@ CPP;
 			return $this->invocation($value, $constructor, $factory, $type,
 				$global_references, $declarations, $required_headers);
 		}
+		if ($value instanceof ast_nullsafe_field) {
+			$field = $value->operand;
+			$owner = $field->receiver->type_def();
+			$operand = $this->value($field->receiver, $global_references, $declarations, $required_headers);
+			foreach ($value_type->conversion_headers($value->conversion) as $header) $required_headers[$header] = true;
+			$present = $this->conversion($value_type, $value->conversion, 'owner->' . Cpp_Identifier::source($field->field), $field);
+			return '([](const ' . $owner->cpp_type() . '& owner) -> ' . $value_type->cpp_type() . ' { if ('
+				. $owner->lower_cpp_condition('owner') . ') return ' . $present . '; return {}; }(' . $operand . '))';
+		}
 		if ($value instanceof ast_field_expression) {
 			if ($value->is_dynamic_key()) {
 				$receiver = $this->value($value->receiver, $global_references, $declarations, $required_headers);

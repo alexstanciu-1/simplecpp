@@ -8,6 +8,7 @@ final class Tokenizer
 {
 	/** CONSTANTS */
 	private const PUNCTUATION /** list<token_kind> */ = [
+		token_kind::nullsafe_member,
 		token_kind::ellipsis,
 		token_kind::coalesce_assign,
 		token_kind::power_assign,
@@ -221,7 +222,7 @@ final class Tokenizer
 		foreach (self::PUNCTUATION as $kind) {
 			if ($flavor === flavor::python && ($kind === token_kind::increment || $kind === token_kind::decrement)) continue;
 			if (($kind === token_kind::at_sign || $kind === token_kind::double_slash) && $flavor !== flavor::python) continue;
-			if ($kind === token_kind::attribute && $flavor !== flavor::php) continue;
+			if (($kind === token_kind::attribute || $kind === token_kind::nullsafe_member) && $flavor !== flavor::php) continue;
 			$kinds[] = $kind;
 		}
 		return $kinds;

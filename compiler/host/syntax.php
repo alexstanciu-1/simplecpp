@@ -129,6 +129,7 @@ final class Syntax_Inspection
 			return ['kind' => 'qualified_static_data', 'receiver' => self::expression($expression->receiver),
 				'name' => $expression->name, 'span' => self::span($expression)];
 		}
+		if ($expression instanceof ast_nullsafe_field) return ['kind' => 'nullsafe_field', 'operand' => self::expression($expression->operand)];
 		if ($expression instanceof ast_field_expression) {
 			return ['kind' => 'field', 'receiver' => self::expression($expression->receiver), 'name' => $expression->field];
 		}

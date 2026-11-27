@@ -21,6 +21,20 @@ less tightly. Nested ternaries associate to the right. PHP also accepts
 uses that value as the true arm. Only a false test evaluates the fallback.
 Both arms follow the full ternary's inferred and declared-return result rules.
 
+## PHP nullsafe field reads
+
+`findPlayer()?->score` evaluates the optional shared receiver once. Absence
+returns an empty optional. Presence reads the declared field and returns its
+value in the field type’s optional representation. A stored zero or empty
+string stays present. An already-nullable field preserves its own absence or
+value, and a shared-handle field preserves object identity. Errors from
+evaluating the receiver propagate.
+
+Preparation resolves the field and checks visibility even when the receiver
+can be absent. The field must have a supported optional representation. This
+form is a single field read. Nullsafe method calls, write targets and chained
+access remain deferred.
+
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 
 Statement-form `$n ??= fallback;` accepts an existing declared local whose type
