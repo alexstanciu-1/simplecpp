@@ -1,0 +1,33 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -72,6 +72,21 @@
+ [[nodiscard]] inline std::size_t plain_string_prefix(std::string_view bytes) noexcept {
+ #ifdef SCPP_JSON_TRY_AVX2
+ 	if (bytes.size() >= 32 && __builtin_cpu_supports("avx2")) return avx2_string_prefix(bytes);
++#endif
++	return portable_string_prefix(bytes);
++}
++// The first 16 suffix bytes often include the closing quote of a short string.
++[[nodiscard]] inline std::size_t escaped_suffix_prefix(std::string_view bytes) noexcept {
++#ifdef SCPP_JSON_TRY_AVX2
++	if (bytes.size() >= 16) {
++		const auto block = _mm_loadu_si128(reinterpret_cast<const __m128i*>(bytes.data()));
++		const auto quote = _mm_cmpeq_epi8(block, _mm_set1_epi8('"'));
++		const auto slash = _mm_cmpeq_epi8(block, _mm_set1_epi8('\\'));
++		const auto controls = _mm_cmpeq_epi8(_mm_min_epu8(block, _mm_set1_epi8(31)), block);
++		const auto mask = static_cast<unsigned>(_mm_movemask_epi8(_mm_or_si128(controls, _mm_or_si128(quote, slash))));
++		if (mask) return std::countr_zero(mask);
++		return 16 + plain_string_prefix(bytes.substr(16));
++	}
+ #endif
+ 	return portable_string_prefix(bytes);
+ }
+@@ -243,7 +258,7 @@
+ 					fail_json_parse("invalid escape sequence", pos_ - 1);
+ 			}
+ 			const auto remaining = input_.substr(pos_);
+-			const auto count = plain_string_prefix(remaining);
++			const auto count = escaped_suffix_prefix(remaining);
+ 			if (count != 0) {
+ 				out.append(remaining.data(), count);
+ 				pos_ += count;

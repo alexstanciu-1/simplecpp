@@ -164,3 +164,33 @@ Median throughput in decimal MB/s of wire JSON, **committed eight-byte decoder �
 The default suite passed on the integrated dev002 build. Both the integrated build and a separate build compiled with `SCPP_JSON_PORTABLE_SCAN_ONLY=1` passed the guarded-page scanner test and matched the portable baseline on 780 valid scalar/vector documents and 844 malformed documents, including diagnostic messages, byte offsets and paths. Both builds ran on the same AVX2-capable Ryzen 9 5950X.
 
 [Raw paired measurements](integrated-avx2.dev002.json)
+
+## Short escaped strings after direct AVX2 integration
+
+The committed decoder at `457f9790b` is the baseline. One escape splits a string into two ordinary-byte scans. The scanner sees the remaining document, so it can enter AVX2 even when its first byte is the closing quote. For example, in the 16-string, three-byte, escape-last Unicode fixture, 13 of the 16 suffix scans have at least 32 input bytes available. All 16 have zero ordinary bytes to copy.
+
+Three independent patches change only the scan following a successfully decoded escape:
+
+- [Portable suffix](portable_tail.patch) always uses the eight-byte scanner after an escape. The initial prefix still uses the committed dispatch.
+- [Closing quote](close_tail.patch) consumes an immediately following closing quote and returns the decoded string. Other suffixes continue through the committed scanner.
+- [SSE2 suffix](sse_tail.patch) checks the first 16 available suffix bytes inline on the existing x86-64 SIMD build path. If the block is ordinary it continues through committed dispatch. Shorter spans use the portable scanner.
+
+Each build decoded vectors of 16 strings on dev002 CPU 7, in 11 shuffled rounds. The portable eight-byte decoder ran alongside the committed AVX2 decoder and all three candidates. The original Unicode fixtures encode one letter as `\uXXXX`. Additional fixtures replace one letter with an escaped slash (`\/`). Compare builds within a fixture since wire lengths differ between escape spellings. The plain-string controls use the same initial scanner for all three candidates.
+
+The table shows throughput changes against the committed decoder. Each short entry is the median of the 12 per-case changes for lengths 3, 7, 8 and 9 and three escape positions. The long entries use 4,096-byte strings with a Unicode escape.
+
+| Change after an escape | Short Unicode | Short slash | Long escape first | Long escape middle | Long escape last |
+|---|---:|---:|---:|---:|---:|
+| Portable suffix | +1.2% | +1.2% | -27.2% | -14.7% | +0.7% |
+| Closing quote | +2.0% | +1.2% | +0.2% | +1.0% | +0.7% |
+| SSE2 suffix | +0.6% | +0.9% | +0.2% | +0.2% | -0.3% |
+
+The closing-quote shortcut improved all eight short escape-last fixtures in both runs. The initial gains were 2.7–6.0% over the committed decoder. A three-way recheck with a different shuffle seed gave 2.0–6.2%. Short escape-first and escape-middle fixtures ranged from −0.9% to +1.7% in the recheck. An empty suffix therefore accounts for a recoverable part of the regression. These experiments do not isolate the cause for nonempty short suffixes.
+
+Across the seven 4,096-byte fixtures, the rechecked candidate stayed within −0.3% to +0.6% of the committed decoder and retained a 32.3–40.2% throughput gain over the eight-byte decoder. Keeping AVX2 available after an escape matters most when much of the string remains.
+
+All builds matched the committed decoder's diagnostics byte for byte on 844 malformed scalar/vector documents and matched the independent oracle on 780 valid documents. An additional check covered 42 valid and 56 malformed scalar/vector documents around adjacent escapes, quotes, missing terminators and invalid delimiters. Allocation counts and bytes matched in all 42 timed fixtures. The closing-quote candidate passed all 425 default tests on dev002. A local guarded-page probe also checked the new SSE2 suffix scanner for lengths 0–96.
+
+To reproduce, apply each candidate patch separately to the committed decoder. Build the batched typed_json_strings drivers under bin/dispatch (committed), bin/word8 (eight-byte decoder), bin/portable_tail, bin/close_tail and bin/sse_tail. Run `taskset -c 7 python3 run.py bin --short-escapes` and then `taskset -c 7 python3 run.py bin --close-recheck`.
+
+[Five-way measurements](short-escapes.dev002.json) · [Closing-quote recheck](close-recheck.dev002.json)

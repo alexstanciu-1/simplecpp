@@ -1,0 +1,11 @@
+--- a/runtime/src/json/reader.hpp
++++ b/runtime/src/json/reader.hpp
+@@ -243,7 +243,7 @@
+ 					fail_json_parse("invalid escape sequence", pos_ - 1);
+ 			}
+ 			const auto remaining = input_.substr(pos_);
+-			const auto count = plain_string_prefix(remaining);
++			const auto count = portable_string_prefix(remaining);
+ 			if (count != 0) {
+ 				out.append(remaining.data(), count);
+ 				pos_ += count;
