@@ -138,6 +138,16 @@ the declaration's initializer facts. Unknown values retain required runtime chec
 Direct global writes, assignment expressions and member/index writes remain deferred.
 The bounded compound-statement extension is defined below. PHP first-write declarations follow the local inference rules below.
 
+### PHP chained assignment statements
+
+In PHP, `$a = $b = compute();` is equivalent to `$b = compute(); $a = $b;`
+when both names are existing writable locals. Longer chains follow the same
+right-to-left order. Each write uses ordinary assignment conversion and the
+next write reads the value actually stored. If the RHS throws, none of the
+writes in the chain runs. A failure during a later write preserves completed
+inner writes. This spelling applies to standalone statements with plain local
+targets.
+
 ## Initializer-based local inference
 
 PHP `$value = initializer;` declares a local on its first write in the current body.
@@ -242,7 +252,7 @@ the update once before any assignment conversion and store. When the assignment
 targets the same local, prefix stores the updated value and postfix restores the
 original value. The existing signed-overflow policy applies.
 This amendment is limited to ordinary local statements, with parameter, property,
-and indexed operands, loop headers, compound and chained assignments, and
+and indexed operands, loop headers, compound assignments, and
 update results inside larger expressions deferred.
 
 ## Discarded-value int64 updates — 2026-11-05

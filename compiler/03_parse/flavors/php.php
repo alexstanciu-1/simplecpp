@@ -34,11 +34,46 @@ final class Php_Grammar implements statement_grammar
 			return $parser->assignment($start, $name, assignment_intent::existing_binding, $terminator);
 		}
 		if ($cursor->is(token_kind::assign)) {
+			if ($terminator === token_kind::semicolon && $cursor->next_is(token_kind::variable)
+				&& ($cursor->tokens->tokens[$cursor->position() + 2]->kind ?? null) === token_kind::assign) {
+				return $this->assignment_chain($parser, $collector, $start, $name);
+			}
 			if ($cursor->next_is(token_kind::ampersand) || !$collector->has_local($name)) {
 				return $parser->declaration($start, $name, null, $terminator);
 			}
 			return $parser->assignment($start, $name, assignment_intent::declare_or_assign, $terminator);
 		}
 		return $parser->declaration($start, $name, $parser->named_type(), $terminator);
+	}
+
+	/** Collect ordinary writes in execution order. Each outer RHS reads the preceding destination. */
+	private function assignment_chain(Parser $parser, Body_Collection $collector, int $start /** uint32 */, string $name): ast_block_statement
+	{
+		$cursor = $parser->cursor;
+		$targets = [];
+		$position = $start;
+		while (true) {
+			if (!$collector->has_local($name)) {
+				throw new diagnostic($cursor->tokens->source, $cursor->tokens->tokens[$position]->offset, 'Chained assignment requires an existing local: $' . $name);
+			}
+			if (!$cursor->next_is(token_kind::variable) || ($cursor->tokens->tokens[$cursor->position() + 2]->kind ?? null) !== token_kind::assign) break;
+			$targets[] = [$position, $name];
+			$cursor->take(token_kind::assign, '=');
+			$position = $cursor->position();
+			$name = $cursor->binding_name(token_kind::variable);
+		}
+		$write = $parser->assignment($position, $name, assignment_intent::existing_binding);
+		$end = $write->end;
+		$writes = [$write];
+		while ($targets !== []) {
+			[$outer, $destination] = array_pop($targets);
+			$read = new ast_name_expression($name, $position, $position + 1);
+			$writes[] = new ast_assignment_statement($outer, $position + 1, $destination, $read, assignment_intent::existing_binding);
+			$name = $destination;
+			$position = $outer;
+		}
+		$child = $collector->child();
+		foreach ($writes as $i => $statement) $child->statement($statement, $i);
+		return new ast_block_statement($child->block($start, $end, $writes));
 	}
 }
