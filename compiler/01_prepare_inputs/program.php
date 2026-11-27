@@ -153,6 +153,6 @@ final class Program_Loader
 
 	public static function load(source_unit $unit): source_file
 	{
-		return File_Loader::load(self::disk_path($unit), $unit->flavor);
+		return File_Loader::load(self::disk_path($unit), $unit->flavor, $unit->module->name . '/' . $unit->path);
 	}
 }

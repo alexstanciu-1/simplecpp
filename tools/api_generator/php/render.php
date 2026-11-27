@@ -220,11 +220,20 @@ function render(array $plan): array {
     }
     $files['public/scpp/fixed_array.hpp'] = BANNER . template('collections/fixed_array_index');
     $files['public/scpp/owner_access.hpp'] = BANNER . template('ownership/application_control');
-    if (isset($plan['exception'])) {
-        $path = 'public/' . $plan['exception']['header'];
+    if (isset($plan['exception']) || isset($plan['error'])) {
+        $path = 'public/scpp/exception.hpp';
+        $fields = $plan['error']['identity_fields'] ?? ['message', 'file', 'line'];
+        $checks = [];
+        foreach ($fields as $field) {
+            $checks[] = $field === 'line' ? 'view->get_line() == other.view->get_line()'
+                : "detail::string_access::read(view->$field()) == detail::string_access::read(other.view->$field())";
+        }
+        $files['src/runtime.cpp'] .= includeHeader('exception_impl.hpp') . template('core/exception_identity',
+            ['identity' => implode(' && ', $checks)]);
         requireThat(!isset($files[$path]), 'The core Exception header path is reserved');
         $files[$path] = BANNER . template('core/exception_declaration',
-            ['string_header' => $plan['string']['header']]);
+            ['string_header' => $plan['string']['header'], 'fences' => isset($plan['error'])
+                ? scalarInputFences($plan, 'exception', [['string', 'int64'], ['string', 'int64', 'string']], true) : '']);
     }
     requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
     $files['public/scpp/entry.hpp'] = BANNER . template('core/entry_declaration', [

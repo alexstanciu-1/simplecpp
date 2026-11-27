@@ -52,7 +52,7 @@ def proof(work):
     for carrier in default['carriers']:
         expected = metadata['carriers']['specialization_providers'].get(carrier['name'], 'core.carriers')
         assert default['submodules']['type_exports'][carrier['name']]['provider'] == expected
-    assert default['submodules']['type_exports']['error_t']['symbol'] == 'scpp::error_t'
+    assert default['submodules']['type_exports']['exception']['symbol'] == 'scpp::exception'
     capability = work / 'capability.php'
     capability.write_text(runner.read_text().split('echo json_encode')[0]
         + "$r=\\scpp\\compiler\\type_registry::specialize('result',\\scpp\\compiler\\type_registry::integer());\n"
@@ -104,7 +104,7 @@ def proof(work):
         if invalid == 'access': m['carriers']['payload_access'] = 'unchecked_value'
         if invalid == 'presence': m['carriers']['presence']['value'] = 'is_false'
         if invalid == 'sentinel': m['carriers']['sentinels']['false']['factory'] = 'from_true'
-        if invalid == 'states': m['carriers']['families']['nullable']['states']['error'] = 'error_t'
+        if invalid == 'states': m['carriers']['families']['nullable']['states']['error'] = 'exception'
         if invalid == 'default': m['carriers']['families']['result']['default_state'] = 'error'
         if invalid == 'provider': m['carriers']['provider'] = 'missing'
         if invalid == 'legacy_header': p['carriers']['header'] = 'scpp/wrong.hpp'

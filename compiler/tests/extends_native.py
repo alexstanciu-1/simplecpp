@@ -37,7 +37,7 @@ def runtime(work, compiler, extra_sources=()):
     private = [ROOT / 'runtime/src' / name for name in ['numeric', 'sequence', 'hash', 'boxed', 'ownership']]
     flags += [arg for path in [*private, ROOT / 'runtime/generated/private'] for arg in ['-I', path]]
     sources = [ROOT / 'runtime/generated/src/runtime.cpp'] + [ROOT / 'runtime/src' / name for name in [
-        'output/output.cpp', 'entry/entry.cpp', 'entry/exception.cpp', 'ownership/owner_access.cpp', 'numeric/arithmetic.cpp']]
+        'output/output.cpp', 'entry/entry.cpp', 'ownership/owner_access.cpp', 'numeric/arithmetic.cpp']]
     sources += list(extra_sources)
     objects = []
     for index, source in enumerate(sources):

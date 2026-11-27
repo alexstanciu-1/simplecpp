@@ -736,12 +736,12 @@
     },
     "families": {
       "nullable": { "default_state": "empty", "states": { "value": "payload", "empty": null } },
-      "result": { "default_state": "value", "states": { "value": "payload", "error": "error_t" } },
+      "result": { "default_state": "value", "states": { "value": "payload", "error": "exception" } },
       "result_or_false": { "default_state": "false", "states": { "value": "payload", "false": null } },
       "result_or_bool": { "default_state": "false", "states": { "value": "payload", "false": null, "true": null } }
     },
     "error": {
-      "type": "error_t",
+      "type": "exception",
       "message": "string",
       "line": "int64",
       "file": "string",
@@ -1454,7 +1454,7 @@
     "exception": {
       "name": "Exception",
       "header": "scpp/exception.hpp",
-      "handle": "scpp::exception_owner",
+      "handle": "scpp::exception",
       "make": "::scpp::make_exception",
       "get_message": "get_message"
     },

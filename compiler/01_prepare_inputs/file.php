@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final class File_Loader
 {
 	/** Read a complete source snapshot and report IO failures at the compiler boundary. */
-	public static function load(string $path, flavor $flavor): source_file
+	public static function load(string $path, flavor $flavor, ?string $logical_path = null): source_file
 	{
 		if (!is_file($path)) {
 			throw new \RuntimeException('Cannot read source file: ' . $path);
@@ -16,6 +16,6 @@ final class File_Loader
 		if ($content === false) {
 			throw new \RuntimeException('Cannot read source file: ' . $path);
 		}
-		return new source_file($path, $content, $flavor);
+		return new source_file($path, $content, $flavor, $logical_path);
 	}
 }

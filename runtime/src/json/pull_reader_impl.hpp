@@ -25,24 +25,24 @@ json_pull_reader& json_pull_reader::operator=(json_pull_reader&& other) noexcept
     return *this;
 }
 result_bool_t json_pull_reader::start(const string& text, const string& file, int64 limit) const {
-    if (!data_ || data_->started) return result_bool_t{error_t{string{"JSON reader cannot be restarted"}}};
+    if (!data_ || data_->started) return result_bool_t{exception{string{"JSON reader cannot be restarted"}}};
     data_->started = true;
     try {
         data_->cursor = std::make_unique<detail::json::pull_reader>(
             std::string(text.data(), text.size()), std::string(file.data(), file.size()), limit);
         return result_bool_t{true};
     } catch (const detail::json::read_error& failure) {
-        return result_bool_t{error_t{string{failure.what()}}};
+        return result_bool_t{exception{string{failure.what()}}};
     }
 }
 namespace detail::json {
 template<class Result, class Operation>
 static Result read_checked(pull_reader* cursor, Operation op) {
-    if (!cursor) return Result{error_t{string{"JSON reader is not initialized"}}};
+    if (!cursor) return Result{exception{string{"JSON reader is not initialized"}}};
     try {
         return Result{op(*cursor)};
     } catch (const read_error& failure) {
-        return Result{error_t{string{failure.what()}}};
+        return Result{exception{string{failure.what()}}};
     }
 }
 }

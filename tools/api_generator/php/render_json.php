@@ -52,7 +52,7 @@ function renderJson(array $plan, array &$files): void {
             $d .= "    auto native = detail::json::$name($input);\n";
         }
         if ($decode) {
-            $d .= "    if (!native.error.empty()) return $result{error_t{string{native.error.data(), detail::checked_integer_cast<$count>(native.error.size())}}};\n";
+            $d .= "    if (!native.error.empty()) return $result{exception{string{native.error.data(), detail::checked_integer_cast<$count>(native.error.size())}}};\n";
             $d .= "    $family value;\n    detail::ownership_access::get<detail::{$family}_value>(value) = std::move(native.value);\n    return $result{std::move(value)};\n";
         } else {
             $d .= "    return encoded_result(std::move(native));\n";
@@ -93,7 +93,7 @@ function renderJson(array $plan, array &$files): void {
             'includes' => implode('', $recordIncludes), 'declarations' => $recordDeclarations]);
         $implementationHeaders .= includeHeader($recordHeader);
         $d = "static result_string encoded_result(detail::json::outcome<std::string>&& native) {\n"
-            . "    if (!native.error.empty()) return result_string{error_t{string{native.error.data(), detail::checked_integer_cast<$count>(native.error.size())}}};\n"
+            . "    if (!native.error.empty()) return result_string{exception{string{native.error.data(), detail::checked_integer_cast<$count>(native.error.size())}}};\n"
             . "    return result_string{detail::own_string(std::move(native.value))};\n}\n"
             . $d . $recordDefinitions
             . "void record_sink::operator()(std::string_view bytes) const { output.append(bytes); }\n"

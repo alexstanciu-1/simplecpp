@@ -495,18 +495,10 @@ function renderCarriers(array $plan, array &$groups): array {
     $payloadHeaders = array_unique($payloadHeaders);
     sort($payloadHeaders, SORT_STRING);
     foreach ($payloadHeaders as $header) $h .= includeHeader($header);
+    if (isset($plan['error'])) $h .= includeHeader('scpp/exception.hpp');
     $h .= "namespace scpp {\n";
+    if (isset($plan['error'])) $h .= "using error_t = exception;\n";
     $d = '';
-    if(isset($plan['error'])) {
-        $h .= template('errors/error_declaration', ['fences' => scalarInputFences($plan, 'error_t', [['string', 'int64'], ['string', 'int64', 'string']], true)]);
-        $comparisons = [];
-        foreach ($plan['error']['identity_fields'] as $field) {
-            $comparisons[] = $plan['error'][$field] === 'string'
-                ? "detail::string_access::read({$field}_) == detail::string_access::read(other.{$field}_)"
-                : "{$field}_ == other.{$field}_";
-        }
-        $d .= template('errors/error_definition', ['identity' => implode(' && ', $comparisons)]);
-    }
     foreach($plan['carriers'] as $c) {
         $n = $c['name'];
         [$class, $implementation] = renderCarrier($plan, $c);
@@ -532,10 +524,10 @@ function renderCarrier(array $plan, array $c): array {
     $result = $c['family'] === 'result';
     $nullable = $c['family'] === 'nullable';
     [$lh, $ld] = lifecycle($n);
-    $vars = compact('n', 'p', 'result', 'lh', 'ld') + ['explicit' => str_starts_with($c['extraction'], 'implicit') ? '':'explicit ', 'error_type' => $result ? ', error_t':''];
+    $vars = compact('n', 'p', 'result', 'lh', 'ld') + ['explicit' => str_starts_with($c['extraction'], 'implicit') ? '':'explicit ', 'error_type' => $result ? ', exception':''];
     $constructors = [[$p]];
     if ($nullable) $constructors[] = ['null_t'];
-    if ($result) $constructors[] = ['error_t'];
+    if ($result) $constructors[] = ['exception'];
     $class = template('carriers/carrier_declaration', $vars) . scalarInputFences($plan, $n, $constructors, true);
     $d .= template('carriers/carrier_storage', $vars) . template('carriers/carrier_value_definition', $vars) . ' ';
     if (!$nullable) {
@@ -555,7 +547,7 @@ function renderCarrier(array $plan, array $c): array {
         $d .= "$n::$n(null_t) noexcept {}\n";
     }
     if($result) {
-        $class .= "    explicit $n(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n    bool_t same_error_identity(const $n& other) const;\n";
+        $class .= "    explicit $n(exception error);\n    bool_t has_error() const noexcept;\n    exception error() const;\n    bool_t same_error_identity(const $n& other) const;\n";
         $d .= template('carriers/carrier_error_definition', $vars)
             . template('carriers/carrier_error_identity', $vars + ['peer' => $n]);
         foreach ($c['error_identity_peers'] ?? [] as $peer) {

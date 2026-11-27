@@ -3,7 +3,7 @@ Doc Status: normative
 
 This contract covers the strict frontend and C++ S2S bounded exception hierarchy.
 It also defines delayed value returns and loop transfers through finally.
-The in-band [error value](error_values_and_take.md) remains a separate type.
+A failed [structured result](carrier_slice.md#structured-errors) carries the same Exception object that a typed catch receives.
 
 ## Construction and transport
 
@@ -12,7 +12,11 @@ Core runtime metadata registers `Exception` as an opaque shared class handle.
 through the same native factory as `Exception::make(string message): Exception`. The instance
 method `get_message(): string` returns its message by value. Empty messages and embedded
 zero bytes are preserved.
-Default storage is absent. Ordinary shared copying retains the same object.
+Construction records the authored one-based line and file. Module builds use
+the module name and relative source path. A descendant can inspect its origin
+inside its constructor. Native helpers supplying a diagnostic retain their
+supplied origin, including an empty file and line zero when unspecified.
+Forwarding or throwing preserves that origin. Default storage is absent. Ordinary shared copying retains the same object.
 The existing stable-receiver rules apply to instance calls.
 
 Source shared classes may extend the canonical registered `Exception`, directly or
@@ -35,8 +39,8 @@ this slice adds no language-level chaining protocol.
 
 `throw expression;` evaluates its operand once. Shared preparation requires the
 registered canonical `Exception` or a shared source descendant, including aliases. Source
-shadowing cannot turn an unrelated class named `Exception` into a throwable. Scalars,
-in-band errors and other objects are rejected before C++ generation. An absent
+shadowing cannot turn an unrelated class named `Exception` into a throwable. Scalars
+and unrelated objects are rejected before C++ generation. An absent
 Exception is a value-dependent runtime error (`absent_exception`), not a language
 exception with a null payload.
 

@@ -250,7 +250,7 @@ return 0;""")
         main.write_text(source)
         assert 'error' not in invoke(proc) and artifacts(out) == baseline
         reader.write_text(decoder.replace('forwardText(result<string> $r):result<Text>', 'forwardText(result<string> $r):int'))
-        assert 'Returning a structured error requires result<T>' in invoke(proc).get('error', '')
+        assert 'conversion from Exception to int64' in invoke(proc).get('error', '')
         reader.write_text(decoder)
         assert 'error' not in invoke(proc) and artifacts(out) == baseline
         records.write_text(definitions.replace('int $version=1', 'hash<int,int> $version'))

@@ -2,11 +2,6 @@
 #include <stdexcept>
 
 namespace scpp {
-void application_control::release_value() noexcept
-{
-    destroy(this);
-    release_weak();
-}
 void throw_invalid_object_cast()
 {
     throw std::runtime_error("invalid_object_cast");

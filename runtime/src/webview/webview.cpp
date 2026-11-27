@@ -51,7 +51,7 @@ static bool checked_text(const string &s) {
     return g_utf8_validate(s.data(), s.size(), nullptr);
 }
 static result_bool_t failure(const char *s) {
-    return result_bool_t{error_t{text(s)}};
+    return result_bool_t{exception{text(s)}};
 }
 static webview_state *active(const webview &handle) {
     auto *s = webview_access::get(handle);
@@ -195,7 +195,7 @@ static void open_page(webview_state &s, bool local, const fs::path &root) {
 result_webview webview_create(const ui_window &window) {
     auto *w = ui_window_access::get(window);
     if (!ui_thread() || !w || w->closed || gtk_bin_get_child(GTK_BIN(w->widget)))
-        return result_webview{error_t{text("window unavailable")}};
+        return result_webview{exception{text("window unavailable")}};
     auto *s = new webview_state;
     auto view = webview_access::adopt(s);
     s->window = window;

@@ -155,7 +155,7 @@ function coreExceptionBinding(mixed $metadata): ?array {
     foreach (['name', 'header', 'handle', 'make', 'get_message'] as $field) {
         $binding[$field] = textValue(at($exception, $field));
     }
-    requireThat($binding['header'] === 'scpp/exception.hpp' && $binding['handle'] === 'scpp::exception_owner'
+    requireThat($binding['header'] === 'scpp/exception.hpp' && $binding['handle'] === 'scpp::exception'
         && $binding['make'] === '::scpp::make_exception' && $binding['get_message'] === 'get_message'
         && $binding['name'] === 'Exception', 'Unsupported core Exception contract');
     return $binding;
@@ -665,7 +665,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     literals($m, ['construction' => 'explicit']);
     $error = at($m, 'error');
     fields($error, ['type', 'message', 'line', 'file', 'state', 'peer_equality']);
-    literals($error, ['type' => 'error_t', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'state' => 'explicit_present']);
+    literals($error, ['type' => 'exception', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'state' => 'explicit_present']);
     $errorEquality = at($error, 'peer_equality');
     fields($errorEquality, ['equal', 'identical']);
     literals($errorEquality, ['equal' => 'same_state']);
@@ -684,7 +684,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         $states = object(at($policy, 'states'));
         $expected = match ($f) {
             'nullable' => ['value' => 'payload', 'empty' => null],
-            'result' => ['value' => 'payload', 'error' => 'error_t'],
+            'result' => ['value' => 'payload', 'error' => 'exception'],
             'result_or_false' => ['value' => 'payload', 'false' => null],
             'result_or_bool' => ['value' => 'payload', 'false' => null, 'true' => null],
         };
@@ -733,7 +733,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         }
         $plan['source_types']->{"$family<$payload>"} = $name;
         if($family === 'result') {
-            $plan['error'] = ['type' => 'error_t', 'state' => 'explicit_present', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'identity_fields' => $identityFields, 'inspection' => 'value_copy', 'global_short_name' => false];
+            $plan['error'] = ['type' => 'exception', 'state' => 'explicit_present', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'identity_fields' => $identityFields, 'inspection' => 'shared_owner', 'global_short_name' => false];
         }
     }
     requireThat($carriers !== [], 'Empty carrier publication');
@@ -751,7 +751,7 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
     $plan['carriers'] = array_values($carriers);
     $plan['carriers_header'] = $header;
     $exports = array_keys($carriers);
-    if (isset($plan['error'])) $exports[] = 'error_t';
+    if (isset($plan['error'])) $exports[] = 'exception';
     $placements = fields($m->specialization_providers ?? (object)[], ['result_or_false_int64']);
     $placements = array_intersect_key($placements, $carriers);
     publishTypeExports($plan['submodules'], 'carriers', $exports, $placements);
@@ -964,7 +964,7 @@ function prepareOwnership(mixed $metadata, mixed $publication, array $facts, arr
     checkHeader($plan, $header);
     requireThat(hasValue($plan, 'bool_t'), 'Ownership: bool_t must be published');
     $inputs = array_merge(array_column($plan['types'], 'name'), array_column($plan['values'], 'name'));
-    $used = array_merge($inputs, array_column($plan['vectors'], 'name'), array_column($plan['carriers'], 'name'), array_column($plan['hashes']['specializations'] ?? [], 'name'), array_keys(object($plan['aliases'])), ['error_t', 'null'], isset($plan['boxed']) ? array_merge(['boxed_kind'], array_column($plan['boxed']['families'], 'name')) : []);
+    $used = array_merge($inputs, array_column($plan['vectors'], 'name'), array_column($plan['carriers'], 'name'), array_column($plan['hashes']['specializations'] ?? [], 'name'), array_keys(object($plan['aliases'])), ['error_t', 'exception', 'null'], isset($plan['boxed']) ? array_merge(['boxed_kind'], array_column($plan['boxed']['families'], 'name')) : []);
     if(isset($plan['string'])) {
         $used[] = 'string';
     }

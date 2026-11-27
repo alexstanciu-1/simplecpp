@@ -18,7 +18,7 @@ final readonly class source_file
 
 	/** CONSTRUCTOR */
 	/** Retain immutable source bytes and build the line-start index for diagnostics. */
-	public function __construct(string $path, string $content, flavor $flavor)
+	public function __construct(string $path, string $content, flavor $flavor, public ?string $logical_path = null)
 	{
 		$this->path = $path;
 		$this->content = $content;

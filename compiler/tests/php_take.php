@@ -9,6 +9,25 @@ $compile = static function (string $source): string {
 	return (new Cpp_Emitter())->emit($program);
 };
 $source = <<<'SCPP'
+class PortFailure extends Exception { public int $port = 0; public function __construct() { $this->port = $this->get_line(); } }
+function validated(PortFailure $failure): result<int> { return $failure; }
+function bad_port(): result<int> { return new Exception("port"); }
+function rethrow_result(result<int> $result): void {
+    take($value, $error, $ok) = $result;
+    if (!$ok) { throw $error; }
+}
+$original = new PortFailure();
+try { rethrow_result(validated($original)); }
+catch (PortFailure $caught) {
+    if ($caught->port !== 8 || $original !== $caught || $caught->get_line() !== 8 || $caught->get_file() !== "take") { return 83; }
+    $caught->port = 42;
+}
+if ($original->port !== 42) { return 84; }
+$bad = bad_port();
+($unusedPort,$problem,$valid) = $bad;
+if ($valid || $problem->get_line() !== 3 || $problem->get_message() !== "port") { return 85; }
+$factory = Exception::make("factory");
+if ($factory->get_line() !== 18 || $factory->get_file() !== "take") { return 86; }
 function length_or_error(result<string> $input): result<int> {
     return (($text, $diagnostic) = $input) ? strlen($text) : $diagnostic;
 }
@@ -116,10 +135,16 @@ foreach (['int', '?int', 'result_or_false<int>', 'result_or_bool<int>'] as $dest
 	try {
 		$compile('function bad(result<string> $r): ' . $destination . ' { take($v,$e,$ok)=$r; return $e; } return 8;');
 	} catch (diagnostic|diagnostic_group $e) {
-		if (!str_contains($e->getMessage(), 'Returning a structured error requires result<T>')) throw $e;
+		if (!str_contains($e->getMessage(), 'Exception')) throw $e;
 		continue;
 	}
 	throw new RuntimeException('Unexpected diagnostic return to ' . $destination);
+}
+try {
+	$compile('function ambiguous(): result<Exception> { return new Exception("bad"); } return 8;');
+	throw new RuntimeException('Unexpected result<Exception> specialization');
+} catch (diagnostic|diagnostic_group $e) {
+	if (!str_contains($e->getMessage(), 'Unavailable runtime specialization')) throw $e;
 }
 $prefix = 'function overwrite(bool &$ok): void { $ok = true; } $r result_or_false<int> = false_sentinel; ';
 foreach ([

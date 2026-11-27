@@ -22,11 +22,11 @@ extern char **environ;
 
 namespace scpp::process {
 namespace process_detail {
-error_t failure(const char *operation, const std::string &reason) {
+exception failure(const char *operation, const std::string &reason) {
 	auto message = std::string("process_") + operation + ": " + reason;
-	return error_t{string{message.data(), static_cast<int64>(message.size())}};
+	return exception{string{message.data(), static_cast<int64>(message.size())}};
 }
-error_t os_failure(const char *operation, int code) {
+exception os_failure(const char *operation, int code) {
 	return failure(operation, std::error_code(code, std::generic_category()).message());
 }
 #if defined(__linux__)

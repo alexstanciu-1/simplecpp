@@ -169,7 +169,7 @@ result_mysqli connect(const string &h, const string &u, const string &p, const s
     auto v = php_connect(h, u, p, d, port, sock);
     auto *s = mysqli_access::get(v);
     if (!s->native)
-        return result_mysqli{error_t{s->connection.message}};
+        return result_mysqli{exception{s->connection.message}};
     return result_mysqli{std::move(v)};
 }
 static bool update(mysqli_state &s, int rc) {

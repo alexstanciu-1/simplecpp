@@ -28,16 +28,16 @@ struct curl_handle_state {
 namespace scpp::curl {
 using detail::curl_handle_access;
 using detail::curl_handle_state;
-static error_t failed(curl_handle_state* state, CURLcode code, const char* message) {
+static exception failed(curl_handle_state* state, CURLcode code, const char* message) {
     string text{message};
     if (state) {
         state->code = code;
         state->message = text;
         state->response.reset();
     }
-    return error_t{std::move(text)};
+    return exception{std::move(text)};
 }
-static error_t invalid(curl_handle_state* state, const char* reason = "invalid or closed curl handle") {
+static exception invalid(curl_handle_state* state, const char* reason = "invalid or closed curl handle") {
     return failed(state, CURLE_BAD_FUNCTION_ARGUMENT, reason);
 }
 static void clear_error(curl_handle_state& state) { state.code = 0; state.message.clear(); }

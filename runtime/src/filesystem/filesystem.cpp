@@ -33,13 +33,13 @@ namespace scpp::fs {
 result_string get(const string& path) {
     const auto* filename = c_path(path);
     if (filename == nullptr) {
-        return result_string{error_t{string{"fs_get: path contains a NUL byte"}}};
+        return result_string{exception{string{"fs_get: path contains a NUL byte"}}};
     }
 
     const std::unique_ptr<std::FILE, decltype(&std::fclose)> file(
         std::fopen(filename, "rb"), &std::fclose);
     if (!file) {
-        return result_string{error_t{string{"fs_get: cannot open file"}}};
+        return result_string{exception{string{"fs_get: cannot open file"}}};
     }
 
     std::string contents;
@@ -51,10 +51,10 @@ result_string get(const string& path) {
     } while (count == sizeof(buffer));
 
     if (std::ferror(file.get()) != 0) {
-        return result_string{error_t{string{"fs_get: cannot read file"}}};
+        return result_string{exception{string{"fs_get: cannot read file"}}};
     }
     if (!std::in_range<int64>(contents.size())) {
-        return result_string{error_t{string{"fs_get: file is too large"}}};
+        return result_string{exception{string{"fs_get: file is too large"}}};
     }
     return result_string{string{contents.data(), static_cast<int64>(contents.size())}};
 }
@@ -62,20 +62,20 @@ result_string get(const string& path) {
 result_int64 put(const string& path, const string& data) {
     const auto* filename = c_path(path);
     if (filename == nullptr) {
-        return result_int64{error_t{string{"fs_put: path contains a NUL byte"}}};
+        return result_int64{exception{string{"fs_put: path contains a NUL byte"}}};
     }
 
     const auto size = static_cast<std::size_t>(data.size());
     const auto* bytes = data.data();
     auto* file = std::fopen(filename, "wb");
     if (file == nullptr) {
-        return result_int64{error_t{string{"fs_put: cannot open file"}}};
+        return result_int64{exception{string{"fs_put: cannot open file"}}};
     }
 
     const auto written = std::fwrite(bytes, 1, size, file);
     const auto closed = std::fclose(file);
     if (written != size || closed != 0) {
-        return result_int64{error_t{string{"fs_put: cannot write complete file"}}};
+        return result_int64{exception{string{"fs_put: cannot write complete file"}}};
     }
     return result_int64{static_cast<int64>(written)};
 }
@@ -102,7 +102,7 @@ result_string stage(const string& directory) {
 #if defined(__unix__) || defined(__APPLE__)
     const auto* name = c_path(directory);
     if (name == nullptr || *name == '\0') {
-        return result_string{error_t{string{"fs_stage: invalid directory"}}};
+        return result_string{exception{string{"fs_stage: invalid directory"}}};
     }
 
     auto path = (std::filesystem::path(name) / ".scpp-stage-XXXXXX").string();
@@ -112,7 +112,7 @@ result_string stage(const string& directory) {
     const int descriptor = ::mkstemp(path.data());
 #endif
     if (descriptor < 0) {
-        return result_string{error_t{string{"fs_stage: cannot reserve file"}}};
+        return result_string{exception{string{"fs_stage: cannot reserve file"}}};
     }
 
     const auto discard = [](const char* filename) { ::unlink(filename); };
@@ -123,7 +123,7 @@ result_string stage(const string& directory) {
     constexpr bool cloexec = true;
 #endif
     if (::close(descriptor) != 0 || !cloexec) {
-        return result_string{error_t{string{"fs_stage: cannot seal reservation"}}};
+        return result_string{exception{string{"fs_stage: cannot seal reservation"}}};
     }
 
     auto result = result_string{string{path.c_str()}};
@@ -131,7 +131,7 @@ result_string stage(const string& directory) {
     return result;
 #else
     (void)directory;
-    return result_string{error_t{string{"fs_stage: exclusive reservation is unavailable on this host"}}};
+    return result_string{exception{string{"fs_stage: exclusive reservation is unavailable on this host"}}};
 #endif
 }
 
@@ -144,8 +144,8 @@ scpp::string owned_string(const std::string& bytes) {
     return scpp::string{bytes.data(), static_cast<scpp::int64>(bytes.size())};
 }
 
-scpp::error_t failure(const char* message) {
-    return scpp::error_t{scpp::string{message}};
+scpp::exception failure(const char* message) {
+    return scpp::exception{scpp::string{message}};
 }
 
 files::file_status status_of(const scpp::string& path, bool follow) {

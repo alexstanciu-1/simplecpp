@@ -83,7 +83,7 @@ $demand->string->functions = ['count_bytes'];
 $lineOnly = unserialize(serialize($functionMetadata));
 $lineOnly->carriers->error->peer_equality->identical->fields = ['line'];
 $lineOnlyRuntime = render(prepareRuntime($lineOnly, $demand, $facts))['src/runtime.cpp'];
-requireThat(str_contains($lineOnlyRuntime, 'bool_t{present_ == other.present_ && line_ == other.line_}'),
+requireThat(str_contains($lineOnlyRuntime, '(view && other.view && view->get_line() == other.view->get_line())'),
     'Native error identity must use exactly the catalog fields');
 $mtDemand = clone $demand;
 foreach ([false, true] as $enabled) {

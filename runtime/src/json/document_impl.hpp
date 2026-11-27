@@ -35,7 +35,7 @@ struct document_access {
         return n;
     }
     static result_json_node root(const json_document& d) {
-        if (!d.data_) return result_json_node{error_t{string{"null document"}}};
+        if (!d.data_) return result_json_node{exception{string{"null document"}}};
         return result_json_node{node(d, d.data_->root)};
     }
     static json_node child(const json_node& n, std::size_t index) { return node(n.owner_, index); }
@@ -104,14 +104,14 @@ namespace scpp::json {
 using detail::json::document_access;
 using detail::json::kind;
 using detail::json::owned;
-static error_t access_error(const char* reason) { return error_t{owned(std::string("json document: ") + reason)}; }
+static exception access_error(const char* reason) { return exception{owned(std::string("json document: ") + reason)}; }
 result_json_document document_parse(const string& text, nullable_json_parse_error& diagnostic, int64 depth) {
     diagnostic.reset();
     try {
         return result_json_document{detail::json::parser(text, depth).parse()};
     } catch (const detail::json::read_error& e) {
         diagnostic = nullable_json_parse_error{json_parse_error{owned(e.category), detail::checked_integer_cast<int64>(e.position), owned(e.detail)}};
-        return result_json_document{error_t{string{e.what()}}};
+        return result_json_document{exception{string{e.what()}}};
     }
 }
 result_json_node document_root(const json_document& d) { return document_access::root(d); }

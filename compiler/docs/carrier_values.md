@@ -106,15 +106,16 @@ Two accepted departures from the donor are explicit:
 - Null does not act as a false sentinel. Use false_sentinel explicitly.
 
 PHP `take` extracts an exact payload and can expose the structured error from
-`result<T>`. The error supports message, file and line inspection. Member
+`result<T>`. The diagnostic has type `Exception` and supports message, file and line inspection. Member
 access through `->` borrows a present payload. See the [PHP extraction and
 member-access contract](../../specs/carrier_slice.md#php-take-outputs).
 
 A PHP function returning `result<T>` can explicitly forward the diagnostic with
 `return $error;`. The result constructor checks that the diagnostic is present.
 
-Source construction of structured errors and automatic error propagation remain
-deferred. PHP numeric carrier writes and string concatenation writes follow the
+Use `return new Exception("invalid port");` to create a failed result at the current source location.
+Throwing the extracted exception preserves its dynamic class and object identity.
+Automatic error propagation and `result<Exception>` remain deferred. PHP numeric carrier writes and string concatenation writes follow the
 checked write contract. Direct carrier echo, general nested carriers and further
 specializations remain deferred. Vector payload copies through a carrier are supported; this does not enable
 arbitrary ordinary vector copying/arguments or new vector operations.

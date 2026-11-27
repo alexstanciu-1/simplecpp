@@ -37,7 +37,7 @@ public:
     void reject(const char* message) override { cursor.reject(message); }
 @definitions@};
 template<class MakeCursor>
-static error_t consume_record(void* out, void (*consume)(void*, Decoder&), MakeCursor make_cursor) {
+static exception consume_record(void* out, void (*consume)(void*, Decoder&), MakeCursor make_cursor) {
     try {
         auto cursor = make_cursor();
         record_reader reader{cursor};
@@ -45,15 +45,15 @@ static error_t consume_record(void* out, void (*consume)(void*, Decoder&), MakeC
         return {};
     } catch (const detail::json::read_error& error) {
         const std::string_view message{error.what()};
-        return error_t{string{message.data(), detail::checked_integer_cast<@count@>(message.size())}};
+        return exception{string{message.data(), detail::checked_integer_cast<@count@>(message.size())}};
     }
 }
-error_t read_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
+exception read_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
     return consume_record(out, consume, [&] {
         return detail::json::pull_reader{std::string(text.data(), text.size()), "", 128};
     });
 }
-error_t read_leaf_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
+exception read_leaf_record(const string& text, void* out, void (*consume)(void*, Decoder&)) {
     return consume_record(out, consume, [&] {
         return detail::json::pull_reader{detail::json::pull_reader::borrow_input{},
             std::string_view(text.data(), static_cast<std::size_t>(text.size())), "", 128};

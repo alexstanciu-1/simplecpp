@@ -138,7 +138,7 @@ add_custom_target(scpp_runtime_publication
   BYPRODUCTS ${runtime_outputs}
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
-add_library(scpp_runtime STATIC runtime/src/sequence/fixed_array.cpp ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/entry/exception.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
+add_library(scpp_runtime STATIC runtime/src/sequence/fixed_array.cpp ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
 if(mt_segments)
   find_package(Threads REQUIRED)
   target_sources(scpp_runtime PRIVATE runtime/src/mt/segments.cpp)

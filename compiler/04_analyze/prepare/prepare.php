@@ -1602,7 +1602,7 @@ final class Preparation
 			throw new diagnostic($take->source(), $take->byte_start(), 'take requires a result and the output count for its family');
 		}
 		foreach ($take->outputs as $index => $output) {
-			$expected = $index === 0 ? $type->payload_type : ($type->family === 'result' && $index === 1 ? type_take_error::instance() : type_bool::instance());
+			$expected = $index === 0 ? $type->payload_type : ($type->family === 'result' && $index === 1 ? type_registry::exception() : type_bool::instance());
 			if ($output instanceof ast_produced_binding) {
 				$output->settle_type($expected);
 				$this->local_frames[array_key_last($this->local_frames)][$output->declaration_key()] = $output;
@@ -2553,9 +2553,13 @@ final class Preparation
 			return value_conversion::identity;
 		}
 		if ($result instanceof class_union_type_definition) $this->watch_union_source($value);
-		if ($value->type_def() instanceof type_take_error && $value->source()->flavor === flavor::php) {
-			if ($result instanceof carrier_type_definition && $result->family === 'result') return value_conversion::forwarded_error;
-			throw new diagnostic($value->source(), $value->byte_start(), 'Returning a structured error requires result<T>');
+		if ($result instanceof carrier_type_definition && $result->family === 'result') {
+			$source = $value->type_def();
+			if ($source instanceof type_exception) return value_conversion::forwarded_error;
+			if ($source instanceof shared_record_type_definition && $source !== $result->payload_type) {
+				$this->dependencies?->watch($this->symbols->entry($source->payload->declaration->symbol_key()), $this->owner);
+				if ($source->payload->exception_descendant()) return value_conversion::forwarded_error;
+			}
 		}
 		return $result->prepare_conversion($value, conversion_context::typed_destination);
 	}

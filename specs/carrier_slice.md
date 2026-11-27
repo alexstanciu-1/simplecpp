@@ -29,7 +29,7 @@ missing payload/error dependencies before emission.
 | Family | Default state | Payload construction | Other state construction/query |
 | --- | --- | --- | --- |
 | nullable_T | Empty | explicit nullable_T(T) | explicit null_t constructor; reset() empties; has_value() |
-| result_T | Successful T{} | explicit result_T(T) | explicit result_T(error_t); has_value(), has_error(), error() |
+| result_T | Successful T{} | explicit result_T(T) | explicit result_T(exception); has_value(), has_error(), error() |
 | result_or_false_T | False sentinel | explicit result_or_false_T(T) | from_false(), is_false(); reset() restores false sentinel |
 | result_or_bool_T | False sentinel | explicit result_or_bool_T(T) | from_false()/from_true(), is_false()/is_true(); reset() restores false sentinel |
 
@@ -81,12 +81,12 @@ operator lowering. Runtime native int variables remain indistinguishable from li
 
 ## Structured errors
 
-Result failure retains an explicit presence flag, owned string message/file and int64
-line. scpp::error_t{} and scpp::error_t::no_error represent no error. Explicit
+Result failure retains a shared exception handle. Its payload owns the message, file and int64 line.
+An empty handle represents no error. Explicit
 construction creates a real error even with an empty message:
 
 ```cpp
-result_int64 failed{scpp::error_t{string{"unable to read"}, int64{7}, string{"app.phs"}}};
+result_int64 failed{scpp::exception{string{"unable to read"}, int64{7}, string{"app.phs"}}};
 if (failed.has_error()) {
     string message = failed.error().get_message();
 }
@@ -95,15 +95,16 @@ if (failed.has_error()) {
 Constructing a failed result from no_error throws std::invalid_argument with
 result_requires_real_error before publishing a new state. Reading error() from a
 successful result throws std::runtime_error with result_no_error. Error inspection
-returns value copies, so a caller cannot mutate a failure into no_error through it.
+returns another owner of the same diagnostic. Reassigning the owner leaves the carrier intact.
 For two results of the same specialization, `same_error_identity(other)` is true
 when both contain errors with matching identity fields. The runtime borrows both
 stored errors and compares string fields as byte views. The public `error()`
 accessor continues to return an owned value.
 
-error_t has explicit native-bool condition conversion and has_error(); message/line/
-file do not determine presence. The type stays namespaced by default because this
-platform's C headers also define a global error_t typedef.
+The native type is `scpp::exception`. Existing native callers can use the compatibility
+alias `scpp::error_t`. Both spellings refer to one type. PHP exposes `Exception`.
+Loose result equality accepts any two failures. Strict result equality compares
+the catalog fields message, file and line, including across different objects.
 
 ## Ownership, reuse and limitations
 
@@ -149,7 +150,7 @@ recorded environment limitation. No libc++ ASan or leak-sanitizer success is cla
 ## Shared type/export integration
 
 Metadata family records explicitly retain default_state and states. `carriers.provider`
-owns placement; requested specializations and error_t enter the shared export index.
+owns placement; requested specializations and exception enter the shared export index.
 Provider assembly derives dependencies from actual payloads. A legacy publication header
 is accepted only when it agrees with provider placement. No ABI or lifetime algorithm
 changes accompany this integration. See [compiler carrier types](../compiler/docs/carrier_types.md)
@@ -176,9 +177,11 @@ The multi-output forms may omit `take`, as in `($value, $ok) = call();`.
 All outputs must be distinct writable variables of the exact output types.
 The error supports a condition and `get_message()`, `get_file()`, and `get_line()`.
 
-In PHP, a value return to a declared `result<T>` accepts the structured diagnostic
-from `take`. Returning a present diagnostic constructs the failure state with its
-original message, file and line, even when the message is empty. Returning a
+In PHP, a value return to a declared `result<T>` accepts a present `Exception`
+or shared descendant, including the diagnostic from `take`. The result retains
+the same object, dynamic class, message and construction site. Throwing the
+extracted object reaches ordinary typed handlers. The specialization
+`result<Exception>` is reserved because an exception could occupy either arm. Returning a
 cleared diagnostic raises `result_requires_real_error`. This conversion is
 specific to a result return. Other typed destinations and ordinary arguments
 retain their existing admission rules.

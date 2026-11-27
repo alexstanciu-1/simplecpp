@@ -40,9 +40,30 @@ final class type_exception extends type_definition
 		return true;
 	}
 
+	/** Root diagnostic accessors also apply to source descendants. */
 	public function runtime_method(string $name): ?runtime_function
 	{
-		return $name === $this->message->name() ? $this->message : null;
+		if ($name === $this->message->name()) return $this->message;
+		$result = match ($name) {
+			'get_line' => type_registry::integer(),
+			'get_file' => type_registry::string(),
+			default => null,
+		};
+		return $result === null ? null : new runtime_function($name, [$this], $result, $name, $this->header, receiver_method: true);
+	}
+
+	public function supports_inferred_local(): bool
+	{
+		return true;
+	}
+
+	public function prepare_condition(ast_expression $value): void
+	{
+	}
+
+	public function lower_cpp_condition(string $value, bool $negated = false): string
+	{
+		return '(' . $value . ').has_error()';
 	}
 
 	/** Source shared owners widen by transferring a retained reference, with an adjusted payload view. */

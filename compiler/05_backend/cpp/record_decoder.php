@@ -37,7 +37,7 @@ struct $name {
     using Value = $value;
     $name() = default;
     explicit $name(Value input) : payload(std::make_shared<Value>(std::move(input))) {}
-    explicit $name(::scpp::error_t error) : failure(std::move(error)) {
+    explicit $name(::scpp::exception error) : failure(std::move(error)) {
         if (!failure.has_error()) throw std::invalid_argument("result_requires_real_error");
     }
     $name(const $name& other) : payload(other.payload ? std::make_shared<Value>(*other.payload) : nullptr), failure(other.failure) {}
@@ -46,7 +46,7 @@ struct $name {
     bool has_value() const noexcept { return bool(payload); }
     bool is_success() const noexcept { return has_value(); }
     bool has_error() const noexcept { return failure.has_error(); }
-    ::scpp::error_t error() const { if (!has_error()) throw std::runtime_error("result_no_error"); return failure; }
+    ::scpp::exception error() const { if (!has_error()) throw std::runtime_error("result_no_error"); return failure; }
     Value& checked_ref() { check(); return *payload; }
     const Value& checked_ref() const { check(); return *payload; }
     auto pin() { check(); return payload; }
@@ -56,7 +56,7 @@ struct $name {
 $text$cursor
 private:
     std::shared_ptr<Value> payload;
-    ::scpp::error_t failure;
+    ::scpp::exception failure;
     void check() const { if (!payload) throw std::runtime_error("carrier_no_value"); }
 };
 
@@ -67,7 +67,7 @@ struct $name {
     using Value = $value;
     $name() {}
     explicit $name(Value value) : payload(std::move(value)), present(true) {}
-    explicit $name(::scpp::error_t error) : failure(std::move(error)) {
+    explicit $name(::scpp::exception error) : failure(std::move(error)) {
         if (!failure.has_error()) throw std::invalid_argument("result_requires_real_error");
     }
     ~$name() { clear(); }
@@ -86,7 +86,7 @@ struct $name {
     bool has_value() const noexcept { return present; }
     bool is_success() const noexcept { return has_value(); }
     bool has_error() const noexcept { return failure.has_error(); }
-    ::scpp::error_t error() const {
+    ::scpp::exception error() const {
         if (!has_error()) throw std::runtime_error("result_no_error");
         return failure;
     }
@@ -98,7 +98,7 @@ $text$cursor
 private:
     union { Value payload; };
     bool present = false;
-    ::scpp::error_t failure;
+    ::scpp::exception failure;
     void clear() { if (present) { payload.~Value(); present = false; } }
     void check() const { if (!present) throw std::runtime_error("carrier_no_value"); }
 };

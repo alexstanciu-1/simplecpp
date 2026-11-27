@@ -1,4 +1,5 @@
 #include <errno.h>
+#include "hash/allocation_probe.hpp"
 #include <scpp/short_names.hpp>
 #include <stdexcept>
 #include <type_traits>
@@ -70,6 +71,11 @@ int main() {
     require(static_cast<bool>(error.get_file() == string{"source.phs"}));
     result_int64 failed{error};
     require(static_cast<bool>(failed.has_error()) && failed.error().get_line() == 7);
+    auto separate = result_int64{scpp::exception{string{""}, int64{7}, string{"source.phs"}}};
+    const auto before = allocation_probe::calls;
+    auto diagnostic = failed.error();
+    require(diagnostic.ptr == error.ptr && failed.same_error_identity(separate));
+    require(allocation_probe::calls == before);
     fails<std::runtime_error>([&] { (void)(failed + b); });
     fails<std::runtime_error>([&] { (void)b.error(); });
     fails<std::invalid_argument>([&] { b = result_int64{scpp::error_t::no_error}; });

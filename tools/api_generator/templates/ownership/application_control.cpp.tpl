@@ -23,6 +23,6 @@ struct application_control {
     void release_strong() noexcept { if (--count == 0) release_value(); }
     void release_weak() noexcept { if (--weak_count == 0) dispose(this); }
 private:
-    void release_value() noexcept;
+    void release_value() noexcept { destroy(this); release_weak(); }
 };
 }

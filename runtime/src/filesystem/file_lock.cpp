@@ -44,8 +44,8 @@ struct file_lock_handle_state {
 namespace scpp::fs {
 using detail::file_lock_handle_access;
 
-static error_t failure(const char* reason) {
-    return error_t{string{reason}};
+static exception failure(const char* reason) {
+    return exception{string{reason}};
 }
 
 file_lock_handle lock_empty() {
@@ -53,9 +53,9 @@ file_lock_handle lock_empty() {
 }
 
 #if defined(__linux__)
-static error_t system_failure(const char* operation, int code) {
+static exception system_failure(const char* operation, int code) {
     const auto message = std::string(operation) + ": " + std::generic_category().message(code);
-    return error_t{string{message.data(), static_cast<int64>(message.size())}};
+    return exception{string{message.data(), static_cast<int64>(message.size())}};
 }
 
 result_bool_t lock_try(file_lock_handle& out, const string& path, bool_t shared) {

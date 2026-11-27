@@ -505,6 +505,10 @@ final class Cpp_Emitter
 		$params = $this->constructor_parameters($payload->constructor(), $includes);
 		$default_unavailable = $payload->constructor() === null && $payload->requires_constructor_inputs();
 		$factory_declaration = $payload->declaration->is_abstract || $default_unavailable ? '' : "\tstatic $owner make($params);\n";
+		if ($payload->exception_descendant() && $factory_declaration !== '') {
+			$includes['scpp/exception.hpp'] = true;
+			$factory_declaration .= "\tstruct at { ::scpp::exception_site site; $owner make($params) const; };\n";
+		}
 		if ($payload->constructor() === null && ($data = $payload->declaration->data_constructor) !== null && !$payload->declaration->is_abstract) {
 			$data_params = $this->data_parameters($data, $includes);
 			$factory_declaration .= "\tstatic $owner scpp_escape_from_data($data_params);\n";
@@ -658,7 +662,12 @@ CPP;
 		$forward = implode(', ', array_map($this->forward_argument(...), $constructor?->parameters ?? []));
 		$payload_args = $constructor !== null && self::self_value_constructor($constructor) ? '0, ' . $forward : $forward;
 		$prefix = $constructor === null ? 'inline ' : "{$owner}::allocation::allocation($params) : ::scpp::application_control(destroy_value, dispose_allocation), value($payload_args) {}\n";
-		return $this->owner_factory("{$prefix}$owner {$owner}::make($params)", $owner, $forward);
+		$factory = $this->owner_factory("{$prefix}$owner {$owner}::make($params)", $owner, $forward);
+		if ($type->payload->exception_descendant()) {
+			$linkage = $constructor === null ? 'inline ' : '';
+			$factory .= "{$linkage}$owner {$owner}::at::make($params) const { ::scpp::exception_site::scope active(site); return {$owner}::make($forward); }\n";
+		}
+		return $factory;
 	}
 
 	/** Install the initial strong owner after successful payload construction. */
@@ -2662,7 +2671,7 @@ CPP;
 				? 'take_slot_' . $slot->id . '.emplace(source.value());' : $this->name($slot) . ' = source.value();';
 			$body = 'const auto ok = source.has_value(); if (ok) ' . $store;
 			$count = count($value->slots);
-			if ($count > 1 && $value->slots[1]->type_def() === type_take_error::instance()) $body .= ' ' . $this->name($value->slots[1]) . ' = ok ? scpp::error_t{} : source.error();';
+			if ($count > 1 && $value->slots[1]->type_def() === type_registry::exception()) $body .= ' ' . $this->name($value->slots[1]) . ' = ok ? scpp::exception{} : source.error();';
 			if ($count > 1 && $value->slots[$count - 1]->type_def() === type_bool::instance()) $body .= ' ' . $this->name($value->slots[$count - 1]) . ' = ok;';
 			return '([&](const auto& source) { ' . $body . ' return ok; }(' . $input . '))';
 		}
@@ -2776,15 +2785,19 @@ CPP;
 			}
 			if ($shared && $type instanceof type_exception) {
 				$message = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
-				return $type->factory->symbol . '(' . $message . ')';
+				return $type->factory->symbol . '(' . $message . ', ' . self::exception_origin($value) . ')';
 			}
 			if ($shared) $declarations[$type->name] = $type;
 			if ($value->arguments === [] && !$shared) return '{}';
 			$record = $shared ? $type->payload : $type;
 			$constructor = $record->constructor();
-			if ($constructor === null) return $type->cpp_type() . '::make()';
+			$factory = $type->cpp_type() . ($shared ? '::make' : '');
+			if ($shared && $record->exception_descendant()) {
+				$factory = $type->cpp_type() . '::at{{' . self::exception_origin($value) . '}}.make';
+			}
+			if ($constructor === null) return $factory . '()';
 			$this->collect_signature_types($constructor, $declarations);
-			return $this->invocation($value, $constructor, $type->cpp_type() . ($shared ? '::make' : ''), $type,
+			return $this->invocation($value, $constructor, $factory, $type,
 				$global_references, $declarations, $required_headers);
 		}
 		if ($value instanceof ast_field_expression) {
@@ -3213,6 +3226,15 @@ CPP;
 					$short = substr($symbol, strrpos($symbol, '::') + 2);
 					// Generated app declarations and locals are encoded. A namespace component can still hide the spelling.
 					$symbol = $foreign || $this->qualified_adapters || in_array($short, explode('::', $this->root), true) ? '::' . $symbol : $short;
+				}
+				if ($function->type_qualified && $function === type_registry::exception()?->factory) {
+					$argument = $value->arguments[0];
+					$message = $this->value($argument, $global_references, $declarations, $required_headers);
+					$type = $function->parameters[0];
+					$conversion = $value->conversion(0);
+					foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+					$message = $this->conversion($type, $conversion, $message, $argument);
+					return $symbol . '(' . $message . ', ' . self::exception_origin($value) . ')';
 				}
 				$borrow_receiver = $value->receiver?->member_borrow !== null;
 				// Slot binding only takes addresses after the format. A literal format can share the call expression with the pin.
@@ -4223,6 +4245,12 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	private static function exception_origin(ast_node $site): string
+	{
+		$source = $site->source();
+		return $source->location($site->byte_start())['line'] . ', ' . Cpp_String_Literals::bytes($source->logical_path ?? $source->path);
+	}
+
 	/** @param list<string> $steps @param ?list<string> $statement_setup */
 	private static function staged_call(string $call, array $steps, string $return_clause, ?array &$statement_setup): string
 	{

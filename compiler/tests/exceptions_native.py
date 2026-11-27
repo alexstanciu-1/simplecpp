@@ -9,7 +9,7 @@ import tempfile
 
 from app_namespace_native import artifacts, invoke, service
 from classes_native import fixture
-from extends_native import runtime, source_edit
+from extends_native import source_edit
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     os.environ['XDEBUG_MODE'] = 'off'
     with tempfile.TemporaryDirectory() as directory:
         work = Path(directory)
-        library = Path(__file__).resolve().parents[2]/'build/clang/libscpp_runtime.a' if quick else runtime(work, 'clang++')
+        library = ROOT / 'build/clang/libscpp_runtime.a'
         for flavor in (['php'] if quick else ['cpp', 'php', 'js']):
-            prove(work / flavor, flavor, library, quick, partial(native, cxx_flags=('-stdlib=libc++',) if quick else ()))
+            prove(work / flavor, flavor, library, quick, partial(native, cxx_flags=('-stdlib=libc++',)))
             print(f'{flavor}: diagnostic identity, original location, and ancestry recovery passed', flush=True)

@@ -61,7 +61,7 @@ namespace scpp::ui {
 using namespace detail;
 result_ui_app ui_app_create() {
     if (!initialize())
-        return result_ui_app{error_t{string{"GTK display unavailable or called outside UI thread"}}};
+        return result_ui_app{exception{string{"GTK display unavailable or called outside UI thread"}}};
     return result_ui_app{ui_app_access::adopt(new ui_app_state)};
 }
 result_ui_window ui_window_create(const ui_app &app, const string &title, int64 width, int64 height) {
@@ -70,7 +70,7 @@ result_ui_window ui_window_create(const ui_app &app, const string &title, int64 
     if (!ui_thread() || !a || a->queue->exited || width <= 0 || height <= 0 || !std::in_range<int>(width) ||
         !std::in_range<int>(height) || name.find('\0') != name.npos ||
         !g_utf8_validate(name.data(), name.size(), nullptr))
-        return result_ui_window{error_t{string{"invalid window parameters or app"}}};
+        return result_ui_window{exception{string{"invalid window parameters or app"}}};
     auto *w = new ui_window_state;
     auto handle = ui_window_access::adopt(w);
     w->queue = a->queue;
@@ -84,14 +84,14 @@ result_ui_window ui_window_create(const ui_app &app, const string &title, int64 
 result_bool_t ui_window_show(const ui_window &window) {
     auto *w = ui_window_access::get(window);
     if (!ui_thread() || !w || w->closed)
-        return result_bool_t{error_t{string{"window is closed or on another thread"}}};
+        return result_bool_t{exception{string{"window is closed or on another thread"}}};
     gtk_widget_show_all(w->widget);
     return result_bool_t{true};
 }
 result_bool_t ui_window_close(const ui_window &window) {
     auto *w = ui_window_access::get(window);
     if (!ui_thread() || !w)
-        return result_bool_t{error_t{string{"invalid window"}}};
+        return result_bool_t{exception{string{"invalid window"}}};
     if (!w->closed)
         gtk_widget_destroy(w->widget);
     return result_bool_t{true};

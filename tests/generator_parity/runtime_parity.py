@@ -203,7 +203,7 @@ def carrier_cases(proof, m, p):
         (['carriers','specializations'],p['carriers']['specializations'] * 2),
         (['carriers','specializations',0,'payload'],'null_t'),
         (['carriers','specializations',0,'payload'],'nullable_int64'),
-        (['carriers','specializations',0,'payload'],'error_t'),
+        (['carriers','specializations',0,'payload'],'exception'),
         (['carriers','specializations',0,'payload'],'missing'),
         (['carriers','specializations',0,'family'],'unknown'),
         (['carriers','header'],p['vectors']['header']),
@@ -284,7 +284,7 @@ def ownership_cases(proof, m, p, default):
         (['ownership','records',0,'constructors'],[['shared_record_probe']]),
         (['ownership','records'],p['ownership']['records'] * 2),
     ],'publication')
-    for name in ['class','std','detail','record__x','_record','Record','r-x','error_t','null','co_await','']:
+    for name in ['class','std','detail','record__x','_record','Record','r-x','exception','null','co_await','']:
         proof.mutations(m,p,[(['ownership','records',0,'name'],name)],'publication')
     for collision in ['string','vector_int64','nullable_int64','int_t']:
         q = copy.deepcopy(default); q['ownership'] = copy.deepcopy(p['ownership'])

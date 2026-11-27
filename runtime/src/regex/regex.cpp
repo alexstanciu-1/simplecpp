@@ -91,7 +91,7 @@ outcome search(const scpp::string& pattern, const scpp::string& subject,
 scpp::result_bool_t scpp::regex::test(const string& pattern, const string& subject) {
     const auto result = search(pattern, subject);
     if (result == outcome::invalid_pattern || result == outcome::engine_error)
-        return result_bool_t{error_t{string{result == outcome::invalid_pattern ?
+        return result_bool_t{exception{string{result == outcome::invalid_pattern ?
             "regex_test: invalid pattern" : "regex_test: matching failed"}}};
     return result_bool_t{result == outcome::match};
 }
@@ -105,12 +105,12 @@ scpp::result_or_false_int64 scpp::regex::preg_match(const string& pattern, const
 
 scpp::result_int64 scpp::regex::find_span(const string& pattern, const string& subject, int64 offset, int64& end) {
     if (offset < 0 || offset > subject.size())
-        return result_int64{error_t{string{"regex_find_span: offset outside subject"}}};
+        return result_int64{exception{string{"regex_find_span: offset outside subject"}}};
     match_span span;
     const auto result = search(pattern, subject, static_cast<PCRE2_SIZE>(offset), &span);
     if (result == outcome::miss) return result_int64{int64{-1}};
     if (result != outcome::match)
-        return result_int64{error_t{string{result == outcome::invalid_pattern ?
+        return result_int64{exception{string{result == outcome::invalid_pattern ?
             "regex_find_span: invalid pattern" : "regex_find_span: matching failed"}}};
     result_int64 start{span.start};
     end = span.end;
