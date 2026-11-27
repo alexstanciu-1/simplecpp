@@ -40,6 +40,22 @@ def exercise(work, flavor):
         main += f'{row}={v}before{family}["team"]; echo (int){row}[0];'
         main += f'{target}={replace}({owner}); {row}={owner}{access}data["team"]; echo (int){row}[0],(int){row}[1];'
         expected += b'HGKB69' + (b'2' if family == 'mixed' else b'6') + b'HGKF74'
+        # Read 2 before the RHS, then write into the replacement on the original owner.
+        change = 'change' + family
+        body = f'{field}={v}replacement; {v}owner=new {holder}(); {field}={build}(9); echo "R"; return 6;'
+        api += f['function'](change, 'int', [('&owner', holder), ('replacement', family)], body).replace('$&', '&$')
+        main += f'{owner}{access}data={build}(2); {saved}={owner};'
+        fresh = v + 'fresh' + family
+        main += declaration(flavor, 'fresh' + family, family, f'{build}(40)')
+        main += f'{target}+={change}({owner},{fresh});'
+        main += f'{row}={saved}{access}data["team"]; echo (int){row}[0],(int){row}[1];'
+        main += f'{row}={owner}{access}data["team"]; echo (int){row}[0];'
+        main += f'{row}={fresh}["team"]; echo (int){row}[0];'
+        expected += b'HGKR8409' + (b'40' if family == 'mixed' else b'8')
+        for update, result in [('++' + target, b'10'), (target + '++', b'11'),
+                               ('--' + target, b'10'), (target + '--', b'9')]:
+            main += f'{update}; {row}={owner}{access}data["team"]; echo (int){row}[0];'
+            expected += b'HGK' + result
     revisions(work, flavor, {'main': main + 'return 8;', 'model': model, 'api': api}, [
         (None, None, expected), ('model', model.replace('data', 'renamed'), 'Unknown field'),
         ('model', model, expected)])
@@ -83,13 +99,27 @@ def removed(work, family):
     guard(work, 'php', family, model + api + main + 'return 0;', 'boxed_missing_key', expected_stdout=b'R00')
 
 
+def missing_leaf(work, family, case):
+    model = f'class Holder {{ public {family} $data; }}'
+    api = ('function rhs(Holder $h):int { $row=$h->data["team"]; $row->remove(0); '
+           '$h->data["team"]=$row; echo "R"; return 6; }')
+    main = f'$h=new Holder(); $root {family}=[]; $row {family}=[];'
+    if case == 'removed_leaf':
+        main += '$row[0]=2;'
+    main += '$root["team"]=$row; $h->data=$root; try { $h->data["team"][0]+=rhs($h); }'
+    main += 'finally { $current=$h->data["team"]; echo count($current); } return 0;'
+    guard(work, 'php', case, model + api + main, 'boxed_missing_key',
+          expected_stdout=b'R0' if case == 'removed_leaf' else b'0')
+
+
 def lifetime(work):
     model = 'class Holder { public mixed $data; public function __destruct() { echo "D"; } }'
     api = 'function rebind(Holder &$holder):int { $holder=new Holder(); echo "R"; return 6; }'
     main = '$holder=new Holder(); $root mixed=[]; $row mixed=[]; $root["team"]=$row; $holder->data=$root;'
     main += '$holder->data["team"][0]=rebind($holder); echo "E"; return 8;'
     revisions(work, 'php', {'main': main, 'api': api, 'model': model}, [
-        (None, None, b'RDED'), ('main', main.replace('[0]=rebind', '[]=rebind'), b'RDED')])
+        (None, None, b'RDED'), ('main', main.replace('[0]=rebind', '[]=rebind'), b'RDED'),
+        ('main', main.replace('$row mixed=[];', '$row mixed=[]; $row[0]=2;').replace('[0]=rebind', '[0]+=rebind'), b'RDED')])
 
 
 def field_access(work):
@@ -106,7 +136,8 @@ def field_access(work):
         (None, None, b'8'), ('main', program.replace('dynamic', 'mixed'), 'Cannot modify readonly property data'),
         ('main', program.replace('[0]=8', '[]=8'), b'8'),
         ('main', program.replace('[0]=8', '[]=8').replace('dynamic', 'mixed'), 'Cannot modify readonly property data'),
-        ('main', program.replace('[0]=8', '[0]+=8'), 'Nested boxed indexing is deferred'),
+        ('main', program.replace('$row dynamic=[];', '$row dynamic=[]; $row[0]=2;').replace('[0]=8', '[0]+=8'), b'10'),
+        ('main', program.replace('dynamic', 'mixed').replace('[0]=8', '[0]+=8'), 'Cannot modify readonly property data'),
         ('main', program.replace('[0]=8', '[0][1]=8'), 'Nested boxed indexing is deferred'),
         ('main', program, b'8')])
 
@@ -114,6 +145,8 @@ def field_access(work):
 with TemporaryDirectory(prefix='nested-boxed-field-') as tmp:
     if sys.argv[1] == 'append':
         append(Path(tmp), sys.argv[2])
+    elif sys.argv[1] in ('missing_leaf', 'removed_leaf'):
+        missing_leaf(Path(tmp), sys.argv[2], sys.argv[1])
     elif sys.argv[1] == 'removed':
         removed(Path(tmp), sys.argv[2])
     elif sys.argv[1] == 'last_owner':

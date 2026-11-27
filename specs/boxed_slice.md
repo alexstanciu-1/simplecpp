@@ -139,7 +139,7 @@ table, so existing aliases of that child observe the change. If the RHS replaces
 the child, the replacement receives the write. Failed lookup leaves earlier
 operand effects visible.
 
-Plain two-key assignment and nested append also accept a writable instance-field path under the typed
+Plain two-key assignment, nested append, compounds and standalone updates also accept a writable instance-field path under the typed
 collection receiver-lifetime rule. Select the field and retain its owner before evaluating
 the group key. Rebinding the holder leaves the selected field on the original owner. Replacing
 the contents of that field during key or RHS evaluation makes the write use its current
@@ -183,7 +183,7 @@ value is copied, the scalar operation is selected from existing metadata using i
 kind, and write-back validates presence after RHS effects. No raw element reference escapes.
 Arithmetic results retain the boxed family; ordering returns bool. String compounds use
 PHP `.=` versus C++/JS `+=`; PHP numeric `+=` rejects string payloads. Scalar division,
-shift and power guards remain in effect. On two-key local paths, compounds and standalone prefix or postfix updates save both
+shift and power guards remain in effect. On two-key local and instance-field paths, compounds and standalone prefix or postfix updates save both
 normalized keys before requiring the existing leaf. Compounds then evaluate the RHS and
 apply the operator to the saved value. Write-back requires the same keys in the current root
 and follows the mixed or dynamic ownership rule above. A missing leaf suppresses RHS

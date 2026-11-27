@@ -135,13 +135,12 @@ final class ast_index_expression extends ast_expression
 	}
 
 	/** STATIC METHODS */
-	/** Plain writes and appends also allow stable instance fields; other boxed mutations require locals. */
-	public static function boxed_path_root(ast_expression $row, bool $allow_field = false): ast_name_expression|ast_field_expression|null
+	/** Two-key boxed mutations require a local or stable instance field. */
+	public static function boxed_path_root(ast_expression $row): ast_name_expression|ast_field_expression|null
 	{
 		if (!($row instanceof ast_index_expression) || $row->source()->flavor === flavor::python) return null;
 		$root = $row->receiver;
 		if (!($root->type_def() instanceof boxed_type_definition)) return null;
-		if ($root instanceof ast_field_expression && !$allow_field) return null;
 		return self::collection_storage_root($root);
 	}
 

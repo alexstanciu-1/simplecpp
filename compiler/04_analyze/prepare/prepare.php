@@ -321,7 +321,7 @@ final class Preparation
 				if ($receiver instanceof ast_index_expression) {
 					$this->value($receiver);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
-					$collection_root ??= ast_index_expression::boxed_path_root($statement->receiver, allow_field: true);
+					$collection_root ??= ast_index_expression::boxed_path_root($statement->receiver);
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
 					if ($collection_root !== null) $this->require_index_write_available($collection_root);
 					$root = $collection_root ?? $receiver;
@@ -370,7 +370,7 @@ final class Preparation
 				} else {
 					$this->value($statement->receiver);
 					$root = $statement->receiver instanceof ast_index_expression
-						? (ast_index_expression::nested_collection_root($statement->receiver) ?? ast_index_expression::boxed_path_root($statement->receiver, allow_field: true))
+						? (ast_index_expression::nested_collection_root($statement->receiver) ?? ast_index_expression::boxed_path_root($statement->receiver))
 						: $statement->receiver;
 					$binding = $root instanceof ast_name_expression ? $root->local_binding() : null;
 					if ($binding === null && !($root instanceof ast_field_expression)) {
