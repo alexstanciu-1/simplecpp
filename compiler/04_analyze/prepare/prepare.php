@@ -1152,12 +1152,12 @@ final class Preparation
 		else {
 			$this->value($declaration->initializer, $name,
 				allow_callback: $type === null && $declaration->initializer instanceof ast_lambda_expression,
-				destination: $declaration instanceof ast_chain_value ? $this->find_local($declaration->first_target)?->type_def() : $type);
+				destination: $declaration instanceof ast_assignment_snapshot ? $this->find_local($declaration->context_target)?->type_def() : $type);
 		}
 		if ($type === null) {
 			$type = $declaration->initializer->type_def();
 			if (!$type->supports_inferred_local() && !($type instanceof fixed_array_type)
-				&& !($declaration instanceof ast_chain_value && $type === type_null::instance())) {
+				&& !($declaration instanceof ast_assignment_snapshot && $type === type_null::instance())) {
 				throw new diagnostic($source, $declaration->initializer->byte_start(),
 					'Cannot infer a local type from null; write an explicit type');
 			}

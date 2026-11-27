@@ -31,6 +31,9 @@ foreach(proof IN LISTS proofs)
     ${PROJECT_SOURCE_DIR}/compiler/tests/${proof}_native.py)
   set_tests_properties(compiler_${proof}_native_full PROPERTIES LABELS on_demand ENVIRONMENT "XDEBUG_MODE=off")
 endforeach()
+add_test(NAME compiler_python_parallel_assignment_full COMMAND ${Python3_EXECUTABLE} -B
+  ${PROJECT_SOURCE_DIR}/compiler/tests/python_parallel_assignment.py)
+set_tests_properties(compiler_python_parallel_assignment_full PROPERTIES LABELS on_demand ENVIRONMENT "XDEBUG_MODE=off")
 if(mt_segments)
   add_test(NAME compiler_mt_segments_native_full COMMAND ${Python3_EXECUTABLE} -B
     ${PROJECT_SOURCE_DIR}/compiler/tests/mt_segments_native.py ${native_facts} $<TARGET_FILE:scpp_runtime> ${CMAKE_CXX_COMPILER})

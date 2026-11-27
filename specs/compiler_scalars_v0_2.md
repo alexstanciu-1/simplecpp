@@ -159,6 +159,16 @@ type from the first target. Shared handles retain the same object identity.
 If evaluating the RHS fails, no write occurs. If a target conversion fails,
 earlier writes remain visible and subsequent targets keep their previous values.
 
+### Python flat parallel assignment
+
+For `a, b = left(), right()`, evaluate the explicit RHS expressions once each,
+from left to right, before writing any target. A contextual literal uses the
+corresponding target's type. Then assign the retained values to existing writable
+locals in target order, applying ordinary assignment conversion at each write.
+If an RHS throws, none of the target writes runs. A conversion failure preserves
+completed writes. Repeated target names are permitted. The lists must have equal
+length. A trailing comma is permitted, including `a, = value,`.
+
 ## Initializer-based local inference
 
 PHP `$value = initializer;` declares a local on its first write in the current body.

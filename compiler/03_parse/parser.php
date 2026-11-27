@@ -380,6 +380,7 @@ final class Parser
 	private function python_statement(Python_Grammar $grammar, Body_Collection $collector): ast_statement
 	{
 		$c = $this->cursor;
+		if ($c->is(token_kind::identifier) && $c->next_is(token_kind::comma)) return $this->python_parallel_assignment($collector);
 		if ($c->is(token_kind::indent)) {
 			throw new diagnostic($c->tokens->source, $c->offset(), 'Unexpected Python indentation');
 		}
@@ -2323,6 +2324,58 @@ final class Parser
 		return $kind === null ? null : binary_operator::compound($kind);
 	}
 
+	/** Flat name lists have a statically known arity, including an explicit singleton with a trailing comma. */
+	private function python_parallel_assignment(Body_Collection $collector): ast_block_statement
+	{
+		$c = $this->cursor;
+		$targets = [];
+		do {
+			$at = $c->position();
+			$name = $c->binding_name(token_kind::identifier);
+			if (!$collector->has_local($name)) {
+				throw new diagnostic($c->tokens->source, $c->tokens->tokens[$at]->offset, 'Parallel assignment requires an existing local: ' . $name);
+			}
+			$targets[] = [$at, $name];
+			if (!$c->is(token_kind::comma)) break;
+			$c->take(token_kind::comma, ',');
+		} while (!$c->is(token_kind::assign));
+		$c->take(token_kind::assign, '=');
+		$values = [$this->assignment_value()];
+		if (!$c->is(token_kind::comma)) {
+			throw new diagnostic($c->tokens->source, $c->offset(), 'Parallel assignment requires an explicit list of RHS expressions');
+		}
+		while ($c->is(token_kind::comma)) {
+			$c->take(token_kind::comma, ',');
+			if ($c->is(token_kind::newline)) break;
+			$values[] = $this->assignment_value();
+		}
+		if (count($values) !== count($targets)) throw new diagnostic($c->tokens->source, $c->offset(), 'Parallel assignment target and value counts differ');
+		return $this->python_assignment_block($collector, $targets, $values);
+	}
+
+	/** Snapshot expressions in source order before any write. A chain shares one snapshot across its targets.
+	 * @param array<int,array{int,string}> $targets
+	 * @param ast_expression[] $values */
+	private function python_assignment_block(Body_Collection $collector, array $targets, array $values): ast_block_statement
+	{
+		$end = $this->statement_end(token_kind::newline);
+		$statements = [];
+		foreach ($values as $i => $value) {
+			[$position, $destination] = $targets[$i];
+			$statements[] = new ast_assignment_snapshot($position, $value->end, $destination, $value);
+		}
+		$single = count($values) === 1;
+		foreach ($targets as $i => [$position, $name]) {
+			$snapshot = $statements[$single ? 0 : $i];
+			$value = $snapshot->initializer;
+			$read = new ast_name_expression($snapshot->short_name, $value->start, $value->end);
+			$statements[] = new ast_assignment_statement($position, $end, $name, $read, assignment_intent::existing_binding);
+		}
+		$child = $collector->child();
+		foreach ($statements as $i => $statement) $child->statement($statement, $i);
+		return new ast_block_statement($child->block($targets[0][0], $end, $statements));
+	}
+
 	/** Collect standalone chain targets before constructing the ordered writes for this flavor. */
 	private function assignment_chain(Body_Collection $collector, token_kind $name_kind): ast_block_statement
 	{
@@ -2342,25 +2395,17 @@ final class Parser
 		if ($cursor->tokens->source->flavor === flavor::python) {
 			$targets[] = [$position, $name];
 			$cursor->take(token_kind::assign, '=');
-			$value = $this->assignment_value();
-			$end = $this->statement_end(token_kind::newline);
-			$snapshot = new ast_chain_value($start, $end, $targets[0][1], $value);
-			$writes = [$snapshot];
-			foreach ($targets as [$position, $name]) {
-				$read = new ast_name_expression($snapshot->short_name, $value->start, $value->end);
-				$writes[] = new ast_assignment_statement($position, $end, $name, $read, assignment_intent::existing_binding);
-			}
-		} else {
-			$write = $this->assignment($position, $name, assignment_intent::existing_binding);
-			$end = $write->end;
-			$writes = [$write];
-			while ($targets !== []) {
-				[$outer, $destination] = array_pop($targets);
-				$read = new ast_name_expression($name, $position, $position + 1);
-				$writes[] = new ast_assignment_statement($outer, $position + 1, $destination, $read, assignment_intent::existing_binding);
-				$name = $destination;
-				$position = $outer;
-			}
+			return $this->python_assignment_block($collector, $targets, [$this->assignment_value()]);
+		}
+		$write = $this->assignment($position, $name, assignment_intent::existing_binding);
+		$end = $write->end;
+		$writes = [$write];
+		while ($targets !== []) {
+			[$outer, $destination] = array_pop($targets);
+			$read = new ast_name_expression($name, $position, $position + 1);
+			$writes[] = new ast_assignment_statement($outer, $position + 1, $destination, $read, assignment_intent::existing_binding);
+			$name = $destination;
+			$position = $outer;
 		}
 		$child = $collector->child();
 		foreach ($writes as $i => $statement) $child->statement($statement, $i);
