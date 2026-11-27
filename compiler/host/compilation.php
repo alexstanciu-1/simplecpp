@@ -48,7 +48,8 @@ final class Compilation_Inspection
 	 */
 	public static function program(prepared_entry $program): array /** array<string,mixed> */
 	{
-		$result = self::body($program->body());
+		$body = $program->body();
+		$result = $body === null ? ['statements' => [], 'work' => ['statements' => 0, 'expressions' => 0, 'name_lookups' => 0]] : self::body($body);
 		$result['native_int_digits'] = $program->target->digits;
 		$result['functions'] = [];
 		$result['globals'] = array_map(self::global_row(...), $program->file->globals());

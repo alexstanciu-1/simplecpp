@@ -54,6 +54,27 @@ class ast_type_reference extends ast_node
 
 }
 
+/** The closing angle shares a token with assignment. Retain its exact source boundary. */
+final class ast_joined_type_reference extends ast_type_reference
+{
+	public function __construct(int $start, int $end, string $name, ?ast_type_reference $child,
+		?ast_type_reference $next, private readonly int $closing_end /** uint32 */)
+	{
+		parent::__construct($start, $end, $name, $child, $next);
+	}
+
+	public function byte_end(): int /** uint32 */
+	{
+		return $this->closing_end;
+	}
+
+	public function source_text(): string
+	{
+		$start = $this->byte_start();
+		return substr($this->source()->content, $start, $this->closing_end - $start);
+	}
+}
+
 /** A trailing T... parameter owns the same storage as vector<T>. */
 final class ast_variadic_type_reference extends ast_type_reference
 {

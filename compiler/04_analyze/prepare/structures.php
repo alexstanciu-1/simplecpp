@@ -96,10 +96,10 @@ final readonly class prepared_entry
 		}
 	}
 
-	public function body(): ast_function_body
+	public function body(): ?ast_function_body
 	{
 		$this->require_prepared();
-		return ($this->file->main() ?? throw new \LogicException('Missing entry'))->body();
+		return $this->file->main()?->body();
 	}
 }
 

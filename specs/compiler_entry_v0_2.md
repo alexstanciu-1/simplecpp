@@ -32,8 +32,7 @@ preparation diagnostics. A reference binds to its collected declaration identity
 Known integer values propagate through local initialization and name reads so
 statically failing exit conversions are diagnosed before emission.
 
-The executable slice requires an explicit value return and supports no following
-statements. Initializer-based inferred locals are covered by the [inference extension](compiler_scalars_v0_2.md#initializer-based-local-inference).
+A PHP-flavor entry exits with status zero on fallthrough, including an empty or declaration-only entry. Other flavors require an explicit value return. Statements after an unconditional return are rejected. Initializer-based inferred locals are covered by the [inference extension](compiler_scalars_v0_2.md#initializer-based-local-inference).
 Plain assignment to existing locals is covered by the [assignment extension](compiler_scalars_v0_2.md#local-assignment-extension). The function extension below admits bare return
 inside explicit void functions, but not in the executable entry. Arithmetic, unary
 signs, nested blocks, runtime input expressions and incremental compilation remain
@@ -122,7 +121,7 @@ rules remain unchanged. Executable statements after a return remain unsupported.
 Function definitions are global declarations, not executable statements. They may
 appear before or after top-level executable statements, including after the entry's
 value return. Definitions may appear in secondary sources. Only the selected entry
-owns top-level executable statements and still requires its integer value return.
+owns top-level executable statements and supplies the process exit status.
 Nested function definitions are not supported.
 
 Names are case-sensitive and resolve in one global function-name domain over the

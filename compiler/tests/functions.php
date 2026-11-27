@@ -122,7 +122,6 @@ foreach ([
 		['function f(): void { $x int=8; } function g(): void { $y int=$x; } return 8;', 'not-yet-initialized'],
 		['function f(): void { return; f(); } return 8;', 'after return'],
 		['return;', 'Entry requires a value'],
-		['function f(): void {}', 'explicit value return'],
 	] as [$text, $message])
 {
 	try {

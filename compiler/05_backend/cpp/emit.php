@@ -863,7 +863,9 @@ CPP;
 		}
 		if ($entry !== null) {
 			$this->adapter_flavor = null;
-			$lines = $this->statements($entry->body(), $declarations, $global_references, $required_headers);
+			$body = $entry->body();
+			$lines = $body === null ? [] : $this->statements($body, $declarations, $global_references, $required_headers);
+			if ($body === null || $body->implicit_zero_exit) $lines[] = "\treturn 0;";
 			$unit_flavor ??= $this->adapter_flavor;
 			$definitions[] = 'int ' . $entry_name . "()\n{\n" . $this->local_imports() . implode("\n", $lines) . "\n}\n";
 		}

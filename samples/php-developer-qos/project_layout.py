@@ -33,7 +33,7 @@ def projects(work):
     tests = app/'tests'
     tests.mkdir()
     (tests/'control.php').write_text('<?php\necho "PHP test only";')
-    attempt('ordinary PHP under tests', app, work, 'Expected variable name')
+    attempt('ordinary PHP under tests', app, work, 'Top-level executable statements are only allowed in the selected entry')
     (tests/'module.json').write_text('{}')
     attempt('nested module boundary', app, work, 'live')
     (tests/'module.json').unlink()

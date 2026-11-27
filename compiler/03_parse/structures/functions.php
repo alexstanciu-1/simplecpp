@@ -651,6 +651,8 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	/** PREP FACTS */
 	/** Preparation state: true only after successful whole-body preparation. */
 	private bool $prepared = false;
+	/** Prepared fact: the selected PHP entry reaches its implicit zero exit. */
+	public bool $implicit_zero_exit = false;
 	/** Prepared cache: entry-target context; null for ordinary function bodies. */
 	private ?int $exit_digits /** uint8 */ = null;
 	/** Preparation statistics: statements visited by the last successful body preparation; zero before completion. */
@@ -696,6 +698,7 @@ final class ast_function_body extends ast_statement_block implements dependency_
 	public function invalidate_dependencies(): void
 	{
 		$this->prepared = false;
+		$this->implicit_zero_exit = false;
 		$this->queue_change();
 		$this->root()->begin_preparation();
 	}

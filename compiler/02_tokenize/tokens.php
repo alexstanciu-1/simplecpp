@@ -96,7 +96,17 @@ final class Tokenizer
 	{
 		$source = $this->source;
 		$pattern = self::pattern($source->flavor);
-		$result = preg_match_all($pattern, $source->content, $matches, \PREG_OFFSET_CAPTURE);
+		$start_offset = 0;
+		if ($source->flavor === flavor::php && str_starts_with($source->content, '<?php')
+			&& (strlen($source->content) === 5 || str_contains(" \t\r\n", $source->content[5]))) {
+			static $warned = false;
+			if (!$warned) {
+				fwrite(\STDERR, $source->path . ":1:1: warning: the <?php opening tag is deprecated; remove it\n");
+				$warned = true;
+			}
+			$start_offset = 5;
+		}
+		$result = preg_match_all($pattern, $source->content, $matches, \PREG_OFFSET_CAPTURE, $start_offset);
 		if ($result === false) {
 			if (preg_last_error() === \PREG_BAD_UTF8_ERROR) {
 				throw new diagnostic($source, self::invalid_utf8_offset($source->content),
@@ -106,7 +116,7 @@ final class Tokenizer
 		}
 		$tokens = [];
 		$layout = $source->flavor === flavor::python ? new Python_Layout($source) : null;
-		$end = 0;
+		$end = $start_offset;
 		foreach ($matches[0] as [$word, $start])
 		{
 			if ($start !== $end) {

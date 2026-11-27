@@ -6,6 +6,8 @@ A PHP developer can ship a native CLI or FastCGI application with this flavor. F
 
 For a side-by-side introduction, open the same settings-patch application in [stock PHP](../../samples/php-developer-qos/stock-php/settings-patch.php) and [Simple C++ PHP flavor](../../samples/php-developer-qos/settings-patch/main.php). Follow `{"enabled":false,"limit":0}` through validation and serialization. Then omit `limit`, and finally send `"limit":null`. The executable controls check all three meanings.
 
+The [updated task verdicts and November onboarding follow-up](php_flavor_developer_qos_reaudit.md) supersede the first-script, compact declaration and include diagnostics recorded in this original field report.
+
 ## Start here
 
 1. Write statements directly in `main.php`. An inferred local keeps its type. Write `$limit ?int = null;` when the initializer alone cannot name the type. Named functions declare parameter and return types. Ordinary PHP function parameter spelling works, e.g. `function quote(int $cents): string`.

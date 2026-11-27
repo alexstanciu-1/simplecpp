@@ -153,7 +153,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		['if (null) {} return 8;', 'Unsupported condition type'],
 		[$fn('nothing', '', 'void', '') . 'if (nothing()) {} return 8;', 'Void call'],
 		['if (false) { missing(); } return 8;', 'Unknown function'],
-		['if (true) { return 8; }', 'Entry slice requires'],
+		...($flavor === flavor::php ? [] : [['if (true) { return 8; }', 'Entry slice requires']]),
 		[$fn('bad', $p, 'int', 'if (' . $var('flag') . ') { return 8; }') . 'return 8;', 'requires a value return'],
 		['if (true) {' . $decl('inside', 'int', '1') . '} echo ' . $var('inside') . '; return 8;', 'Unknown or not-yet-initialized'],
 		['if (true) {' . $decl('x', 'int', '1') . $decl('x', 'int', '2') . '} return 8;', 'Duplicate local'],

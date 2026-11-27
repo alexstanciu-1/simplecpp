@@ -106,7 +106,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		'if (true) { continue; } else { return 8; }', 'if (true) { break; } return 8;'] as $body) {
 		rejects(fn() => $prepare($fn('bad', '', 'int', 'do {' . $body . '} while (false);') . 'return 8;'), 'Non-void function requires');
 	}
-	rejects(fn() => $prepare('do { break; } while (false);'), 'Entry slice requires');
+	if ($flavor !== flavor::php) rejects(fn() => $prepare('do { break; } while (false);'), 'Entry slice requires');
 	rejects(fn() => $prepare($fn('bad', '', 'void', 'break;') . 'while (true) { bad(); break; } return 8;'), 'requires an enclosing loop');
 	// Continue rechecks the condition and must not retain a stale narrow conversion proof.
 	$failure = $decl('x', 'int', '1') . $decl('iteration', 'int', '0') . 'while (' . $var('iteration') . '<2) {'

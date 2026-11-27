@@ -184,9 +184,10 @@ def prove(work, flavor, library, quick=False, run_native=native):
             ('try {} ' + base + ' {} ' + inner + ' {} return 0;', 'shadowed'),
             ('throw 3;', 'shared descendant'),
             ('try { return 0; } ' + catch(flavor, 'Snapshot', 'wrong') + ' { return 2; }', 'shared descendant'),
-            ('try { return 0; } ' + base + ' {}', 'explicit value return'),
             ('try { echo "normal"; } ' + base + ' {} throw ' + v + 'base;', 'Unknown or not-yet-initialized local'),
         ]
+        if flavor != 'php':
+            invalid.append(('try { return 0; } ' + base + ' {}', 'explicit value return'))
         for text, message in invalid:
             source_edit(main_path, text)
             failed = invoke(resident)

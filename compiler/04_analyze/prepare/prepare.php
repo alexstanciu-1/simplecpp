@@ -98,11 +98,9 @@ final class Preparation
 	/** Prepare only the selected executable body, consuming already settled callable contracts. */
 	public function entry(ast_file_node $file, entry_target $target, scope $symbols, ?Dependency_Watches $dependencies = null): void
 	{
-		$source = $file->tokens->source;
 		$main = $file->main();
 		if ($main === null) {
-			throw new diagnostic($source, strlen($source->content),
-				'Entry slice requires an explicit value return');
+			return;
 		}
 		$this->function_body($main->body(), $symbols, $target, $dependencies);
 	}
@@ -180,7 +178,8 @@ final class Preparation
 			&& !($function->return_type_def() instanceof generator_type_definition)) {
 			throw new diagnostic($source, $end, 'Non-void function requires a value return');
 		}
-		if (($target !== null) && (($completion & statement_completion::fallthrough) !== 0)) {
+		$owner->implicit_zero_exit = $target !== null && ($completion & statement_completion::fallthrough) !== 0;
+		if ($owner->implicit_zero_exit && $source->flavor !== flavor::php) {
 			throw new diagnostic($source, $end, 'Entry slice requires an explicit value return');
 		}
 	}

@@ -7,6 +7,12 @@ PHP rebuild implements loading, tokenization and the bounded declaration/assignm
 parser and the bounded [integer entry slice](compiler_entry_v0_2.md).
 The Python subsection records the v0.2 typed surface.
 
+## Starting a PHP-flavor source
+
+A PHP-flavor file starts directly with source code. For migration, the compiler accepts `<?php` at byte zero followed by whitespace or end of file. It warns on stderr once per compiler execution across all source files. A selected PHP entry that reaches the end exits with status zero. Explicit integer returns still select the exit status.
+
+Simple C++ type checking is always enabled. The compiler diagnoses `declare(strict_types=1);` and directs authors to remove it. The `require`, `require_once`, `include` and `include_once` forms direct authors to the source inventory in `module.json`. In typed declarations the assignment can immediately follow the closing generic delimiter, as in `$v vector<int>=[];`.
+
 ## Language and policy boundary
 
 Simple C++ is one language with C++, PHP, JS and Python syntax flavors. There is one PHP
@@ -158,8 +164,7 @@ carriers remain deferred here. Statement-form `??=` supports declared nullable
 locals using ordinary assignment conversion and lazy fallback. Parameters, fields,
 indexed targets and for headers remain deferred. See [coalescing](../compiler/docs/coalesce.md).
 
-There is no member access, general string expressions, PHP tags/HTML
-modes, C++ preprocessing, or JS prototypes. Named interpolation uses the bounded [three-flavor grammar](string_interpolation.md#active-v02-flavors).
+There is no member access, general string expressions, PHP inline HTML modes, C++ preprocessing, or JS prototypes. Named interpolation uses the bounded [three-flavor grammar](string_interpolation.md#active-v02-flavors).
 
 Type-reference syntax preserves nested arguments, including vector<vector<int>>;
 that syntax alone does not make nested container specializations available.

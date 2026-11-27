@@ -92,7 +92,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		['while (null) {} return 8;', 'Unsupported condition type'],
 		['do { return 8; } while (null);', 'Unsupported condition type'],
 		['while (false) { missing(); } return 8;', 'Unknown function'],
-		['while (true) { return 8; }', 'Entry slice requires'],
+		...($flavor === flavor::php ? [] : [['while (true) { return 8; }', 'Entry slice requires']]),
 		[$fn('bad', '', 'int', 'while (true) { return 8; }') . 'return 8;', 'requires a value return'],
 		['do {' . $decl('inside', 'bool', 'false') . '} while (' . $var('inside') . '); return 8;', 'Unknown or not-yet-initialized'],
 		['while (false) {' . $decl('inside', 'int', '8') . '} echo ' . $var('inside') . '; return 8;', 'Unknown or not-yet-initialized'],

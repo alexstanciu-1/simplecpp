@@ -34,11 +34,7 @@ final class Incremental_Preparation
 		$main = $entry->main();
 		$report = ['prepared' => 0, 'reused' => 0];
 		$errors = [];
-		if ($main === null) {
-			$errors[] = new diagnostic($entry->source(), strlen($entry->source()->content),
-				'Entry slice requires an explicit value return');
-		}
-		else {
+		if ($main !== null) {
 			if (!$main->return_type_ready()) {
 				$main->settle_return_type(type_registry::integer());
 			}

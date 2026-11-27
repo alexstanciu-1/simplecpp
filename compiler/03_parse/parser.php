@@ -284,6 +284,7 @@ final class Parser
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
 	private function statement(statement_grammar $grammar, Body_Collection $collector): ast_statement
 	{
+		$this->check_php_directive();
 		if ($this->take_start()) {
 			$value = $this->take_expression();
 			return new ast_take_statement($value, $this->statement_end(token_kind::semicolon));
@@ -1140,7 +1141,7 @@ final class Parser
 			if ($this->cursor->is(token_kind::less)) {
 				$this->cursor->take(token_kind::less, '<');
 				$child = $this->type_reference($word, true);
-				$this->cursor->take(token_kind::greater, '>');
+				$this->cursor->close_type();
 			}
 		}
 		$end = $this->cursor->position();
@@ -1182,6 +1183,9 @@ final class Parser
 		if ($reference) {
 			$mode = $readonly ? passing_mode::readonly_reference : passing_mode::reference;
 			return new ast_callable_reference_component($start, $end, $word, $child, $next, $mode);
+		}
+		if ($this->cursor->angle_remainder !== null) {
+			return new ast_joined_type_reference($start, $end + 1, $word, $child, $next, $this->cursor->offset());
 		}
 		return new ast_type_reference($start, $end, $word, $child, $next);
 	}
@@ -2002,10 +2006,26 @@ final class Parser
 		return new ast_take_expression($start, $this->value(), array_values($outputs));
 	}
 
+	/** Explain copied PHP directives at statement and expression starts. */
+	private function check_php_directive(): void
+	{
+		$c = $this->cursor;
+		if ($c->tokens->source->flavor !== flavor::php || !$c->is(token_kind::identifier)) return;
+		$name = strtolower($c->tokens->text_at($c->position()));
+		if (in_array($name, ['require', 'require_once', 'include', 'include_once'], true)) {
+			throw new diagnostic($c->tokens->source, $c->offset(), "$name is unsupported; select project sources in module.json");
+		}
+		if ($name === 'declare' && $c->next_is(token_kind::lparen)
+			&& isset($c->tokens->tokens[$c->position() + 2]) && strtolower($c->tokens->text_at($c->position() + 2)) === 'strict_types') {
+			throw new diagnostic($c->tokens->source, $c->offset(), 'Remove declare(strict_types); Simple C++ type checking is always enabled');
+		}
+	}
+
 	/** Parse one primary or prefix expression before postfix indexing. */
 	private function atom(bool $argument_operand = false): ast_expression
 	{
 		$c = $this->cursor;
+		$this->check_php_directive();
 		if ($this->take_start()) return $this->take_expression();
 		$block = $this->keyword_block_start();
 		if ($block !== null) return $this->keyword_block($block);

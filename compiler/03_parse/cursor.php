@@ -7,6 +7,8 @@ namespace scpp\compiler;
 final class Syntax_Cursor
 {
 	/** PROPERTIES */
+	/** Unconsumed suffix when a generic delimiter shares a punctuation token with assignment. */
+	public private(set) ?token_kind $angle_remainder = null;
 	/** Token position including EOF. */
 	private int $index /** uint32 */ = 0;
 	/** Native non-owning; parser input remains alive through parsing. */
@@ -34,12 +36,14 @@ final class Syntax_Cursor
 	/** Return: byte position including EOF. */
 	public function offset(): int /** uint32 */
 	{
-		return $this->tokens->tokens[$this->index]->offset ?? strlen($this->tokens->source->content);
+		$token = $this->tokens->tokens[$this->index] ?? null;
+		if ($token === null) return strlen($this->tokens->source->content);
+		return $token->offset + ($this->angle_remainder === null ? 0 : $token->length - strlen($this->angle_remainder->label()));
 	}
 
 	public function is(token_kind $kind): bool
 	{
-		return ($this->tokens->tokens[$this->index]->kind ?? null) === $kind;
+		return ($this->angle_remainder ?? $this->tokens->tokens[$this->index]->kind ?? null) === $kind;
 	}
 
 	public function next_is(token_kind $kind): bool
@@ -58,7 +62,24 @@ final class Syntax_Cursor
 		if (!$this->is($kind)) {
 			throw new diagnostic($this->tokens->source, $this->offset(), 'Expected ' . $expected);
 		}
+		$this->angle_remainder = null;
 		return $this->index++;
+	}
+
+	/** A PHP type can end immediately before assignment, including nested types ending in >>=. */
+	public function close_type(): void
+	{
+		if ($this->tokens->source->flavor === flavor::php) {
+			if ($this->is(token_kind::greater_equal)) {
+				$this->angle_remainder = token_kind::assign;
+				return;
+			}
+			if ($this->is(token_kind::right_assign)) {
+				$this->angle_remainder = token_kind::greater_equal;
+				return;
+			}
+		}
+		$this->take(token_kind::greater, '>');
 	}
 
 	public function take_keyword(string $word): void

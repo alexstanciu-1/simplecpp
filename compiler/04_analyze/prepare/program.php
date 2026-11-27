@@ -114,6 +114,9 @@ final class Program_Preparation
 	public static function admit(ast_file_node $file, bool $is_entry): void
 	{
 		$main = $file->main();
+		if ($is_entry && $main === null && $file->source()->flavor !== flavor::php) {
+			throw new diagnostic($file->source(), strlen($file->source()->content), 'Entry slice requires an explicit value return');
+		}
 		if ((!$is_entry) && ($main !== null)) {
 			$span = $main->body()->statements[0];
 			throw new diagnostic($span->source(), $span->byte_start(),
