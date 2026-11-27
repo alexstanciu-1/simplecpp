@@ -194,3 +194,20 @@ All builds matched the committed decoder's diagnostics byte for byte on 844 malf
 To reproduce, apply each candidate patch separately to the committed decoder. Build the batched typed_json_strings drivers under bin/dispatch (committed), bin/word8 (eight-byte decoder), bin/portable_tail, bin/close_tail and bin/sse_tail. Run `taskset -c 7 python3 run.py bin --short-escapes` and then `taskset -c 7 python3 run.py bin --close-recheck`.
 
 [Five-way measurements](short-escapes.dev002.json) · [Closing-quote recheck](close-recheck.dev002.json)
+
+## Integrated closing-quote shortcut
+
+The shared reader now consumes a closing quote immediately after it finishes decoding an escape. Empty suffixes skip the second scanner call. Nonempty suffixes use the existing scanner. The integrated reader and the committed AVX2 reference from `457f9790b` were compared on dev002 CPU 7 with the eight-byte decoder as a third control. Each fixture held 16 strings. The table shows median wire throughput in decimal MB/s across eleven shuffled rounds, **committed AVX2 → integrated**, for an escape at the end of each string.
+
+| Decoded bytes/string | Unicode escape last | Escaped slash last |
+|---:|---:|---:|
+| 3 | 197 → 207 (+4.8%) | 163 → 172 (+5.8%) |
+| 7 | 262 → 276 (+5.3%) | 244 → 253 (+3.7%) |
+| 8 | 272 → 284 (+4.5%) | 258 → 264 (+2.4%) |
+| 9 | 289 → 302 (+4.5%) | 282 → 289 (+2.5%) |
+
+Across the seven 4,096-byte fixtures (plain and both escape spellings at three positions), throughput changed by -0.1% to +0.7% against committed AVX2. The integrated decoder retained a +32.6% to +38.9% gain over the portable scanner. Allocation counts and bytes matched across all 42 fixtures.
+
+The integrated build passed all 425 default tests on dev002. Scalar and vector differential checks matched the baseline diagnostics byte for byte on 844 malformed documents and matched the value oracle on 780 valid documents. An additional check around adjacent escapes, closing quotes, missing terminators and malformed delimiters matched on 56 malformed and 42 valid documents. Reproduce the timings with the typed_json_strings batched drivers in bin/dispatch, bin/word8 and bin/close_tail and the benchmark runner's `--close-recheck` mode.
+
+[Raw integration measurements](integrated-close.dev002.json)

@@ -242,6 +242,10 @@ protected:
 				default:
 					fail_json_parse("invalid escape sequence", pos_ - 1);
 			}
+			if (peek() == '"') {
+				++pos_;
+				return out;
+			}
 			const auto remaining = input_.substr(pos_);
 			const auto count = plain_string_prefix(remaining);
 			if (count != 0) {

@@ -183,9 +183,10 @@ entry point and the persistent pull reader also retain an owned input snapshot.
 
 A typed string field owns its decoded bytes. A plain string is constructed
 directly from the quoted input's contents. An escaped string uses the same
-escape parser. After each escape, the reader appends the following ordinary
-bytes in one span and leaves the next quote, backslash or control byte for the
-string grammar. On x86-64 GCC and Clang builds, the reader checks CPU support
+escape parser. When a closing quote immediately follows a decoded escape, the
+reader consumes the quote and returns the completed string. Otherwise it scans
+and appends the following ordinary bytes in one span, leaving the next quote,
+backslash or control byte for the string grammar. On x86-64 GCC and Clang builds, the reader checks CPU support
 before calling the AVX2 scanner on 32 or more remaining input bytes. Each
 complete 32-byte block yields a mask locating its first marker. The portable
 scanner handles other CPUs, shorter spans and tails using eight-byte blocks
