@@ -105,11 +105,15 @@ Two accepted departures from the donor are explicit:
   construction is not limited to an already-exact payload type.
 - Null does not act as a false sentinel. Use false_sentinel explicitly.
 
-Source construction/inspection of structured errors (including error::make), take and
-automatic error propagation remain deferred. Existing runtime result error storage and
-checked extraction are unchanged. PHP numeric carrier writes and string concatenation writes follow the checked write contract. Delegated members,
-carrier text conversions/direct echo, nested carriers and further specializations are
-also deferred. Vector payload copies through a carrier are supported; this does not enable
+PHP `take` extracts an exact payload and can expose the structured error from
+`result<T>`. The error supports message, file and line inspection. Member
+access through `->` borrows a present payload. See the [PHP extraction and
+member-access contract](../../specs/carrier_slice.md#php-take-outputs).
+
+Source construction of structured errors and automatic error propagation remain
+deferred. PHP numeric carrier writes and string concatenation writes follow the
+checked write contract. Direct carrier echo, general nested carriers and further
+specializations remain deferred. Vector payload copies through a carrier are supported; this does not enable
 arbitrary ordinary vector copying/arguments or new vector operations.
 
 Presence/condition semantics are separate from native C++ implicit conversion behavior.

@@ -155,6 +155,7 @@ def ticket_report(exe, work):
             shutil.copy(suite/'ticket-report/checked-count.php', app/'main.php')
             checked = build(app, variant)
             check_cli(checked, [address, 'open'], 1, 'prepare failed\n', env)
+            check_cli(exe, [address, 'open'], 1, 'prepare failed\n', env)
             sql = """USE tickets;
 CREATE TABLE tickets (queue VARCHAR(32), state VARCHAR(32));
 INSERT INTO tickets VALUES ('mail','open'),('mail','open'),('api','open'),('api','done'),

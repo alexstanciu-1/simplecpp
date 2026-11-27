@@ -2,7 +2,7 @@
 
 Doc Status: planning
 
-The [original field report](php_flavor_developer_qos.md) describes the experience at `356b6ff15`. The full replay used `4e035377d` on dev002. Task 13 was subsequently verified at `1964c4cab`; the other rows retain their replay verdicts. The unit of assessment is the developer's task. **Fixed** means the original blocking operation now works under its intended v0.2 contract. **Still reproducible** means at least one concrete usability issue remains for discussion, including misleading diagnostics. **Intentional difference** means the tested behavior follows a language or library boundary we can explain to a PHP developer. A reproducible inconvenience is evidence for discussion, not a commitment to implement PHP compatibility.
+The [original field report](php_flavor_developer_qos.md) describes the experience at `356b6ff15`. The full replay used `4e035377d` on dev002. Follow-up runs verified task 13 at `1964c4cab` and task 32 at `d54157085`. The other rows retain their replay verdicts. The unit of assessment is the developer's task. **Fixed** means the original blocking operation now works under its intended v0.2 contract. **Still reproducible** means at least one concrete usability issue remains for discussion, including misleading diagnostics. **Intentional difference** means the tested behavior follows a language or library boundary we can explain to a PHP developer. A reproducible inconvenience is evidence for discussion, not a commitment to implement PHP compatibility.
 
 ## Evidence
 
@@ -45,20 +45,19 @@ All 11 apps passed, including the Apache/FastCGI client and service, MariaDB rep
 | 29 | Build or decode a URL, HTML or CSV | Still reproducible | Form/query encoding and decoding, HTML escaping and CSV helpers remain unavailable under the probed PHP names. The form app still needed its own component decoder. URL components, HTML text and CSV fields require separate contracts. |
 | 30 | Use timestamps or a regex | Still reproducible | PHP `time`, `date` and `strtotime` were unknown with datetime enabled; the general UTC formatter worked. The old mixed-captures workaround is obsolete for numbered strings: a fresh `vector<string>` capture probe printed `2:a`. Miss and invalid-pattern controls still distinguished present zero from failure. |
 | 31 | Call a remote endpoint | Still reproducible | The compiled curl client handled HTTP errors, invalid upstream data and connection failure. `CURLINFO_HTTP_CODE` still rejected while the published response-code spelling worked. This is a narrow naming issue; the exercise gives no reason to map every curl selector. |
-| 32 | Prepare and bind a SQL query | Still reproducible | A fresh statement observed changes to its bound variable on MariaDB. Checking prepare before extracting the statement still prevented binding a stable named variable. Temporary and escaping bindings also rejected as intended. Immediate execution arguments remain a working route. |
+| 32 | Prepare and bind a SQL query | Fixed | The ticket report guards the prepare result, extracts the statement and binds a named slot. On dev002 it handled a failed prepare and read each changed state on subsequent MariaDB executions. The temporary-slot and unproven-alias probes still reject. |
 | 33 | Bring a filesystem snippet | Intentional difference | The two-argument PHP write alias rejected the append-flag call. The journal used append mode and a checked byte count; contention left the file untouched. POSIX lexical path behavior and general-API visibility remained as specified. |
 
 ## Decisions to discuss
 
 | Group | Tasks | Smallest useful discussion |
 |---|---|---|
-| mysqli statement and bound-slot lifetimes | 32 | Can the compiler prove that a local prepare result has one extraction on the success path and that both the handle and bound slots stay confined? Check a second extraction and an escaping handle as counterexamples. |
 | Editing and inspecting boxed data | 8–10 | Choose whether to support nested reads first. Writes also need defined copy/write-back versus alias semantics. Decide which predicates are useful on decoded data within the existing set of boxed kinds. |
 | First-file and everyday diagnostics | 6, 18, 19, 22, 24, 27 | Give the PHP developer a usable next line of code: show the actual echo operand type, describe the entry-file form, point require users to manifest sources, and identify unsupported interpolation/model syntax. The generic-close/assignment ambiguity is a separate parser decision. |
 | Web data boundaries | 29 | Start with form component encode/decode, which removes handwritten parsing from a working app. Discuss query multiplicity, HTML escaping contexts and CSV rules independently. |
 | Familiar library names | 15, 30, 31 | Inventory typed collection counterparts and useful datetime aliases. For curl, decide only whether the response-code synonym pays its way. Native regex captures already address the original regex complaint. |
 
-**Current tally:** 5 fixed, 14 still reproducible, 14 intentional differences. The native CLI alias decision and wider regex family work belong to the separate helper inventory. Neither is an extra task in this tally.
+**Current tally:** 6 fixed, 13 still reproducible, 14 intentional differences. The native CLI alias decision and wider regex family work belong to the separate helper inventory. Neither is an extra task in this tally.
 
 ### Follow-up to task 13 — PHP free builtin inputs
 

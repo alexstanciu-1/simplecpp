@@ -270,9 +270,9 @@ log_event("ok"); return 0;''', output='ok'),
     Probe('hash-array-value', '$v hash<int,string> = ["a"=>1]; $plain=array_values($v); return 0;', reject='Unknown function: array_values'),
     Probe('php-curl-status', '$r curl_handle=curl_init(); $s=curl_getinfo($r,CURLINFO_HTTP_CODE); return 0;', modules=('curl',), reject='Unknown constant: CURLINFO_HTTP_CODE'),
     Probe('php-json-flags', '$s=json_encode("a/b",JSON_UNESCAPED_SLASHES); return 0;', modules=('json',), reject='Argument count mismatch for function: json_encode'),
-    Probe('php-mysqli-bind-temp', '''$db=new mysqli(); $s mysqli_stmt=$db->prepare("SELECT ?"); $s->bind_param("s","open"); return 0;''', modules=('mysqli',), reject='bind_param requires a fresh local statement and a stable typed slot'),
+    Probe('php-mysqli-bind-temp', '''$db=new mysqli(); $s mysqli_stmt=$db->prepare("SELECT ?"); $s->bind_param("s","open"); return 0;''', modules=('mysqli',), reject='Retaining call requires a stable typed slot'),
     Probe('php-mysqli-bind-escape', '''$db=new mysqli(); $s mysqli_stmt=$db->prepare("SELECT ?"); $alias=$s;
-$state="open"; $s->bind_param("s",$state); return 0;''', modules=('mysqli',), reject='Bound statement must stay in its declaring scope without aliases'),
+$state="open"; $s->bind_param("s",$state); return 0;''', modules=('mysqli',), reject='Bound owner must stay confined'),
     Probe('empty-typed-vector', '$v vector<int> = []; echo empty($v)?"empty":"full"; return 0;', output='empty'),
     Probe('empty-typed-hash', '$h hash<int,string> = ["a"=>0]; echo empty($h)?"empty":"full"; return 0;', output='full'),
     Probe('codepoint-slice', 'echo string_utf8_slice_codepoints("aé😀",1,2); return 0;', general=True, output='é😀'),
@@ -280,7 +280,7 @@ $state="open"; $s->bind_param("s",$state); return 0;''', modules=('mysqli',), re
     Probe('text-position-fallback', '$word="abc"; echo strpos($word,"z") ?? -1; return 0;', reject='Coalescing requires a published nullable carrier'),
     Probe('mysqli-guard-bind', '''function read(mysqli $db,string $state):void {
 $maybe=$db->prepare("SELECT ?"); if (!isset($maybe)) {return;} $s mysqli_stmt=$maybe;
-$s->bind_param("s",$state); } return 0;''', modules=('mysqli',), reject='bind_param requires a fresh local statement and a stable typed slot'),
+$s->bind_param("s",$state); } return 0;''', modules=('mysqli',)),
     Probe('mysqli-immediate-args', '''function read(mysqli $db,string $state):void {
 $maybe=$db->prepare("SELECT ?"); if (!isset($maybe)) {return;} $s mysqli_stmt=$maybe;
 $values dynamic=[$state]; db_execute($s,"s",$values); } return 0;''', general=True, modules=('mysqli',)),

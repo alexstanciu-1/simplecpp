@@ -11,7 +11,9 @@ $socket string = $args[1];
 $db = new mysqli("localhost", $user, $password, "tickets", 0, $socket);
 if ($db->connect_errno !== 0) { echo "connection failed\n"; return 1; }
 $state = "";
-$stmt mysqli_stmt = $db->prepare("SELECT queue, COUNT(*) AS n FROM tickets WHERE state=? GROUP BY queue ORDER BY queue");
+$pending = $db->prepare("SELECT queue, COUNT(*) AS n FROM tickets WHERE state=? GROUP BY queue ORDER BY queue");
+if (!$pending) { echo "prepare failed\n"; return 1; }
+$stmt mysqli_stmt = $pending;
 if (!$stmt->bind_param("s", $state)) { echo "bind failed\n"; return 1; }
 for ($i = 2; $i < cli_argc(); $i += 1) {
     $state = $args[$i];
