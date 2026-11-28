@@ -356,15 +356,7 @@ final class Parser
 		if ($this->property_statement_start()) {
 			$target = $this->atom();
 			if ($target instanceof ast_name_expression && $this->computed_member_start()) {
-				$key = $this->computed_member_key();
-				if ($this->cursor->is(token_kind::assign)) {
-					$this->cursor->take(token_kind::assign, '=');
-					$value = $this->assignment_value();
-					return new ast_computed_member_assignment($target, $key, $value, $this->statement_end(token_kind::semicolon));
-				}
-				$mutation = $this->indexed_mutation($target, $key, $this->cursor->position(), computed_member: true);
-				if ($mutation !== null) return $mutation;
-				$target = new ast_computed_member_read($target, $key, $this->cursor->position());
+				return $this->indexed_write($target);
 			}
 			$target = $this->postfix($target, field_target: true);
 			if ($target instanceof ast_call_expression || $target instanceof ast_nullsafe_member) {
@@ -1522,20 +1514,28 @@ final class Parser
 	/** Parse a keyed write or append on a named local or field; preparation checks writability. */
 	private function indexed_write(ast_expression $receiver, token_kind $terminator = token_kind::semicolon): ast_statement
 	{
-		$this->cursor->take(token_kind::lbracket, '[');
-		$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
-		$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-		if ($index !== null && $this->cursor->is(token_kind::lbracket)) {
-			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end), $terminator);
+		$computed = $this->computed_member_start();
+		if ($computed) {
+			$index = $this->computed_member_key();
+			$index_end = $this->cursor->position();
+		} else {
+			$this->cursor->take(token_kind::lbracket, '[');
+			$index = $this->cursor->is(token_kind::rbracket) ? null : $this->value();
+			$index_end = $this->cursor->take(token_kind::rbracket, ']') + 1;
+		}
+		$row = null;
+		if ($index !== null && ($this->cursor->is(token_kind::lbracket) || $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::scope)
+			|| $this->cursor->is(token_kind::lparen) || $this->cursor->is(token_kind::nullsafe_member) || $this->cursor->is(token_kind::dot))) {
+			$row = $computed ? new ast_computed_member_read($receiver, $index, $index_end) : new ast_index_expression($receiver, $index, $index_end);
+			if ($this->cursor->is(token_kind::lbracket) || $this->computed_member_start()) return $this->indexed_write($row, $terminator);
 		}
 		if ($terminator === token_kind::newline && ($index === null || (!$this->cursor->is(token_kind::assign)
 			&& !$this->cursor->is(token_kind::dot) && !$this->cursor->is(token_kind::lparen)))) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python indexed write requires one key and =');
 		}
-		if ($index !== null && ($this->cursor->is(token_kind::lparen) || $this->cursor->is(token_kind::scope)
-			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::nullsafe_member) || $this->cursor->is(token_kind::dot))) {
+		if ($row !== null) {
 			$field_target = $this->cursor->tokens->source->flavor !== flavor::python;
-			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), field_target: $field_target);
+			$target = $this->postfix($row, field_target: $field_target);
 			if ($field_target && $this->cursor->is(token_kind::lbracket)) return $this->indexed_write($target, $terminator);
 			if ($target instanceof ast_field_expression && $terminator === token_kind::newline) {
 				$this->cursor->take(token_kind::assign, '= after Python field');
@@ -1549,12 +1549,12 @@ final class Parser
 		if ($receiver instanceof ast_qualified_data) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed expression-qualified static property writes are deferred');
 		}
-		$mutation = $this->indexed_mutation($receiver, $index, $index_end);
+		$mutation = $this->indexed_mutation($receiver, $index, $index_end, $computed);
 		if ($mutation !== null) return $mutation;
 		if (!($receiver instanceof ast_name_expression || $receiver instanceof ast_field_expression || $receiver instanceof ast_index_expression)) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed assignment requires named or field storage');
 		}
-		return $this->index_store($receiver, $index, $terminator);
+		return $this->index_store($receiver, $index, $terminator, $computed);
 	}
 
 	/** Consume a compound or postfix update after a subscript, leaving other continuations to the caller. */
@@ -1576,13 +1576,15 @@ final class Parser
 		return new ast_index_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);
 	}
 
+	/** Finish a plain indexed store, retaining computed spelling for string-key admission. */
 	private function index_store(ast_name_expression|ast_field_expression|ast_index_expression $receiver, ?ast_expression $index,
-		token_kind $terminator): ast_statement
+		token_kind $terminator, bool $computed): ast_statement
 	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->assignment_value();
 		$end = $this->statement_end($terminator);
-		return $index === null ? new ast_append_statement($receiver, $value, $end)
+		if ($index === null) return new ast_append_statement($receiver, $value, $end);
+		return $computed ? new ast_computed_member_assignment($receiver, $index, $value, $end)
 			: new ast_index_assignment($receiver, $index, $value, $end);
 	}
 

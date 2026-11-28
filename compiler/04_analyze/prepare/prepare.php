@@ -361,7 +361,8 @@ final class Preparation
 					}
 				}
 				$type = $statement->receiver->type_def();
-				if ($statement instanceof ast_computed_member_assignment && (!($binding instanceof ast_local_binding) || !($type instanceof type_dynamic))) {
+				if ($statement instanceof ast_computed_member_assignment && (!($binding instanceof ast_local_binding) || !($type instanceof type_dynamic)
+					|| ($receiver instanceof ast_index_expression && $receiver->receiver !== $boxed_root))) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a local dynamic receiver');
 				}
 				if (!($type instanceof index_write_type)) {
@@ -1946,7 +1947,10 @@ final class Preparation
 			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
 			$type = $syntax->receiver->type_def();
 			if ($syntax instanceof ast_computed_member_read) {
-				if ($deep_write_path) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member reads cannot be used as write targets');
+				if ($deep_write_path && !($syntax->parent instanceof ast_index_assignment && $syntax->parent->receiver === $syntax
+					&& $syntax->receiver instanceof ast_name_expression && $syntax->receiver->local_binding() !== null)) {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member reads cannot be used as write targets');
+				}
 				if (!($type instanceof type_dynamic)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member read requires a dynamic receiver');
 			}
 			if (!($type instanceof index_read_type)) {
