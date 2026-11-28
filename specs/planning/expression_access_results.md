@@ -24,7 +24,7 @@ $f = match (1) { 1 => $a, default => $b };  // Match result types must be identi
 
 Controls distinguish signature compatibility from declaration origin. Selecting the same local twice works. Selecting a local and its inferred copy works. Selecting two separate closure **values** produced by the same typed factory declaration works and invokes the correct body. Giving both factory outputs separate explicit but identical annotations reproduces the failure. The ternary also rejects when the two inputs are separately declared parameters of identical type. Resident and fresh preparation agree. At the audit baseline the arm join compared prepared type objects by identity. **Follow-up 🟢 fixed.** The shared preparation step now uses the existing exact type matcher. The default suite invokes both alternatives and checks parameter type, return type, arity and reference-mode mismatches for ternary and match, including recovery after a signature edit. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Positive and failing controls](../../compiler/tests/expression_access_paths.py)
 
-## 🟠 Remaining implementation, diagnostic and design work
+## Follow-up decisions after the audit
 
 | Item | Evidence and next decision |
 |---|---|
@@ -32,9 +32,9 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 | 🟢 D1. Python nested typed-write diagnostic | Fixed in workspace 03. The preparation diagnostic identifies the storage available in Python. The default regression checks rejection, repair and native execution of both working controls. Typed-vector write admission remains a separate decision. |
 | 🟢 D2. Plain PHP scalar stores through computed shared class handles | Grouped and ungrouped indexed receivers and shared factory results retain the selected allocation through the store. The native regression observes the original and replacement values, throwing RHS behavior and readonly edit/recovery. [Evaluation contract](../expression_evaluation.md#php-scalar-field-stores-through-selected-shared-owners) |
 | 🟢 D3. Computed PHP callees and cross-flavor indexed invocation | PHP now accepts parenthesized expressions producing an owned callable. The registered ternary and match cases verify lazy selection, replacement during argument evaluation and recovery after a provider edit. C++, JavaScript and Python now accept `ops[key](arg)` using the same stored-call preparation and lowering. |
-| D4. Decide additional access syntax and grouping expectations | [D4 slice list](#d4-slice-list) |
-| D5. Keep existing bounded semantics explicit | Nested mixed reads now compose as snapshots in PHP, C++ and JS. References escaping into movable slots and lexical comparisons of numeric-looking strings retain their existing boundaries. No evidence in this audit calls for changing boxed ownership, reference origins or comparison semantics. |
-| A1. Consider preparing typed destinations once | Preparation records boxed roots. The emitter also calls `nested_collection_root` on typed stores, appends and mutations. This is duplicated classification, with incremental invalidation implications. The retained-owner and write-back probes did not reproduce another lost write. Treat a refactor as a separate engineering decision. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Lowering](../../compiler/05_backend/cpp/emit.php) |
+| 🟢 D4. Closed for the agreed scope | [D4 slice list](#d4-slice-list) |
+| 🟢 D5. Closed | Nested mixed snapshot reads shipped for PHP, C++ and JS in `5761dd781`. Durable references into movable elements remain deferred pending an element lifetime contract. String/string equality compares the full byte sequence and ordering is lexicographic over unsigned bytes, including numeric-looking strings. [String contract](../compiler_scalars_v0_2.md#string-comparison--2026-11-06) · [Reference contract](../native_reference_safety.md) |
+| 🟠 A1. Open engineering decision | Preparation records boxed roots. The emitter also calls `nested_collection_root` on typed stores, appends and mutations. This is duplicated classification, with incremental invalidation implications. The retained-owner and write-back probes did not reproduce another lost write. Treat a refactor as a separate engineering decision. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Lowering](../../compiler/05_backend/cpp/emit.php) |
 
 **Two historical gaps closed upstream during the audit.** PHP now prints scalar bytes/bools and reports the received type for a boxed echo operand. PHP kind predicates now admit dynamic values; `is_string` and `is_array` are available. New upstream coverage also exercises terminal checked vector/hash reads on nullsafe chains and nullsafe enum methods and read-only case properties. These changes are included in the integrated default-suite result. [QoS follow-up](php_flavor_developer_qos_reaudit.md) · [Nullsafe access contract](../conditional_expression_matrix.md)
 
@@ -95,8 +95,8 @@ Fixed arrays are tracked separately. General interpolation expressions remain de
 ## Workspace 03 reconciliation
 
 The GAPS thread in `simple_cpp_03` owns the full inventory. The handoff was
-`cc4a00c7f`. The pulled baseline for this pass was `d98403096`. The last
-inventory column now contains 47 verified rows and five follow-up rows.
+`cc4a00c7f`. The pulled baseline for this pass was `d98403096`. At that checkpoint the last
+inventory column contained 47 verified rows and five follow-up rows.
 F1 (`59d400219`) accounts for the original red row. D1 closes one diagnostic
 row. F2 (`cc4a00c7f`) closes two coalescing cases within a broader follow-up row.
 
