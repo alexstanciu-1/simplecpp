@@ -29,6 +29,9 @@ try { $h[keyName($name)] ??= fail(); }
 catch (Exception $e) { echo $e->get_message(), count($h); }
 $h[keyName($name)] ??= insert($h, $name);
 echo $h["missing"], $name;
+$name = "original";
+$h[$name] ??= insert($h, $name);
+echo "[", $h["original"], ",", $name, ",", hash_contains($h, $name) ? 1 : 0, "]";
 $h["last"] ??= replace($h);
 echo count($h), $h["keep"], $h["last"];
 $people = people();
@@ -54,7 +57,7 @@ function people():hash<?Person,string> {
 if __name__ == "__main__":
     with TemporaryDirectory(prefix="scpp-coalesce-hash-") as directory:
         required = MODEL.replace("?Person", "Person").replace("= null;", "= new Person(1);")
-        prefix = b"K0KFT1K7changed239"
+        prefix = b"K0KFT1K7changed[7,changed,0]239"
         revisions(Path(directory), "php", {"main": MAIN, "model": MODEL}, [
             (None, None, prefix + b"886"),
             ("model", required, prefix + b"116"),
