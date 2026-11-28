@@ -72,7 +72,7 @@ function concreteRecipe(string $name): mixed {
     static $recipes = [];
     if (isset($recipes[$name])) return $recipes[$name];
     $recipe = decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values']);
     if (isset($recipe->entry_presence)) {
         $presence = $recipe->entry_presence;
         switch (at($presence, 'protocol')) {

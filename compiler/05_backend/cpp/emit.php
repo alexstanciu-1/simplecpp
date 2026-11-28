@@ -3216,13 +3216,12 @@ CPP;
 			return $type->lower_cpp_unary($value->operator, $operand);
 		}
 		if ($value instanceof ast_isset_expression) {
-			if (($entry = $value->hash_entry) !== null) {
-				$hash = $entry->receiver->type_def();
-				if ($hash instanceof application_collection_type) $this->concrete_collections->request_hash_isset($hash);
-				else $required_headers[$hash->php_isset_header()] = true;
+			if (($entry = $value->indexed_entry) !== null) {
+				$provider = $entry->receiver->type_def();
+				$provider->require_entry_probe($this->concrete_collections, $required_headers);
 				$receiver = $this->value($entry->receiver, $global_references, $declarations, $required_headers);
 				$key = $this->value($entry->index, $global_references, $declarations, $required_headers);
-				$key = $hash->lower_cpp_key($entry->index, $key);
+				$key = $provider->lower_cpp_key($entry->index, $key);
 				return '::scpp::php::isset(' . $receiver . ', ' . $key . ')';
 			}
 			if ($value->operand instanceof ast_index_expression && $value->operand->type_def() instanceof owned_callable_type) {

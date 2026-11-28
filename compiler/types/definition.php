@@ -288,6 +288,22 @@ interface membership_type
 	public function lower_cpp_membership(ast_expression $needle, string $key, string $receiver, array &$headers): string;
 }
 
+/** Probe a normalized key without insertion and observe the selected value's presence. */
+interface indexed_presence_type
+{
+	public function supports_indexed_presence(): bool;
+	public function lower_cpp_key(ast_expression $syntax, string $key): string;
+	/** Publish the selected overload before emitting the caller. @param array<string,bool> $headers */
+	public function require_entry_probe(Cpp_Concrete_Collections $collections, array &$headers): void;
+}
+
+/** An application specialization supplies the associated key and native probe for a private overload. */
+interface application_indexed_presence_type extends indexed_presence_type, application_collection_type
+{
+	public function entry_probe_key_type(): type_definition;
+	public function entry_presence_method(): string;
+}
+
 /** Published key existence query, independent of payload representation or null state. */
 interface key_presence_type
 {

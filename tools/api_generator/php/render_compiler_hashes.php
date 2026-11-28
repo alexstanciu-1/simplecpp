@@ -66,7 +66,13 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         }
         $writable = compilerWritableIteration(hashConcreteRecipe($hash), $hash['traversal'], $traits, $code);
         $writableInterface = $writable === '' ? '' : ', writable_iteration_type';
+        $probeValues = names(concreteRecipe(hashConcreteRecipe($hash))->indexed_probe_values ?? []);
+        $regexProbe = isset($runtime['regex_shapes'][$hash['name']]);
+        $publishedProbe = $regexProbe || in_array($hash['value'], $probeValues, true);
+        $probeHeader = $regexProbe ? 'scpp/php/regex_hash_isset.hpp' : 'scpp/php/hash_isset.hpp';
         $bindings = [
+            '@indexed_probe@' => $publishedProbe ? "\tpublic function supports_indexed_presence(): bool { return true; }\n"
+                . "\tpublic function require_entry_probe(Cpp_Concrete_Collections \$collections, array &\$headers): void { \$headers['$probeHeader'] = true; }\n" : '',
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
             '@entry_presence@' => compilerEntryPresence(hashConcreteRecipe($hash), $at['name'], $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(hashConcreteRecipe($hash)),
@@ -82,13 +88,10 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
 
             '@key@' => $key . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export(providerHeader($runtime['submodules'], $export['provider']), true),
-            '@interfaces@' => ' implements conditional_index_store_type, key_iterable_type, key_presence_type' . $writableInterface . $access . ($lookup === '' ? '' : ', key_lookup_type') . $transfer . ($initialization !== '' ? ', keyed_initializer_type' : '') . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
+            '@interfaces@' => ' implements conditional_index_store_type, key_iterable_type, key_presence_type' . ($publishedProbe ? ', indexed_presence_type' : '') . $writableInterface . $access . ($lookup === '' ? '' : ', key_lookup_type') . $transfer . ($initialization !== '' ? ', keyed_initializer_type' : '') . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($hash['source_family'], true) . " . '<' . $value::instance()->name . ',' . $key::instance()->name . '>', $value::instance(), $key::instance());\n" . $presence . $lookup . $initializationSetup . "\t}\n",
             '@factory@' => "\tpublic static function instance(): self { return self::\$instance ??= new self(); }",
         ];
-        if (isset($runtime['regex_shapes'][$hash['name']])) {
-            $bindings['@methods@'] .= "\n\tpublic function publishes_entry_isset(): bool { return true; }\n\tpublic function php_isset_header(): string { return 'scpp/php/regex_hash_isset.hpp'; }\n";
-        }
         $template = readFile(__DIR__ . '/../templates/collections/hash_type.php.tpl');
         $code .= strtr($template, $bindings);
         foreach (['generic' => false] + ($hash['key'] === 'int64' ? ['append' => true] : []) as $variant => $append) {
@@ -111,13 +114,15 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
                     . var_export('::' . $init['input'], true) . ", \$this->native_name . " . var_export('::' . $init[$mode], true) . ", 0); }\n";
             }
             if (!$append) $recipe = array_replace($recipe, ['enable_append' => '', 'append' => '']);
+            $applicationProbe = compilerApplicationEntryProbe($probeValues, $definitions);
             $code .= strtr($template, array_replace($bindings, [
+                '@indexed_probe@' => $applicationProbe,
                 '@lookup_property@' => "\tprivate readonly ?runtime_function \$shared_lookup;",
                 '@lookup@' => "\tpublic function shared_lookup_function(): ?runtime_function { return \$this->shared_lookup; }\n", '@initialization@' => $appInitialization,
                 '@append_method@' => $append ? compilerHashAppend($hash) : '',
                 '@key@' => '$this->key_type',
                 '@methods@' => compilerCollectionMethods($hash, $definitions, '$this->key_type'),
-                '@class@' => $app, '@interfaces@' => ' implements conditional_index_store_type, application_collection_type, key_presence_type, shared_value_lookup_type, key_iterable_type' . $writableInterface . $access . ($appInitialization !== '' ? ', keyed_initializer_type' : '') . $transfer . ($append ? ', appendable_collection_type' : ''),
+                '@class@' => $app, '@interfaces@' => ' implements conditional_index_store_type, application_collection_type, key_presence_type, shared_value_lookup_type, key_iterable_type' . ($applicationProbe === '' ? '' : ', application_indexed_presence_type') . $writableInterface . $access . ($appInitialization !== '' ? ', keyed_initializer_type' : '') . $transfer . ($append ? ', appendable_collection_type' : ''),
                 '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true),
                 '@identity@' => strtr(readFile(__DIR__ . '/../templates/collections/application_hash_identity.php.tpl'), [
                     '@family@' => var_export($family, true),
@@ -131,6 +136,20 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $cases[] = "\t\t\tif ((\$element === $value::instance()) && (\$second === $key::instance())) return $class::instance();";
     }
     return [$code, implode("\n", $cases), $family, ($applicationCases['append'] ?? '') . ($applicationCases['generic'] ?? '')];
+}
+
+/** Application classes are shared across payloads; test the associated type at preparation time. */
+function compilerApplicationEntryProbe(array $values, array $definitions): string {
+    if ($values === []) return '';
+    $tests = [];
+    foreach ($values as $value) {
+        if ($value === 'shared_owner') $tests[] = '$this->value_type instanceof shared_record_type_definition';
+        elseif (isset($definitions[$value])) $tests[] = '$this->value_type === type_' . $definitions[$value]['class'] . '::instance()';
+    }
+    if ($tests === []) return '';
+    return "\tpublic function supports_indexed_presence(): bool { return " . implode(' || ', $tests) . "; }\n"
+        . "\tpublic function require_entry_probe(Cpp_Concrete_Collections \$collections, array &\$headers): void { \$collections->request_indexed_isset(\$this); }\n"
+        . "\tpublic function entry_probe_key_type(): type_definition { return \$this->key_type; }\n";
 }
 
 /** Generate append only when the published method plan provides the integer-key operation. */

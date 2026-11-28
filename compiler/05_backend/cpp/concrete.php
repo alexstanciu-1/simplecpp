@@ -107,17 +107,17 @@ final class Cpp_Concrete_Collections
 		return $helper . '::append(' . implode(', ', [$receiver, ...$inputs]) . ')';
 	}
 
-	/** Publish the concrete PHP probe only for a caller that uses this application hash. */
-	public function request_hash_isset(application_collection_type&hash_type_definition $hash): void
+	/** Publish the concrete PHP probe only for a caller that uses this application collection. */
+	public function request_indexed_isset(application_indexed_presence_type $provider): void
 	{
-		$this->request($hash);
-		$key = hash('sha256', $this->root . "\0" . $hash->cpp_type());
+		$this->request($provider);
+		$key = hash('sha256', $this->root . "\0" . $provider->cpp_type());
 		$path = 'units/' . hash('sha256', 'php-isset:' . $key) . '.hpp';
 		if (isset($this->operation_headers[$path])) return;
 		$body = \Scpp\Api\template('collections/php_hash_isset', [
-			'hash' => (new cpp_concrete_type($hash, $this->root))->cppType('scpp::php'),
-			'key' => (new cpp_concrete_type($hash->key_type, $this->root))->cppType('scpp::php'),
-			'method' => $hash->entry_presence_method(),
+			'hash' => (new cpp_concrete_type($provider, $this->root))->cppType('scpp::php'),
+			'key' => (new cpp_concrete_type($provider->entry_probe_key_type(), $this->root))->cppType('scpp::php'),
+			'method' => $provider->entry_presence_method(),
 		]);
 		$this->operation_headers[$path] = "#pragma once\n#include \"" . $key . ".hpp\"\n" . $body;
 	}

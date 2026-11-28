@@ -4,8 +4,12 @@ import tempfile
 from collection_goal_native import revisions
 
 CALLER = """
+$numbers hash<int,string> = ["zero" => 0];
+echo (int)isset($numbers["zero"]), (int)isset($numbers["missing"]), count($numbers);
 $users = users();
 echo (int)isset($users["user"]), (int)isset($users["missing"]), count($users);
+$users["user"]=new User();
+echo (int)isset($users["user"]);
 return 8;
 """
 REQUIRED = """
@@ -19,8 +23,9 @@ if __name__ == '__main__':
     with tempfile.TemporaryDirectory() as directory:
         work = Path(directory)
         revisions(work, 'php', {'main': CALLER, 'model': 'class User {}', 'api': REQUIRED}, [
-            (None, None, b'101'),
-            ('api', NULLABLE, b'001'),
+            (None, None, b'1011011'),
+            ('api', NULLABLE, b'1010011'),
             ('main', CALLER.replace('"user"', '1'), 'requires string'),
-            ('main', CALLER, b'001'),
+            ('main', 'struct Point { public int $x; } $values hash<Point,string> = []; echo isset($values["x"]); return 8;', 'requires a carrier or owned callable'),
+            ('main', CALLER, b'1010011'),
         ])

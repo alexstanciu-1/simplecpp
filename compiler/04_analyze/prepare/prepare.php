@@ -2037,9 +2037,8 @@ final class Preparation
 			if ($entry instanceof ast_index_expression && $type instanceof owned_callable_type) $this->retain_member_place($entry);
 			if ($syntax->source()->flavor === flavor::php && $entry instanceof ast_index_expression
 				&& $entry->receiver instanceof ast_name_expression && $entry->receiver->local_binding() !== null
-				&& $entry->receiver->type_def() instanceof hash_type_definition
-				&& ($entry->receiver->type_def()->publishes_entry_isset() || $type === type_registry::integer()
-					|| $type === type_registry::string() || $type instanceof shared_record_type_definition)) {
+				&& ($provider = $entry->receiver->type_def()) instanceof indexed_presence_type
+				&& $provider->supports_indexed_presence()) {
 				$syntax->settle_presence($entry);
 				return;
 			}

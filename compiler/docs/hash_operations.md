@@ -28,7 +28,10 @@ integer, string or shared record values. The key runs once before lookup. A miss
 key returns false and leaves the hash unchanged. Zero and empty text are present.
 For nullable shared values, the probe checks the stored owner in place, so a key
 holding null returns false. The generated caller uses a concrete `scpp::php::isset`
-overload. [Keyed evaluation contract](../../specs/count_empty_isset_contract.md#v02-keyed-evaluation-order)
+overload. Preparation asks the provider for indexed presence after checking the named
+local and its key. Published providers supply the overload header, including the
+regex capture overloads. Application providers supply the associated key and native
+presence method for the generated overload. [Keyed evaluation contract](../../specs/count_empty_isset_contract.md#v02-keyed-evaluation-order)
 
 Generated `clear()` methods, including expression receivers, are described in
 [collection methods](collection_methods.md).
