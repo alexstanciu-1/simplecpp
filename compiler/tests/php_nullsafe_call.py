@@ -133,6 +133,50 @@ def index_member(work, case):
           error, exception_type='std::out_of_range', expected_stdout=b'PK')
 
 
+def repeated_index(work, case):
+    hash_first = case.startswith('hash_vector')
+    outer = 'hash<vector<int>,string>' if hash_first else 'vector<hash<int,string>>'
+    inner = 'vector<int>' if hash_first else 'hash<int,string>'
+    group, leaf = ('"home"', '0') if hash_first else ('0', '"home"')
+    group_type, leaf_type = ('string', 'int') if hash_first else ('int', 'string')
+    insert = f'$this->groups[{group}]' if hash_first else '$this->groups[]'
+    populate = '$row[]=$n;' if hash_first else f'$row[{leaf}]=$n;'
+    model = f"""
+        class Team {{
+            public {outer} $groups;
+            public function add():void {{{insert}=[];}}
+            public function put(int $n):void {{
+                $row {inner}=[];{populate}$this->groups[{group}]=$row;
+            }}
+        }}
+    """
+    probes = f"""
+        function probe(?Team $t):?Team {{echo "P";return $t;}}
+        function groupKey():{group_type} {{echo "G";return {group};}}
+        function leafKey():{leaf_type} {{echo "L";return {leaf};}}
+        function read(?Team $t):nullable<int> {{return probe($t)?->groups[groupKey()][leafKey()];}}
+    """
+    if case.endswith('_missing'):
+        outer_error, inner_error = ('hash_missing_key', 'sequence_index_out_of_range') if hash_first else ('sequence_index_out_of_range', 'hash_missing_key')
+        for label, setup, error, trace in [('outer', '', outer_error, b'PG'), ('inner', '$t->add();', inner_error, b'PGL')]:
+            guard(work, 'php', label, model + probes + '$t=new Team();' + setup + 'echo read($t) ?? 9;return 8;',
+                  error, exception_type='std::out_of_range', expected_stdout=trace)
+        return
+    main = probes + f"""
+        async function replaceKey(?Team $t):{leaf_type} {{
+            await async_sleep_ms(1);echo "R";$t->put(90);return {leaf};
+        }}
+        async function saved(?Team $t):int {{return probe($t)?->groups[groupKey()][await replaceKey($t)] ?? 9;}}
+        echo read(null) ?? 9,await saved(null);
+        $t=new Team();$t->add();$t->put(0);echo read($t) ?? 9;
+        $t->put(7);echo await saved($t),read($t) ?? 9;return 8;
+    """
+    changed = model.replace(inner, inner.replace('<int', '<string')).replace('=$n;', '="edited";')
+    trace = b'P9P9PGL0PGR7PGL90'
+    revisions(work, 'php', dict(main=main, team=model), [
+        (None, None, trace), ('team', changed, 'Unsupported explicit conversion from string to int64'), ('team', model, trace)])
+
+
 def index_admission(work):
     main = 'function read(?Team $t):nullable<int> {return $t?->scores[0];}return 8;'
     model = 'class Team {public vector<int> $scores;}'
@@ -155,6 +199,22 @@ def index_owner(work):
         $n=pick($t)?->scores->values[replace($t)];echo "R",$n ?? 0;return 8;
     """
     revisions(work, 'php', dict(main=main), [(None, None, b'KD7R7D9')])
+
+
+def repeated_index_owner(work):
+    main = """
+        class Scores {
+            public hash<vector<hash<int,string>>,string> $rows;
+            public function __construct(int $n) {$this->rows["g"]=[["p" => $n]];}
+            public function __destruct() {echo "D",$this->rows["g"][0]["p"];}
+        }
+        class Team {public ?Scores $scores;}
+        function replace(Team $t):string {$t->scores=new Scores(90);echo "K";return "g";}
+        function pick(Team $t):?Team {return $t;}
+        $t=new Team();$t->scores=new Scores(7);
+        $n=pick($t)?->scores->rows[replace($t)][0]["p"];echo "R",$n ?? 0;return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'KD7R7D90')])
 
 
 def index_suspended(work):
@@ -462,14 +522,16 @@ def indexed_callable(work, case):
 
 with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     case = sys.argv[1]
-    if case in ('index_vector', 'index_hash'):
+    if case in ('hash_vector', 'vector_hash', 'hash_vector_missing', 'vector_hash_missing'):
+        repeated_index(Path(tmp), case)
+    elif case in ('index_vector', 'index_hash'):
         terminal_index(Path(tmp), case)
     elif case in ('index_member_vector', 'index_member_hash'):
         index_member(Path(tmp), case)
     elif case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
-        {'enum_properties': enum_properties, 'enum_property_admission': enum_property_admission,
+        {'repeated_index_owner': repeated_index_owner, 'enum_properties': enum_properties, 'enum_property_admission': enum_property_admission,
          'enum_selected_case': enum_selected_case, 'enum_method': enum_method, 'index_admission': index_admission, 'index_owner': index_owner, 'index_suspended': index_suspended, 'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
          'terminal_void_suspended': terminal_void_suspended, 'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
          'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,

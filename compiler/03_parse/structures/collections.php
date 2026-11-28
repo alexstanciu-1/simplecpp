@@ -129,6 +129,14 @@ final class ast_index_expression extends ast_expression
 	}
 
 	/** METHODS */
+	/** A run of successive receivers ends at its guard; an index inside a key is a separate expression. */
+	public function in_nullsafe_index_run(): bool
+	{
+		$read = $this;
+		while ($read->parent instanceof ast_index_expression && $read->parent->receiver === $read) $read = $read->parent;
+		return $read->parent instanceof ast_nullsafe_member && $read->parent->operand === $read;
+	}
+
 	public function settle_element(type_definition $type): void
 	{
 		$this->settle_value($type, null);
