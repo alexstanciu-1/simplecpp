@@ -55,12 +55,12 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 | D4-Q5 | Done | Two keys through hash-of-vector or vector-of-hash on either root. |
 | D4-Q6 | Done | Typed vector/hash paths at any depth on locals and writable instance fields. |
 | D4-Q7 | Done | One bracket key on local `mixed` or `dynamic`. Null mixed initializes on a successful store. Null dynamic fails before fallback. |
-| D4-Q8 | Proposed | Separate conditional entry probing from nested checked-slot access. Use the shared entry contract for typed and boxed stores, including one boxed bracket key on an instance field. |
-| D4-Q9 | Proposed | Complete same-family boxed paths at any depth on locals and instance fields. Include brackets on both families and computed string names on dynamic. Verify the full matrix below and close the PHP statement-form workstream. |
+| D4-Q8 | Done | Separate conditional entry probing from nested checked-slot access. Use the shared entry contract for typed and boxed stores, including one boxed bracket key on an instance field. |
+| D4-Q9 | Done | Complete same-family boxed paths at any depth on locals and instance fields. Include brackets on both families and computed string names on dynamic. Both roots reuse the boxed path store and ownership rules. |
 
-### Proposed finish line for conditional assignment
+### PHP conditional assignment acceptance
 
-The remaining proposal covers PHP standalone statements on declared locals and admitted instance fields. Preserve previously admitted local forms in other flavors. Preparation validates the writable destination, key types and fallback conversion even if runtime presence will skip the fallback.
+The completed workstream covers PHP standalone statements on declared locals and admitted instance fields. Preserve previously admitted local forms in other flavors. Preparation validates the writable destination, key types and fallback conversion even if runtime presence will skip the fallback.
 
 | Destination in this scope | Rule |
 |---|---|
@@ -71,7 +71,16 @@ The remaining proposal covers PHP standalone statements on declared locals and a
 
 Use existing destination access and readonly rules. Entry probing is independent of how a provider descends into a child or publishes an updated child. Mixed publishes changed children back through the path, while dynamic preserves shared child identity. Neither needs to expose an element address across user code.
 
-Acceptance covers local and field roots, hit/miss/null and falsey values, invalid or missing intermediates, key order, fallback throws, holder and middle-child replacement, mixed snapshot independence, dynamic alias visibility, and cross-file readonly edit/recovery. Include rejection controls for the scope boundaries. Reuse existing regression evidence for shipped forms.
+| Acceptance evidence | Registered compiler tests |
+|---|---|
+| Direct carrier presence, assignment conversion and retained edits | `coalesce_assignment`, `coalesce_assignment_native`, `coalesce_field_native` |
+| Typed paths, checked bounds, saved-key order, replacement and readonly recovery | `coalesce_hash_native`, `coalesce_vector_*`, `coalesce_nested_native`, `coalesce_deep_native`, `coalesce_hash_field_native`, `coalesce_vector_field_native` |
+| Boxed hit, missing/null, falsey values, key evaluation and null receivers | `coalesce_boxed_mixed`, `coalesce_boxed_dynamic`, `coalesce_boxed_null_dynamic` |
+| Holder rebinding, field replacement, mixed initialization, dynamic null failure, readonly edit/recovery | `coalesce_boxed_field_*` |
+| Local and field paths, computed names, throwing fallback, bad intermediates, child replacement/removal, mixed snapshots and dynamic aliases | `coalesce_boxed_path_mixed`, `coalesce_boxed_path_dynamic` |
+| Rejected destinations, computed-name types and invalid skipped fallback | `coalesce_scope` |
+
+Test names above omit the `compiler_` prefix.
 
 Park parameters (all modes), globals, static properties, new direct carrier families including bare boxed locals and optional owners, indexed paths crossing from typed to boxed storage within one chain, other indexed families, append targets, nullsafe targets, assignment expressions, for-header uses and new flavor syntax. Each requires a separate proposal to enter scope. Fixed arrays are owned by their separate workstream.
 

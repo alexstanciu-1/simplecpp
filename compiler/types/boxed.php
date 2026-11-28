@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Canonical tagged scalar family. Runtime checks consume the actual payload, e.g. (int)$boxed. */
-abstract class boxed_type_definition extends type_definition implements indexed_mutation_type, membership_type
+abstract class boxed_type_definition extends type_definition implements indexed_mutation_type, conditional_index_store_type, membership_type
 {
 	use same_type_subset;
 	use keyed_entry_insert;
@@ -128,6 +128,16 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 			$place = $child;
 		}
 		return [$lookup, $place, implode(' ', array_reverse($publish))];
+	}
+
+	/** A missing intermediate throws. Only the final entry may be missing or null.
+	 * @param string[] $parent_keys
+	 */
+	public function lower_cpp_path_presence(string $root, array $parent_keys, string $key): string
+	{
+		[$lookup, $place] = $this->lower_cpp_path_lookup($root, $parent_keys, false);
+		$present = $this->lower_cpp_entry_presence($place, $key);
+		return "([&]() { $lookup return $present; }())";
 	}
 
 	/** Copy the existing leaf before any RHS effects.

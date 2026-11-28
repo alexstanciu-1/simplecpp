@@ -468,8 +468,10 @@ interface nested_index_storage_type extends indexed_mutation_type
 }
 
 /** Conditional indexed stores probe the saved key before evaluating a fallback. */
-interface conditional_index_store_type extends nested_index_storage_type
+interface conditional_index_store_type extends index_write_type
 {
+	public function lower_cpp_key(ast_expression $syntax, string $key): string;
+	public function lower_cpp_write(string $receiver, string $key, string $value): string;
 	public function lower_cpp_entry_presence(string $receiver, string $key): string;
 }
 

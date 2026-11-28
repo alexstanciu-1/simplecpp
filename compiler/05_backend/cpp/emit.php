@@ -2112,25 +2112,33 @@ CPP;
 			$collection = $entry->receiver->type_def();
 			$steps = [];
 			$row = $entry->receiver;
-			$receiver = $row instanceof ast_index_expression
-				? $this->nested_collection_place(ast_index_expression::nested_collection_root($row), $row, $globals, $declarations, $headers, $steps)
-				: $this->collection_root_place($row, $globals, $declarations, $headers, $steps);
+			$parents = [];
+			if ($statement->boxed_root !== null) {
+				$receiver = $this->collection_root_place($statement->boxed_root, $globals, $declarations, $headers, $steps);
+				$parents = $this->boxed_path_keys($row, null, $globals, $declarations, $headers, $steps);
+			} else {
+				$receiver = $row instanceof ast_index_expression
+					? $this->nested_collection_place(ast_index_expression::nested_collection_root($row), $row, $globals, $declarations, $headers, $steps)
+					: $this->collection_root_place($row, $globals, $declarations, $headers, $steps);
+			}
 			array_push($this->async_steps, ...$steps);
 			$key = $this->value($entry->index, $globals, $declarations, $headers);
 			$this->async_steps[] = 'const auto coalesce_key = ' . $collection->lower_cpp_key($entry->index, $key) . ';';
-			$present = $collection->lower_cpp_entry_presence($receiver, 'coalesce_key');
+			$present = $parents === [] ? $collection->lower_cpp_entry_presence($receiver, 'coalesce_key')
+				: $collection->lower_cpp_path_presence($receiver, $parents, 'coalesce_key');
 			$element = $collection->write_type();
 			[$value, $rhs] = $this->staged_operand($statement->value, $globals, $declarations, $headers);
 			$conversion = $statement->conversion();
 			foreach ($element->conversion_headers($conversion) as $header) $headers[$header] = true;
 			$value = $element->lower_cpp_exact_argument($statement->value, $conversion, $value, $this->inline_adapters);
-			if ($row instanceof ast_index_expression) {
+			if ($parents !== [] || $row instanceof ast_index_expression) {
 				// Complete fallback effects and conversion before resolving the parent again.
 				$rhs[] = 'auto coalesce_value = ' . $value . ';';
 				$headers['utility'] = true;
 				$value = 'std::move(coalesce_value)';
 			}
-			$rhs[] = $collection->lower_cpp_write($receiver, 'coalesce_key', $value) . ';';
+			$rhs[] = $parents === [] ? $collection->lower_cpp_write($receiver, 'coalesce_key', $value) . ';'
+				: $collection->lower_cpp_path_store($receiver, $parents, 'coalesce_key', $value);
 			return $this->async_statement('if (!(' . $present . ')) { ' . implode(' ', $rhs) . ' }');
 		}
 		$field = $statement instanceof ast_property_compound;

@@ -137,11 +137,14 @@ For a local `dynamic` receiver, PHP also admits plain assignment `$d->{expr} = r
 
 On a local `dynamic` receiver or a stable `dynamic` instance field, plain assignment, append, compounds and standalone prefix/postfix updates may mix `->{expr}` and bracket keys at any depth. Each computed name requires a string. Bracket keys follow ordinary boxed key normalization. All forms save the keys once in source order. Assignment and append resolve the current path after evaluating the RHS. Append takes its next integer key from the selected child at that time. Compounds and updates require the existing leaf first. A compound applies the operator to the saved value and checks the current path before storing. For an instance field, select and retain the holder before evaluating the first key. Keys and the RHS can rebind the holder variable. Write-back uses the current contents of the selected field on the original holder. A readonly dynamic field permits mutation of the shared container and rejects replacement of the field outside initialization. Computed calls and computed write paths rooted in static or global storage remain deferred.
 
-In PHP, a single bracket key on a local `mixed` or `dynamic` also supports
+In PHP, same-family bracket paths on local and instance-field `mixed` and `dynamic` values support
 [`??=` conditional assignment](conditional_expression_matrix.md). It tests the
-entry for boxed null, which covers a missing key and a stored null. A null
-`mixed` initializes on the store. A null `dynamic` fails the container check
-after key evaluation and before fallback.
+leaf for boxed null, which covers a missing key and a stored null. A null
+`mixed` initializes on a single-key store. A null `dynamic` fails the container check
+after key evaluation and before fallback. Nested paths require existing container
+intermediates and recheck the full path after fallback. Dynamic accepts computed
+string names in these paths. Field holder retention and the ordinary boxed
+write-back rules apply.
 
 ## Plain two-key assignment on boxed locals
 
