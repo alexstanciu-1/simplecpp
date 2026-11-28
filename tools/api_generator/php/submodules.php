@@ -262,6 +262,34 @@ function needsStructuralDecoder(mixed $publication): bool {
     return $requested || in_array('decode', names($publication->json->operations ?? []), true);
 }
 
+/** The provider declares its general map domain independently of its PHP array_map builder. */
+function generalMapDomain(mixed $provider): ?string {
+    $contract = $provider->map_domain ?? null;
+    if ($contract === null) return null;
+    fields($contract, ['kind', 'publication']);
+    $kind = textValue(at($contract, 'kind'));
+    requireThat(in_array($kind, ['sequence', 'keyed', 'collection'], true), 'Invalid general map domain');
+    requireThat(preg_match('/^[a-z_]+\.[a-z_]+$/D', textValue(at($contract, 'publication'))) === 1,
+        'Invalid general map publication selector');
+    return $kind;
+}
+
+/** A nonempty specialization list or an enabled dispatch binding publishes the provider's map domain. */
+function publishedMaps(mixed $metadata, mixed $publication): array {
+    $maps = ['array_map' => true];
+    foreach (object($metadata) as $provider) {
+        if (!isset($provider->map_domain)) continue;
+        $domain = generalMapDomain($provider);
+        [$group, $field] = explode('.', $provider->map_domain->publication);
+        $selection = $publication->{$group}->{$field} ?? null;
+        if ($selection === true || (is_array($selection) && $selection !== [])) {
+            $maps['collection_map'] = true;
+            $maps[$domain . '_map'] = true;
+        }
+    }
+    return array_values(array_intersect($publication->collection_transforms ?? [], array_keys($maps)));
+}
+
 /** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
 function publicationProviderHeaders(mixed $metadata, mixed $publication): array {
     $plan = submodulePlan($metadata);
@@ -286,7 +314,7 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         if (array_diff($integers, $publication->string->explicit_formatters ?? [])) $headers[] = 'scpp/numeric/to_string.hpp';
     }
     if (in_array('array_filter', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_filter.hpp';
-    if (in_array('array_map', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_map.hpp';
+    if (publishedMaps($metadata, $publication) !== []) $headers[] = 'scpp/collection_map.hpp';
     if (in_array('in_array', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_scan.hpp';
     if (in_array('implode', $publication->string->functions ?? [], true)
         && in_array('string', array_column($publication->hashes->specializations ?? [], 'value'), true)) {

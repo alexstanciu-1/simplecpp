@@ -222,7 +222,7 @@ function render(array $plan): array {
     if (in_array('array_filter', $plan['collection_transforms'] ?? [], true)) {
         $files['public/scpp/collection_filter.hpp'] = BANNER . template('collections/filter_entries');
     }
-    if (in_array('array_map', $plan['collection_transforms'] ?? [], true)) {
+    if (array_intersect(['array_map', 'collection_map', 'sequence_map', 'keyed_map'], $plan['collection_transforms'] ?? [])) {
         $files['public/scpp/collection_map.hpp'] = BANNER . template('collections/map_entries');
     }
     if (in_array('in_array', $plan['collection_transforms'] ?? [], true)) {

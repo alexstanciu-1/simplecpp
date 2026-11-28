@@ -143,6 +143,17 @@ def proof(work, quick=False):
     emit(metadata, publication)
     assert snapshot() == original
 
+    map_only = copy.deepcopy(publication)
+    map_only['collection_transforms'] = ['sequence_map']
+    for domain, available in [('sequence', True), ('collection', False)]:
+        variant = copy.deepcopy(metadata)
+        variant['vector']['map_domain']['kind'] = domain
+        plan = emit(variant, map_only)
+        assert ('sequence_map' in plan.get('collection_transforms', [])) == available
+        assert (output / 'public/scpp/collection_map.hpp').is_file() == available
+        run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
+        assert ("'general:func:sequence_map'" in (compiler / 'types/registry.php').read_text()) == available
+
     if not quick:
         # Element-specific dependencies: an int-only vector needs no string or optional numeric provider.
         minimal = copy.deepcopy(no_vectors)

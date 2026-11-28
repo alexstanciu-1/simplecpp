@@ -7,7 +7,8 @@ function compilerAccessInterfaces(mixed $provider, bool $indexed = true): string
     $contracts = names($provider->access_contracts ?? []);
     $readModes = array_intersect($contracts, ['python_index_read', 'python_index_read_snapshot']);
     requireThat(count($readModes) <= 1 && (!$readModes || $indexed), 'Python index access requires one bound read mode');
-    $interfaces = '';
+    $domain = generalMapDomain($provider);
+    $interfaces = $domain === null ? '' : ', ' . $domain . '_map_source';
     foreach ($contracts as $contract) {
         $interfaces .= match ($contract) {
             'readonly_slot' => ', readonly_collection_slot',

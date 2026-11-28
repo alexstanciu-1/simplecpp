@@ -114,6 +114,8 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
         check()
         baseline = artifacts(out)
         assert any(b'iteration_next' in code and b'&label_' in code for code in baseline.values())
+        maps = sum(main_source.count(name + '(') for name in ('collection_map', 'keyed_map', 'labels', 'array_map'))
+        assert sum(unit.count(b'::scpp::detail::map_entries<') for unit in baseline.values()) == maps
         bundle = json.loads((out / 'manifest.json').read_text())
         binary = work / 'run'
         subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I', root/'runtime/generated/public',
@@ -121,9 +123,17 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
         result = subprocess.run([binary], capture_output=True, check=True)
         assert result.stdout == b'19;8;2;3;4;', result.stdout
         manifest.write_text('{}')
-        check('sequence_map')
+        for name, declaration in [('collection_map', '$v vector<int>=[1];'), ('sequence_map', '$v vector<int>=[1];'),
+                                  ('keyed_map', '$v hash<int,int>=[2=>1];')]:
+            main.write_text(declaration + f'$r={name}($v,label(...)); return 0;')
+            check('Unknown function: ' + name)
         manifest.write_text('{"general_api":true}')
-        for expression, error in [('keyed_map($v,label(...))', 'Unsupported collection'),
+        for name in ('collection_map', 'sequence_map', 'keyed_map'):
+            main.write_text(f'$v fixed_array<byte,1>=[1]; $r={name}($v,fn(byte $x):int=>(int)$x);return 0;')
+            check('Unsupported collection for ' + name)
+        for expression, error in [('sequence_map($h,label(...))', 'Unsupported collection'),
+                                  ('keyed_map($h,fn(int $x):byte=>(byte)$x)', 'Unavailable collection result for keyed_map'),
+                                  ('keyed_map($v,label(...))', 'Unsupported collection'),
                                   ('sequence_filter($v,label(...))', 'Invalid callback'),
                                   ('collection_map($v,fn(string $x):int=>1)', 'Invalid callback'),
                                   ('collection_filter($v,fn(int &$x):bool=>true)', 'Invalid callback'),
@@ -134,7 +144,7 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
                                   ('collection_filter($b,fn(mixed $x):mixed=>$x)', 'Invalid callback'),
                                   ('sequence_map($b,fn(mixed $x):mixed=>$x)', 'Unsupported collection'),
                                   ('keyed_map($b,fn(mixed $x):mixed=>$x)', 'Unsupported collection')]:
-            main.write_text('$v vector<int> = [1]; $b mixed = []; '+expression+'; return 0;')
+            main.write_text('$v vector<int> = [1]; $h hash<int,string>=[]; $b mixed = []; '+expression+'; return 0;')
             check(error)
         main.write_text(main_source)
         model.write_text(models.replace('label(int $x):string', 'label(int $x):int').replace('$x===2 ? "two":"other"', '$x'))
