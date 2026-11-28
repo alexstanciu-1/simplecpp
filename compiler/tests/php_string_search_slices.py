@@ -75,6 +75,13 @@ for subject, src, dst in [
         (b'no match', b'XYZ', b'abc')]:
     transforms.append(f'strtr({literal(subject)},{literal(src)},{literal(dst)})')
 transforms.append('strtr(to:"ba",string:"ab",from:"ab")')
+for name in ('str_increment', 'str_decrement'):
+    values = ['1', 'b', 'B', '9', 'z', 'Z', '10', '100', 'aa', 'AA', 'aA', 'Aa',
+              'a0', 'A0', '1a', '2a', '9z', 'Zz', 'z9', '9Z9', '10a', 'aA0',
+              '1b', 'a1', 'AA99zz', 'z' * 40, 'a' * 40, '1' + '0' * 40]
+    if name == 'str_increment':
+        values += ['0', '00', '009', '0Az', 'A', 'a']
+    transforms.extend(f'{name}(string:"{value}")' for value in values)
 body += '\n'.join(f'echo bin2hex({call}),";";' for call in transforms)
 body += """
 function check_ireplace(string $search, string $replace, string $subject):void {
@@ -94,6 +101,10 @@ for search, replacement, subject in [
 
 errors = ['chunk_split("",0)', 'chunk_split("x",-2)', 'wordwrap("x",2,"")',
           'wordwrap("x",0,"",true)', 'wordwrap("x",0,"|",true)']
+for name in ('str_increment', 'str_decrement'):
+    for invalid in (b'', b'0!', b'!z', b' a', b'a-b', b'a\0z', b'a\xff', 'é'.encode()):
+        errors.append(f'{name}({literal(invalid)})')
+errors.extend(f'str_decrement("{value}")' for value in ('0', '00', '09', '0a', '0Z', 'A', 'a'))
 error_cases = ''.join(f'if(cli_argc()==={i+2}) {{ {call}; return 99; }}\n'
                       for i,call in enumerate(errors))
 

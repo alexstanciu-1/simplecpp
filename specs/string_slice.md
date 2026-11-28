@@ -259,3 +259,11 @@ Scalar PHP `str_ireplace(search, replace, subject[, count])` uses the
 non-overlapping and ignore ASCII letter case. The count includes identity
 replacements and is overwritten with zero on a miss or empty search. Both
 helpers accept embedded NULs. Collection overloads remain deferred.
+
+PHP `str_increment(string)` and `str_decrement(string)` step a nonempty
+ASCII alphanumeric byte string from the right. Each position carries or
+borrows in its own alphabet (digits, uppercase or lowercase). A carry past
+the first byte grows the string (`9z` becomes `10a`). A borrow can shorten
+it (`10a` becomes `9z`). Increment accepts leading zeroes. Decrement
+rejects any leading zero and the single letters `a` and `A`. Empty input,
+non-alphanumeric bytes and decrement underflow raise `ValueError`.
