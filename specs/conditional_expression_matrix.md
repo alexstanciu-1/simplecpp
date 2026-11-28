@@ -163,12 +163,12 @@ the key or fallback still updates the original holder. Replacing its collection
 field during fallback makes the replacement collection receive the store at the
 saved key. Preparation checks field writability even when the element is present.
 
-For two-key PHP paths through a hash of vectors or a vector of hashes, the same
-root selection applies. Evaluate and save both keys in order before looking up
-the parent, even if it is missing. A failed parent lookup skips the fallback.
+For PHP paths through typed vectors and hashes at any depth, the same root selection
+applies. Evaluate and save every key once in source order before looking up any
+intermediate entry. A missing intermediate entry skips the fallback.
 The leaf collection supplies the single-key presence rule. When fallback is needed,
-finish evaluating and converting its result before resolving the parent again
-with the saved keys. A replacement child receives the store. A removed parent or
+finish evaluating and converting its result before resolving the full path again
+from the selected root with the saved keys. A replacement child receives the store. A removed parent or
 an invalid vector position raises its usual error and preserves fallback effects.
 
 Parameters, globals, static properties, other indexed places, for-header writes and

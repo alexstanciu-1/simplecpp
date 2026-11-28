@@ -2124,7 +2124,7 @@ CPP;
 			$steps = [];
 			$row = $entry->receiver;
 			$receiver = $row instanceof ast_index_expression
-				? $this->nested_collection_place($row->receiver, $row, $globals, $declarations, $headers, $steps)
+				? $this->nested_collection_place(ast_index_expression::nested_collection_root($row), $row, $globals, $declarations, $headers, $steps)
 				: $this->collection_root_place($row, $globals, $declarations, $headers, $steps);
 			array_push($this->async_steps, ...$steps);
 			$key = $this->value($entry->index, $globals, $declarations, $headers);

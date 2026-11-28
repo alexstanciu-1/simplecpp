@@ -313,19 +313,9 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
-				$this->prepare_index_mutation($statement);
+				$root = $this->prepare_index_mutation($statement);
 				if ($statement->operator === binary_operator::coalesce && $source->flavor === flavor::php
 					&& $receiver->type_def() instanceof conditional_index_store_type) {
-					$root = $receiver;
-					if ($receiver instanceof ast_index_expression) {
-						$root = $receiver->receiver;
-						$parent = $root->type_def();
-						$child = $receiver->type_def();
-						if (!(($parent instanceof hash_type_definition && $child instanceof vector_type_definition)
-							|| ($parent instanceof vector_type_definition && $child instanceof hash_type_definition))) {
-							throw new diagnostic($source, $receiver->byte_start(), 'Nested coalescing assignment requires a hash of vectors or a vector of hashes');
-						}
-					}
 					if ($root instanceof ast_field_expression && ast_index_expression::collection_storage_root($root) !== null) {
 						if ($root !== $receiver) $this->check_indexed_field_owner($root);
 						$this->retain_member_place($root);
@@ -1129,7 +1119,7 @@ final class Preparation
 	}
 
 	/** A mutation through a value-copy row requires a path back to writable storage. */
-	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): void
+	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): ast_expression
 	{
 		$receiver = $statement->target->receiver;
 		$this->value($statement->target, deep_write_path: true);
@@ -1144,7 +1134,7 @@ final class Preparation
 			$this->require_index_write_available($root);
 			Readonly_Access::write($root, true);
 			if ($root instanceof ast_name_expression) $this->latest_writes[$root->local_binding()->storage_id()] = null;
-			return;
+			return $root;
 		}
 		if ($receiver instanceof ast_index_expression && !$receiver->type_def()->mutates_referenced_value()
 			&& $receiver->receiver->type_def() instanceof nested_index_storage_type) {
@@ -1152,6 +1142,7 @@ final class Preparation
 		}
 		$this->require_index_write_available($receiver);
 		Readonly_Access::write($receiver, true);
+		return $receiver;
 	}
 
 	/** A separate hash write could insert a key while the loop holds a selection. */

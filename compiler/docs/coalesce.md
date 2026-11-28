@@ -69,9 +69,10 @@ again after the fallback, including when the vector has been rebound or cleared.
 For an indexed instance field, the collection root lowering retains the holder and
 binds its field before key evaluation. The conditional store uses that same field
 after fallback effects, including replacement of the collection.
-For two-key hash-of-vector and vector-of-hash paths, lowering saves both keys,
-probes the leaf through a checked parent slot, then materializes the converted
-fallback before looking up the parent again for the store.
+For typed vector and hash paths at any depth, preparation uses the storage root
+found by the indexed-mutation check. Lowering saves all keys and probes the leaf
+through checked slots. After converting the fallback, it resolves each slot again
+from that root before storing.
 The native field test checks rebinding the last owner, skipping the fallback for
 zero, writes made by a throwing fallback and readonly declaration edit/recovery.
 
