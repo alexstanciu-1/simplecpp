@@ -13,6 +13,17 @@ This amendment supersedes the eager operand ordering and snapshot requirements
 in the earlier decisions below and in operator-specific descriptions. A backend
 may still sequence operands. Such sequencing describes that lowering only.
 
+## PHP scalar field stores through selected shared owners
+
+For `$owners[key()]->x = rhs()`, `($owners[key()])->x = rhs()` and
+`factory()->x = rhs()`, select and check the shared class handle once before
+evaluating the RHS. The indexed form uses ordinary checked vector or hash
+lookup. Keep the selected owner alive through assignment conversion and the
+store. If the RHS replaces the indexed slot, the selected object receives the
+write. A lookup or empty-owner failure skips the RHS. If the RHS throws, its
+earlier effects stand and the assignment performs no store. The ordinary
+field visibility and readonly rules apply.
+
 ## Typed hash and boxed keyed writes (2026-11-12)
 
 For a typed hash, `mixed`, or `dynamic` keyed write, native C++ call-argument order applies

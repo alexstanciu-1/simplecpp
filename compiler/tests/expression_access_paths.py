@@ -25,6 +25,35 @@ def python_nested_write(work, case):
         ('main', controls, b'')])
 
 
+def scalar_owner(work, case):
+    model = """
+    class Holder {
+        public int $x=3;
+        public function __destruct() {echo "D",$this->x;}
+    }
+    """
+    helpers = """
+    function slot():int {echo "I";return 0;}
+    function factory():Holder {echo "F";return new Holder();}
+    function rhs():int {echo "V";return 7;}
+    function fail():int {echo "T";throw Exception::make("rhs");}
+    function swap(vector<Holder> &$v):int {echo "R";$v[0]=new Holder();return 7;}
+    """
+    main = helpers + """
+    function plain():void {$v vector<Holder>=[new Holder()];$v[slot()]->x=swap($v);echo $v[0]->x;}
+    function grouped():void {$v vector<Holder>=[new Holder()];($v[slot()])->x=swap($v);echo $v[0]->x;}
+    plain();grouped();factory()->x=rhs();
+    try {factory()->x=fail();} catch (Exception $e) {echo "C";}
+    $h=new Holder();$m hash<Holder,string>=["k"=>$h];$m["k"]->x=7;
+    try {($m["k"])->x=fail();} catch (Exception $e) {echo $h->x;}
+    return 8;
+    """
+    trace = b'IRD73D3IRD73D3FVD7FTD3CT7D7'
+    revisions(work, 'php', dict(main=main, model=model), [
+        (None, None, trace), ('model', model.replace('public int', 'public readonly int'), 'Cannot modify readonly property x'),
+        ('model', model, trace)])
+
+
 def awaited_key(work, case):
     mutation = '$h->ops["run"]=second(...);'
     if case == 'await_remove':
@@ -348,7 +377,7 @@ def coalesce_pair(work, case):
 
 CASES = {name: awaited_key for name in ('await_replace', 'await_remove', 'await_both')}
 
-CASES.update(python_nested_write=python_nested_write, empty_callable=empty_callable, throw_arg=exceptional, throw_key=exceptional,
+CASES.update(scalar_owner=scalar_owner, python_nested_write=python_nested_write, empty_callable=empty_callable, throw_arg=exceptional, throw_key=exceptional,
              selection_full=selection, anchor_full=anchor,
              failed_store=failed_store, selection=selection, call_modes=call_modes, anchor=anchor)
 

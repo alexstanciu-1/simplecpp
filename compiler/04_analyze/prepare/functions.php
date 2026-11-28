@@ -94,6 +94,7 @@ final class Function_Preparation
 				continue;
 			}
 			if ($statement instanceof ast_field_assignment) {
+				$statement->retain_selected_owner = false;
 				$statement->transfer = false;
 				$statement->conversion = null;
 				self::expression($statement->target);

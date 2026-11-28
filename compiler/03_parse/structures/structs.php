@@ -386,6 +386,8 @@ final class ast_field_assignment extends ast_statement
 	public readonly ast_expression $value;
 
 	/** PREP FACTS */
+	/** Prepared fact: retain the computed shared receiver through scalar assignment. */
+	public bool $retain_selected_owner = false;
 	/** Prepared fact: true only for a proven terminal whole-value transfer. */
 	public bool $transfer = false;
 	/** Prepared fact: assignment conversion, cleared before each preparation. */

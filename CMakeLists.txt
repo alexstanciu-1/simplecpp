@@ -905,7 +905,7 @@ if(BUILD_TESTING)
       failed_store shallow_failure conversion_failure selection call_modes anchor bounds_string bounds_vector
       bounds_fixed bounds_hash terminal_void mixed_read grouped_absent grouped_present factory_match factory_ternary
       arithmetic_failure predicate_after_write qualified_receiver declared_match declared_ternary signatures_match signatures_ternary
-      wrapper_coalesce handle_coalesce awaited_coalesce python_nested_write)
+      wrapper_coalesce handle_coalesce awaited_coalesce python_nested_write scalar_owner)
     add_test(NAME compiler_expression_path_${case} COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/expression_access_paths.py ${case})
   endforeach()

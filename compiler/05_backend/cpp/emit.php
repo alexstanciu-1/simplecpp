@@ -1542,7 +1542,7 @@ CPP;
 					$field = $this->name_value($statement->target, $global_references, $declarations, $required_headers);
 				} elseif (($element = $statement->selected_record_element()) !== null) {
 					$field = $this->name($element, reference: true) . '.' . Cpp_Identifier::source($statement->target->field);
-				} elseif ($statement->target instanceof ast_field_expression && $before !== $this->suspensions) {
+				} elseif ($statement->target instanceof ast_field_expression && ($statement->retain_selected_owner || $before !== $this->suspensions)) {
 					$steps = [];
 					$owner = $this->retained_place($statement->target->receiver, $global_references, $declarations, $required_headers, $steps);
 					array_push($this->async_steps, ...$steps);

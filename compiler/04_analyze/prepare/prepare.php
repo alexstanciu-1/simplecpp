@@ -288,7 +288,7 @@ final class Preparation
 				}
 			}
 			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
-				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment);
+				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment ? $statement : null);
 				$type = $statement->target->type_def();
 				$before = $this->suspension_count;
 				if ($statement instanceof ast_field_assignment && $statement->target instanceof ast_field_expression && $statement->target->key_write_root !== null) {
@@ -1349,7 +1349,7 @@ final class Preparation
 	}
 
 	/** Check writable instance paths and qualified static members for all property writes. */
-	private function writable_property(ast_name_expression|ast_field_expression $root, bool $initialize = false, bool $payload = false): ?ast_instance_field
+	private function writable_property(ast_name_expression|ast_field_expression $root, ?ast_field_assignment $assignment = null, bool $payload = false): ?ast_instance_field
 	{
 		if ($root instanceof ast_name_expression) {
 			if ($root instanceof ast_called_type_name && $payload) throw new diagnostic($root->source(), $root->byte_start(), 'Indexed late-static property writes are deferred');
@@ -1366,9 +1366,16 @@ final class Preparation
 			$root->key_write_root = $place;
 			return null;
 		}
-		$field = $initialize ? $this->constructor_initialization?->assignment($root, $this->loop !== null) : null;
+		$field = $assignment !== null ? $this->constructor_initialization?->assignment($root, $this->loop !== null) : null;
 		Readonly_Access::write($root, $payload, $field);
 		if ($payload && $this->check_indexed_field_owner($root)) return $field;
+		$owner = $root->receiver;
+		if ($assignment !== null && $root->source()->flavor === flavor::php && $root->type_def()->predicate_kind() !== ''
+			&& $owner->type_def() instanceof shared_record_type_definition
+			&& ($owner instanceof ast_call_expression || $this->check_indexed_field_owner($root))) {
+			$assignment->retain_selected_owner = true;
+			return $field;
+		}
 		$root = $root->receiver;
 		while ($root instanceof ast_field_expression) $root = $root->receiver;
 		if ($root instanceof ast_index_expression && $root->receiver->type_def() instanceof segment_type) return $field;

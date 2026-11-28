@@ -30,7 +30,7 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 |---|---|
 | 🟢 F2 fixed after audit | Homogeneous nullable integers and identical shared class handles are implemented. Their both-empty outcomes differ. The registered tests check the domain error for integers and the empty result for optional handles. [Compiler contract](../../compiler/docs/coalesce.md) |
 | 🟢 D1. Python nested typed-write diagnostic | Fixed in workspace 03. The preparation diagnostic identifies the storage available in Python. The default regression checks rejection, repair and native execution of both working controls. Typed-vector write admission remains a separate decision. |
-| D2. Clarify scalar field destinations through indexed or temporary class handles | Both `$owners[0]->x=7` and `($owners[0])->x=7` reach preparation and reject for writable local storage. Calling a method or reading the same field works; indexed writes into a **collection field** of the selected holder work. A direct write through a factory result also rejects. Decide whether to extend the retained-owner rule to scalar fields, or document the restriction with a target-specific diagnostic. |
+| 🟢 D2. Plain PHP scalar stores through computed shared class handles | Grouped and ungrouped indexed receivers and shared factory results retain the selected allocation through the store. The native regression observes the original and replacement values, throwing RHS behavior and readonly edit/recovery. [Evaluation contract](../expression_evaluation.md#php-scalar-field-stores-through-selected-shared-owners) |
 | D3. Decide computed callee and flavor boundaries | In PHP a grouped stored callable field and grouped local work; `(true ? $a : $b)(7)` stopped at the invocation suffix. The direct `ops[0](6)` syntax probe still stopped in parsing in C++, JS and Python. These are admission decisions independent of F1. No cross-flavor extension was assumed. |
 | D4. Decide additional access syntax and grouping expectations | A grouped optional field followed by an ordinary field access checks the resulting owner. On an absent outer receiver it raised `ownership_empty_access`; the continuous guarded member chain produced absence. A grouped scalar optional can feed coalescing. Computed PHP member names, nullsafe writes, nonlocal/indexed `??=` and field interpolation remain limited. Field interpolation still reports a closing-brace parse error. Decide each surface before broadening admission; a grouping comparison alone does not prove a language bug. |
 | D5. Keep existing bounded semantics explicit | Non-Python mixed nested value reads, references escaping into movable slots and the sampled lexical comparisons of numeric-looking strings have existing boundaries. No evidence in this audit calls for changing boxed ownership, reference origins or comparison semantics. |
@@ -42,7 +42,7 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 
 The GAPS thread in `simple_cpp_03` owns the full inventory. The handoff was
 `cc4a00c7f`. The pulled baseline for this pass was `d98403096`. The last
-inventory column now contains 43 verified rows and nine follow-up rows.
+inventory column now contains 44 verified rows and eight follow-up rows.
 F1 (`59d400219`) accounts for the original red row. D1 closes one diagnostic
 row. F2 (`cc4a00c7f`) closes two coalescing cases within a broader follow-up row.
 
@@ -64,7 +64,12 @@ in 90.66 s. These figures apply to the workspace 03 snapshot.
   `function make():N {return new N();}` and `$owners vector<N>=[make()];`.
   Each destination in `$owners[0]->x=7`, `($owners[0])->x=7` and
   `make()->x=7` parses and reports `Field assignment requires writable local storage`.
-  A retained-owner scalar store is the next language decision.
+  The D2 implementation on base `83f3ab25f` admits these plain stores.
+  In the vector regression the original owner's destructor observes 7 after
+  slot replacement, and a read of the replacement returns 3. A throwing RHS
+  leaves the factory result at 3 and a previously written hash-held object at 7.
+  On dev002 the D2 compiler/test patch (`cedd25a45ff9`) passed 15/15 focused
+  checks and 663/663 default tests with `ctest --preset default -j24` in 45.80 s.
 - **D3, parser.** Replayed direct `return ops[0](6)` in C++, JS and Python,
   and PHP `(true ? $a : $b)(7)` with owned callable locals. All stop at the
   invocation suffix. PHP terminal guarded indexed invocation in `5b2388267`
