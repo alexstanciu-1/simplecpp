@@ -80,6 +80,9 @@ def prove(module, source, disabled_call, helper='', failures=()):
 
 if sys.argv[2] == 'io':
     prove('io', io, 'fopen("a","r")', 'int origin(){return SEEK_SET;}', [
+        ('$bad=str_getcsv("row", ""); return 0;', 'CSV separator must be one byte'),
+        ('$bad=str_getcsv("row", ",", ""); return 0;', 'CSV enclosure must be one byte'),
+        ('$h file_stream=fopen("csv","wb"); $bad=fputcsv($h,["a"],",","q","xx"); return 0;', 'CSV escape must be empty or one byte'),
         ('$bad=fopen("a","x"); return 0;', 'unsupported stream mode'),
         ('$h file_stream=fopen("stream.dat","rb"); $a=$h; $closed=fclose($h); $bad=fread($a,1); return 0;', 'stream is closed'),
     ])

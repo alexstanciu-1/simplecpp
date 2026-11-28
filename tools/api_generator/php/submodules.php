@@ -240,14 +240,14 @@ function compilerProviderMetadata(mixed $metadata, ?array $plan = null): object 
     return $copy;
 }
 
-const STRING_VECTOR_IMPLEMENTATIONS = ['split_bytes', 'join_bytes'];
+const STRING_VECTOR_IMPLEMENTATIONS = ['split_bytes', 'join_bytes', 'parse_csv'];
 
 function stringAdapterHeader(string $flavor, string $implementation): string {
     $file = in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true) ? 'string_vectors' : 'string';
     return "scpp/$flavor/$file.hpp";
 }
 
-const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['html_escape', 'increment_alnum', 'decrement_alnum', 'chunk_bytes', 'wrap_words', 'byte_set_tail', 'compare_prefix', 'pad_bytes', 'count_matches', 'split_bytes', 'find', 'rfind'];
+const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['html_escape', 'increment_alnum', 'decrement_alnum', 'chunk_bytes', 'wrap_words', 'byte_set_tail', 'compare_prefix', 'pad_bytes', 'count_matches', 'split_bytes', 'parse_csv', 'find', 'rfind'];
 
 /** A JSON output adapter is an existing consumer of the independent structural protocol. */
 function needsStructuralEncoder(mixed $publication): bool {

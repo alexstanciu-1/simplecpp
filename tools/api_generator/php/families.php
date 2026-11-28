@@ -225,6 +225,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'direct_provider', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'php_aliases', 'complement', 'numeric_inputs', 'selector', 'arities', 'ascii_fold']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
+            'parse_csv' => ['parameters' => ['string', 'string', 'string', 'string'], 'result' => 'vector<string>', 'required_parameters' => 1],
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
             'join_bytes' => ['parameters' => ['vector<string>', 'string'], 'result' => 'string'],
             'byte_length', 'first_byte' => ['parameters' => ['string'], 'result' => $count],
@@ -282,7 +283,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'First-byte case requires an ASCII case operation');
         $span = $implementation === 'byte_span';
         requireThat($span === isset($function->complement), 'Byte span requires a membership mode');
-        $phpOnly = $span || $implementation === 'html_escape' || in_array($implementation, ['format_number', 'replace_window', 'compare_natural', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'urlencode', 'rawurlencode', 'urldecode', 'rawurldecode', 'quoted_printable_encode', 'quoted_printable_decode', 'chunk_bytes', 'wrap_words', 'translate_bytes', 'ascii_replace_bytes', 'increment_alnum', 'decrement_alnum'], true) || $firstByte
+        $phpOnly = $span || in_array($implementation, ['html_escape', 'parse_csv'], true) || in_array($implementation, ['format_number', 'replace_window', 'compare_natural', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'urlencode', 'rawurlencode', 'urldecode', 'rawurldecode', 'quoted_printable_encode', 'quoted_printable_decode', 'chunk_bytes', 'wrap_words', 'translate_bytes', 'ascii_replace_bytes', 'increment_alnum', 'decrement_alnum'], true) || $firstByte
             || ($implementation === 'trim_bytes' && isset($function->flavors));
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
@@ -449,7 +450,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                     $options['search_offset'] = $policy;
                 }
                 if (isset($freeNames[$flavor])) $options['free'] = true;
-                if ($flavor === 'php' && in_array($implementation, STRING_VECTOR_IMPLEMENTATIONS, true)) $options['swap_first_two'] = true;
+                if ($flavor === 'php' && in_array($implementation, ['split_bytes', 'join_bytes'], true)) $options['swap_first_two'] = true;
                 checkHeader($plan, stringAdapterHeader($flavor, $implementation));
                 $plan['string_functions'][$name]['adapters'][$flavor] = [
                     'name' => $spelling, 'symbol' => "scpp::$flavor::$spelling", 'header' => $options['header'] ?? stringAdapterHeader($flavor, $implementation)] + $options;

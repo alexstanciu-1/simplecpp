@@ -4,6 +4,7 @@
     {"native": "open", "general": ["io_open"], "php": ["fopen"], "parameters": ["string", "string"], "result": "result_or_false_file_stream"},
     {"native": "tell", "general": ["io_tell"], "php": ["ftell"], "parameters": ["file_stream"], "result": "result_or_false_int64"},
     {"native": "write", "general": ["io_write"], "php": ["fwrite", "fputs"], "parameters": ["file_stream", "string"], "result": "result_or_false_int64"},
+    {"native": "write_csv", "php": ["fputcsv"], "parameters": ["file_stream", "vector_string", "string", "string", "string", "string"], "required": 2, "result": "result_or_false_int64"},
     {"native": "read", "general": ["io_read"], "php": ["fread"], "parameters": ["file_stream", "int64"], "result": "result_or_false_string"},
     {"native": "read_line", "general": ["io_read_line"], "php": ["fgets"], "parameters": ["file_stream", "int64"], "result": "result_or_false_string", "required": 1},
     {"native": "seek", "general": ["io_seek"], "php": ["fseek"], "parameters": ["file_stream", "int64", "int64"], "result": "nullable_int64", "required": 2},

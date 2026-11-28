@@ -22,10 +22,10 @@ Doc Status: planning
 
 | Group | Names |
 | --- | --- |
-| Published PHP names (bounded signatures) | `htmlspecialchars`, `quoted_printable_encode`, `quoted_printable_decode`, `strnatcmp`, `strnatcasecmp`, `str_increment`, `str_decrement`, `strtr`, `str_ireplace`, `chunk_split`, `wordwrap`, `ucwords`, `nl2br`, `addslashes`, `stripslashes`, `strstr`, `strchr`, `stristr`, `strrchr`, `strpbrk`, `strspn`, `strcspn`, `echo`, `ord`, `chr`, `chop`, `strrev`, `str_rot13`, `bin2hex`, `explode`, `hex2bin`, `implode`, `lcfirst`, `ltrim`, `number_format`, `rtrim`, `str_contains`, `str_ends_with`, `str_pad`, `str_repeat`, `str_replace`, `str_starts_with`, `strcasecmp`, `strcmp`, `stripos`, `strlen`, `strncasecmp`, `strncmp`, `strpos`, `strripos`, `strrpos`, `strtolower`, `strtoupper`, `substr`, `substr_compare`, `substr_count`, `substr_replace`, `trim`, `ucfirst` |
+| Published PHP names (bounded signatures) | `str_getcsv`, `htmlspecialchars`, `quoted_printable_encode`, `quoted_printable_decode`, `strnatcmp`, `strnatcasecmp`, `str_increment`, `str_decrement`, `strtr`, `str_ireplace`, `chunk_split`, `wordwrap`, `ucwords`, `nl2br`, `addslashes`, `stripslashes`, `strstr`, `strchr`, `stristr`, `strrchr`, `strpbrk`, `strspn`, `strcspn`, `echo`, `ord`, `chr`, `chop`, `strrev`, `str_rot13`, `bin2hex`, `explode`, `hex2bin`, `implode`, `lcfirst`, `ltrim`, `number_format`, `rtrim`, `str_contains`, `str_ends_with`, `str_pad`, `str_repeat`, `str_replace`, `str_starts_with`, `strcasecmp`, `strcmp`, `stripos`, `strlen`, `strncasecmp`, `strncmp`, `strpos`, `strripos`, `strrpos`, `strtolower`, `strtoupper`, `substr`, `substr_compare`, `substr_count`, `substr_replace`, `trim`, `ucfirst` |
 | Direct byte operations and aliases | `str_split`, `join` |
 | Text composition and scanning | `count_chars`, `str_word_count`, `str_shuffle`, `strtok` |
-| HTML and web boundaries | `htmlspecialchars_decode`, `htmlentities`, `html_entity_decode`, `get_html_translation_table`, `strip_tags`, `parse_str`, `str_getcsv` |
+| HTML and web boundaries | `htmlspecialchars_decode`, `htmlentities`, `html_entity_decode`, `get_html_translation_table`, `strip_tags`, `parse_str` |
 | Formatting, output and parsing | `sprintf`, `printf`, `fprintf`, `vsprintf`, `vprintf`, `vfprintf`, `sscanf`, `print` |
 | Escapes and transfer encodings | `addcslashes`, `stripcslashes`, `quotemeta`, `convert_uuencode`, `convert_uudecode` |
 | Matching, phonetics and locale | `levenshtein`, `similar_text`, `metaphone`, `soundex`, `strcoll`, `setlocale`, `localeconv`, `nl_langinfo`, `hebrev` |

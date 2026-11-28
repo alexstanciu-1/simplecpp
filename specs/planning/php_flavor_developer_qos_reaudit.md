@@ -85,19 +85,19 @@ operand. [Interpolation checks](../../compiler/tests/interpolation.php)
 | 26 | Traverse a producer | Intentional difference | A typed iterator resumed after break and the keyed producer yielded its keys. PHP's Generator name and yield delegation remain outside the tested slice. |
 | 27 | Organize multiple files | Fixed | Include/require diagnostics identify manifest source selection. On Linux, `__FILE__` and `__DIR__` resolve relative to the executable; the source-file/parent-directory probe succeeded. |
 | 28 | Read HTTP input and send status | Intentional difference | Superglobals, `php://input` and PHP header/session helpers did not supply request state. The explicit FastCGI exchange handled the request, headers and status in the live apps. |
-| 29 | Build or decode a URL, HTML or CSV | Still reproducible | Scalar URL component helpers are published. The form app retains its stricter input validation. HTML 4.01 text escaping now covers the catalog. Query structures and CSV helpers remain open. |
+| 29 | Build or decode a URL, HTML or CSV | Still reproducible | Scalar URL component helpers are published. The form app retains its stricter input validation. HTML 4.01 text escaping now covers the catalog. The typed CSV parser and stream writer cover the import/export examples. Structured query strings remain open. |
 | 30 | Use timestamps or a regex | Fixed | PHP `time()` returns Unix seconds with datetime enabled. The general UTC formatter works. PHP `date()` formats UTC timestamps. `strtotime()` parses absolute and relative dates with bundled timezone data. The old mixed-captures workaround is obsolete for numbered strings: a fresh `vector<string>` capture probe printed `2:a`. Miss and invalid-pattern controls still distinguished present zero from failure. |
 | 31 | Call a remote endpoint | Fixed | The compiled curl client handled HTTP errors, invalid upstream data and connection failure. Both `CURLINFO_HTTP_CODE` and `CURLINFO_RESPONSE_CODE` returned 201 for the same loopback POST. |
 | 32 | Prepare and bind a SQL query | Fixed | The ticket report guards the prepare result, extracts the statement and binds a named slot. On dev002 it handled a failed prepare and read each changed state on subsequent MariaDB executions. The temporary-slot and unproven-alias probes still reject. |
 | 33 | Bring a filesystem snippet | Intentional difference | The two-argument PHP write alias rejected the append-flag call. The journal used append mode and a checked byte count; contention left the file untouched. POSIX lexical path behavior and general-API visibility remained as specified. |
 
-## Remaining work after the datetime helpers
+## Remaining work after CSV and curl
 
 The current classification of the original 33 tasks is **18 fixed, 1 still reproducible and 14 intentional differences**. The November 27 full replay counted 10, 9 and 14 respectively. Tasks 6, 10, 15, 22, 24, 27, 30 and 31 have since moved to fixed. At `443f4fcec` a focused dev002 replay reconfirmed the missing PHP names in tasks 29 and 31 and the three working clock, format and parse spellings in task 30. A fixed task can still have a deliberate boundary, such as explicit extraction of a boxed value before echo.
 
 | Priority | Task | Evidence and proposed scope |
 |---|---|---|
-| 1 | 29 · Query strings and CSV | The [catalog view](../../samples/php-developer-qos/catalog-view/view.php) uses the PHP UTF-8, HTML 4.01 escaper with quotes preserved. PHP query structures and CSV field lists go with the later collection review. |
+| 1 | 29 · Query strings | The [catalog view](../../samples/php-developer-qos/catalog-view/view.php) uses the PHP UTF-8, HTML 4.01 escaper with quotes preserved. `str_getcsv` and `fputcsv` use typed string vectors. The remaining missing names are `parse_str` and `http_build_query`. |
 
 ### Task 29 · URL component audit at `87d31d524`
 

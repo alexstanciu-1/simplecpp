@@ -16,6 +16,7 @@ Copying a handle shares its state. Releasing the final handle releases its nativ
 | io_open(path, mode) | fopen | result_or_false<file_stream> |
 | io_tell(stream) | ftell | result_or_false<int> |
 | io_write(stream, bytes) | fwrite, fputs | result_or_false<int> |
+| | fputcsv(stream, fields[, separator, enclosure, escape, eol]) | result_or_false<int> |
 | io_read(stream, length) | fread | result_or_false<string> |
 | io_read_line(stream[, width]) | fgets | result_or_false<string> |
 | io_seek(stream, offset[, origin]) | fseek | nullable<int> |
@@ -32,6 +33,20 @@ false. A byte read at EOF succeeds with an empty string. Seek defaults to SEEK_S
 SEEK_SET, SEEK_CUR and SEEK_END are available as source constants. Success clears
 EOF and returns present zero. Invalid origin, offset outside native range or a failed
 seek returns null. A write reports the count actually written.
+
+### PHP CSV
+
+`str_getcsv(record[, separator, enclosure, escape])` is a core string helper. It
+returns one native `vector<string>` per input record. A completely blank record
+returns one empty string. The parser also preserves quoted empty fields, empty
+columns, doubled enclosures, embedded line breaks and NUL bytes.
+
+`fputcsv` accepts a writable file stream and a `vector<string>`. It writes fields
+in order and returns the byte count including the ending (a newline by default).
+Both helpers use single-byte separators and enclosures, defaulting to comma
+and double quote. The default escape is backslash. An empty escape disables it.
+CSV scanning uses byte comparisons and ASCII whitespace. For round trips of
+fields containing backslashes and quotes, pass an empty escape to both helpers.
 
 ## Managed Process
 
