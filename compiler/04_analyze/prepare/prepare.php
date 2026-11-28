@@ -1100,7 +1100,11 @@ final class Preparation
 	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): void
 	{
 		$receiver = $statement->target->receiver;
-		$this->value($statement->target, deep_write_path: true);
+		$computed = $statement->target instanceof ast_computed_member_read;
+		$this->value($statement->target, deep_write_path: !$computed);
+		if ($computed && !($receiver instanceof ast_name_expression && $receiver->local_binding() !== null)) {
+			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member mutation requires a local dynamic receiver');
+		}
 		if ($receiver instanceof ast_field_expression) $this->check_indexed_field_owner($receiver);
 		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver);
 		if ($receiver instanceof ast_index_expression && $receiver->type_def() instanceof boxed_type_definition
