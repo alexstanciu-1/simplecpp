@@ -203,18 +203,102 @@ def computed_deep_missing(work, flavor):
         guard(work, flavor, label, DEEP_KEYS + main, 'boxed_missing_key', expected_stdout=trace)
 
 
+FIELD_MODEL = """
+    class Holder {
+        public dynamic $data;
+        public function __construct(dynamic $root) {$this->data=$root;}
+        public function __destruct() {echo "D",(int)$this->data["group"][9];}
+    }
+"""
+FIELD_API = """
+    function owner():int {echo "O";return 0;}
+    function groupKey():string {echo "G";return "group";}
+    function leafKey():string {echo "K";return "9";}
+    function install(Holder $h,dynamic $next):void {$h->data=$next;}
+    function swap(vector<Holder> &$owners,dynamic $fresh,dynamic $other):int {
+        $next dynamic=[];$next["group"]=$fresh;install($owners[0],$next);
+        $owners[0]=new Holder($other);echo "R";return 3;
+    }
+"""
+FIELD_SETUP = """
+    $root dynamic=[];$old dynamic=[];$old[9]=4;$root["group"]=$old;
+    $other dynamic=[];$untouched dynamic=[];$untouched[9]=90;$other["group"]=$untouched;
+    $fresh dynamic=[];$fresh[8]=8;$owners vector<Holder>=[new Holder($root)];
+"""
+
+
+def computed_field_store(work, flavor):
+    main = ''
+    for i, suffix in enumerate(('->{leafKey()}', '[]')):
+        main += f'function run{i}():void {{' + FIELD_SETUP
+        main += '$owners[owner()]->data->{groupKey()}' + suffix + '=swap($owners,$fresh,$other);'
+        main += 'echo "E",(int)$old[9],(int)$fresh[9],(int)$owners[0]->data["group"][9];}'
+        main += f'run{i}();'
+    trace = b'OGKRD3E4390D90OGRD3E4390D90'
+    readonly = FIELD_MODEL.replace('public dynamic', 'public readonly dynamic')
+    revisions(work, flavor, dict(main=main + 'return 8;', api=FIELD_API, model=FIELD_MODEL), [
+        (None, None, trace), ('model', readonly, 'Cannot modify readonly property data'), ('model', FIELD_MODEL, trace)])
+
+
+def computed_field_mutation(work, flavor):
+    main = FIELD_SETUP + """
+        $fresh[9]=99;
+        $owners[owner()]->data->{groupKey()}->{leafKey()}+=swap($owners,$fresh,$other);
+        echo "E",(int)$old[9],(int)$fresh[9],(int)$owners[0]->data["group"][9];return 8;
+    """
+    key_api = """
+        function rebindKey(vector<Holder> &$owners,dynamic $other):string {
+            $owners[0]=new Holder($other);echo "G";return "group";
+        }
+    """
+    key_case = FIELD_SETUP + """
+        $owners[owner()]->data->{rebindKey($owners,$other)}->{leafKey()}+=3;
+        echo "E",(int)$old[9],(int)$owners[0]->data["group"][9];
+    """
+    main = 'function rhsCase():int {' + main + '} function keyCase():void {' + key_case + '} rhsCase();keyCase();return 8;'
+    trace = b'OGKRD7E4790D90OGKD7E790D90'
+    readonly = FIELD_MODEL.replace('public dynamic', 'public readonly dynamic')
+    revisions(work, flavor, dict(main=main, api=FIELD_API + key_api, model=FIELD_MODEL), [
+        (None, None, trace), ('model', readonly, 'Cannot modify readonly property data'), ('model', FIELD_MODEL, trace)])
+
+
+def computed_field_readonly(work, flavor):
+    model = 'class Holder {public dynamic $data; public function __construct(dynamic $v) {$this->data=$v;}}'
+    api = 'function name():string {echo "K";return "group";}'
+    main = """
+        $root dynamic=[];$h=new Holder($root);$child dynamic=[];$h->data->{name()}=$child;
+        $h->data->{name()}[]=3;
+        ++$h->data->{name()}[0];echo (int)$child[0];
+        $h->data["group"]->{"0"}++;echo (int)$child[0];
+        --$h->data->{name()}[0];echo (int)$child[0];
+        $h->data->{name()}[0]--;echo (int)$child[0];
+        $h->data->{"n"}=4;$h->data->{"n"}+=3;echo (int)$root["n"];return 8;
+    """
+    trace = b'KKK45K4K37'
+    readonly = model.replace('public dynamic', 'public readonly dynamic')
+    revisions(work, flavor, dict(main=main, api=api, model=model), [
+        (None, None, trace), ('model', readonly, trace), ('model', model, trace)])
+
+
+def computed_field_missing(work, flavor):
+    model = 'class Holder {public dynamic $data;}'
+    api = NESTED_KEYS + 'function removeLeaf(dynamic $row):int {echo "R";$row->remove("leaf");return 3;}'
+    setup = '$root dynamic=[];$row dynamic=[];$h=new Holder();$root["group"]=$row;$h->data=$root;'
+    for case, seed, trace in [('missing', '', b'GK0'), ('removed', '$row["leaf"]=4;', b'GKR0')]:
+        main = setup + seed + 'try {$h->data->{groupKey()}->{leafKey()}+=removeLeaf($row);} finally {echo count($row);}return 0;'
+        guard(work, flavor, case, model + api + main, 'boxed_missing_key', expected_stdout=trace)
+
+
 def computed_admission(work, flavor):
     setup = '$d dynamic=[];$name="key";'
     cases = [
         ('$d mixed=[];$x=$d->{"key"};', 'Computed member read requires a dynamic receiver'),
         ('class H {public int $key;}$h=new H();$x=$h->{"key"};', 'Computed member read requires a dynamic receiver'),
         (setup + '$x=$d->{$name}();', 'Computed member calls are not supported'),
-        ('$d mixed=[];$d->{"key"}=7;', 'Computed member assignment requires a local dynamic receiver'),
-        ('class H {public dynamic $data;}$h=new H();$h->data->{"key"}=7;', 'Expected writable struct field'),
+        ('$d mixed=[];$d->{"key"}=7;', 'Computed member assignment requires a dynamic local or writable dynamic instance field'),
+        ('class H {public mixed $data;}$h=new H();$h->data->{"key"}=7;', 'Computed member assignment requires a dynamic local or writable dynamic instance field'),
         ('$d mixed=[];$d->{"key"}+=7;', 'Computed member read requires a dynamic receiver'),
-        ('class H {public dynamic $data;}$h=new H();++$h->data->{"key"};', 'Computed member write requires a local dynamic receiver'),
-        ('class H {public dynamic $data;}$h=new H();$h->data[0]->{"mid"}["key"][]=7;', 'Computed member write requires a local dynamic receiver'),
-        ('function make():dynamic {$d dynamic=[];return $d;} ++make()->{"mid"}["key"];', 'Computed member write requires a local dynamic receiver'),
+        ('function make():dynamic {$d dynamic=[];return $d;} ++make()->{"mid"}["key"];', 'Computed member write requires a dynamic local or stable dynamic instance field'),
         (setup + '$d[0]->{1}=7;', 'Computed member name requires a string'),
     ]
     revisions(work, flavor, dict(main='return 8;'), [('main', source + 'return 8;', error) for source, error in cases])
@@ -227,4 +311,6 @@ with TemporaryDirectory(prefix='dynamic-arrow-') as tmp:
      'computed_append': computed_append, 'computed_append_missing': computed_append_missing,
      'computed_nested_mutation': computed_nested_mutation, 'computed_nested_mutation_failure': computed_nested_mutation_failure,
      'computed_deep': computed_deep, 'computed_deep_missing': computed_deep_missing,
+     'computed_field_store': computed_field_store, 'computed_field_mutation': computed_field_mutation,
+     'computed_field_readonly': computed_field_readonly, 'computed_field_missing': computed_field_missing,
      'exercise': exercise}[sys.argv[1]](Path(tmp), sys.argv[2])

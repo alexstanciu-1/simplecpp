@@ -348,24 +348,20 @@ final class Parser
 		}
 		if ($this->expression_statement_start()) {
 			$value = $this->primary(field_target: true);
-			if ($this->cursor->is(token_kind::lbracket)) return $this->indexed_write($value);
+			if ($this->cursor->is(token_kind::lbracket) || $this->computed_member_start()) return $this->indexed_write($value);
 			if ($value instanceof ast_called_type_name || $value instanceof ast_qualified_data
 				|| ($value instanceof ast_field_expression && $this->cursor->tokens->source->flavor !== flavor::python)) return $this->property_write($value);
 			return $this->call_statement($value);
 		}
 		if ($this->property_statement_start()) {
-			$target = $this->atom();
-			if ($target instanceof ast_name_expression && $this->computed_member_start()) {
-				return $this->indexed_write($target);
-			}
-			$target = $this->postfix($target, field_target: true);
+			$target = $this->primary(field_target: true);
 			if ($target instanceof ast_call_expression || $target instanceof ast_nullsafe_member) {
 				return $this->call_statement($target);
 			}
 			if (!($target instanceof ast_field_expression) && !($target instanceof ast_name_expression)) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected writable struct field');
 			}
-			if ($this->cursor->is(token_kind::lbracket)) {
+			if ($this->cursor->is(token_kind::lbracket) || $this->computed_member_start()) {
 				return $this->indexed_write($target);
 			}
 			return $this->property_write($target);
@@ -1536,7 +1532,7 @@ final class Parser
 		if ($row !== null) {
 			$field_target = $this->cursor->tokens->source->flavor !== flavor::python;
 			$target = $this->postfix($row, field_target: $field_target);
-			if ($field_target && $this->cursor->is(token_kind::lbracket)) return $this->indexed_write($target, $terminator);
+			if ($field_target && ($this->cursor->is(token_kind::lbracket) || $this->computed_member_start())) return $this->indexed_write($target, $terminator);
 			if ($target instanceof ast_field_expression && $terminator === token_kind::newline) {
 				$this->cursor->take(token_kind::assign, '= after Python field');
 				$value = $this->assignment_value();
@@ -1701,6 +1697,7 @@ final class Parser
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				if ($this->computed_member_start()) {
+					if ($field_target && ($value instanceof ast_field_expression || $value instanceof ast_name_expression)) break;
 					$key = $this->computed_member_key();
 					$value = new ast_computed_member_read($value, $key, $this->cursor->position());
 					continue;
