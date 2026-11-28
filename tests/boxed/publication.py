@@ -109,10 +109,13 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
     for field, value in [('count_method', 'size'), ('key_types', ['bool_t']), ('methods', {'has': 'has', 'remove': 'source_remove'})]:
         m = copy.deepcopy(metadata); m['boxed']['source_collection'][field] = value
         run(m, publication, accepted=False)
-    # Source-enabled families must publish, compile and execute independently.
+    # Source-enabled families need the production scalar widths and casts for dispatch.
+    defaults = json.loads((a.source/'runtime/metadata/publication.json').read_text())
     for family, absent in [('mixed', 'dynamic'), ('dynamic', 'mixed')]:
-        pub = json.loads((a.source/'runtime/metadata/publication.json').read_text())
-        pub['boxed']['families'] = [family]
+        pub = {key: defaults[key] for key in ('version', 'namespace', 'headers', 'types', 'values',
+                                             'operators', 'short_aliases', 'modules', 'string')}
+        pub['string'] = dict(pub['string'], functions=[])
+        pub['boxed'] = dict(publication['boxed'], families=[family], scalar_dispatch=True, scalar_conversions=False)
         one, selected = run(metadata, pub)
         assert absent not in selected['submodules']['type_exports']
         assert not (one/'out/public/scpp'/f'{absent}.hpp').exists()

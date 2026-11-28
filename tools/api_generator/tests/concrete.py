@@ -1,5 +1,5 @@
 """General concrete instantiation, non-default/throwing elements and real runtime allocation failure cleanup."""
-import os
+import json
 from pathlib import Path
 import subprocess
 import tempfile
@@ -15,8 +15,19 @@ def run(command, env=None):
 def prove(work, sanitize, quick=False):
     source = work / 'probe.cpp'
     run(['php', ROOT/'tools/api_generator/tests/concrete.php', source])
+    generated = ROOT / 'runtime/generated'
+    if not quick:
+        # Compile the same generated allocation probe with each compiler's own standard library.
+        request = json.loads((ROOT / 'tests/generator_parity/numeric_publication.json').read_text())
+        request['string']['functions'] = ['explode', 'implode']
+        profile = work / 'vector-publication.json'
+        profile.write_text(json.dumps(request))
+        generated = work / 'generated'
+        layout = ROOT / 'build/clang/native-layout'
+        run(['php', ROOT / 'tools/api_generator/generate.php', 'emit-runtime', ROOT / 'runtime/metadata/runtime.json',
+             profile, layout / 'facts.json', layout / 'context.json', generated])
     for compiler in (['clang++'] if quick else ['clang++', 'g++']):
-        flags = ['-std=c++23', '-O0' if quick else '-O1', '-g0', '-Wall', '-Wextra', '-Werror', '-I'+str(ROOT/'runtime/generated/public'), '-I'+str(ROOT/'runtime/src/sequence'), '-I'+str(ROOT/'runtime/src/hash')]
+        flags = ['-std=c++23', '-O0' if quick else '-O1', '-g0', '-Wall', '-Wextra', '-Werror', '-I'+str(generated/'public'), '-I'+str(ROOT/'runtime/src/sequence'), '-I'+str(ROOT/'runtime/src/hash')]
         if sanitize and compiler == 'clang++': flags += ['-fsanitize=address,undefined', '-fno-omit-frame-pointer']
         run([compiler, *flags, source, '-o', work/'probe'])
         run([work/'probe'])
@@ -25,7 +36,7 @@ def prove(work, sanitize, quick=False):
         rejected = subprocess.run([compiler, *flags, '-fsyntax-only', str(invalid)], capture_output=True, text=True)
         assert rejected.returncode != 0 and 'nothrow_move_constructible' in rejected.stderr, rejected.stderr
         runtime_inputs = (['-stdlib=libc++', ROOT/'build/clang/libscpp_runtime.a'] if quick else
-                          ['-I'+str(ROOT/'runtime/src/numeric'), ROOT/'runtime/generated/src/runtime.cpp'])
+                          ['-I'+str(ROOT/'runtime/src/numeric'), generated/'src/runtime.cpp'])
         run([compiler, *flags, ROOT/'tests/vector_failure.cpp', *runtime_inputs, '-o', work/'failure'])
         run([work/'failure'])
         print(compiler + ': generic recipe, vector/hash aligned non-default elements, holes, copy failure prefixes and runtime allocation failures passed', flush=True)

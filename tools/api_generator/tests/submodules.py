@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 from pathlib import Path
@@ -36,10 +37,11 @@ def proof(work, quick=False, cache_only=False):
     publication = work / 'publication.json'
     published = json.loads((ROOT / 'runtime/metadata/publication.json').read_text())
     published['types'] = ['int64', 'byte']
-    published.pop('modules', None)
-    published['text_helpers'].remove('stable_hash_string_u64')
-    published.pop('mt_segments', None)
-    published.pop('async_frames', None)
+    # Publish the scalar, string and collection providers exercised by the relocation proof.
+    published = {key: value for key, value in published.items() if key in (
+        'version', 'namespace', 'types', 'values', 'headers', 'operators', 'short_aliases',
+        'string', 'vectors', 'hashes', 'carriers')}
+    published['string']['functions'] = []
     published['vectors'].pop('header', None)  # Provider metadata owns the relocatable spelling.
     publication.write_text(json.dumps(published))
     if cache_only:
@@ -237,8 +239,8 @@ def proof(work, quick=False, cache_only=False):
                 assert [line for line in baseline[globals_only[0]].splitlines() if line.startswith('#include')] == [f'#include <{core_header}>']
                 null_units = [p for p, text in baseline.items() if p.endswith('.cpp') and 'scpp::null_t absent_()' in text]
                 assert len(null_units) == 1
-                for suffix in ('.cpp', '.hpp'):
-                    unit = (out / null_units[0]).with_suffix(suffix).read_text()
+                for extension in ('.cpp', '.hpp'):
+                    unit = (out / null_units[0]).with_suffix(extension).read_text()
                     assert [line for line in unit.splitlines() if line.startswith('#include <')] == [f'#include <{core_header}>']
                 if variant == 'relocated':
                     query_units = [unit for path, unit in baseline.items() if path.endswith('.cpp')
@@ -462,7 +464,9 @@ add_custom_target(publication ALL DEPENDS ${{outputs}})
     reduced = check()
     custom = str(generated / 'public/scpp/cmake/custom.hpp')
     assert custom not in reduced and not Path(custom).exists()
-    assert set(after) - set(reduced) == {custom}
+    retired = {custom, str(generated / 'public/scpp/numeric/to_string.hpp')}
+    assert set(after) - set(reduced) == retired
+    assert all(not Path(path).exists() for path in retired)
     # Re-enabling demand must restore the output without a manual clean/configure.
     request['types'] = list(original['types'])
     request['modules'] = ['numeric']
@@ -709,7 +713,13 @@ def cached_application_proof(work, original, facts, context, publication, quick=
                 application_before = artifacts(out)
             generate(value)
             if label == 'spelling_only':
-                assert artifacts(runtime) == runtime_before, 'Spelling-only change altered runtime declarations'
+                runtime_after = artifacts(runtime)
+                # Hash specializations also spell the exported byte type in their native bindings.
+                hash_header = 'public/' + value['submodules']['core.hashes']['header']
+                for path in (hash_header, 'src/hash.cpp'):
+                    runtime_after[path] = re.sub(r'\bbyte\b', 'uint8', runtime_after[path])
+                    runtime_before[path] = re.sub(r'\bbyte\b', 'uint8', runtime_before[path])
+                assert runtime_after == runtime_before, 'Spelling-only change affected unrelated runtime output'
             # New process: PHP classes loaded before regeneration cannot be hot-replaced.
             response = compile_project()
             assert response['rebuilt'], 'Regenerated compiler did not invalidate application cache'

@@ -125,7 +125,9 @@ def proof(work, quick=False):
         if carrier['payload'] not in names
     ]
     emit(metadata, no_vectors, 1)  # Split/join still need vector<string>.
-    no_vectors['string']['functions'] = [f for f in no_vectors['string']['functions'] if f not in ('explode', 'implode')]
+    vector_functions = {name for name, signature in metadata['string']['functions'].items()
+                        if signature['result'] == 'vector<string>' or 'vector<string>' in signature['parameters']}
+    no_vectors['string']['functions'] = [name for name in no_vectors['string']['functions'] if name not in vector_functions]
     absent = emit(metadata, no_vectors)
     assert not list((output / 'public/scpp').glob('*/string_vectors.hpp'))
     assert not (output / 'public/scpp/vectors.hpp').exists()

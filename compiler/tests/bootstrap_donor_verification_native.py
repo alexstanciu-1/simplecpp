@@ -12,7 +12,10 @@ from extends_native import ROOT, runtime, source_edit
 CASES = [
     ('chained-assignment',
      '$a = $b = 1; return 8;',
-     'main.phs:1:9: Expected ;'),
+     'main.phs:1:1: Chained assignment requires an existing local: $a'),
+    ('existing-chained-assignment',
+     '$a=0; $b=0; $a=$b=4; echo $a,$b; return 8;',
+     (8, b'44', b'')),
     ('split-assignment',
      'class Box {public int $n=7;} function makeBox():Box {echo "M"; return new Box();} '
      '$b=makeBox(); $a=$b; $b->n=9; echo $a->n; return 8;',
