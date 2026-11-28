@@ -1960,6 +1960,12 @@ final class Preparation
 					&& !($part->receiver->type_def() instanceof type_mixed)) {
 					throw new diagnostic($part->source(), $part->receiver->byte_start(), 'Keyed interpolation requires a hash or mixed row');
 				}
+				if ($part instanceof ast_interpolation_field) {
+					$receiver = $part->receiver->member_type();
+					if (!($receiver instanceof record_type_definition || $receiver instanceof shared_record_type_definition)) {
+						throw new diagnostic($part->source(), $part->byte_start(), 'Field interpolation requires a declared record field');
+					}
+				}
 				if (!($part instanceof ast_interpolation_text)) {
 					$part->prepare_text($string);
 				}

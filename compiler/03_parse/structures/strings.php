@@ -85,7 +85,7 @@ final class ast_interpolation_text extends ast_string_token_slice {
 final class ast_interpolation_key extends ast_string_token_slice {
 }
 
-/** Prepared formatting shared by named and indexed insertions. */
+/** Prepared formatting shared by named, indexed and field insertions. */
 trait ast_interpolation_conversion
 {
 	/** Prepared fact: scalar-to-string operation, cleared for incremental re-preparation. */
@@ -146,14 +146,30 @@ final class ast_interpolation_index extends ast_index_expression
 	}
 }
 
+/** PHP "{$row->name}" formats one declared field using ordinary member access. */
+final class ast_interpolation_field extends ast_field_expression
+{
+	use ast_interpolation_conversion;
+
+	public function byte_start(): int /** uint32 */
+	{
+		return $this->receiver->byte_start() - 1;
+	}
+
+	public function byte_end(): int /** uint32 */
+	{
+		return $this->receiver->byte_end() + 2 + strlen($this->field);
+	}
+}
+
 /** Ordered text and local references that produce one owned string, e.g. "Hello $name". */
 final class ast_interpolated_string extends ast_expression
 {
-	/** @var (ast_interpolation_text|ast_interpolation_name|ast_interpolation_index)[] */
-	public readonly array $parts /** list<ast_interpolation_text|ast_interpolation_name|ast_interpolation_index> */;
+	/** @var (ast_interpolation_text|ast_interpolation_name|ast_interpolation_index|ast_interpolation_field)[] */
+	public readonly array $parts /** list<ast_interpolation_text|ast_interpolation_name|ast_interpolation_index|ast_interpolation_field> */;
 
-	/** @param (ast_interpolation_text|ast_interpolation_name|ast_interpolation_index)[] $parts */
-	public function __construct(int $token /** uint32 */, array $parts /** list<ast_interpolation_text|ast_interpolation_name|ast_interpolation_index> */)
+	/** @param (ast_interpolation_text|ast_interpolation_name|ast_interpolation_index|ast_interpolation_field)[] $parts */
+	public function __construct(int $token /** uint32 */, array $parts /** list<ast_interpolation_text|ast_interpolation_name|ast_interpolation_index|ast_interpolation_field> */)
 	{
 		parent::__construct($token, $token + 1);
 		$this->parts = $parts;

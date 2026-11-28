@@ -14,7 +14,10 @@ Ordinary JS and C++ quoted strings keep markers as text. The C++ flavor implemen
 the f-literal spelling in the Simple C++ frontend. Native builds consume ordinary
 runtime string operations. Each flavor admits local and parameter names using its existing ASCII name
 characters. PHP also admits one single-quoted literal key on a local or
-parameter inside braces, as in `"Hello {$row['name']}"`. Calls, arbitrary expressions,
+parameter inside braces, as in `"Hello {$row['name']}"`. A PHP braced insertion can also
+read one declared instance field from a local or parameter, as in `"{$user->name}: {$user->score}"`.
+Ordinary field visibility and receiver checks apply. The field value uses the same formatting as a local.
+Calls, arbitrary expressions,
 global names and formatting specifiers are outside this slice.
 
 String, bool, byte/uint8, int/int64 and float/float64 insertions use the
