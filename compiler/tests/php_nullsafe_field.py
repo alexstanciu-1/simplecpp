@@ -52,7 +52,8 @@ def admission(work):
     read = 'function read(?Player $p):nullable<int> {return $p?->score;} return 8;'
     revisions(work, 'php', dict(main=read, player=player), [
         ('player', player.replace('public int', 'private int'), 'Cannot access private field Player::score'),
-        ('player', player.replace('int $score', 'function<int(int)> $score'), 'No optional representation for field type'),
+        ('player', player.replace('int $score', 'function<int(int)> $score'), 'Unsupported explicit conversion from function<int64(int64)> to int64'),
+        ('player', player.replace('int $score', 'hash<int,string> $score'), 'No optional representation for field type'),
         ('player', player, b'')])
 
 

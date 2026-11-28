@@ -230,3 +230,11 @@ argument or the RHS of a compound field update replaces the carrier, the
 operation finishes on the originally selected payload. A plain field store
 evaluates its RHS before selecting the destination. These rules also apply
 when the receiver comes from a call or a nested field.
+
+## Nullable scalar instance fields
+
+The default publication admits nullable int64, float64, bool and string as
+instance fields through each specialization's `instance_field` capability.
+An omitted initializer or literal null gives an empty carrier. A payload
+initializer or write gives a present carrier, including zero, false and the
+empty string. Assigning null restores absence.

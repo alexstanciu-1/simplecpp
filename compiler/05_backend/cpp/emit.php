@@ -100,6 +100,22 @@ final class Cpp_Emitter
 	}
 
 	/**
+	 * Lower a literal or apply the same prepared formatting for echo and string construction.
+	 * @param array<string,ast_global_declaration> $global_references
+	 * @param array<string,ast_function_declaration> $declarations
+	 * @param array<string,bool> $required_headers
+	 */
+	private function interpolation_part(ast_expression $part, type_definition $type, array &$global_references,
+		array &$declarations, array &$required_headers): string
+	{
+		$value = $this->value($part, $global_references, $declarations, $required_headers);
+		if ($part instanceof ast_interpolation_text) return $value;
+		$conversion = $part->conversion();
+		foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
+		return $this->conversion($type, $conversion, $value, $part);
+	}
+
+	/**
 	 * Apply the prepared conversions and publish the operation's runtime dependencies.
 	 * @param array<string,bool> $required_headers
 	 */
@@ -1711,6 +1727,21 @@ CPP;
 					foreach ($type->output_headers() as $header) {
 						$required_headers[$header] = true;
 					}
+					if ($value instanceof ast_interpolated_string && $value->source()->flavor === flavor::php) {
+						// Complete every lookup and conversion before the first byte of this operand is visible.
+						$setup = $output = [];
+						foreach ($value->parts as $i => $part) {
+							$operand = null;
+							if (!($part instanceof ast_interpolation_text)) {
+								$operand = 'scpp_text_' . $i;
+								$setup[] = 'const auto& ' . $operand . ' = ' . $this->interpolation_part($part, $type,
+									$global_references, $declarations, $required_headers) . ';';
+							}
+							$output[] = $type->lower_cpp_output($part, $operand);
+						}
+						$lines[] = $this->async_statement('{ ' . implode(' ', $setup) . ' ' . implode(' ', $output) . ' }');
+						continue;
+					}
 					$operand = $value instanceof ast_string_expression ? null
 						: $this->value($value, $global_references, $declarations, $required_headers);
 					$lines[] = $this->async_statement($type->lower_cpp_output($value, $operand));
@@ -3082,14 +3113,7 @@ CPP;
 			$type = $value->type_def();
 			$code = '';
 			foreach ($value->parts as $part) {
-				$operand = $this->value($part, $global_references, $declarations, $required_headers);
-				if ($part instanceof ast_interpolation_name) {
-					$conversion = $part->conversion();
-					foreach ($type->scalar_conversion_headers($conversion) as $header) {
-						$required_headers[$header] = true;
-					}
-					$operand = $type->lower_scalar_conversion($conversion, $operand);
-				}
+				$operand = $this->interpolation_part($part, $type, $global_references, $declarations, $required_headers);
 				if ($code === '') {
 					if (count($value->parts) === 1) {
 						return $type->cpp_type() . '(' . $operand . ')';

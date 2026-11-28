@@ -774,15 +774,18 @@
       },
       {
         "family": "nullable",
-        "payload": "int64"
+        "payload": "int64",
+        "instance_field": true
       },
       {
         "family": "nullable",
-        "payload": "float64"
+        "payload": "float64",
+        "instance_field": true
       },
       {
         "family": "nullable",
-        "payload": "bool_t"
+        "payload": "bool_t",
+        "instance_field": true
       },
       {
         "family": "nullable",

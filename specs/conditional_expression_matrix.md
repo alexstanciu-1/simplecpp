@@ -33,6 +33,13 @@ evaluating the receiver propagate.
 Preparation resolves the field and checks visibility even when the receiver
 can be absent. The field must have a supported optional representation.
 
+An owned callable field supplies its own empty state. Reading `$router?->op`
+returns an empty callable for an absent router and a copy of the field for a
+present router. In `($router?->op)(arg())`, the guard ends before invocation.
+The argument runs even when the selected callable is empty, then invocation
+raises the ordinary empty-call failure. If the argument replaces the field,
+the pending call uses the copy selected before argument evaluation.
+
 For `findPlayer()?->scoreFor(key())`, absence skips the arguments and the call.
 Presence retains the selected owner through argument evaluation and invocation.
 Arguments bind and execute as for an ordinary instance call, including named
@@ -79,6 +86,16 @@ ordinary lookup failure before any later key or coalescing fallback runs.
 Each lookup returns its element by value. When that element is a collection,
 the next lookup sees the selected snapshot, even if its key suspends and
 replaces the original outer slot. A stored zero stays present through `??`.
+
+Parentheses end the guard when they enclose the nullsafe field read. In
+`($team?->scores)[key()]`, preparation must first form the optional result
+of the field read, then check ordinary indexed access on that result. With
+the current runtime, `vector<int>` and `hash<int,string>` fields have no
+published optional representation. A `vector<string>` field produces a
+`nullable<vector<string>>`, which does not support ordinary indexed access.
+All three grouped forms therefore reject before execution. Removing those
+parentheses places the lookup inside the guard: `$team?->scores[key()]`
+skips the key on absence and evaluates it once on hit or miss.
 
 A checked index may also feed a further nullsafe member access, for example
 `$team?->players[key()]?->points` or `$team?->players[key()]?->score(arg())`.

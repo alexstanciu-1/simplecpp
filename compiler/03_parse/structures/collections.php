@@ -109,7 +109,7 @@ final class ast_keyed_collection_expression extends ast_expression
 }
 
 /** Value-copy indexed read, e.g. values[0]; owns its receiver and index, never represents mutable element storage. */
-final class ast_index_expression extends ast_expression
+class ast_index_expression extends ast_expression
 {
 	/** PROPERTIES */
 	/** Native owning receiver expression. */

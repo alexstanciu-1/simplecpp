@@ -1516,10 +1516,11 @@ final class Parser
 		if ($index !== null && $this->cursor->is(token_kind::lbracket)) {
 			return $this->indexed_write(new ast_index_expression($receiver, $index, $index_end), $terminator);
 		}
-		if ($terminator === token_kind::newline && ($index === null || (!$this->cursor->is(token_kind::assign) && !$this->cursor->is(token_kind::dot)))) {
+		if ($terminator === token_kind::newline && ($index === null || (!$this->cursor->is(token_kind::assign)
+			&& !$this->cursor->is(token_kind::dot) && !$this->cursor->is(token_kind::lparen)))) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Python indexed write requires one key and =');
 		}
-		if ($index !== null && (($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lparen)) || $this->cursor->is(token_kind::scope)
+		if ($index !== null && ($this->cursor->is(token_kind::lparen) || $this->cursor->is(token_kind::scope)
 			|| $this->cursor->is(token_kind::member) || $this->cursor->is(token_kind::nullsafe_member) || $this->cursor->is(token_kind::dot))) {
 			$field_target = $this->cursor->tokens->source->flavor !== flavor::python;
 			$target = $this->postfix(new ast_index_expression($receiver, $index, $index_end), field_target: $field_target);
@@ -1530,7 +1531,7 @@ final class Parser
 				return new ast_field_assignment($target, $value, $this->statement_end($terminator));
 			}
 			if ($target instanceof ast_qualified_data || $target instanceof ast_field_expression) return $this->property_write($target);
-			return $this->call_statement($target);
+			return $this->call_statement($target, $terminator);
 		}
 		if ($receiver instanceof ast_called_type_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed late-static property writes are deferred');
 		if ($receiver instanceof ast_qualified_data) {
@@ -1628,13 +1629,13 @@ final class Parser
 	{
 		while (true) {
 			$flavor = $this->cursor->tokens->source->flavor;
-			if ($flavor === flavor::python && !$this->cursor->is(token_kind::dot) && !$this->cursor->is(token_kind::lbracket)) break;
-			if ($flavor === flavor::php && $this->cursor->is(token_kind::lparen)
-				&& ($value instanceof ast_index_expression || $value instanceof ast_call_expression)) {
+			if ($this->cursor->is(token_kind::lparen)
+				&& ($value instanceof ast_index_expression || ($flavor === flavor::php && $value instanceof ast_call_expression))) {
 				$name = $value instanceof ast_index_expression ? 'indexed callable' : 'call result';
 				$value = $this->call_arguments($value->start, $name, null, $value, call_qualifier::stored_value);
 				continue;
 			}
+			if ($flavor === flavor::python && !$this->cursor->is(token_kind::dot) && !$this->cursor->is(token_kind::lbracket)) break;
 			if ($this->cursor->is(token_kind::scope)) {
 				$this->cursor->take(token_kind::scope, '::');
 				$property = $flavor === flavor::php && $this->cursor->is(token_kind::variable);

@@ -35,6 +35,20 @@ Filtering `[0,1,2]` retained keys 1 and 2, indexing `"ABC"` and echoing the
 byte printed `65`, and the promotion diagnostic pointed to the field declaration.
 The full-replay tally below belongs to its recorded revision.
 
+### Nullable scalar fields follow-up
+
+The settings-model probe now prints 10 from a `?int` instance field. PHP
+`?int`, `?float` and `?bool` fields use the same published nullable types as
+parameters. Zero and false survive field writes as present values; assigning
+null restores absence. [Native field and edit checks](../../compiler/tests/nullable_scalar_fields_native.py)
+
+### Quoted-key template follow-up
+
+Task 22 now prints `Hello Ada` directly from `echo "Hello {$row['name']}";`
+with a mixed row. A typed string-keyed hash supports the same spelling.
+A failed lookup or formatting check prints no part of that interpolated
+operand. [Interpolation checks](../../compiler/tests/interpolation.php)
+
 ## Task verdicts at the full replay
 
 | # | Original developer task | Verdict | Current evidence and scope |

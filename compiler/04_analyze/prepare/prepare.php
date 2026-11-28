@@ -1860,6 +1860,7 @@ final class Preparation
 				if ($hop instanceof ast_call_expression) $this->check_nullsafe_call($hop);
 			}
 			$result = $payload === type_void::instance() || ($payload instanceof carrier_type_definition && $payload->family === 'nullable')
+				|| ($member instanceof ast_field_expression && $payload instanceof owned_callable_type)
 				? $payload : Type_Resolution::nullable_value($payload);
 			if ($result === null) {
 				$kind = $member instanceof ast_index_expression ? 'indexed element' : ($member instanceof ast_call_expression ? 'method result' : 'field type');
@@ -1948,7 +1949,11 @@ final class Preparation
 			$string = type_registry::string();
 			foreach ($syntax->parts as $part) {
 				$this->value($part, $initializing);
-				if ($part instanceof ast_interpolation_name) {
+				if ($part instanceof ast_interpolation_index && !($part->receiver->type_def() instanceof hash_type_definition)
+					&& !($part->receiver->type_def() instanceof type_mixed)) {
+					throw new diagnostic($part->source(), $part->receiver->byte_start(), 'Keyed interpolation requires a hash or mixed row');
+				}
+				if (!($part instanceof ast_interpolation_text)) {
 					$part->prepare_text($string);
 				}
 			}
