@@ -66,7 +66,7 @@ foreach ([
 	'str_ireplace("x","y","x",1)' => 'str_ireplace argument 4 (count)',
 	'$n ?int = 0; str_replace("x","y","x",$n)' => 'str_replace argument 4 (count) requires writable int64 storage, received nullable<int64>',
 	'str_replace("x","y","x",1)' => 'str_replace argument 4 (count)',
-	'$v result<bool> = false; is_bool($v)' => 'requires a scalar, vector, hash or box; received result<bool_t>',
+	'$v result<bool> = false; is_bool($v)' => 'requires a type with a PHP kind; received result<bool_t>',
 ] as $expression => $expected) {
 	try {
 		$compile($expression . '; return 8;');

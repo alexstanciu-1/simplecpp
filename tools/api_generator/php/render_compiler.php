@@ -321,7 +321,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $specializations .= "\t\tif (\$family === $name) {\n$hashCases\n\t\t\treturn null;\n\t\t}\n";
     }
     if (isset($runtime['boxed_dispatch'])) {
-        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases, compilerAccessInterfaces($metadata->boxed));
+        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases, compilerAccessInterfaces($metadata->boxed, runtimeKind: true));
     }
     $runtimeTypes = [];
     foreach ($definitions as $identity => $definition) $runtimeTypes[$identity] = $definition['class'];

@@ -125,6 +125,17 @@ interface collection_value_source
 	public function lower_cpp_value_cursor(string $receiver): string;
 }
 
+/** Every value of this provider has the PHP container kind, including empty values. */
+interface php_container_type
+{
+}
+
+/** Compare the current stored kind with a published PHP predicate kind, evaluating the operand once. */
+interface php_runtime_kind_type
+{
+	public function lower_cpp_kind_test(string $operand, string $kind): string;
+}
+
 /** Entry traversal supplies the key and value from the same successful advance. */
 interface collection_entry_source extends collection_value_source
 {

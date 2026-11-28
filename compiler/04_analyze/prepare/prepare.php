@@ -2482,9 +2482,9 @@ final class Preparation
 			$arg = $operands[0];
 			$this->value($arg, destination: $arg instanceof ast_collection_expression ? type_mixed::instance() : null);
 			$type = $arg->type_def();
-			$kind = $type instanceof vector_type_definition || $type instanceof hash_type_definition ? 'container' : $type->predicate_kind();
-			if ($kind === '' && !($type instanceof boxed_type_definition)) {
-				throw new diagnostic($arg->source(), $arg->byte_start(), $call->name . ' requires a scalar, vector, hash or box; received ' . $type->name);
+			$kind = $type instanceof php_container_type ? 'container' : $type->predicate_kind();
+			if ($kind === '' && !($type instanceof php_runtime_kind_type)) {
+				throw new diagnostic($arg->source(), $arg->byte_start(), $call->name . ' requires a type with a PHP kind; received ' . $type->name);
 			}
 			$call->settle_runtime(new prepared_kind_predicate($call->name, $type, $runtime->kind, $kind === '' ? null : $kind === $runtime->kind));
 			return;

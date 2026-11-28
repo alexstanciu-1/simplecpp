@@ -210,9 +210,10 @@ introduce no public object layout or additional boxed kinds.
 ## Kind predicates
 
 PHP publishes `is_bool`, `is_int`, `is_float`, `is_string`, `is_null` and
-`is_array`. For a native scalar, vector or hash, the compiler knows the answer
-from the declared type. Both vectors and hashes satisfy `is_array`. Mixed
-and dynamic operands inspect the stored tag, including the container tag.
+`is_array`. A scalar's published kind or a provider's PHP container guarantee
+settles the answer during preparation. Vector, hash and fixed-array providers
+satisfy `is_array` for every value, including empty containers. Mixed and
+dynamic providers compare the current stored tag with the requested kind.
 Every argument evaluates once even if its type settles the answer. The
 predicate returns a bool snapshot. Carrier inputs require explicit extraction.
 The general API predicates retain their exact mixed input.

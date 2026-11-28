@@ -11,6 +11,11 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 
 	use collection_keyed_store;
 
+	public function lower_cpp_kind_test(string $operand, string $kind): string
+	{
+		return "(($operand).kind() == scpp::boxed_kind::$kind)";
+	}
+
 	public function mapped_result_type(type_definition $element): ?type_definition
 	{
 		return $element === $this ? $this : null;
