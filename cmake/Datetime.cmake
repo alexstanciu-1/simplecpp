@@ -2,6 +2,12 @@
 function(scpp_add_datetime target core generated)
   add_library(${target} STATIC ${generated}/src/datetime.cpp
     ${PROJECT_SOURCE_DIR}/runtime/src/datetime/datetime.cpp)
+  if(ARGV3)
+    target_sources(${target} PRIVATE ${generated}/src/php_date.cpp
+      ${PROJECT_SOURCE_DIR}/runtime/src/datetime/php_date.cpp
+      ${PROJECT_SOURCE_DIR}/runtime/src/datetime/timelib/utc.cpp
+      ${PROJECT_SOURCE_DIR}/runtime/src/datetime/timelib/dow.cpp)
+  endif()
   target_link_libraries(${target} PUBLIC ${core})
   target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/runtime/src/datetime ${PROJECT_SOURCE_DIR}/runtime/src/numeric)
   target_compile_features(${target} PUBLIC cxx_std_23)

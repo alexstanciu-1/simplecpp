@@ -916,7 +916,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     $plan['hash_publication'] = ['provider' => $provider, 'requires' => exportProviders($plan['submodules'], array_values(array_unique($dependencies)))];
     $plan['hashes'] = ['transfer_assignment' => $transfer, 'key_contracts' => $keyContracts, 'header' => $header, 'count_type' => 'int64', 'specializations' => array_values($hashes)];
 }
-const DATETIME_SIGNATURES = [ 'now_unix_seconds' => ['int64', []], 'now_unix_millis' => ['int64', []], 'monotonic_millis' => ['int64', []], 'monotonic_micros' => ['uint64', []], 'monotonic_nanos' => ['uint64', []], 'sleep_millis' => ['void', ['int64']], 'format_iso_utc' => ['string', ['int64']], 'parse_iso_utc' => ['result_int64', ['string']], 'parse_common_local' => ['result_int64', ['string']], 'format_local' => ['string', ['string', 'int64']], 'format_local_now' => ['string', ['string']]];
+const DATETIME_SIGNATURES = [ 'now_unix_seconds' => ['int64', []], 'now_unix_millis' => ['int64', []], 'monotonic_millis' => ['int64', []], 'monotonic_micros' => ['uint64', []], 'monotonic_nanos' => ['uint64', []], 'sleep_millis' => ['void', ['int64']], 'format_iso_utc' => ['string', ['int64']], 'parse_iso_utc' => ['result_int64', ['string']], 'parse_common_local' => ['result_int64', ['string']], 'format_local' => ['string', ['string', 'int64']], 'format_local_now' => ['string', ['string']], 'php_date' => ['string', ['string', 'nullable_int64'], 1]];
 function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'datetime', 'datetime', 'Datetime');
     if($m === null) {
@@ -957,6 +957,9 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
         if($result === 'string' || in_array('string', $args, true)) {
             requireThat(isset($plan['string']), 'Datetime requires published string');
         }
+        if (in_array('nullable_int64', $args, true)) {
+            requireThat(in_array('nullable_int64', array_column($plan['carriers'], 'name'), true), 'Datetime date requires published nullable_int64');
+        }
         if($result === 'result_int64') {
             requireThat(in_array('result_int64', array_column($plan['carriers'], 'name'), true), 'Datetime parse requires published result_int64');
         }
@@ -964,10 +967,12 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
         $includes = array_map(fn(string $id): string => providerHeader($plan['submodules'], $id),
             exportProviders($plan['submodules'], $identities));
         $operations[] = ['name' => $name, 'source_name' => $generalNames[$name] ?? null, 'php_name' => $phpNames[$name] ?? null, 'parameters' => $args,
+            'required' => DATETIME_SIGNATURES[$name][2] ?? count($args),
             'header' => moduleOperationHeader($header, $name), 'includes' => $includes, 'result' => $result, 'arguments' => array_map(fn(string $a):string => "const $a&", $args)];
     }
     requireThat($operations !== [], 'Empty datetime publication');
-    $plan['datetime'] = ['module' => 'datetime', 'namespace' => 'scpp::dt', 'header' => $header, 'utc_years' => [0, 9999], 'local_dst' => 'host_normalize_and_select', 'parse_failure' => 'result_error', 'format_failure' => 'throw_runtime_error', 'operations' => $operations, 'build' => ['target' => 'scpp_datetime', 'requires' => 'scpp_runtime', 'generated_sources' => ['src/datetime.cpp'], 'private_sources' => ['runtime/src/datetime/datetime.cpp'], 'private_includes' => ['runtime/src/datetime', 'runtime/src/numeric']]];
+    $date = in_array('php_date', array_column($operations, 'name'), true);
+    $plan['datetime'] = ['module' => 'datetime', 'namespace' => 'scpp::dt', 'header' => $header, 'utc_years' => [0, 9999], 'local_dst' => 'host_normalize_and_select', 'parse_failure' => 'result_error', 'format_failure' => 'throw_runtime_error', 'operations' => $operations, 'build' => ['target' => 'scpp_datetime', 'requires' => 'scpp_runtime', 'generated_sources' => ['src/datetime.cpp', ...($date ? ['src/php_date.cpp'] : [])], 'private_sources' => ['runtime/src/datetime/datetime.cpp', ...($date ? ['runtime/src/datetime/php_date.cpp', 'runtime/src/datetime/timelib/utc.cpp', 'runtime/src/datetime/timelib/dow.cpp'] : [])], 'private_includes' => ['runtime/src/datetime', 'runtime/src/numeric']]];
 }
 
 function prepareOwnership(mixed $metadata, mixed $publication, array $facts, array &$plan): void {

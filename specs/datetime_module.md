@@ -27,6 +27,12 @@ PHP also exposes `time(): int` when the project selects `datetime` and the build
 `now_unix_seconds`. This PHP name needs no `general_api` opt-in and binds directly to
 the same native symbol and declaration header as `dt_now()`.
 
+PHP also publishes `date(string $format, ?int $timestamp = null): string` through
+`datetime`. Omission or null samples the clock once. A present timestamp selects
+that Unix second, including zero and negative values. Formatting uses UTC
+independently of the host zone and follows PHP 8.5 date tokens and byte escaping.
+The private timelib UTC calendar and formatter link only when referenced.
+
 When published, uint64 supports exact typed storage, parameters and returns.
 Its native representation preserves all 64 unsigned bits. This transport
 contract introduces no arithmetic, conversions or unsigned source literals.
@@ -169,7 +175,7 @@ must build without the legacy runtime tree, including with tests disabled.
 
 ## Deferred scope
 
-The legacy source callable catalog remains unchanged. Custom DST resolution, PHP date/strtotime/microtime adapters, named zones, locale-aware
+The legacy source callable catalog remains unchanged. Custom DST resolution, PHP strtotime/microtime adapters, named zones, locale-aware
 formatters, calendar arithmetic and general module/plugin discovery are separate work.
 
 Donor provenance and initial validation are recorded in `datetime_validation.md`;

@@ -103,7 +103,37 @@ return 0;
             before = php_time()
             seconds = int(subprocess.check_output([exe], env=env))
             assert before <= seconds <= php_time()
+        assert b'timelib_' not in subprocess.check_output(['nm', exe])
+        # Compare raw bytes, including literal NUL and the final unpaired escape.
+        # Both now forms are checked against a clock interval across the execution.
+        tokens = ' '.join('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        pattern = '"' + tokens + r'|\\Y|\0|\\' + '"'
+        stamps = ['(-9223372036854775807 - 1)', -62198755200, -1, 0, 951827696, 1071792000, 1071878400,
+                  1071964800, 1451606400, 1710054000, 1730613600, 253402300800, 9223372036854775807]
+        program = 'function stamp(?int $ts): string { return date(' + pattern + ', $ts); }\n'
+        program += ''.join(f'echo stamp({ts}), "\\n";\n' for ts in stamps)
+        now_calls = r'echo date("U"), "\n", date("U", null), "\n", unix_date(null);'
+        source.write_text(program + 'function unix_date(?int $ts): string {return date("U", $ts);}' + now_calls)
+        result = invoke(proc)
+        assert 'error' not in result, result
+        bundle = json.loads((output/'manifest.json').read_text())
+        units = [output/unit for unit in bundle['translation_units']]
+        lowered = ''.join(unit.read_text() for unit in units)
+        assert '::scpp::dt::php_date(' in lowered and 'timelib' not in lowered, lowered
+        subprocess.run([*link, *units, *(build/Path(p).name for p in bundle['link_inputs']), '-o', exe], check=True)
+        expected = subprocess.check_output(['php', '-n', '-d', 'date.timezone=UTC', '-r',
+                                            program])
+        for zone in ['UTC0', 'America/New_York']:
+            env = {**os.environ, 'TZ': zone}
+            before = php_time()
+            output_bytes = subprocess.check_output([exe], env=env)
+            after = php_time()
+            assert output_bytes.startswith(expected), (output_bytes, expected)
+            omitted, literal_null, nullable_null = output_bytes[len(expected):].split(b'\n', 2)
+            assert all(before <= int(t) <= after for t in [omitted, literal_null, nullable_null])
         settings.write_text('{}')
+        assert 'requires module runtime-datetime' in invoke(proc).get('error', '')
+        source.write_text('echo time();')
         assert 'requires module runtime-datetime' in invoke(proc).get('error', '')
         settings.write_text(json.dumps({'dependencies': enabled['dependencies']}))
         source.write_text('echo time(0);')
