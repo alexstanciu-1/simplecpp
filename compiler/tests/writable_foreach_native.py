@@ -201,3 +201,18 @@ with TemporaryDirectory(prefix='scpp-writable-foreach-reference-') as directory:
         ('main', reference_main, reference_trace),
     ]
     revisions(Path(directory), 'php', dict(main=reference_main, provider=reference_provider), edits)
+
+# The selected key (7), advanced physical cursor (2), and visible key (41)
+# name different entries or positions after deletion of the first entry.
+hole_main = """
+$map hash<int,int> = [];$map[13]=9;$map[7]=3;$map[41]=80;
+$map->remove(13);
+foreach ($map as $key => &$value) {
+    $key=41;$value=$value+4;
+    $borrow=function() use (&$value):void {$value*=2;};
+    $borrow();echo $map[7],",",$map[$key];break;
+}
+return 8;
+"""
+with TemporaryDirectory(prefix='scpp-writable-hash-hole-') as directory:
+    revisions(Path(directory), 'php', dict(main=hole_main), [(None, None, b'14,80')])

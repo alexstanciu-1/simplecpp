@@ -1259,20 +1259,10 @@ CPP;
 				$owner = $this->name($source->local_def());
 				$index = 'iteration_index_' . $statement->start;
 				$type = $source->type_def();
-				if ($type instanceof key_iterable_type) {
-					$prefix = 'loop_' . $statement->start . '_';
-					$lines[] = '{ scpp::int64 ' . $prefix . 'iteration_position{}, ' . $prefix . 'iteration_limit{};';
-					$lines[] = $type->lower_cpp_iteration_initialize($owner, $prefix);
-					$lines[] = $type->iteration_key_type()->cpp_type() . ' ' . $index . '{};';
-					$lines[] = 'while (' . $type->lower_cpp_iteration_next_key($owner, $index, $prefix) . ') {';
-				} else {
-					$limit = 'iteration_limit_' . $statement->start;
-					$count = $type->lower_cpp_cardinality(collection_cardinality::count, $owner);
-					$lines[] = "for (scpp::int64 $index = 0, $limit = $count; $index < $limit; ++$index) {";
-				}
+				$type->lower_cpp_writable_iteration_open($lines, $owner, $statement->start);
 				if ($statement->key !== null) $lines[] = '[[maybe_unused]] auto ' . $this->name($statement->key) . ' = ' . $index . ';';
 				foreach ($this->loop_body_lines($statement, $declarations, $global_references, $required_headers, $function, null) as $line) $lines[] = "\t" . $line;
-				$lines[] = $type instanceof key_iterable_type ? '} }' : '}';
+				$lines[] = $type->lower_cpp_writable_iteration_close();
 			}
 			elseif ($statement instanceof ast_foreach_statement && ($source_type = $statement->source_value->type_def()) instanceof segment_type
 				&& $source_type->key !== null) {
@@ -2094,8 +2084,7 @@ CPP;
 			$owner = $this->name($source->local_def());
 			$type = $source->type_def();
 			if ($reference) return $type->lower_cpp_iteration_reference($owner, $loop->start);
-			if ($type instanceof key_iterable_type) return $type->lower_cpp_iteration_current_value($owner, 'loop_' . $loop->start . '_iteration_position');
-			return $type->lower_cpp_element_read($owner, 'iteration_index_' . $loop->start);
+			return $type->lower_cpp_iteration_read($owner, $loop->start);
 		}
 		return ($this->generator_locals[$binding->storage_id()] ?? null)
 			?? 'var_' . self::name_component($binding->declaration_key()) . '_' . $binding->storage_id();
@@ -2107,7 +2096,7 @@ CPP;
 		$loop = $element->parent;
 		$source = $loop->source_value;
 		$value = 'static_cast<' . $element->type_def()->cpp_type() . '>(' . $value . ')';
-		return $source->type_def()->lower_cpp_write($this->name($source->local_def()), 'iteration_index_' . $loop->start, $value);
+		return $source->type_def()->lower_cpp_iteration_replace($this->name($source->local_def()), $loop->start, $value);
 	}
 
 	/**

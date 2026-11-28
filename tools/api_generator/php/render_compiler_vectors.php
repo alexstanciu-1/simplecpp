@@ -89,6 +89,7 @@ function compilerCollectionMethods(array $collection, array $definitions, ?strin
 function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definitions): array {
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n\n// Generated from validated runtime publication. Do not edit.\n";
     $cases = [];
+    $writableTraits = [];
     $application = false;
     $access = compilerAccessInterfaces($metadata->vector ?? null);
     $family = isset($metadata->vector) ? textValue(at($metadata->vector, 'source_type')) : null;
@@ -131,7 +132,10 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
                 . "\t\treturn \$this->initialization;\n\t}\n";
             $initializationSetup = "\t\t\$this->initialization = new initialization_transport($elementClass::instance()->cpp_type(), $input, $factory, {$init['inline_limit']});\n";
         }
+        $writable = compilerWritableIteration(vectorConcreteRecipe($vector), $vector['traversal'], $writableTraits, $code);
+        $writableInterface = $writable === '' ? '' : ', writable_iteration_type';
         $bindings = [
+            '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
             '@checked_slot_binding@' => compilerCheckedSlot(vectorConcreteRecipe($vector)),
             '@initialization@' => $initialization,
             '@iteration@' => compilerTraversalMethods($vector['traversal'], $elementClass . '::instance()', $countClass . '::instance()'),
@@ -141,7 +145,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             '@element@' => $elementClass . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true), '@count@' => $countClass,
             '@append@' => $append['name'], '@index@' => $index['name'], '@set@' => $set['name'],
-            '@interfaces@' => ' implements conditional_index_store_type, iterable_type' . $access . $sequence . $transfer,
+            '@interfaces@' => ' implements conditional_index_store_type, iterable_type' . $writableInterface . $access . $sequence . $transfer,
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($vector['source_type'], true) . ", $elementClass::instance());\n$initializationSetup\t}\n",
             '@factory@' => "\tpublic static function instance(): self\n\t{\n\t\treturn self::\$instance ??= new self();\n\t}",
         ];
@@ -164,7 +168,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             $applicationMethods = compilerCollectionMethods($vector, $definitions, applicationVector: true);
             $code .= strtr($template, array_replace($bindings, [
                 '@methods@' => $applicationMethods,
-                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements conditional_index_store_type, application_collection_type, iterable_type' . $access . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
+                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements conditional_index_store_type, application_collection_type, iterable_type' . $writableInterface . $access . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
                 '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true)
                     . ($vector['enable_reserve'] === '1' ? ", 'scpp/value_error.hpp'" : ''),

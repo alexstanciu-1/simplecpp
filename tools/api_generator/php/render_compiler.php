@@ -16,6 +16,41 @@ function compilerCheckedSlot(string $recipe): string {
         readFile(__DIR__ . '/../templates/collections/compiler_checked_slot.php.tpl'));
 }
 
+/** A protocol binds traversal, value-copy read, immediate replacement and scoped borrow as one grant. */
+function compilerWritableIteration(string $recipeName, array $traversal, array &$traits, string &$code): string {
+    $recipe = concreteRecipe($recipeName);
+    if (!isset($recipe->writable_iteration)) return '';
+    $protocol = textValue($recipe->writable_iteration);
+    $cursor = match ($protocol) {
+        'live_key_cursor' => true,
+        'dense_index' => false,
+        default => throw new \RuntimeException("Unknown writable traversal protocol: $protocol"),
+    };
+    requireThat(isset($traversal['next_key_method']) === $cursor && isset($traversal['current_value_method']) === $cursor,
+        'Writable selection disagrees with traversal');
+    $trait = 'writable_iteration_' . $protocol;
+    if (isset($traits[$trait])) return $trait;
+    $traits[$trait] = true;
+    $open = $cursor ? <<<'PHP'
+		$prefix = 'loop_' . $loop_start . '_';
+		$lines[] = '{ scpp::int64 ' . $prefix . 'iteration_position{}, ' . $prefix . 'iteration_limit{};';
+		$lines[] = $this->lower_cpp_iteration_initialize($receiver, $prefix);
+		$lines[] = $this->iteration_key_type()->cpp_type() . ' ' . $index . '{};';
+		$lines[] = 'while (' . $this->lower_cpp_iteration_next_key($receiver, $index, $prefix) . ') {';
+PHP
+    : <<<'PHP'
+		$limit = 'iteration_limit_' . $loop_start;
+		$count = $this->lower_cpp_cardinality(collection_cardinality::count, $receiver);
+		$lines[] = "for (scpp::int64 $index = 0, $limit = $count; $index < $limit; ++$index) {";
+PHP;
+    $code .= strtr(readFile(__DIR__ . '/../templates/collections/compiler_writable_iteration.php.tpl'), [
+        '@trait@' => $trait, '@open@' => $open, '@close@' => $cursor ? '} }' : '}',
+        '@read@' => $cursor ? 'lower_cpp_iteration_current_value' : 'lower_cpp_element_read',
+        '@selection@' => $cursor ? 'loop_{$loop_start}_iteration_position' : 'iteration_index_{$loop_start}',
+    ]);
+    return $trait;
+}
+
 /** Bind the two source observations to checked, nullary runtime member signatures. */
 function compilerCardinalityMethods(array $methods, string $count, array $definitions): string {
     $bindings = [];

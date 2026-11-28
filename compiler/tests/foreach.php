@@ -163,6 +163,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$hash = '$map hash<int,string> = [];$map["key"]=1;';
 		$emit('writable_hash', $hash . 'foreach ($map as $k => &$n) {$k="other";$n+=2;}echo $map["key"];return 8;', '3');
 		rejects(fn() => $prepare($hash . 'foreach ($map as &$n) {$map["key"]=4;}return 8;'), 'during writable foreach');
+		$emit('hash_hole_borrow', 'function twice(int &$value):void {$value*=2;}'
+			. '$h hash<int,int>=[];$h[13]=9;$h[7]=3;$h[41]=80;$h->remove(13);'
+			. 'foreach ($h as $key => &$n) {$key=41;$n+=4;echo $h[7],",";twice($n);echo $h[7],",",$h[$key];break;}return 8;', '7,14,80');
 		$nested = 'foreach ($items as &$value) {$outer=function() use (&$value):void {'
 			. '$inner=function() use (&$value):void {$value+=2;};$inner();};$outer();}';
 		$twice = 'function applyTwice(callback_view<void> $op):void {applyOnce($op);applyOnce($op);}'

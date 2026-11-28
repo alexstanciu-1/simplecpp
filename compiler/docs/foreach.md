@@ -12,7 +12,14 @@ JS also supports for (name in source) with a braced body for typed hash keys.
 Both key-only forms share the existing destination and loop scope rules and materialize only the key.
 PHP writable vector and hash bindings use the [indexed write-through contract](../../specs/collection_traversal.md#php-writable-vector-and-hash-foreach).
 Preparation tracks active collection storage IDs while visiting the body and checks mutable call effects against those IDs.
-Vector lowering uses a private index. Hash lowering advances the generated live-key cursor, reads the current slot, and writes through the private selected key. Destructuring and nullable unwrapping are deferred.
+A concrete recipe grants writable traversal with one protocol. Publication generates a shared lowering trait for its published and application-defined specializations.
+
+| Recipe protocol | Traverse | Read and borrow | Replace |
+| --- | --- | --- | --- |
+| `dense_index` | Count once, advance a private index | Selected index | Set by selected index |
+| `live_key_cursor` | Capture the physical limit, advance to the next live entry and save its key | Selected cursor position after advance | Set by saved key |
+
+The optional source key receives a copy. Assigning to it cannot redirect a read, write or borrow. Destructuring and nullable unwrapping are deferred.
 Concrete [yield producers](yield.md) reuse this traversal path.
 [Iterator<T> and Iterator<T,K> structs](iterator.md) support custom traversal. Scalar/null
 boxed sources throw, including on a later advance after replacement. Statically noniterable sources are preparation errors.

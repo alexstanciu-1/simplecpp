@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Resolved vector<T> identity supplied by runtime publication, with checked element access and mutation.
  * Copies and by-value calls use the common conversion path; instance fields default to empty.
  */
-abstract class vector_type_definition extends type_definition implements subset_source, map_source, entry_result_builder, readonly_index_lookup_type, writable_iteration_type, appendable_collection_type, indexed_mutation_type, native_sequence_type, iterable_type, membership_type
+abstract class vector_type_definition extends type_definition implements subset_source, map_source, entry_result_builder, readonly_index_lookup_type, appendable_collection_type, indexed_mutation_type, native_sequence_type, iterable_type, membership_type
 {
 	use indexed_entry_read;
 	use positional_subset;
@@ -51,11 +51,6 @@ abstract class vector_type_definition extends type_definition implements subset_
 	public function private_copy_allocation_only(): bool
 	{
 		return $this->element_type->copy_has_no_observable_effects();
-	}
-
-	public function lower_cpp_iteration_reference(string $receiver, int $loop_start): string
-	{
-		return "$receiver.iteration_reference(iteration_index_{$loop_start})";
 	}
 
 	/** Bind the factory on the canonical vector, including application-owned element types. */

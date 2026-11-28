@@ -70,7 +70,7 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
 function concreteRecipe(string $name): mixed {
     static $recipes = [];
     $recipe = $recipes[$name] ??= decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration']);
     return $recipe;
 }
 
