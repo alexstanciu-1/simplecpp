@@ -156,6 +156,13 @@ in the current vector. The store checks bounds again, so clearing or shortening
 the vector can cause a write-back failure after fallback effects have occurred.
 The operation never extends the vector.
 
+These single-key hash and vector rules also apply to writable PHP instance fields.
+For `$holder->items[key()] ??= fallback();`, the statement retains the selected
+holder and binds its field before evaluating the key. Rebinding the holder during
+the key or fallback still updates the original holder. Replacing its collection
+field during fallback makes the replacement collection receive the store at the
+saved key. Preparation checks field writability even when the element is present.
+
 Parameters, globals, static properties, other indexed places, for-header writes and
 application/shared carriers remain outside this contract.
 

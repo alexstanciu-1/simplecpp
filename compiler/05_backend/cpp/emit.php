@@ -2121,7 +2121,9 @@ CPP;
 		if ($statement instanceof ast_index_compound) {
 			$entry = $statement->target;
 			$collection = $entry->receiver->type_def();
-			$receiver = $this->name($entry->receiver->local_binding());
+			$steps = [];
+			$receiver = $this->collection_root_place($entry->receiver, $globals, $declarations, $headers, $steps);
+			array_push($this->async_steps, ...$steps);
 			$key = $this->value($entry->index, $globals, $declarations, $headers);
 			$this->async_steps[] = 'const auto coalesce_key = ' . $collection->lower_cpp_key($entry->index, $key) . ';';
 			$present = $collection->lower_cpp_entry_presence($receiver, 'coalesce_key');

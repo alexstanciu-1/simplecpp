@@ -315,12 +315,14 @@ final class Preparation
 				$receiver = $statement->target->receiver;
 				$this->prepare_index_mutation($statement);
 				if ($statement->operator === binary_operator::coalesce && $source->flavor === flavor::php
-					&& $receiver instanceof ast_name_expression && $receiver->local_binding() instanceof ast_local_declaration
-					&& $receiver->type_def() instanceof conditional_index_store_type) {
+					&& $receiver->type_def() instanceof conditional_index_store_type
+					&& (($receiver instanceof ast_name_expression && $receiver->local_binding() instanceof ast_local_declaration)
+						|| ($receiver instanceof ast_field_expression && ast_index_expression::collection_storage_root($receiver) !== null))) {
 					$element = $receiver->type_def()->write_type();
 					$this->collection_element($statement->value, $element, null);
 					$statement->prepare_conditional_store($element);
-					$this->latest_writes[$receiver->local_binding()->storage_id()] = null;
+					if ($receiver instanceof ast_field_expression) $this->retain_member_place($receiver);
+					else $this->latest_writes[$receiver->local_binding()->storage_id()] = null;
 				} else {
 					if (!($receiver->type_def() instanceof indexed_mutation_type)) {
 						throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');

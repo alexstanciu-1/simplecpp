@@ -57,7 +57,7 @@ Declared locals and writable declared PHP instance fields use the same generated
 The backend emits a presence-guarded `if` containing ordinary assignment, without
 a lambda, snapshot or payload extraction. Conversions and RHS effects occur only
 in that branch. Null and same-carrier assignments follow existing assignment rules;
-implicit narrowing is not broadened. Parameters, static properties, indexed destinations other than local PHP hashes and vectors,
+implicit narrowing is not broadened. Parameters, static properties, indexed destinations beyond single-key PHP hash/vector locals and instance fields,
 for-header writes and assignment expressions remain deferred. For a field, lowering
 retains the selected receiver and binds the field once before checking presence.
 A local PHP hash keeps the normalized key across its entry presence probe and the guarded
@@ -66,6 +66,9 @@ use the same owner-presence probe as indexed `isset`.
 A vector uses checked slot access for the presence probe, avoiding element copies.
 Only the saved index survives that probe. The ordinary vector setter checks bounds
 again after the fallback, including when the vector has been rebound or cleared.
+For an indexed instance field, the collection root lowering retains the holder and
+binds its field before key evaluation. The conditional store uses that same field
+after fallback effects, including replacement of the collection.
 The native field test checks rebinding the last owner, skipping the fallback for
 zero, writes made by a throwing fallback and readonly declaration edit/recovery.
 
