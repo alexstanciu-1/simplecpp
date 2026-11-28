@@ -231,7 +231,7 @@ function render(Label $view): string{return $view->title();} echo render(new Pag
     Probe('query-charset', 'echo urlencode("a b"); return 0;', output='a+b'),
     Probe('php-trim-set', 'echo trim("--key--","-"); return 0;', output='key'),
     Probe('php-mb-len', 'echo mb_strlen("é"); return 0;', reject='Unknown function: mb_strlen'),
-    Probe('time-natural', 'echo time(); return 0;', modules=('datetime',), reject='Unknown function: time'),
+    Probe('time-natural', '$t int = time(); echo $t > 0 ? "unix" : "invalid";', modules=('datetime',), output='unix'),
     Probe('cstring-split-limit', '$parts=explode("=","key=a=b",2); echo count($parts),":",$parts[1]; return 0;', output='2:a=b'),
     Probe('array-membership', '$items vector<string> = ["red","green"]; echo in_array("green",$items,true)?"Y":"N"; return 0;', output='Y'),
     Probe('hello-minimal', 'echo "hello";', output='hello'),

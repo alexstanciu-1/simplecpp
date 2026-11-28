@@ -78,6 +78,40 @@ return 0;
         fresh.stdin.close()
         fresh.wait()
 
+    php_clock = work/'php-clock'
+    php_clock.mkdir()
+    settings = php_clock/'module.json'
+    source = php_clock/'main.php'
+    settings.write_text(json.dumps({'dependencies': enabled['dependencies']}))
+    source.write_text('$seconds int = time(); echo $seconds;')
+    output = work/'php-clock-out'
+    proc = service(php_clock, output)
+    try:
+        result = invoke(proc)
+        assert 'error' not in result, result
+        bundle = json.loads((output/'manifest.json').read_text())
+        units = [output/unit for unit in bundle['translation_units']]
+        lowered = ''.join(unit.read_text() for unit in units)
+        assert lowered.count('::scpp::dt::now_unix_seconds()') == 1, lowered
+        assert 'scpp/datetime/now_unix_seconds.hpp' in lowered, lowered
+        exe = work/'php-time'
+        subprocess.run([*link, *units, *(build/Path(p).name for p in bundle['link_inputs']), '-o', exe], check=True)
+        for zone in ['UTC0', 'EST5EDT']:
+            env = {**os.environ, 'TZ': zone}
+            def php_time():
+                return int(subprocess.check_output(['php', '-n', '-r', 'echo time();'], env=env))
+            before = php_time()
+            seconds = int(subprocess.check_output([exe], env=env))
+            assert before <= seconds <= php_time()
+        settings.write_text('{}')
+        assert 'requires module runtime-datetime' in invoke(proc).get('error', '')
+        settings.write_text(json.dumps({'dependencies': enabled['dependencies']}))
+        source.write_text('echo time(0);')
+        assert 'Argument count mismatch' in invoke(proc).get('error', '')
+    finally:
+        proc.stdin.close()
+        proc.wait()
+
     clock = work/'clock'
     clock.mkdir()
     (clock/'module.json').write_text(json.dumps({'dependencies': enabled['dependencies']}))
@@ -131,6 +165,7 @@ return 0;
     narrow = 'scpp/custom/time/parse_iso_utc.hpp'
     assert "general:func:dt_parse_iso_utc" in bindings and narrow in bindings
     assert 'general:func:dt_now' not in bindings and not (work/'compiler/types/uint64.php').exists()
+    assert "php:func:time'" not in bindings
     umbrella = work/'runtime/public/scpp/custom/time.hpp'
     assert narrow in umbrella.read_text() and 'now_unix_seconds' not in umbrella.read_text()
     assert (work/'runtime/public'/narrow).is_file()

@@ -18,6 +18,11 @@ int main() {
     rejects([&]{ (void)checked_duration_count<Ms>(Sec{maximum/1000+1}); });
     rejects([&]{ (void)checked_duration_count<Ms>(Sec{std::numeric_limits<i64>::min()}); });
     require(checked_duration_count<Sec>(Ms{-1999})==-1);
+    require(checked_duration_count<Sec, true>(Ms{-1001})==-2);
+    require(checked_duration_count<Sec, true>(Ms{-1000})==-1);
+    require(checked_duration_count<Sec, true>(Ms{-1})==-1);
+    require(checked_duration_count<Sec, true>(Ms{0})==0);
+    require(checked_duration_count<Sec, true>(Ms{999})==0);
     rejects([&]{ (void)checked_duration_count<UMs>(Sec{-1}); });
     require(checked_duration_count<UMs>(UMs{std::numeric_limits<u64>::max()})==std::numeric_limits<u64>::max());
     rejects([&]{ (void)checked_duration_count<Ms>(UMs{std::numeric_limits<u64>::max()}); });
