@@ -739,6 +739,7 @@ final class weak_record_type_definition extends record_handle_definition
 /** Exact record owner contract: explicit shared<Struct>, required Class or optional ?Class. */
 final class shared_record_type_definition extends record_handle_definition
 {
+	use collection_specializations;
 	use hash_key_specializations;
 
 	/** PROPERTIES */

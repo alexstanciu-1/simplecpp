@@ -6,7 +6,7 @@ The first application specialization slice admits `vector<Record>` local values 
 all three flavors. Empty construction, append, checked indexed reads/replacement,
 count/empty and ordinary vector copying reuse the existing collection protocols.
 The element retains its normal storage semantics: structs are copied inline; bare
-classes use required shared owners. Copying a vector copies its storage, while copied
+classes use required shared owners, and `vector<?Player>` can store an empty owner. Copying a vector copies its storage, while copied
 class owners and shared fields preserve their existing object identity.
 
 ```php
@@ -23,8 +23,8 @@ $copy[0] = $q; // $points still contains x = 7.
 ## Ownership and preparation
 
 Type arguments resolve through the ordinary application lookup and stable symbol
-watches. Each record definition lazily owns canonical collection specializations of its default
-value type, keyed by collection family and canonical key type. This follows the existing declaration-generation lifetime rather than
+watches. Each canonical element value type lazily owns its vector specialization. Required and optional
+class handles keep distinct element contracts. This follows the existing declaration-generation lifetime rather than
 adding a session-global registry that could retain obsolete ASTs. The specialization
 retains its non-owning element link and deterministic native name; it copies no field,
 method, constructor or AST data. Unchanged source and prepared facts remain reusable.

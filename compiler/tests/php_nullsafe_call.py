@@ -98,6 +98,41 @@ def terminal_index(work, case):
           error, exception_type='std::out_of_range', expected_stdout=b'PK')
 
 
+def index_member(work, case):
+    vector = case == 'index_member_vector'
+    slot = '0' if vector else '"home"'
+    collection = 'vector<?Player>' if vector else 'hash<?Player,string>'
+    insert = '$this->players[]' if vector else '$this->players["home"]'
+    model = f"""
+        class Team {{
+            public {collection} $players;
+            public function addEmpty():void {{{insert}=null;}}
+            public function put(int $n):void {{$p=new Player();$p->points=$n;$this->players[{slot}]=$p;}}
+        }}
+    """
+    keys = ('function key():int' if vector else 'function key():string') + ' {echo "K";return ' + slot + ';}'
+    readers = keys + """
+        function probe(?Team $t):?Team {echo "P";return $t;}
+        function swap(?Team $t):int {echo "A";$t->put(8);return 1;}
+        function field(?Team $t):int {return probe($t)?->players[key()]?->points ?? 9;}
+        function callPlayer(?Team $t):int {return probe($t)?->players[key()]?->score(swap($t)) ?? 9;}
+    """
+    types = PLAYERS.replace('public int $points;', 'public int $points; public function __destruct() {echo "D",$this->points;}')
+    types = types.replace('class Other {}', 'class Other {public int $points;}')
+    main = readers + """
+        echo field(null),callPlayer(null);
+        $t=new Team();$t->addEmpty();echo field($t),callPlayer($t);
+        $t->put(0);echo field($t),callPlayer($t),field($t);return 8;
+    """
+    trace = b'P9P9PK9PK9PK0PKAMD00PK8D8'
+    revisions(work, 'php', dict(main=main, team=model, players=types), [
+        (None, None, trace), ('team', model.replace('Player', 'Other'), 'Unknown method Other::score'),
+        ('team', model, trace)])
+    error = 'sequence_index_out_of_range' if vector else 'hash_missing_key'
+    guard(work, 'php', 'missing', types + model + readers + 'echo callPlayer(new Team());return 8;',
+          error, exception_type='std::out_of_range', expected_stdout=b'PK')
+
+
 def index_admission(work):
     main = 'function read(?Team $t):nullable<int> {return $t?->scores[0];}return 8;'
     model = 'class Team {public vector<int> $scores;}'
@@ -429,6 +464,8 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     case = sys.argv[1]
     if case in ('index_vector', 'index_hash'):
         terminal_index(Path(tmp), case)
+    elif case in ('index_member_vector', 'index_member_hash'):
+        index_member(Path(tmp), case)
     elif case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:

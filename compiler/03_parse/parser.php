@@ -1653,7 +1653,7 @@ final class Parser
 						$this->cursor->take(token_kind::member, '->');
 						$member = $this->instance_member($member);
 					}
-					if ($this->cursor->is(token_kind::lbracket)) return new ast_nullsafe_member($this->indexed_read($member), $guarded);
+					if ($this->cursor->is(token_kind::lbracket)) $member = $this->indexed_read($member);
 					$value = new ast_nullsafe_member($member, $guarded);
 				} while ($this->cursor->is(token_kind::nullsafe_member));
 				return $value;

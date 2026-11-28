@@ -314,8 +314,7 @@ final class Type_Resolution
 		$published = type_registry::specialize($family, $element, $key);
 		if ($published !== null) return $published;
 		if ($key !== null) return $key->keyed_collection_type($family, $element);
-		$owner = $element instanceof shared_record_type_definition && $element->required ? $element->payload : $element;
-		return $owner->collection_type($family, null);
+		return $element->default_type()->collection_type($family, null);
 	}
 
 	/** Select a published specialization from already resolved arguments. */
