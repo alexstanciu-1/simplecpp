@@ -3040,7 +3040,10 @@ CPP;
 				$base = $field;
 				while ($base instanceof ast_field_expression && $base->member_borrow === null) $base = $base->receiver;
 				$steps = [];
-				$receiver = $base->member_borrow !== null && !$value->index->is_effect_free_literal()
+				// A key can replace the last shared owner of a selected field inside the guard.
+				$guarded_field = $value->parent instanceof ast_nullsafe_member && $field instanceof ast_field_expression
+					&& $field->receiver !== $this->guarded_receiver;
+				$receiver = ($guarded_field || $base->member_borrow !== null) && !$value->index->is_effect_free_literal()
 					? $this->retained_place($field, $global_references, $declarations, $required_headers, $steps, full_expression: true)
 					: $this->value($field, $global_references, $declarations, $required_headers);
 			}

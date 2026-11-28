@@ -81,6 +81,61 @@ PROBES = """
 """
 
 
+def terminal_index(work, case):
+    vector = case == 'index_vector'
+    collection = 'vector<int>' if vector else 'hash<int,string>'
+    key = 'function key():int {echo "K";return 0;}' if vector else 'function key():string {echo "K";return "home";}'
+    fill = '$this->scores[]=0;' if vector else '$this->scores["home"]=0;'
+    team = 'class Team {public ' + collection + ' $scores; public function fill():void {' + fill + '}}'
+    probe = 'function probe(?Team $t):?Team {echo "P";return $t;}'
+    read = 'function read(?Team $t):nullable<int> {return probe($t)?->scores[key()];}'
+    main = key + probe + read + 'echo read(null) ?? 9;$t=new Team();$t->fill();echo read($t) ?? 9;return 8;'
+    changed = team.replace('<int', '<string').replace('=0;', '="zero";')
+    revisions(work, 'php', dict(main=main, team=team), [
+        (None, None, b'P9PK0'), ('team', changed, 'Unsupported explicit conversion from string to int64'), ('team', team, b'P9PK0')])
+    error = 'sequence_index_out_of_range' if vector else 'hash_missing_key'
+    guard(work, 'php', 'missing', team + key + probe + read + 'echo read(new Team()) ?? 9;return 8;',
+          error, exception_type='std::out_of_range', expected_stdout=b'PK')
+
+
+def index_admission(work):
+    main = 'function read(?Team $t):nullable<int> {return $t?->scores[0];}return 8;'
+    model = 'class Team {public vector<int> $scores;}'
+    revisions(work, 'php', dict(main=main, model=model), [
+        ('model', model.replace('vector<int>', 'string'), 'Nullsafe indexed read requires a typed vector or hash'),
+        ('model', model, b'')])
+
+
+def index_owner(work):
+    main = """
+        class Scores {
+            public vector<int> $values;
+            public function __construct(int $n) {$this->values[]=$n;}
+            public function __destruct() {echo "D",$this->values[0];}
+        }
+        class Team {public ?Scores $scores;}
+        function replace(Team $t):int {$t->scores=new Scores(9);echo "K";return 0;}
+        function pick(Team $t):?Team {return $t;}
+        $t=new Team();$t->scores=new Scores(7);
+        $n=pick($t)?->scores->values[replace($t)];echo "R",$n ?? 0;return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'KD7R7D9')])
+
+
+def index_suspended(work):
+    main = """
+        class Team {
+            public function scores():vector<int> {echo "S";$v vector<int> = [0];return $v;}
+        }
+        class Club {public ?Team $team;}
+        async function key():int {await async_sleep_ms(1);echo "K";return 0;}
+        async function read(?Club $c):int {return $c?->team?->scores()[await key()] ?? 9;}
+        echo await read(null);$c=new Club();echo await read($c);
+        $c->team=new Team();echo await read($c);return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'99SK0')])
+
+
 def ordinary_suffix(work):
     main = PROBES + """
         function check(?Team $t):void {
@@ -311,10 +366,12 @@ def indexed_callable(work, case):
 
 with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     case = sys.argv[1]
-    if case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
+    if case in ('index_vector', 'index_hash'):
+        terminal_index(Path(tmp), case)
+    elif case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
-        {'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
+        {'index_admission': index_admission, 'index_owner': index_owner, 'index_suspended': index_suspended, 'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
          'terminal_void_suspended': terminal_void_suspended, 'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
          'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
          'dispatch': dispatch, 'admission': admission, 'ordinary_suffix': ordinary_suffix,

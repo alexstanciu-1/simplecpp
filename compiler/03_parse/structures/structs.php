@@ -336,15 +336,15 @@ final class ast_field_expression extends ast_expression
 	}
 }
 
-/** A PHP ?-> guards a run of field reads and instance calls. */
+/** A PHP ?-> guards member access and an optional terminal index. */
 final class ast_nullsafe_member extends ast_expression
 {
 	/** PROPERTIES */
-	public readonly ast_field_expression|ast_call_expression $operand;
+	public readonly ast_field_expression|ast_call_expression|ast_index_expression $operand;
 	public int $conversion /** uint16 */ = value_conversion::identity;
 
 	/** CONSTRUCTOR */
-	public function __construct(ast_field_expression|ast_call_expression $operand,
+	public function __construct(ast_field_expression|ast_call_expression|ast_index_expression $operand,
 		/** Non-owning first member of the run owned by $operand. */
 		public readonly ast_field_expression|ast_call_expression $guarded_member)
 	{
@@ -354,7 +354,7 @@ final class ast_nullsafe_member extends ast_expression
 	}
 
 	/** METHODS */
-	/** An ordinary member follows this guard in the same run. */
+	/** The guarded member has a further member or index access. */
 	public function has_suffix(): bool
 	{
 		return $this->operand !== $this->guarded_member;

@@ -58,6 +58,13 @@ yields absence. An empty captain or coach raises the ordinary empty-owner
 failure. All four paths skip `key()`. With every owner present, `key()` and
 `score()` each run once, and a score of zero stays present.
 
+A chain may end in one checked read from a typed vector or hash, for example
+`$team?->scores[key()]`. An absent guarded receiver skips the key and yields
+absence. On a selected path the collection and key each run once, and the
+element uses its type's optional representation. A stored zero stays present.
+An invalid vector index or missing hash key raises the ordinary lookup failure,
+including when a coalescing fallback follows the chain.
+
 A standalone call such as `$team?->coach->notify(key());` may end in a
 synchronous `void` method. An absent team skips the arguments and invocation.
 With a present team, the ordinary receiver check runs before `key()`. An

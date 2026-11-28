@@ -1609,6 +1609,15 @@ final class Parser
 			: new ast_field_expression($receiver, $name, $this->cursor->position());
 	}
 
+	/** Read one index on the selected receiver. */
+	private function indexed_read(ast_expression $receiver): ast_index_expression
+	{
+		$this->cursor->take(token_kind::lbracket, '[');
+		$index = $this->value();
+		$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
+		return new ast_index_expression($receiver, $index, $end);
+	}
+
 	/** Continue member calls and indexing on the expression already parsed. */
 	private function postfix(ast_expression $value, bool $field_target, bool $stop_before_items = false): ast_expression
 	{
@@ -1639,6 +1648,7 @@ final class Parser
 						$this->cursor->take(token_kind::member, '->');
 						$member = $this->instance_member($member);
 					}
+					if ($this->cursor->is(token_kind::lbracket)) return new ast_nullsafe_member($this->indexed_read($member), $guarded);
 					$value = new ast_nullsafe_member($member, $guarded);
 				} while ($this->cursor->is(token_kind::nullsafe_member));
 				return $value;
@@ -1660,10 +1670,7 @@ final class Parser
 			if ($field_target || !$this->cursor->is(token_kind::lbracket)) {
 				break;
 			}
-			$this->cursor->take(token_kind::lbracket, '[');
-			$index = $this->value();
-			$end = $this->cursor->take(token_kind::rbracket, ']') + 1;
-			$value = new ast_index_expression($value, $index, $end);
+			$value = $this->indexed_read($value);
 		}
 		return $value;
 	}
