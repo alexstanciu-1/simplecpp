@@ -95,9 +95,12 @@ def selection(work, case):
     return 8;
     """
     expected = b'N7XbranchGIA16Tkey'
-    revisions(work, 'php', {'main': main, 'holder': CALLABLES, 'model': model}, [
-        (None, None, expected), ('model', model.replace('function key(int $i):string', 'function key(int $i):int'), None),
-        ('model', model, expected)])
+    # A second successful native build took the full edit sequence above four seconds in isolation.
+    # Default still verifies the invalid provider and a native recovery against fresh compilation.
+    bad = model.replace('function key(int $i):string', 'function key(int $i):int')
+    initial = [(None, None, expected)] if case == 'selection_full' else []
+    revisions(work, 'php', {'main': main, 'holder': CALLABLES, 'model': model},
+              initial + [('model', bad, None), ('model', model, expected)])
 
 
 def call_modes(work, case):
@@ -136,8 +139,12 @@ def anchor(work, case):
     $something vector<vector<function<int(int)>>> = [$row]; $arg=6;
     """ + expression + '; echo ' + expression + ';return 8;'
     bad = provider.replace('vector<int>', 'vector<string>').replace('[0,0,0,0,0,0,0,0,0,0,0]', '["x"]')
-    revisions(work, 'php', {'main': source, 'provider': provider}, [
-        (None, None, b'MC6MC68'), ('provider', bad, 'Vector index requires int64'), ('provider', provider, b'MC6MC68')])
+    # Full valid/invalid/repaired sequence took five seconds in isolation. Default keeps the
+    # parser assertion, invalid-key diagnostic and a single successful native recovery.
+    expected = b'MC6MC68'
+    initial = [(None, None, expected)] if case == 'anchor_full' else []
+    revisions(work, 'php', {'main': source, 'provider': provider},
+              initial + [('provider', bad, 'Vector index requires int64'), ('provider', provider, expected)])
 
 
 def bounds(work, case):
@@ -301,6 +308,7 @@ def pending_coalesce(work, case):
 CASES = {name: awaited_key for name in ('await_replace', 'await_remove', 'await_both')}
 
 CASES.update(empty_callable=empty_callable, throw_arg=exceptional, throw_key=exceptional,
+             selection_full=selection, anchor_full=anchor,
              failed_store=failed_store, selection=selection, call_modes=call_modes, anchor=anchor)
 
 CASES.update({name: bounds for name in ('bounds_string', 'bounds_vector', 'bounds_fixed', 'bounds_hash')})
