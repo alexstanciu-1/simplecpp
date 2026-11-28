@@ -1860,6 +1860,7 @@ final class Preparation
 				if ($hop instanceof ast_call_expression) $this->check_nullsafe_call($hop);
 			}
 			$result = $payload === type_void::instance() || ($payload instanceof carrier_type_definition && $payload->family === 'nullable')
+				|| ($member instanceof ast_field_expression && $payload instanceof owned_callable_type)
 				? $payload : Type_Resolution::nullable_value($payload);
 			if ($result === null) {
 				$kind = $member instanceof ast_index_expression ? 'indexed element' : ($member instanceof ast_call_expression ? 'method result' : 'field type');

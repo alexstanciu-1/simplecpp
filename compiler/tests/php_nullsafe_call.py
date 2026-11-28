@@ -133,6 +133,37 @@ def index_member(work, case):
           error, exception_type='std::out_of_range', expected_stdout=b'PK')
 
 
+def callable_field(work, case):
+    model = """
+        class Router {
+            public function<int(int)> $op;
+            public function seed():void {$this->op=original(...);}
+            public function replace():void {$this->op=replacement(...);}
+        }
+        function original(int $n):int {echo "A";return $n;}
+        function replacement(int $n):int {echo "B";return $n+1;}
+    """
+    probe = 'function probe(?Router $r):?Router {echo "P";return $r;}'
+    if case != 'callable_field_recovery':
+        root = 'null' if case == 'callable_field_absent' else 'new Router()'
+        main = probe + 'function arg():int {echo "X";return 7;}'
+        main += f'$r ?Router={root};return (probe($r)?->op)(arg());'
+        guard(work, 'php', case, model + main, exception_type='std::bad_function_call',
+              exception_header='functional', expected_stdout=b'PX')
+        return
+    main = probe + """
+        function arg(?Router $r):int {echo "X";$r->replace();return 7;}
+        function invoke(?Router $r):int {return (probe($r)?->op)(arg($r));}
+        $r ?Router=new Router();$r->seed();$saved=$r?->op;
+        echo invoke($r),invoke($r),$saved(7);return 8;
+    """
+    changed = model.replace('public function<int(int)>', 'public int').replace('=original(...);', '=1;').replace('=replacement(...);', '=2;')
+    trace = b'PXA7PXB8A7'
+    revisions(work, 'php', dict(main=main, router=model), [
+        (None, None, trace), ('router', changed, 'Invocation requires an owned callable'),
+        ('router', model, trace)])
+
+
 def terminal_index_call(work, case):
     vector = case.endswith('vector')
     key = '0' if vector else '"score"'
@@ -625,6 +656,8 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     case = sys.argv[1]
     if case in ('hash_vector', 'vector_hash', 'hash_vector_missing', 'vector_hash_missing'):
         repeated_index(Path(tmp), case)
+    elif case.startswith('callable_field_'):
+        callable_field(Path(tmp), case)
     elif case.startswith('terminal_index_call_') and case.endswith(('vector', 'hash')):
         terminal_index_call(Path(tmp), case)
     elif case in ('index_vector', 'index_hash'):
