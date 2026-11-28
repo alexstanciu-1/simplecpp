@@ -177,7 +177,7 @@ class ast_index_expression extends ast_expression
 	}
 
 	/** Keep inline paths rooted in local storage or in a retainable receiver. */
-	private static function collection_storage_root(ast_expression $root): ast_name_expression|ast_field_expression|null
+	public static function collection_storage_root(ast_expression $root): ast_name_expression|ast_field_expression|null
 	{
 		$base = $root;
 		while ($base instanceof ast_field_expression && $base->shares_receiver_storage()) {

@@ -176,7 +176,7 @@ $doc=json_document_parse("{",$diag); $root=json_document_root($doc); echo "after
     Probe('preg-unbound-output', '''$found=preg_match("/(ok)/","ok",$matches); return 0;''', modules=('regex',), reject='Unknown or not-yet-initialized local/global: matches'),
     Probe('preg-output', '''$matches mixed=[]; $r=preg_match("/(ok)/","ok",$matches); $found int=$r;
 $word string=$matches[1]; echo $found,":",$word; return 0;''', modules=('regex',), output='1:ok'),
-    Probe('date-natural', 'echo date("Y",0); return 0;', modules=('datetime',), reject='Unknown function: date'),
+    Probe('date-natural', 'echo date("Y",0); return 0;', modules=('datetime',), output='1970'),
     Probe('date-general', 'echo dt_format_iso_utc(0); return 0;', general=True, modules=('datetime',), output='1970-01-01T00:00:00Z'),
     Probe('file-basename', 'echo basename("/tmp/docs/"),"|",dirname("leaf"); return 0;', modules=('filesystem',), output='|'),
     Probe('neutral-file-name', '$open=fs_get("settings.json"); return 0;', modules=('filesystem',), reject='Unknown function: fs_get'),

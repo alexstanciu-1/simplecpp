@@ -11,6 +11,7 @@
     "parse_iso_utc",
     "format_local",
     "format_local_now",
+    "php_date",
     "parse_common_local"
   ]
 }

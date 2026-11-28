@@ -579,9 +579,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $result = $op['result'] === 'void' ? 'void' : $runtimeTypes[$op['result']];
         $symbol = '::' . $runtime['datetime']['namespace'] . '::' . $op['name'];
         $mask = (1 << count($arguments)) - 1;
+        $admission = $op['required'] < count($arguments) ? "required_parameters: {$op['required']}" : 'exact_arguments: true';
         foreach ($sourceNames as $surface => $name) {
             $runtimeCases[] = "\t\t\t'$surface:func:$name' => \$bindings[\$key] ??= new runtime_function('$name', ["
-                . implode(', ', $arguments) . "], type_$result::instance(), '$symbol', '{$op['header']}', const_reference_mask: $mask, required_module: 'runtime-datetime', exact_arguments: true),";
+                . implode(', ', $arguments) . "], type_$result::instance(), '$symbol', '{$op['header']}', const_reference_mask: $mask, required_module: 'runtime-datetime', $admission),";
         }
     }
     array_push($runtimeCases, ...compilerModuleFunctionCases($runtime, $runtimeTypes));

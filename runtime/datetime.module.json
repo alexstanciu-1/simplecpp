@@ -3,7 +3,11 @@
     "type": "c++",
     "sources": [
         "generated/src/datetime.cpp",
-        "src/datetime/datetime.cpp"
+        "src/datetime/datetime.cpp",
+        "generated/src/php_date.cpp",
+        "src/datetime/php_date.cpp",
+        "src/datetime/timelib/utc.cpp",
+        "src/datetime/timelib/dow.cpp"
     ],
     "dependencies": {
         "runtime": {"modules": ["numeric"]}
