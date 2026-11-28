@@ -17,6 +17,14 @@ function arg():int { echo "I"; return 6; }
 SETUP = '$holder=new Holder(); $holder->ops["run"]=first(...);'
 
 
+def python_nested_write(work, case):
+    typed = 'v: vector<vector<int>> = [[3]]\n'
+    controls = typed + 'd: dynamic = [[3]]\nd[0][0] = 5\nif d[0][0] == 5:\n    return v[0][0]+5\nreturn 1\n'
+    revisions(work, 'py', {'main': typed + 'v[0][0] = 8\nreturn v[0][0]\n'}, [
+        (None, None, 'main.py:2:1: Nested indexed write requires inline fixed-array storage or a shared Python container'),
+        ('main', controls, b'')])
+
+
 def awaited_key(work, case):
     mutation = '$h->ops["run"]=second(...);'
     if case == 'await_remove':
@@ -340,7 +348,7 @@ def coalesce_pair(work, case):
 
 CASES = {name: awaited_key for name in ('await_replace', 'await_remove', 'await_both')}
 
-CASES.update(empty_callable=empty_callable, throw_arg=exceptional, throw_key=exceptional,
+CASES.update(python_nested_write=python_nested_write, empty_callable=empty_callable, throw_arg=exceptional, throw_key=exceptional,
              selection_full=selection, anchor_full=anchor,
              failed_store=failed_store, selection=selection, call_modes=call_modes, anchor=anchor)
 

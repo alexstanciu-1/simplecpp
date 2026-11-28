@@ -29,7 +29,7 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 | Item | Evidence and next decision |
 |---|---|
 | 🟢 F2 fixed after audit | Homogeneous nullable integers and identical shared class handles are implemented. Their both-empty outcomes differ. The registered tests check the domain error for integers and the empty result for optional handles. [Compiler contract](../../compiler/docs/coalesce.md) |
-| D1. Improve the Python nested typed-write diagnostic | Python accepts a nested typed-vector read and a nested shared boxed-list write. The nested typed-vector store rejects, but its diagnostic offers a typed local/field path that the Python preparation branch excludes. Explain the applicable Python boundary. Supporting typed-vector writes would be a separate feature. |
+| 🟢 D1. Python nested typed-write diagnostic | Fixed in workspace 03. The preparation diagnostic identifies the storage available in Python. The default regression checks rejection, repair and native execution of both working controls. Typed-vector write admission remains a separate decision. |
 | D2. Clarify scalar field destinations through indexed or temporary class handles | Both `$owners[0]->x=7` and `($owners[0])->x=7` reach preparation and reject for writable local storage. Calling a method or reading the same field works; indexed writes into a **collection field** of the selected holder work. A direct write through a factory result also rejects. Decide whether to extend the retained-owner rule to scalar fields, or document the restriction with a target-specific diagnostic. |
 | D3. Decide computed callee and flavor boundaries | In PHP a grouped stored callable field and grouped local work; `(true ? $a : $b)(7)` stopped at the invocation suffix. The direct `ops[0](6)` syntax probe still stopped in parsing in C++, JS and Python. These are admission decisions independent of F1. No cross-flavor extension was assumed. |
 | D4. Decide additional access syntax and grouping expectations | A grouped optional field followed by an ordinary field access checks the resulting owner. On an absent outer receiver it raised `ownership_empty_access`; the continuous guarded member chain produced absence. A grouped scalar optional can feed coalescing. Computed PHP member names, nullsafe writes, nonlocal/indexed `??=` and field interpolation remain limited. Field interpolation still reports a closing-brace parse error. Decide each surface before broadening admission; a grouping comparison alone does not prove a language bug. |
@@ -37,6 +37,52 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 | A1. Consider preparing typed destinations once | Preparation records boxed roots. The emitter also calls `nested_collection_root` on typed stores, appends and mutations. This is duplicated classification, with incremental invalidation implications. The retained-owner and write-back probes did not reproduce another lost write. Treat a refactor as a separate engineering decision. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Lowering](../../compiler/05_backend/cpp/emit.php) |
 
 **Two historical gaps closed upstream during the audit.** PHP now prints scalar bytes/bools and reports the received type for a boxed echo operand. PHP kind predicates now admit dynamic values; `is_string` and `is_array` are available. New upstream coverage also exercises terminal checked vector/hash reads on nullsafe chains and nullsafe enum methods and read-only case properties. These changes are included in the integrated default-suite result. [QoS follow-up](php_flavor_developer_qos_reaudit.md) · [Nullsafe access contract](../conditional_expression_matrix.md)
+
+## Workspace 03 reconciliation
+
+The GAPS thread in `simple_cpp_03` owns the full inventory. The handoff was
+`cc4a00c7f`. The pulled baseline for this pass was `d98403096`. The last
+inventory column now contains 43 verified rows and nine follow-up rows.
+F1 (`59d400219`) accounts for the original red row. D1 closes one diagnostic
+row. F2 (`cc4a00c7f`) closes two coalescing cases within a broader follow-up row.
+
+On dev002, the root default configure and build passed for `d98403096` plus
+the D1 compiler/test patch (stable patch ID `7ad72cd9a4be`). The focused
+expression-path and coalescing selection passed **47/47** in 9.60 s. The
+full default suite passed **662/662** with `ctest --preset default -j24`
+in 90.66 s. These figures apply to the workspace 03 snapshot.
+
+- **D1, Python preparation.** At the pulled revision,
+  `v: vector<vector<int>> = [[3]]` followed by `v[0][0] = 8` parsed and
+  rejected at line 2, column 1. The diagnostic offered a typed local/field
+  path that Python excludes. The revised message is
+  `Nested indexed write requires inline fixed-array storage or a shared Python container`.
+  The registered `python_nested_write` regression compares resident and fresh
+  diagnostics, then reads the typed element and writes and reads a shared
+  boxed-list element in the repaired native program.
+- **D2, PHP preparation.** Replayed with `class N {public int $x=3;}`,
+  `function make():N {return new N();}` and `$owners vector<N>=[make()];`.
+  Each destination in `$owners[0]->x=7`, `($owners[0])->x=7` and
+  `make()->x=7` parses and reports `Field assignment requires writable local storage`.
+  A retained-owner scalar store is the next language decision.
+- **D3, parser.** Replayed direct `return ops[0](6)` in C++, JS and Python,
+  and PHP `(true ? $a : $b)(7)` with owned callable locals. All stop at the
+  invocation suffix. PHP terminal guarded indexed invocation in `5b2388267`
+  does not settle general computed-callee or other-flavor syntax.
+- **D4, PHP.** The registered `grouped_absent` and `grouped_present` fixtures
+  distinguish a grouped empty receiver's runtime failure from absence propagated
+  by the continuous chain. Repeated checked reads (`adaee7bba`), ordinary
+  member continuation (`7fa1e23dd`) and terminal indexed calls (`5b2388267`)
+  have their own native regressions. In separate probes, `$d->{$n}`,
+  `$h?->x=7` and `"{$h->x}"` still stop in parsing (expected identifier,
+  call statement and closing interpolation brace respectively). Indexed
+  `$v[0] ??= 7` and field `$h->x ??= 7` on integer slots parse and reject
+  in preparation with `Unsupported compound operands or write-back type`.
+- **D5 and A1.** Keep the missing-key, mixed-read, stable-reference and text
+  comparison contracts in the inventory. The intervening compiler changes
+  concern terminal indexed calls. Typed stores, appends and updates still
+  consult `nested_collection_root` in lowering. The existing native controls
+  protect write-back behavior; they cannot prove classification happens once.
 
 ## 🟢 Native witnesses worth retaining
 
