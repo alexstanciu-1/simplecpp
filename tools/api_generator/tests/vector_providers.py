@@ -133,6 +133,8 @@ def proof(work, quick=False):
     assert 'core.vectors' not in absent['submodules']['published']
     run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
     assert binding() is None, 'Retired publication specialization still resolves'
+    assert "'php:func:in_array'" in (compiler / 'types/registry.php').read_text()
+    assert (output / 'public/scpp/collection_scan.hpp').is_file()
     assert 'class type_vector_' not in (compiler / 'types/vectors.php').read_text()
     emit(metadata, publication)
     assert snapshot() == original

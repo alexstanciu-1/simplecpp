@@ -1542,7 +1542,7 @@ CPP;
 					$field = $this->name_value($statement->target, $global_references, $declarations, $required_headers);
 				} elseif (($element = $statement->selected_record_element()) !== null) {
 					$field = $this->name($element, reference: true) . '.' . Cpp_Identifier::source($statement->target->field);
-				} elseif ($statement->target instanceof ast_field_expression && $before !== $this->suspensions) {
+				} elseif ($statement->target instanceof ast_field_expression && ($statement->retain_selected_owner || $before !== $this->suspensions)) {
 					$steps = [];
 					$owner = $this->retained_place($statement->target->receiver, $global_references, $declarations, $required_headers, $steps);
 					array_push($this->async_steps, ...$steps);
@@ -3362,12 +3362,12 @@ CPP;
 					}
 					foreach ($element->binary_headers(binary_operator::equal) as $header) $required_headers[$header] = true;
 					$item = $type->iteration_output_type();
-					$next = $type->lower_cpp_iteration_next('source', 'item', null);
+					$cursor = $type->lower_cpp_value_cursor('source');
+					$required_headers[$function->header] = true;
 					$match = $element->lower_cpp_binary(binary_operator::equal, 'needle', $item === null ? 'item' : 'item.value', $element);
 					$params = 'const auto& needle, const auto& source' . (count($args) === 3 ? ', bool' : '');
-					return '[](' . $params . ') { ' . ($item ?? $element->cpp_type()) . ' item{}; '
-						. $type->lower_cpp_iteration_storage(false) . $type->lower_cpp_iteration_initialize('source')
-						. " while ($next) { if ($match) return true; } return false; }(" . implode(', ', $args) . ')';
+					return '[](' . $params . ') { return ' . $function->symbol . '<' . ($item ?? $element->cpp_type())
+						. ">($cursor, [&](const auto& item) { return $match; }); }(" . implode(', ', $args) . ')';
 				}
 				if ($function instanceof collection_transform_function) {
 					return $this->collection_transform($value, $function, $global_references, $declarations, $required_headers);

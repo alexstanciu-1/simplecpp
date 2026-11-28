@@ -25,6 +25,35 @@ def selection(work):
         ('api', factory, trace)])
 
 
+def conditional(work, kind):
+    api = """
+        function left(int $x):int {echo "A";return $x+1;}
+        function right(int $x):int {echo "B";return $x+2;}
+        function newer(int $x):int {echo "N";return $x+10;}
+        function condition(bool $choice):bool {echo "C";return $choice;}
+        function arm(string $tag,function<int(int)> $op):function<int(int)> {echo $tag;return $op;}
+    """
+    def pick(a, b):
+        return (f'(condition($choice) ? {a} : {b})' if kind == 'ternary' else
+                f'(match(true) {{condition($choice)=>{a},default=>{b}}})')
+
+    traced = pick('arm("L",$a)', 'arm("R",$b)')
+    direct = pick('$a', '$b')
+    main = """
+        function run(bool $choice):void {
+            $a function<int(int)>=left(...);$b function<int(int)>=right(...);
+            $replace=function() use (&$a,&$b):int {echo "X";$a=newer(...);$b=newer(...);return 7;};
+    """ + f'{traced}(7);echo {direct}($replace()),"/",{direct}(7);' + """
+        }
+        run(true);run(false);return 8;
+    """
+    trace = b'CLACXA8/CN17CRBCXB9/CN17'
+    revisions(work, 'php', dict(main=main, api=api), [
+        ('api', api.replace('):function<int(int)> {echo $tag;return $op;', '):int {echo $tag;return 3;'),
+         'Invocation requires an owned callable'),
+        ('api', api, trace)])
+
+
 def references(work):
     factory = 'function picker():function<int&(int&)> {echo "F";return fn&(&$x)=>$x;}'
     main = """
@@ -70,4 +99,8 @@ def absent(work):
 with TemporaryDirectory(prefix='php-callable-expression-') as tmp:
     cases = {'selection': selection, 'references': references, 'local_arguments': lambda w: arguments(w, '($f)'),
              'factory_arguments': lambda w: arguments(w, 'makeOp()'), 'absent': absent, 'suspended': suspended}
-    cases[sys.argv[1]](Path(tmp))
+    case = sys.argv[1]
+    if case in ('ternary', 'match'):
+        conditional(Path(tmp), case)
+    else:
+        cases[case](Path(tmp))

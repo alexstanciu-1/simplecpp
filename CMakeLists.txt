@@ -585,6 +585,8 @@ if(BUILD_TESTING)
   add_test(NAME compiler_text_helpers_native COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/text_helpers_native.py
     ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  add_test(NAME compiler_collection_value_scan COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_value_scan.py)
   add_test(NAME compiler_collection_transforms COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_transforms.py
     ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
@@ -905,7 +907,7 @@ if(BUILD_TESTING)
       failed_store shallow_failure conversion_failure selection call_modes anchor bounds_string bounds_vector
       bounds_fixed bounds_hash terminal_void mixed_read grouped_absent grouped_present factory_match factory_ternary
       arithmetic_failure predicate_after_write qualified_receiver declared_match declared_ternary signatures_match signatures_ternary
-      wrapper_coalesce handle_coalesce awaited_coalesce python_nested_write)
+      wrapper_coalesce handle_coalesce awaited_coalesce python_nested_write scalar_owner)
     add_test(NAME compiler_expression_path_${case} COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/expression_access_paths.py ${case})
   endforeach()
@@ -1009,7 +1011,7 @@ if(BUILD_TESTING)
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/static_callable_properties_native.py --absent)
   add_test(NAME compiler_static_callable_properties_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/static_callable_properties_native.py --quick)
   set_tests_properties(compiler_static_callable_properties_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
-  foreach(case selection references local_arguments factory_arguments absent suspended)
+  foreach(case selection references local_arguments factory_arguments absent suspended ternary match)
     add_test(NAME compiler_php_callable_expression_${case} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_callable_expression.py ${case})
   endforeach()
   add_test(NAME compiler_erased_reference_returns_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/erased_reference_returns_native.py --quick)

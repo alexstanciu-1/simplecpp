@@ -2218,11 +2218,8 @@ final class Parser
 					&& $c->tokens->tokens[$value->start]->kind === token_kind::variable) {
 					return $this->call_arguments($start, $value->name, null, null, call_qualifier::local);
 				}
-				// Every PHP static property read ends in :: followed by a variable token.
-				if ($value instanceof ast_name_expression && !$value->constant_only && $value->end - $value->start >= 3
-					&& $c->tokens->tokens[$value->end - 2]->kind === token_kind::scope) {
-					return $this->call_arguments($start, $value->name, null, $value, call_qualifier::stored_value);
-				}
+				$name = $value instanceof ast_name_expression ? $value->name : 'parenthesized expression';
+				return $this->call_arguments($start, $name, null, $value, call_qualifier::stored_value);
 			}
 			return $value;
 		}

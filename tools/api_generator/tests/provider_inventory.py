@@ -4,6 +4,8 @@
 def prepared_provider_headers(plan, runtime):
     graph = plan['submodules']
     headers = {graph['nodes'][provider]['header'] for provider in graph['published']}
+    if 'in_array' in plan.get('collection_transforms', []):
+        headers.add('scpp/collection_scan.hpp')
     if 'structural_decoder' in plan:
         headers.add('scpp/decoder.hpp')
     if 'structural_encoder' in plan:

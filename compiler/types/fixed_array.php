@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Inline byte storage, e.g. fixed_array<fixed_array<byte,5>,3>. Each dimension keeps its logical bound. */
-final class fixed_array_type extends type_definition implements indexed_collection_type, index_write_type, counted_collection_type
+final class fixed_array_type extends type_definition implements collection_value_source, indexed_collection_type, index_write_type, counted_collection_type
 {
 	/** CONSTANTS */
 	public const int PAYLOAD_LIMIT /** uint32 */ = 4294967295;
@@ -79,6 +79,18 @@ final class fixed_array_type extends type_definition implements indexed_collecti
 		return $this->element;
 	}
 
+	public function iteration_value_type(): type_definition
+	{
+		return $this->element;
+	}
+
+	public function lower_cpp_value_cursor(string $receiver): string
+	{
+		$slot = $receiver . '[position++]';
+		$copy = $this->element instanceof self ? "__builtin_memmove(item, $slot, sizeof(item))" : "item = $slot";
+		return "[&$receiver, position = scpp::int64{}](auto& item) mutable { if (position == {$this->extent}) return false; "
+			. "$copy; return true; }";
+	}
 
 	public function cardinality_result(collection_cardinality $operation): type_definition
 	{
