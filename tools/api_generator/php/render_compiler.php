@@ -796,6 +796,14 @@ function compilerLiteralFamilies(array $definitions): array {
     return ['cases' => implode("\n", $cases), 'accessors' => implode("\n\n", $accessors)];
 }
 
+/** Omitted provider grants inherit the type definition's conservative defaults. */
+function compilerCollectionDeclarations(object $provider): string {
+    if (!property_exists($provider, 'declarations')) return '';
+    $grants = fields($provider->declarations, ['inferred_local', 'instance_field']);
+    foreach ($grants as $name => $grant) $grants[$name] = boolean($grant);
+    return compilerDeclarations($grants);
+}
+
 /** Emit declaration-policy queries, separate from representation and conversion permissions. */
 function compilerDeclarations(array $declarations): string {
     $methods = '';

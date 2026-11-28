@@ -73,6 +73,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $provider = concreteRecipe(hashConcreteRecipe($hash));
         $indexedTypes = textValue(at($provider, 'indexed_entry_types'));
         $bindings = compilerCollectionBuilders($provider) + [
+            '@declarations@' => compilerCollectionDeclarations($provider),
             '@indexed_probe@' => $publishedProbe ? "\tpublic function supports_indexed_presence(): bool { return true; }\n"
                 . "\tpublic function require_entry_probe(Cpp_Concrete_Collections \$collections, array &\$headers): void { \$headers['$probeHeader'] = true; }\n" : '',
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",

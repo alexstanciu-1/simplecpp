@@ -1,4 +1,5 @@
 {
+  "declarations": {"inferred_local": true, "instance_field": true},
   "fill_factory": {"source": "vector_filled", "member": "filled"},
   "subset_result": {"family": "hash"},
   "map_result": {"family": "vector", "key": "none"},

@@ -15,31 +15,18 @@ abstract class vector_type_definition extends type_definition implements readonl
 	use collection_specializations;
 	use concrete_value_storage;
 
-	/** PROPERTIES */
 	/** Native non-owning canonical element definition, shared by all occurrences. */
 	public readonly type_definition $element_type;
 
-	/** CONSTRUCTOR */
 	protected function __construct(string $name, type_definition $element)
 	{
 		parent::__construct($name);
 		$this->element_type = $element;
 	}
 
-	/** METHODS */
 	public function private_copy_allocation_only(): bool
 	{
 		return $this->element_type->copy_has_no_observable_effects();
-	}
-
-	public function supports_inferred_local(): bool
-	{
-		return true;
-	}
-
-	public function supports_instance_field(): bool
-	{
-		return true;
 	}
 
 	/** Admit the scalar and shared-owner equality domains that have Python representations. */

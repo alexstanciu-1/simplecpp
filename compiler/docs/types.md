@@ -198,6 +198,11 @@ from runtime representation and conversion permissions. Missing/nonboolean field
 generation. Generated `supports_inferred_local()` and `supports_global_storage()` queries
 return constants; unknown/non-value types inherit conservative false defaults.
 
+Vector and hash provider recipes independently grant `declarations.inferred_local` and
+`declarations.instance_field` for published and application specializations. An omitted
+grant inherits the default rejection. Static properties follow the existing instance-field
+query for these providers. Global storage has its own admission rule.
+
 Current policy: int64, bool, byte and float64 support both; null permits global storage
 but not local inference; string permits local inference but not global storage. Typed
 null locals and string constants remain supported. String globals and nullable inference

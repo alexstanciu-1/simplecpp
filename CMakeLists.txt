@@ -1258,6 +1258,8 @@ if(BUILD_TESTING)
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/compiler.php ${native_facts} ${native_context})
   add_test(NAME collection_access_contracts COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/collection_access.py)
+  add_test(NAME collection_declaration_contracts COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/collection_declarations.py)
   add_test(NAME collection_argument_targets COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/collection_arguments.py ${native_facts} ${native_context})
   add_test(NAME iterator_contract_metadata COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/iterator_contract.py)

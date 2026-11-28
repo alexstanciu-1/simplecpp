@@ -31,16 +31,6 @@ abstract class hash_type_definition extends type_definition implements readonly_
 		return $this->key_type->copy_has_no_observable_effects() && $this->value_type->copy_has_no_observable_effects();
 	}
 
-	public function supports_inferred_local(): bool
-	{
-		return true;
-	}
-
-	public function supports_instance_field(): bool
-	{
-		return true;
-	}
-
 	abstract public function presence_function(): runtime_function;
 
 	public function prepare_membership(ast_binary_expression $site): void

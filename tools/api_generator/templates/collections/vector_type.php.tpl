@@ -13,6 +13,7 @@ final class @class@ extends vector_type_definition@interfaces@, subset_source, m
 @identity@
 @initialization@
 	/** METHODS */
+@declarations@
 @subset_result@
 @map_result@
 @iteration@
