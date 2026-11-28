@@ -226,3 +226,15 @@ Omitted and null length select the entire remaining window. A negative
 length excludes bytes from its end, and zero selects an empty window.
 A window beyond either bound truncates to the available bytes. NUL is
 an ordinary byte in both operands.
+
+PHP `ucwords(string[, separators])` uppercases the first ASCII lowercase
+letter at byte zero or immediately following a separator. The default set
+is space, tab, CR, LF, form feed and vertical tab. A custom set replaces it.
+Separator membership uses the byte after capitalization, so
+`ucwords("aaaa", "a")` yields `"AaAa"`.
+`nl2br(string[, use_xhtml])` inserts `<br />` by default, or `<br>` when
+false, before each CRLF, LFCR, lone CR or lone LF and retains the newline bytes.
+`addslashes` prefixes quotes and backslashes with a backslash and encodes NUL
+as backslash followed by ASCII zero. `stripslashes` removes each escape
+backslash, decodes escaped ASCII zero to NUL and discards a lone trailing
+backslash. All four return byte strings.

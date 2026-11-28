@@ -37,6 +37,24 @@ for name in ('strspn', 'strcspn'):
     body += f'echo {name}("aaaa","a",-9223372036854775807-1,9223372036854775807),";";\n'
     body += f'echo {name}("aaaa","a",0,-9223372036854775807-1),";";\n'
 
+# Encode inputs as hex so both frontends receive identical bytes, including
+# control bytes that have different escape spellings across source flavors.
+def literal(data):
+    return f'(string)hex2bin("{data.hex()}")'
+
+
+transforms = []
+for data in (b'', b'aaaa', b'one-two words', b'a\tb\rc\nd\fe\vf', b'\0a\xffb'):
+    for sep in (None, b'', b'-', b'a', b'A', b'\0\xff'):
+        args = literal(data) if sep is None else f'separators:{literal(sep)},string:{literal(data)}'
+        transforms.append(f'ucwords({args})')
+for data in (b'', b'a\rb\nc', b'\r\n\n\r', b'\r\r\n\n', b'\0\n\xff'):
+    for flag in ('', ',true', ',false'):
+        transforms.append(f'nl2br({literal(data)}{flag})')
+for data in (b'', bytes(range(256)), b"'\x22\\\0", b'q\\', b'\\\\', b'\\\\\\', b'\\q\\0\\\0'):
+    transforms.extend(f'{name}({literal(data)})' for name in ('addslashes', 'stripslashes'))
+body += '\n'.join(f'echo bin2hex({call}),";";' for call in transforms)
+
 with tempfile.TemporaryDirectory() as directory:
     work = Path(directory)
     app = work/'app'
