@@ -111,7 +111,36 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	verify(str_contains($cpp, 'scpp::str::format_bool(') && str_contains($cpp, 'scpp::str::format_float64('), 'Expected generated casts');
 	$fixtures[$flavor->name] = ['cpp' => $cpp, 'stdout_hex' => bin2hex("é\0|-12|255|-0|true|é\0Hi [é\0]!" . $bytes)];
 	foreach (['mixed' => '1', 'dynamic' => '1', 'null' => 'null', 'vector<int>' => '[]'] as $type => $value) {
+		if ($flavor === flavor::php && $type === 'mixed') continue;
 		rejects(fn() => $prepare($decl('x', $type, $value) . 'echo ' . $quote($field('x')) . '; return 8;'), 'conversion');
+	}
+	if ($flavor === flavor::php) {
+		$rows = <<<'SCPP'
+$names hash<string,string> = ["name"=>"Ada"];
+$nums hash<int,string> = ["year"=>2026];
+$row mixed = ["ok"=>false, "n"=>1.5, "empty"=>"", "name"=>"Ada"];
+SCPP;
+		$template = <<<'SCPP'
+"Hello {$names['name']} {$nums['year']} {$row['ok']}/{$row['n']}/{$row['empty']}/{$row['name']}"
+SCPP;
+		$emit = static fn(string $body) => (new Cpp_Emitter())->emit($prepare($body . 'return 8;'));
+		$stream = $emit($rows . "echo $template;");
+		verify(!str_contains($stream, '.append(') && !str_contains($stream, 'return result;'), 'Echo built a combined string');
+		verify(substr_count($stream, '.at(') === 2 && substr_count($stream, '.source_read(') === 4
+			&& strrpos($stream, '.source_read(') < strpos($stream, 'scpp::echo_bytes('), 'Echo repeated or delayed a lookup');
+		$message = 'Hello Ada 2026 false/1.5//Ada';
+		$fixtures['php-keys'] = ['cpp' => $emit($rows . "echo $template; " . '$copy = ' . "$template; echo " . '$copy;'),
+			'stdout_hex' => bin2hex($message . $message)];
+		foreach (['typed-miss' => ['$row hash<string,string> = ["ok"=>"good"];', 'catch_out_of_range'],
+			'mixed-miss' => ['$row mixed = ["ok"=>"good"];', 'catch_runtime_error'],
+			'mixed-null' => ['$row mixed = ["ok"=>"good", "bad"=>null];', 'catch_runtime_error'],
+			'mixed-table' => ['$row mixed = ["ok"=>"good", "bad"=>[]];', 'catch_runtime_error']] as $case => [$source, $exception]) {
+			$bad = <<<'SCPP'
+echo "prefix {$row['ok']} middle {$row['bad']}";
+SCPP;
+			$fixtures['php-' . $case] = ['cpp' => $emit($source . $bad), 'stdout_hex' => '',
+				$exception => $case === 'typed-miss' ? 'hash_missing_key' : 'boxed_scalar_kind'];
+		}
 	}
 	$plain = match ($flavor) {
 		flavor::php => "'\$missing'", flavor::js => '"${missing}"', flavor::cpp => '"{missing}"',
@@ -153,7 +182,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$session = null;
 		$root = null;
 		$revision = time();
-		foreach ([$valid, $function('float', 'word', 'return 8.25;'), $function('mixed', 'word', 'return 8;'),
+		foreach ([$valid, $function('float', 'word', 'return 8.25;'), $function('dynamic', 'word', 'return 8;'),
 			'retry', null, $function('string', 'word', 'return "é\0";'), $valid] as $step => $body) {
 			if ($body !== 'retry') {
 				if ($body === null) {

@@ -60,6 +60,21 @@ final class Interpolation
 				}
 				throw new diagnostic($tokens->source, $tokens->tokens[$token]->offset + $i, 'Expected an interpolation name');
 			}
+			$name = substr($text, $match_start, $after - $match_start);
+			$arrow?->read($name, $token, $match_start);
+			$part = new ast_interpolation_name($name, $token, $match_start);
+			if ($braced && $flavor === flavor::php && substr($text, $after, 2) === "['") {
+				$quote = ++$after;
+				while (++$after < $end && $text[$after] !== "'") {
+					if ($text[$after] === '\\') ++$after;
+				}
+				if ($after >= $end || $text[$after + 1] !== ']') {
+					throw new diagnostic($tokens->source, $tokens->tokens[$token]->offset + $quote, 'Expected a single-quoted interpolation key and closing bracket');
+				}
+				$key = new ast_interpolation_key($token, $quote, $after - $quote + 1);
+				$part = new ast_interpolation_index($part, $key, $token + 1);
+				$after += 2;
+			}
 			if ($braced && $text[$after] !== '}') {
 				throw new diagnostic($tokens->source, $tokens->tokens[$token]->offset + $after, 'Expected closing interpolation brace');
 			}
@@ -69,9 +84,7 @@ final class Interpolation
 			if ($start < $i) {
 				$parts[] = new ast_interpolation_text($token, $start, $i - $start);
 			}
-			$name = substr($text, $match_start, $after - $match_start);
-			$arrow?->read($name, $token, $match_start);
-			$parts[] = new ast_interpolation_name($name, $token, $match_start);
+			$parts[] = $part;
 			$start = $after + ($braced ? 1 : 0);
 			$i = $start - 1;
 		}

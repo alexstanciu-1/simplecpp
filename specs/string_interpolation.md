@@ -12,10 +12,22 @@ Doc Status: normative
 
 Ordinary JS and C++ quoted strings keep markers as text. The C++ flavor implements
 the f-literal spelling in the Simple C++ frontend. Native builds consume ordinary
-runtime string operations. Each flavor admits a single local or parameter name
-per insertion using its existing ASCII name characters. Calls, expressions,
+runtime string operations. Each flavor admits local and parameter names using its existing ASCII name
+characters. PHP also admits one single-quoted literal key on a local or
+parameter inside braces, as in `"Hello {$row['name']}"`. Calls, arbitrary expressions,
 global names and formatting specifiers are outside this slice.
 
 String, bool, byte/uint8, int/int64 and float/float64 insertions use the
 [explicit scalar cast](compiler_scalars_v0_2.md#explicit-scalar-to-string-casts-in-v02).
-Null, boxed values, carriers and collections require separate handling by the caller.
+PHP also accepts `mixed` insertions using the explicit boxed-to-string cast.
+For example, a boxed false formats as `false` in both a stored string and an
+echoed string. Boxed null and containers raise `boxed_scalar_kind`.
+Other boxed types, statically null values, carriers and collections require
+separate handling by the caller.
+
+PHP keyed insertions use the ordinary indexed read on a string-keyed typed
+hash or a mixed row. A typed hash miss raises its ordinary missing-key error.
+A missing key in a mixed row yields boxed null and fails during formatting.
+Each insertion is evaluated once in source order. When echoing an interpolated
+operand, all its insertions must succeed before the first byte of that operand
+is printed. Earlier, separate echo operands retain their usual effects.

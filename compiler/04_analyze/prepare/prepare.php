@@ -1948,7 +1948,11 @@ final class Preparation
 			$string = type_registry::string();
 			foreach ($syntax->parts as $part) {
 				$this->value($part, $initializing);
-				if ($part instanceof ast_interpolation_name) {
+				if ($part instanceof ast_interpolation_index && !($part->receiver->type_def() instanceof hash_type_definition)
+					&& !($part->receiver->type_def() instanceof type_mixed)) {
+					throw new diagnostic($part->source(), $part->receiver->byte_start(), 'Keyed interpolation requires a hash or mixed row');
+				}
+				if (!($part instanceof ast_interpolation_text)) {
 					$part->prepare_text($string);
 				}
 			}

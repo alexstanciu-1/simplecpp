@@ -104,7 +104,7 @@ $v vector<int> = [10]; adjust($v); echo $v[0]; return 0;''', output='10'),
     Probe('typed-empty-loop', '''$n=9; $v vector<int> = []; foreach ($v as $n) {} echo $n; return 0;''', output='9'),
     Probe('eager-fallback', '''function fallback(int &$calls): int { $calls+=1; return 8; }
 $n ?int=0; $calls=0; echo $n ?? fallback($calls), $calls; return 0;''', output='00'),
-    Probe('template-fields', '$row mixed=["name"=>"Ada"]; echo "Hello {$row[\'name\']}"; return 0;', reject='Expected closing interpolation brace'),
+    Probe('template-fields', '$row mixed=["name"=>"Ada"]; echo "Hello {$row[\'name\']}"; return 0;', output='Hello Ada'),
     Probe('template-local', '$name="Ada"; $ok=true; echo "Hello $name {$ok}"; return 0;', output='Hello Ada true'),
     Probe('bool-output', 'echo true,"/",false; return 0;', output='1/'),
     Probe('typed-ternary', '$ok=true; $v=$ok ? 404 : "absent"; return 0;', reject='Ternary result types must be identical'),
