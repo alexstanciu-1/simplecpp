@@ -141,7 +141,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $provider = concreteRecipe(vectorConcreteRecipe($vector));
         $indexedTypes = at($provider, 'indexed_entry_types');
         [$readMember, $indexedRead] = compilerIndexedRead($provider, $vector['methods'], $vector['count_type'], $element);
-        $bindings = compilerCollectionBuilders($provider) + [
+        $bindings = compilerReadSegment($provider, !empty($runtime['mt_segments'])) + compilerCollectionBuilders($provider) + [
             '@copy_effect@' => compilerPrivateCopyEffect($provider, ['e' => '$this->element_type']),
             '@declarations@' => compilerCollectionDeclarations($provider),
             '@fill_binding@' => $fillFactory === null ? '' : compilerFillBinding($fillFactory, $countClass, collectionFillBorrows($vector)),

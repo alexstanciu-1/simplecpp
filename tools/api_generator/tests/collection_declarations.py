@@ -40,12 +40,22 @@ def prove(work):
         programs = []
         for family in ('vector', 'hash'):
             path = generator / f'templates/collections/{family}.concrete.json'
-            recipe = json.loads(path.read_text())
+            recipe = json.loads((GENERATOR.parent / path.relative_to(generator)).read_text())
             local = family == local_family
             recipe['declarations'] = {'inferred_local': local, 'instance_field': not local}
             # Absence and explicit false both withdraw a grant.
             if family == 'hash':
                 del recipe['declarations']['instance_field' if local else 'inferred_local']
+            if not local:
+                del recipe['read_segment']
+            owner, view = ('vector<int>', 'read_segment<int>') if family == 'vector' else ('hash<int,int>', 'read_hash_segment<int,int>')
+            prefix = f'function reader({view} $s):int {{return count($s);}} $items {owner}=[]; '
+            error = None if local else 'Segment requires a matching local vector or hash'
+            programs.extend([
+                (prefix + 'parallel {reader(segment($items,0,0));}; return 0;', error),
+                (prefix + 'parallel {job (read: $s=segment($items,0,0)) {return count($s);} }; return 0;', error),
+                (prefix + 'foreach ($items as $v) {return $v;} return 0;', None),
+            ])
             path.write_text(json.dumps(recipe))
             for element in ('int', 'Item'):
                 programs.extend(cases(family, element, local, not local))

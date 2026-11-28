@@ -4209,8 +4209,8 @@ CPP;
 					$length = "snapshot_$i.range$slot.length";
 				} else [, $offset, $length] = $operands;
 				$forwarded[] = 'inputs[' . count($args) . ']';
-				$borrow = ($input->type_def()->key === null ? 'borrow' : 'borrow_hash') . ($input->type_def()->read_only ? '_read' : '');
-				$args[] = "::scpp::mt::job::{$borrow}($owner, $offset, $length)";
+				$borrow = $input->read_segment_borrow ?? ($input->type_def()->key === null ? '::scpp::mt::job::borrow' : '::scpp::mt::job::borrow_hash');
+				$args[] = "{$borrow}($owner, $offset, $length)";
 			}
 			$grant_list = implode(', ', $args);
 			$context = $scalar_inputs ? "snapshot_$i, " : '';

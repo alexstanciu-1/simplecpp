@@ -3,6 +3,14 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Provider lends stable read-only slots through join, with optional observable keys. */
+interface read_segment_source
+{
+	public function iteration_value_type(): type_definition;
+	public function read_segment_key_type(): ?type_definition;
+	public function read_segment_borrow(): string;
+}
+
 /** Borrowed worker parameter. Only the joined launch can create a view over collection slots. */
 final class segment_type extends type_definition implements python_index_read_type, index_write_type, counted_collection_type
 {

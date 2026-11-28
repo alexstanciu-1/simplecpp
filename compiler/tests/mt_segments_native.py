@@ -237,6 +237,24 @@ HASH_BATCH = """function record_hash(): int {
     };
     return $result[0] + $records["a"]->x + $records["b"]->x;
 }
+function vector_digits(read_segment<int> $s): int { return $s[0]*10+$s[1]; }
+function vector_read_pair(vector<int> &$v): vector<int> {
+    return parallel {
+        vector_digits(segment($v,1,2));
+        job (read: $s = segment($v,1,2)) { return vector_digits($s); }
+    };
+}
+function entry_digits(read_hash_segment<int,int> $s): int {
+    $digits = 0;
+    foreach ($s as $key => $value) { $digits = $digits*1000 + $key*100 + $value; }
+    return $digits;
+}
+function hole_read_pair(hash<int,int> &$table): vector<int> {
+    return parallel {
+        entry_digits(segment($table,0,2));
+        job (read: $s = segment($table,0,2)) { return entry_digits($s); }
+    };
+}
 function read_order(read_hash_segment<int,int> $s): int {
     $order = 0;
     foreach ($s as $key => $v) { $order = $order * 10 + $key; }

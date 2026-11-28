@@ -8,6 +8,8 @@
 using Int = scpp::int64;
 namespace App {
 Int record_hash_();
+scpp::vector_int64 vector_read_pair_(scpp::vector_int64&);
+scpp::vector_int64 hole_read_pair_(scpp::hash_int64_int64&);
 scpp::vector_int64 read_pair_(scpp::hash_int64_int64&, Int, Int);
 scpp::vector_int64 hash_batch_(scpp::hash_int64_int64&, scpp::hash_int64_int64&, scpp::vector_int64&, Int);
 }
@@ -20,6 +22,12 @@ static void check_hash_segments() {
     for (Int key = 1; key <= 5; ++key) table.set(key, key);
     assert(table.remove(Int{2}));
     table.set(Int{3}, Int{30});
+    auto crossing = App::hole_read_pair_(table);
+    assert(crossing.at(0) == 101330 && crossing.at(1) == 101330);
+    scpp::vector_int64 values;
+    for (Int value : {9, 4, 7, 2}) values.append(value);
+    auto middle = App::vector_read_pair_(values);
+    assert(middle.at(0) == 47 && middle.at(1) == 47);
     auto deleted = App::read_pair_(table, 0, 4);
     assert(deleted.at(0) == 1345 && deleted.at(1) == 4);
     table.set(Int{2}, Int{20});

@@ -596,6 +596,11 @@ the joined lifetime. Two readers may overlap on the same vector. Any nonempty
 overlap involving a writer rejects the whole batch before dispatch, including
 overlaps within one job. Empty ranges claim no slots.
 
+Named and inline readers require a provider grant for read-only segments. The grant declares
+the element type, any observable key type and the native read-borrow function. The provider
+keeps the selected elements and keys valid through join. Preparation binds the function at
+the segment expression. Ordinary iteration and writable borrowing are independent grants.
+
 A `read:` binding borrows its source slots without copying. Its worker can index
 and count the segment and forward it to a helper taking `read_segment<T>`.
 The compiler checks this contract in the helper body, including writes to fields

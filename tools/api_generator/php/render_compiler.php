@@ -25,6 +25,24 @@ function compilerSubsetResult(object $result): string {
     return "\n\tpublic function subset_result_type(): ?type_definition\n\t{\n\t\treturn $type;\n\t}\n";
 }
 
+/** Resolve the native borrow and the traversal types observable in a read-only segment. */
+function compilerReadSegment(object $provider, bool $published): array {
+    if (!$published || !isset($provider->read_segment)) return ['@read_segment_interface@' => '', '@read_segment_methods@' => ''];
+    $grant = $provider->read_segment;
+    fields($grant, ['element', 'key', 'borrow']);
+    requireThat(at($grant, 'element') === 'iteration_value', 'Unknown read segment element source');
+    $key = match (at($grant, 'key')) {
+        'none' => 'null',
+        'iteration' => '$this->iteration_key_type()',
+        default => throw new \RuntimeException('Unknown read segment key source'),
+    };
+    $borrow = textValue(at($grant, 'borrow'));
+    requireThat(preg_match('/^(?:::[A-Za-z_][A-Za-z0-9_]*)+$/D', $borrow) === 1, 'Invalid read segment borrow symbol');
+    return ['@read_segment_interface@' => ', read_segment_source', '@read_segment_methods@' =>
+        "\tpublic function read_segment_key_type(): ?type_definition { return $key; }\n"
+        . "\tpublic function read_segment_borrow(): string { return " . var_export($borrow, true) . "; }\n"];
+}
+
 /** Bind associated result types independently of how this provider builds an output. */
 function compilerCollectionBuilders(object $recipe): array {
     $result = at($recipe, 'map_result');

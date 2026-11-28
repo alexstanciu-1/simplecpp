@@ -274,6 +274,8 @@ class ast_call_expression extends ast_expression
 	public bool $suspending_operands = false;
 	/** Prepared fact: joined-batch intrinsic, or null for ordinary calls. */
 	public private(set) ?string $mt_operation = null;
+	/** Prepared fact: native entry point for a segment borrowed by a reader. */
+	public private(set) ?string $read_segment_borrow = null;
 
 	/** Prepared fact: native non-owning target binding or direct producer operand; null before preparation or after reset. */
 	private symbol_entry|runtime_function|called_method_instance|ast_local_binding|ast_call_expression|null $function_symbol = null;
@@ -312,9 +314,10 @@ class ast_call_expression extends ast_expression
 		return $this->lexical_root()->function_key($this->name);
 	}
 
-	public function settle_mt(string $operation, type_definition $type): void
+	public function settle_mt(string $operation, type_definition $type, ?string $read_borrow = null): void
 	{
 		$this->mt_operation = $operation;
+		$this->read_segment_borrow = $read_borrow;
 		$this->settle_value($type, null);
 	}
 
@@ -478,6 +481,7 @@ class ast_call_expression extends ast_expression
 		$this->ancestor_dispatch = false;
 		$this->interface_dispatch = false;
 		$this->mt_operation = null;
+		$this->read_segment_borrow = null;
 		$this->cardinality = null;
 		$this->suspending_operands = false;
 		$this->conversions = [];

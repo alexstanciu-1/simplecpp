@@ -79,15 +79,23 @@ final class Mt_Provisioning
 			|| $range->qualifier === call_qualifier::local || $range->member_separator !== null || $range->receiver !== null || !in_array(count($range->arguments), [2, 3], true))
 			self::reject($range, 'Expected segment(collection, offset, length) or segment(collection, range)');
 		$owner = $range->arguments[0];
-		$prepare($owner, writable_segment: !($expected instanceof segment_type ? $expected->read_only : $read_only));
+		$read_only = $expected instanceof segment_type ? $expected->read_only : $read_only;
+		$prepare($owner, writable_segment: !$read_only);
 		$container = $owner->type_def();
-		if ($owner::class !== ast_name_expression::class || $owner->local_binding() === null || !($container instanceof vector_type_definition || $container instanceof hash_type_definition))
+		if ($owner::class !== ast_name_expression::class || $owner->local_binding() === null || ($read_only
+			? !($container instanceof read_segment_source)
+			: !($container instanceof vector_type_definition || $container instanceof hash_type_definition)))
 			self::reject($owner, 'Segment requires a matching local vector or hash');
 		if (ast_writable_element::origin($owner->local_binding()) !== null) self::reject($range, 'Writable foreach element cannot supply segment storage');
-		$key = $container instanceof hash_type_definition ? $container->key_type : null;
+		if ($read_only) {
+			$key = $container->read_segment_key_type();
+			$element = $container->iteration_value_type();
+		} else {
+			$key = $container instanceof hash_type_definition ? $container->key_type : null;
+			$element = $container instanceof hash_type_definition ? $container->value_type : $container->element_type;
+		}
 		if ($key !== null && $key !== type_int64::instance() && $key !== type_string::instance())
 			self::reject($range, 'Hash segment keys must be int or string');
-		$element = $container instanceof hash_type_definition ? $container->value_type : $container->element_type;
 		if ($expected === null) {
 			if (!Mt_Rules::isolated($element)) self::reject($range, 'Segment requires isolated inline elements');
 			$expected = new segment_type($element, $read_only, $key);
@@ -105,7 +113,7 @@ final class Mt_Provisioning
 				|| ($bound::class === ast_name_expression::class && $bound->local_binding() !== null)))
 				self::reject($bound, 'Segment bounds require int locals or literals');
 		}
-		$range->settle_mt('segment', $expected);
+		$range->settle_mt('segment', $expected, $read_only ? $container->read_segment_borrow() : null);
 		return $expected;
 	}
 
