@@ -2025,15 +2025,21 @@ final class Preparation
 				$this->value($syntax->right, $initializing);
 			}
 			if ($syntax->operator === binary_operator::coalesce) {
-				$carrier = $syntax->left->type_def();
-				if (!($carrier instanceof carrier_type_definition) || !$carrier->supports_coalescing()) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier');
+				$left = $syntax->left->type_def();
+				$right = $syntax->right instanceof ast_throw_expression ? null : $syntax->right->type_def();
+				if ($left instanceof carrier_type_definition && $left->supports_coalescing()) {
+					$result = $left->payload_type;
+					if ($right !== null && $right !== $result && !($right === $left && $result === type_int64::instance())) {
+						throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type or a matching nullable<int>');
+					}
+					$this->retain_member_place($syntax->left);
+				} elseif ($left instanceof shared_record_type_definition && $left->payload->declaration->kind === record_kind::class_type) {
+					if ($right !== $left) throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing requires identical shared class handle types');
+					$result = $left;
+				} else {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier or a shared class handle');
 				}
-				if (!($syntax->right instanceof ast_throw_expression) && $syntax->right->type_def() !== $carrier->payload_type) {
-					throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type');
-				}
-				$this->retain_member_place($syntax->left);
-				$syntax->settle_binary($carrier->payload_type);
+				$syntax->settle_binary($result);
 				return;
 			}
 			if ($syntax->operator->logical()) {

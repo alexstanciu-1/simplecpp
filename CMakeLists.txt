@@ -904,7 +904,8 @@ if(BUILD_TESTING)
   foreach(case await_replace await_remove await_both suspended_owner empty_callable throw_key throw_arg
       failed_store shallow_failure conversion_failure selection call_modes anchor bounds_string bounds_vector
       bounds_fixed bounds_hash terminal_void mixed_read grouped_absent grouped_present factory_match factory_ternary
-      arithmetic_failure predicate_after_write qualified_receiver declared_match declared_ternary signatures_match signatures_ternary)
+      arithmetic_failure predicate_after_write qualified_receiver declared_match declared_ternary signatures_match signatures_ternary
+      wrapper_coalesce handle_coalesce awaited_coalesce)
     add_test(NAME compiler_expression_path_${case} COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/expression_access_paths.py ${case})
   endforeach()
@@ -945,6 +946,12 @@ if(BUILD_TESTING)
   add_test(NAME compiler_coalesce_assignment_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/coalesce_assignment_native.py --quick)
   set_tests_properties(compiler_coalesce_assignment_native PROPERTIES TIMEOUT 300)
   add_test(NAME compiler_coalesce COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/coalesce.php)
+  foreach(flavor cpp php js)
+    foreach(pair integer empty handles)
+      add_test(NAME compiler_coalesce_${flavor}_${pair} COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/coalesce_native.py --flavor ${flavor} --pair ${pair})
+    endforeach()
+  endforeach()
   add_test(NAME compiler_coalesce_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/coalesce_native.py --quick)
   set_tests_properties(compiler_coalesce_native PROPERTIES TIMEOUT 300)
   add_test(NAME compiler_shared_lookup_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/shared_lookup_native.py --quick)

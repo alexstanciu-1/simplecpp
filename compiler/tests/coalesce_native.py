@@ -98,7 +98,7 @@ def prove(work,flavor,libraries, *, quick=False):
     for i,(prefix,expr,error) in enumerate([
         ('','1 ?? 2','nullable carrier'),('','null ?? 2','nullable carrier'),
         (local('n','nullable<int>','null'),v+'n ?? 1.0','exact payload'),
-        (local('n','nullable<int>','null'),v+'n ?? '+v+'n','exact payload'),
+        (local('n','nullable<bool>','null'),v+'n ?? '+v+'n','exact payload'),
         (local('n','nullable<int>','1'),v+'n ?? missing()','Unknown'),
         (local('n','result<int>','1'),v+'n ?? 2','nullable carrier'),
         (local('n','nullable<int>','null'),v+'n ??= 2','Expected'),
@@ -107,13 +107,49 @@ def prove(work,flavor,libraries, *, quick=False):
         got=fresh(bad,work/f'{flavor}-bad-out-{i}');assert error.lower() in got.get('error','').lower(),got
 
 
+def pair(work, flavor, case):
+    from collection_goal_native import guard, revisions
+    s = fixture(flavor)
+    fn, v, field = s['function'], s['v'], s['access']
+    if case == 'handles':
+        api = s['node'] + s['other']
+        api += fn('choose', 'Node', [('a', 'Node'), ('b', 'Node')], f'return {v}a ?? {v}b;')
+        for name, marker in [('first', 'L'), ('second', 'R')]:
+            api += fn(name, '?Node', [('n', '?Node')], f'echo "{marker}";return {v}n;')
+        main = s['infer']('a', 'new Node()') + s['infer']('b', 'new Node()')
+        main += s['infer']('required', f'choose({v}a,{v}b)') + f'if ({v}required !== {v}a) {{return 1;}}'
+        main += s['infer']('left', f'first({v}a) ?? second({v}b)') + f'{v}left{field}x=7;'
+        main += s['infer']('right', f'first(null) ?? second({v}b)') + f'{v}right{field}x=9;'
+        main += s['infer']('empty', 'first(null) ?? second(null)')
+        main += f'if ({v}empty !== null) {{return 2;}}echo {v}a{field}x,{v}b{field}x;return 8;'
+        wrong = fn('invalid', '?Node', [('a', '?Node'), ('b', '?Other')], f'return {v}a ?? {v}b;')
+        revisions(work, flavor, {'api': api, 'main': main}, [
+            ('api', api + wrong, 'identical shared class handle types'), ('api', api, b'LLRLR79')])
+        return
+
+    api = fn('number', 'nullable<int>', [('present', 'bool')], f'echo "L";if ({v}present) {{return 0;}}return null;')
+    api += fn('backup', 'nullable<int>', [('present', 'bool')], f'echo "R";if ({v}present) {{return 7;}}return null;')
+    if case == 'empty':
+        guard(work, flavor, case, api + 'echo number(false) ?? backup(false);return 8;',
+              'coalesce_selected_branch_has_no_usable_value_domain', expected_stdout=b'LR',
+              exception_type='std::domain_error')
+        return
+    main = 'echo number(true) ?? backup(false),number(false) ?? backup(true);return 8;'
+    revisions(work, flavor, {'main': api + main}, [(None, None, b'L0LR7')])
+
+
 if __name__=='__main__':
     with tempfile.TemporaryDirectory(prefix='scpp-coalesce-') as temporary:
         work=Path(temporary)
         import argparse
         parser = argparse.ArgumentParser(description=__doc__)
         parser.add_argument('--quick', action='store_true')
-        if parser.parse_args().quick:
+        parser.add_argument('--pair', choices=['integer', 'empty', 'handles'])
+        parser.add_argument('--flavor', choices=['cpp', 'php', 'js'], default='php')
+        args = parser.parse_args()
+        if args.pair:
+            pair(work, args.flavor, args.pair)
+        elif args.quick:
             prove(work, 'php', {}, quick=True)
         else:
             libraries={cc:runtime(work,cc) for cc in ['clang++','g++']}

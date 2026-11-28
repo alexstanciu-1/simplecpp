@@ -305,9 +305,26 @@ def qualified_receiver(work, case):
     revisions(work, 'php', {'main': source}, [(None, None, b'3M3M3')])
 
 
-def pending_coalesce(work, case):
-    # Broader normative matrix; the active compiler currently implements nullable<T> ?? T.
-    if case == 'pending_wrapper_coalesce':
+def awaited_coalesce_pair(work, case):
+    source = """
+    class Node {public int $n=1;}
+    async function num(nullable<int> $n):nullable<int> {echo "I";await async_sleep_ms(1);return $n;}
+    async function obj(?Node $n):?Node {echo "H";await async_sleep_ms(1);return $n;}
+    async function run():int {
+        $zero nullable<int>=0;$empty nullable<int>=null;
+        echo (await num($zero)) ?? await num($empty),(await num($empty)) ?? await num($zero);
+        $a=new Node();$b=new Node();
+        $x=(await obj($a)) ?? await obj($b);$x->n=7;
+        $y=(await obj(null)) ?? await obj($b);$y->n=9;
+        echo $a->n,$b->n;return 8;
+    }
+    return await run();
+    """
+    revisions(work, 'php', {'main': source}, [(None, None, b'I0II0HHH79')])
+
+
+def coalesce_pair(work, case):
+    if case == 'wrapper_coalesce':
         source = '$a nullable<int>=null;$b nullable<int>=7;echo $a ?? $b;return 8;'
         expected = b'7'
     else:
@@ -329,8 +346,8 @@ CASES.update(empty_callable=empty_callable, throw_arg=exceptional, throw_key=exc
 
 CASES.update({name: bounds for name in ('bounds_string', 'bounds_vector', 'bounds_fixed', 'bounds_hash')})
 CASES.update(arithmetic_failure=arithmetic_failure, predicate_after_write=predicate_after_write,
-             qualified_receiver=qualified_receiver, pending_wrapper_coalesce=pending_coalesce,
-             pending_handle_coalesce=pending_coalesce)
+             qualified_receiver=qualified_receiver, wrapper_coalesce=coalesce_pair,
+             handle_coalesce=coalesce_pair, awaited_coalesce=awaited_coalesce_pair)
 CASES.update(grouped_absent=grouped_receiver, grouped_present=grouped_receiver)
 CASES.update({name: callable_join for name in ('factory_match', 'factory_ternary', 'declared_match', 'declared_ternary')})
 CASES.update(signatures_ternary=callable_join_signatures, signatures_match=callable_join_signatures)
