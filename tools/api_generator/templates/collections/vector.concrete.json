@@ -4,6 +4,7 @@
   "fill_factory": {"source": "vector_filled", "member": "filled"},
   "subset_result": {"family": "hash"},
   "map_result": {"family": "vector", "key": "none"},
+  "indexed_store": {"member": "set", "missing": "reject"},
   "indexed_entry_types": {"protocol": "traversal_value_exact_key", "key_diagnostic": "Vector index requires"},
   "entry_insertion": "append",
   "writable_iteration": "dense_index",

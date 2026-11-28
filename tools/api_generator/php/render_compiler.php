@@ -46,6 +46,26 @@ function compilerCollectionBuilders(object $recipe): array {
             . "\t\treturn Type_Resolution::collection(" . var_export($family, true) . ", \$element, $key);\n\t}\n"];
 }
 
+/** Select the ordinary store overload for the provider's exact key and value types. */
+function compilerIndexedStore(object $provider, array $methods, string $key, string $value): string {
+    $store = at($provider, 'indexed_store');
+    fields($store, ['member', 'missing']);
+    $member = textValue(at($store, 'member'));
+    requireThat(recordIdentifier($member), 'Invalid indexed store member');
+    foreach ($methods as $method) {
+        if ($method['name'] !== $member || $method['arguments'] !== [$key, $value]) continue;
+        $mutable = match (at($store, 'missing')) {
+            'reject' => ($method['receiver'] ?? null) === 'mutable_reference'
+                && ($method['adaptation'] ?? null) === 'checked_index_move_value',
+            'insert' => ($method['mutates'] ?? false) === true,
+            default => throw new \RuntimeException('Unknown indexed store missing-key policy'),
+        };
+        requireThat($mutable && $method['result'] === 'void', 'Invalid indexed store signature: ' . $member);
+        return str_replace('@member@', $member, readFile(__DIR__ . '/../templates/collections/compiler_indexed_store.php.tpl'));
+    }
+    throw new \RuntimeException('Missing indexed store overload: ' . $member);
+}
+
 /** Bind published and application types to the same concrete member. */
 function compilerCheckedSlot(string $recipe): string {
     return str_replace('@method@', checkedSlotMethod(concreteRecipe($recipe)),

@@ -74,7 +74,7 @@ function concreteRecipe(string $name): mixed {
     static $recipes = [];
     if (isset($recipes[$name])) return $recipes[$name];
     $recipe = decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values', 'fill_factory', 'map_result', 'subset_result', 'entry_insertion', 'indexed_entry_types', 'declarations', 'private_copy_allocation_only', 'coalescing_lookup', 'application_scalar_values']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values', 'fill_factory', 'map_result', 'subset_result', 'entry_insertion', 'indexed_entry_types', 'indexed_store', 'declarations', 'private_copy_allocation_only', 'coalescing_lookup', 'application_scalar_values']);
     if (property_exists($recipe, 'indexed_entry_types')) {
         fields($recipe->indexed_entry_types, ['protocol', 'key_diagnostic']);
     }

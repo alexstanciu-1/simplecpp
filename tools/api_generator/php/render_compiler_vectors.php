@@ -115,15 +115,11 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $elementClass = 'type_' . $definitions[$element]['class'];
         $append = null;
         $index = null;
-        $set = null;
         foreach ($vector['methods'] as $method) {
             if ($method['name'] === 'append' && $method['arguments'] === [$element]) $append = $method;
-            if ($method['name'] === 'set' && $method['arguments'] === [$vector['count_type'], $element]) $set = $method;
             if ($method['name'] === 'at' && $method['arguments'] === [$vector['count_type']]) $index = $method;
         }
         requireThat($append !== null && $append['receiver'] === 'mutable_reference' && $append['result'] === 'void', 'Compiler vector requires canonical append binding');
-        requireThat($set !== null && $set['receiver'] === 'mutable_reference' && $set['result'] === 'void'
-            && $set['adaptation'] === 'checked_index_move_value', 'Compiler vector requires canonical set binding');
         requireThat($index !== null && $index['receiver'] === 'const_reference' && $index['result'] === $element
             && $index['result_category'] === 'value', 'Compiler vector requires value-copy index binding');
         requireThat(isset($definitions[$vector['count_type']]), 'Compiler vector count type is unavailable');
@@ -153,6 +149,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             '@declarations@' => compilerCollectionDeclarations($provider),
             '@fill_binding@' => $fillFactory === null ? '' : compilerFillBinding($fillFactory, $countClass, collectionFillBorrows($vector)),
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
+            '@indexed_store@' => compilerIndexedStore($provider, $vector['methods'], $vector['count_type'], $element),
             '@entry_presence@' => compilerEntryPresence(vectorConcreteRecipe($vector), null, $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(vectorConcreteRecipe($vector)),
             '@initialization@' => $initialization,
@@ -162,7 +159,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
             '@element@' => $elementClass . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true),
-            '@append@' => $append['name'], '@index@' => $index['name'], '@set@' => $set['name'],
+            '@append@' => $append['name'], '@index@' => $index['name'],
             '@interfaces@' => ' implements nested_index_storage_type, conditional_index_store_type, iterable_type' . $fillInterface . $writableInterface . $access . $sequence . $transfer,
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($vector['source_type'], true) . ", $elementClass::instance());\n$initializationSetup\t}\n",
             '@factory@' => "\tpublic static function instance(): self\n\t{\n\t\treturn self::\$instance ??= new self();\n\t}",

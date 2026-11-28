@@ -787,6 +787,20 @@ foreach (['missing', 'unknown', 'incompatible', 'unregistered_keywords', 'duplic
     } catch (\RuntimeException $expected) {
     }
 }
+// Indexed writes follow the provider member, even when a different mutable overload exists.
+$storeProvider = (object)['indexed_store' => (object)['member' => 'put', 'missing' => 'insert']];
+$store = ['name' => 'put', 'arguments' => ['string', 'int64'], 'result' => 'void', 'mutates' => true];
+$otherStore = array_replace($store, ['name' => 'set']);
+$binding = compilerIndexedStore($storeProvider, [$otherStore, $store], 'string', 'int64');
+requireThat(str_contains($binding, "'.put('"), 'Indexed store ignored its declared member');
+foreach ([['mutates' => false], ['result' => 'int64'], ['arguments' => ['int64', 'string']]] as $invalid) {
+    try {
+        compilerIndexedStore($storeProvider, [$otherStore, array_replace($store, $invalid)], 'string', 'int64');
+        throw new \LogicException('Accepted incompatible indexed store');
+    } catch (\RuntimeException $error) {
+        requireThat(str_contains($error->getMessage(), 'indexed store'), 'Unexpected store validation error');
+    }
+}
 // A partial component proof must never enable collection copy elision.
 $copyProvider = clone concreteRecipe('collections/hash');
 unset($copyProvider->private_copy_allocation_only);

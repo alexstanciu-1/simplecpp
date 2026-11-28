@@ -46,7 +46,9 @@ The provider binding `traversal_value_exact_key` uses the traversed value type
 as the indexed write destination. The traversed key type supplies the native entry
 key type. Preparation requires that exact type and reports a mismatch at the key
 expression using the provider’s diagnostic prefix. Lowering uses the same type
-for the identity conversion.
+for the identity conversion. The `indexed_store` recipe selects the mutable member
+taking the exact key and value types. A vector store rejects an out-of-range position.
+A hash store inserts a missing key or replaces its existing value.
 
 ## Ownership and mutation
 

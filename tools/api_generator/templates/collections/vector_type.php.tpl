@@ -59,10 +59,7 @@ final class @class@ extends vector_type_definition@interfaces@, subset_source, m
 		return '(' . $receiver . ').@index@(' . $index . ')';
 	}
 
-	public function lower_cpp_write(string $receiver, string $key, string $value): string
-	{
-		return $receiver . '.@set@(' . $key . ', ' . $value . ')';
-	}
+@indexed_store@
 
 @cardinality@
 @factory@

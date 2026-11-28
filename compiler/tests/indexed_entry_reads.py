@@ -9,6 +9,7 @@ from native_build import write_build
 
 
 source = '''
+function rhs(int $n):int {echo "S";return $n;}
 function numbers():vector<string> { echo "V"; return ["vector"]; }
 function labels():hash<int,string> { echo "H"; $h hash<int,string>=["05"=>37]; return $h; }
 function pos(int $i):int { echo "I"; return $i; }
@@ -19,6 +20,14 @@ if(cli_argc()===2){ $v=numbers()[pos(1)]; return 99; }
 if(cli_argc()===3){ $h=labels()[keyText("5")]; return 99; }
 if(cli_argc()===4){ $b=$rows[rowPos(1)][pos(0)]; return 99; }
 if(cli_argc()===5){ $b=$rows[rowPos(0)][pos(1)]; return 99; }
+$values vector<int>=[1];
+if(cli_argc()===6){$values[pos(1)]=rhs(9);return 99;}
+$values[pos(0)]=rhs(8);
+$table hash<int,string>=[];
+$table[keyText("05")]=rhs(5);
+$table[keyText("5")]=rhs(7);
+$table[keyText("05")]=rhs(9);
+if($values[0]!==8 || count($table)!==2 || $table["05"]!==9 || $table["5"]!==7){return 96;}
 $v string=numbers()[pos(0)];
 $h int=labels()[keyText("05")];
 $b byte=$rows[rowPos(0)][pos(0)];
@@ -60,8 +69,9 @@ with tempfile.TemporaryDirectory(prefix='indexed-entry-reads-') as tmp:
     manifest = json.loads((out / 'manifest.json').read_text())
     units = [out / name for name in manifest['translation_units']]
     subprocess.run(write_build(work, units), cwd=work, check=True)
-    for argc, trace, error in [(1, b'VIHKRIRABWICD', b''), (2, b'VI', b'sequence_index_out_of_range\n'),
+    for argc, trace, error in [(1, b'IS' + b'KS' * 3 + b'VIHKRIRABWICD', b''), (2, b'VI', b'sequence_index_out_of_range\n'),
                                (3, b'HK', b'hash_missing_key\n'), (4, b'R', b'sequence_index_out_of_range\n'),
-                               (5, b'RI', b'sequence_index_out_of_range\n')]:
+                               (5, b'RI', b'sequence_index_out_of_range\n'),
+                               (6, b'IS', b'sequence_index_out_of_range\n')]:
         result = subprocess.run([work / 'program', *(['x'] * (argc - 1))], capture_output=True)
         assert (result.returncode, result.stdout, result.stderr) == (int(bool(error)), trace, error), result

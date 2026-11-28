@@ -53,10 +53,7 @@ final class @class@ extends hash_type_definition@interfaces@, coalescing_index_r
 		return $receiver . '.@index@(' . $this->lower_cpp_key($key, $index) . ')';
 	}
 
-	public function lower_cpp_write(string $receiver, string $key, string $value): string
-	{
-		return $receiver . '.@set@(' . $key . ', ' . $value . ')';
-	}
+@indexed_store@
 
 @append_method@
 @lookup@

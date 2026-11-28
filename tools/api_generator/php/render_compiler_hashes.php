@@ -21,17 +21,14 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $class = 'type_' . $hash['name'];
         requireThat($hash['construction'] === 'empty' && $hash['key_policy'] === 'strict'
             && $hash['read'] === 'value_copy', 'Compiler hash requires empty construction, strict keys and copied reads');
-        $set = null;
         $at = null;
         $has = null;
         $find = null;
         foreach ($hash['methods'] as $method) {
             if ($method['name'] === 'find' && $method['arguments'] === ['const ' . $hash['key'] . '&']) $find = $method;
             if ($method['name'] === 'has' && $method['arguments'] === ['const ' . $hash['key'] . '&']) $has = $method;
-            if ($method['name'] === 'set' && $method['arguments'] === [$hash['key'], $hash['value']]) $set = $method;
             if ($method['name'] === 'at' && $method['arguments'] === ['const ' . $hash['key'] . '&']) $at = $method;
         }
-        requireThat($set !== null && $set['result'] === 'void' && $set['mutates'], 'Compiler hash requires canonical set binding');
         requireThat($at !== null && $at['result'] === $hash['value'] && !$at['mutates']
             && $at['missing'] === 'throw_out_of_range', 'Compiler hash requires checked value-copy read binding');
         requireThat($has !== null && $has['result'] === 'bool_t' && !$has['mutates'],
@@ -79,11 +76,12 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
                 . "\tpublic function require_entry_probe(Cpp_Concrete_Collections \$collections, array &\$headers): void { \$headers['$probeHeader'] = true; }\n" : '',
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
             '@coalescing_lookup@' => $provider->coalescing_lookup,
+            '@indexed_store@' => compilerIndexedStore($provider, $hash['methods'], $hash['key'], $hash['value']),
             '@entry_presence@' => compilerEntryPresence(hashConcreteRecipe($hash), $at['name'], $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(hashConcreteRecipe($hash)),
             '@initialization@' => $initialization,
             '@append_method@' => compilerHashAppend($hash),
-            '@set@' => $set['name'], '@index@' => $at['name'],
+            '@index@' => $at['name'],
             '@iteration@' => compilerTraversalMethods($hash['traversal'], $value . '::instance()', $key . '::instance()', indexedTypes: $indexedTypes),
             '@methods@' => compilerCollectionMethods($hash, $definitions),
             '@cardinality@' => compilerCardinalityMethods($hash['methods'], $runtime['hashes']['count_type'], $definitions),
