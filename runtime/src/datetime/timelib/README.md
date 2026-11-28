@@ -1,0 +1,1 @@
+Private UTC calendar subset of timelib 2022.17 from PHP tag `php-8.5.12`, directory `ext/date/lib`. The two headers and `dow.c` are upstream sources. `utc.cpp` contains the first three UTC conversion routines from `unixtime2tm.c`. The sources compile as C++ in the datetime archive. See LICENSE.rst.

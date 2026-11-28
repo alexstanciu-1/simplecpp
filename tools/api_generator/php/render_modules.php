@@ -75,9 +75,19 @@ function renderDatetime(array $plan, array &$files): void {
         $name = $op['name'];
         $result = $op['result'];
         $signature = "$result $name(" . implode(', ', $args) . ')';
-        $declaration = "$signature;\n" . scalarInputFences($plan, $name, [$op['arguments']]);
+        $declArgs = $args;
+        for ($i = $op['required']; $i < count($args); ++$i) $declArgs[$i] .= ' = {}';
+        $declaration = "$result $name(" . implode(', ', $declArgs) . ");\n" . scalarInputFences($plan, $name, [$op['arguments']]);
         $files['public/' . $op['header']] = moduleHeaderBody($op['includes'], $module['namespace'], $declaration);
         $h .= includeHeader($op['header']);
+        if ($name === 'php_date') {
+            $files['src/php_date.cpp'] = BANNER . includeHeader($op['header']) . includeHeader('datetime_native.hpp')
+                . includeHeader('scalar_semantics.hpp') . "namespace scpp::dt {\n$signature {\n"
+                . "    const auto seconds = input1.has_value() ? static_cast<long long>(input1.value()) : detail::datetime::now_unix_seconds();\n"
+                . "    const auto bytes = detail::datetime::php_date({input0.data(), static_cast<std::size_t>(input0.size())}, seconds);\n"
+                . "    return string{bytes.data(), detail::checked_integer_cast<{$plan['string']['count_representation']}>(bytes.size())};\n}\n}\n";
+            continue;
+        }
         if($op['arguments'] === []) {
             $native = $result === 'uint64' ? 'unsigned long long':'long long';
             $body = "return $result{static_cast<$native>(detail::datetime::$name())};";
