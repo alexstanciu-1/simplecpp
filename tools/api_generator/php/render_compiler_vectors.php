@@ -146,13 +146,15 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $fillFactory = empty($vector['capacity_helpers']) ? null : concreteRecipe(vectorConcreteRecipe($vector))->fill_factory;
         if ($fillFactory !== null) $fillFactories[$fillFactory->source] = $family;
         $fillInterface = $fillFactory === null ? '' : ', filled_collection_type';
-        $bindings = compilerCollectionBuilders(concreteRecipe(vectorConcreteRecipe($vector))) + [
+        $provider = concreteRecipe(vectorConcreteRecipe($vector));
+        $indexedTypes = textValue(at($provider, 'indexed_entry_types'));
+        $bindings = compilerCollectionBuilders($provider) + [
             '@fill_binding@' => $fillFactory === null ? '' : compilerFillBinding($fillFactory, $countClass, collectionFillBorrows($vector)),
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
             '@entry_presence@' => compilerEntryPresence(vectorConcreteRecipe($vector), null, $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(vectorConcreteRecipe($vector)),
             '@initialization@' => $initialization,
-            '@iteration@' => compilerTraversalMethods($vector['traversal'], $elementClass . '::instance()', $countClass . '::instance()'),
+            '@iteration@' => compilerTraversalMethods($vector['traversal'], $elementClass . '::instance()', $countClass . '::instance()', indexedTypes: $indexedTypes),
             '@methods@' => compilerCollectionMethods($vector, $definitions),
             '@cardinality@' => compilerCardinalityMethods($vector['methods'], $vector['count_type'], $definitions),
             '@class@' => $class, '@name@' => var_export($vector['source_type'], true),
@@ -184,7 +186,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
                 '@fill_binding@' => $fillFactory === null ? '' : compilerFillBinding($fillFactory, $countClass, true),
                 '@methods@' => $applicationMethods,
                 '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements nested_index_storage_type, conditional_index_store_type, application_collection_type, iterable_type' . $fillInterface . $writableInterface . $access . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
-                '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
+                '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true, indexedTypes: $indexedTypes), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true)
                     . ($vector['enable_reserve'] === '1' ? ", 'scpp/value_error.hpp'" : ''),
                 '@factory@' => $destinationMethod . "\tpublic static function concrete_recipe(): string\n\t{\n\t\treturn " . var_export(vectorConcreteRecipe($vector), true) . ";\n\t}\n\n\t/** Recipe inputs from the same validated vector plan as runtime specializations. @return string[] */\n\tpublic function recipe_arguments(): array\n\t{\n\t\treturn " . var_export($recipe, true) . " + ['buffer' => '::scpp::detail', 'access_name' => 'access_' . \$this->native_name, 'access' => 'detail::access_' . \$this->native_name];\n\t}\n\t/** @return type_definition[] */\n\tpublic function concrete_types(): array { return ['e' => \$this->element_type]; }",
@@ -197,7 +199,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
 }
 
 /** Bind the common traversal protocol from a validated runtime publication row. */
-function compilerTraversalMethods(array $plan, string $value, string $key, bool $boxed = false, bool $constructed = false): string {
+function compilerTraversalMethods(array $plan, string $value, string $key, bool $boxed = false, bool $constructed = false, ?string $indexedTypes = null): string {
     requireThat($plan['mode'] === 'borrow_live_wrapper_physical' && $plan['visibility'] === 'compiler_internal', 'Unsupported compiler traversal protocol');
     $state = $boxed ? 'scpp::int64 iteration_key_index{}; scpp::string iteration_key_text{};' : '';
     $arguments = $boxed ? "\$prefix . 'iteration_key_index, ' . \$prefix . 'iteration_key_text, ' . \$value" : "\$key . ', ' . \$value";
@@ -215,6 +217,12 @@ function compilerTraversalMethods(array $plan, string $value, string $key, bool 
 	}
 
 PHP);
+    if ($indexedTypes !== null) {
+        requireThat($indexedTypes === 'traversal_value_exact_key', 'Unknown indexed entry type binding');
+        $output .= strtr(readFile(__DIR__ . '/../templates/collections/compiler_indexed_entry_types.php.tpl'), [
+            '@value@' => $value, '@key@' => $key,
+        ]);
+    }
     return $output . $keys . strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
         '@entry_key@' => $boxed ? 'key.index, key.text' : 'key', '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
         '@limit@' => $plan['limit_method'], '@next@' => $plan['next_method'],

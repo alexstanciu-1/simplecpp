@@ -2,6 +2,7 @@
   "hash_key": "k",
   "subset_result": {"source": true},
   "map_result": {"family": "hash", "key": "source"},
+  "indexed_entry_types": "traversal_value_exact_key",
   "entry_insertion": "keyed_store",
   "writable_iteration": "live_key_cursor",
   "indexed_probe_values": ["int64", "string", "shared_owner"],

@@ -41,21 +41,6 @@ abstract class hash_type_definition extends type_definition implements readonly_
 		return true;
 	}
 
-	public function cpp_entry_key_type(): string
-	{
-		return $this->key_type->cpp_type();
-	}
-
-	public function write_type(): type_definition
-	{
-		return $this->value_type;
-	}
-
-	public function lower_cpp_key(ast_expression $syntax, string $key): string
-	{
-		return $this->key_type->lower_cpp_exact_argument($syntax, value_conversion::identity, $key);
-	}
-
 	abstract public function presence_function(): runtime_function;
 
 	public function prepare_membership(ast_binary_expression $site): void

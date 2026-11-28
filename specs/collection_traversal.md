@@ -42,6 +42,10 @@ key. Integer keys clear key_text. This follows their existing normalized key dom
 and does not make dynamic depend on mixed. Text keys preserve all bytes, including
 NUL. The compiler will own materialization of a source-language key binding.
 
+The provider binding `traversal_value_exact_key` uses the traversed value type
+as the indexed write destination. The traversed key type supplies the native entry
+key type and lowers an admitted index with the identity conversion.
+
 ## Ownership and mutation
 
 Cursor and output slots must be distinct caller-owned variables, not element

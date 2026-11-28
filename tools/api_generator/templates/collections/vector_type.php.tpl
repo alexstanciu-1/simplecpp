@@ -54,7 +54,7 @@ final class @class@ extends vector_type_definition@interfaces@, subset_source, m
 
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{
-		$index = @count@::instance()->lower_cpp_exact_argument($key, value_conversion::identity, $index);
+		$index = $this->lower_cpp_key($key, $index);
 		return $this->lower_cpp_element_read($receiver, $index);
 	}
 
@@ -62,11 +62,6 @@ final class @class@ extends vector_type_definition@interfaces@, subset_source, m
 	public function lower_cpp_element_read(string $receiver, string $index): string
 	{
 		return '(' . $receiver . ').@index@(' . $index . ')';
-	}
-
-	public function lower_cpp_key(ast_expression $syntax, string $key): string
-	{
-		return @count@::instance()->lower_cpp_exact_argument($syntax, value_conversion::identity, $key);
 	}
 
 	public function lower_cpp_write(string $receiver, string $key, string $value): string

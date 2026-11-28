@@ -70,7 +70,9 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $regexProbe = isset($runtime['regex_shapes'][$hash['name']]);
         $publishedProbe = $regexProbe || in_array($hash['value'], $probeValues, true);
         $probeHeader = $regexProbe ? 'scpp/php/regex_hash_isset.hpp' : 'scpp/php/hash_isset.hpp';
-        $bindings = compilerCollectionBuilders(concreteRecipe(hashConcreteRecipe($hash))) + [
+        $provider = concreteRecipe(hashConcreteRecipe($hash));
+        $indexedTypes = textValue(at($provider, 'indexed_entry_types'));
+        $bindings = compilerCollectionBuilders($provider) + [
             '@indexed_probe@' => $publishedProbe ? "\tpublic function supports_indexed_presence(): bool { return true; }\n"
                 . "\tpublic function require_entry_probe(Cpp_Concrete_Collections \$collections, array &\$headers): void { \$headers['$probeHeader'] = true; }\n" : '',
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
@@ -79,7 +81,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             '@initialization@' => $initialization,
             '@append_method@' => compilerHashAppend($hash),
             '@set@' => $set['name'], '@index@' => $at['name'],
-            '@iteration@' => compilerTraversalMethods($hash['traversal'], $value . '::instance()', $key . '::instance()'),
+            '@iteration@' => compilerTraversalMethods($hash['traversal'], $value . '::instance()', $key . '::instance()', indexedTypes: $indexedTypes),
             '@methods@' => compilerCollectionMethods($hash, $definitions),
             '@cardinality@' => compilerCardinalityMethods($hash['methods'], $runtime['hashes']['count_type'], $definitions),
             '@class@' => $class,
@@ -123,7 +125,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
                 '@key@' => '$this->key_type',
                 '@methods@' => compilerCollectionMethods($hash, $definitions, '$this->key_type'),
                 '@class@' => $app, '@interfaces@' => ' implements nested_index_storage_type, conditional_index_store_type, application_collection_type, key_presence_type, shared_value_lookup_type, key_iterable_type' . ($applicationProbe === '' ? '' : ', application_indexed_presence_type') . $writableInterface . $access . ($appInitialization !== '' ? ', keyed_initializer_type' : '') . $transfer . ($append ? ', appendable_collection_type' : ''),
-                '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true),
+                '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true, indexedTypes: $indexedTypes),
                 '@identity@' => strtr(readFile(__DIR__ . '/../templates/collections/application_hash_identity.php.tpl'), [
                     '@family@' => var_export($family, true),
                     '@presence@' => rtrim(str_replace("$key::instance()", '$key', $presence)),
