@@ -164,27 +164,40 @@ interface same_family_map_source extends map_source
 {
 }
 
-/** Construct a complete mapped result in encounter order. Dense builders may append. */
-interface mapped_result_builder
+/** Construct a fresh result in encounter order. Dense builders may append. */
+interface entry_result_builder
 {
 	public function lower_cpp_empty(): string;
-	public function lower_cpp_mapped_entry(string $receiver, string $key, string $value): string;
+	public function lower_cpp_insert_entry(string $receiver, string $key, string $value): string;
 }
 
 /** Preserve the entry cursor's key with the provider's normal keyed store. */
-trait keyed_map_insert
+trait keyed_entry_insert
 {
-	public function lower_cpp_mapped_entry(string $receiver, string $key, string $value): string
+	public function lower_cpp_insert_entry(string $receiver, string $key, string $value): string
 	{
 		return $this->lower_cpp_write($receiver, $key, $value);
 	}
 }
 
 /** Empty construction and insertion with the key supplied by the entry cursor. */
-interface keyed_result_builder
+interface keyed_result_builder extends entry_result_builder
 {
-	public function lower_cpp_empty(): string;
-	public function lower_cpp_write(string $receiver, string $key, string $value): string;
+}
+
+/** General filtering builds a fresh result of the input type in encounter order. */
+interface collection_filter_source extends collection_entry_source, entry_result_builder
+{
+}
+
+/** Survivors are appended densely in encounter order. */
+interface sequence_filter_source extends collection_filter_source
+{
+}
+
+/** Survivors retain their exact original keys. */
+interface keyed_filter_source extends collection_filter_source, keyed_result_builder
+{
 }
 
 /** A dense sequence can produce sparse subsets through the configured positional result family. */

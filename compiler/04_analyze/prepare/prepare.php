@@ -326,7 +326,7 @@ final class Preparation
 					$this->value($receiver, deep_write_path: true);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
 					if ($collection_root === null) {
-						$boxed_root = ast_index_expression::boxed_path_root($receiver);
+						$boxed_root = ast_index_expression::boxed_path_root($receiver, $statement instanceof ast_computed_member_assignment);
 						$collection_root = $boxed_root;
 					}
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
@@ -362,7 +362,7 @@ final class Preparation
 				}
 				$type = $statement->receiver->type_def();
 				if ($statement instanceof ast_computed_member_assignment && (!($binding instanceof ast_local_binding) || !($type instanceof type_dynamic)
-					|| ($receiver instanceof ast_index_expression && $receiver->receiver !== $boxed_root))) {
+					|| ($receiver instanceof ast_index_expression && $boxed_root === null))) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a local dynamic receiver');
 				}
 				if (!($type instanceof index_write_type)) {
@@ -1104,13 +1104,9 @@ final class Preparation
 	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): void
 	{
 		$receiver = $statement->target->receiver;
-		$computed = $statement->target instanceof ast_computed_member_read;
-		$this->value($statement->target, deep_write_path: !$computed);
-		if ($computed && !($receiver instanceof ast_name_expression && $receiver->local_binding() !== null)) {
-			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member mutation requires a local dynamic receiver');
-		}
+		$this->value($statement->target, deep_write_path: true);
 		if ($receiver instanceof ast_field_expression) $this->check_indexed_field_owner($receiver);
-		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver);
+		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver, $statement->target instanceof ast_computed_member_read);
 		if ($receiver instanceof ast_index_expression && $receiver->type_def() instanceof boxed_type_definition
 			&& $statement->boxed_root === null && $statement->source()->flavor !== flavor::python) {
 			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested boxed update requires a local or instance-field boxed root');
@@ -1947,10 +1943,6 @@ final class Preparation
 			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
 			$type = $syntax->receiver->type_def();
 			if ($syntax instanceof ast_computed_member_read) {
-				if ($deep_write_path && !($syntax->parent instanceof ast_index_assignment && $syntax->parent->receiver === $syntax
-					&& $syntax->receiver instanceof ast_name_expression && $syntax->receiver->local_binding() !== null)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member reads cannot be used as write targets');
-				}
 				if (!($type instanceof type_dynamic)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member read requires a dynamic receiver');
 			}
 			if (!($type instanceof index_read_type)) {
@@ -3522,28 +3514,21 @@ final class Preparation
 		$input = $source->type_def();
 		$filter = in_array($operation, [runtime_factory::array_filter, runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
 		$output = $input;
-		if (!$filter) {
-			$admitted = match ($operation) {
-				runtime_factory::array_map => $input instanceof map_source,
-				runtime_factory::collection_map => $input instanceof collection_map_source,
-				runtime_factory::sequence_map => $input instanceof sequence_map_source,
-				runtime_factory::keyed_map => $input instanceof keyed_map_source,
-			};
-			if (!$admitted) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
-			$element = $input->iteration_value_type();
-		} elseif ($operation === runtime_factory::array_filter) {
-			if (!($input instanceof subset_source)) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for array_filter');
-			$element = $input->iteration_value_type();
+		$admitted = match ($operation) {
+			runtime_factory::array_map => $input instanceof map_source,
+			runtime_factory::collection_map => $input instanceof collection_map_source,
+			runtime_factory::sequence_map => $input instanceof sequence_map_source,
+			runtime_factory::keyed_map => $input instanceof keyed_map_source,
+			runtime_factory::array_filter => $input instanceof subset_source,
+			runtime_factory::collection_filter => $input instanceof collection_filter_source,
+			runtime_factory::sequence_filter => $input instanceof sequence_filter_source,
+			runtime_factory::keyed_filter => $input instanceof keyed_filter_source,
+		};
+		if (!$admitted) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
+		$element = $input->iteration_value_type();
+		if ($operation === runtime_factory::array_filter) {
 			$output = $input->subset_result_type();
 			if (!($output instanceof keyed_result_builder)) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
-		} elseif ($input instanceof vector_type_definition && $operation !== runtime_factory::keyed_filter) {
-			$element = $input->element_type;
-		} elseif ($input instanceof hash_type_definition && $operation !== runtime_factory::sequence_filter) {
-			$element = $input->value_type;
-		} elseif ($input instanceof boxed_type_definition && $operation === runtime_factory::collection_filter) {
-			$element = $input;
-		} else {
-			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
 		}
 		if ($implicit_filter) {
 			if (!$element->supports_scalar_condition()) {
@@ -3580,7 +3565,7 @@ final class Preparation
 		}
 		if (!$filter) {
 			$output = $input->mapped_result_type($signature->result);
-			if (!($output instanceof mapped_result_builder)) {
+			if (!($output instanceof entry_result_builder)) {
 				$message = $callback_first ? 'Unavailable mapped result builder for array_map' : 'Unavailable collection result for ' . $operation->name;
 				throw new diagnostic($call->source(), $call->byte_start(), $message);
 			}

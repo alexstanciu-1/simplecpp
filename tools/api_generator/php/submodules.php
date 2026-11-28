@@ -262,32 +262,38 @@ function needsStructuralDecoder(mixed $publication): bool {
     return $requested || in_array('decode', names($publication->json->operations ?? []), true);
 }
 
-/** The provider declares its general map domain independently of its PHP array_map builder. */
-function generalMapDomain(mixed $provider): ?string {
-    $contract = $provider->map_domain ?? null;
-    if ($contract === null) return null;
-    fields($contract, ['kind', 'publication']);
+/** Most specific general helpers advertised by the provider, indexed by operation. */
+function generalTransforms(mixed $provider): array {
+    $contract = $provider->transform_domain ?? null;
+    if ($contract === null) return [];
+    fields($contract, ['kind', 'operations', 'publication']);
     $kind = textValue(at($contract, 'kind'));
-    requireThat(in_array($kind, ['sequence', 'keyed', 'collection'], true), 'Invalid general map domain');
+    requireThat(in_array($kind, ['sequence', 'keyed', 'collection'], true), 'Invalid general transform domain');
     requireThat(preg_match('/^[a-z_]+\.[a-z_]+$/D', textValue(at($contract, 'publication'))) === 1,
-        'Invalid general map publication selector');
-    return $kind;
+        'Invalid general transform publication selector');
+    $forms = [];
+    foreach (names(at($contract, 'operations')) as $op) {
+        requireThat(in_array($op, ['map', 'filter'], true), 'Unknown provider transform');
+        $forms[$op] = $kind . '_' . $op;
+    }
+    return $forms;
 }
 
-/** A nonempty specialization list or an enabled dispatch binding publishes the provider's map domain. */
-function publishedMaps(mixed $metadata, mixed $publication): array {
-    $maps = ['array_map' => true];
+/** A published provider admits its declared helpers and their general collection forms. */
+function publishedTransforms(mixed $metadata, mixed $publication): array {
+    $available = ['array_map' => true, 'array_filter' => true, 'in_array' => true];
     foreach (object($metadata) as $provider) {
-        if (!isset($provider->map_domain)) continue;
-        $domain = generalMapDomain($provider);
-        [$group, $field] = explode('.', $provider->map_domain->publication);
+        if (!isset($provider->transform_domain)) continue;
+        $forms = generalTransforms($provider);
+        [$group, $field] = explode('.', $provider->transform_domain->publication);
         $selection = $publication->{$group}->{$field} ?? null;
-        if ($selection === true || (is_array($selection) && $selection !== [])) {
-            $maps['collection_map'] = true;
-            $maps[$domain . '_map'] = true;
+        if ($selection !== true && !(is_array($selection) && $selection !== [])) continue;
+        foreach ($forms as $op => $form) {
+            $available['collection_' . $op] = true;
+            $available[$form] = true;
         }
     }
-    return array_values(array_intersect($publication->collection_transforms ?? [], array_keys($maps)));
+    return array_values(array_intersect($publication->collection_transforms ?? [], array_keys($available)));
 }
 
 /** Configure-time inventory for managed headers; full semantic preparation still validates publication. */
@@ -313,8 +319,12 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         $headers[] = 'scpp/to_string.hpp';
         if (array_diff($integers, $publication->string->explicit_formatters ?? [])) $headers[] = 'scpp/numeric/to_string.hpp';
     }
-    if (in_array('array_filter', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_filter.hpp';
-    if (publishedMaps($metadata, $publication) !== []) $headers[] = 'scpp/collection_map.hpp';
+    $transforms = publishedTransforms($metadata, $publication);
+    foreach (['map', 'filter'] as $op) {
+        if (array_intersect(["array_$op", "collection_$op", "sequence_$op", "keyed_$op"], $transforms)) {
+            $headers[] = "scpp/collection_$op.hpp";
+        }
+    }
     if (in_array('in_array', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_scan.hpp';
     if (in_array('implode', $publication->string->functions ?? [], true)
         && in_array('string', array_column($publication->hashes->specializations ?? [], 'value'), true)) {

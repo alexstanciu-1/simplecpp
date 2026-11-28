@@ -143,16 +143,26 @@ def proof(work, quick=False):
     emit(metadata, publication)
     assert snapshot() == original
 
-    map_only = copy.deepcopy(publication)
-    map_only['collection_transforms'] = ['sequence_map']
-    for domain, available in [('sequence', True), ('collection', False)]:
+    selected = copy.deepcopy(publication)
+    selected['collection_transforms'] = ['sequence_map', 'sequence_filter']
+    # On dev002 the isolated quick proof took 3.96 s with all three domain variants,
+    # 3.43 s with filter-only. It still compiles and links one relocated native runtime at -O0.
+    domains = [('sequence', ['filter'])]
+    if not quick:
+        domains.extend([('sequence', ['map']), ('collection', ['map', 'filter'])])
+    for domain, operations in domains:
         variant = copy.deepcopy(metadata)
-        variant['vector']['map_domain']['kind'] = domain
-        plan = emit(variant, map_only)
-        assert ('sequence_map' in plan.get('collection_transforms', [])) == available
-        assert (output / 'public/scpp/collection_map.hpp').is_file() == available
+        variant['vector']['transform_domain'].update(kind=domain, operations=operations)
+        plan = emit(variant, selected)
         run(['php', generator, 'emit-compiler', mp, pp, facts, context, compiler])
-        assert ("'general:func:sequence_map'" in (compiler / 'types/registry.php').read_text()) == available
+        registry = (compiler / 'types/registry.php').read_text()
+        definitions = (compiler / 'types/vectors.php').read_text()
+        for op in ('map', 'filter'):
+            available = domain == 'sequence' and op in operations
+            assert ('sequence_' + op in plan.get('collection_transforms', [])) == available
+            assert (output / f'public/scpp/collection_{op}.hpp').is_file() == available
+            assert (f"'general:func:sequence_{op}'" in registry) == available
+            assert (f'sequence_{op}_source' in definitions) == available
 
     if not quick:
         # Element-specific dependencies: an int-only vector needs no string or optional numeric provider.

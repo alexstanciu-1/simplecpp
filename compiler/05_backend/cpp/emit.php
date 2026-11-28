@@ -4010,7 +4010,6 @@ CPP;
 		$callback = $call->arguments[$callback_first ? 0 : 1] ?? null;
 		$type = $input->type_def();
 		$out = $function->return_type_def();
-		$result = $out->cpp_type();
 		$owner_steps = [];
 		$receiver = $this->retained_place($input, $globals, $declarations, $headers, $owner_steps, full_expression: true);
 		$callable = $callback === null ? null : $this->value($callback, $globals, $declarations, $headers);
@@ -4019,7 +4018,7 @@ CPP;
 			$element = $type->iteration_value_type()->cpp_type();
 			$slot = $type->iteration_output_type();
 			$item = $slot === null ? 'item' : 'item.value';
-			$insert = $out->lower_cpp_mapped_entry('result', 'key', 'static_cast<decltype(mapped)&&>(mapped)');
+			$insert = $out->lower_cpp_insert_entry('result', 'key', 'static_cast<decltype(mapped)&&>(mapped)');
 			$params = $callback_first ? 'auto callback, const auto& source' : 'const auto& source, auto callback';
 			$args = $callback_first ? "$callable, $receiver" : "$receiver, $callable";
 			return "[]($params) { auto result = " . $out->lower_cpp_empty()
@@ -4027,41 +4026,21 @@ CPP;
 				. ", [&](auto& item) { return callback(static_cast<$element&&>($item)); }, "
 				. "[&]([[maybe_unused]] auto& key, auto&& mapped) { $insert; }); return result; }($args)";
 		}
-		if ($function->name() === 'array_filter') {
-			$headers['scpp/collection_filter.hpp'] = true;
-			$slot = $type->iteration_output_type();
-			$item = $slot === null ? 'item' : 'item.value';
-			$element = $type->iteration_value_type();
-			$test = "callback($item)";
-			if ($callback === null) {
-				foreach ($element->condition_headers() as $header) $headers[$header] = true;
-				$test = $element->lower_cpp_condition($item);
-			}
-			$store = $out->lower_cpp_write('result', 'key', 'static_cast<' . $element->cpp_type() . '&&>(' . $item . ')');
-			$params = $callback === null ? 'const auto& source' : 'const auto& source, auto callback';
-			$args = $callback === null ? $receiver : "$receiver, $callable";
-			return "[]($params) { auto result = " . $out->lower_cpp_empty() . '; ::scpp::detail::filter_entries<'
-				. $type->cpp_entry_key_type() . ', ' . ($slot ?? $element->cpp_type()) . '>(' . $type->lower_cpp_entry_cursor('source')
-				. ", [&](auto& item) { return $test; }, [&](auto& key, auto& item) { $store; }); return result; }($args)";
+		$headers['scpp/collection_filter.hpp'] = true;
+		$slot = $type->iteration_output_type();
+		$item = $slot === null ? 'item' : 'item.value';
+		$element = $type->iteration_value_type();
+		$test = "callback($item)";
+		if ($callback === null) {
+			foreach ($element->condition_headers() as $header) $headers[$header] = true;
+			$test = $element->lower_cpp_condition($item);
 		}
-		$boxed = $type instanceof boxed_type_definition;
-		$keyed = $boxed || $out instanceof hash_type_definition;
-		$key = $keyed ? 'key' : null;
-		$output = $type->iteration_output_type();
-		$element = $type->iteration_value_type()->cpp_type();
-		$item = $output === null ? 'item' : 'item.value';
-		$initial = $boxed ? ' = ' . $type->lower_cpp_empty() : '';
-		$lines = ["$result result$initial;", ($output ?? $element) . ' item{};'];
-		if ($keyed) $lines[] = ($boxed ? 'scpp::boxed_text_key' : $out->key_type->cpp_type()) . ' key{};';
-		$lines[] = $type->lower_cpp_iteration_storage($keyed && !$boxed) . $type->lower_cpp_iteration_initialize('source');
-		$next = $boxed ? $type->lower_cpp_iteration_next_classified('source', 'item', 'key') : $type->lower_cpp_iteration_next('source', 'item', $key);
-		$lines[] = "while ($next) {";
-		$value = "static_cast<$element&&>($item)";
-		$insert = ($keyed ? $out->lower_cpp_write('result', 'key', $value) : $out->lower_cpp_append_value('result', $value)) . ';';
-		$lines[] = "if (callback($item)) $insert";
-		$lines[] = '} return result;';
-		// A selected owned callable survives reassignment of its source slot by the callback.
-		return '[](const auto& source, auto callback) { ' . implode(' ', $lines) . " }($receiver, $callable)";
+		$store = $out->lower_cpp_insert_entry('result', 'key', 'static_cast<' . $element->cpp_type() . '&&>(' . $item . ')');
+		$params = $callback === null ? 'const auto& source' : 'const auto& source, auto callback';
+		$args = $callback === null ? $receiver : "$receiver, $callable";
+		return "[]($params) { auto result = " . $out->lower_cpp_empty() . '; ::scpp::detail::filter_entries<'
+			. $type->cpp_entry_key_type() . ', ' . ($slot ?? $element->cpp_type()) . '>(' . $type->lower_cpp_entry_cursor('source')
+			. ", [&](auto& item) { return $test; }, [&]([[maybe_unused]] auto& key, auto& item) { $store; }); return result; }($args)";
 	}
 
 	/**

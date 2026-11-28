@@ -219,7 +219,7 @@ function render(array $plan): array {
         $files['public/scpp/mt_segment.hpp'] = BANNER . template('collections/mt_segment');
         $files['public/scpp/mt_segments.hpp'] = BANNER . template('collections/mt_segments');
     }
-    if (in_array('array_filter', $plan['collection_transforms'] ?? [], true)) {
+    if (array_intersect(['array_filter', 'collection_filter', 'sequence_filter', 'keyed_filter'], $plan['collection_transforms'] ?? [])) {
         $files['public/scpp/collection_filter.hpp'] = BANNER . template('collections/filter_entries');
     }
     if (array_intersect(['array_map', 'collection_map', 'sequence_map', 'keyed_map'], $plan['collection_transforms'] ?? [])) {
