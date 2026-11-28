@@ -486,7 +486,7 @@ def enum_property_admission(work):
     revisions(work, 'php', dict(main=main), [
         (None, None, b'N:9|First:0|'),
         ('main', main.replace('?->name', '?->missing'), 'Unknown enum property Rank.missing'),
-        ('main', main.replace('echo $rank?->name', '$rank?->name="changed";echo $rank?->name'), 'Expected call statement'),
+        ('main', main.replace('echo $rank?->name', '$rank?->name="changed";echo $rank?->name'), 'Cannot write through the nullsafe operator'),
         ('main', main, b'N:9|First:0|')])
 
 

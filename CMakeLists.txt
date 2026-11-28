@@ -954,7 +954,7 @@ if(BUILD_TESTING)
   endforeach()
   foreach(case await_replace await_remove await_both suspended_owner empty_callable throw_key throw_arg
       failed_store shallow_failure conversion_failure selection call_modes anchor bounds_string bounds_vector
-      bounds_fixed bounds_hash terminal_void mixed_read grouped_absent grouped_present factory_match factory_ternary
+      bounds_fixed bounds_hash terminal_void mixed_read nullsafe_write grouped_absent grouped_present factory_match factory_ternary
       arithmetic_failure predicate_after_write qualified_receiver declared_match declared_ternary signatures_match signatures_ternary
       wrapper_coalesce handle_coalesce awaited_coalesce python_nested_write scalar_owner)
     add_test(NAME compiler_expression_path_${case} COMMAND ${Python3_EXECUTABLE} -B

@@ -23,6 +23,8 @@ Both arms follow the full ternary's inferred and declared-return result rules.
 
 ## PHP nullsafe access
 
+A PHP write destination containing `?->` on its receiver path is read-only. Assignment, append, compounds (including `??=`), and standalone prefix/postfix updates receive the diagnostic `Cannot write through the nullsafe operator (?->)`. Keys, call arguments and right-hand sides are value expressions and can contain nullsafe reads. To write conditionally, guard the receiver explicitly, for example `if ($p !== null) { $p->score = rhs(); }`.
+
 `findPlayer()?->score` evaluates the optional shared receiver once. Absence
 returns an empty optional. Presence reads the declared field and returns its
 value in the field type’s optional representation. A stored zero or empty

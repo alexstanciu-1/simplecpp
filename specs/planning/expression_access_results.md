@@ -88,7 +88,7 @@ Other D4 decisions outside conditional assignment:
 
 - Computed dynamic calls are deferred pending a use case.
 - Named PHP static dynamic properties now support all four computed write forms. The `computed_static` fixture checks cross-file reads, replacement and rename recovery. Globals remain deferred.
-- Nullsafe write targets, including when an absent receiver skips keys or RHS effects.
+- PHP nullsafe write targets are read-only. The `nullsafe_write` fixture checks the shared diagnostic, value-context reads and recovery to an explicitly guarded write.
 
 Fixed arrays are tracked separately. General interpolation expressions remain deferred beyond the completed single-field slice.
 
@@ -171,7 +171,7 @@ in 90.66 s. These figures apply to the workspace 03 snapshot.
   A readonly edit permits shared payload updates, rejects field replacement, and recovers when reverted.
   The PHP interpolation fixtures verify declared string and integer fields, cross-file rename and recovery,
   and first-error ordering before echo emits the interpolated operand.
-  In a separate probe, `$h?->x=7` stops in parsing (expected call statement). Indexed
+  At the audit baseline, `$h?->x=7` stopped in parsing (expected call statement). Indexed
   `$v[0] ??= 7` on a local integer vector now checks bounds and skips fallback for every existing element.
   PHP field `$h->x ??= 7` requires a published nullable carrier.
 - **D5 and A1.** Keep the missing-key, mixed-read, stable-reference and text
