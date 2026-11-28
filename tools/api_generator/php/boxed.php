@@ -23,7 +23,7 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         'methods' => (array) $source->methods];
     if (!property_exists($publication, 'boxed')) return;
     $p = $publication->boxed;
-    fields($p, ['header', 'families', 'scalar_conversions', 'scalar_dispatch', 'mixed_predicates', 'php_operations']);
+    fields($p, ['header', 'families', 'scalar_conversions', 'scalar_dispatch', 'mixed_predicates', 'php_operations', 'query_builder']);
     $header = headerPath(at($p, 'header'));
     checkHeader($plan, $header);
     $requested = names(at($p, 'families'), 'Duplicate boxed family');

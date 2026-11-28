@@ -51,9 +51,4 @@ if __name__ == "__main__":
             if case == "mixed":
                 main += BOOTSTRAP
                 expected += b"KlaterXNK01F991"
-            outside = '$box["outer"]["inner"]' if case == "mixed" else '$box->{keyName("member")}'
-            revisions(work, "php", {"main": main + "return 8;"}, [
-                (None, None, expected),
-                ("main", main + outside + " ??= 1; return 8;", "single bracket key on a local"),
-                ("main", main + "return 8;", expected),
-            ])
+            revisions(work, "php", {"main": main + "return 8;"}, [(None, None, expected)])

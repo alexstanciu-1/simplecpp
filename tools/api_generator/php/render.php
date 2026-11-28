@@ -168,6 +168,7 @@ function render(array $plan): array {
     renderOwnership($plan, $files);
     renderHashes($plan, $files, $groups);
     renderHashJoin($plan, $files);
+    renderQueryBuilder($plan, $files);
     renderStringable($plan, $files);
     renderTextBuilders($plan, $files);
     renderTextHelpers($plan, $files);

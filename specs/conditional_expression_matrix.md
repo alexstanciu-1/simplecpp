@@ -171,13 +171,29 @@ finish evaluating and converting its result before resolving the full path again
 from the selected root with the saved keys. A replacement child receives the store. A removed parent or
 an invalid vector position raises its usual error and preserves fallback effects.
 
-For a PHP local `mixed` or `dynamic`, `$box[key()] ??= fallback();` evaluates and
+For a declared PHP local or instance field of type `mixed` or `dynamic`, the statement evaluates and
 normalizes one bracket key before testing the receiver and entry. On a container,
 a missing key or stored null selects the fallback. Zero, false and the empty
 string skip it. A null `mixed` becomes a container on the successful store. A null
 `dynamic` raises `boxed_expected_container` before evaluating the fallback.
-The ordinary boxed store uses the current local and the saved key, including
-when the fallback replaces the local. A throwing fallback performs no final store.
+For a field, retain the selected holder before evaluating keys. The store uses
+the current collection on that holder, including after replacement of the field.
+A readonly mixed field rejects the write during preparation. A readonly dynamic
+field permits mutation of its initialized shared container.
+
+Same-family boxed paths support bracket keys at any depth. Dynamic also accepts
+computed string names, including a name mixed with brackets in the same path.
+Save every normalized key once in source order before resolving any intermediate.
+Every intermediate must exist and be a container, including the root of a nested
+path. A missing intermediate raises `boxed_missing_key`. Null and scalar
+intermediates raise `boxed_expected_container`. These failures skip fallback.
+Only a single-key mixed store can initialize a null root.
+
+After a successful fallback and conversion, resolve the saved path again from
+current storage. A replaced child receives the store. A removed child raises its
+lookup error and preserves fallback effects. Mixed writes publish updated
+children back to the root with copy-on-write semantics. Dynamic writes into the
+selected shared child. A throwing fallback or conversion produces no final store.
 
 Parameters, globals, static properties, other indexed places, for-header writes and
 application/shared carriers remain outside this contract.

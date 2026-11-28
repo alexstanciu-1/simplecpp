@@ -57,7 +57,7 @@ Declared locals and writable declared PHP instance fields use the same generated
 The backend emits a presence-guarded `if` containing ordinary assignment, without
 a lambda, snapshot or payload extraction. Conversions and RHS effects occur only
 in that branch. Null and same-carrier assignments follow existing assignment rules;
-implicit narrowing is not broadened. Parameters, static properties, indexed destinations beyond the supported PHP typed paths and single-key boxed locals,
+implicit narrowing is not broadened. Parameters, static properties, indexed destinations beyond the supported PHP typed and boxed collection paths,
 for-header writes and assignment expressions remain deferred. For a field, lowering
 retains the selected receiver and binds the field once before checking presence.
 A local PHP hash keeps the normalized key across its entry presence probe and the guarded
@@ -76,9 +76,12 @@ For typed vector and hash paths at any depth, preparation uses the storage root
 found by the indexed-mutation check. Lowering saves all keys and probes the leaf
 through checked slots. After converting the fallback, it resolves each slot again
 from that root before storing.
-For a boxed local, the ordinary normalized key and boxed store surround a
-non-inserting null probe. Null mixed skips the lookup and initializes on write.
-Dynamic requires a container before entering the fallback branch.
+Typed and boxed collections publish the same conditional indexed-store capability.
+Typed providers separately publish checked-slot traversal. Boxed paths use the
+existing saved-key walk to probe through checked container children. After the RHS
+and conversion succeed, lowering walks those keys again and uses the ordinary
+boxed path store, including reverse publication of mixed children. Dynamic
+computed names use the same normalized keys as bracket syntax.
 The native field test checks rebinding the last owner, skipping the fallback for
 zero, writes made by a throwing fallback and readonly declaration edit/recovery.
 

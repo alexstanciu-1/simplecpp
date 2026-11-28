@@ -316,11 +316,7 @@ final class Preparation
 				$root = $this->prepare_index_mutation($statement);
 				$collection = $receiver->type_def();
 				if ($statement->operator === binary_operator::coalesce && $source->flavor === flavor::php
-					&& ($collection instanceof conditional_index_store_type || $collection instanceof boxed_type_definition)) {
-					if ($collection instanceof boxed_type_definition && (!($receiver instanceof ast_name_expression)
-						|| !($receiver->local_binding() instanceof ast_local_declaration) || $statement->target instanceof ast_computed_member_read)) {
-						throw new diagnostic($source, $receiver->byte_start(), 'Boxed coalescing assignment requires a single bracket key on a local');
-					}
+					&& $collection instanceof conditional_index_store_type) {
 					if ($root instanceof ast_field_expression && ast_index_expression::collection_storage_root($root) !== null) {
 						if ($root !== $receiver) $this->check_indexed_field_owner($root);
 						$this->retain_member_place($root);

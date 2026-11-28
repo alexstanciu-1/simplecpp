@@ -80,7 +80,7 @@ $functionMetadata->string->functions->count_bytes = $declaration;
 $declaration->symbol = 'scpp::str::measured_bytes';
 $demand = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
 $demand->string->functions = ['count_bytes'];
-unset($demand->boxed->php_operations); // This publication omits the URL decoder used by parse_str.
+unset($demand->boxed->php_operations, $demand->boxed->query_builder); // This publication omits the URL component codecs used by both query helpers.
 $lineOnly = unserialize(serialize($functionMetadata));
 $lineOnly->carriers->error->peer_equality->identical->fields = ['line'];
 $lineOnlyRuntime = render(prepareRuntime($lineOnly, $demand, $facts))['src/runtime.cpp'];

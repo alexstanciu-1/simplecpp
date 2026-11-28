@@ -32,11 +32,65 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 | 🟢 D1. Python nested typed-write diagnostic | Fixed in workspace 03. The preparation diagnostic identifies the storage available in Python. The default regression checks rejection, repair and native execution of both working controls. Typed-vector write admission remains a separate decision. |
 | 🟢 D2. Plain PHP scalar stores through computed shared class handles | Grouped and ungrouped indexed receivers and shared factory results retain the selected allocation through the store. The native regression observes the original and replacement values, throwing RHS behavior and readonly edit/recovery. [Evaluation contract](../expression_evaluation.md#php-scalar-field-stores-through-selected-shared-owners) |
 | 🟢 D3. Computed PHP callees and cross-flavor indexed invocation | PHP now accepts parenthesized expressions producing an owned callable. The registered ternary and match cases verify lazy selection, replacement during argument evaluation and recovery after a provider edit. C++, JavaScript and Python now accept `ops[key](arg)` using the same stored-call preparation and lowering. |
-| D4. Decide additional access syntax and grouping expectations | A grouped optional field followed by an ordinary field access checks the resulting owner. On an absent outer receiver it raised `ownership_empty_access`; the continuous guarded member chain produced absence. Parentheses ending a field read also put a subsequent index outside the guard; the paired tests cover both preparation boundaries. A grouped scalar optional can feed coalescing. Grouped invocation of a nullsafe owned callable field now uses its empty state and ordinary argument ordering. PHP admits computed string-key reads on dynamic. PHP braced interpolation reads one declared field from a local or parameter. Plain local dynamic assignments, compounds and standalone updates accept computed string keys. Local and stable instance-field dynamic write paths accept bracket and computed names at arbitrary depth for assignment, append, compounds and standalone updates. D4-Q1 admits guarded assignment to writable declared nullable PHP instance fields. D4-Q2 admits single-key conditional stores in local typed PHP hashes. D4-Q3 admits checked conditional replacement in local typed PHP vectors. D4-Q4 extends both indexed rules to writable instance fields, retaining the holder before the key. D4-Q5 admits two-key hash-of-vector and vector-of-hash paths on both roots and rechecks the parent after fallback. D4-Q6 generalizes this to typed vector/hash paths at any depth, including consecutive vectors or hashes. D4-Q7 admits one bracket key on a local mixed or dynamic with family-specific null receiver behavior. Computed calls, computed writes on other storage, nullsafe writes and other indexed `??=` remain limited. Decide each surface before broadening admission; a grouping comparison alone does not prove a language bug. |
+| D4. Decide additional access syntax and grouping expectations | [D4 slice list](#d4-slice-list) |
 | D5. Keep existing bounded semantics explicit | Non-Python mixed nested value reads, references escaping into movable slots and the sampled lexical comparisons of numeric-looking strings have existing boundaries. No evidence in this audit calls for changing boxed ownership, reference origins or comparison semantics. |
 | A1. Consider preparing typed destinations once | Preparation records boxed roots. The emitter also calls `nested_collection_root` on typed stores, appends and mutations. This is duplicated classification, with incremental invalidation implications. The retained-owner and write-back probes did not reproduce another lost write. Treat a refactor as a separate engineering decision. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Lowering](../../compiler/05_backend/cpp/emit.php) |
 
 **Two historical gaps closed upstream during the audit.** PHP now prints scalar bytes/bools and reports the received type for a boxed echo operand. PHP kind predicates now admit dynamic values; `is_string` and `is_array` are available. New upstream coverage also exercises terminal checked vector/hash reads on nullsafe chains and nullsafe enum methods and read-only case properties. These changes are included in the integrated default-suite result. [QoS follow-up](php_flavor_developer_qos_reaudit.md) · [Nullsafe access contract](../conditional_expression_matrix.md)
+
+## D4 slice list
+
+| Slice | Status | PHP scope |
+|---|---|---|
+| Earlier work (unnumbered) | Done | Grouping and nullsafe chain boundaries, nullsafe owned-callable field reads, one declared field in braced interpolation, and computed string-key reads on dynamic. |
+| Earlier writes (unnumbered) | Done | Single computed-name assignment, compounds and standalone updates on local dynamic, then plain two-key assignment with a computed name at either hop. |
+| D4-W1 | Done | Nested append on local dynamic paths containing a computed name. |
+| D4-W2 | Done | Nested compounds and standalone updates on those local paths. |
+| D4-W3 | Done | Computed names anywhere in an arbitrary-depth local dynamic write path. |
+| D4-W4 / D4-W5 | Done together | Assignment, append, compounds and standalone updates through stable dynamic instance fields. |
+| D4-Q1 | Done | `??=` on a declared nullable instance field. |
+| D4-Q2 | Done | One key on a local typed hash. |
+| D4-Q3 | Done | One index on a local typed vector, with checked bounds. |
+| D4-Q4 | Done | One key on a typed hash or vector instance field. |
+| D4-Q5 | Done | Two keys through hash-of-vector or vector-of-hash on either root. |
+| D4-Q6 | Done | Typed vector/hash paths at any depth on locals and writable instance fields. |
+| D4-Q7 | Done | One bracket key on local `mixed` or `dynamic`. Null mixed initializes on a successful store. Null dynamic fails before fallback. |
+| D4-Q8 | Done | Separate conditional entry probing from nested checked-slot access. Use the shared entry contract for typed and boxed stores, including one boxed bracket key on an instance field. |
+| D4-Q9 | Done | Complete same-family boxed paths at any depth on locals and instance fields. Include brackets on both families and computed string names on dynamic. Both roots reuse the boxed path store and ownership rules. |
+
+### PHP conditional assignment acceptance
+
+The completed workstream covers PHP standalone statements on declared locals and admitted instance fields. Preserve previously admitted local forms in other flavors. Preparation validates the writable destination, key types and fallback conversion even if runtime presence will skip the fallback.
+
+| Destination in this scope | Rule |
+|---|---|
+| Direct published nullable carrier | Existing carrier presence and ordinary assignment conversion. |
+| Typed vector/hash path | Existing checked intermediates. Missing hash leaf selects fallback. Invalid vector position throws before fallback. |
+| Same-family boxed path | Brackets on mixed and dynamic, also computed string names on dynamic. Missing or null leaf selects fallback. Existing intermediates must be containers. A null mixed root can initialize only for a single-key store. |
+| All indexed paths | Retain a field holder, save keys once in source order, then probe. After a selected fallback and conversion succeed, resolve the saved path in current storage and store once. A throwing fallback or conversion produces no final store. |
+
+Use existing destination access and readonly rules. Entry probing is independent of how a provider descends into a child or publishes an updated child. Mixed publishes changed children back through the path, while dynamic preserves shared child identity. Neither needs to expose an element address across user code.
+
+| Acceptance evidence | Registered compiler tests |
+|---|---|
+| Direct carrier presence, assignment conversion and retained edits | `coalesce_assignment`, `coalesce_assignment_native`, `coalesce_field_native` |
+| Typed paths, checked bounds, saved-key order, replacement and readonly recovery | `coalesce_hash_native`, `coalesce_vector_*`, `coalesce_nested_native`, `coalesce_deep_native`, `coalesce_hash_field_native`, `coalesce_vector_field_native` |
+| Boxed hit, missing/null, falsey values, key evaluation and null receivers | `coalesce_boxed_mixed`, `coalesce_boxed_dynamic`, `coalesce_boxed_null_dynamic` |
+| Holder rebinding, field replacement, mixed initialization, dynamic null failure, readonly edit/recovery | `coalesce_boxed_field_*` |
+| Local and field paths, computed names, throwing fallback, bad intermediates, child replacement/removal, mixed snapshots and dynamic aliases | `coalesce_boxed_path_mixed`, `coalesce_boxed_path_dynamic` |
+| Rejected destinations, computed-name types and invalid skipped fallback | `coalesce_scope` |
+
+Test names above omit the `compiler_` prefix.
+
+Park parameters (all modes), globals, static properties, new direct carrier families including bare boxed locals and optional owners, indexed paths crossing from typed to boxed storage within one chain, other indexed families, append targets, nullsafe targets, assignment expressions, for-header uses and new flavor syntax. Each requires a separate proposal to enter scope. Fixed arrays are owned by their separate workstream.
+
+Other D4 decisions outside conditional assignment:
+
+- Computed dynamic calls and their method-name/data-key collision rule.
+- Computed dynamic writes through storage beyond the admitted local and instance-field roots.
+- Nullsafe write targets, including when an absent receiver skips keys or RHS effects.
+
+Fixed arrays are tracked separately. General interpolation expressions remain deferred beyond the completed single-field slice.
 
 ## Workspace 03 reconciliation
 

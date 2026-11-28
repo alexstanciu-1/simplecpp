@@ -180,7 +180,7 @@ $word string=$matches[1]; echo $found,":",$word; return 0;''', modules=('regex',
     Probe('date-general', 'echo dt_format_iso_utc(0); return 0;', general=True, modules=('datetime',), output='1970-01-01T00:00:00Z'),
     Probe('file-basename', 'echo basename("/tmp/docs/"),"|",dirname("leaf"); return 0;', modules=('filesystem',), output='|'),
     Probe('neutral-file-name', '$open=fs_get("settings.json"); return 0;', modules=('filesystem',), reject='Unknown function: fs_get'),
-    Probe('php-query-builder', '$s=http_build_query(["page"=>1]); return 0;', reject='Unknown function: http_build_query'),
+    Probe('php-query-builder', '$s=http_build_query(["page"=>1]); echo $s;', output='page=1'),
     Probe('string-byte-value', '$s="ABC"; echo (int)$s[0]; return 0;', output='65'),
     Probe('utf8-width', '$s="é😀"; echo strlen($s),"|",string_utf8_codepoint_count($s); return 0;', general=True, output='6|2'),
     Probe('json-intermediate', '''$r=json_decode('{"user":{"name":"Ana"}}'); $v dynamic=$r; $user dynamic=$v["user"];
