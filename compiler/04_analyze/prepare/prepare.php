@@ -1838,10 +1838,8 @@ final class Preparation
 			$guarded = $syntax->guarded_member;
 			$kind = $guarded instanceof ast_call_expression ? 'method call' : 'field read';
 			$owner = $guarded->receiver->type_def();
-			$enum_call = $owner instanceof nullable_enum_type_definition && $guarded instanceof ast_call_expression;
-			if (!$enum_call && !($owner instanceof shared_record_type_definition && !$owner->required)) {
-				$expected = $guarded instanceof ast_call_expression ? 'an optional shared owner or nullable enum' : 'an optional shared owner';
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe ' . $kind . ' requires ' . $expected);
+			if (!($owner instanceof nullable_enum_type_definition) && !($owner instanceof shared_record_type_definition && !$owner->required)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe ' . $kind . ' requires an optional shared owner or nullable enum');
 			}
 			if ($member instanceof ast_index_expression && !($member->receiver->type_def() instanceof readonly_index_lookup_type)) {
 				throw new diagnostic($member->source(), $member->byte_start(), 'Nullsafe indexed read requires a typed vector or hash');
@@ -1867,6 +1865,17 @@ final class Preparation
 			}
 			if (in_array($syntax->source()->flavor, [flavor::php, flavor::cpp], true)) $syntax->receiver->prepare_member_borrow();
 			$type = $syntax->receiver->member_type();
+			$guard = $syntax->parent;
+			if ($type instanceof enum_type_definition && $syntax->receiver->member_borrow instanceof nullable_enum_type_definition
+				&& $guard instanceof ast_nullsafe_member && $guard->guarded_member === $syntax) {
+				$guard->enum_property = match ($syntax->field) {
+					'name' => dependency_use::enum_name,
+					'value' => dependency_use::enum_value,
+					default => throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unknown enum property ' . $type->name . '.' . $syntax->field),
+				};
+				$syntax->settle_field($this->enum_projection($type, $guard->enum_property)->return_type_def());
+				return;
+			}
 			if ($type instanceof shared_record_type_definition) $type = $type->payload;
 			if ($type instanceof runtime_field_type) {
 				$field = $type->runtime_field($syntax->field);
@@ -2154,6 +2163,13 @@ final class Preparation
 				$syntax->constant_only ? 'Unknown constant: ' . $name : 'Unknown or not-yet-initialized local/global: ' . $name);
 		}
 		throw new \LogicException('Unhandled expression preparation');
+	}
+
+	/** Bind a case name or backing value and watch its declaring enum for edits. */
+	private function enum_projection(enum_type_definition $type, dependency_use $operation): runtime_function
+	{
+		$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner, $type->helper_usage($operation));
+		return $type->helper_function($operation);
 	}
 
 	/** Guarded calls use synchronous instance dispatch and never return a reference. */
@@ -3103,10 +3119,7 @@ final class Preparation
 				$this->value($argument, $initializing);
 				$type = $argument->type_def();
 				if (!($type instanceof enum_type_definition)) throw new diagnostic($argument->source(), $argument->byte_start(), $builtin . ' requires an enum');
-				$use = $builtin === 'enum_name' ? dependency_use::enum_name
-					: ($type->backing() === type_string::instance() ? dependency_use::enum_value : null);
-				$this->dependencies?->watch($this->symbols->entry($type->declaration->symbol_key()), $this->owner, $use?->value ?? 0);
-				$call->settle_runtime($use === null ? $type->value_function() : $type->helper_function($use));
+				$call->settle_runtime($this->enum_projection($type, $builtin === 'enum_name' ? dependency_use::enum_name : dependency_use::enum_value));
 				return;
 			}
 			$operation = match ($builtin) {

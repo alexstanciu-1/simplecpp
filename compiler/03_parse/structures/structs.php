@@ -341,6 +341,8 @@ final class ast_nullsafe_member extends ast_expression
 {
 	/** PROPERTIES */
 	public readonly ast_field_expression|ast_call_expression|ast_index_expression $operand;
+	/** Prepared enum helper for a guarded case property; null for ordinary member access. */
+	public ?dependency_use $enum_property = null;
 	public int $conversion /** uint16 */ = value_conversion::identity;
 
 	/** CONSTRUCTOR */
@@ -369,6 +371,7 @@ final class ast_nullsafe_member extends ast_expression
 	public function reset_preparation(): void
 	{
 		parent::reset_preparation();
+		$this->enum_property = null;
 		$this->conversion = value_conversion::identity;
 	}
 }

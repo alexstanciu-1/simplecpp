@@ -152,6 +152,13 @@ final class enum_type_definition extends type_definition
 	{
 		return $this->from_value_function ?? throw new \LogicException('Enum construction signature is not prepared');
 	}
+
+	/** Integer backing values use the binding's direct cast; other operations publish a helper. */
+	public function helper_usage(dependency_use $operation): int /** uint8 */
+	{
+		return $operation === dependency_use::enum_value && $this->backing() !== type_string::instance() ? 0 : $operation->value;
+	}
+
 	/** Select a concrete helper without allocating a call-site signature. */
 	public function helper_function(dependency_use $use): runtime_function
 	{
