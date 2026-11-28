@@ -7,7 +7,15 @@
         "generated/src/php_date.cpp",
         "src/datetime/php_date.cpp",
         "src/datetime/timelib/utc.cpp",
-        "src/datetime/timelib/dow.cpp"
+        "src/datetime/timelib/dow.cpp",
+        "generated/src/php_strtotime.cpp",
+        "src/datetime/php_strtotime.cpp",
+        "src/datetime/timelib/parse_date.c",
+        "src/datetime/timelib/parse_posix.c",
+        "src/datetime/timelib/parse_tz.c",
+        "src/datetime/timelib/timelib.c",
+        "src/datetime/timelib/tm2unixtime.c",
+        "src/datetime/timelib/unixtime2tm.c"
     ],
     "dependencies": {
         "runtime": {"modules": ["numeric"]}
