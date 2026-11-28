@@ -192,17 +192,19 @@ foreach (['strcmp' => 'compare_bytes(arg0, arg1, false)', 'strcasecmp' => 'compa
         && !str_contains($header, 'substr_compare(') && substr_count($definitions, 'static int64 compare_byte_views(') === 1,
         'Isolated byte comparison publication mismatch');
 }
-// A flavor result is part of the public signature and must be available in this publication.
-foreach (['strpos' => 'int64', 'hex2bin' => 'string', 'strstr' => 'string', 'strpbrk' => 'string'] as $name => $payload) {
+// Every carrier in a public signature must be available in this publication.
+foreach (['strpos' => ['result_or_false', 'int64'], 'hex2bin' => ['result_or_false', 'string'],
+    'strstr' => ['result_or_false', 'string'], 'strpbrk' => ['result_or_false', 'string'],
+    'strspn' => ['nullable', 'int64'], 'strcspn' => ['nullable', 'int64']] as $name => [$family, $payload]) {
     $restricted = unserialize(serialize($demand));
     $restricted->string->functions = [$name];
     $restricted->carriers->specializations = array_values(array_filter($restricted->carriers->specializations,
-        static fn($row) => $row->family !== 'result_or_false' || $row->payload !== $payload));
+        static fn($row) => $row->family !== $family || $row->payload !== $payload));
     try {
         prepareRuntime($functionMetadata, $restricted, $facts);
-        throw new \LogicException('Missing result carrier was accepted for ' . $name);
+        throw new \LogicException('Missing carrier was accepted for ' . $name);
     } catch (\RuntimeException $error) {
-        requireThat(str_contains($error->getMessage(), "$name requires published result_or_false<$payload>"), $error->getMessage());
+        requireThat(str_contains($error->getMessage(), "$name requires published $family<$payload>"), $error->getMessage());
     }
 }
 $demand->string->functions = [];

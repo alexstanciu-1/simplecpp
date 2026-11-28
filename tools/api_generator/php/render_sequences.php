@@ -50,9 +50,10 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                     $result = $adapter['result'] ?? $binding['result'];
                     $result = $plan['source_types']->{$result} ?? $result;
                     $resultHeader = $binding['result_header'] ?? (isset($adapter['body']) ? providerHeader($plan['submodules'], typeExport($plan['submodules'], $result)['provider']) : null);
-                    if ($resultHeader !== null && !isset($carrierIncludes[$path][$resultHeader])) {
-                        $files[$path] .= includeHeader($resultHeader);
-                        $carrierIncludes[$path][$resultHeader] = true;
+                    foreach ([$resultHeader, $binding['input_header'] ?? null] as $header) {
+                        if ($header === null || isset($carrierIncludes[$path][$header])) continue;
+                        $files[$path] .= includeHeader($header);
+                        $carrierIncludes[$path][$header] = true;
                     }
                     if (isset($binding['overloads'])) {
                         foreach ($binding['overloads'] as $arity => $variants) {
@@ -87,6 +88,15 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                             $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, array_slice($parameters, 0, $arity),
                                 $binding['symbol'], array_slice($arguments, 0, $arity));
                         }
+                    }
+                    if (isset($adapter['complement'])) {
+                        $mode = $adapter['complement'] ? 'true' : 'false';
+                        $short = array_slice($parameters, 0, 3);
+                        $short[2] .= ' = 0';
+                        $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, $short, $binding['symbol'],
+                            ['arg0', 'arg1', 'arg2', 'arg0.size()', $mode]);
+                        $arguments[3] = 'arg3.has_value() ? arg3.value() : arg0.size()';
+                        $arguments[] = $mode;
                     }
                     if (isset($adapter['before_needle'])) $parameters[2] .= ' = false';
                     if ($binding['implementation'] === 'replace_window') $parameters[3] .= ' = 0';
@@ -230,6 +240,7 @@ function renderString(array $plan, array &$groups): array {
     $windowPositionEmitted = false;
     $sliceMatcher = array_intersect($classic, ['substring_tail', 'ascii_substring_tail']);
     if ($sliceMatcher) $d .= "namespace str {\n" . template('strings/byte_match') . "}\n";
+    $spanSymbols = [];
     $searchPolicyEmitted = false;
     $padSymbols = [];
     $trimSymbols = [];
@@ -320,6 +331,15 @@ function renderString(array $plan, array &$groups): array {
             $signature = "string $name(const string& value, int64 start, int64 bound, slice_bound mode)";
             $h .= "namespace str { enum class slice_bound { to_end, length, exclusive_end }; $signature; }\n";
             $d .= template('strings/string_slice', ['signature' => $signature]);
+            continue;
+        }
+        if ($function['implementation'] === 'byte_span') {
+            if (!isset($spanSymbols[$name])) {
+                $signature = "int64 $name(const string& value, const string& mask, int64 offset, int64 length, bool complement)";
+                $h .= "namespace str { $signature; }\n";
+                $d .= template('strings/byte_span', ['signature' => $signature]);
+                $spanSymbols[$name] = true;
+            }
             continue;
         }
         if ($function['implementation'] === 'trim_bytes') {

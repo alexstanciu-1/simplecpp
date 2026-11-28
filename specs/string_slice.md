@@ -217,3 +217,12 @@ up to the match. A successful empty prefix or suffix is a present string.
 `strpbrk` returns the suffix at the first byte in a supplied set and raises
 `ValueError` for an empty set. All five names return `result_or_false<string>`
 and preserve embedded NULs.
+
+PHP `strspn(subject, characters[, offset[, length]])` counts consecutive
+bytes in the set, starting at the window's first byte. `strcspn` counts
+consecutive bytes outside the set. Both return an integer. Offset defaults
+to zero. A negative offset counts from the end and clamps at the start.
+Omitted and null length select the entire remaining window. A negative
+length excludes bytes from its end, and zero selects an empty window.
+A window beyond either bound truncates to the available bytes. NUL is
+an ordinary byte in both operands.

@@ -113,11 +113,11 @@ def proof(work):
         assert (compiler / 'types/carriers.php').read_bytes() == stable
 
     absent = copy.deepcopy(publication); absent.pop('carriers'); absent.pop('hashes', None)
-    # Retire functions whose core or PHP adapter result needs a carrier as well.
+    # Retire functions whose core signature or PHP adapter result needs a carrier as well.
     def needs_carrier(name):
         function = metadata['string']['functions'][name]
-        results = [function['result'], *(sig.get('result', '') for sig in function.get('signatures', {}).values())]
-        return any(result.partition('<')[0] in metadata['carriers']['families'] for result in results)
+        types = [*function['parameters'], function['result'], *(sig.get('result', '') for sig in function.get('signatures', {}).values())]
+        return any(result.partition('<')[0] in metadata['carriers']['families'] for result in types)
     absent['string']['functions'] = [name for name in absent['string']['functions'] if not needs_carrier(name)]
     del absent['cli_helpers']['environment']
     absent['text_helpers'].remove('string_byte_find')

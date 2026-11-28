@@ -67,6 +67,10 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
             $export = typeExport($plan['submodules'], $vector);
             $plan['string_functions'][$name]['header'] = providerHeader($plan['submodules'], $export['provider']);
         }
+        if (in_array('nullable<int64>', $binding['parameters'], true)) {
+            requireThat(isset($plan['source_types']->{'nullable<int64>'}), "$name requires published nullable<int64>");
+            $plan['string_functions'][$name]['input_header'] = $plan['carriers_header'];
+        }
         if ($binding['result'] === 'result_or_false<string>') {
             $export = $plan['source_types']->{$binding['result']} ?? null;
             requireThat($export !== null, "$name requires published " . $binding['result']);
@@ -221,7 +225,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'direct_provider', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'php_aliases', 'numeric_inputs', 'selector', 'arities', 'ascii_fold']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'direct_provider', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'php_aliases', 'complement', 'numeric_inputs', 'selector', 'arities', 'ascii_fold']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
@@ -231,6 +235,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'count_matches' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'find', 'rfind' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'substring_tail', 'ascii_substring_tail', 'last_byte_tail' => ['parameters' => ['string', 'string', 'bool_t'], 'result' => 'result_or_false<string>', 'required_parameters' => 2],
+            'byte_span' => ['parameters' => ['string', 'string', 'int64', 'nullable<int64>'], 'result' => $count, 'required_parameters' => 2],
             'byte_set_tail' => ['parameters' => ['string', 'string'], 'result' => 'result_or_false<string>'],
             'hex_decode' => ['parameters' => ['string'], 'result' => 'result_or_false<string>'],
             'hex_encode', 'ascii_lower', 'ascii_upper', 'trim_bytes', 'reverse_bytes', 'ascii_rot13' => ['parameters' => ['string'], 'result' => 'string'],
@@ -253,7 +258,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         requireThat(preg_match('/^[a-z_][a-z0-9_]*$/D', $name) === 1
             && preg_match('/^scpp::str::[a-z_][a-z0-9_]*$/D', $symbol) === 1, 'Invalid string function name');
         foreach ([...$signature['parameters'], $signature['result']] as $type) {
-            if ($type === 'string' || $type === 'vector<string>' || $type === 'result_or_false<string>') continue;
+            if ($type === 'string' || $type === 'nullable<int64>' || $type === 'vector<string>' || $type === 'result_or_false<string>') continue;
             requireThat(hasType($plan, $type) || hasValue($plan, $type), 'String function requires a published parameter/result type');
             $libraryTypes[] = $type;
         }
@@ -273,7 +278,9 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $firstByte = boolean($function->first_byte_only ?? false);
         requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
             'First-byte case requires an ASCII case operation');
-        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13'], true) || $firstByte
+        $span = $implementation === 'byte_span';
+        requireThat($span === isset($function->complement), 'Byte span requires a membership mode');
+        $phpOnly = $span || in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13'], true) || $firstByte
             || ($implementation === 'trim_bytes' && isset($function->flavors));
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
@@ -325,7 +332,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             $defaults = fields(at($m, 'trim_defaults'), ['php', 'js', 'cpp']);
             requireThat(($function->flavor_adapters ?? false) === true, 'Default trim requires flavor adapters');
         }
-        requireThat(!isset($symbols[$symbol]) || (($trim || $replace || $padding || $compare) && $symbols[$symbol] === $implementation), 'Duplicate string function binding');
+        requireThat(!isset($symbols[$symbol]) || (($trim || $replace || $padding || $compare || $span) && $symbols[$symbol] === $implementation), 'Duplicate string function binding');
         $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $libraryHeader, 'members' => $members];
@@ -377,6 +384,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             foreach ($spellings as $flavor => $spelling) {
                 $options = [];
                 if (in_array($implementation, ['substring_tail', 'ascii_substring_tail', 'last_byte_tail'], true)) $options['before_needle'] = true;
+                if ($span) $options['complement'] = boolean($function->complement);
                 if ($compare) $options['ascii_fold'] = boolean($function->ascii_fold);
                 if ($split) {
                     $policy = $limits[$flavor] ?? null;
@@ -1079,7 +1087,7 @@ function prepareOwnership(mixed $metadata, mixed $publication, array $facts, arr
 function stringAdapterConstReferenceMask(array $types): int {
     $mask = 0;
     foreach ($types as $i => $type) {
-        if ($type === 'string' || $type === 'vector<string>') $mask |= 1 << $i;
+        if ($type === 'string' || $type === 'vector<string>' || $type === 'nullable<int64>') $mask |= 1 << $i;
     }
     return $mask;
 }
