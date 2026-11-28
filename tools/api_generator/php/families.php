@@ -8,6 +8,7 @@ require_once __DIR__ . '/module_functions.php';
 require_once __DIR__ . '/text_helpers.php';
 require_once __DIR__ . '/cli_helpers.php';
 require_once __DIR__ . '/text_builders.php';
+require_once __DIR__ . '/stringable.php';
 
 const STRUCTURAL_READERS = ['int64' => 'read_integer', 'bool_t' => 'read_boolean', 'string' => 'read_string'];
 
@@ -100,6 +101,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
         }
     }
     prepareTextBuilders($metadata, $publication, $plan);
+    prepareStringable($metadata, $plan);
     prepareCliHelpers($publication, $plan);
     prepareTextHelpers($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);

@@ -100,6 +100,7 @@ final class Incremental_Frontend
 				$candidate->dependency_watches = $previous->dependency_watches;
 			}
 			$candidate->scope = Symbol_Publication::changes($changed, $retired, $previous?->scope ?? new scope(), $candidate->dependency_watches);
+			Source_Frontend::prepare_core_interfaces($candidate->scope, $changed);
 			// Publication has succeeded; only now adopt the live queue and replace source-owned membership.
 			if ($previous !== null) {
 				$candidate->preparation_work = $previous->preparation_work;

@@ -51,7 +51,7 @@ final class Import_Preparation
 				$runtime = match ($kind) {
 					'func' => $function !== null,
 					'const' => $file->type_availability->runtime_constant($key, $file->source()->flavor) !== null,
-					'class' => $import->target === type_registry::exception()?->name,
+					'class' => $import->target === type_registry::exception()?->name || $import->target === Stringable_Contract::NAME,
 				};
 				if (!$runtime) continue;
 			}

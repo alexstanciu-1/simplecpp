@@ -60,6 +60,7 @@ final class Program_Preparation
 				}
 			}
 		}
+		Source_Frontend::prepare_core_interfaces($symbols, $files);
 		Literal_Declaration_Preparation::declarations($symbols, $dependencies);
 		self::layouts($files, $symbols, $dependencies);
 		Function_Preparation::declarations($symbols, $dependencies);
@@ -113,6 +114,10 @@ final class Program_Preparation
 	/** Only the explicitly selected entry may contain executable statements. */
 	public static function admit(ast_file_node $file, bool $is_entry): void
 	{
+		if (Stringable_Contract::NAME !== null && isset($file->declarations[$key = 'class:' . Stringable_Contract::NAME])) {
+			$conflict = $file->declarations[$key];
+			throw new diagnostic($file->source(), $conflict->byte_start(), 'Cannot redeclare core interface ' . Stringable_Contract::NAME);
+		}
 		$main = $file->main();
 		if ($is_entry && $main === null && $file->source()->flavor !== flavor::php) {
 			throw new diagnostic($file->source(), strlen($file->source()->content), 'Entry slice requires an explicit value return');

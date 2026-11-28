@@ -98,6 +98,12 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $files['types/interfaces.php'] = strtr(readFile(__DIR__ . '/../templates/collections/iterator_contract.php.tpl'), [
         '@name@' => var_export($interface?->name, true), '@method@' => var_export($interface?->method, true),
     ]);
+    $contract = $runtime['to_string'] ?? null;
+    $files['types/interfaces.php'] .= strtr(readFile(__DIR__ . '/../templates/core/stringable_contract.php.tpl'), [
+        '@name@' => var_export($contract['interface'] ?? null, true),
+        '@method@' => var_export($contract['method'] ?? null, true),
+        '@source@' => var_export($contract === null ? null : "interface {$contract['interface']} { {$contract['result']} {$contract['method']}(); };", true),
+    ]);
     $conversions = compilerConversionPlan($metadata, $definitions, $types, $facts, $runtime['explicit_formatters'] ?? []);
     $conditions = compilerConditionPlan($compiler, $definitions);
     $comparisons = compilerComparisonPlan($compiler, $definitions, names(at(at($metadata, 'string'), 'operations')));
@@ -139,6 +145,18 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 'symbol' => $phpOutput === 'discard' ? 'static_cast<void>' : "scpp::$phpOutput"];
         }
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($output[$identity] ?? null) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
+        if ($contract !== null && (isset($runtime['explicit_formatters'][$identity]) || $identity === 'string'
+            || isset($contract['integers'][$identity]) || isset($contract['builders'][$identity]))) {
+            $builder = isset($contract['builders'][$identity]);
+            $header = $builder ? $contract['builders'][$identity] : 'scpp/to_string.hpp';
+            if (isset($contract['integers'][$identity])) $header = 'scpp/numeric/to_string.hpp';
+            $symbol = $builder ? $contract['method'] : '::scpp::to_string';
+            $mode = $builder ? 'receiver_method: true' : 'free_receiver: true';
+            $borrow = $builder || $identity === 'string' ? 1 : 0;
+            $methods .= "\n\tpublic function native_string_formatter(): ?runtime_function\n\t{\n"
+                . "\t\tstatic \$binding = null;\n\t\treturn \$binding ??= new runtime_function('{$contract['method']}', [\$this], type_string::instance(), '$symbol', '$header', "
+                . "const_reference_mask: $borrow, $mode, retains_receiver: false, exact_arguments: true);\n\t}\n";
+        }
         $kind = isset($types[$identity]) ? 'integer' : $definition['strategy'];
         if (in_array($kind, ['integer', 'boolean', 'floating', 'string', 'null'], true)) {
             $methods .= "\n\tpublic function predicate_kind(): string { return '$kind'; }\n";

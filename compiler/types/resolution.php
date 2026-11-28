@@ -247,10 +247,18 @@ final class Type_Resolution
 	private static function application(ast_type_reference $syntax, scope $symbols, dependency_watcher $watcher,
 		?Dependency_Watches $dependencies): ?type_definition
 	{
-		$entry = $symbols->entry($syntax->lexical_root()->type_key($syntax->name));
+		$file = $syntax->lexical_root();
+		$key = $file->type_key($syntax->name);
+		$entry = $symbols->entry($key);
 		$dependencies?->watch($entry, $watcher);
 		$record = $entry->declaration();
-		return $record instanceof ast_type_declaration ? $record->type_definition() : self::core_class($syntax->root(), $syntax->name);
+		if ($record instanceof ast_type_declaration) return $record->type_definition();
+		$name = Stringable_Contract::NAME;
+		if ($symbols->stringable !== null && ($key === 'class:' . $name
+			|| ($syntax->name === $name && $file->imported_type_target($name) === null))) {
+			return $symbols->stringable->type_definition();
+		}
+		return self::core_class($syntax->root(), $syntax->name);
 	}
 
 	/** Core-class fallback follows imports and honors a source declaration found by the caller. */
