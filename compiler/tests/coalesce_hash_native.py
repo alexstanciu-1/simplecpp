@@ -33,7 +33,10 @@ $h["last"] ??= replace($h);
 echo count($h), $h["keep"], $h["last"];
 $people = people();
 $people["one"] ??= new Person(8);
-echo $people["one"]->number;
+$saved = $people["one"];
+$people["one"] ??= new Person(10);
+$people["missing"] ??= new Person(6);
+echo $saved->number, $people["one"]->number, $people["missing"]->number;
 return 8;
 """
 MODEL = """
@@ -53,8 +56,8 @@ if __name__ == "__main__":
         required = MODEL.replace("?Person", "Person").replace("= null;", "= new Person(1);")
         prefix = b"K0KFT1K7changed239"
         revisions(Path(directory), "php", {"main": MAIN, "model": MODEL}, [
-            (None, None, prefix + b"8"),
-            ("model", required, prefix + b"1"),
+            (None, None, prefix + b"886"),
+            ("model", required, prefix + b"116"),
             ("model", MODEL.replace("?Person", "int").replace("= null;", "= 0;"), "conversion"),
-            ("model", MODEL, prefix + b"8"),
+            ("model", MODEL, prefix + b"886"),
         ])

@@ -33,25 +33,6 @@ abstract class hash_type_definition extends type_definition implements subset_so
 		return type_registry::mapped_keyed($element, $this->key_type);
 	}
 
-	/** A keyed probe of a nullable shared value inspects the stored owner after lookup. */
-	public function probes_stored_owner(): bool
-	{
-		return $this->value_type instanceof shared_record_type_definition && !$this->value_type->required;
-	}
-
-	/** Probe one normalized key without insertion. Optional shared owners publish a fused probe. */
-	public function entry_presence_method(): string
-	{
-		return $this->probes_stored_owner() ? 'has_present_owner' : $this->presence_function()->symbol;
-	}
-
-	public function lower_cpp_entry_presence(string $receiver, string $key): string
-	{
-		$present = $receiver . '.' . $this->entry_presence_method() . '(' . $key . ')';
-		if ($this->value_type instanceof presence_test_type) $present .= ' && ' . $this->value_type->lower_cpp_presence($receiver . '.at(' . $key . ')');
-		return $present;
-	}
-
 	public function private_copy_allocation_only(): bool
 	{
 		return $this->key_type->copy_has_no_observable_effects() && $this->value_type->copy_has_no_observable_effects();

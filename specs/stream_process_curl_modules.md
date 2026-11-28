@@ -88,7 +88,7 @@ content_type, total_time_ms, header_size, request_size and redirect_count.
 Headers are nonempty lines with trailing CR/LF removed. The seven selectors are
 CURLINFO_RESPONSE_CODE, CURLINFO_EFFECTIVE_URL, CURLINFO_CONTENT_TYPE,
 CURLINFO_TOTAL_TIME_MS, CURLINFO_HEADER_SIZE, CURLINFO_REQUEST_SIZE and
-CURLINFO_REDIRECT_COUNT. The PHP table uses the corresponding lowercase keys and
+CURLINFO_REDIRECT_COUNT. CURLINFO_HTTP_CODE is an alias of CURLINFO_RESPONSE_CODE. The PHP table uses the corresponding lowercase keys and
 also includes http_code. Source constants have module-local identities. Their
 translation and the libcurl headers belong to the native provider. Reset clears
 options, diagnostics and cached response. Close invalidates aliases. Returned

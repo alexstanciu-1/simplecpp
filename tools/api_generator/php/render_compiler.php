@@ -16,6 +16,20 @@ function compilerCheckedSlot(string $recipe): string {
         readFile(__DIR__ . '/../templates/collections/compiler_checked_slot.php.tpl'));
 }
 
+/** Publish one presence binding for the concrete recipe and reuse it across its specializations. */
+function compilerEntryPresence(string $recipeName, ?string $read, array &$traits, string &$code): string {
+    $presence = at(concreteRecipe($recipeName), 'entry_presence');
+    $protocol = $presence->protocol;
+    requireThat(($read !== null) === ($protocol === 'key_lookup'), 'Entry presence requires its declared lookup binding');
+    $trait = 'entry_presence_' . $protocol;
+    if (!isset($traits[$trait])) {
+        $template = readFile(__DIR__ . '/../templates/collections/compiler_' . $trait . '.php.tpl');
+        $code .= $read === null ? $template : strtr($template, ['@owner_probe@' => $presence->owner_probe, '@read@' => $read]);
+        $traits[$trait] = true;
+    }
+    return $trait;
+}
+
 /** A protocol binds traversal, value-copy read, immediate replacement and scoped borrow as one grant. */
 function compilerWritableIteration(string $recipeName, array $traversal, array &$traits, string &$code): string {
     $recipe = concreteRecipe($recipeName);

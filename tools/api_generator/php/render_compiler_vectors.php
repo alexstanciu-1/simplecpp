@@ -89,7 +89,7 @@ function compilerCollectionMethods(array $collection, array $definitions, ?strin
 function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definitions): array {
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n\n// Generated from validated runtime publication. Do not edit.\n";
     $cases = [];
-    $writableTraits = [];
+    $traits = [];
     $application = false;
     $access = compilerAccessInterfaces($metadata->vector ?? null);
     $family = isset($metadata->vector) ? textValue(at($metadata->vector, 'source_type')) : null;
@@ -132,10 +132,11 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
                 . "\t\treturn \$this->initialization;\n\t}\n";
             $initializationSetup = "\t\t\$this->initialization = new initialization_transport($elementClass::instance()->cpp_type(), $input, $factory, {$init['inline_limit']});\n";
         }
-        $writable = compilerWritableIteration(vectorConcreteRecipe($vector), $vector['traversal'], $writableTraits, $code);
+        $writable = compilerWritableIteration(vectorConcreteRecipe($vector), $vector['traversal'], $traits, $code);
         $writableInterface = $writable === '' ? '' : ', writable_iteration_type';
         $bindings = [
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
+            '@entry_presence@' => compilerEntryPresence(vectorConcreteRecipe($vector), null, $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(vectorConcreteRecipe($vector)),
             '@initialization@' => $initialization,
             '@iteration@' => compilerTraversalMethods($vector['traversal'], $elementClass . '::instance()', $countClass . '::instance()'),

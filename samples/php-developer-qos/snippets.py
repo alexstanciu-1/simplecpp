@@ -83,7 +83,7 @@ foreach ($fields as $f) { echo ($f ? "Y" : "N"); } return 0;''', output='NNYYY')
     Probe('truthy-default', '$label="0"; echo $label ?: "anon"; return 0;', output='anon'),
     Probe('nullable-update', '$n ?int=null; $n ??= 0; $n ??= 2; echo $n ?? 9; return 0;', output='0'),
     Probe('map-default', '$counts hash<int,string> = []; echo $counts["missing"] ?? 0; return 0;', reject='Coalescing requires a published nullable carrier'),
-    Probe('map-init-key', '$counts hash<int,string> = []; $counts["x"] ??= 0; return 0;', reject='Unsupported compound operands or write-back type'),
+    Probe('map-init-key', '$counts hash<int,string> = []; $counts["x"] ??= 0; $counts["x"] ??= 9; echo $counts["x"]; return 0;', output='0'),
     Probe('map-find', '$h hash<int,string> = ["yes"=>0]; echo hash_find($h,"yes") ?? 9, hash_find($h,"no") ?? 9; return 0;', output='09'),
     Probe('keys-stay-strings', '''$h hash<int,string> = ["01"=>3, "1"=>4];
 foreach ($h as $k=>$n) { echo $k, "=", $n, "|"; } return 0;''', output='01=3|1=4|'),
@@ -268,7 +268,7 @@ log_event("ok"); return 0;''', output='ok'),
     Probe('datetime-natural-epoch', 'echo (int)strtotime("1970-01-01T00:00:00Z"); return 0;', modules=('datetime',), output='0'),
     Probe('fputcsv', '$f file_stream=fopen("export.csv","wb"); fputcsv($f,["a","b"]); return 0;', modules=('io',), reject='Unknown function: fputcsv'),
     Probe('hash-array-value', '$v hash<int,string> = ["a"=>1]; $plain=array_values($v); return 0;', reject='Unknown function: array_values'),
-    Probe('php-curl-status', '$r curl_handle=curl_init(); $s=curl_getinfo($r,CURLINFO_HTTP_CODE); return 0;', modules=('curl',), reject='Unknown constant: CURLINFO_HTTP_CODE'),
+    Probe('php-curl-status', '$r curl_handle=curl_init(); echo CURLINFO_HTTP_CODE === CURLINFO_RESPONSE_CODE ? "same":"different"; return 0;', modules=('curl',), output='same'),
     Probe('php-json-flags', '$s=json_encode("a/b",JSON_UNESCAPED_SLASHES); return 0;', modules=('json',), reject='Argument count mismatch for function: json_encode'),
     Probe('php-mysqli-bind-temp', '''$db=new mysqli(); $s mysqli_stmt=$db->prepare("SELECT ?"); $s->bind_param("s","open"); return 0;''', modules=('mysqli',), reject='Retaining call requires a stable typed slot'),
     Probe('php-mysqli-bind-escape', '''$db=new mysqli(); $s mysqli_stmt=$db->prepare("SELECT ?"); $alias=$s;

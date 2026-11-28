@@ -3,6 +3,7 @@
 final class @class@ extends vector_type_definition@interfaces@
 {
 	use collection_keyed_store;
+	use @entry_presence@;
 @writable_iteration@@checked_slot_binding@
 
 	/** @var array<string,runtime_function|null> Canonical signatures cached on this type, never on each call. */

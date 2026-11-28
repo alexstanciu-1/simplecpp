@@ -59,7 +59,7 @@ operand. [Interpolation checks](../../compiler/tests/interpolation.php)
 |---|---|---|---|
 | 1 | Detect a failed search or read | Fixed | Strict false guards distinguished byte position zero, a search miss and a missing file. Two missed searches and two absent nullable ints also compared without extracting an absent payload. |
 | 2 | Test emptiness | Fixed | The string matrix passed for native and boxed text. The contract uses byte length, so the string `"0"` is nonempty. Boxed numbers and null still raise `invalid_empty_operand`. |
-| 3 | Default a missing value | Intentional difference | Nullable coalescing preserved zero and `hash_find` supplied the fallback on a miss. Direct hash reads and falseable search results still reject `??`. Presence, a false sentinel and key lookup have distinct contracts. |
+| 3 | Default a missing value | Intentional difference | Nullable coalescing preserved zero, `hash_find` supplied the fallback on a miss, and keyed `??=` initialized a missing hash entry and preserved its stored zero. Direct hash reads and falseable search results still reject `??`. Presence, a false sentinel and key lookup have distinct contracts. |
 | 4 | Ask whether a key exists | Fixed | `isset($h[$k])` now compiles for typed hashes, including a stored zero. The nullable-value probe separately exercises absence. Boxed `has` can distinguish an explicit null from an absent key. |
 | 5 | Read a form integer | Fixed | `(int)"42"` printed 42. A function casting its string parameter printed 1234 for decimal input and raised `invalid_decimal_text` for bad text. A mixed slot holding text still fails direct integer extraction with `boxed_scalar_kind`; extract its string first. |
 | 6 | Print a value | Fixed | Scalar echo uses PHP output spelling. Classes that implement Stringable and both text builders work with echo, interpolation and explicit string casts. A direct mixed read still requires extraction, and the diagnostic names mixed. |
@@ -87,18 +87,17 @@ operand. [Interpolation checks](../../compiler/tests/interpolation.php)
 | 28 | Read HTTP input and send status | Intentional difference | Superglobals, `php://input` and PHP header/session helpers did not supply request state. The explicit FastCGI exchange handled the request, headers and status in the live apps. |
 | 29 | Build or decode a URL, HTML or CSV | Still reproducible | Scalar URL component helpers are published. The form app retains its stricter input validation. HTML 4.01 text escaping now covers the catalog. Query structures and CSV helpers remain open. |
 | 30 | Use timestamps or a regex | Fixed | PHP `time()` returns Unix seconds with datetime enabled. The general UTC formatter works. PHP `date()` formats UTC timestamps. `strtotime()` parses absolute and relative dates with bundled timezone data. The old mixed-captures workaround is obsolete for numbered strings: a fresh `vector<string>` capture probe printed `2:a`. Miss and invalid-pattern controls still distinguished present zero from failure. |
-| 31 | Call a remote endpoint | Still reproducible | The compiled curl client handled HTTP errors, invalid upstream data and connection failure. `CURLINFO_HTTP_CODE` still rejected while the published response-code spelling worked. This is a narrow naming issue; the exercise gives no reason to map every curl selector. |
+| 31 | Call a remote endpoint | Fixed | The compiled curl client handled HTTP errors, invalid upstream data and connection failure. Both `CURLINFO_HTTP_CODE` and `CURLINFO_RESPONSE_CODE` returned 201 for the same loopback POST. |
 | 32 | Prepare and bind a SQL query | Fixed | The ticket report guards the prepare result, extracts the statement and binds a named slot. On dev002 it handled a failed prepare and read each changed state on subsequent MariaDB executions. The temporary-slot and unproven-alias probes still reject. |
 | 33 | Bring a filesystem snippet | Intentional difference | The two-argument PHP write alias rejected the append-flag call. The journal used append mode and a checked byte count; contention left the file untouched. POSIX lexical path behavior and general-API visibility remained as specified. |
 
-## Remaining work after Stringable
+## Remaining work after the datetime helpers
 
-The current classification of the original 33 tasks is **16 fixed, 3 still reproducible and 14 intentional differences**. The November 27 full replay counted 10, 9 and 14 respectively. The six changes are tasks 6, 10, 15, 22, 24 and 27. A fixed task can still have a deliberate boundary, such as explicit extraction of a boxed value before echo.
+The current classification of the original 33 tasks is **18 fixed, 1 still reproducible and 14 intentional differences**. The November 27 full replay counted 10, 9 and 14 respectively. Tasks 6, 10, 15, 22, 24, 27, 30 and 31 have since moved to fixed. At `443f4fcec` a focused dev002 replay reconfirmed the missing PHP names in tasks 29 and 31 and the three working clock, format and parse spellings in task 30. A fixed task can still have a deliberate boundary, such as explicit extraction of a boxed value before echo.
 
 | Priority | Task | Evidence and proposed scope |
 |---|---|---|
-| 1 | 29 · HTML | The [catalog view](../../samples/php-developer-qos/catalog-view/view.php) uses the PHP UTF-8, HTML 4.01 escaper with quotes preserved. PHP query structures and CSV field lists go with the later collection review. |
-| 3 | 31 · curl | Consider the single `CURLINFO_HTTP_CODE` synonym for `CURLINFO_RESPONSE_CODE`. The HTTP client already reads the status through the published selector. |
+| 1 | 29 · Query strings and CSV | The [catalog view](../../samples/php-developer-qos/catalog-view/view.php) uses the PHP UTF-8, HTML 4.01 escaper with quotes preserved. PHP query structures and CSV field lists go with the later collection review. |
 
 ### Task 29 · URL component audit at `87d31d524`
 
