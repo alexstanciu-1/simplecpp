@@ -12,7 +12,7 @@ namespace scpp\compiler;
  * ```
  * The node retains the token spelling 0008; preparation later checks and normalizes it to 8.
  */
-final class ast_integer_expression extends ast_expression
+class ast_integer_expression extends ast_expression
 {
 	public function settle_integer(int $value /** int64 */): void
 	{
@@ -22,6 +22,15 @@ final class ast_integer_expression extends ast_expression
 	public function integer(): int /** int64 */
 	{
 		return $this->constant() ?? throw new \LogicException('Integer value is not prepared');
+	}
+}
+
+/** An implicit integer key in a positional PHP binding. */
+final class ast_destructure_position extends ast_integer_expression
+{
+	public function __construct(int $start /** uint32 */, public readonly int $position /** uint32 */)
+	{
+		parent::__construct($start, $start + 1);
 	}
 }
 
@@ -386,6 +395,19 @@ final class ast_assignment_snapshot extends ast_local_declaration
 	public function __construct(int $start /** uint32 */, int $end /** uint32 */, public readonly string $context_target, ast_expression $value)
 	{
 		parent::__construct($start, $end, ':rhs_' . $start, null, $value);
+	}
+}
+
+/** Statement-local receiver shared by the reads in a flat destructuring assignment. */
+final class ast_destructure_source extends ast_local_declaration
+{
+	/** Prepared fact: earlier writes leave the selected local storage and its contents stable. */
+	public bool $borrow = false;
+
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->borrow = false;
 	}
 }
 

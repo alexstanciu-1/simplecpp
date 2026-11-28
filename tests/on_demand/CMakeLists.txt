@@ -171,3 +171,7 @@ if(SCPP_ENABLE_FCGI AND SCPP_APACHE_EXECUTABLE AND SCPP_APACHE_MODULE_DIR AND Py
     ${PROJECT_SOURCE_DIR}/tools/fcgi_dev/test_apache.py ${SCPP_APACHE_EXECUTABLE} ${SCPP_APACHE_MODULE_DIR})
   set_tests_properties(fcgi_dev_reload_apache PROPERTIES LABELS on_demand TIMEOUT 180)
 endif()
+
+add_test(NAME compiler_php_destructuring_full COMMAND ${Python3_EXECUTABLE} -B
+  ${PROJECT_SOURCE_DIR}/compiler/tests/php_destructuring.py)
+set_tests_properties(compiler_php_destructuring_full PROPERTIES LABELS on_demand ENVIRONMENT "XDEBUG_MODE=off")

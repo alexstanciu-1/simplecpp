@@ -1228,7 +1228,7 @@ CPP;
 				continue;
 			}
 			$leaf = $resume !== null && !($statement instanceof ast_if_statement || $statement instanceof ast_loop_statement
-				|| $statement instanceof ast_yield_statement);
+				|| $statement instanceof ast_yield_statement || $statement instanceof ast_destructure_source);
 			if ($leaf) $lines[] = '{';
 			if ($statement instanceof ast_yield_statement) {
 				$lines[] = $this->generator_yield($statement, $function->return_type_def(), $resume, $declarations, $global_references, $required_headers);
@@ -1682,6 +1682,28 @@ CPP;
 			elseif ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
 				$lines[] = $this->conditional_assignment($statement, $global_references, $declarations, $required_headers);
 			}
+			elseif ($statement instanceof ast_destructure_source) {
+				$name = $this->name($statement);
+				$type = $statement->type_def();
+				$value = $this->value($statement->initializer, $global_references, $declarations, $required_headers);
+				// Cursor output locals live in the frame. The receiver ends before any later yield.
+				if ($resume !== null) $lines[] = "\t{";
+				if ($statement->borrow) {
+					$lines[] = "\tconst auto& $name = $value;";
+				} elseif ($type instanceof fixed_array_type) {
+					$lines[] = "\t" . $type->declarator($name) . ';';
+					$lines[] = $this->async_statement("__builtin_memmove($name, $value, sizeof($name));");
+				} elseif ($resume !== null) {
+					$lines[] = "\tauto $name = $value;";
+				} else {
+					$slot = $name . '_storage';
+					$storage = new Cpp_Staged_Result($type, $slot);
+					$lines[] = "\t" . $storage->declaration($required_headers);
+					$lines[] = $this->async_statement($storage->initialize($value));
+					$lines[] = "\tconst auto& $name = $slot.value;";
+					$required_headers['memory'] = true;
+				}
+			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				if ($body instanceof ast_function_body && $statement === $body->byte_view_length) {
 					$this->byte_view = $statement->initializer->arguments[0];
@@ -1695,6 +1717,15 @@ CPP;
 					operand_override: $first_initializer !== null && $statement === $body->statements[0] ? $first_initializer : null,
 					borrow_snapshot: $statement === $borrowed_snapshot);
 				$lines[] = $this->async_statement($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
+				$read = $statement instanceof ast_local_declaration ? $statement->initializer : ($statement instanceof ast_assignment_statement ? $statement->value : null);
+				if ($read instanceof ast_destructure_read && $read->last) {
+					$source = $read->receiver->local_def();
+					if ($resume !== null) $lines[] = "\t}";
+					elseif (!$source->borrow && !($source->type_def() instanceof fixed_array_type)) {
+						$slot = $this->name($source) . '_storage';
+						$lines[] = "\t$slot.live = false; std::destroy_at(&$slot.value);";
+					}
+				}
 			}
 			elseif ($statement instanceof ast_return_statement && ($statement->value === null || $statement->value->type_def() === type_void::instance())) {
 				if ($statement->value !== null) {

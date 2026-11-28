@@ -125,9 +125,7 @@ final class Parser
 				$nodes[] = $function;
 				continue;
 			}
-			$statement = $this->statement($grammar, $collector);
-			$collector->statement($statement, count($statements));
-			$statements[] = $statement;
+			$this->collect_statement($grammar, $collector, $statements);
 		}
 		$body_end = $this->cursor->position();
 		if ($braced) {
@@ -279,6 +277,60 @@ final class Parser
 				'Exit depth requires a positive decimal integer');
 		}
 		return $depth;
+	}
+
+	/** Collect a source statement, expanding flat PHP bindings in their enclosing lexical scope. @param ast_statement[] $statements */
+	private function collect_statement(statement_grammar $grammar, Body_Collection $collector, array &$statements /** list<ast_statement> */): void
+	{
+		if ($this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::lbracket)) {
+			$this->destructure($collector, $statements);
+			return;
+		}
+		$statement = $this->statement($grammar, $collector);
+		$collector->statement($statement, count($statements));
+		$statements[] = $statement;
+	}
+
+	/** Publish the receiver once, then ordinary indexed assignments in written order. @param ast_statement[] $statements */
+	private function destructure(Body_Collection $collector, array &$statements /** list<ast_statement> */): void
+	{
+		$c = $this->cursor;
+		$start = $c->take(token_kind::lbracket, '[');
+		$bindings = [];
+		$keyed = !$c->is(token_kind::variable);
+		do {
+			$key = null;
+			if (!$c->is(token_kind::variable)) {
+				$key = $this->literal_initializer('Destructuring keys must be integer or string literals');
+				if (!($key instanceof ast_integer_expression || $key instanceof ast_string_expression)) {
+					throw new diagnostic($c->tokens->source, $c->offset(), 'Destructuring keys must be integer or string literals');
+				}
+				$c->take(token_kind::arrow, '=> after a destructuring key');
+			}
+			if ($keyed !== ($key !== null)) throw new diagnostic($c->tokens->source, $c->offset(), 'Cannot mix keyed and positional destructuring');
+			$at = $c->position();
+			$name = $c->binding_name(token_kind::variable);
+			$bindings[] = [$at, $name, $key ?? new ast_destructure_position($at, count($bindings))];
+			if (!$c->is(token_kind::comma)) break;
+			$c->take(token_kind::comma, ',');
+		} while (!$c->is(token_kind::rbracket));
+		$c->take(token_kind::rbracket, '] after destructuring locals');
+		$c->take(token_kind::assign, '= after destructuring locals');
+		$value = $this->assignment_value();
+		$end = $this->statement_end(token_kind::semicolon);
+		$source = new ast_destructure_source($start, $end, ':destructure_' . $start, null, $value);
+		$collector->statement($source, count($statements));
+		$statements[] = $source;
+		$last = count($bindings) - 1;
+		foreach ($bindings as $i => [$at, $name, $key]) {
+			$receiver = new ast_name_expression($source->short_name, $at, $at + 1);
+			$read = new ast_destructure_read($receiver, $key, $at + 1, $i === $last);
+			$statement = $collector->has_local($name)
+				? new ast_assignment_statement($at, $end, $name, $read, assignment_intent::existing_binding)
+				: new ast_local_declaration($at, $end, $name, null, $read);
+			$collector->statement($statement, count($statements));
+			$statements[] = $statement;
+		}
 	}
 
 	/** Share body grammar while keeping function definitions out of executable statement inventories. */
@@ -491,9 +543,7 @@ final class Parser
 			$body_start = $c->position();
 			$statements = [];
 			while (!$c->keyword('case') && !$c->keyword('default') && !$c->is(token_kind::rbrace)) {
-				$statement = $this->statement($grammar, $child);
-				$child->statement($statement, count($statements));
-				$statements[] = $statement;
+				$this->collect_statement($grammar, $child, $statements);
 			}
 			$this->lexical = $collector;
 			$body = $child->block($body_start, $c->position(), $statements);
@@ -565,10 +615,10 @@ final class Parser
 		$start = $this->cursor->position();
 		$child = $collector->child();
 		$this->lexical = $child;
-		$statement = $this->statement($grammar, $child);
-		$child->statement($statement, 0);
+		$statements = [];
+		$this->collect_statement($grammar, $child, $statements);
 		$this->lexical = $collector;
-		return $child->block($start, $this->cursor->position(), [$statement]);
+		return $child->block($start, $this->cursor->position(), $statements);
 	}
 
 	/** Parse a lexical block once, optionally with an existing header binding. */
@@ -583,9 +633,7 @@ final class Parser
 			if ($this->cursor->at_end()) {
 				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected }');
 			}
-			$statement = $this->statement($grammar, $child);
-			$child->statement($statement, count($statements));
-			$statements[] = $statement;
+			$this->collect_statement($grammar, $child, $statements);
 		}
 		$end = $this->close_suite($close, $statements);
 		$this->lexical = $collector;
@@ -843,9 +891,7 @@ final class Parser
 			if ($this->cursor->at_end()) {
 				throw new diagnostic($source, $this->cursor->offset(), 'Expected }');
 			}
-			$statement = $this->statement($grammar, $body_collector);
-			$body_collector->statement($statement, count($statements));
-			$statements[] = $statement;
+			$this->collect_statement($grammar, $body_collector, $statements);
 		}
 		$end = $this->close_suite($close, $statements);
 		$this->lexical = $previous;

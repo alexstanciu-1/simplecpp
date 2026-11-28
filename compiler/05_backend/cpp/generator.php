@@ -172,6 +172,7 @@ CPP;
 	private static function visit_generator_bindings(ast_statement_block $block, \Closure $visit): void
 	{
 		foreach ($block->statements as $statement) {
+			if ($statement instanceof ast_destructure_source) continue;
 			if ($statement instanceof ast_local_declaration) $visit($statement);
 			elseif ($statement instanceof ast_block_statement) self::visit_generator_bindings($statement->body, $visit);
 			elseif ($statement instanceof ast_if_statement) {
@@ -204,7 +205,9 @@ CPP;
 		for ($index = count($resume->scopes) - 1; $index >= $depth; --$index) {
 			$scope = $resume->scopes[$index];
 			if ($scope instanceof ast_foreach_statement) $text .= $this->generator_destroy($scope) . "\n";
-			else foreach (array_reverse($scope->locals) as $local) $text .= $this->generator_destroy($local) . "\n";
+			else foreach (array_reverse($scope->locals) as $local) {
+				if (!($local instanceof ast_destructure_source)) $text .= $this->generator_destroy($local) . "\n";
+			}
 		}
 		return $text;
 	}
