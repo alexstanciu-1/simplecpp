@@ -73,7 +73,7 @@ function concreteRecipe(string $name): mixed {
     static $recipes = [];
     if (isset($recipes[$name])) return $recipes[$name];
     $recipe = decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values', 'fill_factory']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values', 'fill_factory', 'map_result', 'entry_insertion']);
     if (isset($recipe->fill_factory)) {
         fields($recipe->fill_factory, ['source', 'member']);
         foreach (['source', 'member'] as $field) {

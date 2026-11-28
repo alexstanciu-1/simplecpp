@@ -182,6 +182,17 @@ interface entry_result_builder
 	public function lower_cpp_insert_entry(string $receiver, string $key, string $value): string;
 }
 
+/** Append mapped values in encounter order to a dense result. */
+trait append_entry_insert
+{
+	abstract public function lower_cpp_append_value(string $receiver, string $value): string;
+
+	public function lower_cpp_insert_entry(string $receiver, string $key, string $value): string
+	{
+		return $this->lower_cpp_append_value($receiver, $value);
+	}
+}
+
 /** Preserve the entry cursor's key with the provider's normal keyed store. */
 trait keyed_entry_insert
 {

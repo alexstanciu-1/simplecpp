@@ -4,11 +4,10 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements subset_source, map_source, keyed_result_builder, readonly_index_lookup_type, indexed_mutation_type, counted_collection_type, membership_type
+abstract class hash_type_definition extends type_definition implements subset_source, readonly_index_lookup_type, indexed_mutation_type, counted_collection_type, membership_type
 {
 	use indexed_entry_read;
 	use same_type_subset;
-	use keyed_entry_insert;
 	use checked_indexed_mutation;
 	use collection_specializations;
 	use concrete_value_storage;
@@ -28,11 +27,6 @@ abstract class hash_type_definition extends type_definition implements subset_so
 	}
 
 	/** METHODS */
-	public function mapped_result_type(type_definition $element): ?type_definition
-	{
-		return type_registry::mapped_keyed($element, $this->key_type);
-	}
-
 	public function private_copy_allocation_only(): bool
 	{
 		return $this->key_type->copy_has_no_observable_effects() && $this->value_type->copy_has_no_observable_effects();

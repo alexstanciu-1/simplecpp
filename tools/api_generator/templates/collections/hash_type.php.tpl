@@ -1,7 +1,8 @@
 
 /** Canonical published hash<V,K> identity; empty construction, checked keyed writes and copied reads. */
-final class @class@ extends hash_type_definition@interfaces@
+final class @class@ extends hash_type_definition@interfaces@, map_source, @entry_builder@
 {
+	use @entry_insert@;
 	use collection_keyed_store;
 	use @entry_presence@;
 @writable_iteration@@checked_slot_binding@
@@ -15,6 +16,7 @@ final class @class@ extends hash_type_definition@interfaces@
 @initialization@
 @identity@
 	/** METHODS */
+@map_result@
 @iteration@
 @methods@
 	public function presence_function(): runtime_function

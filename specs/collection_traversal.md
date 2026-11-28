@@ -156,7 +156,9 @@ default. Other flavors select it with the project setting `"general_api": true`.
 Providers declare their general transform domain and supported operations in
 metadata. Each sequence or keyed form also admits its corresponding collection
 helper. A collection-only provider admits the collection form alone.
-Preparation selects the map builder from the callback return type. General
+The input provider recipe names the mapped result family and specifies whether to
+carry the source key type. Preparation specializes that family with the callback
+return type. The output provider recipe selects append or keyed insertion. General
 filters build a fresh result of the input type. Its builder appends survivors
 for a dense sequence or inserts them under the observed key for a keyed table.
 All four filter forms use the same runtime entry loop. PHP `array_filter`

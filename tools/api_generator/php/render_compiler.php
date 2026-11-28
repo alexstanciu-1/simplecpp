@@ -10,6 +10,27 @@ require_once __DIR__ . '/render_compiler_carriers.php';
 require_once __DIR__ . '/render_compiler_hashes.php';
 require_once __DIR__ . '/boxed_dispatch.php';
 
+/** Bind the input's mapped result type independently of how this provider builds an output. */
+function compilerMapBuilder(object $recipe): array {
+    $result = at($recipe, 'map_result');
+    fields($result, ['family', 'key']);
+    $family = textValue(at($result, 'family'));
+    requireThat(recordIdentifier($family), 'Invalid mapped result family');
+    $key = match (at($result, 'key')) {
+        'none' => 'null',
+        'source' => '$this->iteration_key_type()',
+        default => throw new \RuntimeException('Invalid mapped result key policy'),
+    };
+    [$builder, $insert] = match (at($recipe, 'entry_insertion')) {
+        'append' => ['entry_result_builder', 'append_entry_insert'],
+        'keyed_store' => ['keyed_result_builder', 'keyed_entry_insert'],
+        default => throw new \RuntimeException('Invalid collection entry insertion protocol'),
+    };
+    return ['@entry_builder@' => $builder, '@entry_insert@' => $insert,
+        '@map_result@' => "\n\tpublic function mapped_result_type(type_definition \$element): ?type_definition\n\t{\n"
+            . "\t\treturn Type_Resolution::collection(" . var_export($family, true) . ", \$element, $key);\n\t}\n"];
+}
+
 /** Bind published and application types to the same concrete member. */
 function compilerCheckedSlot(string $recipe): string {
     return str_replace('@method@', checkedSlotMethod(concreteRecipe($recipe)),
@@ -657,7 +678,6 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@optional_requires@' => $optionalRequires . (isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : ''),
         '@extent_families@' => implode(', ', $extentFamilies),
         '@mapped_sequence@' => $vectorFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($vectorFamily, true) . ', $element, null)',
-        '@mapped_keyed@' => $hashFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($hashFamily, true) . ', $element, $key)',
         '@positional_subset@' => $subsetFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($subsetFamily, true) . ', $element, self::integer())',
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations, '@application_specializations@' => $applicationVectors . $applicationHashes,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),

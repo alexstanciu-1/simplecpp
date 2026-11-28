@@ -19,6 +19,9 @@ $h hash<int,int>=[19=>2,2=>1];
 $ints hash<string,int>=array_map(label(...),$h);
 foreach($ints as $k=>$word){echo "/",$k,$word;}
 $text hash<int,string>=["05"=>2,"5"=>1];
+$items hash<Item,string>=array_map(makeItem(...),$text);
+$numbers hash<int,string>=array_map(fn($item):int=>$item->n,$items);
+if(count($numbers)!==2 || $numbers["05"]!==2 || $numbers["5"]!==1){return 10;}
 $strings hash<string,string>=array_map(label(...),$text);
 foreach($strings as $k=>$word){echo "/",$k,$word;}
 $bytes fixed_array<byte,3>=[2,1,2];

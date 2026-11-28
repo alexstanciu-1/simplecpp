@@ -1,7 +1,8 @@
 
 /** Canonical published @class@ identity; empty construction, checked element writes and value-copy indexing. */
-final class @class@ extends vector_type_definition@interfaces@
+final class @class@ extends vector_type_definition@interfaces@, map_source, @entry_builder@
 {
+	use @entry_insert@;
 	use collection_keyed_store;
 	use @entry_presence@;
 @writable_iteration@@checked_slot_binding@
@@ -12,6 +13,7 @@ final class @class@ extends vector_type_definition@interfaces@
 @identity@
 @initialization@
 	/** METHODS */
+@map_result@
 @iteration@
 @methods@
 	public function cpp_type(): string
