@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements subset_source, map_source, keyed_result_builder, readonly_index_lookup_type, writable_iteration_type, nested_index_storage_type, counted_collection_type, membership_type
+abstract class hash_type_definition extends type_definition implements subset_source, map_source, keyed_result_builder, readonly_index_lookup_type, writable_iteration_type, conditional_index_store_type, counted_collection_type, membership_type
 {
 	use indexed_entry_read;
 	use same_type_subset;
@@ -43,6 +43,13 @@ abstract class hash_type_definition extends type_definition implements subset_so
 	public function entry_presence_method(): string
 	{
 		return $this->probes_stored_owner() ? 'has_present_owner' : $this->presence_function()->symbol;
+	}
+
+	public function lower_cpp_entry_presence(string $receiver, string $key): string
+	{
+		$present = $receiver . '.' . $this->entry_presence_method() . '(' . $key . ')';
+		if ($this->value_type instanceof presence_test_type) $present .= ' && ' . $this->value_type->lower_cpp_presence($receiver . '.at(' . $key . ')');
+		return $present;
 	}
 
 	public function private_copy_allocation_only(): bool

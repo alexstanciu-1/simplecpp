@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Resolved vector<T> identity supplied by runtime publication, with checked element access and mutation.
  * Copies and by-value calls use the common conversion path; instance fields default to empty.
  */
-abstract class vector_type_definition extends type_definition implements subset_source, map_source, entry_result_builder, readonly_index_lookup_type, writable_iteration_type, appendable_collection_type, nested_index_storage_type, native_sequence_type, iterable_type, membership_type
+abstract class vector_type_definition extends type_definition implements subset_source, map_source, entry_result_builder, readonly_index_lookup_type, writable_iteration_type, appendable_collection_type, conditional_index_store_type, native_sequence_type, iterable_type, membership_type
 {
 	use indexed_entry_read;
 	use positional_subset;
@@ -37,6 +37,15 @@ abstract class vector_type_definition extends type_definition implements subset_
 	public function lower_cpp_insert_entry(string $receiver, string $key, string $value): string
 	{
 		return $this->lower_cpp_append_value($receiver, $value);
+	}
+
+	public function lower_cpp_entry_presence(string $receiver, string $key): string
+	{
+		$slot = $this->lower_cpp_slot($receiver, $key);
+		if ($this->element_type instanceof presence_test_type) return $this->element_type->lower_cpp_presence($slot);
+		if ($this->element_type instanceof shared_record_type_definition && !$this->element_type->required) return $this->element_type->lower_cpp_condition($slot);
+		// Even an always-present element must pass the bounds check, without copying its payload.
+		return '((void)' . $slot . ', true)';
 	}
 
 	public function private_copy_allocation_only(): bool

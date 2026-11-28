@@ -148,6 +148,14 @@ conversion applies and the current hash receives the value at the saved key, eve
 if the fallback replaced the hash or inserted that key. If fallback or conversion
 throws, its earlier effects survive and the conditional store does not run.
 
+For a PHP local typed vector, `$v[index()] ??= fallback();` saves the index once.
+The initial bounds check throws before fallback for a negative index or an index
+at or beyond the length. An in-range present value (including zero) skips fallback.
+For an absent element the converted result replaces the element at the saved index
+in the current vector. The store checks bounds again, so clearing or shortening
+the vector can cause a write-back failure after fallback effects have occurred.
+The operation never extends the vector.
+
 Parameters, globals, static properties, other indexed places, for-header writes and
 application/shared carriers remain outside this contract.
 

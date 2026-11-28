@@ -2120,18 +2120,17 @@ CPP;
 	{
 		if ($statement instanceof ast_index_compound) {
 			$entry = $statement->target;
-			$hash = $entry->receiver->type_def();
+			$collection = $entry->receiver->type_def();
 			$receiver = $this->name($entry->receiver->local_binding());
 			$key = $this->value($entry->index, $globals, $declarations, $headers);
-			$this->async_steps[] = 'const auto coalesce_key = ' . $hash->lower_cpp_key($entry->index, $key) . ';';
-			$present = $receiver . '.' . $hash->entry_presence_method() . '(coalesce_key)';
-			$element = $hash->write_type();
-			if ($element instanceof presence_test_type) $present .= ' && ' . $element->lower_cpp_presence($receiver . '.at(coalesce_key)');
+			$this->async_steps[] = 'const auto coalesce_key = ' . $collection->lower_cpp_key($entry->index, $key) . ';';
+			$present = $collection->lower_cpp_entry_presence($receiver, 'coalesce_key');
+			$element = $collection->write_type();
 			[$value, $rhs] = $this->staged_operand($statement->value, $globals, $declarations, $headers);
 			$conversion = $statement->conversion();
 			foreach ($element->conversion_headers($conversion) as $header) $headers[$header] = true;
 			$value = $element->lower_cpp_exact_argument($statement->value, $conversion, $value, $this->inline_adapters);
-			$rhs[] = $hash->lower_cpp_write($receiver, 'coalesce_key', $value) . ';';
+			$rhs[] = $collection->lower_cpp_write($receiver, 'coalesce_key', $value) . ';';
 			return $this->async_statement('if (!(' . $present . ')) { ' . implode(' ', $rhs) . ' }');
 		}
 		$field = $statement instanceof ast_property_compound;

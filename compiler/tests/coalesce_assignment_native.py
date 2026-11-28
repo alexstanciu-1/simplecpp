@@ -102,8 +102,9 @@ def prove(work,flavor,libraries, *, quick=False):
         (local('n','nullable<int>','null')+f'for ({v}n ??= 2;false;{v}n=3) {{}}','plain local'),
         (local('n','nullable<int>','null')+f'for ({v}n=null;false;{v}n ??= 3) {{}}','plain local'),
         (s['record']('Point',s['field']('x','int','0'))+s['local']('p','Point')+f'{v}p{s["access"]}x ??= 2;','nullable carrier' if flavor=='php' else 'compound'),
-        (local('items','vector<int>','[]')+f'{v}items[]=1;{v}items[0] ??= 2;','compound'),
     ]
+    if flavor != 'php':
+        bad_sources.append((local('items','vector<int>','[]')+f'{v}items[]=1;{v}items[0] ??= 2;', 'compound'))
     for i,(source,error) in enumerate(bad_sources):
         bad=work/f'{flavor}-bad-{i}';write_app(bad,flavor,{'main':source+'return 8;'})
         got=fresh(bad,work/f'{flavor}-bad-out-{i}');assert error.lower() in got.get('error','').lower(),got

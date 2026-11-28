@@ -316,7 +316,7 @@ final class Preparation
 				$this->prepare_index_mutation($statement);
 				if ($statement->operator === binary_operator::coalesce && $source->flavor === flavor::php
 					&& $receiver instanceof ast_name_expression && $receiver->local_binding() instanceof ast_local_declaration
-					&& $receiver->type_def() instanceof hash_type_definition) {
+					&& $receiver->type_def() instanceof conditional_index_store_type) {
 					$element = $receiver->type_def()->write_type();
 					$this->collection_element($statement->value, $element, null);
 					$statement->prepare_conditional_store($element);
