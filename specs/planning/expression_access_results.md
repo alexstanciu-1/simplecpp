@@ -1,0 +1,70 @@
+# Expression and access-path audit results
+
+Doc Status: planning
+
+2026-11-28. Compiler baseline `c0a428116`, integrated upstream revision `a702bab53`, final regression revision `56e95560c`. The [inventory](expression_access_inventory.md) gives the disposition of each of the 52 reviewed rows. Colors describe the observed cases within each row. They are not a percentage of the language implemented.
+
+| Status | Rows | Meaning |
+|---|---:|---|
+| 🟢 Verified | 41 | The specified behavior or rejection has an observed witness. Some rows rely on existing suites. |
+| 🔴 Defect | 1 | Two source-identical callable signatures behave differently in a conditional selection depending on their declaration origin. |
+| 🟠 Follow-up | 10 | Broader contracts, diagnostics, surface decisions or architecture work. The concrete items are listed below. |
+
+## 🔴 F1. Conditional selection compares declaration identity for owned callables
+
+Two independently declared values have the same written signature. Whole-value assignment between them succeeds. Both of the following selections reject during preparation, before C++ emission.
+
+```php
+$a function<int(int)> = fn($x) => $x + 1;
+$b function<int(int)> = fn($x) => $x + 2;
+$f = true ? $a : $b;                  // Ternary result types must be identical
+// Independent probe
+$f = match (1) { 1 => $a, default => $b };  // Match result types must be identical
+```
+
+Controls distinguish signature compatibility from declaration origin. Selecting the same local twice works. Selecting a local and its inferred copy works. Selecting two separate closure **values** produced by the same typed factory declaration works and invokes the correct body. Giving both factory outputs separate explicit but identical annotations reproduces the failure. The ternary also rejects when the two inputs are separately declared parameters of identical type. Resident and fresh preparation agree. The current arm join compares prepared type objects by identity. A future fix should preserve callable mode, parameter and return compatibility and test invalidation after a genuine signature change. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Positive and failing controls](../../compiler/tests/expression_access_paths.py)
+
+## 🟠 Remaining implementation, diagnostic and design work
+
+| Item | Evidence and next decision |
+|---|---|
+| F2. Implement two wider coalescing contracts when extending the active compiler | The normative matrix specifies same-type shared-handle joins and homogeneous scalar wrappers. A function returning `$a ?? $b` for two parameters of class `N` rejects the left as an unpublished nullable carrier. Two `nullable<int>` locals reject the right because it is a wrapper rather than its payload. Both parse. The active compiler explicitly documents its narrower slice. Expected witnesses are preserved below. [Normative matrix](../conditional_expression_matrix.md) · [Implementation boundary](../../compiler/docs/coalesce.md) |
+| D1. Improve the Python nested typed-write diagnostic | Python accepts a nested typed-vector read and a nested shared boxed-list write. The nested typed-vector store rejects, but its diagnostic offers a typed local/field path that the Python preparation branch excludes. Explain the applicable Python boundary. Supporting typed-vector writes would be a separate feature. |
+| D2. Clarify scalar field destinations through indexed or temporary class handles | Both `$owners[0]->x=7` and `($owners[0])->x=7` reach preparation and reject for writable local storage. Calling a method or reading the same field works; indexed writes into a **collection field** of the selected holder work. A direct write through a factory result also rejects. Decide whether to extend the retained-owner rule to scalar fields, or document the restriction with a target-specific diagnostic. |
+| D3. Decide computed callee and flavor boundaries | In PHP a grouped stored callable field and grouped local work; `(true ? $a : $b)(7)` stopped at the invocation suffix. The direct `ops[0](6)` syntax probe still stopped in parsing in C++, JS and Python. These are admission decisions independent of F1. No cross-flavor extension was assumed. |
+| D4. Decide additional access syntax and grouping expectations | A grouped optional field followed by an ordinary field access checks the resulting owner. On an absent outer receiver it raised `ownership_empty_access`; the continuous guarded member chain produced absence. A grouped scalar optional can feed coalescing. Computed PHP member names, nullsafe writes, nonlocal/indexed `??=` and field interpolation remain limited. Field interpolation still reports a closing-brace parse error. Decide each surface before broadening admission; a grouping comparison alone does not prove a language bug. |
+| D5. Keep existing bounded semantics explicit | Non-Python mixed nested value reads, references escaping into movable slots and the sampled lexical comparisons of numeric-looking strings have existing boundaries. No evidence in this audit calls for changing boxed ownership, reference origins or comparison semantics. |
+| A1. Consider preparing typed destinations once | Preparation records boxed roots. The emitter also calls `nested_collection_root` on typed stores, appends and mutations. This is duplicated classification, with incremental invalidation implications. The retained-owner and write-back probes did not reproduce another lost write. Treat a refactor as a separate engineering decision. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Lowering](../../compiler/05_backend/cpp/emit.php) |
+
+**Two historical gaps closed upstream during the audit.** PHP now prints scalar bytes/bools and reports the received type for a boxed echo operand. PHP kind predicates now admit dynamic values; `is_string` and `is_array` are available. New upstream coverage also exercises terminal checked vector/hash reads on nullsafe chains and nullsafe enum methods and read-only case properties. These changes are included in the integrated default-suite result. [QoS follow-up](php_flavor_developer_qos_reaudit.md) · [Nullsafe access contract](../conditional_expression_matrix.md)
+
+## 🟢 Native witnesses worth retaining
+
+| Expression boundary | Observed on dev002 |
+|---|---|
+| Awaited key replaces A with B | Key enters and resumes once. Ordinary argument runs once. Both the pending call and the following lookup invoke B and return 26. |
+| Awaited key removes the selected entry | Only key entry and resumption run. The checked lookup raises `hash_missing_key` before any argument or invocation. A present but empty callable instead evaluates the argument before raising `std::bad_function_call`. |
+| Both key and argument suspend | Key installs B, then argument installs C. Pending call returns 26 from B; next lookup returns 36 from C. Rebinding the selected holder's registry during the key retains the original holder for the pending call. |
+| Last external callable handle removed, then key or argument throws | Destruction happens at removal when the key is still being computed; a previously selected callable survives removal until unwind in the argument case. The caught typed exception has the same identity as the thrown object. No later operand or callee runs. |
+| Failing writes | Throwing deep RHS leaves the prior leaf at 3 and its earlier side effect at 1. Modulo by zero and failed byte narrowing preserve the stored 7. Shallow typed-hash store accepts either permitted order of sibling evaluation while checking once-only effects and absence of partial stores. |
+| Failure before a following suffix | An illegal index in a string, fixed byte array, vector or hash stops before conversion to the next key or evaluation of the outer call argument. |
+| Computed method receiver and binding modes | Indexed receiver evaluated once per invocation. By-reference write reaches the caller, reversed named arguments run in written order, and unpacking passes the two vector elements once. |
+| Original expression and conditional arms | Original parsed shape matches. Statement and value forms execute, a provider change makes the index invalid, and repair restores native behavior. A ternary preserves selected shared identity; an effectful match key runs only its chosen arm, and an exception suppresses the outer argument. |
+| Reads inside writes and void calls used as values | Deep mixed destination admitted, but the identical deep read is still rejected in an index or RHS. Terminal nullsafe void statement admitted; using its result as key, argument or continued receiver rejects and repairs cleanly. |
+
+## Verification and reproduction
+
+- Ran on dev002 using Clang, libc++, the root default CMake preset and the configured PHP 8.5 compiler. The host uses its existing libc++ installation and the runtime ownership-header include path. Native fixtures compile and execute generated C++; negative fixtures compare diagnostics, exception types/messages, effects or fresh/resident output as appropriate.
+- Baseline default suite **593/593** passed. After the pull, build and default suite at `d3ca7dd96` passed **629/629**. After the test timing adjustment at `56e95560c`, the final `ctest --preset default -j24` again passed **629/629**, in **39.41 s**. This includes **26 new registered regression cases**. Suite counts describe this checkout and preset. The historical AST/native replay also exercised PHP, C++, JavaScript and Python. Syntax-only cross-flavor rejects were not counted as native executions.
+- To run the new default regressions alone from a configured checkout, use `ctest --preset default -R '^compiler_expression_path_' --output-on-failure`.
+- The full callable-collection and boxed-collection on-demand drivers passed on dev002. In isolation the complete valid/invalid/repaired anchor and selection tests took 5.15 s and 4.52 s. Their default forms keep the invalid-provider check and native recovery, taking 1.39 s and 2.10 s respectively. The full sequences also passed after the split; run them with `anchor_full` and `selection_full` in the same driver.
+- The four intended-success reproducers below were run separately on the integrated compiler. They currently fail at preparation with the diagnostics under F1/F2. They are directly runnable and excluded from the passing default suite. A successful future implementation should make them pass and promote them into the default suite. [Test driver](../../compiler/tests/expression_access_paths.py)
+
+```sh
+python3 -B compiler/tests/expression_access_paths.py pending_ternary
+python3 -B compiler/tests/expression_access_paths.py pending_match
+python3 -B compiler/tests/expression_access_paths.py pending_handle_coalesce
+python3 -B compiler/tests/expression_access_paths.py pending_wrapper_coalesce
+```
+
+Scope is the semantic distinctions in the reviewed inventory. This is evidence for the tested shapes on dev002. It does not establish exhaustive language coverage or native portability on untested toolchains.
