@@ -326,7 +326,7 @@ final class Preparation
 					$this->value($receiver, deep_write_path: true);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
 					if ($collection_root === null) {
-						$boxed_root = ast_index_expression::boxed_path_root($receiver);
+						$boxed_root = ast_index_expression::boxed_path_root($receiver, $statement instanceof ast_computed_member_assignment);
 						$collection_root = $boxed_root;
 					}
 					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
@@ -362,7 +362,7 @@ final class Preparation
 				}
 				$type = $statement->receiver->type_def();
 				if ($statement instanceof ast_computed_member_assignment && (!($binding instanceof ast_local_binding) || !($type instanceof type_dynamic)
-					|| ($receiver instanceof ast_index_expression && $receiver->receiver !== $boxed_root))) {
+					|| ($receiver instanceof ast_index_expression && $boxed_root === null))) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a local dynamic receiver');
 				}
 				if (!($type instanceof index_write_type)) {
@@ -1104,13 +1104,9 @@ final class Preparation
 	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): void
 	{
 		$receiver = $statement->target->receiver;
-		$computed = $statement->target instanceof ast_computed_member_read;
-		$this->value($statement->target, deep_write_path: !$computed);
-		if ($computed && !($receiver instanceof ast_name_expression && $receiver->local_binding() !== null)) {
-			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member mutation requires a local dynamic receiver');
-		}
+		$this->value($statement->target, deep_write_path: true);
 		if ($receiver instanceof ast_field_expression) $this->check_indexed_field_owner($receiver);
-		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver);
+		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver, $statement->target instanceof ast_computed_member_read);
 		if ($receiver instanceof ast_index_expression && $receiver->type_def() instanceof boxed_type_definition
 			&& $statement->boxed_root === null && $statement->source()->flavor !== flavor::python) {
 			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested boxed update requires a local or instance-field boxed root');
@@ -1947,10 +1943,6 @@ final class Preparation
 			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
 			$type = $syntax->receiver->type_def();
 			if ($syntax instanceof ast_computed_member_read) {
-				if ($deep_write_path && !($syntax->parent instanceof ast_index_assignment && $syntax->parent->receiver === $syntax
-					&& $syntax->receiver instanceof ast_name_expression && $syntax->receiver->local_binding() !== null)) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member reads cannot be used as write targets');
-				}
 				if (!($type instanceof type_dynamic)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member read requires a dynamic receiver');
 			}
 			if (!($type instanceof index_read_type)) {
