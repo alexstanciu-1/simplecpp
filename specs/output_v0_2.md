@@ -39,19 +39,18 @@ lower to sequential runtime calls. See legacy output rules.
 
 With the structural Encoder published, `var_dump($value)` evaluates one operand
 once and returns void. It writes bytes to the same standard output destination
-as `echo`. The operation works with JSON disabled. Its scalar inputs are the
-published Encoder leaves (int64, float64, bool, string and their published
-nullable forms), plus null. Strings report byte length and include their raw
-bytes between quotes.
+as `echo` and works with JSON disabled. The operand type supplies its structural
+encoding capability. Signed and unsigned integers retain their full decimal range.
+Other scalar inputs are float64, bool, string and null. Strings report byte length
+and include their raw bytes between quotes.
 
 Mixed tables print as `array(n)` and dynamic tables as `object(dynamic)(n)`.
-Integer and string keys remain distinct in the output. A typed vector prints
-numeric positions. A field-derived data struct or class prints its declared
-name, field count, and fields in schema order. Preparation checks the fields and
-vector elements against the same Encoder capabilities. A missing owner or
-nullable value prints `NULL`. Revisiting an active ancestor prints
-`*RECURSION*`; shared siblings are visited independently.
+A typed vector prints numeric positions. A typed hash prints its integer or
+string keys in traversal order. A field-derived data struct or class prints its
+declared name, field count and fields in schema order. Preparation recursively
+checks fields, nullable payloads, vector elements and hash values using the same
+capability. A missing owner or nullable value prints `NULL`. Revisiting an active
+ancestor prints `*RECURSION*`. Shared siblings are visited independently.
 
-Multiple arguments, Result carriers, direct typed hashes and ordinary classes
-remain outside this initial diagnostic surface. FastCGI applications still
-choose their response body explicitly.
+Multiple arguments, Result carriers and ordinary classes remain outside this
+diagnostic surface. FastCGI applications still choose their response body explicitly.

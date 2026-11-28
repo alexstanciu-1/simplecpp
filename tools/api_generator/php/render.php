@@ -194,7 +194,7 @@ function render(array $plan): array {
                 : providerHeader($plan['submodules'], typeExport($plan['submodules'], $type)['provider']);
             $dumpHeaders[$header] = includeHeader($header);
             $body = match (true) {
-                isset($boxed[$type]) => "boxed(detail::ownership_access::get<{$boxed[$type]}>(v));",
+                isset($boxed[$type]) => "detail::encode_boxed(detail::ownership_access::get<{$boxed[$type]}>(v), *this);",
                 ($nullable[$type] ?? null) === 'nullable' => 'if (v.has_value()) write(v.value()); else write_null();',
                 $type === 'string' => 'scalar(bytes{v.data(), static_cast<std::size_t>(v.size())});',
                 default => 'scalar(v);',
@@ -202,7 +202,7 @@ function render(array $plan): array {
             $methods .= "    void write($parameter v) override { $body }\n";
         }
         $files['private/var_dump_bindings.hpp'] = BANNER . implode('', $dumpHeaders)
-            . ($boxed ? "#define SCPP_DUMP_BOXED 1\n" . includeHeader('ownership_semantics.hpp') . includeHeader('boxed_inspection.hpp') . includeHeader('boxed_conversion.hpp') : '');
+            . ($boxed ? includeHeader('ownership_semantics.hpp') . includeHeader('boxed_conversion.hpp') . includeHeader('boxed_encoding.hpp') : '');
         $files['private/var_dump_methods.hpp'] = BANNER . $methods;
         $includes = implode('', $scalarHeaders);
         $files['public/scpp/encoder.hpp'] = BANNER . template('structure/encoder', compact('includes', 'forwards', 'declarations'));

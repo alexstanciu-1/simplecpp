@@ -10,7 +10,6 @@ namespace scpp\compiler;
 abstract class vector_type_definition extends type_definition implements readonly_index_lookup_type, appendable_collection_type, indexed_mutation_type, native_sequence_type, iterable_type, membership_type
 {
 	use indexed_entry_read;
-
 	use checked_indexed_mutation;
 	use collection_specializations;
 	use concrete_value_storage;
@@ -22,6 +21,11 @@ abstract class vector_type_definition extends type_definition implements readonl
 	{
 		parent::__construct($name);
 		$this->element_type = $element;
+	}
+
+	public function structural_encoding(): ?encoding_shape
+	{
+		return encoding_shape::sequence;
 	}
 
 	/** Admit the scalar and shared-owner equality domains that have Python representations. */

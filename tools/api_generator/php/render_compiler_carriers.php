@@ -61,6 +61,8 @@ function compilerCarrierTypes(?array $runtime, array $definitions): array {
             '@sentinel_cases@' => implode("\n", $sentinelCases),
             '@presence_expression@' => $presenceExpression,
             '@peer_equality@' => $peerEquality,
+            '@encoding@' => isset($runtime['structural_encoder'][$carrier['name']])
+                ? "\n\tpublic function structural_encoding(): ?encoding_shape { return encoding_shape::leaf; }\n" : '',
             '@presence@' => $valuePresence,
             '@true_presence@' => $truePresence,
             '@dispatch_label_type@' => in_array($carrier['family'], ['nullable', 'result'], true) ? '$this->payload_type' : '$this',

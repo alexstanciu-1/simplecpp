@@ -1,10 +1,12 @@
 #pragma once
 @includes@
 #include <string_view>
+#include <cstdint>
 #include <type_traits>
 
 namespace scpp {
 @forwards@struct encoder_cycle {};
+struct unsupported_encoding {};
 
 class Encoder {
     struct frame { const void* identity; const frame* parent; };
@@ -21,6 +23,9 @@ public:
     virtual void end_array() = 0;
     virtual void record(std::string_view, std::size_t) { begin_object(); }
     virtual void sequence(std::size_t) { begin_array(); }
+    virtual void mapping(std::size_t) { throw unsupported_encoding{}; }
+    virtual void integer_key(std::int64_t) { throw unsupported_encoding{}; }
+    virtual void write_unsigned(std::uint64_t) { throw unsupported_encoding{}; }
     virtual void recursion() { throw encoder_cycle{}; }
     virtual void write_null() = 0;
 @declarations@

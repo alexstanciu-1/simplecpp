@@ -431,6 +431,20 @@ interface sequence_initializer_type extends indexed_collection_type
 	public function lower_cpp_sequence_append(ast_expression $element, int $conversion /** uint16 */, string $receiver, string $value, ?Cpp_Adapters $adapters = null): string;
 }
 
+/** Structural traversal selected by the canonical type and its publication. Native uint8. */
+enum encoding_shape: int
+{
+	case leaf = 0;
+	case null_value = 1;
+	case signed_integer = 2;
+	case unsigned_integer = 3;
+	case optional = 4;
+	case sequence = 5;
+	case mapping = 6;
+	case record = 7;
+	case owner = 8;
+}
+
 /** Exact native element access for codec traversal of a prepared ordered sequence. */
 interface native_sequence_type extends counted_collection_type
 {
@@ -585,6 +599,12 @@ abstract class type_definition
 	}
 
 	/** METHODS */
+	/** Null when this type has no structural inspection contract. */
+	public function structural_encoding(): ?encoding_shape
+	{
+		return null;
+	}
+
 	/** Published Decoder operation for a scalar leaf. */
 	public function structural_reader(): ?string
 	{

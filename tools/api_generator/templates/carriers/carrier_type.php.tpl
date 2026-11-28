@@ -9,6 +9,7 @@ final class @class@ extends carrier_type_definition
 		parent::__construct(@family@, @payload@::instance());
 	}
 
+@encoding@
 	public function dispatch_label_type(): type_definition
 	{
 		return @dispatch_label_type@;

@@ -116,14 +116,9 @@ final readonly class rewrite_rule_overloads extends runtime_overloads
 	}
 }
 
-/** Encoder leaves exposed by the active structural publication. */
+/** A PHP observation resolved through the operand's structural encoding capability. */
 final readonly class dump_contract extends runtime_overloads
 {
-	/** @param array<class-string<type_definition>,bool> $leaves */
-	public function __construct(public array $leaves, ?type_definition $list_context)
-	{
-		parent::__construct([], list_context: $list_context);
-	}
 }
 
 /** One synchronous observation of the prepared operand. */

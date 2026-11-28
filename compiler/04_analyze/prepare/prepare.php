@@ -2510,14 +2510,8 @@ final class Preparation
 			$arg = $operands[0];
 			$this->value($arg, destination: $arg instanceof ast_collection_expression ? $runtime->list_context : null);
 			$type = $arg->type_def();
-			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
-			$record = $leaf instanceof shared_record_type_definition ? $leaf->payload : $leaf;
-			if ($record instanceof record_type_definition && $record->declaration->data_constructor !== null && $record->constructor() === null) {
-				$seen = [];
-				$this->check_encode_schema($record, $runtime->leaves, $arg, $seen, 'var_dump');
-			} elseif (!isset($runtime->leaves[$leaf::class]) && $type !== type_null::instance()) {
-				throw new diagnostic($arg->source(), $arg->byte_start(), 'Unsupported var_dump type: ' . $type->name);
-			}
+			$seen = [];
+			$this->require_encoding($type, $arg, $seen);
 			$call->settle_runtime(new dump_function($type));
 			return;
 		}
@@ -2705,6 +2699,35 @@ final class Preparation
 				$path[] = $record->name . '::$' . $field->short_name;
 				throw new diagnostic($site->source(), $site->byte_start(), 'Cannot export ' . implode(' -> ', $path) . ' (' . $type->name . ') to ' . $box->name);
 			}
+		}
+	}
+
+	/** Check the recursive capability once per type, including layout dependencies across record boundaries.
+	 * @param bool[] $seen */
+	private function require_encoding(type_definition $type, ast_expression $site, array &$seen, ?string $field = null): void
+	{
+		if (isset($seen[spl_object_id($type)])) return;
+		$seen[spl_object_id($type)] = true;
+		switch ($type->structural_encoding()) {
+			case encoding_shape::record:
+				$this->watch_encode_schema($type);
+				foreach ($type->declaration->data_constructor->parameters as $parameter) {
+					$this->require_encoding($parameter->type_def(), $site, $seen, $type->name . '::$' . $parameter->short_name);
+				}
+				return;
+			case encoding_shape::owner:
+				$this->require_encoding($type->payload, $site, $seen, $field);
+				return;
+			case encoding_shape::optional:
+				$this->require_encoding($type->payload_type, $site, $seen, $field);
+				return;
+			case encoding_shape::sequence:
+			case encoding_shape::mapping:
+				$this->require_encoding($type->write_type(), $site, $seen, $field);
+				return;
+			case null:
+				throw new diagnostic($site->source(), $site->byte_start(), $field === null
+					? 'Unsupported var_dump type: ' . $type->name : "No var_dump encoder for $field (" . $type->name . ')');
 		}
 	}
 
