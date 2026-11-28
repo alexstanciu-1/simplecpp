@@ -190,3 +190,23 @@ including when the final text equals the input. Empty rules perform no replaceme
 With empty input all patterns are still validated. A later invalid pattern or match
 error stops the call immediately, with the scalar and collection failure states
 above and count including completed replacements through the failing rule.
+
+## General Unicode grapheme helpers
+
+With the regex module selected, `string_grapheme_count(text): int` counts
+Unicode 14.0.0 extended grapheme clusters. `string_grapheme_slice(text, start,
+length): string` returns the original bytes of the requested cluster window.
+Both use zero-based cluster positions. A negative start, nonpositive length,
+or start beyond the input gives an empty string. A long slice stops at the end.
+One malformed UTF-8 sequence anywhere in the input switches both operations
+to byte units for the entire string. Embedded NUL is valid.
+
+The native provider uses a shared PCRE2 pattern with pinned Unicode properties.
+PCRE2 10.42's built-in grapheme matcher disagrees with the corresponding
+Unicode conformance corpus on some regional indicator and pictographic cases.
+To regenerate the pattern, run `tools/unicode/grapheme_pattern.py` with Python
+and the Unicode 14.0.0 UCD files `auxiliary/GraphemeBreakProperty.txt` and
+`emoji/emoji-data.txt` in that order. Its standard output is
+`runtime/src/regex/grapheme_pattern.inc`. The build uses the checked-in artifact.
+Unicode property data and the conformance fixture are covered by the
+[Unicode license](../tools/unicode/LICENSE.txt).

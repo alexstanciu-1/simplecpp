@@ -18,6 +18,7 @@ Reconciled against `codex/helpers-and-libs` through `cfd9f27c9` on 2026-11-25. A
 | Exact-mixed type predicates | PHP and general is_bool, is_int and is_float observe the mixed tag. [Contract](../../boxed_slice.md#exact-mixed-type-predicates) |
 | Boxed collections | Table-valued mixed and dynamic support indexing, probes, mutation, traversal and same-family generic map/filter. Keys and order survive transforms, with mixed copy-on-write and dynamic shared identity. [Contract](../../collection_traversal.md) |
 | JSON codec, document/nodes, pull reader | Checked encode/decode for the published types, immutable documents with retained nodes and diagnostics, and a checked pull reader with a shared cursor. [Contract](../../json_module.md) |
+| Grapheme operations | General count and slice use optional PCRE2, Unicode 14.0.0 cluster boundaries and whole-input byte fallback. [Contract](../../regex_module.md#general-unicode-grapheme-helpers) |
 | Regex | General PCRE2 operations and ten PHP preg names, including captures, output parameters, split, filter and callback replacement. [Contract](../../regex_module.md) |
 | Stream I/O, Process, curl | Byte streams with shared cursor/close state, managed Linux children with captured output, checked curl requests and PHP adapters. Each module and a combined caller reached a native executable. [Group verification](stream_process_curl_audit.md#stage-1-verification) |
 | FastCGI host | Optional synchronous Unix-socket backend tested behind Apache2. The application owns its handler and response. The PHP bridge and process supervision remain deferred. [Contract](../../fastcgi_module.md) |
@@ -29,7 +30,6 @@ Reconciled against `codex/helpers-and-libs` through `cfd9f27c9` on 2026-11-25. A
 | Area | Disposition |
 | --- | --- |
 | Fixed arrays | Keep direct native arrays for stack locals and inline fields. Broader element/extent coverage, traversal and sequence map/filter remain explicit debt. [Array audit](typed_container_operations_audit.md) |
-| Grapheme operations | Code-point helpers shipped. Grapheme count and slice await a segmentation contract and implementation. [Unicode audit](string_families_audit.md) |
 | Source buffers and spans | Public buffer/span ownership, line indexing, span hashing and builder span append await a source caller. The current compiler owns its source snapshots and diagnostic offset mapping. [Donor surface index](donor_surfaces.tsv) |
 | Tokenizer | Excluded from native helper intake by decision. Its implementation and benchmarks belong to the Simple C++ tokenizer. [Benchmark](../benchmarks/tokenizer/current_native.md) |
 | Iterators and storage | Built-in traversal, custom iterators and yield producers exist. Sparse stable-ID storage and keyed duplicate membership await concrete consumers. [Iteration](../../../compiler/docs/foreach.md) |

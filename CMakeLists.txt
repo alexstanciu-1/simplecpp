@@ -242,7 +242,7 @@ if(SCPP_ENABLE_REGEX)
   # The native app builder consumes module-owned file paths from regex.module.json.
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/regex-deps)
   file(CREATE_LINK "${PCRE2_LIBRARY}" "${CMAKE_CURRENT_BINARY_DIR}/regex-deps/libpcre2-8.so" SYMBOLIC)
-  add_library(scpp_regex STATIC runtime/src/regex/regex.cpp)
+  add_library(scpp_regex STATIC runtime/src/regex/regex.cpp runtime/src/regex/graphemes.cpp)
   target_link_libraries(scpp_regex PUBLIC scpp_runtime ${PCRE2_LIBRARY})
   target_include_directories(scpp_regex PRIVATE ${runtime_generated}/private ${PCRE2_INCLUDE_DIR})
 endif()
@@ -812,6 +812,10 @@ if(BUILD_TESTING)
       ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} ${CMAKE_BINARY_DIR})
   endif()
   if(SCPP_ENABLE_REGEX)
+    add_executable(grapheme_conformance_test tests/graphemes/conformance.cpp)
+    target_link_libraries(grapheme_conformance_test PRIVATE scpp_regex)
+    add_test(NAME unicode_grapheme_conformance COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/graphemes/conformance.py $<TARGET_FILE:grapheme_conformance_test>)
     add_test(NAME compiler_regex_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/regex_native.py
       ${PHP_EXECUTABLE} ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER}
