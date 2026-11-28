@@ -450,8 +450,14 @@ The call saves the selected callable before evaluating its arguments, including
 arguments that replace the source binding. Grouped local calls keep their
 existing signature and argument-binding rules.
 
-An indexed call such as `$ops["add"](arg())` selects the target before evaluating
-arguments. Container copies own independent entries. Keyed `isset` requires every
+All four flavors can invoke an owned callable selected by a vector or hash
+lookup, in statement or value position. PHP spells it `$ops[$key](arg())`;
+C++, JavaScript and Python spell it `ops[key](arg())`. The checked lookup
+evaluates the key once and retains the target before evaluating arguments.
+A missing slot raises the collection's lookup failure and skips the arguments.
+A present empty callable evaluates its arguments and fails on invocation.
+
+Container copies own independent entries. Keyed `isset` requires every
 index on the path to exist and the final callable to be present. A missing index
 skips the remaining keys and leaves the container untouched.
 
