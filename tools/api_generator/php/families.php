@@ -250,7 +250,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'compare_bytes' => ['parameters' => ['string', 'string'], 'result' => 'int64'],
             'compare_window' => ['parameters' => ['string', 'string', 'int64', 'int64', 'bool_t'], 'required_parameters' => 3, 'result' => 'int64'],
             'replace_window' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'required_parameters' => 3, 'result' => 'string'],
-            'replace_bytes' => ['parameters' => ['string', 'string', 'string'], 'result' => 'string'],
+            'translate_bytes', 'ascii_replace_bytes', 'replace_bytes' => ['parameters' => ['string', 'string', 'string'], 'result' => 'string'],
             'slice_bytes' => ['parameters' => ['string', 'int64', 'int64'], 'result' => 'string', 'required_parameters' => 2],
             'repeat' => ['parameters' => ['string', 'int64'], 'result' => 'string'],
             'starts_with', 'ends_with', 'contains' => ['parameters' => ['string', 'string'], 'result' => 'bool_t'],
@@ -284,7 +284,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'First-byte case requires an ASCII case operation');
         $span = $implementation === 'byte_span';
         requireThat($span === isset($function->complement), 'Byte span requires a membership mode');
-        $phpOnly = $span || in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words'], true) || $firstByte
+        $phpOnly = $span || in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words', 'translate_bytes', 'ascii_replace_bytes'], true) || $firstByte
             || ($implementation === 'trim_bytes' && isset($function->flavors));
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
@@ -320,7 +320,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             $bounds = fields($function->bound, ['php', 'cpp', 'js']);
             requireThat(($function->flavor_adapters ?? false) === true, 'Slice requires flavor adapters');
         }
-        $replace = $implementation === 'replace_bytes';
+        $replace = in_array($implementation, ['replace_bytes', 'ascii_replace_bytes'], true);
         requireThat($replace === property_exists($function, 'replace_mode'), 'Replacement bindings require a mode');
         if ($replace) {
             requireThat(in_array($function->replace_mode, ['first', 'all'], true), 'Invalid replacement mode');

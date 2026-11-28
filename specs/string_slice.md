@@ -249,3 +249,13 @@ only when requested. Defaults are 75 bytes, LF and false. Empty input returns
 an empty string before option validation. Otherwise an empty break raises
 `ValueError`, as does width zero with cutting enabled. Negative widths follow
 PHP's wrapping behavior. Both helpers publish positional optional arguments.
+
+PHP `strtr(string, from, to)` translates original bytes in one pass. It pairs
+the two alphabets up to the shorter length. For a repeated source byte the
+last paired entry wins. Unmapped bytes pass through unchanged.
+
+Scalar PHP `str_ireplace(search, replace, subject[, count])` uses the
+`str_replace` argument order and exact writable integer count. Matches are
+non-overlapping and ignore ASCII letter case. The count includes identity
+replacements and is overwritten with zero on a miss or empty search. Both
+helpers accept embedded NULs. Collection overloads remain deferred.

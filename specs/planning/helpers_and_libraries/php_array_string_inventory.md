@@ -22,8 +22,8 @@ Doc Status: planning
 
 | Group | Names |
 | --- | --- |
-| Published PHP names (bounded signatures) | `chunk_split`, `wordwrap`, `ucwords`, `nl2br`, `addslashes`, `stripslashes`, `strstr`, `strchr`, `stristr`, `strrchr`, `strpbrk`, `strspn`, `strcspn`, `echo`, `ord`, `chr`, `chop`, `strrev`, `str_rot13`, `bin2hex`, `explode`, `hex2bin`, `implode`, `lcfirst`, `ltrim`, `number_format`, `rtrim`, `str_contains`, `str_ends_with`, `str_pad`, `str_repeat`, `str_replace`, `str_starts_with`, `strcasecmp`, `strcmp`, `stripos`, `strlen`, `strncasecmp`, `strncmp`, `strpos`, `strripos`, `strrpos`, `strtolower`, `strtoupper`, `substr`, `substr_compare`, `substr_count`, `substr_replace`, `trim`, `ucfirst` |
-| Direct byte operations and aliases | `str_split`, `join`, `strtr`, `str_ireplace` |
+| Published PHP names (bounded signatures) | `strtr`, `str_ireplace`, `chunk_split`, `wordwrap`, `ucwords`, `nl2br`, `addslashes`, `stripslashes`, `strstr`, `strchr`, `stristr`, `strrchr`, `strpbrk`, `strspn`, `strcspn`, `echo`, `ord`, `chr`, `chop`, `strrev`, `str_rot13`, `bin2hex`, `explode`, `hex2bin`, `implode`, `lcfirst`, `ltrim`, `number_format`, `rtrim`, `str_contains`, `str_ends_with`, `str_pad`, `str_repeat`, `str_replace`, `str_starts_with`, `strcasecmp`, `strcmp`, `stripos`, `strlen`, `strncasecmp`, `strncmp`, `strpos`, `strripos`, `strrpos`, `strtolower`, `strtoupper`, `substr`, `substr_compare`, `substr_count`, `substr_replace`, `trim`, `ucfirst` |
+| Direct byte operations and aliases | `str_split`, `join` |
 | Text composition and scanning | `count_chars`, `str_word_count`, `str_increment`, `str_decrement`, `str_shuffle`, `strtok` |
 | HTML and web boundaries | `htmlspecialchars`, `htmlspecialchars_decode`, `htmlentities`, `html_entity_decode`, `get_html_translation_table`, `strip_tags`, `parse_str`, `str_getcsv` |
 | Formatting, output and parsing | `sprintf`, `printf`, `fprintf`, `vsprintf`, `vprintf`, `vfprintf`, `sscanf`, `print` |

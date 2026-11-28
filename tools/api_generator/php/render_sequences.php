@@ -203,7 +203,7 @@ function renderString(array $plan, array &$groups): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('strings/string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $usesClassicStorage = array_intersect($classic, ['reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes']);
+    $usesClassicStorage = array_intersect($classic, ['reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'ascii_replace_bytes', 'translate_bytes', 'pad_bytes', 'join_bytes']);
     $vars['classic_storage'] = ($usesClassicStorage || isset($plan['json'])) ? template('strings/string_own', ['n' => $n]) : '';
     if ($usesClassicStorage) $vars['classic_storage'] .= template('strings/string_classic_storage', ['n' => $n]);
     $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
@@ -249,8 +249,8 @@ function renderString(array $plan, array &$groups): array {
     if (array_intersect($classic, ['compare_bytes', 'compare_prefix', 'compare_window'])) $d .= template('strings/string_compare_views');
     $comparisonSymbols = [];
     $windowPositionEmitted = false;
-    $sliceMatcher = array_intersect($classic, ['substring_tail', 'ascii_substring_tail']);
-    if ($sliceMatcher) $d .= "namespace str {\n" . template('strings/byte_match') . "}\n";
+    $needsMatcher = array_intersect($classic, ['substring_tail', 'ascii_substring_tail', 'ascii_replace_bytes']);
+    if ($needsMatcher) $d .= "namespace str {\n" . template('strings/byte_match') . "}\n";
     $spanSymbols = [];
     $searchPolicyEmitted = false;
     $padSymbols = [];
@@ -263,7 +263,7 @@ function renderString(array $plan, array &$groups): array {
             if (!$searchPolicyEmitted) {
                 $groups[] = ['provider' => $plan['search_policy']['provider'], 'system' => [],
                     'declarations' => "namespace scpp::str { enum class search_policy { signed_offset, clamp, nonnegative }; }\n"];
-                $d .= template('strings/string_search_position', ['byte_match' => $sliceMatcher ? '' : template('strings/byte_match')]);
+                $d .= template('strings/string_search_position', ['byte_match' => $needsMatcher ? '' : template('strings/byte_match')]);
                 $searchPolicyEmitted = true;
             }
             $args = 'const string& subject, const string& needle';
@@ -287,12 +287,14 @@ function renderString(array $plan, array &$groups): array {
             }
             continue;
         }
-        if ($function['implementation'] === 'replace_bytes') {
+        if (in_array($function['implementation'], ['replace_bytes', 'ascii_replace_bytes'], true)) {
             if (!$replaceSymbols) $h .= "namespace str { enum class replace_mode { first, all }; }\n";
             $args = 'const string& subject, const string& search, const string& replacement, replace_mode mode';
             if (!isset($replaceSymbols[$name])) {
                 $h .= "namespace str { string $name($args); }\n";
-                $d .= template('strings/string_replace', ['name' => $name, 'args' => $args]);
+                $match = $function['implementation'] === 'ascii_replace_bytes'
+                    ? 'byte_match<false, true>(remaining, needle, 0)' : 'remaining.find(needle)';
+                $d .= template('strings/string_replace', ['name' => $name, 'args' => $args, 'match' => $match]);
                 $replaceSymbols[$name] = false;
             }
             if (isset($function['adapters']['php']['reference_parameters']) && !$replaceSymbols[$name]) {
@@ -413,7 +415,7 @@ function renderString(array $plan, array &$groups): array {
                 'first_byte' => 'return value.size() == 0 ? 0 : static_cast<unsigned char>(value.data()[0]);',
                 'low_byte' => 'const char byte = static_cast<char>(static_cast<unsigned char>(value)); return string{&byte, 1};',
                 'reverse_bytes' => "const auto bytes = $bytes(value); return detail::string_access::own(std::string(bytes.rbegin(), bytes.rend()));",
-                'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words' => trim(template('strings/' . $method, [])),
+                'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words', 'translate_bytes' => trim(template('strings/' . $method, [])),
                 'repeat' => "return detail::string_access::own(detail::repeat_bytes($bytes(value), other));",
                 default => "return $bytes(value).$method($bytes(other));",
             };

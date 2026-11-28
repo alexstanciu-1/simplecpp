@@ -67,7 +67,30 @@ for data in (b'', b' a  bc ', b'abcdef gh ij', b'ab||cd||z', b'ab\r\ncd\n', b'a\
         transforms.extend((f'wordwrap({arg},2,{br})', f'wordwrap({arg},2,{br},true)'))
 for width,cut in ((0,'false'), (-1,'false'), (-1,'true'), (9223372036854775807,'true')):
     transforms.append(f'wordwrap(" abc  def ",{width},"|",{cut})')
+for subject, src, dst in [
+        (b'abcabc', b'abc', b'XY'), (b'abc', b'a', b'XYZ'), (b'abba', b'ab', b'ba'),
+        (b'abba', b'aba', b'XYZ'), (b'\xff\0a', b'\0\xff', b'\xff\0'),
+        (bytes(range(256)), bytes(range(256)), bytes(reversed(range(256)))),
+        (b'', b'ab', b'xy'), (b'abc', b'', b'xy'), (b'abc', b'ab', b''),
+        (b'no match', b'XYZ', b'abc')]:
+    transforms.append(f'strtr({literal(subject)},{literal(src)},{literal(dst)})')
+transforms.append('strtr(to:"ba",string:"ab",from:"ab")')
 body += '\n'.join(f'echo bin2hex({call}),";";' for call in transforms)
+body += """
+function check_ireplace(string $search, string $replace, string $subject):void {
+    $n=77;
+    $result=str_ireplace($search,$replace,$subject,$n);
+    echo bin2hex($result),":",$n,";",bin2hex(str_ireplace($search,$replace,$subject)),";";
+}
+"""
+for search, replacement, subject in [
+        (b'Ab', b'!', b'aBAbabAB'), (b'aa', b'x', b'AaaAa'), (b'a', b'aA', b'Aa'),
+        (b'X', b'X', b'XXX'), (b'', b'!', b'abc'), (b'a', b'!', b''),
+        (b'Z', b'x', b'abc'), (b'A\0b', b'\0', b'a\0B-A\0b'),
+        (b'\0', b'', b'\0a\0'), (b'\xc4', b'x', b'\xe4\xc4'),
+        (b'aB', b'!', b'Keep Ab CaSe')]:
+    body += f'check_ireplace({literal(search)},{literal(replacement)},{literal(subject)});\n'
+
 
 errors = ['chunk_split("",0)', 'chunk_split("x",-2)', 'wordwrap("x",2,"")',
           'wordwrap("x",0,"",true)', 'wordwrap("x",0,"|",true)']

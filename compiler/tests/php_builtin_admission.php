@@ -62,6 +62,8 @@ CPP;
 foreach ([
 	'strlen(7)' => 'strlen argument 1 (string) requires string, received int64. Use an explicit (string) cast',
 	'str_replace("x", 7, "x")' => 'str_replace argument 2 (replace) requires string, received int64',
+	'$n ?int = 0; str_ireplace("x","y","x",$n)' => 'str_ireplace argument 4 (count) requires writable int64 storage, received nullable<int64>',
+	'str_ireplace("x","y","x",1)' => 'str_ireplace argument 4 (count)',
 	'$n ?int = 0; str_replace("x","y","x",$n)' => 'str_replace argument 4 (count) requires writable int64 storage, received nullable<int64>',
 	'str_replace("x","y","x",1)' => 'str_replace argument 4 (count)',
 	'$v result<bool> = false; is_bool($v)' => 'requires a scalar, vector, hash or box; received result<bool_t>',
