@@ -247,7 +247,7 @@ function stringAdapterHeader(string $flavor, string $implementation): string {
     return "scpp/$flavor/$file.hpp";
 }
 
-const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['byte_set_tail', 'compare_prefix', 'pad_bytes', 'count_matches', 'split_bytes', 'find', 'rfind'];
+const STRING_VALUE_ERROR_IMPLEMENTATIONS = ['chunk_bytes', 'wrap_words', 'byte_set_tail', 'compare_prefix', 'pad_bytes', 'count_matches', 'split_bytes', 'find', 'rfind'];
 
 /** A JSON output adapter is an existing consumer of the independent structural protocol. */
 function needsStructuralEncoder(mixed $publication): bool {

@@ -235,6 +235,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'count_matches' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'find', 'rfind' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'substring_tail', 'ascii_substring_tail', 'last_byte_tail' => ['parameters' => ['string', 'string', 'bool_t'], 'result' => 'result_or_false<string>', 'required_parameters' => 2],
+            'chunk_bytes' => ['parameters' => ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 1],
+            'wrap_words' => ['parameters' => ['string', 'int64', 'string', 'bool_t'], 'result' => 'string', 'required_parameters' => 1],
             'ascii_words' => ['parameters' => ['string', 'string'], 'result' => 'string', 'required_parameters' => 1],
             'newline_breaks' => ['parameters' => ['string', 'bool_t'], 'result' => 'string', 'required_parameters' => 1],
             'byte_span' => ['parameters' => ['string', 'string', 'int64', 'nullable<int64>'], 'result' => $count, 'required_parameters' => 2],
@@ -282,7 +284,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'First-byte case requires an ASCII case operation');
         $span = $implementation === 'byte_span';
         requireThat($span === isset($function->complement), 'Byte span requires a membership mode');
-        $phpOnly = $span || in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes'], true) || $firstByte
+        $phpOnly = $span || in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words'], true) || $firstByte
             || ($implementation === 'trim_bytes' && isset($function->flavors));
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');

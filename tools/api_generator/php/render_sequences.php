@@ -98,6 +98,15 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $arguments[3] = 'arg3.has_value() ? arg3.value() : arg0.size()';
                         $arguments[] = $mode;
                     }
+                    if ($binding['implementation'] === 'chunk_bytes') {
+                        $parameters[1] .= ' = 76';
+                        $parameters[2] .= ' = ::scpp::string{"\r\n", 2}';
+                    }
+                    if ($binding['implementation'] === 'wrap_words') {
+                        $parameters[1] .= ' = 75';
+                        $parameters[2] .= ' = ::scpp::string{"\n", 1}';
+                        $parameters[3] .= ' = false';
+                    }
                     if ($binding['implementation'] === 'ascii_words') $parameters[1] .= ' = ::scpp::string{" \t\r\n\f\v", 6}';
                     if ($binding['implementation'] === 'newline_breaks') $parameters[1] .= ' = true';
                     if (isset($adapter['before_needle'])) $parameters[2] .= ' = false';
@@ -194,7 +203,7 @@ function renderString(array $plan, array &$groups): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('strings/string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $usesClassicStorage = array_intersect($classic, ['reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes']);
+    $usesClassicStorage = array_intersect($classic, ['reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes']);
     $vars['classic_storage'] = ($usesClassicStorage || isset($plan['json'])) ? template('strings/string_own', ['n' => $n]) : '';
     if ($usesClassicStorage) $vars['classic_storage'] .= template('strings/string_classic_storage', ['n' => $n]);
     $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
@@ -404,7 +413,7 @@ function renderString(array $plan, array &$groups): array {
                 'first_byte' => 'return value.size() == 0 ? 0 : static_cast<unsigned char>(value.data()[0]);',
                 'low_byte' => 'const char byte = static_cast<char>(static_cast<unsigned char>(value)); return string{&byte, 1};',
                 'reverse_bytes' => "const auto bytes = $bytes(value); return detail::string_access::own(std::string(bytes.rbegin(), bytes.rend()));",
-                'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes' => trim(template('strings/' . $method, [])),
+                'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'chunk_bytes', 'wrap_words' => trim(template('strings/' . $method, [])),
                 'repeat' => "return detail::string_access::own(detail::repeat_bytes($bytes(value), other));",
                 default => "return $bytes(value).$method($bytes(other));",
             };

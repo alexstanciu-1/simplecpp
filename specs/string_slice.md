@@ -238,3 +238,14 @@ false, before each CRLF, LFCR, lone CR or lone LF and retains the newline bytes.
 as backslash followed by ASCII zero. `stripslashes` removes each escape
 backslash, decodes escaped ASCII zero to NUL and discards a lone trailing
 backslash. All four return byte strings.
+
+PHP `chunk_split(s[, length[, separator]])` appends the separator to every
+byte chunk, including the final chunk. Empty input yields one separator.
+Length defaults to 76 and must be positive. The default separator is CRLF.
+
+PHP `wordwrap(s[, width[, break[, cut_long_words]]])` wraps at ASCII spaces,
+preserves existing occurrences of the configured break and splits long words
+only when requested. Defaults are 75 bytes, LF and false. Empty input returns
+an empty string before option validation. Otherwise an empty break raises
+`ValueError`, as does width zero with cutting enabled. Negative widths follow
+PHP's wrapping behavior. Both helpers publish positional optional arguments.

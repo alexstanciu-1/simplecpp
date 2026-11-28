@@ -53,7 +53,26 @@ for data in (b'', b'a\rb\nc', b'\r\n\n\r', b'\r\r\n\n', b'\0\n\xff'):
         transforms.append(f'nl2br({literal(data)}{flag})')
 for data in (b'', bytes(range(256)), b"'\x22\\\0", b'q\\', b'\\\\', b'\\\\\\', b'\\q\\0\\\0'):
     transforms.extend(f'{name}({literal(data)})' for name in ('addslashes', 'stripslashes'))
+for data in (b'', b'ab', b'abcd', b'abcde', b'a\0b', b'x' * 77):
+    arg = literal(data)
+    transforms.extend((f'chunk_split({arg})', f'chunk_split({arg},2)'))
+    for sep in (b'', b'|', b'\0!', b'\r\n'):
+        transforms.append(f'chunk_split({arg},2,{literal(sep)})')
+transforms.extend(('wordwrap("a b")', 'wordwrap("a b",2)', 'wordwrap("",0,"",true)',
+                   'chunk_split("abc",9223372036854775807,"|")'))
+for data in (b'', b' a  bc ', b'abcdef gh ij', b'ab||cd||z', b'ab\r\ncd\n', b'a\0xyzz', b'a\tb\xffc'):
+    arg = literal(data)
+    for sep in (b'|', b'||', b'\r\n', b'\0q'):
+        br = literal(sep)
+        transforms.extend((f'wordwrap({arg},2,{br})', f'wordwrap({arg},2,{br},true)'))
+for width,cut in ((0,'false'), (-1,'false'), (-1,'true'), (9223372036854775807,'true')):
+    transforms.append(f'wordwrap(" abc  def ",{width},"|",{cut})')
 body += '\n'.join(f'echo bin2hex({call}),";";' for call in transforms)
+
+errors = ['chunk_split("",0)', 'chunk_split("x",-2)', 'wordwrap("x",2,"")',
+          'wordwrap("x",0,"",true)', 'wordwrap("x",0,"|",true)']
+error_cases = ''.join(f'if(cli_argc()==={i+2}) {{ {call}; return 99; }}\n'
+                      for i,call in enumerate(errors))
 
 with tempfile.TemporaryDirectory() as directory:
     work = Path(directory)
@@ -61,8 +80,16 @@ with tempfile.TemporaryDirectory() as directory:
     app.mkdir()
     (app/'module.json').write_text('{}')
     main = app/'main.php'
-    main.write_text(body + '\nstrpbrk("abc",""); echo "unreachable";')
     expected = subprocess.check_output(['php', '-n', '-r', body], env=env)
+    # PHP 8.5.7 duplicated a final break at the width boundary when cutting.
+    # Pin the dev002 (8.5.12) result and compare newer PHP directly as well.
+    trailing = 'echo bin2hex(wordwrap("ab||cd||",2,"||",true)),";";'
+    main.write_text(error_cases + body + trailing + 'strpbrk("abc",""); echo "unreachable";')
+    pinned = b'61627c7c63647c7c;'
+    php_version = int(subprocess.check_output(['php', '-n', '-r', 'echo PHP_VERSION_ID;']))
+    if php_version >= 80512:
+        assert subprocess.check_output(['php', '-n', '-r', trailing]) == pinned
+    expected += pinned
     assert b'H;' in expected and b'F;' in expected
     config = work/'toolchain.json'
     config.write_text(json.dumps({'cxx':'clang++','flags':['-std=c++23','-stdlib=libc++','-I',
@@ -72,5 +99,10 @@ with tempfile.TemporaryDirectory() as directory:
                     generated, work/'native', config], check=True, stdout=subprocess.DEVNULL, env=env)
     exe = subprocess.run([work/'native/program'], capture_output=True)
     assert exe.stdout == expected and exe.returncode == 1 and b'strpbrk' in exe.stderr, exe
+    for i, call in enumerate(errors):
+        php = subprocess.check_output(['php', '-n', '-r',
+            f'try {{ {call}; }} catch (ValueError $e) {{ echo $e->getMessage(); }}'], env=env)
+        failure = subprocess.run([work/'native/program', *(['x'] * (i + 1))], capture_output=True)
+        assert php and failure.returncode == 1 and php in failure.stderr, (call, php, failure)
     cpp = ''.join(unit.read_text() for unit in generated.rglob('*.cpp'))
     assert 'strchr(' not in cpp and 'strstr(' in cpp
