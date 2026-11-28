@@ -446,6 +446,15 @@ CPP;
 		return 'extern ' . $this->signature_type($node->type_def(), false) . ' ' . self::global_name($node) . ';';
 	}
 
+	/** Record the helper required by an enum operation during standalone emission. */
+	private function request_enum_helper(enum_type_definition $type, dependency_use $use): void
+	{
+		$usage = $type->helper_usage($use);
+		if ($usage === 0) return;
+		$key = $type->declaration->symbol_key();
+		$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $usage;
+	}
+
 	private function needs_enum_helper(ast_enum_declaration $enum, dependency_use $use): bool
 	{
 		return $this->headers?->uses_helper($enum, $use)
@@ -2876,7 +2885,14 @@ CPP;
 			$test = $receiver->member_borrow?->lower_cpp_presence('owner') ?? $owner->lower_cpp_condition('owner');
 			$result_type = $value_type->cpp_type();
 			if (!$value->has_suffix() && $member instanceof ast_field_expression) {
-				$present = $this->conversion($value_type, $value->conversion, 'owner->' . Cpp_Identifier::source($member->field), $member);
+				if ($value->enum_property !== null) {
+					$type = $owner->payload_type;
+					$helper = $type->helper_function($value->enum_property);
+					$this->request_enum_helper($type, $value->enum_property);
+					$required_headers[$helper->header] = true;
+					$read = $helper->symbol . '(' . $owner->lower_cpp_extract('owner') . ')';
+				} else $read = 'owner->' . Cpp_Identifier::source($member->field);
+				$present = $this->conversion($value_type, $value->conversion, $read, $member);
 				return '([](const ' . $owner->cpp_type() . "& owner) -> $result_type { if ($test) return $present; return {}; }($operand))";
 			}
 			$before = $this->suspensions;
@@ -3347,7 +3363,7 @@ CPP;
 					'enum_from_value' => dependency_use::enum_from_value,
 					'enum_try_from_value' => dependency_use::enum_try_from_value,
 					'enum_name' => dependency_use::enum_name,
-					'enum_value' => $value->type_def() === type_string::instance() ? dependency_use::enum_value : null,
+					'enum_value' => dependency_use::enum_value,
 					default => null,
 				};
 				if ($use !== null) {
@@ -3356,8 +3372,7 @@ CPP;
 						dependency_use::enum_try_from_value => $value_type->payload_type,
 						default => $value->arguments[0]->type_def(),
 					};
-					$key = $type->declaration->symbol_key();
-					$this->enum_helpers[$key] = ($this->enum_helpers[$key] ?? 0) | $use->value;
+					$this->request_enum_helper($type, $use);
 				}
 				$required_headers[$function->header] = true;
 				$symbol = $function->symbol;

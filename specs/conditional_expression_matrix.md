@@ -46,6 +46,13 @@ lookup once. A miss skips `key()` and the method. On a hit, even a case
 backed by the empty string is present. The method receives the selected case
 by value, and its result follows the same optional-result rule.
 
+PHP nullable enums expose two read-only case properties. `$case?->name`
+returns the unqualified case spelling as an optional string. `$case?->value`
+returns the backing value in its optional representation. Both evaluate the
+receiver once and yield absence on a miss. An empty backing string or integer
+zero stays present through `??`. The properties use the same bindings as
+`enum_name()` and `enum_value()`.
+
 Consecutive `?->` hops compose from left to right. In
 `findTeam()?->captain?->scoreFor(key())`, each selected receiver is evaluated
 once. If either owner is absent, the result is absent and `key()` is skipped.
