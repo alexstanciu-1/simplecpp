@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -14,6 +15,11 @@ template<class Value> class packed_table;
 // The compiler selects operations; this owner handles tags and family ownership.
 enum class boxed_family { mixed, dynamic };
 
+class json_array_key_error final : public std::invalid_argument {
+public:
+    using std::invalid_argument::invalid_argument;
+};
+
 template<boxed_family Family> class boxed_value final {
 public:
     enum class kind {
@@ -25,12 +31,17 @@ private:
     friend struct boxed_inspection;
     using table = packed_table<boxed_value>;
     struct list_storage { std::shared_ptr<table> entries; };
+    struct array_storage { std::shared_ptr<table> entries; };
+    struct object_storage { std::shared_ptr<table> entries; };
     using tuple_storage = std::shared_ptr<const std::vector<boxed_value>>;
     using payload = std::variant<std::monostate, bool, std::int64_t, double,
-        std::shared_ptr<const std::string>, std::shared_ptr<table>, tuple_storage, list_storage>;
+        std::shared_ptr<const std::string>, std::shared_ptr<table>, tuple_storage, list_storage, array_storage, object_storage>;
     payload value_;
     std::shared_ptr<table>& writable_table_handle();
     std::int64_t python_position(std::int64_t index) const;
+    bool is_python_mapping() const noexcept {
+        return type() == kind::container && !std::holds_alternative<list_storage>(value_);
+    }
     const table* read_table() const;
     template<class Operation> auto mutate(Operation operation);
 public:
@@ -46,6 +57,10 @@ public:
     static boxed_value floating(double value) noexcept;
     static boxed_value string(std::string_view value);
     static boxed_value container();
+    static boxed_value json_array();
+    static boxed_value json_object();
+    bool is_json_array() const noexcept { return std::holds_alternative<array_storage>(value_); }
+    bool is_json_object() const noexcept { return std::holds_alternative<object_storage>(value_); }
     static boxed_value python_list();
     static boxed_value tuple(std::vector<boxed_value> slots);
     bool python_equal(const boxed_value& other, unsigned depth = 0) const;

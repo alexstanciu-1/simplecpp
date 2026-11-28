@@ -54,8 +54,8 @@ template<class Value> void grammar() {
     require(keys.value().read(int64{2147483647LL}).get_integer() == 4);
     require(keys.value().read(string{"4294967296"}).get_integer() == 5);
     require(keys.value().read(string{"99999999999999999999999"}).get_integer() == 6);
-    require(bytes(json::encode(decode<Value>("{}").value()).value()) == "[]");
-    require(bytes(json::encode(decode<Value>(R"({"0":1,"1":2})").value()).value()) == "[1,2]");
+    require(bytes(json::encode(decode<Value>("{}").value()).value()) == "{}");
+    require(bytes(json::encode(decode<Value>(R"({"0":1,"1":2})").value()).value()) == R"({"0":1,"1":2})");
     require(bytes(json::encode(decode<Value>(R"({"1":2,"0":1})").value()).value()) == R"({"1":2,"0":1})");
     require(bytes(json::encode(keys.value()).value()) == R"({"0":1,"00":2,"-1":3,"2147483647":4,"4294967296":5,"99999999999999999999999":6})");
     auto escaped = Value::from_string(string{"\0\x01\b\f\n\r\t\"\\/", 10LL});
@@ -68,6 +68,37 @@ template<class Value> void grammar() {
     for (double bad : {std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()})
         require(json::encode(Value::from_floating(float64{bad})).has_error());
     require(bytes(json::encode(Value::from_integer(int64{42LL})).value()) == "42");
+}
+template<class Value> void decoded_shapes() {
+    const auto encode = [](const Value& v) { return bytes(json::encode(v).value()); };
+    auto nested = decode<Value>(R"([{},[],{"0":[]}])").value();
+    require(encode(nested) == R"([{},[],{"0":[]}])");
+    auto array = decode<Value>("[0,1,2,3]").value();
+    auto peer = array;
+    require(array.is_json_array() && !array.is_json_object());
+    require(array.remove(int64{1LL}) && !array.remove(int64{9LL}));
+    require(encode(array) == "[0,2,3]");
+    require(encode(peer) == (std::is_same_v<Value, mixed> ? "[0,1,2,3]" : "[0,2,3]"));
+    require(array.remove(int64{0LL}) && array.remove(int64{1LL}));
+    array.set(int64{1LL}, Value::from_integer(int64{7LL}));
+    array.set(int64{0LL}, Value::from_integer(int64{6LL}));
+    require(array.append(Value{}) == 2);
+    require(encode(array) == "[6,7,null]");
+    array.clear();
+    require(array.is_json_array() && encode(array) == "[]");
+    auto object = decode<Value>(R"({"0":1,"1":2})").value();
+    require(object.is_json_object() && !object.is_json_array());
+    require(object.remove(int64{0LL}));
+    require(encode(object) == R"({"1":2})");
+    object.clear();
+    require(encode(object) == "{}");
+    auto ordinary = Value::container();
+    require(!ordinary.is_json_array() && !ordinary.is_json_object());
+    ordinary.set(int64{3LL}, Value{});
+    ordinary.set(string{"x"}, Value{});
+    require(encode(ordinary) == R"({"3":null,"x":null})");
+    ordinary.clear();
+    require(encode(ordinary) == "[]");
 }
 void ownership_and_cycles() {
     auto mixed_result = json::decode_mixed(string{R"({"a":1})"});
@@ -185,6 +216,7 @@ void nullable_scalars() {
 }
 struct comma_punctuation : std::numpunct<char> { char do_decimal_point() const override { return ','; } };
 int main() {
+    decoded_shapes<mixed>(); decoded_shapes<dynamic>();
     grammar<mixed>(); grammar<dynamic>(); ownership_and_cycles(); allocation_failures(); typed_scalars(); nullable_scalars();
     auto old = std::locale::global(std::locale(std::locale::classic(), new comma_punctuation));
     require(bytes(json::encode(dynamic::from_floating(float64{1.25})).value()) == "1.25");

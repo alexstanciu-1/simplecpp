@@ -33,6 +33,18 @@ boxed_value<Family> boxed_value<Family>::container() {
     boxed_value<Family> r; r.value_ = std::make_shared<table>(); return r;
 }
 template<boxed_family Family>
+boxed_value<Family> boxed_value<Family>::json_array() {
+    boxed_value result;
+    result.value_ = array_storage{std::make_shared<table>()};
+    return result;
+}
+template<boxed_family Family>
+boxed_value<Family> boxed_value<Family>::json_object() {
+    boxed_value result;
+    result.value_ = object_storage{std::make_shared<table>()};
+    return result;
+}
+template<boxed_family Family>
 boxed_value<Family> boxed_value<Family>::python_list() {
     boxed_value r;
     r.value_ = list_storage{std::make_shared<table>()};
@@ -46,11 +58,16 @@ boxed_value<Family> boxed_value<Family>::tuple(std::vector<boxed_value> slots) {
 }
 template<boxed_family Family>
 std::shared_ptr<typename boxed_value<Family>::table>& boxed_value<Family>::writable_table_handle() {
+    if (auto* array = std::get_if<array_storage>(&value_)) return array->entries;
+    if (auto* object = std::get_if<object_storage>(&value_)) return object->entries;
     if (auto* list = std::get_if<list_storage>(&value_)) return list->entries;
     return std::get<std::shared_ptr<table>>(value_);
 }
 template<boxed_family Family>
-typename boxed_value<Family>::kind boxed_value<Family>::type() const noexcept { return std::holds_alternative<list_storage>(value_) ? kind::container : static_cast<kind>(value_.index()); }
+typename boxed_value<Family>::kind boxed_value<Family>::type() const noexcept {
+    // The extra storage tags all represent the public container kind.
+    return value_.index() > static_cast<std::size_t>(kind::tuple) ? kind::container : static_cast<kind>(value_.index());
+}
 template<boxed_family Family>
 bool boxed_value<Family>::get_boolean() const {
     if (type() != kind::boolean) throw std::runtime_error("boxed_expected_boolean");
@@ -89,6 +106,8 @@ const typename boxed_value<Family>::table* boxed_value<Family>::read_table() con
     if (type() == kind::tuple) throw std::runtime_error("TypeError");
     if (type() == kind::null) return nullptr;
     if (type() != kind::container) throw std::runtime_error("boxed_expected_container");
+    if (const auto* array = std::get_if<array_storage>(&value_)) return array->entries.get();
+    if (const auto* object = std::get_if<object_storage>(&value_)) return object->entries.get();
     if (const auto* list = std::get_if<list_storage>(&value_)) return list->entries.get();
     return std::get<std::shared_ptr<table>>(value_).get();
 }
@@ -164,11 +183,14 @@ bool boxed_value<Family>::contains(std::string_view key) const {
 }
 template<boxed_family Family>
 void boxed_value<Family>::set(std::int64_t key, boxed_value<Family> value) {
+    if (is_json_array() && (key < 0 || static_cast<std::uint64_t>(key) > container_size()))
+        throw json_array_key_error("json_array_sparse_key");
     (void)packed_key::integer(key);
     mutate([&](table& t) { t.set(key, std::move(value)); });
 }
 template<boxed_family Family>
 void boxed_value<Family>::set(std::string_view key, boxed_value<Family> value) {
+    if (is_json_array()) throw json_array_key_error("json_array_string_key");
     mutate([&](table& t) { t.set(key, std::move(value)); });
 }
 template<boxed_family Family>
@@ -178,10 +200,12 @@ std::int64_t boxed_value<Family>::append(boxed_value<Family> value) {
 template<boxed_family Family>
 bool boxed_value<Family>::remove(std::int64_t key) {
     if (!contains(key)) return false; // misses do not detach or bootstrap
+    if (is_json_array()) return mutate([&](table& t) { return t.remove_dense_at(key); });
     return mutate([&](table& t) { return t.remove(key); });
 }
 template<boxed_family Family>
 bool boxed_value<Family>::remove(std::string_view key) {
+    if (is_json_array()) throw json_array_key_error("json_array_string_key");
     if (!contains(key)) return false;
     return mutate([&](table& t) { return t.remove(key); });
 }
@@ -241,7 +265,7 @@ boxed_value<Family> boxed_value<Family>::python_read(std::int64_t index) const {
 }
 template<boxed_family Family>
 boxed_value<Family> boxed_value<Family>::python_read(std::string_view key) const {
-    if (!std::holds_alternative<std::shared_ptr<table>>(value_)) throw std::runtime_error("TypeError");
+    if (!is_python_mapping()) throw std::runtime_error("TypeError");
     const auto* entry = read_table()->find(key);
     if (!entry) throw std::out_of_range("KeyError");
     return *entry;
@@ -254,12 +278,12 @@ void boxed_value<Family>::python_set(std::int64_t key, boxed_value value) {
 }
 template<boxed_family Family>
 void boxed_value<Family>::python_set(std::string_view key, boxed_value value) {
-    if (!std::holds_alternative<std::shared_ptr<table>>(value_)) throw std::runtime_error("TypeError");
+    if (!is_python_mapping()) throw std::runtime_error("TypeError");
     set(key, std::move(value));
 }
 template<boxed_family Family>
 bool boxed_value<Family>::python_next(std::int64_t& position, std::int64_t limit, boxed_value& value) const {
-    if (!std::holds_alternative<std::shared_ptr<table>>(value_)) return iteration_next(position, limit, value);
+    if (!is_python_mapping()) return iteration_next(position, limit, value);
     std::uint32_t key;
     if (!iteration_next(position, limit, value, &key)) return false;
     value = packed_key::is_string(key) ? string(packed_string_pool::instance().resolve(key)) : integer(key);

@@ -66,7 +66,7 @@ private:
 		if (get() != '[') {
 			fail_json_parse("expected '['", pos_);
 		}
-		auto out = Value::container();
+		auto out = Value::json_array();
 		skip_whitespace();
 		if (!at_end() && peek() == ']') {
 			++pos_;
@@ -93,7 +93,7 @@ private:
 		if (get() != '{') {
 			fail_json_parse("expected '{'", pos_);
 		}
-		auto out = Value::container();
+		auto out = Value::json_object();
 		// Compare decoded JSON names, before any family-specific key normalization.
 		std::unordered_set<std::string> names;
 		skip_whitespace();
@@ -218,7 +218,7 @@ template<class Value> void writer::table(const Value& value) {
         const void* identity;
         ~guard() { active.erase(identity); }
     } path{active_, &table};
-    const bool array = table.is_packed();
+    const bool array = value.is_json_array() || (!value.is_json_object() && table.is_packed());
     output_.push_back(array ? '[' : '{');
     bool first = true;
     table.visit_entries([&](std::uint32_t code, const Value& entry) {

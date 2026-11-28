@@ -4,6 +4,21 @@ Doc Status: planning
 
 The [original field report](php_flavor_developer_qos.md) describes the experience at `356b6ff15`. The first full replay used `4e035377d`. On November 27 we reran the full study on dev002 with the PHP onboarding changes, then repeated it on the merged compiler at `da940c179`. The unit of assessment is the developer's task. **Fixed** means the original blocking operation now works under its intended v0.2 contract. **Still reproducible** means at least one concrete usability issue remains for discussion, including misleading diagnostics. **Intentional difference** means the tested behavior follows a language or library boundary we can explain to a PHP developer. A reproducible inconvenience is evidence for discussion, not a commitment to implement PHP compatibility.
 
+## Tasks 11 and 12 after decoded JSON identity
+
+At `1727a6add` on dev002, both boxed families agreed on all 20 inputs in the [wire corpus](../../samples/php-developer-qos/wire_shapes.py). Empty, nested and densely numbered objects round-tripped as objects, matching stock PHP object mode. For example, `{"0":false,"1":null}` survived exactly. Stock PHP associative mode produced `[false,null]`. The broader wire-fidelity distinction remains. Boxed decoding rejected the member name `"2147483648"` and re-encoded the number `1e2` as `100`. Document nodes exposed the original member name and number token.
+
+For task 12 we built the [boolean preference endpoint](../../samples/php-developer-qos/preferences-api/main.phs) three ways and sent 13 FastCGI requests to each executable. The temporary boxed variants checked decode success, then `is_bool($node)` before extracting the value. The document endpoint checked parse success, then `json_node_boolean($node)`.
+
+| POST body | Boxed mixed and dynamic | Document |
+|---|---|---|
+| `false` | 200, returned `enabled:false` | Same |
+| `null`, `0`, `"false"`, `[]`, `{}`, `{"enabled":false}` | 422, expected boolean | Same |
+| Truncated object `{` | 400, syntax | Same |
+| Bytes `22 FF 22` | 422, expected boolean. The decoder accepted a string and the wire probe emitted the original bytes. | 400, syntax. The parser reported `utf8` at byte 1. |
+
+The CPU comparison on dev002 used Clang 18 Release builds of `3a38123ca` and `1727a6add`, with 12 paired runs on one CPU. Median paired decode time for 128 integers increased 10.6% for dynamic (4.71 to 5.21 µs) and 4.0% for mixed. The 32-record workload showed no consistent change across pairs. Encoding 64 consecutive numeric object keys took about twice as long and emitted 493 bytes, compared with the previous 183-byte array that omitted the keys. The separate allocation probe observed the same allocation counts and bytes for its tested inputs.
+
 ## November 28 refresh on the pushed Stringable merge
 
 At `87ca872a9`, we replayed all 250 isolated PHP snippets on dev002. There were 143 expected outputs, 93 compiler rejections and 14 runtime failures after reconciling two stale expectations. The published PHP byte helpers now produce `chr(65) === "A"` and `ord("A") === 65`; both corrected probes passed on rerun. The Stringable native and incremental checks passed, as did both field/order interpolation tests and the form-preview and catalog-view applications. The remaining study drivers retain their earlier dated evidence. [Snippet runner](../../samples/php-developer-qos/snippets.py) · [Stringable checks](../../compiler/tests/stringable_native.py)
@@ -67,8 +82,8 @@ operand. [Interpolation checks](../../compiler/tests/interpolation.php)
 | 8 | Read a nested JSON property | Fixed | Both `$v->user->name` and `$v["user"]["name"]` printed Ana directly. |
 | 9 | Copy a row and change it | Fixed | The nested indexed write printed Jo. The explicit copy/edit/write-back control preserved Ana in the original. Mixed copies and shared dynamic aliases retain their intended distinct behavior. |
 | 10 | Validate an unknown value | Fixed | The published kind predicates accept mixed, dynamic and native inputs. A decoded dynamic boolean passed `is_bool`, and `is_int(1)` also succeeded. |
-| 11 | Round-trip a JSON API response | Intentional difference | The boxed table encoded an empty object as `[]`; document parsing retained object identity. The wire corpus exercised numeric-looking keys, exact large-number tokens and duplicate names. Use documents for wire fidelity. |
-| 12 | Distinguish malformed bytes from an invalid schema | Intentional difference | Boxed decoding accepted raw invalid UTF-8, while the document parser reported `utf8@1`. The settings endpoint distinguished malformed input (400), valid input with the wrong shape (422) and valid false (200). |
+| 11 | Round-trip a JSON API response | Intentional difference | Array/object identity is fixed for both boxed families. Exact number tokens and the full range of numeric-looking member names still require document nodes. |
+| 12 | Distinguish malformed bytes from an invalid schema | Intentional difference | Both paths reject malformed syntax and can return 422 for valid JSON of the wrong type. Only the document parser detected the raw invalid UTF-8 in this replay and let the endpoint return 400. |
 | 13 | Pass a checked or boxed value to a function | Fixed | Source functions, methods and builtins share by-value argument admission. The document-root chain printed `array` for a valid parse and raised `carrier_no_value` before the next statement for a failed parse. Both observations reproduced in the full replay. |
 | 14 | Move between domain objects and JSON | Intentional difference | Direct encode of the tested Product class and typed vector rejected. Explicit field projection encoded `{"id":7}`. This verdict applies to those inputs and does not generalize to every record API. |
 | 15 | Use familiar collection operations | Fixed | Single-input PHP array_map, key-preserving array_filter and strict in_array work on the tested typed inputs. The broad PHP array parameter remains a separate type-system difference. Further collection work awaits standardization. |
