@@ -581,7 +581,7 @@ abstract class type_definition
 	}
 
 	/** Published native formatter for the common to_string capability. */
-	public function native_string_formatter(): ?runtime_function
+	public function native_string_formatter(bool $fallback = false): ?runtime_function
 	{
 		return null;
 	}
@@ -1020,6 +1020,7 @@ abstract class type_definition
 	/** Evaluate only a known source fact; conversion handlers may explicitly decline evaluation. */
 	final public function evaluate_constant(int $conversion /** uint16 */, ast_expression $source): int|float|bool|null|constant_evaluation /** int64|float64|bool|null|constant_evaluation */
 	{
+		if ($conversion === value_conversion::stringable_text) return constant_evaluation::unavailable;
 		if ($conversion === value_conversion::decimal_literal) return (int)constant_dispatch::string_label_bytes($source);
 		return $source->constant_known() ? $this->convert_constant($conversion, $source->constant())
 			: constant_evaluation::unavailable;

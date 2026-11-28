@@ -22,7 +22,10 @@ global names and formatting specifiers are outside this slice.
 
 String, bool, byte/uint8, int/int64 and float/float64 insertions use the
 [explicit scalar cast](compiler_scalars_v0_2.md#explicit-scalar-to-string-casts-in-v02).
-PHP also accepts `mixed` insertions using the explicit boxed-to-string cast.
+PHP also formats published integer widths, both string builders, and class or
+interface values implementing the core Stringable contract. Each insertion
+captures its text before the next user formatter can modify its source.
+PHP accepts `mixed` insertions using the explicit boxed-to-string cast.
 For example, a boxed false formats as `false` in both a stored string and an
 echoed string. Boxed null and containers raise `boxed_scalar_kind`.
 Other boxed types, statically null values, carriers and collections require

@@ -691,5 +691,5 @@ callers use the corresponding `scpp::to_string(value)` overload.
 
 Interface parameters use the existing class-owner representation. The native
 capability grants a concrete operation and introduces no scalar or builder
-boxing. This slice covers explicit calls. Each flavor's existing rules still
-govern output, interpolation, casts and implicit argument conversions.
+boxing. PHP additionally uses this capability for echo, interpolation and explicit
+string casts. Ordinary typed string arguments keep their own admission rules.

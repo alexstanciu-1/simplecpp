@@ -18,10 +18,10 @@ This PHP-flavor example prints `8called` followed by a newline and exits with 8.
 Use existing flavor-specific variable/function declaration syntax for cpp/js.
 
 Single quotes decode only escaped quote/backslash. Double quotes accept `\\`,
-`\"`, `\$`, `\n`, `\r`, `\t` and isolated `\0`. Interpolation, other escapes,
+`\"`, `\$`, `\n`, `\r`, `\t` and isolated `\0`. Unsupported escapes,
 empty operand lists, trailing commas and unsupported value types diagnose. String literals and typed string locals are supported. Source spelling must be valid UTF-8 (including quoted text); NUL is
 allowed inside literals. The runtime byte-output API does not impose that encoding
-restriction on its input buffers. String operators, interpolation and text conversions remain deferred.
+restriction on its input buffers. PHP echo evaluates all insertions in one interpolated operand before writing its bytes.
 
 ## Ownership
 
@@ -62,13 +62,13 @@ A body edit changes stdout and only its owning translation unit. The chained-out
 `echo_string` and the literal binding `echo_bytes` in the named runtime binding catalog. The generator validates active
 type/strategy compatibility and binding signatures, and generates `supports_output()`,
 `output_headers()` and `lower_cpp_output()`. Unsupported types keep conservative base
-methods. No implicit conversion or `to_string` capability is introduced.
+methods. PHP also consults the core `to_string` capability for classes and builders.
 
 `ast_echo_statement.values` owns an ordered, nonempty list of expression children,
 replacing `value`. Collection, preparation, reset and inspection traverse every operand.
 Syntax and compilation inspection expose `values` arrays; literal byte inspection is
 preserved. Each operand is prepared once and the complete statement must pass admission
-before any executable is emitted. No extra prepared facts are stored.
+before any executable is emitted. Each implicit formatter call retains its prepared target.
 
 Emission produces one output statement per operand, preserving print-before-next
 semantics. String expressions bind directly to the compiled `echo_string(const string&)` helper.

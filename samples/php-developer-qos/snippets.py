@@ -47,7 +47,7 @@ echo "|", $calls; return 0;''', '111000000000|4'),
     Probe('empty-number', '$n=0; if (empty($n)) { return 1; } return 0;',
           reject='empty requires a string or collection'),
     Probe('echo-boxed', '$h=[]; $h["jobs"]=1; echo $h["jobs"]; return 0;',
-          reject='Echo requires a printable scalar; received mixed'),
+          reject='Echo requires a printable scalar or Stringable value; received mixed'),
     Probe('extract-boxed', '$h=[]; $h["jobs"]=1; $n int=$h["jobs"]; echo $n; return 0;', '1'),
     Probe('copies', '''$a mixed=["n"=>1]; $b=$a; $b["n"]=2; $x int=$a["n"]; echo $x;
 $c dynamic=["n"=>1]; $d=$c; $d["n"]=2; $y int=$c["n"]; echo $y; return 0;''', '12'),

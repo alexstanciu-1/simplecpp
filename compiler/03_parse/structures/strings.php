@@ -88,12 +88,18 @@ final class ast_interpolation_key extends ast_string_token_slice {
 /** Prepared formatting shared by named, indexed and field insertions. */
 trait ast_interpolation_conversion
 {
+	/** Prepared fact: selected target for an implicit PHP text consumer. */
+	public runtime_function|ast_function_declaration|null $text_formatter = null;
 	/** Prepared fact: scalar-to-string operation, cleared for incremental re-preparation. */
 	private ?int $conversion /** uint16|null */ = null;
 
 	/** Select scalar formatting, including runtime kind selection for a PHP mixed operand. */
 	public function prepare_text(type_definition $string): void
 	{
+		if ($this->text_formatter !== null) {
+			$this->conversion = value_conversion::stringable_text;
+			return;
+		}
 		if ($this->type_def() instanceof carrier_type_definition) {
 			throw new diagnostic($this->source(), $this->byte_start(), 'Interpolation requires a scalar local or parameter');
 		}
@@ -113,6 +119,7 @@ trait ast_interpolation_conversion
 	{
 		parent::reset_preparation();
 		$this->conversion = null;
+		$this->text_formatter = null;
 	}
 }
 

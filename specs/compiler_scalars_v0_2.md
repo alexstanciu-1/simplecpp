@@ -712,6 +712,10 @@ negative values. Float/float64 uses locale-independent shortest round-trip text
 with the C++ floating `to_chars` contract. Negative zero produces `-0`. NaN and
 infinities raise `nonfinite_decimal_text`. A string retains its exact bytes.
 
+In PHP an explicit string cast can also call the core Stringable method on a
+class or interface value and use a published builder or integer formatter.
+A checked cast from a supported carrier first requires its payload.
+
 Mixed and dynamic dispatch on the stored scalar kind and use the same formatter.
 A statically known null is rejected during preparation. A boxed null or container
 raises `boxed_scalar_kind` at execution. Formatting requires an explicit cast.

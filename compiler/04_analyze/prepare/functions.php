@@ -119,6 +119,7 @@ final class Function_Preparation
 				self::expression($statement->initializer);
 			}
 			elseif ($statement instanceof ast_echo_statement) {
+				$statement->formatters = [];
 				foreach ($statement->values as $value) {
 					self::expression($value);
 				}

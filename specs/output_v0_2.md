@@ -23,9 +23,13 @@ the existing PHP runtime output contract (`php::echo_one` / `php::to_string`):
   writes `1`. A structured Result error writes its message. Value states delegate
   to their payload's output contract.
 
-Typed containers, source records, enums and callable payloads are not admitted by
+PHP accepts an explicitly Stringable class or interface value and both published
+string builders. It calls the formatter once and writes the resulting bytes.
+Direct scalar echo retains its own output spelling, including the boolean rules.
+
+Typed containers, other source records, enums and callable payloads are not admitted by
 this bounded slice. They reject during preparation, including in unreachable code.
-`print`, user-defined formatting and new formatting policies are outside this slice.
+`print`, other user-defined formatting and new formatting policies are outside this slice.
 
 The type-aware compiler retains one statement with ordered operands. The legacy
 exporter's sibling `AST_ECHO` representation remains an implementation detail; both
