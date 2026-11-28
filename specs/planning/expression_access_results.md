@@ -4,15 +4,15 @@ Doc Status: planning
 
 2026-11-28. Compiler baseline `c0a428116`, integrated upstream revision `a702bab53`, final regression revision `56e95560c`. The [inventory](expression_access_inventory.md) gives the disposition of each of the 52 reviewed rows. Colors describe the observed cases within each row. They are not a percentage of the language implemented.
 
-| Status | Rows | Meaning |
+| Status at audit close | Rows | Meaning |
 |---|---:|---|
 | 🟢 Verified | 41 | The specified behavior or rejection has an observed witness. Some rows rely on existing suites. |
 | 🔴 Defect | 1 | Two source-identical callable signatures behave differently in a conditional selection depending on their declaration origin. |
 | 🟠 Follow-up | 10 | Broader contracts, diagnostics, surface decisions or architecture work. The concrete items are listed below. |
 
-## 🔴 F1. Conditional selection compares declaration identity for owned callables
+## 🟢 F1 fixed after audit. Callable selection now compares signatures
 
-Two independently declared values have the same written signature. Whole-value assignment between them succeeds. Both of the following selections reject during preparation, before C++ emission.
+At the audit baseline, whole-value assignment between independent declarations of the same callable signature succeeded, while both selections below failed in preparation.
 
 ```php
 $a function<int(int)> = fn($x) => $x + 1;
@@ -22,7 +22,7 @@ $f = true ? $a : $b;                  // Ternary result types must be identical
 $f = match (1) { 1 => $a, default => $b };  // Match result types must be identical
 ```
 
-Controls distinguish signature compatibility from declaration origin. Selecting the same local twice works. Selecting a local and its inferred copy works. Selecting two separate closure **values** produced by the same typed factory declaration works and invokes the correct body. Giving both factory outputs separate explicit but identical annotations reproduces the failure. The ternary also rejects when the two inputs are separately declared parameters of identical type. Resident and fresh preparation agree. The current arm join compares prepared type objects by identity. A future fix should preserve callable mode, parameter and return compatibility and test invalidation after a genuine signature change. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Positive and failing controls](../../compiler/tests/expression_access_paths.py)
+Controls distinguish signature compatibility from declaration origin. Selecting the same local twice works. Selecting a local and its inferred copy works. Selecting two separate closure **values** produced by the same typed factory declaration works and invokes the correct body. Giving both factory outputs separate explicit but identical annotations reproduces the failure. The ternary also rejects when the two inputs are separately declared parameters of identical type. Resident and fresh preparation agree. At the audit baseline the arm join compared prepared type objects by identity. **Follow-up 🟢 fixed.** The shared preparation step now uses the existing exact type matcher. The default suite invokes both alternatives and checks parameter type, return type, arity and reference-mode mismatches for ternary and match, including recovery after a signature edit. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Positive and failing controls](../../compiler/tests/expression_access_paths.py)
 
 ## 🟠 Remaining implementation, diagnostic and design work
 
@@ -58,11 +58,9 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 - Baseline default suite **593/593** passed. After the pull, build and default suite at `d3ca7dd96` passed **629/629**. After the test timing adjustment at `56e95560c`, the final `ctest --preset default -j24` again passed **629/629**, in **39.41 s**. This includes **26 new registered regression cases**. Suite counts describe this checkout and preset. The historical AST/native replay also exercised PHP, C++, JavaScript and Python. Syntax-only cross-flavor rejects were not counted as native executions.
 - To run the new default regressions alone from a configured checkout, use `ctest --preset default -R '^compiler_expression_path_' --output-on-failure`.
 - The full callable-collection and boxed-collection on-demand drivers passed on dev002. In isolation the complete valid/invalid/repaired anchor and selection tests took 5.15 s and 4.52 s. Their default forms keep the invalid-provider check and native recovery, taking 1.39 s and 2.10 s respectively. The full sequences also passed after the split; run them with `anchor_full` and `selection_full` in the same driver.
-- The four intended-success reproducers below were run separately on the integrated compiler. They currently fail at preparation with the diagnostics under F1/F2. They are directly runnable and excluded from the passing default suite. A successful future implementation should make them pass and promote them into the default suite. [Test driver](../../compiler/tests/expression_access_paths.py)
+- The F1 reproducers are registered as `compiler_expression_path_declared_ternary` and `compiler_expression_path_declared_match`. The two remaining intended-success reproducers cover the deferred F2 coalescing contracts. [Test driver](../../compiler/tests/expression_access_paths.py)
 
 ```sh
-python3 -B compiler/tests/expression_access_paths.py pending_ternary
-python3 -B compiler/tests/expression_access_paths.py pending_match
 python3 -B compiler/tests/expression_access_paths.py pending_handle_coalesce
 python3 -B compiler/tests/expression_access_paths.py pending_wrapper_coalesce
 ```

@@ -246,14 +246,30 @@ def grouped_receiver(work, case):
 
 
 def callable_join(work, case):
-    # Keep expected semantics executable for the two outstanding preparation failures.
     model = 'function make(int $n):function<int(int)> {return fn($x)=>$x+$n;}'
     separate = '$a function<int(int)>=make(1);$b function<int(int)>=make(2);'
     shared = '$a=make(1);$b=make(2);'
-    expr = 'true ? $a : $b' if case.endswith('ternary') else 'match(1){1=>$a,default=>$b}'
-    setup = separate if case.startswith('pending') else shared
-    source = setup + '$f=' + expr + ';echo $f(7);return 8;'
-    revisions(work, 'php', {'api': model, 'main': source}, [(None, None, b'8')])
+    expr = '$left ? $a : $b' if case.endswith('ternary') else 'match(true){$left=>$a,default=>$b}'
+    setup = separate if case.startswith('declared') else shared
+    source = ('function run(bool $left):int {' + setup + '$f=' + expr + ';return $f(7);}'
+              'echo run(true),run(false);return 8;')
+    revisions(work, 'php', {'api': model, 'main': source}, [(None, None, b'89')])
+
+
+def callable_join_signatures(work, case):
+    ternary = case.endswith('ternary')
+    expr = 'true ? $a : $b' if ternary else 'match(1){1=>$a,default=>$b}'
+    diagnostic = ('Ternary' if ternary else 'Match') + ' result types must be identical'
+
+    def program(signature):
+        return ('function pick(function<int(int)> $a,function<' + signature + '> $b):int {'
+                '$f=' + expr + ';return $f(7);}'
+                'echo pick(fn($x)=>$x+1,fn($x)=>$x+2);return 8;')
+
+    valid = program('int(int)')
+    edits = [('main', program(signature), diagnostic)
+             for signature in ('string(int)', 'int(string)', 'int(int,int)', 'int(int&)')]
+    revisions(work, 'php', {'main': valid}, [(None, None, b'8'), *edits, ('main', valid, b'8')])
 
 
 def arithmetic_failure(work, case):
@@ -316,7 +332,8 @@ CASES.update(arithmetic_failure=arithmetic_failure, predicate_after_write=predic
              qualified_receiver=qualified_receiver, pending_wrapper_coalesce=pending_coalesce,
              pending_handle_coalesce=pending_coalesce)
 CASES.update(grouped_absent=grouped_receiver, grouped_present=grouped_receiver)
-CASES.update({name: callable_join for name in ('factory_match', 'factory_ternary', 'pending_match', 'pending_ternary')})
+CASES.update({name: callable_join for name in ('factory_match', 'factory_ternary', 'declared_match', 'declared_ternary')})
+CASES.update(signatures_ternary=callable_join_signatures, signatures_match=callable_join_signatures)
 CASES.update(suspended_owner=suspended_owner, terminal_void=terminal_void, mixed_read=mixed_read_context,
              shallow_failure=shallow_failure, conversion_failure=conversion_failure)
 

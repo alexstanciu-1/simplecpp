@@ -1620,8 +1620,8 @@ final class Preparation
 		if ($branch instanceof ast_throw_expression) return;
 		$type = $branch->type_def();
 		if (!$type->supports_inferred_local() || $type instanceof generator_type_definition) throw new diagnostic($branch->source(), $branch->byte_start(), $construct . ' arm requires a supported value result');
-		if ($result !== null && $result !== $type) throw new diagnostic($branch->source(), $branch->byte_start(), $construct . ' result types must be identical');
-		$result = $type;
+		if ($result !== null && !$result->matches($type)) throw new diagnostic($branch->source(), $branch->byte_start(), $construct . ' result types must be identical');
+		$result ??= $type;
 	}
 
 	/** Reject uses of conditional storage on a path where it may still be empty. */
