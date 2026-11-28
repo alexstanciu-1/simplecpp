@@ -1,6 +1,6 @@
 
 /** Canonical published hash<V,K> identity; empty construction, checked keyed writes and copied reads. */
-final class @class@ extends hash_type_definition@interfaces@, subset_source, map_source, @entry_builder@
+final class @class@ extends hash_type_definition@interfaces@, coalescing_index_read_type, subset_source, map_source, @entry_builder@
 {
 	use @entry_insert@;
 	use collection_keyed_store;
@@ -49,6 +49,11 @@ final class @class@ extends hash_type_definition@interfaces@, subset_source, map
 	public function lower_cpp_empty(): string
 	{
 		return $this->cpp_type() . '{}';
+	}
+
+	public function lower_cpp_coalescing_lookup(ast_expression $key, string $receiver, string $index): string
+	{
+		return $receiver . '.@coalescing_lookup@(' . $this->lower_cpp_key($key, $index) . ')';
 	}
 
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string

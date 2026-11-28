@@ -8,6 +8,8 @@
   "entry_insertion": "keyed_store",
   "writable_iteration": "live_key_cursor",
   "indexed_probe_values": ["int64", "string", "shared_owner"],
+  "application_scalar_values": ["bool_t"],
+  "coalescing_lookup": "lookup_entry",
   "entry_presence": {"protocol": "key_lookup", "owner_probe": "has_present_owner"},
   "checked_slot": {"method": "checked_slot", "key": "k", "value": "v", "missing": "hash_missing_key"},
   "parameters": {

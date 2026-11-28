@@ -2085,7 +2085,10 @@ final class Preparation
 				$this->value($syntax->right, $initializing);
 			}
 			if ($syntax->operator === binary_operator::coalesce) {
-				$left = $syntax->left->type_def();
+				$entry = $syntax->left;
+				$provider = $entry instanceof ast_index_expression && $syntax->source()->flavor === flavor::php
+					? $entry->receiver->type_def() : null;
+				$left = $entry->type_def();
 				$right = $syntax->right instanceof ast_throw_expression ? null : $syntax->right->type_def();
 				if ($left instanceof carrier_type_definition && $left->supports_coalescing()) {
 					$result = $left->payload_type;
@@ -2093,12 +2096,19 @@ final class Preparation
 						throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type or a matching nullable<int>');
 					}
 					$this->retain_member_place($syntax->left);
+				} elseif ($provider instanceof coalescing_index_read_type) {
+					if ($right !== null && $right !== $left && !($left instanceof shared_record_type_definition
+						&& $right instanceof shared_record_type_definition && $right->payload === $left->payload && !$left->required)) {
+						throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Indexed coalescing fallback requires the entry value type');
+					}
+					$result = $left;
 				} elseif ($left instanceof shared_record_type_definition && $left->payload->declaration->kind === record_kind::class_type) {
 					if ($right !== $left) throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing requires identical shared class handle types');
 					$result = $left;
 				} else {
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier or a shared class handle');
 				}
+				if ($provider instanceof coalescing_index_read_type) $entry->coalescing_lookup = $provider;
 				$syntax->settle_binary($result);
 				return;
 			}

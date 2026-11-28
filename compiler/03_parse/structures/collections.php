@@ -117,6 +117,10 @@ class ast_index_expression extends ast_expression
 	/** Native owning index expression. */
 	public readonly ast_expression $index;
 
+	/** PREP FACTS */
+	/** Prepared fact: provider for the direct indexed operand of PHP ??; selects an owned hit/miss snapshot. */
+	public ?coalescing_index_read_type $coalescing_lookup = null;
+
 	/** CONSTRUCTOR */
 	/** $end: exclusive token position after ]. */
 	public function __construct(ast_expression $receiver, ast_expression $index, int $end /** uint32 */)
@@ -129,6 +133,12 @@ class ast_index_expression extends ast_expression
 	}
 
 	/** METHODS */
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->coalescing_lookup = null;
+	}
+
 	/** A run of successive receivers ends at its guard; an index inside a key is a separate expression. */
 	public function in_nullsafe_index_run(): bool
 	{

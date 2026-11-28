@@ -30,6 +30,7 @@ function renderHashTypes(array $plan, array $specializations, bool $lookup): arr
         $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh') + $hash['traversal'] + ['inline' => '', 'mt_segments' => $mt ? '1' : ''];
         $vars['lookup'] = $lookup ? "    $nullable find(const $k& key) const;\n" : '';
         $vars['checked_slot'] = checkedSlotMethod(concreteRecipe(hashConcreteRecipe($hash)));
+        $vars['coalescing_lookup'] = concreteRecipe(hashConcreteRecipe($hash))->coalescing_lookup;
         $vars['methods'] = template('collections/hash_value_methods_declaration', $vars);
         $h .= template('collections/hash_declaration', $vars) . template('collections/hash_key_iteration_declaration', $vars);
         if ($hash['initialization'] !== null) {
@@ -40,7 +41,7 @@ function renderHashTypes(array $plan, array $specializations, bool $lookup): arr
             $d .= template('collections/initialization_input_definition', $input);
             if (isset($init['consume'])) $h .= "    static $n {$init['consume']}({$init['entry']}* values, $count count);\n";
         }
-        foreach (['has', 'at', 'find', 'remove'] as $method) $h .= scalarInputFences($plan, $method, [["const $k&"]], false, $method === 'remove' ? '' : ' const');
+        foreach (['has', 'at', 'find', 'remove', $vars['coalescing_lookup']] as $method) $h .= scalarInputFences($plan, $method, [["const $k&"]], false, $method === 'remove' ? '' : ' const');
         $h .= scalarInputFences($plan, 'set', [[$k, $v]]);
 
         $parts = concreteTemplate(hashConcreteRecipe($hash), ['k' => new RuntimeConcreteType($plan, $k), 'v' => new RuntimeConcreteType($plan, $v)], array_diff_key($vars, ['k' => true, 'v' => true]) + hashConcreteArguments($hash, $count), 'scpp');

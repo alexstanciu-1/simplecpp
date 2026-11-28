@@ -82,7 +82,7 @@ foreach ($fields as $f) { echo ($f ? "Y" : "N"); } return 0;''', output='NNYYY')
     Probe('compare-user-input', '$input="2"; echo (int)($input == 2); return 0;', reject='Unsupported binary operands or operator'),
     Probe('truthy-default', '$label="0"; echo $label ?: "anon"; return 0;', output='anon'),
     Probe('nullable-update', '$n ?int=null; $n ??= 0; $n ??= 2; echo $n ?? 9; return 0;', output='0'),
-    Probe('map-default', '$counts hash<int,string> = []; echo $counts["missing"] ?? 0; return 0;', reject='Coalescing requires a published nullable carrier'),
+    Probe('map-default', '$counts hash<int,string> = []; echo $counts["missing"] ?? 0; return 0;', output='0'),
     Probe('map-init-key', '$counts hash<int,string> = []; $counts["x"] ??= 0; $counts["x"] ??= 9; echo $counts["x"]; return 0;', output='0'),
     Probe('map-find', '$h hash<int,string> = ["yes"=>0]; echo hash_find($h,"yes") ?? 9, hash_find($h,"no") ?? 9; return 0;', output='09'),
     Probe('keys-stay-strings', '''$h hash<int,string> = ["01"=>3, "1"=>4];

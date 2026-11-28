@@ -3176,9 +3176,12 @@ CPP;
 				// A key can replace the last shared owner of a selected field inside the guard.
 				$guarded_field = $this->guarded_receiver !== null && $field instanceof ast_field_expression
 					&& $field->receiver !== $this->guarded_receiver && $value->in_nullsafe_index_run();
-				$receiver = ($guarded_field || $base->member_borrow !== null) && !$value->index->is_effect_free_literal()
+				$receiver = ($guarded_field || $base->member_borrow !== null || ($value->coalescing_lookup !== null && $field instanceof ast_field_expression)) && !$value->index->is_effect_free_literal()
 					? $this->retained_place($field, $global_references, $declarations, $required_headers, $steps, full_expression: true)
 					: $this->value($field, $global_references, $declarations, $required_headers);
+			}
+			if ($value->coalescing_lookup !== null) {
+				return $value->coalescing_lookup->lower_cpp_coalescing_lookup($value->index, $receiver, $index);
 			}
 			return $type->lower_cpp_index($value->index, $receiver, $index);
 		}
@@ -3291,7 +3294,19 @@ CPP;
 				$before = $this->suspensions;
 				$start = count($this->async_steps);
 				$steps = [];
-				if ($left_type instanceof shared_record_type_definition) {
+				if ($value->left instanceof ast_index_expression && $value->left->coalescing_lookup !== null) {
+					$lookup = $this->value($value->left, $global_references, $declarations, $required_headers);
+					$steps[] = 'auto entry = ' . $lookup . ';';
+					$presence = 'entry.found';
+					$required_headers['utility'] = true;
+					$present = 'std::move(entry.value)';
+					if ($left_type instanceof carrier_type_definition && $left_type->supports_coalescing()) {
+						$presence .= ' && ' . $left_type->lower_cpp_presence('entry.value');
+						$present = $left_type->lower_cpp_extract('entry.value');
+					} elseif ($left_type instanceof shared_record_type_definition) {
+						$presence .= ' && ' . $left_type->lower_cpp_condition('entry.value');
+					}
+				} elseif ($left_type instanceof shared_record_type_definition) {
 					$left = $this->value($value->left, $global_references, $declarations, $required_headers);
 					$steps[] = 'auto coalesce_value = ' . $left . ';';
 					$presence = $left_type->lower_cpp_condition('coalesce_value');
@@ -3306,7 +3321,7 @@ CPP;
 				$throws = $value->right instanceof ast_throw_expression;
 				$fallback = $throws ? $this->throw_call($value->right, $global_references, $declarations, $required_headers)
 					: $this->value($value->right, $global_references, $declarations, $required_headers, inside_scope: true);
-				if ($left_type instanceof carrier_type_definition && !$throws && $value->right->type_def() === $left_type) {
+				if ($left_type instanceof carrier_type_definition && $left_type->supports_coalescing() && !$throws && $value->right->type_def() === $left_type) {
 					$required_headers['stdexcept'] = true;
 					$fallback = '([](const auto& backup) { if (!' . $left_type->lower_cpp_presence('backup')
 						. ') throw std::domain_error("coalesce_selected_branch_has_no_usable_value_domain"); return '

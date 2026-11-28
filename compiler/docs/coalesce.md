@@ -16,6 +16,10 @@ produce an empty optional handle. Both forms evaluate the left once and the
 fallback only on absence. Mixed required/optional handles, upcasts, other
 homogeneous wrappers and result/sentinel families remain deferred.
 
+## Direct PHP typed-hash reads
+
+For `$h[$key] ?? $fallback`, a typed hash provider supplies an owned entry snapshot from one non-inserting lookup. Evaluate the receiver and exact key once. On a hit, return the copied value (including zero, false and the empty string), preserving the identity of a stored class handle. A missing entry or an empty nullable value/handle selects the lazy fallback. The fallback can mutate or replace the hash; its return value is the expression result and there is no write-back. Other failures, including evaluating the key or copying the value, propagate. The fallback must match the selected type under the coalescing rules, or throw. Ordinary indexed reads still throw on a missing key. This lookup applies to the immediate left operand.
+
 ## Ownership and preparation
 
 The parser reuses binary syntax and its existing operand ownership. `??` is right

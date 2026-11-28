@@ -325,6 +325,12 @@ interface key_presence_type
 	public function presence_function(): runtime_function;
 }
 
+/** A provider can snapshot an indexed hit in one non-inserting lookup for a lazy fallback. */
+interface coalescing_index_read_type extends index_read_type
+{
+	public function lower_cpp_coalescing_lookup(ast_expression $key, string $receiver, string $index): string;
+}
+
 /** Published copied lookup with an explicit absence carrier; no implicit carrier synthesis. */
 interface key_lookup_type
 {
