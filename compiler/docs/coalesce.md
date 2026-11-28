@@ -53,12 +53,15 @@ compound calculations from conditional writes, so no fabricated calculation type
 or new AST field is retained. Conditional writes do not publish the RHS as an
 unconditional constant. The usual conservative reference-call invalidation remains.
 
-Admission requires a declared local and the same generated nullable capability.
+Declared locals and writable declared PHP instance fields use the same generated nullable capability.
 The backend emits a presence-guarded `if` containing ordinary assignment, without
 a lambda, snapshot or payload extraction. Conversions and RHS effects occur only
 in that branch. Null and same-carrier assignments follow existing assignment rules;
-implicit narrowing is not broadened. Parameters, properties, indexed destinations,
-for-header writes and assignment expressions remain deferred.
+implicit narrowing is not broadened. Parameters, static properties, indexed destinations,
+for-header writes and assignment expressions remain deferred. For a field, lowering
+retains the selected receiver and binds the field once before checking presence.
+The native field test checks rebinding the last owner, skipping the fallback for
+zero, writes made by a throwing fallback and readonly declaration edit/recovery.
 
 `tests/coalesce_assignment.php` checks token boundaries, shared syntax ownership,
 single-pass preparation, absence of invented constants, pure inspections/emission

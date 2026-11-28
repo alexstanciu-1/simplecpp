@@ -288,16 +288,19 @@ final class Preparation
 				}
 			}
 			elseif ($statement instanceof ast_field_assignment || $statement instanceof ast_property_compound) {
-				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment ? $statement : null);
+				$conditional_field = $statement instanceof ast_property_compound && $statement->operator === binary_operator::coalesce
+					&& $source->flavor === flavor::php && $statement->target instanceof ast_field_expression;
+				$initializing_field = $this->writable_property($statement->target, $statement instanceof ast_field_assignment ? $statement : null, conditional_field: $conditional_field);
 				$type = $statement->target->type_def();
 				$before = $this->suspension_count;
 				if ($statement instanceof ast_field_assignment && $statement->target instanceof ast_field_expression && $statement->target->key_write_root !== null) {
 					$this->collection_element($statement->value, $type, null);
 					$statement->conversion = $type->prepare_conversion($statement->value, conversion_context::typed_destination);
 				} else {
-					$this->value($statement->value, destination: $statement instanceof ast_field_assignment ? $type : null);
+					$this->value($statement->value, destination: $statement instanceof ast_field_assignment || $conditional_field ? $type : null);
 					if ($statement instanceof ast_property_compound) {
-						$statement->prepare_storage_compound($type);
+						if ($conditional_field) $statement->prepare_coalescing_assignment($type);
+						else $statement->prepare_storage_compound($type);
 						if (!$statement->simple_compound_rhs() || $type instanceof carrier_type_definition) $this->retain_member_place($statement->target);
 					}
 					else {
@@ -1360,7 +1363,7 @@ final class Preparation
 	}
 
 	/** Check writable instance paths and qualified static members for all property writes. */
-	private function writable_property(ast_name_expression|ast_field_expression $root, ?ast_field_assignment $assignment = null, bool $payload = false): ?ast_instance_field
+	private function writable_property(ast_name_expression|ast_field_expression $root, ?ast_field_assignment $assignment = null, bool $payload = false, bool $conditional_field = false): ?ast_instance_field
 	{
 		if ($root instanceof ast_name_expression) {
 			if ($root instanceof ast_called_type_name && $payload) throw new diagnostic($root->source(), $root->byte_start(), 'Indexed late-static property writes are deferred');
@@ -1381,10 +1384,10 @@ final class Preparation
 		Readonly_Access::write($root, $payload, $field);
 		if ($payload && $this->check_indexed_field_owner($root)) return $field;
 		$owner = $root->receiver;
-		if ($assignment !== null && $root->source()->flavor === flavor::php && $root->type_def()->scalar_kind() !== null
+		if (($conditional_field || ($assignment !== null && $root->source()->flavor === flavor::php && $root->type_def()->scalar_kind() !== null))
 			&& $owner->type_def() instanceof shared_record_type_definition
 			&& ($owner instanceof ast_call_expression || $this->check_indexed_field_owner($root))) {
-			$assignment->retain_selected_owner = true;
+			if ($assignment !== null) $assignment->retain_selected_owner = true;
 			return $field;
 		}
 		$root = $root->receiver;
@@ -1466,11 +1469,9 @@ final class Preparation
 			if (!($local instanceof ast_local_declaration) || $statement->parent instanceof ast_for_statement) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Coalescing assignment requires a plain local statement');
 			}
-			if (!($type instanceof carrier_type_definition) || !$type->supports_coalescing()) {
-				throw new diagnostic($statement->source(), $statement->byte_start(), 'Coalescing assignment requires a published nullable carrier');
-			}
+			$statement->prepare_coalescing_assignment($type, $local);
 		}
-		if (!$statement->calculates_value()) {
+		elseif (!$statement->calculates_value()) {
 			$conversion = $type->prepare_conversion($statement->value, conversion_context::assignment);
 			$statement->settle_assignment($local, $conversion);
 			if ($local instanceof ast_produced_binding && $local->is_take_payload()) $this->take_ready[spl_object_id($local)] = true;

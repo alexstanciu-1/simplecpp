@@ -68,8 +68,8 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
             $export = typeExport($plan['submodules'], $vector);
             $plan['string_functions'][$name]['header'] = providerHeader($plan['submodules'], $export['provider']);
         }
-        if (in_array('nullable<int64>', $binding['parameters'], true)) {
-            requireThat(isset($plan['source_types']->{'nullable<int64>'}), "$name requires published nullable<int64>");
+        foreach (array_intersect($binding['parameters'], ['nullable<int64>', 'nullable<string>']) as $input) {
+            requireThat(isset($plan['source_types']->$input), "$name requires published $input");
             $plan['string_functions'][$name]['input_header'] = $plan['carriers_header'];
         }
         if ($binding['result'] === 'result_or_false<string>') {
@@ -236,6 +236,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'wrap_words' => ['parameters' => ['string', 'int64', 'string', 'bool_t'], 'result' => 'string', 'required_parameters' => 1],
             'ascii_words' => ['parameters' => ['string', 'string'], 'result' => 'string', 'required_parameters' => 1],
             'newline_breaks' => ['parameters' => ['string', 'bool_t'], 'result' => 'string', 'required_parameters' => 1],
+            'html_escape' => ['parameters' => ['string', 'int64', 'nullable<string>', 'bool_t'], 'result' => 'string', 'required_parameters' => 1],
             'byte_span' => ['parameters' => ['string', 'string', 'int64', 'nullable<int64>'], 'result' => $count, 'required_parameters' => 2],
             'byte_set_tail' => ['parameters' => ['string', 'string'], 'result' => 'result_or_false<string>'],
             'hex_decode' => ['parameters' => ['string'], 'result' => 'result_or_false<string>'],
@@ -259,7 +260,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         requireThat(preg_match('/^[a-z_][a-z0-9_]*$/D', $name) === 1
             && preg_match('/^scpp::str::[a-z_][a-z0-9_]*$/D', $symbol) === 1, 'Invalid string function name');
         foreach ([...$signature['parameters'], $signature['result']] as $type) {
-            if ($type === 'string' || $type === 'nullable<int64>' || $type === 'vector<string>' || $type === 'result_or_false<string>') continue;
+            if ($type === 'string' || $type === 'nullable<int64>' || $type === 'nullable<string>' || $type === 'vector<string>' || $type === 'result_or_false<string>') continue;
             requireThat(hasType($plan, $type) || hasValue($plan, $type), 'String function requires a published parameter/result type');
             $libraryTypes[] = $type;
         }
@@ -281,7 +282,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'First-byte case requires an ASCII case operation');
         $span = $implementation === 'byte_span';
         requireThat($span === isset($function->complement), 'Byte span requires a membership mode');
-        $phpOnly = $span || in_array($implementation, ['format_number', 'replace_window', 'compare_natural', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'urlencode', 'rawurlencode', 'urldecode', 'rawurldecode', 'quoted_printable_encode', 'quoted_printable_decode', 'chunk_bytes', 'wrap_words', 'translate_bytes', 'ascii_replace_bytes', 'increment_alnum', 'decrement_alnum'], true) || $firstByte
+        $phpOnly = $span || $implementation === 'html_escape' || in_array($implementation, ['format_number', 'replace_window', 'compare_natural', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'urlencode', 'rawurlencode', 'urldecode', 'rawurldecode', 'quoted_printable_encode', 'quoted_printable_decode', 'chunk_bytes', 'wrap_words', 'translate_bytes', 'ascii_replace_bytes', 'increment_alnum', 'decrement_alnum'], true) || $firstByte
             || ($implementation === 'trim_bytes' && isset($function->flavors));
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
@@ -295,11 +296,15 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             $spellings = array_intersect_key($spellings, array_flip($expected));
             requireThat(count($spellings) === count($expected), 'Missing flavor spelling');
         }
-        requireThat(($padding && $side === 'argument') === isset($function->constants), 'PHP padding publishes side constants');
-        if (isset($function->constants)) {
-            $values = fields($function->constants, ['STR_PAD_LEFT', 'STR_PAD_RIGHT', 'STR_PAD_BOTH']);
-            literals($function->constants, ['STR_PAD_LEFT' => 0, 'STR_PAD_RIGHT' => 1, 'STR_PAD_BOTH' => 2]);
-            $plan['php_integer_constants'] = $values;
+        $publishesConstants = ($padding && $side === 'argument') || $implementation === 'html_escape';
+        requireThat($publishesConstants === isset($function->constants), 'Missing or unexpected PHP string constants');
+        if ($publishesConstants) {
+            $expected = $padding ? ['STR_PAD_LEFT' => 0, 'STR_PAD_RIGHT' => 1, 'STR_PAD_BOTH' => 2]
+                : ['ENT_NOQUOTES' => 0, 'ENT_COMPAT' => 2, 'ENT_QUOTES' => 3, 'ENT_IGNORE' => 4, 'ENT_SUBSTITUTE' => 8,
+                   'ENT_HTML401' => 0, 'ENT_XML1' => 16, 'ENT_XHTML' => 32, 'ENT_HTML5' => 48, 'ENT_DISALLOWED' => 128];
+            fields($function->constants, array_keys($expected));
+            literals($function->constants, $expected);
+            $plan['php_integer_constants'] = ($plan['php_integer_constants'] ?? []) + $expected;
         }
         $search = in_array($implementation, ['find', 'rfind'], true);
         if ($search) {
@@ -384,6 +389,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             requireThat($search || $members !== [] || isset($function->flavors), 'Flavor adapters require flavor-specific string spellings');
             foreach ($spellings as $flavor => $spelling) {
                 $options = [];
+                if ($publishesConstants) $options['constants'] = object($function->constants);
                 if (in_array($implementation, ['substring_tail', 'ascii_substring_tail', 'last_byte_tail'], true)) $options['before_needle'] = true;
                 if ($span) $options['complement'] = boolean($function->complement);
                 if ($compare) $options['ascii_fold'] = boolean($function->ascii_fold);
@@ -1086,7 +1092,7 @@ function prepareOwnership(mixed $metadata, mixed $publication, array $facts, arr
 function stringAdapterConstReferenceMask(array $types): int {
     $mask = 0;
     foreach ($types as $i => $type) {
-        if ($type === 'string' || $type === 'vector<string>' || $type === 'nullable<int64>') $mask |= 1 << $i;
+        if ($type === 'string' || $type === 'vector<string>' || $type === 'nullable<int64>' || $type === 'nullable<string>') $mask |= 1 << $i;
     }
     return $mask;
 }

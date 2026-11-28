@@ -22,10 +22,10 @@ Doc Status: planning
 
 | Group | Names |
 | --- | --- |
-| Published PHP names (bounded signatures) | `quoted_printable_encode`, `quoted_printable_decode`, `strnatcmp`, `strnatcasecmp`, `str_increment`, `str_decrement`, `strtr`, `str_ireplace`, `chunk_split`, `wordwrap`, `ucwords`, `nl2br`, `addslashes`, `stripslashes`, `strstr`, `strchr`, `stristr`, `strrchr`, `strpbrk`, `strspn`, `strcspn`, `echo`, `ord`, `chr`, `chop`, `strrev`, `str_rot13`, `bin2hex`, `explode`, `hex2bin`, `implode`, `lcfirst`, `ltrim`, `number_format`, `rtrim`, `str_contains`, `str_ends_with`, `str_pad`, `str_repeat`, `str_replace`, `str_starts_with`, `strcasecmp`, `strcmp`, `stripos`, `strlen`, `strncasecmp`, `strncmp`, `strpos`, `strripos`, `strrpos`, `strtolower`, `strtoupper`, `substr`, `substr_compare`, `substr_count`, `substr_replace`, `trim`, `ucfirst` |
+| Published PHP names (bounded signatures) | `htmlspecialchars`, `quoted_printable_encode`, `quoted_printable_decode`, `strnatcmp`, `strnatcasecmp`, `str_increment`, `str_decrement`, `strtr`, `str_ireplace`, `chunk_split`, `wordwrap`, `ucwords`, `nl2br`, `addslashes`, `stripslashes`, `strstr`, `strchr`, `stristr`, `strrchr`, `strpbrk`, `strspn`, `strcspn`, `echo`, `ord`, `chr`, `chop`, `strrev`, `str_rot13`, `bin2hex`, `explode`, `hex2bin`, `implode`, `lcfirst`, `ltrim`, `number_format`, `rtrim`, `str_contains`, `str_ends_with`, `str_pad`, `str_repeat`, `str_replace`, `str_starts_with`, `strcasecmp`, `strcmp`, `stripos`, `strlen`, `strncasecmp`, `strncmp`, `strpos`, `strripos`, `strrpos`, `strtolower`, `strtoupper`, `substr`, `substr_compare`, `substr_count`, `substr_replace`, `trim`, `ucfirst` |
 | Direct byte operations and aliases | `str_split`, `join` |
 | Text composition and scanning | `count_chars`, `str_word_count`, `str_shuffle`, `strtok` |
-| HTML and web boundaries | `htmlspecialchars`, `htmlspecialchars_decode`, `htmlentities`, `html_entity_decode`, `get_html_translation_table`, `strip_tags`, `parse_str`, `str_getcsv` |
+| HTML and web boundaries | `htmlspecialchars_decode`, `htmlentities`, `html_entity_decode`, `get_html_translation_table`, `strip_tags`, `parse_str`, `str_getcsv` |
 | Formatting, output and parsing | `sprintf`, `printf`, `fprintf`, `vsprintf`, `vprintf`, `vfprintf`, `sscanf`, `print` |
 | Escapes and transfer encodings | `addcslashes`, `stripcslashes`, `quotemeta`, `convert_uuencode`, `convert_uudecode` |
 | Matching, phonetics and locale | `levenshtein`, `similar_text`, `metaphone`, `soundex`, `strcoll`, `setlocale`, `localeconv`, `nl_langinfo`, `hebrev` |
@@ -60,7 +60,7 @@ The native filter without a callback requires a published scalar condition. Map 
 
 For each new read helper exercise empty input, keys 0 and 2, reinserted keys, numeric-looking string keys, and presence with a null payload where representable. Use an alias and edit a nested result to verify the expected ownership. For mutators settle writable-slot admission, numeric reindexing, key preservation and shared aliases before selecting a runtime target. Vector append and indexed removal already address some uses of push and splice. Sorting by value while keeping keys (`asort`) can produce a sparse or reordered index sequence that an in-place typed vector cannot represent. Multi-input map, filter key modes, heterogeneous comparison, recursive merges and callback sorts merit separate contracts.
 
-For web applications, prioritize `htmlspecialchars` separately and settle flags, encoding, malformed input and double encoding first. The existing `implode` and `explode` bindings, comparisons, replace count and search miss contracts are documented in the [string family audit](string_families_audit.md) and [byte-string contract](../../string_slice.md).
+The bounded PHP HTML escaper covers UTF-8, HTML 4.01 and double encoding enabled. The existing `implode` and `explode` bindings, comparisons, replace count and search miss contracts are documented in the [string family audit](string_families_audit.md) and [byte-string contract](../../string_slice.md).
 
 ## Relocatable PHP source paths
 

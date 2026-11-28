@@ -101,7 +101,7 @@ def prove(work,flavor,libraries, *, quick=False):
         (fn('parameter','int',[('n','nullable<int>')],f'{v}n ??= 2;return 0;'),'plain local'),
         (local('n','nullable<int>','null')+f'for ({v}n ??= 2;false;{v}n=3) {{}}','plain local'),
         (local('n','nullable<int>','null')+f'for ({v}n=null;false;{v}n ??= 3) {{}}','plain local'),
-        (s['record']('Point',s['field']('x','int','0'))+s['local']('p','Point')+f'{v}p{s["access"]}x ??= 2;','compound'),
+        (s['record']('Point',s['field']('x','int','0'))+s['local']('p','Point')+f'{v}p{s["access"]}x ??= 2;','nullable carrier' if flavor=='php' else 'compound'),
         (local('items','vector<int>','[]')+f'{v}items[]=1;{v}items[0] ??= 2;','compound'),
     ]
     for i,(source,error) in enumerate(bad_sources):
