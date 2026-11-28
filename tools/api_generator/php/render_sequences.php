@@ -88,6 +88,7 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                                 $binding['symbol'], array_slice($arguments, 0, $arity));
                         }
                     }
+                    if (isset($adapter['before_needle'])) $parameters[2] .= ' = false';
                     if ($binding['implementation'] === 'replace_window') $parameters[3] .= ' = 0';
                     if (isset($adapter['ascii_fold'])) $arguments[] = $adapter['ascii_fold'] ? 'true' : 'false';
                     if (isset($adapter['search_offset'])) $arguments[] = '::scpp::str::search_policy::' . $adapter['search_offset'];
@@ -142,6 +143,9 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         }
                     }
                     $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, $parameters, $binding['symbol'], $arguments);
+                    foreach ($binding['php_aliases'] ?? [] as $alias) {
+                        $files[$path] .= stringAdapterOverload('php', ['name' => $alias], $result, $parameters, $binding['symbol'], $arguments);
+                    }
                 }
             }
         }
@@ -224,6 +228,8 @@ function renderString(array $plan, array &$groups): array {
     if (array_intersect($classic, ['compare_bytes', 'compare_prefix', 'compare_window'])) $d .= template('strings/string_compare_views');
     $comparisonSymbols = [];
     $windowPositionEmitted = false;
+    $sliceMatcher = array_intersect($classic, ['substring_tail', 'ascii_substring_tail']);
+    if ($sliceMatcher) $d .= "namespace str {\n" . template('strings/byte_match') . "}\n";
     $searchPolicyEmitted = false;
     $padSymbols = [];
     $trimSymbols = [];
@@ -235,7 +241,7 @@ function renderString(array $plan, array &$groups): array {
             if (!$searchPolicyEmitted) {
                 $groups[] = ['provider' => $plan['search_policy']['provider'], 'system' => [],
                     'declarations' => "namespace scpp::str { enum class search_policy { signed_offset, clamp, nonnegative }; }\n"];
-                $d .= template('strings/string_search_position');
+                $d .= template('strings/string_search_position', ['byte_match' => $sliceMatcher ? '' : template('strings/byte_match')]);
                 $searchPolicyEmitted = true;
             }
             $args = 'const string& subject, const string& needle';
@@ -334,12 +340,22 @@ function renderString(array $plan, array &$groups): array {
             $parameters[] = scalarInput($type) . ' ' . (['value', 'other', 'third', 'fourth'][$index]);
         }
         $signature = "{$function['result']} $name(" . implode(', ', $parameters) . ')';
-        if ($function['implementation'] === 'hex_encode' || $function['implementation'] === 'hex_decode') {
+        if ($function['implementation'] === 'hex_encode' || isset($function['result_header'])) {
             $result = $plan['source_types']->{$function['result']};
             if (isset($function['result_header'])) $h .= "class $result;\n";
             $signature = "$result $name(" . implode(', ', $parameters) . ')';
             $h .= "namespace str { $signature; }\n";
-            $d .= template('strings/' . $function['implementation'], ['signature' => $signature, 'result' => $result]);
+            $match = match ($function['implementation']) {
+                'substring_tail' => 'byte_match<false, false>(subject, needle, 0)',
+                'ascii_substring_tail' => 'byte_match<false, true>(subject, needle, 0)',
+                'last_byte_tail' => "subject.rfind(needle.empty() ? '\\0' : needle.front())",
+                'byte_set_tail' => 'subject.find_first_of(needle)',
+                default => null,
+            };
+            $d .= $match === null ? template('strings/' . $function['implementation'], ['signature' => $signature, 'result' => $result])
+                : template('strings/search_slice', ['signature' => $signature, 'result' => $result, 'match' => $match,
+                    'slice' => isset($function['required_parameters']) ? 'third ? subject.substr(0, match) : subject.substr(match)' : 'subject.substr(match)',
+                    'validation' => $function['implementation'] === 'byte_set_tail' ? '    if (needle.empty()) throw ValueError("strpbrk(): characters must be non-empty");' . "\n" : '']);
         } elseif ($function['implementation'] === 'byte_length') {
             $h .= "namespace str { inline $signature { return value.size(); } }\n";
         } elseif ($function['implementation'] === 'count_matches') {

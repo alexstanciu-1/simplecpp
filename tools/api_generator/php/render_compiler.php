@@ -485,7 +485,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                     $call = 'new runtime_overloads([2 => [' . implode(', ', $variants)
                         . "]], argument_index: 1, list_context: type_$vector::instance())";
                 }
-                $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= $call,";
+                $keys = [$key];
+                if ($flavor === 'php') foreach ($binding['php_aliases'] ?? [] as $alias) $keys[] = "php:func:$alias";
+                $bindingKeys = implode(', ', array_map(static fn($k) => var_export($k, true), $keys));
+                $runtimeCases[] = "\t\t\t$bindingKeys => \$bindings[\$key] ??= $call,";
             }
             continue;
         }

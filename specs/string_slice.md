@@ -207,3 +207,13 @@ NUL. These use the PHP 8.5 value results, without emitting PHP deprecation
 notices. `strrev(s)` reverses the bytes. `str_rot13(s)` rotates ASCII letters
 and preserves every other byte. `chop(s[,mask])` shares both published PHP
 rtrim forms, including the explicit byte-mask behavior.
+
+PHP `strstr` (alias `strchr`) and `stristr` return the suffix beginning at the
+first substring match. `stristr` folds ASCII for comparison and preserves the
+subject's original bytes in its result. `strrchr` searches backward for the
+first byte of the needle, using a NUL byte for an empty needle. All three
+operations accept the optional bool `before_needle`, which returns the prefix
+up to the match. A successful empty prefix or suffix is a present string.
+`strpbrk` returns the suffix at the first byte in a supplied set and raises
+`ValueError` for an empty set. All five names return `result_or_false<string>`
+and preserve embedded NULs.
