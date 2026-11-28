@@ -500,6 +500,16 @@ class ast_assignment_statement extends ast_storage_write
 		$this->conversion = $conversion;
 	}
 
+	/** A guarded store uses ordinary assignment conversion even if presence skips its RHS at runtime. */
+	public function prepare_coalescing_assignment(type_definition $storage, ?ast_local_binding $local = null): void
+	{
+		if (!($storage instanceof carrier_type_definition) || !$storage->supports_coalescing()) {
+			throw new diagnostic($this->source(), $this->byte_start(), 'Coalescing assignment requires a published nullable carrier');
+		}
+		$this->conversion = $storage->prepare_conversion($this->value, conversion_context::assignment);
+		if ($local !== null) $this->settle_binding($local);
+	}
+
 	/** Conditional writes select a branch; only eager compounds have calculation facts. */
 	public function calculates_value(): bool
 	{

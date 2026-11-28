@@ -137,8 +137,12 @@ Null and same-carrier fallbacks retain ordinary assignment behavior; they can le
 the destination empty. There is no new implicit float-to-int conversion. A failed
 fallback or conversion performs no final store; any earlier fallback effects remain.
 If fallback modifies the same local, successful completion still stores its result.
-This statement does not yield a value. Parameters, globals, properties, indexed
-places, for-header writes and application/shared carriers remain outside this slice.
+This statement does not yield a value. PHP also accepts the statement on a writable declared nullable instance field.
+It evaluates the receiver once and retains the selected owner through the store or
+exception. Rebinding the receiver during fallback leaves the store directed at the
+original field. A write to that field by the fallback survives if the fallback throws.
+Parameters, globals, static properties, indexed places, for-header writes and
+application/shared carriers remain outside this contract.
 
 ## v0.2 homogeneous scalar wrapper coalescing — 2026-10-20
 
