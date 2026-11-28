@@ -336,7 +336,9 @@ final class Preparation
 						$owner = $root->receiver->type_def();
 						if (!($owner instanceof fixed_array_type) && !($source->flavor === flavor::python
 							&& $owner instanceof boxed_type_definition && $owner->mutates_referenced_value())) {
-							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires inline fixed-array storage, a typed vector/hash path on local or instance-field storage, or a shared Python container');
+							$places = $source->flavor === flavor::python ? 'inline fixed-array storage or a shared Python container'
+								: 'inline fixed-array storage or a typed vector/hash path on local or instance-field storage';
+							throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires ' . $places);
 						}
 						$root = $root->receiver;
 					}
