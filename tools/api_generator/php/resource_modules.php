@@ -106,7 +106,12 @@ function prepareResourceModules(object $publication, array &$plan): void {
             $ops[$native] = compact('params','result','mutable','mask','header','includes','required','surfaces','dispatch','slotPack','freshOwner','retainsReceiver','retainsSlots');
         }
         $constants = object($catalog->constants ?? (object)[]);
-        foreach ($constants as $name => $value) requireThat(preg_match('/^[A-Z][A-Z0-9_]*$/D', $name) && is_int($value), 'Invalid module constant');
+        $declared = $constants;
+        foreach ($declared as $name => $value) {
+            if (is_string($value)) $value = $declared[$value] ?? null;
+            requireThat(preg_match('/^[A-Z][A-Z0-9_]*$/D', $name) && is_int($value), 'Invalid module constant or alias');
+            $constants[$name] = $value;
+        }
         $plan['resource_modules'][$module] = compact('ops','types','constants');
     }
 }

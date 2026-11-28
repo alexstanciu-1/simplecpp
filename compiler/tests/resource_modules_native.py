@@ -192,6 +192,9 @@ if(!curl_setopt($h,CURLOPT_POSTFIELDS,"a\0b")){return 3;}
 $p curl_response=curl_request_exec($h); $lines=$p->headers;
 if($p->status_code!==201 || $p->body!=="a\0b" || $p->content_type!=="application/octet-stream"){return 4;}
 if($p->header_size<=0 || $p->request_size<=0 || $lines[0]==="" || $r->status_code!==404){return 5;}
+$status int=curl_getinfo($h,CURLINFO_RESPONSE_CODE);
+$http int=curl_getinfo($h,CURLINFO_HTTP_CODE);
+if($http!==201 || $http!==$status){return 6;}
 return 0;
 '''.replace('BASE', 'http://127.0.0.1:'+str(server.server_port)), 'curl_init()')
         finally:
