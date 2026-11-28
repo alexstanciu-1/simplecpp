@@ -7,6 +7,7 @@
 #include <string>
 
 namespace scpp::detail::datetime {
+std::string php_microtime();
 std::int64_t now_unix_seconds();
 std::int64_t now_unix_millis();
 std::int64_t monotonic_millis();

@@ -59,7 +59,7 @@ def prove(module, source, disabled_call, helper='', failures=()):
             main.write_text(disabled_call+'; return 0;')
             assert 'requires module runtime-'+module.split('+')[0] in invoke(proc).get('error','')
             manifest.write_text(json.dumps({'dependencies': deps['dependencies']}))
-            if module == 'io' or module == 'curl':
+            if module in ('io', 'curl') or disabled_call.startswith('shell_exec('):
                 assert 'error' not in invoke(proc)
             general_call = {'io': 'io_open("a","r")', 'process': 'process_start("/bin/true",[],"",0)',
                             'curl': 'curl_request_init()'}[module.split('+')[0]]
@@ -101,6 +101,14 @@ for stream, marker in [(sys.stdout.buffer, b'O'), (sys.stderr.buffer, b'E')]:
 sys.stdout.buffer.write(sys.stdin.buffer.read())
 """
     prove('process', r'''
+$rss=memory_get_usage(); $peak=memory_get_peak_usage();
+if($rss<=0 || $peak<=0 || memory_get_usage(false)<=0 || memory_get_peak_usage(true)<=0){return 10;}
+$memoryProbe=str_repeat("x",8388608);
+if(strlen($memoryProbe)!==8388608 || memory_get_usage(true)-$rss<4194304 || memory_get_peak_usage(false)<4194304){return 13;}
+$binary string=shell_exec("printf 'a\\000b'; exit 7");
+$empty string=shell_exec("exit 3");
+if($binary!=="a\0b" || $empty!==""){return 11;}
+try {shell_exec("printf x\0ignored");return 12;} catch(Exception $error){}
 $args vector<string> =[];
 $h process_handle=process_start("/bin/cat",$args,"a\0b",0); $alias=$h;
 $done bool=process_poll($h); while(!$done){$done=process_poll($alias);}
@@ -132,7 +140,7 @@ $o=process_result($h);
 if($o->exit_code!==0 || $o->stdout_text!==("/tmp\n\n".'a b;$x'."\n")){return 9;}
 return 0;
 '''.replace('CHILD_SCRIPT', json.dumps(child)).replace('PYTHON_EXE', json.dumps(sys.executable)),
-          'process_start("/bin/true",[],"",0)')
+          'shell_exec("true")')
 
 if sys.argv[2] == 'curl':
     with tempfile.TemporaryDirectory(prefix='curl-file-') as tmp:

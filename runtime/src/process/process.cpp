@@ -1,4 +1,6 @@
 #include "process_provider.hpp"
+#include <cstdio>
+#include <cstring>
 #include <atomic>
 #include <memory>
 #include <utility>
@@ -14,6 +16,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <pthread.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -321,6 +324,46 @@ result_bool_t close(const process_handle &value) {
 	return result_bool_t{bool_t(true)};
 #else
 	return result_bool_t{process_detail::failure("close", "managed processes require Linux")};
+#endif
+}
+
+int64 resident_bytes() {
+#if defined(__linux__)
+    std::unique_ptr<FILE, decltype(&std::fclose)> file(std::fopen("/proc/self/statm", "r"), &std::fclose);
+    long long pages = 0;
+    const long page_size = ::sysconf(_SC_PAGESIZE);
+    if (file && page_size > 0 && std::fscanf(file.get(), "%*s %lld", &pages) == 1)
+        return pages * page_size;
+#endif
+    return 0;
+}
+
+int64 peak_resident_bytes() {
+#if defined(__linux__)
+    struct rusage usage{};
+    if (::getrusage(RUSAGE_SELF, &usage) == 0) return static_cast<int64>(usage.ru_maxrss) * 1024;
+#endif
+    return 0;
+}
+
+int64 resident_bytes(bool_t) { return resident_bytes(); }
+int64 peak_resident_bytes(bool_t) { return peak_resident_bytes(); }
+
+result_or_false_string shell_exec(const string& command) {
+#if defined(__linux__)
+    if (command.size() == 0 || std::memchr(command.data(), 0, command.size()))
+        throw_exception(exception{string{"shell_exec requires a nonempty command without NUL"}});
+    const std::string terminated(command.data(), command.size());
+    std::unique_ptr<FILE, decltype(&::pclose)> pipe(::popen(terminated.c_str(), "re"), &::pclose);
+    if (!pipe) return {};
+    std::string output;
+    char block[8192];
+    while (const auto count = std::fread(block, 1, sizeof(block), pipe.get()))
+        output.append(block, count);
+    if (std::ferror(pipe.get()) || ::pclose(pipe.release()) == -1) return {};
+    return result_or_false_string{string{output.data(), static_cast<int64>(output.size())}};
+#else
+    return {};
 #endif
 }
 

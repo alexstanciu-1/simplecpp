@@ -22,6 +22,10 @@ with tempfile.TemporaryDirectory(prefix='scpp-datetime-') as tmp:
     main = app / 'main.phs'
     main.write_text('''
 $seconds int = dt_now();
+$stamp string = microtime();
+if (substr($stamp,0,2)!=="0." || substr($stamp,8,3)!=="00 ") {return 3;}
+$wall int = (int)substr($stamp,11);
+if ($wall < $seconds || $wall > time()) {return 4;}
 $millis int = dt_now_ms();
 $start int = dt_monotonic_ms();
 dt_sleep_ms(0);

@@ -1403,6 +1403,7 @@
   },
   "text_helpers": {
     "hash_string": ["string", "string"],
+    "content_sha256": ["string", "string"],
     "stable_hash_string_u64": ["uint64", "string"],
     "string_utf8_is_valid": ["bool_t", "string"],
     "string_utf8_codepoint_count": ["int64", "string"],
@@ -1416,7 +1417,7 @@
   },
   "datetime": {
     "binding": "native_datetime",
-    "php_names": {"now_unix_seconds": "time", "php_date": "date", "php_strtotime": "strtotime"},
+    "php_names": {"now_unix_seconds": "time", "php_microtime": "microtime", "php_date": "date", "php_strtotime": "strtotime"},
     "general_names": {
       "now_unix_seconds": "dt_now",
       "now_unix_millis": "dt_now_ms",
@@ -1445,6 +1446,7 @@
       "format_local",
       "format_local_now",
       "php_date",
+      "php_microtime",
       "php_strtotime",
       "parse_common_local"
     ],

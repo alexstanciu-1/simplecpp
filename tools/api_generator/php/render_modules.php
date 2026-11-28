@@ -97,7 +97,10 @@ function renderDatetime(array $plan, array &$files): void {
                 . "    return string{bytes.data(), detail::checked_integer_cast<{$plan['string']['count_representation']}>(bytes.size())};\n}\n}\n";
             continue;
         }
-        if($op['arguments'] === []) {
+        if ($name === 'php_microtime') {
+            $body = 'const auto bytes = detail::datetime::php_microtime(); return string{bytes.data(), static_cast<int64>(bytes.size())};';
+        }
+        elseif($op['arguments'] === []) {
             $native = $result === 'uint64' ? 'unsigned long long':'long long';
             $body = "return $result{static_cast<$native>(detail::datetime::$name())};";
         }

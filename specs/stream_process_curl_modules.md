@@ -108,3 +108,16 @@ also includes http_code. Source constants have module-local identities. Their
 translation and the libcurl headers belong to the native provider. Reset clears
 options, diagnostics and cached response. Close invalidates aliases. Returned
 snapshots survive both operations.
+
+## PHP process observations and shell output
+
+Selecting the process module exposes `memory_get_usage([bool]): int` and
+`memory_get_peak_usage([bool]): int`. They report the current process RSS and
+peak RSS in bytes on Linux. Either value of the optional flag selects the same
+process metric. An unavailable measurement returns zero.
+
+`shell_exec(string): result_or_false<string>` runs a command through the Linux
+host shell and captures stdout byte for byte. Stderr is inherited. An empty
+command or an embedded NUL raises an Exception before execution. Failure to
+open, read or close the pipe returns false. A successfully collected stream
+can be empty, and a nonzero child exit status preserves the captured output.
