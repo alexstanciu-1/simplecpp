@@ -3189,7 +3189,7 @@ final class Preparation
 			$result = $type instanceof counted_collection_type ? $type->cardinality_result($operation) : null;
 			if ($result === null) {
 				$message = $operation === collection_cardinality::empty
-					? 'empty requires a string or collection' : 'count requires a published vector or hash';
+					? 'empty requires a string or collection' : 'count requires a type that supports counting';
 				throw new diagnostic($receiver->source(), $receiver->byte_start(), $message);
 			}
 			$call->settle_cardinality($operation, $result);
@@ -3436,10 +3436,10 @@ final class Preparation
 		$type = $needle->type_def();
 		$this->value($source, destination: $source instanceof ast_collection_expression ? Type_Resolution::collection('vector', $type, null) : null);
 		$input = $source->type_def();
-		if (!($input instanceof vector_type_definition || $input instanceof hash_type_definition)
+		if (!($input instanceof collection_value_source)
 			|| $type !== $input->iteration_value_type() || $type->predicate_kind() === ''
 			|| $type->binary_result(binary_operator::equal, $type) !== type_bool::instance()) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'in_array requires a typed vector or hash with a matching comparable scalar needle');
+			throw new diagnostic($call->source(), $call->byte_start(), 'in_array requires value traversal with a matching comparable scalar needle');
 		}
 		$parameters = [$type, $input];
 		if ($count === 3) {
@@ -3449,7 +3449,7 @@ final class Preparation
 			$parameters[] = type_bool::instance();
 		}
 		$this->retain_member_place($source);
-		$call->settle_runtime(new collection_membership_function('in_array', $parameters, type_bool::instance(), '', $input->cpp_headers()[0]));
+		$call->settle_runtime(new collection_membership_function('in_array', $parameters, type_bool::instance(), '::scpp::detail::any_value', 'scpp/collection_scan.hpp'));
 	}
 
 	/** Select a concrete traversal and result using the settled input and callback types. */

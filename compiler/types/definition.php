@@ -115,6 +115,16 @@ trait hash_key_specializations
 	}
 }
 
+/** A synchronous value cursor over a borrowed collection. Each successful advance supplies one element. */
+interface collection_value_source
+{
+	public function iteration_value_type(): type_definition;
+	/** Null uses the element itself; a constructed output slot exposes the element in its value member. */
+	public function iteration_output_type(): ?string;
+	/** The named receiver stays alive and stable throughout the cursor's use. */
+	public function lower_cpp_value_cursor(string $receiver): string;
+}
+
 /** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
 interface iterable_type
 {

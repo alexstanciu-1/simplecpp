@@ -225,7 +225,7 @@ positions. Omitting the predicate uses the published scalar condition of each
 element, including the false string `"0"`. Boxed tables require a callback.
 The callback contracts are the same as for the general transforms above.
 
-`in_array(needle, source[, strict])` scans a typed vector or hash by value and
+`in_array(needle, source[, strict])` uses the receiver’s published value cursor and
 stops at its first match. This slice admits a comparable scalar needle of the
 exact element type. Both flag values use the element's published equality. All
-supplied operands, including a computed flag, evaluate once.
+supplied operands, including a computed flag, evaluate once. Typed vectors, typed hashes and one-dimensional fixed byte arrays qualify. An indexed row can supply the byte array. Fixed arrays use their logical extent for both count and traversal, including extent zero. Boxed traversal supplies boxed values, which do not meet this helper’s exact scalar equality requirement.

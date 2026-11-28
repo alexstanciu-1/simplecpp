@@ -218,6 +218,9 @@ function render(array $plan): array {
         $files['public/scpp/mt_segment.hpp'] = BANNER . template('collections/mt_segment');
         $files['public/scpp/mt_segments.hpp'] = BANNER . template('collections/mt_segments');
     }
+    if (in_array('in_array', $plan['collection_transforms'] ?? [], true)) {
+        $files['public/scpp/collection_scan.hpp'] = BANNER . template('collections/value_scan');
+    }
     $files['public/scpp/fixed_array.hpp'] = BANNER . template('collections/fixed_array_index');
     $files['public/scpp/owner_access.hpp'] = BANNER . template('ownership/application_control');
     if (isset($plan['exception']) || isset($plan['error'])) {

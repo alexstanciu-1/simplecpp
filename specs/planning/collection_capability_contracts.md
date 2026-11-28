@@ -58,6 +58,10 @@ Use the same capability definitions for compiler admission and runtime helper im
 
 **Pilot acceptance test.** Bind cardinality and value traversal for a third test provider with comparable scalar elements. Run the existing count and search algorithms on it. The only provider-specific additions should be capability bindings, publication and conformance tests. Review both the runtime sources and generator templates to verify that adding the provider required no new helper body, family switch or handwritten helper overload. Apply the same test to a future user-defined provider.
 
+## Count and value-search pilot
+
+The pilot uses the existing cardinality query and a borrowed value cursor. Generated collection bindings use their published limit and next-value operations. Fixed arrays bind the cursor to their logical extent. A single runtime `any_value` loop consumes either cursor and the prepared element equality. Boxed cursors remain subject to the helper’s exact scalar equality rule. [Third-provider regression](../../compiler/tests/collection_value_scan.py) · [Runtime algorithm](../../tools/api_generator/templates/collections/value_scan.cpp.tpl)
+
 ## Delivery and review gates
 
 | Stage | Proposed work | Acceptance evidence |

@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Resolved vector<T> identity supplied by runtime publication, with checked element access and mutation.
  * Copies and by-value calls use the common conversion path; instance fields default to empty.
  */
-abstract class vector_type_definition extends type_definition implements readonly_index_lookup_type, writable_iteration_type, appendable_collection_type, nested_index_storage_type, native_sequence_type, iterable_type, membership_type
+abstract class vector_type_definition extends type_definition implements collection_value_source, readonly_index_lookup_type, writable_iteration_type, appendable_collection_type, nested_index_storage_type, native_sequence_type, iterable_type, membership_type
 {
 	use checked_indexed_mutation;
 	use collection_specializations;

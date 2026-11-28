@@ -4,6 +4,12 @@
 		return @value@;
 	}
 
+	public function lower_cpp_value_cursor(string $receiver): string
+	{
+		return "[&$receiver, position = scpp::int64{}, limit = $receiver.@limit@()](auto& item) mutable { "
+			. "return $receiver.@next@(position, limit, item); }";
+	}
+
 	public function iteration_key_type(): ?type_definition
 	{
 		return @key@;
