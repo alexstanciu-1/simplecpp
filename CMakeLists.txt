@@ -901,6 +901,13 @@ if(BUILD_TESTING)
   foreach(effect replace_child replace_holder remove_leaf index_replace_present index_replace_missing)
     add_test(NAME compiler_php_dynamic_compound_${effect} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/indexed_dynamic_compound.py ${effect})
   endforeach()
+  foreach(case await_replace await_remove await_both suspended_owner empty_callable throw_key throw_arg
+      failed_store shallow_failure conversion_failure selection call_modes anchor bounds_string bounds_vector
+      bounds_fixed bounds_hash terminal_void mixed_read grouped_absent grouped_present factory_match factory_ternary
+      arithmetic_failure predicate_after_write qualified_receiver)
+    add_test(NAME compiler_expression_path_${case} COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/expression_access_paths.py ${case})
+  endforeach()
   add_test(NAME compiler_php_indexed_owner_target COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/indexed_owner_target.py)
   foreach(case replacement lifetime admission append mutations mutation_access missing_before missing_after missing_update hash_reinsert hash_missing hash_inline)
     add_test(NAME compiler_php_indexed_owner_${case} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/indexed_owner_target.py ${case})
