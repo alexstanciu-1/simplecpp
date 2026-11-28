@@ -58,11 +58,11 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['positional_subset_family', 'php_builtin_admission', 'published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'php_scalar_output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
+    fields($compiler, ['positional_subset_family', 'php_builtin_admission', 'php_kind_predicates', 'published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'php_scalar_output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
     $phpAdmission = object($compiler->php_builtin_admission ?? new \stdClass());
-    if (isset($metadata->string->functions, $metadata->boxed->mixed_predicates)) {
+    if (isset($metadata->string->functions, $compiler->php_kind_predicates)) {
         foreach ($phpAdmission as $name => $_) {
-            requireThat(isset($metadata->string->functions->$name) || isset($metadata->boxed->mixed_predicates->$name),
+            requireThat(isset($metadata->string->functions->$name) || isset($compiler->php_kind_predicates->$name),
                 "Unknown PHP admission target: $name");
         }
     }
@@ -161,8 +161,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 . "const_reference_mask: $borrow, $mode, retains_receiver: false, exact_arguments: true);\n\t}\n";
         }
         $kind = isset($types[$identity]) ? 'integer' : $definition['strategy'];
-        if (in_array($kind, ['integer', 'boolean', 'floating', 'string', 'null'], true)) {
-            $methods .= "\n\tpublic function predicate_kind(): string { return '$kind'; }\n";
+        if ((valueKinds()[$kind] ?? null) === 'scalar') {
+            $methods .= "\n\tpublic function scalar_kind(): ?value_kind { return value_kind::$kind; }\n";
         }
         if (isset($runtime['structural_decoder'][$identity])) {
             $reader = $runtime['structural_decoder'][$identity];
@@ -321,7 +321,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $specializations .= "\t\tif (\$family === $name) {\n$hashCases\n\t\t\treturn null;\n\t\t}\n";
     }
     if (isset($runtime['boxed_dispatch'])) {
-        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases, compilerAccessInterfaces($metadata->boxed));
+        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases, compilerAccessInterfaces($metadata->boxed, runtimeKind: true));
     }
     $runtimeTypes = [];
     foreach ($definitions as $identity => $definition) $runtimeTypes[$identity] = $definition['class'];
@@ -401,7 +401,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $header = providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $source)['provider']);
         if ($source === 'mixed') {
             foreach ($runtime['mixed_predicates'] ?? [] as $name => $kind) {
-                $runtimeCases[] = "\t\t\t'php:func:$name' => \$bindings[\$key] ??= new php_kind_predicate('$kind'),";
+                $runtimeCases[] = "\t\t\t'php:func:$name' => \$bindings[\$key] ??= new php_kind_predicate(value_kind::$kind),";
                 $function = "new runtime_function('$name', [type_mixed::instance()], type_bool::instance(), '::scpp::$name', '$header', const_reference_mask: 1";
                 $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings['mixed:$name'] ??= new runtime_overloads([1 => [type_mixed::class => $function, php_exact_inputs: 1)]]),";
             }
@@ -585,6 +585,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $subsetFamily = $compiler->positional_subset_family ?? null;
     requireThat($subsetFamily === null || (is_string($subsetFamily) && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $subsetFamily)), 'Invalid positional subset family');
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
+        '@value_kinds@' => implode("\n\t", array_map(static fn(string $kind): string => "case $kind;", array_keys(valueKinds()))),
         '@record_result_header@' => isset($runtime['structural_decoder'])
             ? 'public const ?string RECORD_RESULT_HEADER = ' . var_export($runtime['carriers_header'] ?? null, true) . ";\n\t" : '',
         '@mt_available@' => ($runtime['mt_segments'] ?? false) ? 'true' : 'false',

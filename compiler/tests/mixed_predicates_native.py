@@ -21,6 +21,7 @@ function classify(mixed $value): int {
     if (is_float($value)) {return 3;}
     return 0;
 }
+function vectorOnce(int &$calls):vector<int> { $calls+=1; return []; }
 function integerOnce(int &$calls):int { $calls+=1; return 0; }
 function once(int &$calls): mixed { $calls += 1; return false; }
 ''')
@@ -36,6 +37,10 @@ $calls=0; if(!is_bool(once($calls)) || $calls!==1){return 7;}
 $d dynamic="text"; if(!is_string($d) || is_array($d) || is_null($d)){return 8;}
 $d=null; if(!is_null($d) || !is_array([1])){return 9;}
 if(!is_bool(false) || !is_float(1.0) || !is_int(integerOnce($calls)) || $calls!==2){return 10;}
+$fixed fixed_array<byte,2>=[1,2]; $hash hash<int,string>=[];
+if(!is_array($fixed) || is_int($fixed) || !is_array($hash) || !is_array(vectorOnce($calls)) || $calls!==3){return 11;}
+if(is_array(once($calls)) || $calls!==4 || !is_array($x)){return 12;}
+$d=[]; if(!is_array($d) || is_string($d)){return 13;}
 return 0;
 '''
     main.write_text(source)
@@ -46,9 +51,10 @@ return 0;
         manifest = json.loads((out/'manifest.json').read_text())
         units = [out/u for u in manifest['translation_units']]
         lowered = '\n'.join(u.read_text() for u in units)
-        for kind in ('boolean', 'integer', 'floating'):
+        for kind in ('boolean', 'integer', 'floating', 'container'):
             assert f'boxed_kind::{kind}' in lowered
         assert 'static_cast<void>(integerOnce_' in lowered
+        assert 'static_cast<void>(vectorOnce_' in lowered
         subprocess.run([clang, '-std=c++23', '-stdlib=libc++', '-I', root/'runtime/generated/public',
                         *units, *manifest['link_inputs'], '-o', work/'run'], check=True)
         subprocess.run([work/'run'], check=True)
@@ -57,7 +63,7 @@ return 0;
             result = invoke(proc)
             reason = 'Argument count mismatch' if expression in ('is_int()', 'is_int($x,$x)') else 'Unsupported first argument type'
             if expression.startswith('is_bool('):
-                reason = 'requires a scalar, vector, hash or box'
+                reason = 'requires a type with a PHP kind'
             assert reason in result.get('error', ''), (expression, result)
         main.write_text(source)
         assert 'error' not in invoke(proc)

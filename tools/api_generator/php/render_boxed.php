@@ -4,12 +4,13 @@ namespace Scpp\Api;
 function renderBoxed(array $plan, array &$files, array &$groups): void {
     if (!isset($plan['boxed'])) return;
     $box = $plan['boxed'];
+    $kindEnum = 'enum class boxed_kind { ' . implode(', ', array_keys(valueKinds())) . ' };';
     $h = BANNER . "#pragma once\n" . scalarProviderIncludes($plan) . includeHeader($plan['string']['header']);
-    $h .= "namespace scpp {\nnamespace detail { struct ownership_access; }\nenum class boxed_kind { null, boolean, integer, floating, string, container, tuple };\n";
+    $h .= "namespace scpp {\nnamespace detail { struct ownership_access; }\n$kindEnum\n";
     foreach ($box['families'] as $family) $h .= "class {$family['name']};\n";
     $split = isset($plan['boxed_dispatch']);
     if ($split) {
-        $files['public/scpp/boxed_kind.hpp'] = BANNER . "#pragma once\nnamespace scpp { enum class boxed_kind { null, boolean, integer, floating, string, container, tuple }; }\n";
+        $files['public/scpp/boxed_kind.hpp'] = BANNER . "#pragma once\nnamespace scpp { $kindEnum }\n";
         $files['public/scpp/boxed_key.hpp'] = BANNER . "#pragma once\n" . includeHeader($plan['string']['header'])
             . scalarProviderIncludes($plan) . "namespace scpp {\nstruct boxed_text_key { int64 index; string text; };\n"
             . "int64 boxed_key(int64 key);\nboxed_text_key boxed_key(string key);\n}\n";

@@ -125,6 +125,17 @@ interface collection_value_source
 	public function lower_cpp_value_cursor(string $receiver): string;
 }
 
+/** Every value of this provider has the container kind, including empty values. */
+interface container_type
+{
+}
+
+/** Compare the current stored kind with a requested value kind, evaluating the operand once. */
+interface runtime_kind_type
+{
+	public function lower_cpp_kind_test(string $operand, value_kind $kind): string;
+}
+
 /** Entry traversal supplies the key and value from the same successful advance. */
 interface collection_entry_source extends collection_value_source
 {
@@ -645,10 +656,10 @@ abstract class type_definition
 		return false;
 	}
 
-	/** Empty for types without a published PHP scalar kind. */
-	public function predicate_kind(): string
+	/** Null for types without a statically known scalar kind. */
+	public function scalar_kind(): ?value_kind
 	{
-		return '';
+		return null;
 	}
 
 	/** Output admission is separate from string conversion. */

@@ -146,7 +146,7 @@ class ast_index_expression extends ast_expression
 	}
 
 	/** STATIC METHODS */
-	/** Find writable boxed storage, requiring a local dynamic root for computed names. */
+	/** Computed names share the boxed path rooted in a local or stable declared dynamic field. */
 	public static function boxed_path_root(ast_expression $row, bool $computed_key = false): ast_name_expression|ast_field_expression|null
 	{
 		if ($row->source()->flavor === flavor::python) return null;
@@ -155,12 +155,12 @@ class ast_index_expression extends ast_expression
 			$computed_key = $computed_key || $root instanceof ast_computed_member_read;
 			$root = $root->receiver;
 		}
-		if ($computed_key && !($root instanceof ast_name_expression && $root->local_binding() !== null && $root->type_def() instanceof type_dynamic)) {
-			throw new diagnostic($row->source(), $row->byte_start(), 'Computed member write requires a local dynamic receiver');
+		if ($root === $row && !$computed_key) return null;
+		$place = $root->type_def() instanceof boxed_type_definition ? self::collection_storage_root($root) : null;
+		if ($computed_key && (!($root->type_def() instanceof type_dynamic) || $place === null)) {
+			throw new diagnostic($row->source(), $row->byte_start(), 'Computed member write requires a dynamic local or stable dynamic instance field');
 		}
-		if ($root === $row) return null;
-		if (!($root->type_def() instanceof boxed_type_definition)) return null;
-		return self::collection_storage_root($root);
+		return $root === $row ? null : $place;
 	}
 
 	/** Find local or instance-field storage reached through checked collection slots. */

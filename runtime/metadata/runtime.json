@@ -689,7 +689,7 @@
   },
   "vector": {
     "transform_domain": {"operations": ["map", "filter"], "kind": "sequence", "publication": "vectors.specializations"},
-    "access_contracts": ["readonly_slot", "python_index_read"],
+    "access_contracts": ["container", "readonly_slot", "python_index_read"],
     "provider": "core.vectors",
     "source_type": "vector",
     "initialization": {
@@ -804,7 +804,7 @@
   },
   "hash": {
     "transform_domain": {"operations": ["map", "filter"], "kind": "keyed", "publication": "hashes.specializations"},
-    "access_contracts": ["readonly_slot", "python_index_read"],
+    "access_contracts": ["container", "readonly_slot", "python_index_read"],
     "transfer_assignment": "private_value_nothrow",
     "initialization": {
       "mode": "ordered_keyed",
@@ -1448,8 +1448,7 @@
   },
   "boxed": {
     "transform_domain": {"operations": ["map", "filter"], "kind": "collection", "publication": "boxed.scalar_dispatch"},
-    "access_contracts": ["python_index_read_snapshot"],
-    "mixed_predicates": {"is_bool": "boolean", "is_int": "integer", "is_float": "floating", "is_string": "string", "is_array": "container", "is_null": "null"},
+    "access_contracts": ["runtime_kind", "python_index_read_snapshot"],
     "initialization": "ordered_family_literals",
     "transfer_assignment": "private_value_nothrow",
     "scalar_kinds": ["null_t", "bool_t", "int64", "float64", "string"],
@@ -1492,6 +1491,7 @@
   },
   "compiler": {
     "positional_subset_family": "hash",
+    "php_kind_predicates": {"is_bool": "boolean", "is_int": "integer", "is_float": "floating", "is_string": "string", "is_array": "container", "is_null": "null"},
     "php_builtin_admission": {
       "number_format": [["value", "typed"], ["decimals", "typed"], ["decimal_separator", "typed"], ["thousands_separator", "typed"]],
       "strlen": [["string", "typed"]],

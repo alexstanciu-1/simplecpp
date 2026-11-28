@@ -31,6 +31,7 @@ file(GLOB_RECURSE generator_sources CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.php.tpl
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.concrete.json)
 list(APPEND generator_sources ${php_generator_source}
+  ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/boxed/value_kinds.def
   ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/json/record_output.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/structure/record_fields.hpp)
 set(api_tooling ${CMAKE_CURRENT_BINARY_DIR}/scpp-api-tooling)
@@ -905,7 +906,8 @@ if(BUILD_TESTING)
     endforeach()
   endforeach()
   foreach(case computed computed_write computed_admission computed_mutation computed_mutation_failure computed_nested computed_nested_missing
-      computed_append computed_append_missing computed_nested_mutation computed_nested_mutation_failure computed_deep computed_deep_missing)
+      computed_append computed_append_missing computed_nested_mutation computed_nested_mutation_failure computed_deep computed_deep_missing computed_field_store
+      computed_field_mutation computed_field_readonly computed_field_missing)
     add_test(NAME compiler_dynamic_arrow_${case}_php COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/dynamic_arrow.py ${case} php)
   endforeach()

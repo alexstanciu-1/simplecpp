@@ -6,7 +6,7 @@ require_once __DIR__ . '/boxed_dispatch.php';
 function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'boxed', 'boxed', 'Boxed');
     if ($m === null) return;
-    fields($m, ['transform_domain', 'access_contracts', 'mixed_predicates', 'binding', 'families', 'providers', 'scalar_kinds', 'integer_keys', 'string_keys', 'read', 'conversion', 'source_collection', 'transfer_assignment', 'initialization']);
+    fields($m, ['transform_domain', 'access_contracts', 'binding', 'families', 'providers', 'scalar_kinds', 'integer_keys', 'string_keys', 'read', 'conversion', 'source_collection', 'transfer_assignment', 'initialization']);
     $literalInput = $m->initialization ?? null;
     requireThat($literalInput === null || $literalInput === 'ordered_family_literals', 'Unsupported boxed initialization');
     $transfer = privateValueTransfer($m);
@@ -31,8 +31,8 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
     foreach (names($p->mixed_predicates ?? [], 'Duplicate mixed predicate') as $name) {
         requireThat(in_array('mixed', $requested, true), 'Mixed predicates require mixed');
         requireThat(preg_match('/^is_[a-z]+$/D', $name) === 1, 'Invalid mixed predicate name');
-        $kind = at(at($m, 'mixed_predicates'), $name);
-        requireThat(in_array($kind, ['boolean', 'integer', 'floating', 'string', 'container', 'null'], true), 'Unsupported mixed predicate kind');
+        $kind = at(at($metadata->compiler, 'php_kind_predicates'), $name);
+        requireThat(is_string($kind) && isset(valueKinds()[$kind]), 'Unsupported mixed predicate kind');
         $plan['mixed_predicates'][$name] = $kind;
     }
     $convert = boolean(at($p, 'scalar_conversions'));

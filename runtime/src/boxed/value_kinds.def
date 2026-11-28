@@ -1,0 +1,7 @@
+SCPP_VALUE_KIND(null, scalar)
+SCPP_VALUE_KIND(boolean, scalar)
+SCPP_VALUE_KIND(integer, scalar)
+SCPP_VALUE_KIND(floating, scalar)
+SCPP_VALUE_KIND(string, scalar)
+SCPP_VALUE_KIND(container, collection)
+SCPP_VALUE_KIND(tuple, collection)

@@ -3394,8 +3394,9 @@ CPP;
 				if ($function instanceof prepared_kind_predicate) {
 					$arg = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
 					if ($function->answer !== null) return '(static_cast<void>(' . $arg . '), ' . ($function->answer ? 'true' : 'false') . ')';
-					foreach ($value->arguments[0]->type_def()->cpp_headers() as $header) $required_headers[$header] = true;
-					return '((' . $arg . ').kind() == scpp::boxed_kind::' . $function->kind . ')';
+					$provider = $function->parameters[0];
+					foreach ($provider->cpp_headers() as $header) $required_headers[$header] = true;
+					return $provider->lower_cpp_kind_test($arg, $function->kind);
 				}
 				if ($function instanceof collection_membership_function) {
 					[$needle, $source] = $value->arguments;

@@ -129,7 +129,7 @@ PHP also admits `$d->{expr}` as a read when the receiver has type `dynamic` and 
 
 For a local `dynamic` receiver, PHP also admits plain assignment `$d->{expr} = rhs();`. Evaluate and normalize the string key once, then evaluate and box the RHS, then insert or replace the saved key using the ordinary bracket store. A throwing RHS performs no store. A computed name of `"remove"` writes the data key. Local computed names also support the same compound operators and standalone prefix/postfix `++` and `--` as bracket targets. Evaluate the name once and save the existing value before the RHS. A missing key skips the RHS and raises `boxed_missing_key`. If the RHS removes the saved key, write-back raises the same error and leaves the key absent.
 
-On a local `dynamic` receiver, plain assignment, append, compounds and standalone prefix/postfix updates may mix `->{expr}` and bracket keys at any depth. Each computed name requires a string. Bracket keys follow ordinary boxed key normalization. All forms save the keys once in source order. Assignment and append resolve the current path after evaluating the RHS. Append takes its next integer key from the selected child at that time. Compounds and updates require the existing leaf first. A compound applies the operator to the saved value and checks the current path before storing. Computed calls and computed write paths rooted in instance fields or other nonlocal storage remain deferred.
+On a local `dynamic` receiver or a stable `dynamic` instance field, plain assignment, append, compounds and standalone prefix/postfix updates may mix `->{expr}` and bracket keys at any depth. Each computed name requires a string. Bracket keys follow ordinary boxed key normalization. All forms save the keys once in source order. Assignment and append resolve the current path after evaluating the RHS. Append takes its next integer key from the selected child at that time. Compounds and updates require the existing leaf first. A compound applies the operator to the saved value and checks the current path before storing. For an instance field, select and retain the holder before evaluating the first key. Keys and the RHS can rebind the holder variable. Write-back uses the current contents of the selected field on the original holder. A readonly dynamic field permits mutation of the shared container and rejects replacement of the field outside initialization. Computed calls and computed write paths rooted in static or global storage remain deferred.
 
 ## Plain two-key assignment on boxed locals
 
@@ -210,9 +210,11 @@ introduce no public object layout or additional boxed kinds.
 ## Kind predicates
 
 PHP publishes `is_bool`, `is_int`, `is_float`, `is_string`, `is_null` and
-`is_array`. For a native scalar, vector or hash, the compiler knows the answer
-from the declared type. Both vectors and hashes satisfy `is_array`. Mixed
-and dynamic operands inspect the stored tag, including the container tag.
+`is_array`. The PHP flavor maps these names to shared value kinds (for example, `is_array`
+requests `container`). A scalar's published kind or a provider's `container` guarantee
+settles the answer during preparation. Vector, hash and fixed-array providers
+satisfy `is_array` for every value, including empty containers. Mixed and
+dynamic providers declare `runtime_kind` and compare the current stored tag with the requested kind.
 Every argument evaluates once even if its type settles the answer. The
 predicate returns a bool snapshot. Carrier inputs require explicit extraction.
 The general API predicates retain their exact mixed input.
