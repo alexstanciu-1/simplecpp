@@ -33,6 +33,14 @@ that Unix second, including zero and negative values. Formatting uses UTC
 independently of the host zone and follows PHP 8.5 date tokens and byte escaping.
 The private timelib UTC calendar and formatter link only when referenced.
 
+PHP `strtotime(string $datetime, ?int $base_timestamp = null): result_or_false<int>`
+uses the same module and UTC default. Omitted and null bases sample the clock once.
+Timelib fills missing fields from the UTC base and applies explicit offsets, zone
+abbreviations, or named-zone rules from its bundled database. Parser errors, empty
+input and integer conversion failures return false. Warning-only normalization
+succeeds. The parser receives the full byte length. The relative parser and zone
+database link independently of the clock and UTC formatter.
+
 When published, uint64 supports exact typed storage, parameters and returns.
 Its native representation preserves all 64 unsigned bits. This transport
 contract introduces no arithmetic, conversions or unsigned source literals.
@@ -175,7 +183,7 @@ must build without the legacy runtime tree, including with tests disabled.
 
 ## Deferred scope
 
-The legacy source callable catalog remains unchanged. Custom DST resolution, PHP strtotime/microtime adapters, named zones, locale-aware
+The legacy source callable catalog remains unchanged. Custom DST resolution, PHP microtime adapters, configurable default zones, locale-aware
 formatters, calendar arithmetic and general module/plugin discovery are separate work.
 
 Donor provenance and initial validation are recorded in `datetime_validation.md`;

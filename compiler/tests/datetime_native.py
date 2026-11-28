@@ -121,6 +121,7 @@ return 0;
         lowered = ''.join(unit.read_text() for unit in units)
         assert '::scpp::dt::php_date(' in lowered and 'timelib' not in lowered, lowered
         subprocess.run([*link, *units, *(build/Path(p).name for p in bundle['link_inputs']), '-o', exe], check=True)
+        assert b'timelib_strtotime' not in subprocess.check_output(['nm', exe])
         expected = subprocess.check_output(['php', '-n', '-d', 'date.timezone=UTC', '-r',
                                             program])
         for zone in ['UTC0', 'America/New_York']:
