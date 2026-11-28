@@ -20,6 +20,13 @@ rule to the prepared index expression and assigns the provider’s entry value t
 to the read. Each reached receiver and key evaluates once. A failed lookup in
 a nested read prevents evaluation of the next key.
 
+For a nested write through vectors or hashes, the concrete provider binds a
+checked slot to its key and stored value type. It borrows an existing element
+from a mutable lvalue for immediate access. Missing positions and keys raise
+the usual lookup error. Across key or RHS effects the compiler retains the
+root and reevaluates the lookup with saved keys. Writable foreach uses its
+own traversal position binding.
+
 ## Optional key inputs
 
 A typed optional key expression uses the existing checked by-value argument conversion

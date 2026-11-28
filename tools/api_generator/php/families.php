@@ -970,11 +970,6 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
     $plan['datetime'] = ['module' => 'datetime', 'namespace' => 'scpp::dt', 'header' => $header, 'utc_years' => [0, 9999], 'local_dst' => 'host_normalize_and_select', 'parse_failure' => 'result_error', 'format_failure' => 'throw_runtime_error', 'operations' => $operations, 'build' => ['target' => 'scpp_datetime', 'requires' => 'scpp_runtime', 'generated_sources' => ['src/datetime.cpp'], 'private_sources' => ['runtime/src/datetime/datetime.cpp'], 'private_includes' => ['runtime/src/datetime', 'runtime/src/numeric']]];
 }
 
-function recordIdentifier(string $name): bool {
-    $keywords = explode(' ', 'alignas alignof and and_eq asm auto bitand bitor bool break case catch char char8_t char16_t char32_t class compl concept const consteval constexpr constinit const_cast continue co_await co_return co_yield decltype default delete do double dynamic_cast else enum explicit export extern false float for friend goto if inline int long mutable namespace new noexcept not not_eq nullptr operator or or_eq private protected public register reinterpret_cast requires return short signed sizeof static static_assert static_cast struct switch template this thread_local throw true try typedef typeid typename union unsigned using virtual void volatile wchar_t while xor xor_eq std detail');
-    return preg_match('/^[a-z][a-z0-9_]*$/D', $name) === 1 && !str_contains($name, '__') && !in_array($name, $keywords, true);
-}
-
 function prepareOwnership(mixed $metadata, mixed $publication, array $facts, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'ownership', 'ownership', 'Ownership');
     if($m === null) {

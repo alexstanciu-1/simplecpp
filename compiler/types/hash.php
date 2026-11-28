@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements subset_source, map_source, keyed_result_builder, readonly_index_lookup_type, writable_iteration_type, conditional_index_store_type, counted_collection_type, membership_type
+abstract class hash_type_definition extends type_definition implements subset_source, map_source, keyed_result_builder, readonly_index_lookup_type, writable_iteration_type, indexed_mutation_type, counted_collection_type, membership_type
 {
 	use indexed_entry_read;
 	use same_type_subset;
@@ -55,11 +55,6 @@ abstract class hash_type_definition extends type_definition implements subset_so
 	public function private_copy_allocation_only(): bool
 	{
 		return $this->key_type->copy_has_no_observable_effects() && $this->value_type->copy_has_no_observable_effects();
-	}
-
-	public function lower_cpp_slot(string $receiver, string $key): string
-	{
-		return "$receiver.checked_slot($key)";
 	}
 
 	public function lower_cpp_iteration_reference(string $receiver, int $loop_start): string

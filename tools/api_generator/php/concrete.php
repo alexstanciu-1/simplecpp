@@ -46,6 +46,7 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
         $values += compact('hash', 'equal');
     }
     requireThat(!array_key_exists('type_contracts', $values), 'Concrete type contracts are generated');
+    if (isset($recipe->checked_slot)) $values['checked_slot'] = checkedSlotMethod($recipe);
     $values['type_contracts'] = $contracts;
     $result = [];
     foreach (object(at($recipe, 'fragments')) as $section => $fragments) {
@@ -69,8 +70,23 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
 function concreteRecipe(string $name): mixed {
     static $recipes = [];
     $recipe = $recipes[$name] ??= decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot']);
     return $recipe;
+}
+
+/** Checked slots borrow an existing element from a mutable lvalue for one immediate access. */
+function checkedSlotMethod(object $recipe): string {
+    $slot = at($recipe, 'checked_slot');
+    fields($slot, ['method', 'key', 'value', 'missing']);
+    $method = textValue(at($slot, 'method'));
+    requireThat(recordIdentifier($method), 'Invalid checked slot member');
+    $key = $recipe->hash_key ?? 'index';
+    $valueParameters = array_diff(array_keys(object($recipe->parameters)), [$key]);
+    requireThat(at($slot, 'key') === $key && array_values($valueParameters) === [at($slot, 'value')],
+        'Invalid checked slot associated types');
+    requireThat(at($slot, 'missing') === ($key === 'index' ? 'sequence_index_out_of_range' : 'hash_missing_key'),
+        'Invalid checked slot failure');
+    return $method;
 }
 
 /** Package a concrete application definition without family-specific compiler assembly. */

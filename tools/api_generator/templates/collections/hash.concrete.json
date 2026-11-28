@@ -1,5 +1,6 @@
 {
   "hash_key": "k",
+  "checked_slot": {"method": "checked_slot", "key": "k", "value": "v", "missing": "hash_missing_key"},
   "parameters": {
     "k": {"alias": "key_type", "requires": ["copy_constructible", "nothrow_move_constructible", "nothrow_move_assignable", "nothrow_destructible"]},
     "v": {"alias": "value_type", "requires": ["copy_constructible", "nothrow_move_constructible", "nothrow_move_assignable", "nothrow_destructible"]}
