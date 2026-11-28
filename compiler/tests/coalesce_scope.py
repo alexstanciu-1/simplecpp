@@ -15,7 +15,7 @@ CASES = [
     ('$v vector<mixed> = []; $v[0]["x"] ??= 3;', 'Unavailable runtime specialization'),
     ('$s string = "x"; $s[0] ??= 3;', 'mutable collection'),
     ('$a mixed = []; $a[] ??= 3;', 'requires a key'),
-    ('class H {public ?int $n;} $h ?H = null; $h?->n ??= 3;', 'Expected call statement'),
+    ('class H {public ?int $n;} $h ?H = null; $h?->n ??= 3;', 'Cannot write through the nullsafe operator'),
     ('$b mixed = []; $x = ($b["x"] ??= 3);', 'Expected )'),
     ('$b dynamic = []; for ($b["x"] ??= 3; false; ) {}', 'Expected update operator'),
     ('$b mixed = []; $b->{"x"} ??= 3;', 'requires a dynamic receiver'),

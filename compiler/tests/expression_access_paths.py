@@ -263,6 +263,31 @@ def suspended_owner(work, case):
     revisions(work, 'php', {'main': source}, [(None, None, b'OKSIAB|16/26')])
 
 
+def nullsafe_write(work, case):
+    model = 'class N {public int $v=0;public vector<int> $items;public ?N $child;}'
+    main = """
+        function rhs():int {echo "R";return 7;}
+        function run(?N $n):void {
+            $dst=new N();
+            $dst->v=$n?->v ?? 9;echo $dst->v;
+            $v vector<int>=[0];$v[$n?->v ?? 0]=4;echo $v[0];
+            WRITE
+        }
+        run(null);$n=new N();run($n);echo $n->v;return 8;
+    """
+    repaired = main.replace('WRITE', 'if ($n !== null) {$n->v=rhs();}')
+    invalid = [
+        '$n?->v=rhs();', '$n?->items[]=1;', '$n?->items[0]+=1;', '$n?->v??=1;',
+        '++$n?->v;', '--$n?->v;', '$n?->v++;', '$n?->v--;',
+        '$n?->child->items[0]=1;', '$n?->child->{"key"}+=1;', '++$n?->child->{"key"};',
+        '($n?->child)->v=3;', '($n?->items)[0]++;', '$n->child?->items[]=2;',
+    ]
+    edits = [('main', main.replace('WRITE', target), 'Cannot write through the nullsafe operator (?->)')
+             for target in invalid]
+    revisions(work, 'php', dict(model=model, main=repaired), [(None, None, b'9404R7'), *edits,
+                                                               ('main', repaired, b'9404R7')])
+
+
 def grouped_receiver(work, case):
     source = """
     class N {public int $v=3;}
@@ -385,7 +410,7 @@ CASES.update({name: bounds for name in ('bounds_string', 'bounds_vector', 'bound
 CASES.update(arithmetic_failure=arithmetic_failure, predicate_after_write=predicate_after_write,
              qualified_receiver=qualified_receiver, wrapper_coalesce=coalesce_pair,
              handle_coalesce=coalesce_pair, awaited_coalesce=awaited_coalesce_pair)
-CASES.update(grouped_absent=grouped_receiver, grouped_present=grouped_receiver)
+CASES.update(nullsafe_write=nullsafe_write, grouped_absent=grouped_receiver, grouped_present=grouped_receiver)
 CASES.update({name: callable_join for name in ('factory_match', 'factory_ternary', 'declared_match', 'declared_ternary')})
 CASES.update(signatures_ternary=callable_join_signatures, signatures_match=callable_join_signatures)
 CASES.update(suspended_owner=suspended_owner, terminal_void=terminal_void, mixed_read=mixed_read_context,

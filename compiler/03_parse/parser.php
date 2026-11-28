@@ -355,6 +355,9 @@ final class Parser
 		}
 		if ($this->property_statement_start()) {
 			$target = $this->primary(field_target: true);
+			if ($target instanceof ast_nullsafe_member && ($this->cursor->is(token_kind::lbracket) || $this->computed_member_start())) {
+				return $this->indexed_write($target);
+			}
 			if ($target instanceof ast_call_expression || $target instanceof ast_nullsafe_member) {
 				return $this->call_statement($target);
 			}
@@ -983,6 +986,10 @@ final class Parser
 	/** Finish a discarded ordinary or member call. */
 	private function call_statement(ast_expression $call, token_kind $terminator = token_kind::semicolon): ast_statement
 	{
+		if ($this->cursor->is(token_kind::assign) || $this->cursor->is(token_kind::increment)
+			|| $this->cursor->is(token_kind::decrement) || $this->compound_operator() !== null) {
+			$this->check_write_receiver($call);
+		}
 		if ($call instanceof ast_nullsafe_member && $call->operand instanceof ast_call_expression) {
 			return new ast_discard_statement($call, $this->statement_end($terminator));
 		}
@@ -1449,9 +1456,23 @@ final class Parser
 		return $initializer;
 	}
 
+	/** Only the storage path is a write context. Indices and call arguments are reads. */
+	private function check_write_receiver(ast_expression $target): void
+	{
+		if ($this->cursor->tokens->source->flavor !== flavor::php) return;
+		while ($target instanceof ast_field_expression || $target instanceof ast_index_expression
+			|| $target instanceof ast_qualified_data || ($target instanceof ast_call_expression && $target->receiver !== null)) {
+			$target = $target->receiver;
+		}
+		if ($target instanceof ast_nullsafe_member) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Cannot write through the nullsafe operator (?->)');
+		}
+	}
+
 	/** Parse the discarded write or update on an already selected property. */
 	private function property_write(ast_field_expression|ast_name_expression $target): ast_statement
 	{
+		$this->check_write_receiver($target);
 		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
 			return $this->property_update($target->start, $target, $this->take_update_operator(), true);
 		}
@@ -1541,6 +1562,7 @@ final class Parser
 			if ($target instanceof ast_qualified_data || $target instanceof ast_field_expression) return $this->property_write($target);
 			return $this->call_statement($target, $terminator);
 		}
+		$this->check_write_receiver($receiver);
 		if ($receiver instanceof ast_called_type_name) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed late-static property writes are deferred');
 		if ($receiver instanceof ast_qualified_data) {
 			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed expression-qualified static property writes are deferred');
@@ -1681,6 +1703,7 @@ final class Parser
 					$guarded = $this->instance_member($value);
 					$member = $guarded;
 					while (true) {
+						if ($this->computed_member_start() || ($this->cursor->is(token_kind::lbracket) && $this->cursor->next_is(token_kind::rbracket))) break;
 						if ($this->cursor->is(token_kind::lbracket)) $member = $this->indexed_read($member);
 						elseif ($this->cursor->is(token_kind::member)) {
 							$this->cursor->take(token_kind::member, '->');
@@ -2413,6 +2436,7 @@ final class Parser
 			$operator = $this->take_update_operator();
 			if ($allow_property && ($this->property_statement_start(true) || $this->expression_statement_start() || $cursor->next_is(token_kind::lbracket))) {
 				$target = $this->primary();
+				$this->check_write_receiver($target);
 				if ($target instanceof ast_index_expression) {
 					if ($terminator !== token_kind::semicolon) {
 						throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Indexed updates in for headers are deferred');
