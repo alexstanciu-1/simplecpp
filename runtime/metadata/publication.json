@@ -5,7 +5,9 @@
   "async_frames": true,
   "mt_segments": true,
   "modules": ["numeric"],
-  "boxed": {"mixed_predicates": ["is_bool", "is_int", "is_float", "is_string", "is_array", "is_null"], "header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
+  "boxed": {"php_operations": [
+    {"native": "parse_str", "php": ["parse_str"], "parameters": ["string", "mixed"], "mutable_parameters": [1], "result": "void"}
+  ], "mixed_predicates": ["is_bool", "is_int", "is_float", "is_string", "is_array", "is_null"], "header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
   "namespace": "scpp",
   "types": [
     "int64",

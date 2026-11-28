@@ -188,6 +188,9 @@ target_include_directories(scpp_runtime
   PUBLIC ${runtime_generated}/public
   PRIVATE ${runtime_generated}/private ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/hash)
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
+if("${runtime_generated}/public/scpp/php/parse_str.hpp" IN_LIST runtime_outputs)
+  target_sources(scpp_runtime PRIVATE runtime/src/boxed/parse_str.cpp)
+endif()
 if(async_frames)
   target_sources(scpp_runtime PRIVATE runtime/src/async/task.cpp)
 endif()
@@ -745,6 +748,8 @@ if(BUILD_TESTING)
       set_tests_properties(compiler_fcgi_apache_native PROPERTIES TIMEOUT 60)
     endif()
   endif()
+  add_test(NAME compiler_php_parse_str_native COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_parse_str_native.py ${CMAKE_CXX_COMPILER})
   if(SCPP_ENABLE_IO)
     add_test(NAME compiler_php_csv_native COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_csv_native.py ${CMAKE_CXX_COMPILER})

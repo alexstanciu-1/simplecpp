@@ -101,6 +101,12 @@ same committed mutation or the same prior contents after failure. Private capaci
 or valid interned keys may remain allocated. Strong cycles remain supported and
 require explicit edge removal for reference-count reclamation (RT-DEBT-02).
 
+## PHP form query parsing
+
+The PHP core binding `parse_str(string $string, mixed &$result): void` requires an exact writable mixed slot. It replaces that slot with an insertion-ordered mixed table, including for empty input. The parser splits on ampersands, form-decodes names and values, and resolves bracket paths in input order. Leaves contain byte strings. Reassignment retains key position. A scalar and table at the same path replace one another.
+
+The compiled runtime uses the PHP defaults of 1,000 input fields and 64 bracket levels. Each nonempty field counts, including duplicates and ignored names. An extra field emits a warning on stderr and publishes the first 1,000 fields. An over-depth path deletes its top-level entry and parsing continues. A canonical signed 64-bit PHP integer key outside the mixed key domain, or an append past its maximum, throws a source-catchable exception and preserves the previous output. A decimal spelling outside the PHP integer domain remains a string key.
+
 ## Linking and next scope
 
 Compile generated `src/boxed.cpp` alongside that publication's `src/runtime.cpp`;

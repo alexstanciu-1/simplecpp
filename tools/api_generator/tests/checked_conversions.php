@@ -13,7 +13,7 @@ $root = dirname(__DIR__, 3);
 $metadata = decode(readFile($root . '/runtime/metadata/runtime.json'), 'metadata');
 $publication = decode(readFile($root . '/runtime/metadata/publication.json'), 'publication');
 $publication->types = ['byte', 'int64'];
-unset($publication->modules, $publication->cli_helpers);
+unset($publication->modules, $publication->cli_helpers, $publication->boxed->php_operations);
 $publication->text_helpers = array_values(array_diff($publication->text_helpers, ['stable_hash_string_u64']));
 // Exercise the standalone scalar runtime surface while deliberately varying its conversion policies.
 $publication->boxed->scalar_dispatch = false;
