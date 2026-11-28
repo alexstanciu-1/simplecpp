@@ -57,9 +57,12 @@ Declared locals and writable declared PHP instance fields use the same generated
 The backend emits a presence-guarded `if` containing ordinary assignment, without
 a lambda, snapshot or payload extraction. Conversions and RHS effects occur only
 in that branch. Null and same-carrier assignments follow existing assignment rules;
-implicit narrowing is not broadened. Parameters, static properties, indexed destinations,
+implicit narrowing is not broadened. Parameters, static properties, indexed destinations other than local PHP hashes,
 for-header writes and assignment expressions remain deferred. For a field, lowering
 retains the selected receiver and binds the field once before checking presence.
+A local PHP hash keeps the normalized key across its entry presence probe and the guarded
+keyed store. No slot reference survives fallback evaluation. Nullable shared elements
+use the same owner-presence probe as indexed `isset`.
 The native field test checks rebinding the last owner, skipping the fallback for
 zero, writes made by a throwing fallback and readonly declaration edit/recovery.
 

@@ -141,7 +141,14 @@ This statement does not yield a value. PHP also accepts the statement on a writa
 It evaluates the receiver once and retains the selected owner through the store or
 exception. Rebinding the receiver during fallback leaves the store directed at the
 original field. A write to that field by the fallback survives if the fallback throws.
-Parameters, globals, static properties, indexed places, for-header writes and
+For a PHP local typed hash, `$h[key()] ??= fallback();` saves the key once.
+A missing key or an absent payload selects the fallback. A present zero skips it.
+The presence probe leaves the hash untouched. On success the ordinary keyed-store
+conversion applies and the current hash receives the value at the saved key, even
+if the fallback replaced the hash or inserted that key. If fallback or conversion
+throws, its earlier effects survive and the conditional store does not run.
+
+Parameters, globals, static properties, other indexed places, for-header writes and
 application/shared carriers remain outside this contract.
 
 ## v0.2 homogeneous scalar wrapper coalescing — 2026-10-20

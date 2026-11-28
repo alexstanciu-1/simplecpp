@@ -320,6 +320,12 @@ final class ast_index_compound extends ast_assignment_statement
 		$this->target = $target;
 		$target->attach($this);
 	}
+
+	/** Conditional insertion converts the fallback exactly like an ordinary keyed write. */
+	public function prepare_conditional_store(type_definition $element): void
+	{
+		$this->conversion = $element->prepare_conversion($this->value, conversion_context::typed_destination);
+	}
 }
 
 /** Discarded indexed update, e.g. factory()->items[key()]++; shares generated numeric update admission. */

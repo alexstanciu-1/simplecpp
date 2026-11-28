@@ -117,7 +117,7 @@ final class Cpp_Concrete_Collections
 		$body = \Scpp\Api\template('collections/php_hash_isset', [
 			'hash' => (new cpp_concrete_type($hash, $this->root))->cppType('scpp::php'),
 			'key' => (new cpp_concrete_type($hash->key_type, $this->root))->cppType('scpp::php'),
-			'method' => $hash->probes_stored_owner() ? 'has_present_owner' : 'has',
+			'method' => $hash->entry_presence_method(),
 		]);
 		$this->operation_headers[$path] = "#pragma once\n#include \"" . $key . ".hpp\"\n" . $body;
 	}
