@@ -577,6 +577,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@optional_requires@' => $optionalRequires . (isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : ''),
         '@extent_families@' => implode(', ', $extentFamilies),
+        '@mapped_sequence@' => $vectorFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($vectorFamily, true) . ', $element, null)',
+        '@mapped_keyed@' => $hashFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($hashFamily, true) . ', $element, $key)',
         '@positional_subset@' => $subsetFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($subsetFamily, true) . ', $element, self::integer())',
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations, '@application_specializations@' => $applicationVectors . $applicationHashes,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),

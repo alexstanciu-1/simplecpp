@@ -82,6 +82,16 @@ final class type_registry
 @application_specializations@		return null;
 	}
 
+	public static function mapped_sequence(type_definition $element): ?type_definition
+	{
+		return @mapped_sequence@;
+	}
+
+	public static function mapped_keyed(type_definition $element, type_definition $key): ?type_definition
+	{
+		return @mapped_keyed@;
+	}
+
 	public static function positional_subset(type_definition $element): ?type_definition
 	{
 		return @positional_subset@;

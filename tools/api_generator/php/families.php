@@ -85,12 +85,8 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     }
     prepareHashes($metadata, $publication, $plan);
     foreach (names(property_exists($publication, 'collection_transforms') ? $publication->collection_transforms : [], 'Duplicate collection transform') as $name) {
-        if ($name === 'in_array' || $name === 'array_filter') {
+        if (in_array($name, ['in_array', 'array_filter', 'array_map'], true)) {
             $plan['collection_transforms'][] = $name;
-            continue;
-        }
-        if ($name === 'array_map') {
-            if ($plan['vectors'] !== [] || isset($plan['hashes'])) $plan['collection_transforms'][] = $name;
             continue;
         }
         requireThat(preg_match('/^(collection|sequence|keyed)_(map|filter)$/D', $name, $match) === 1, 'Unknown collection transform');

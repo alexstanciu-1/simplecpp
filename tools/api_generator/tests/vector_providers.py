@@ -135,6 +135,8 @@ def proof(work, quick=False):
     assert binding() is None, 'Retired publication specialization still resolves'
     assert "'php:func:in_array'" in (compiler / 'types/registry.php').read_text()
     assert (output / 'public/scpp/collection_scan.hpp').is_file()
+    assert "'php:func:array_map'" in (compiler / 'types/registry.php').read_text()
+    assert (output / 'public/scpp/collection_map.hpp').is_file()
     assert "'php:func:array_filter'" in (compiler / 'types/registry.php').read_text()
     assert (output / 'public/scpp/collection_filter.hpp').is_file()
     assert 'class type_vector_' not in (compiler / 'types/vectors.php').read_text()

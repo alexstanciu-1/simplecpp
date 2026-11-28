@@ -3486,13 +3486,16 @@ final class Preparation
 			$element = $input->iteration_value_type();
 			$filter_output = $input->subset_result_type();
 			if (!($filter_output instanceof keyed_result_builder)) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
+		} elseif ($map) {
+			if (!($input instanceof map_source)) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for array_map');
+			$element = $input->iteration_value_type();
 		} elseif ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
 			$element = $input->element_type;
 			$key = null;
 		} elseif ($input instanceof hash_type_definition && !in_array($operation, [runtime_factory::sequence_map, runtime_factory::sequence_filter], true)) {
 			$element = $input->value_type;
 			$key = $input->key_type;
-		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter, runtime_factory::array_map], true)) {
+		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter], true)) {
 			$element = $input;
 			$key = null;
 		} else {
@@ -3519,7 +3522,7 @@ final class Preparation
 		if (!($signature instanceof callback_type_definition) || $signature->inputs !== [$element]
 			|| $signature->input_mode(0) !== passing_mode::value || $signature->reference_origin !== null
 			|| ($type instanceof lambda_type_definition && $type->has_defaults)
-			|| (!$filter && $input instanceof boxed_type_definition && $signature->result !== $input)
+			|| (!$map && !$filter && $input instanceof boxed_type_definition && $signature->result !== $input)
 			|| $signature->result === type_void::instance() || ($filter && $signature->result !== type_bool::instance())) {
 			throw new diagnostic($callback->source(), $callback->byte_start(), 'Invalid callback signature for ' . $operation->name);
 		}
@@ -3532,7 +3535,12 @@ final class Preparation
 		} else {
 			$this->dependencies?->callable_site($this->owner, $call);
 		}
-		$output = ($filter || $input instanceof boxed_type_definition) ? $filter_output : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+		if ($map) {
+			$output = $input->mapped_result_type($signature->result);
+			if (!($output instanceof mapped_result_builder)) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable mapped result builder for array_map');
+		} else {
+			$output = ($filter || $input instanceof boxed_type_definition) ? $filter_output : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+		}
 		if ($output === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable collection result for ' . $operation->name);
 		$this->retain_member_place($source);
 		$call->settle_runtime(new collection_transform_function($operation, $input, $type, $output, $filter));

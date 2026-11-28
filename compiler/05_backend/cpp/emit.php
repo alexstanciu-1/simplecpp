@@ -3990,6 +3990,17 @@ CPP;
 		$owner_steps = [];
 		$receiver = $this->retained_place($input, $globals, $declarations, $headers, $owner_steps, full_expression: true);
 		$callable = $callback === null ? null : $this->value($callback, $globals, $declarations, $headers);
+		if ($map) {
+			$headers['scpp/collection_map.hpp'] = true;
+			$element = $type->iteration_value_type()->cpp_type();
+			$slot = $type->iteration_output_type();
+			$item = $slot === null ? 'item' : 'item.value';
+			$insert = $out->lower_cpp_mapped_entry('result', 'key', 'static_cast<decltype(mapped)&&>(mapped)');
+			return '[](auto callback, const auto& source) { auto result = ' . $out->lower_cpp_empty()
+				. '; ::scpp::detail::map_entries<' . $type->cpp_entry_key_type() . ', ' . ($slot ?? $element) . '>(' . $type->lower_cpp_entry_cursor('source')
+				. ", [&](auto& item) { return callback(static_cast<$element&&>($item)); }, "
+				. "[&]([[maybe_unused]] auto& key, auto&& mapped) { $insert; }); return result; }($callable, $receiver)";
+		}
 		if ($function->name() === 'array_filter') {
 			$headers['scpp/collection_filter.hpp'] = true;
 			$slot = $type->iteration_output_type();
@@ -4024,9 +4035,7 @@ CPP;
 		$lines[] = $function->filter ? "if (callback($item)) $insert" : $insert;
 		$lines[] = '} return result;';
 		// A selected owned callable survives reassignment of its source slot by the callback.
-		$params = $map ? 'auto callback, const auto& source' : 'const auto& source, auto callback';
-		$args = $map ? "$callable, $receiver" : "$receiver, $callable";
-		return "[]($params) { " . implode(' ', $lines) . " }($args)";
+		return '[](const auto& source, auto callback) { ' . implode(' ', $lines) . " }($receiver, $callable)";
 	}
 
 	/**

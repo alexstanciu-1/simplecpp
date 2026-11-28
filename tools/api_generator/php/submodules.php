@@ -281,6 +281,7 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
     if (in_array('array_filter', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_filter.hpp';
+    if (in_array('array_map', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_map.hpp';
     if (in_array('in_array', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_scan.hpp';
     if (in_array('implode', $publication->string->functions ?? [], true)
         && in_array('string', array_column($publication->hashes->specializations ?? [], 'value'), true)) {

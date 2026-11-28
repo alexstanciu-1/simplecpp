@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Inline byte storage, e.g. fixed_array<fixed_array<byte,5>,3>. Each dimension keeps its logical bound. */
-final class fixed_array_type extends type_definition implements subset_source, indexed_collection_type, index_write_type, counted_collection_type
+final class fixed_array_type extends type_definition implements subset_source, map_source, indexed_collection_type, index_write_type, counted_collection_type
 {
 	use positional_subset;
 
@@ -44,6 +44,12 @@ final class fixed_array_type extends type_definition implements subset_source, i
 	}
 
 	/** METHODS */
+	/** Inline rows cannot be passed to a mapped callback by value. */
+	public function mapped_result_type(type_definition $element): ?type_definition
+	{
+		return $this->element instanceof self ? null : type_registry::mapped_sequence($element);
+	}
+
 	public function cpp_type(): string
 	{
 		return $this->declarator('');

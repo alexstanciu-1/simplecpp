@@ -125,12 +125,39 @@ interface collection_value_source
 	public function lower_cpp_value_cursor(string $receiver): string;
 }
 
-/** Ordered entry traversal and the associated type used to build a key-preserving subset. */
-interface subset_source extends collection_value_source
+/** Entry traversal supplies the key and value from the same successful advance. */
+interface collection_entry_source extends collection_value_source
 {
-	public function subset_result_type(): ?type_definition;
 	public function cpp_entry_key_type(): string;
 	public function lower_cpp_entry_cursor(string $receiver): string;
+}
+
+/** Associated builder for a key-preserving subset. */
+interface subset_source extends collection_entry_source
+{
+	public function subset_result_type(): ?type_definition;
+}
+
+/** Resolve a builder after the callback has supplied its result type. */
+interface map_source extends collection_entry_source
+{
+	public function mapped_result_type(type_definition $element): ?type_definition;
+}
+
+/** Construct a complete mapped result in encounter order. Dense builders may append. */
+interface mapped_result_builder
+{
+	public function lower_cpp_empty(): string;
+	public function lower_cpp_mapped_entry(string $receiver, string $key, string $value): string;
+}
+
+/** Preserve the entry cursor's key with the provider's normal keyed store. */
+trait keyed_map_insert
+{
+	public function lower_cpp_mapped_entry(string $receiver, string $key, string $value): string
+	{
+		return $this->lower_cpp_write($receiver, $key, $value);
+	}
 }
 
 /** Empty construction and insertion with the key supplied by the entry cursor. */

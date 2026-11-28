@@ -228,8 +228,15 @@ existing flavors. Indexed writes have their own admission rules.
 
 ## PHP array helpers
 
-`array_map(callback, source)` maps one vector, typed hash or boxed table and
-retains its keys. `array_filter(source, predicate)` retains matching entries in
+`array_map(callback, source)` visits each entry of one source in encounter order and calls the callback once per entry.
+The provider selects the result builder from the callback return type. Vectors and
+one-dimensional fixed byte arrays build a dense vector of mapped values. Typed hashes
+preserve their key type and keys, including sparse integers. Boxed tables build a fresh
+table of the same family and require that family as the callback result. Preparation
+rejects a missing builder before code generation. A throwing callback discards the
+partial result.
+
+`array_filter(source, predicate)` retains matching entries in
 encounter order. The source supplies an entry cursor and an associated result type.
 The result builder creates an empty collection and inserts each retained value at
 its original key. Vectors and one-dimensional fixed byte arrays use the positional

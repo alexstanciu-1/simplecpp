@@ -7,8 +7,14 @@ namespace scpp\compiler;
 abstract class boxed_type_definition extends type_definition implements indexed_mutation_type, membership_type
 {
 	use same_type_subset;
+	use keyed_map_insert;
 
 	use collection_keyed_store;
+
+	public function mapped_result_type(type_definition $element): ?type_definition
+	{
+		return $element === $this ? $this : null;
+	}
 
 	public function prepare_membership(ast_binary_expression $site): void
 	{
