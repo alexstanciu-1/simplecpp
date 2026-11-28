@@ -44,6 +44,16 @@ def literal(data):
 
 
 transforms = []
+for data in (b'', b'a\r\nb', b'a\rb\nc', b'\n\r', b'  \r\n', b' \n', b' \r', b'end ',
+             b'\t \t\r\n', b'A\0B=Z', bytes(range(256)), b'x' * 75 + b'\r\ny'):
+    transforms.append(f'quoted_printable_encode(string:{literal(data)})')
+for width in (63, 66, 69, 72, 74, 75, 76):
+    for tail in (b'a', b'=', b'\xc2\xa2', b'\xe2\x82\xac', b'\xf0\x9f\x98\x80', b'\x80', b'\xf5\xffZ'):
+        transforms.append(f'quoted_printable_encode({literal(b"x" * width + tail)})')
+for data in (b'', b'foo_bar', b'a=\r\nb', b'a=\nb', b'a=\rb', b'a=\n\rb', b'= \t\r\nZ',
+             b'a \t\r\nb', b'a \t', b'a=', b'a= \t', b'= \tx', b'=zQ=2', b'=aF=Ff=00B',
+             b'A\0B', b'A=\0B', b'A=00B\0C', b'==41', b'x' * 75 + b'=\r\ny'):
+    transforms.append(f'quoted_printable_decode(string:{literal(data)})')
 for data in (b'', b'aaaa', b'one-two words', b'a\tb\rc\nd\fe\vf', b'\0a\xffb'):
     for sep in (None, b'', b'-', b'a', b'A', b'\0\xff'):
         args = literal(data) if sep is None else f'separators:{literal(sep)},string:{literal(data)}'

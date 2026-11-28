@@ -275,3 +275,17 @@ digit by digit; other digit runs compare by length and then digits, without an
 integer size limit. Equal runs resume comparison at the immediate suffix byte.
 The insensitive form compares ASCII letters in uppercase. Embedded NULs are
 ordinary bytes. The result is a negative integer, zero or a positive integer.
+
+PHP `quoted_printable_encode(string)` preserves CRLF pairs and escapes lone
+CR, LF, tabs, NUL and other nonprintable bytes with uppercase hex. A space
+immediately before CR is escaped; a final space stays literal. The encoder
+uses PHP 8.5's 75-column soft-break rule (`=\r\n`). Bytes 80–DF, E0–EF
+and F0–F4 (hex) require room for 6, 9 and 12 columns respectively before
+emitting the three-byte escape. Bytes F5–FF emit their escape without first
+checking the column limit.
+
+PHP `quoted_printable_decode(string)` accepts either hex case and removes a
+soft break at CRLF, CR or LF, including intervening spaces and tabs after
+the equals sign. A final equals sign followed only by spaces or tabs is
+discarded. Other malformed escapes pass through. As observed on PHP 8.5.12,
+a literal NUL ends the encoded input; `=00` emits a NUL and decoding continues.
