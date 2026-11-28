@@ -215,3 +215,17 @@ leaves the previous output, key and position unchanged. No element-storage point
 the advance call. Exhaustion leaves outputs unchanged. Existing bounds, holes, mutation
 and receiver-lifetime rules apply equally to reference outputs and construction-aware slots.
 The slot owns its copied value through normal loop completion and suspended-cursor cleanup.
+
+## PHP array helpers
+
+`array_map(callback, source)` maps one vector, typed hash or boxed table and
+retains its keys. `array_filter(source, predicate)` retains matching entries in
+encounter order. A vector therefore produces `hash<T,int>` keyed by its original
+positions. Omitting the predicate uses the published scalar condition of each
+element, including the false string `"0"`. Boxed tables require a callback.
+The callback contracts are the same as for the general transforms above.
+
+`in_array(needle, source[, strict])` scans a typed vector or hash by value and
+stops at its first match. This slice admits a comparable scalar needle of the
+exact element type. Both flag values use the element's published equality. All
+supplied operands, including a computed flag, evaluate once.

@@ -2,8 +2,7 @@
 
 Doc Status: supporting
 
-`echo` currently accepts one or more comma-separated int64 or string values,
-with identical behavior in cpp/php/js flavors. It works in the entry body and
+`echo` accepts comma-separated int64 or string values in cpp/php/js. PHP additionally accepts the other published integer widths (including numeric bytes), floats, bool and null. True writes `1`. False and null write zero bytes. Float formatting uses locale-independent shortest round-trip text. It works in the entry body and
 function bodies, including calls across files. Output has no automatic
 separator or newline.
 

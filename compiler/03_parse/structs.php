@@ -219,7 +219,7 @@ final class Record_Syntax
 				if ($python) $c->take_keyword('def');
 				$at = $c->position();
 				$c->name(token_kind::identifier);
-				$parameters = $parser->parameters($python);
+				$parameters = $parser->parameters($python, constructor: true);
 				foreach ($parameters as $parameter) {
 					if ($parameter->mode === passing_mode::reference) {
 						throw new diagnostic($c->tokens->source, $c->offset(), 'Constructors cannot take writable reference parameters');

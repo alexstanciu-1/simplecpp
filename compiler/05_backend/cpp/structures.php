@@ -10,6 +10,8 @@ final readonly class cpp_program_output
 	public string $entry_path;
 	public string $cpp_namespace;
 	public bool $group_async_methods;
+	/** Build-time source root used to calculate the executable-relative installation layout. */
+	public ?string $source_root;
 	/** @var string[] Sources rendered during this emission pass, excluding reused text. */
 	public array $emitted_sources /** list<string> */;
 	/** @var string[] Prebuilt dependency artifacts, unchecked. */
@@ -34,8 +36,9 @@ final readonly class cpp_program_output
 	 * @param string[] $link_inputs
 	 */
 	public function __construct(string $entry_path, array $source_units /** array<string,string> */,
-		array $files /** array<string,string> */, array $native_sources /** list<string> */ = [], array $link_inputs /** list<string> */ = [], array $emitted_sources /** list<string> */ = [], string $cpp_namespace = 'App', array $source_adapters /** array<string,list<string>> */ = [], bool $group_async_methods = false)
+		array $files /** array<string,string> */, array $native_sources /** list<string> */ = [], array $link_inputs /** list<string> */ = [], array $emitted_sources /** list<string> */ = [], string $cpp_namespace = 'App', array $source_adapters /** array<string,list<string>> */ = [], bool $group_async_methods = false, ?string $source_root = null)
 	{
+		$this->source_root = $source_root;
 		$this->entry_path = $entry_path;
 		$this->cpp_namespace = $cpp_namespace;
 		$this->group_async_methods = $group_async_methods;

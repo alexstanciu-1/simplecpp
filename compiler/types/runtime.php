@@ -161,11 +161,35 @@ final readonly class record_decode_function extends runtime_function
 /** The selected traversal and callback signature for a typed collection transform. */
 final readonly class collection_transform_function extends runtime_function
 {
-	public function __construct(runtime_factory $operation, type_definition $input, type_definition $callable,
+	public function __construct(runtime_factory $operation, type_definition $input, ?type_definition $callable,
 		type_definition $output, public bool $filter)
 	{
-		parent::__construct($operation->name, [$input, $callable], $output, $operation->name,
-			$output->cpp_headers()[0], const_reference_mask: 1);
+		$parameters = $callable === null ? [$input] : ($operation === runtime_factory::array_map ? [$callable, $input] : [$input, $callable]);
+		parent::__construct($operation->name, $parameters, $output, $operation->name,
+			$output->cpp_headers()[0], const_reference_mask: $operation === runtime_factory::array_map ? 2 : 1);
+	}
+}
+
+/** PHP kind observations inspect a box at runtime or use the prepared source type. */
+final readonly class php_kind_predicate extends runtime_overloads
+{
+	public function __construct(public string $kind)
+	{
+		parent::__construct([]);
+	}
+}
+
+/** Membership walks native collection values and stops at the first equal element. */
+final readonly class collection_membership_function extends runtime_function
+{
+}
+
+/** The argument still evaluates once when its kind is statically known. */
+final readonly class prepared_kind_predicate extends runtime_function
+{
+	public function __construct(string $name, type_definition $type, public string $kind, public ?bool $answer)
+	{
+		parent::__construct($name, [$type], type_bool::instance(), $name, '', const_reference_mask: 1);
 	}
 }
 
@@ -173,6 +197,9 @@ final readonly class collection_transform_function extends runtime_function
 enum runtime_factory
 {
 	case vector_filled;
+	case array_map;
+	case array_filter;
+	case in_array;
 	case collection_map;
 	case collection_filter;
 	case sequence_map;

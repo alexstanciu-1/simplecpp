@@ -55,6 +55,7 @@ final class Cpp_Emitter
 	private array $transfer_labels = [];
 	/** Private demand collected during this source unit’s existing lowering walk. */
 	private Cpp_Adapters $inline_adapters;
+	private bool $uses_source_path = false;
 	/** Native non-owning during emission of the selected function. */
 	private ?Destination_Plan $destination = null;
 	/** Private concrete type demand, sharing the source adapter publication and cleanup boundary. */
@@ -175,6 +176,17 @@ final class Cpp_Emitter
 	public function adapter_files(): array /** array<string,string> */
 	{
 		$files = $this->concrete_collections->files() + $this->inline_adapters->files();
+		if ($this->uses_source_path) {
+			$files[self::source_path_header()] = <<<'CPP'
+#pragma once
+#include <scpp/string.hpp>
+#ifndef SCPP_SOURCE_ROOT_FROM_EXE
+#define SCPP_SOURCE_ROOT_FROM_EXE "."
+#endif
+namespace scpp::php { string source_path(const char* suffix); }
+
+CPP;
+		}
 		foreach ($this->async_results as $task => $type) {
 			$path = async_task_binding::header_path($task);
 			$files[$path] = $this->headers?->grouped_declaration($path) ?? \Scpp\Api\asyncTaskHeader(
@@ -745,6 +757,7 @@ CPP;
 		$this->inline_adapters = new Cpp_Adapters($this->root);
 		$this->concrete_collections = new Cpp_Concrete_Collections($this->root);
 		$this->async_results = [];
+		$this->uses_source_path = false;
 		$declarations = [];
 		$definitions = [];
 		$global_references = [];
@@ -3297,6 +3310,32 @@ CPP;
 					$owner = $function instanceof record_encode_function ? $function->parameters[0] : $target->default_type();
 					if ($owner instanceof shared_record_type_definition) $declarations[$owner->name] = $owner;
 				}
+				if ($function instanceof prepared_kind_predicate) {
+					$arg = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
+					if ($function->answer !== null) return '(static_cast<void>(' . $arg . '), ' . ($function->answer ? 'true' : 'false') . ')';
+					foreach ($value->arguments[0]->type_def()->cpp_headers() as $header) $required_headers[$header] = true;
+					return '((' . $arg . ').kind() == scpp::boxed_kind::' . $function->kind . ')';
+				}
+				if ($function instanceof collection_membership_function) {
+					[$needle, $source] = $value->arguments;
+					$element = $needle->type_def();
+					$type = $source->type_def();
+					$args = [];
+					$steps = [];
+					foreach ($value->arguments as $arg) {
+						$args[] = $arg === $source
+							? $this->retained_place($arg, $global_references, $declarations, $required_headers, $steps, full_expression: true)
+							: $this->value($arg, $global_references, $declarations, $required_headers);
+					}
+					foreach ($element->binary_headers(binary_operator::equal) as $header) $required_headers[$header] = true;
+					$item = $type->iteration_output_type();
+					$next = $type->lower_cpp_iteration_next('source', 'item', null);
+					$match = $element->lower_cpp_binary(binary_operator::equal, 'needle', $item === null ? 'item' : 'item.value', $element);
+					$params = 'const auto& needle, const auto& source' . (count($args) === 3 ? ', bool' : '');
+					return '[](' . $params . ') { ' . ($item ?? $element->cpp_type()) . ' item{}; '
+						. $type->lower_cpp_iteration_storage(false) . $type->lower_cpp_iteration_initialize('source')
+						. " while ($next) { if ($match) return true; } return false; }(" . implode(', ', $args) . ')';
+				}
 				if ($function instanceof collection_transform_function) {
 					return $this->collection_transform($value, $function, $global_references, $declarations, $required_headers);
 				}
@@ -3499,6 +3538,16 @@ CPP;
 		$reorderable = $value->type_def()->cpp_trivial_value() && ast_writable_element::origin($value->local_binding()) === null;
 		if ($declaration instanceof ast_enum_case) {
 			return $declaration->parent->definition->cpp_case($declaration);
+		}
+		if ($declaration instanceof php_source_path) {
+			$this->uses_source_path = true;
+			$path = $value->source()->path;
+			$root = $this->headers?->source_root;
+			if (str_starts_with($path, '/')) {
+				$path = $root ? Program_Loader::displacement($root, $path) : basename($path);
+			}
+			if ($declaration === php_source_path::directory) $path = dirname($path);
+			return '::scpp::php::source_path(SCPP_SOURCE_ROOT_FROM_EXE "/" ' . Cpp_String_Literals::bytes($path) . ')';
 		}
 		if ($declaration instanceof runtime_integer_constant) {
 			return $declaration->value . 'LL';
@@ -3876,31 +3925,41 @@ CPP;
 	private function collection_transform(ast_call_expression $call, collection_transform_function $function,
 		array &$globals, array &$declarations, array &$headers): string
 	{
-		[$input, $callback] = $call->arguments;
+		$map = $function->name() === 'array_map';
+		$input = $call->arguments[$map ? 1 : 0];
+		$callback = $call->arguments[$map ? 0 : 1] ?? null;
 		$type = $input->type_def();
 		$out = $function->return_type_def();
 		$result = $out->cpp_type();
 		$owner_steps = [];
 		$receiver = $this->retained_place($input, $globals, $declarations, $headers, $owner_steps, full_expression: true);
-		$callable = $this->value($callback, $globals, $declarations, $headers);
+		$callable = $callback === null ? null : $this->value($callback, $globals, $declarations, $headers);
 		$boxed = $type instanceof boxed_type_definition;
-		$keyed = $boxed || $type instanceof hash_type_definition;
+		$keyed = $boxed || $out instanceof hash_type_definition;
 		$key = $keyed ? 'key' : null;
 		$output = $type->iteration_output_type();
 		$element = $type->iteration_value_type()->cpp_type();
 		$item = $output === null ? 'item' : 'item.value';
 		$initial = $boxed ? ' = ' . $type->lower_cpp_empty() : '';
 		$lines = ["$result result$initial;", ($output ?? $element) . ' item{};'];
-		if ($keyed) $lines[] = ($boxed ? 'scpp::boxed_text_key' : $type->key_type->cpp_type()) . ' key{};';
+		if ($keyed) $lines[] = ($boxed ? 'scpp::boxed_text_key' : $out->key_type->cpp_type()) . ' key{};';
 		$lines[] = $type->lower_cpp_iteration_storage($keyed && !$boxed) . $type->lower_cpp_iteration_initialize('source');
 		$next = $boxed ? $type->lower_cpp_iteration_next_classified('source', 'item', 'key') : $type->lower_cpp_iteration_next('source', 'item', $key);
 		$lines[] = "while ($next) {";
 		$value = $function->filter ? "static_cast<$element&&>($item)" : "callback(static_cast<$element&&>($item))";
 		$insert = ($keyed ? $out->lower_cpp_write('result', 'key', $value) : $out->lower_cpp_append_value('result', $value)) . ';';
-		$lines[] = $function->filter ? "if (callback($item)) $insert" : $insert;
+		$test = "callback($item)";
+		if ($callback === null) {
+			$element_type = $type->iteration_value_type();
+			foreach ($element_type->condition_headers() as $header) $headers[$header] = true;
+			$test = $element_type->lower_cpp_condition($item);
+		}
+		$lines[] = $function->filter ? "if ($test) $insert" : $insert;
 		$lines[] = '} return result;';
 		// A selected owned callable survives reassignment of its source slot by the callback.
-		return '[](const auto& source, auto callback) { ' . implode(' ', $lines) . ' }(' . $receiver . ', ' . $callable . ')';
+		$params = $callback === null ? 'const auto& source' : ($map ? 'auto callback, const auto& source' : 'const auto& source, auto callback');
+		$args = $callback === null ? $receiver : ($map ? "$callable, $receiver" : "$receiver, $callable");
+		return "[]($params) { " . implode(' ', $lines) . " }($args)";
 	}
 
 	/**
@@ -4347,6 +4406,12 @@ CPP;
 	}
 
 	/** STATIC METHODS */
+	/** Shared private declaration for units using executable-relative PHP source paths. */
+	public static function source_path_header(): string
+	{
+		return 'units/' . hash('sha256', 'php:source_path:adapter') . '.hpp';
+	}
+
 	private static function exception_origin(ast_node $site): string
 	{
 		$source = $site->source();

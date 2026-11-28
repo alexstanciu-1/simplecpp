@@ -67,7 +67,8 @@ final class Cpp_Program
 		}
 		sort($native, \SORT_STRING);
 		return new cpp_program_output($output->entry_path, $output->source_units, array_merge($output->files, $header_files, $adapter_files, $headers->grouped_methods_unit($adapter_files)), $native,
-			array_values(array_unique($links)), $emitted, $root, $source_adapters, $grouped);
+			array_values(array_unique($links)), $emitted, $root, $source_adapters, $grouped,
+			isset($adapter_files[Cpp_Emitter::source_path_header()]) ? $headers->source_root : null);
 	}
 
 	/** Merge source-private adapter text after lowering; differing expansions cannot silently share a symbol. @param string[] $files */

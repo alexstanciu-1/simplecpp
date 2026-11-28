@@ -93,7 +93,7 @@ class ast_name_expression extends ast_expression
 	 * Prepared fact: local AST identity, stable source symbol or runtime constant; null until prepared.
 	 * Native non-owning; locals belong to body syntax, parameters to signatures, stable entries to the compilation scope.
 	 */
-	protected ast_local_binding|ast_object_access_expression|symbol_entry|runtime_integer_constant|ast_enum_case|null $binding = null;
+	protected ast_local_binding|ast_object_access_expression|symbol_entry|runtime_integer_constant|php_source_path|ast_enum_case|null $binding = null;
 
 	/** CONSTRUCTOR */
 	/**
@@ -163,6 +163,13 @@ class ast_name_expression extends ast_expression
 		$this->binding = $symbol;
 	}
 
+	/** Installation paths are strings with a runtime origin and no foldable byte value. */
+	public function settle_source_path(php_source_path $constant): void
+	{
+		$this->binding = $constant;
+		$this->settle_value(type_registry::string(), null);
+	}
+
 	/** Module constants provide the value after ordinary source lookup has been observed. */
 	public function settle_runtime_constant(runtime_integer_constant $constant): void
 	{
@@ -174,7 +181,7 @@ class ast_name_expression extends ast_expression
 	public function declaration(): name_binding
 	{
 		if ($this->binding instanceof ast_object_access_expression) return $this->binding->operand->declaration();
-		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant || $this->binding instanceof ast_enum_case) {
+		if ($this->binding instanceof ast_local_binding || $this->binding instanceof runtime_integer_constant || $this->binding instanceof php_source_path || $this->binding instanceof ast_enum_case) {
 			return $this->binding;
 		}
 		$declaration = $this->binding?->declaration();

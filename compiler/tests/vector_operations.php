@@ -72,7 +72,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		[$decl('vector<int>', 'values', '[]') . "$v" . '[0] = "bad";', 'conversion'],
 		[$decl('vector<string>', 'strings', '[]') . "$s" . '[0] = 1;', 'conversion'],
 		[$decl('vector<int>', 'values', '[]') . $decl('vector<string>', 'copy', $v), 'conversion'],
-		['echo [];', $flavor === flavor::cpp ? 'explicitly typed local initializer' : 'Echo currently supports'],
+		['echo [];', $flavor === flavor::cpp ? 'explicitly typed local initializer' : ($flavor === flavor::php ? 'Echo requires' : 'Echo currently supports')],
 	] as [$text, $message]) {
 		rejects(fn() => $prepare($text . 'return 8;'), $message);
 	}

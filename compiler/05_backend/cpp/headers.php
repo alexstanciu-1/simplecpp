@@ -14,6 +14,7 @@ final class Cpp_Headers
 	private array $declarations /** array<string,string> */ = [];
 	/** @var string[] Relative artifact path to generated header text. */
 	private array $files /** array<string,string> */ = [];
+	public readonly ?string $source_root;
 
 	/** @var int[] Ephemeral lowering requirements from completed watch relations. */
 	private ?array $helper_uses /** array<string,uint16>|null */ = null;
@@ -25,6 +26,7 @@ final class Cpp_Headers
 	/** Plan completed declarations; null creates an empty standalone planner. @param cpp_generator_layout[] $layouts */
 	public function __construct(?prepared_program $program = null, array $layouts /** array<string,cpp_generator_layout> */ = [])
 	{
+		$this->source_root = $program?->session?->entry->root;
 		if ($program === null) return;
 		$this->helper_uses = [];
 		$results = [];

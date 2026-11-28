@@ -510,8 +510,20 @@ abstract class type_definition
 		return $this->supports_instance_field();
 	}
 
+	/** Whether scalar condition lowering is published for this type. */
+	public function supports_scalar_condition(): bool
+	{
+		return false;
+	}
+
+	/** Empty for types without a published PHP scalar kind. */
+	public function predicate_kind(): string
+	{
+		return '';
+	}
+
 	/** Output admission is separate from string conversion. */
-	public function supports_output(): bool
+	public function supports_output(flavor $flavor): bool
 	{
 		return false;
 	}

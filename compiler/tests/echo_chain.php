@@ -74,7 +74,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$fixtures[$flavor->name . '_failure'] = ['cpp' => (new Cpp_Emitter())->emit($prepare($failure)),
 		'stdout_hex' => bin2hex('beforeB'), 'catch_domain_error' => 'division_by_zero'];
 
-	foreach (['true', 'null', '1.5', '(byte) 8'] as $value) {
+	if ($flavor === flavor::php) {
+		$fixtures['php_scalars'] = ['cpp' => (new Cpp_Emitter())->emit($prepare('echo true, false, null, 1.5, (byte)8;return 8;')), 'stdout_hex' => bin2hex('11.58')];
+	}
+	foreach ($flavor === flavor::php ? [] : ['true', 'null', '1.5', '(byte) 8'] as $value) {
 		rejects(fn() => $prepare('echo "prefix", ' . $value . ', "suffix"; return 8;'), 'Echo currently supports only int64 and string values');
 	}
 	foreach (['echo;', 'echo 1,;'] as $invalid) {
@@ -98,7 +101,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		foreach ([['string', '"B"'], ['bool', 'true'], ['string', '"C"'], ['', ''], ['int', '10']] as [$type, $value]) {
 			$write($type, $value);
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
-			if ($type === 'bool' || $type === '') {
+			if (($type === 'bool' && $flavor !== flavor::php) || $type === '') {
 				rejects(fn() => $project->run(), '');
 				rejects(fn() => $project->run(), '');
 				rejects(fn() => $fresh->run(), '');
@@ -106,7 +109,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 				$project->run();
 				$fresh->run();
 				verify(artifacts($directory . '/out') === artifacts($directory . '/fresh'), 'Echo recovery differs from fresh output');
-				$fixtures[$flavor->name . '_recovery_' . $value] = ['files' => artifacts($directory . '/out'), 'stdout_hex' => bin2hex('>' . trim($value, '"') . '<')];
+				$fixtures[$flavor->name . '_recovery_' . $value] = ['files' => artifacts($directory . '/out'), 'stdout_hex' => bin2hex('>' . ($type === 'bool' ? '1' : trim($value, '"')) . '<')];
 			}
 			verify($project->session()->entry->entry->ast === $caller, 'Unchanged echo caller reparsed');
 		}

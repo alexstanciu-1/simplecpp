@@ -58,7 +58,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['php_builtin_admission', 'published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
+    fields($compiler, ['php_builtin_admission', 'published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'php_scalar_output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
     $phpAdmission = object($compiler->php_builtin_admission ?? new \stdClass());
     if (isset($metadata->string->functions, $metadata->boxed->mixed_predicates)) {
         foreach ($phpAdmission as $name => $_) {
@@ -132,7 +132,17 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach ($definitions as $identity => $definition) {
         $keyContract = $runtime['hashes']['key_contracts'][$identity] ?? null;
         $typeTraits = $keyContract === null ? '' : "\tuse hash_key_specializations;\n\tuse concrete_value_storage;\n\n";
+        $phpOutput = $compiler->php_scalar_output->$identity ?? null;
+        if ($phpOutput !== null && isset($output['int64'])) {
+            requireThat(in_array($phpOutput, ['echo_int', 'echo_uint', 'echo_float', 'echo_php_bool', 'discard'], true), 'Unknown PHP scalar output');
+            $output[$identity] = ['header' => $output['int64']['header'], 'php' => true,
+                'symbol' => $phpOutput === 'discard' ? 'static_cast<void>' : "scpp::$phpOutput"];
+        }
         $methods = compilerDeclarations($definition['declarations']) . compilerOutput($output[$identity] ?? null) . compilerConversions($conversions, $definitions, $identity) . compilerConditions($conditions, $identity) . compilerBinary($compiler, $definitions, $identity, $safety, $binary, $types) . compilerUpdates($updates[$identity] ?? []) . compilerUnary($unary[$identity] ?? [], $identity, $safety, $definitions, $types) . compilerPromotions($promotions[$identity] ?? [], $definitions);
+        $kind = isset($types[$identity]) ? 'integer' : $definition['strategy'];
+        if (in_array($kind, ['integer', 'boolean', 'floating', 'string', 'null'], true)) {
+            $methods .= "\n\tpublic function predicate_kind(): string { return '$kind'; }\n";
+        }
         if (isset($runtime['structural_decoder'][$identity])) {
             $reader = $runtime['structural_decoder'][$identity];
             $methods .= "\n\tpublic function structural_reader(): ?string { return '$reader'; }\n";
@@ -344,7 +354,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $runtimeCases[] = "\t\t\t'$key' => \$bindings[\$key] ??= new regex_callback_function('$name', $input, $table, '{$binding['callbackHeader']}', $countOutput),";
     }
     foreach ($runtime['collection_transforms'] ?? [] as $name) {
-        $runtimeCases[] = "\t\t\t'general:func:$name' => runtime_factory::$name,";
+        $surface = in_array($name, ['array_map', 'array_filter', 'in_array'], true) ? 'php' : 'general';
+        $runtimeCases[] = "\t\t\t'$surface:func:$name' => runtime_factory::$name,";
     }
     if ($vectorFactory) {
         $runtimeCases[] = "\t\t\t'general:func:vector_filled' => runtime_factory::vector_filled,";
@@ -367,15 +378,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $source = $family['name'];
         $header = providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $source)['provider']);
         if ($source === 'mixed') {
-            foreach (array_keys($runtime['mixed_predicates'] ?? []) as $name) {
+            foreach ($runtime['mixed_predicates'] ?? [] as $name => $kind) {
+                $runtimeCases[] = "\t\t\t'php:func:$name' => \$bindings[\$key] ??= new php_kind_predicate('$kind'),";
                 $function = "new runtime_function('$name', [type_mixed::instance()], type_bool::instance(), '::scpp::$name', '$header', const_reference_mask: 1";
-                $policy = compilerPhpAdmission($phpAdmission, $name, 1);
-                $keys = "'php:func:$name', 'general:func:$name'";
-                if ($policy !== '') {
-                    $runtimeCases[] = "\t\t\t'php:func:$name' => \$bindings[\$key] ??= $function$policy),";
-                    $keys = "'general:func:$name'";
-                }
-                $runtimeCases[] = "\t\t\t$keys => \$bindings['mixed:$name'] ??= new runtime_overloads([1 => [type_mixed::class => $function, php_exact_inputs: 1)]]),";
+                $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings['mixed:$name'] ??= new runtime_overloads([1 => [type_mixed::class => $function, php_exact_inputs: 1)]]),";
             }
         }
         foreach ($family['source_collection']['methods'] as $name => $binding) {
@@ -685,6 +691,7 @@ function compilerDeclarations(array $declarations): string {
 /** Emit type-owned output dispatch; formatting/lifetime algorithms stay in the backend. */
 function compilerOutput(?array $selected): string {
     if ($selected === null) return '';
+    $admission = isset($selected['php']) ? '$flavor === flavor::php' : 'true';
     $header = var_export($selected['header'], true);
     $symbol = var_export($selected['symbol'], true);
     $expression = isset($selected['literal_symbol'])
@@ -692,9 +699,9 @@ function compilerOutput(?array $selected): string {
         : $symbol . " . '(' . \$operand . ');'";
     return "
 \t/** Generated output admission; does not authorize string conversion. */
-\tpublic function supports_output(): bool
+\tpublic function supports_output(flavor \$flavor): bool
 \t{
-\t\treturn true;
+\t\treturn $admission;
 \t}
 
 \t/** @return string[] */
@@ -864,6 +871,8 @@ function compilerConditions(array $conditions, string $identity): string {
     };
     $headers = $storage === null ? '[]' : '[' . var_export($storage['header'], true) . ']';
     return "
+\tpublic function supports_scalar_condition(): bool { return true; }
+
 \t/** Generated condition admission; never an explicit bool conversion. */
 \tpublic function prepare_condition(ast_expression \$value): void
 \t{

@@ -21,7 +21,21 @@ The complete first script can be `echo "hello";`. Source discovery brings projec
 
 **Calling functions and handling failures.** Unpacking is optional. For example, `$p = strpos("abc", "a"); if ($p !== false) { $n int = $p; echo $n; }` printed zero. Changing the needle to a missing byte skipped the body. Passing a successful `json_encode(10)` result directly to `strlen` printed 2. A typed consumer checks for a payload and throws on a missing one. Use a guard when the caller can recover, forward a compatible result when the caller's caller handles failure, or use `take` when the payload and diagnostic are needed separately.
 
-## Task verdicts
+## Follow-up to the scalar and collection probes
+
+PHP echo now prints native scalar values, including a numeric byte. A direct
+boxed read still needs explicit extraction and its diagnostic names the type
+(task 6). The six published kind predicates accept both boxed families and
+native scalar and collection operands (10). Single-input map, key-preserving
+filter and typed membership are available by their PHP names (15). Constructor
+promotion now points to explicit field declaration and constructor assignment
+(24). Executable-relative source paths now cover task 27 on Linux. On dev002 all 634 default
+tests passed, and ten targeted onboarding snippets matched their expectations.
+Filtering `[0,1,2]` retained keys 1 and 2, indexing `"ABC"` and echoing the
+byte printed `65`, and the promotion diagnostic pointed to the field declaration.
+The full-replay tally below belongs to its recorded revision.
+
+## Task verdicts at the full replay
 
 | # | Original developer task | Verdict | Current evidence and scope |
 |---|---|---|---|

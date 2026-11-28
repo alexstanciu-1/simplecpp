@@ -20,13 +20,19 @@ void echo_string(const string& value)
 }
 #endif
 
-void echo_int(::int64_t value)
+template<class T>
+static void echo_number(T value)
 {
-    char buffer[32];
+    char buffer[64];
     const auto result = std::to_chars(buffer, buffer + sizeof(buffer), value);
     if (result.ec != std::errc{}) {
-        throw std::runtime_error("echo: integer formatting failed");
+        throw std::runtime_error("echo: number formatting failed");
     }
     echo_bytes(buffer, static_cast<::size_t>(result.ptr - buffer));
 }
+
+void echo_int(::int64_t value) { echo_number(value); }
+void echo_uint(::uint64_t value) { echo_number(value); }
+void echo_float(double value) { echo_number(value); }
+void echo_php_bool(bool value) { if (value) echo_bytes("1", 1); }
 }

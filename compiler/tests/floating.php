@@ -109,7 +109,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$minimum->file->globals()[0]->initializer->constant()) === PHP_INT_MIN, 'Exact int64 lower boundary');
 	rejects(fn() => $prepare($decl('float', 'bad', 'null') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare('return 8.0;'), 'requires int64');
-	rejects(fn() => $prepare('echo 8.0; return 8;'), 'Echo currently');
+	if ($flavor !== flavor::php) rejects(fn() => $prepare('echo 8.0; return 8;'), 'Echo currently');
 	$literal = $values[0]->initializer;
 	rejects(fn() => type_float64::instance()->prepare_conversion($literal, \scpp\compiler\conversion_context::assignment), 'implicit conversion');
 	$float_literal = $values[3]->initializer;

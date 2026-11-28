@@ -104,8 +104,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	rejects(fn() => $prepare($decl('int', 'bad', 'null') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare($decl('null', 'bad', '0') . 'return 8;'), 'conversion');
 	rejects(fn() => $prepare('return true;'), 'requires int64');
-	rejects(fn() => $prepare('echo false; return 8;'), 'Echo currently');
-	rejects(fn() => $prepare($decl('byte', 'bad', '1') . 'echo ' . $var('bad') . '; return 8;'), 'Echo currently');
+	if ($flavor !== flavor::php) rejects(fn() => $prepare('echo false; return 8;'), 'Echo currently');
+	if ($flavor !== flavor::php) rejects(fn() => $prepare($decl('byte', 'bad', '1') . 'echo ' . $var('bad') . '; return 8;'), 'Echo currently');
 	$integer = $locals[3]->initializer;
 	rejects(fn() => type_bool::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment), 'implicit conversion');
 	rejects(fn() => type_uint8::instance()->prepare_conversion($integer, \scpp\compiler\conversion_context::assignment), 'implicit conversion');

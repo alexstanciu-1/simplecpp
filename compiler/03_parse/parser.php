@@ -876,7 +876,7 @@ final class Parser
 	 * Parse explicit positional passing modes and optional literal-default syntax.
 	 * @return ast_parameter_declaration[]
 	 */
-	public function parameters(bool $python_receiver = false, bool $lambda = false): array /** list<ast_parameter_declaration> */
+	public function parameters(bool $python_receiver = false, bool $lambda = false, bool $constructor = false): array /** list<ast_parameter_declaration> */
 	{
 		$this->cursor->take(token_kind::lparen, '(');
 		if ($python_receiver) {
@@ -885,6 +885,11 @@ final class Parser
 		}
 		$parameters = [];
 		while (!$this->cursor->is(token_kind::rparen)) {
+			if ($constructor && $this->cursor->tokens->source->flavor === flavor::php
+				&& !$this->cursor->at_end() && in_array($this->cursor->tokens->text_at($this->cursor->position()), ['public', 'protected', 'private', 'readonly'], true)) {
+				throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(),
+					'Declare the field in the class body and assign it from a typed constructor parameter');
+			}
 			$start = $this->cursor->position();
 			if (in_array($this->cursor->tokens->source->flavor, [flavor::js, flavor::python], true)) {
 				$mode = $this->cursor->tokens->source->flavor === flavor::python ? passing_mode::value : $this->parameter_mode();

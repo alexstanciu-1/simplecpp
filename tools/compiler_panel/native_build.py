@@ -2,6 +2,7 @@
 from pathlib import Path
 from contextlib import contextmanager
 import hashlib
+import json
 import shlex
 import shutil
 import sys
@@ -68,7 +69,7 @@ def async_producers(units):
     return selected
 
 
-def write_build(work, units, optimization='O2', pch=False, cached_pch=None, validate_pch=True, async_units=None):
+def write_build(work, units, optimization='O2', pch=False, cached_pch=None, validate_pch=True, async_units=None, source_directory=None):
     if optimization not in ('O0', 'O1', 'O2') or not isinstance(pch, bool):
         raise ValueError('Invalid native build options')
     cxx = shutil.which('clang++')
@@ -81,12 +82,15 @@ def write_build(work, units, optimization='O2', pch=False, cached_pch=None, vali
     library = ROOT / 'build/clang/libscpp_runtime.a'
     common = [cxx, '-' + optimization, '-g0', '-std=c++23', '-stdlib=libc++', '-Wall', '-Wextra', '-Werror', '-I', include]
     flags = ' '.join(map(shell, common))
+    compile_flags = flags
+    if source_directory is not None:
+        compile_flags += ' ' + shell('-DSCPP_SOURCE_ROOT_FROM_EXE=' + json.dumps(source_directory))
     probe = [sys.executable, '-B', QUALIFICATION, '--cxx', cxx, '--cache', library.parent / 'native-qualification',
              *['--flag=' + str(flag) for flag in common[1:]], '--link-flag=--ld-path=' + mold]
     lines = ['ninja_required_version = 1.10',
              'rule qualify', '  command = ' + ' '.join(map(shell, probe)) + ' $probe_flags',
              'build force-qualification: phony', 'build qualify-native: qualify force-qualification',
-             'rule compile', f'  command = {flags} $pchflag -MD -MF $out.d -c $in -o $out',
+             'rule compile', f'  command = {compile_flags} $pchflag -MD -MF $out.d -c $in -o $out',
              '  depfile = $out.d', '  deps = gcc',
              'rule pch', f'  command = {flags} -x c++-header -MD -MF $out.d $in -o $out',
              '  depfile = $out.d', '  deps = gcc',

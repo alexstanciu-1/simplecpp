@@ -12,12 +12,20 @@ cxx, linker, runtime = sys.argv[1:]
 main_source = r'''
 use function sequence_map as labels;
 $v vector<int> = [1,2,3];
+$native = array_map(label(...),$v);
+$gaps = array_filter($v,fn($x)=>$x!==2);
+if($native[1]!=="two" || count($gaps)!==2 || $gaps[2]!==3 || !in_array("two",$native,true)){return 20;}
+$truth vector<string>=["","0","ok"]; $keptTruth=array_filter($truth);
+if(count($keptTruth)!==1 || $keptTruth[2]!=="ok"){return 21;}
 $names = labels($v, label(...));
 if (count($names)!==3 || $names[1]!=="two") {return 1;}
 $seq = sequence_filter($v, fn($x)=>$x!==2);
 if (count($seq)!==2 || $seq[1]!==3) {return 2;}
 $h hash<int,int> = [];
 $h[19]=1; $h[2]=2; $h[8]=3;
+$phpWords=array_map(label(...),$h);
+$phpKept=array_filter($phpWords,fn($s)=>$s==="two");
+if(count($phpKept)!==1 || $phpKept[2]!=="two" || in_array("absent",$phpKept)){return 22;}
 $words = keyed_map($h,label(...));
 $kept = keyed_filter($words, fn($x)=>$x!=="two");
 foreach ($kept as $k=>$word) {echo $k,";";}
@@ -130,7 +138,7 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
             check(error)
         main.write_text(main_source)
         model.write_text(models.replace('label(int $x):string', 'label(int $x):int').replace('$x===2 ? "two":"other"', '$x'))
-        check('Unsupported binary')
+        check('matching comparable scalar needle')
         model.write_text(models)
         check()
         assert 'error' not in fresh(app, work/'fresh')

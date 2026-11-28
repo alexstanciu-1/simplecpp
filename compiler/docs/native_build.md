@@ -157,3 +157,14 @@ The proof covers cpp/php/js on Clang/GCC, with a matching GCC runtime fixture:
 The test reports the median of 31 warm cache checks separately from native builds.
 These local checks are not a dev002 end-to-end performance comparison and do not
 establish total compilation speedup.
+
+## PHP source locations on Linux
+
+A bundle using `__FILE__` or `__DIR__` carries its build-time source root in
+the manifest. The native build embeds its relative displacement from the
+executable directory. Each source unit contributes its own suffix, including
+for dependency modules. At startup the linked path helper snapshots the parent
+of `/proc/self/exe`. This produces absolute strings that remain usable from
+another working directory and follow the package when it is moved as a unit.
+A custom C++ build can define `SCPP_SOURCE_ROOT_FROM_EXE` as a string literal
+for its installation layout. The default places the executable at the source root.

@@ -3,6 +3,18 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** PHP source location selected at preparation and anchored to the executable at startup. */
+enum php_source_path: string implements name_binding
+{
+	case file = '__FILE__';
+	case directory = '__DIR__';
+
+	public function symbol_key(): string
+	{
+		return 'const:' . $this->value;
+	}
+}
+
 /** Published integer literal from runtime metadata, e.g. PHP STR_PAD_LEFT. */
 final readonly class runtime_integer_constant implements name_binding
 {

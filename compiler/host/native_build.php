@@ -113,6 +113,9 @@ final class Native_Build
 			throw new \RuntimeException('Cannot enter native build directory');
 		}
 		try {
+			if (isset($manifest['source_root'])) {
+				$flags[] = '-DSCPP_SOURCE_ROOT_FROM_EXE=' . Cpp_String_Literals::bytes(Program_Loader::displacement($directory, $manifest['source_root']));
+			}
 			return self::build($units, $libraries, $flags, $link_flags, $config, $directory, $jobs, $publish_only);
 		}
 		finally {

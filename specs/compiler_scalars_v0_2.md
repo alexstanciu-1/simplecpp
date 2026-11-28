@@ -69,8 +69,7 @@ constants: an unknown global payload must not be folded into a reader's cache.
 
 ## Boundaries unchanged
 
-Entry exit status requires int64. The current echo slice accepts int64 or its
-string literals and typed string locals; it does not acquire boolean/null/byte formatting.
+Entry exit status requires int64. PHP echo supports native scalar types as described in [the output slice](../compiler/docs/output_slice.md).
 Void functions, calls, symbols, ownership and source lookup retain their existing rules.
 
 Explicit cast expressions use the same generated explicit-intent conversion API;
@@ -793,10 +792,7 @@ exact inspection and writable-slot metadata override the value default. Native
 const-reference passing describes the C++ representation. Overload selection
 preserves an exact carrier overload, such as the nullable JSON encoder.
 
-The PHP `is_bool` predicate inspects an exact mixed operand. A plain bool, a
-dynamic box and a result carrying a bool cannot supply this argument. A mixed
-value of any kind is a valid argument. The predicate returns true precisely for
-its boolean kind.
+PHP kind predicates inspect boxed tags or resolve statically for native scalar and collection types. See [kind predicates](boxed_slice.md#kind-predicates).
 
 The compiler catalog supplies argument policies and diagnostic labels separately
 from named-call availability and native parameter representation. Preparation

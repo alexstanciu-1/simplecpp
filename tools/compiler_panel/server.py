@@ -111,7 +111,8 @@ def compile_report(data, php, cache_root=None):
         with cache as (build_dir, cache_report):
             command = write_build(build_dir, units,
                                   data.get('optimization', 'O2'), use_pch,
-                                  validate_pch=data.get('validate_pch', True), async_units=producers)
+                                  validate_pch=data.get('validate_pch', True), async_units=producers,
+                                  source_directory='sources' if report.pop('uses_source_paths', False) else None)
             graph = (build_dir / 'build.ninja').read_text()
             qualification_start = time.perf_counter()
             with qualified_ninja(command, build_dir) as invocation:

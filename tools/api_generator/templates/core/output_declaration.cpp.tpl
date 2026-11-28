@@ -4,4 +4,7 @@ namespace scpp {
 // Failures may throw. Formatting and IO implementation dependencies remain private.
 void echo_bytes(const char* data, ::size_t length);
 void echo_int(::int64_t value);
+void echo_uint(::uint64_t value);
+void echo_float(double value);
+void echo_php_bool(bool value);
 @string_output@}

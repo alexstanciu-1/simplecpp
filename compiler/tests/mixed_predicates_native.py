@@ -21,6 +21,7 @@ function classify(mixed $value): int {
     if (is_float($value)) {return 3;}
     return 0;
 }
+function integerOnce(int &$calls):int { $calls+=1; return 0; }
 function once(int &$calls): mixed { $calls += 1; return false; }
 ''')
     main = app/'main.php'
@@ -32,6 +33,9 @@ $x="1"; if(classify($x)!==0){return 4;}
 $x=null; if(classify($x)!==0){return 5;}
 $x=[1]; if(classify($x)!==0 || is_float([]) || !is_int($x[0])){return 6;}
 $calls=0; if(!is_bool(once($calls)) || $calls!==1){return 7;}
+$d dynamic="text"; if(!is_string($d) || is_array($d) || is_null($d)){return 8;}
+$d=null; if(!is_null($d) || !is_array([1])){return 9;}
+if(!is_bool(false) || !is_float(1.0) || !is_int(integerOnce($calls)) || $calls!==2){return 10;}
 return 0;
 '''
     main.write_text(source)
@@ -42,18 +46,18 @@ return 0;
         manifest = json.loads((out/'manifest.json').read_text())
         units = [out/u for u in manifest['translation_units']]
         lowered = '\n'.join(u.read_text() for u in units)
-        for predicate in ('is_bool', 'is_int', 'is_float'):
-            assert f'::scpp::{predicate}(' in lowered
+        for kind in ('boolean', 'integer', 'floating'):
+            assert f'boxed_kind::{kind}' in lowered
+        assert 'static_cast<void>(integerOnce_' in lowered
         subprocess.run([clang, '-std=c++23', '-stdlib=libc++', '-I', root/'runtime/generated/public',
                         *units, *manifest['link_inputs'], '-o', work/'run'], check=True)
         subprocess.run([work/'run'], check=True)
-        for expression in ['is_bool(false)', 'is_int(0)', 'is_float(1.0)', 'is_int($d)',
-                           'is_bool($wrapped)', 'is_int()', 'is_int($x,$x)']:
+        for expression in ['is_bool($wrapped)', 'is_int()', 'is_int($x,$x)']:
             main.write_text('$x mixed=0; $d dynamic=1; $wrapped ?int=1; '+expression+'; return 0;')
             result = invoke(proc)
             reason = 'Argument count mismatch' if expression in ('is_int()', 'is_int($x,$x)') else 'Unsupported first argument type'
             if expression.startswith('is_bool('):
-                reason = 'is_bool argument 1 (value) requires exact mixed'
+                reason = 'requires a scalar, vector, hash or box'
             assert reason in result.get('error', ''), (expression, result)
         main.write_text(source)
         assert 'error' not in invoke(proc)

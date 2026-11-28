@@ -140,6 +140,19 @@ final class Program_Loader
 		return $module;
 	}
 
+	/** Lexical displacement between two canonical absolute POSIX paths. */
+	public static function displacement(string $directory, string $target): string
+	{
+		$from = explode('/', trim($directory, '/'));
+		$to = explode('/', trim($target, '/'));
+		if ($from === ['']) $from = [];
+		if ($to === ['']) $to = [];
+		$i = 0;
+		while (isset($from[$i], $to[$i]) && $from[$i] === $to[$i]) ++$i;
+		$parts = array_merge(array_fill(0, count($from) - $i, '..'), array_slice($to, $i));
+		return $parts === [] ? '.' : implode('/', $parts);
+	}
+
 	/** Validate containment again at read time; module membership remains relative. */
 	private static function disk_path(source_unit $unit): string
 	{

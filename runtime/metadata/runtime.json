@@ -594,6 +594,11 @@
       "float64": {"policy": "decimal_float", "symbol": "format_float64"}
     },
     "functions": {
+      "ord": {"parameters": ["string"], "result": "int64", "symbol": "scpp::str::first_byte", "implementation": "first_byte", "flavors": ["php"], "flavor_adapters": true},
+      "chr": {"parameters": ["int64"], "result": "string", "symbol": "scpp::str::low_byte", "implementation": "low_byte", "flavors": ["php"], "flavor_adapters": true},
+      "strrev": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::reverse_bytes", "implementation": "reverse_bytes", "flavors": ["php"], "flavor_adapters": true},
+      "str_rot13": {"parameters": ["string"], "result": "string", "symbol": "scpp::str::ascii_rot13", "implementation": "ascii_rot13", "flavors": ["php"], "flavor_adapters": true},
+      "chop": {"parameters": ["string"], "signatures": {"php": {"parameters": ["string", "string"], "required_parameters": 1}}, "result": "string", "symbol": "scpp::str::trim_bytes", "implementation": "trim_bytes", "side": "end", "flavor_adapters": true, "flavors": ["php"]},
       "strlen": {"result": "int64", "symbol": "scpp::str::byte_length", "implementation": "byte_length", "parameters": ["string"]},
       "string_byte_from_int": {"result": "string", "symbol": "scpp::str::byte_from_int", "implementation": "checked_single_byte", "parameters": ["int64"]},
       "str_starts_with": {"parameters": ["string", "string"], "result": "bool_t", "symbol": "scpp::str::starts_with", "implementation": "starts_with", "direct_provider": "str.prefix", "flavor_adapters": true, "members": {"cpp": "starts_with", "js": "startsWith"}},
@@ -1401,7 +1406,7 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
-    "mixed_predicates": {"is_bool": "boolean", "is_int": "integer", "is_float": "floating"},
+    "mixed_predicates": {"is_bool": "boolean", "is_int": "integer", "is_float": "floating", "is_string": "string", "is_array": "container", "is_null": "null"},
     "initialization": "ordered_family_literals",
     "transfer_assignment": "private_value_nothrow",
     "scalar_kinds": ["null_t", "bool_t", "int64", "float64", "string"],
@@ -1446,8 +1451,7 @@
     "php_builtin_admission": {
       "number_format": [["value", "typed"], ["decimals", "typed"], ["decimal_separator", "typed"], ["thousands_separator", "typed"]],
       "strlen": [["string", "typed"]],
-      "str_replace": [["search", "typed"], ["replace", "typed"], ["subject", "typed"], ["count", "writable"]],
-      "is_bool": [["value", "exact"]]
+      "str_replace": [["search", "typed"], ["replace", "typed"], ["subject", "typed"], ["count", "writable"]]
     },
     "published_transport_types": {"uint64": "runtime-numeric"},
     "generic_syntax": { "fixed_array": ["type", "integer_extent"] },
@@ -1761,6 +1765,11 @@
       "checked_shift": {
         "reorderable": false
       }
+    },
+    "php_scalar_output": {
+      "int8": "echo_int", "int16": "echo_int", "int32": "echo_int",
+      "uint8": "echo_int", "uint16": "echo_int", "uint32": "echo_int", "uint64": "echo_uint",
+      "float64": "echo_float", "bool_t": "echo_php_bool", "null_t": "discard"
     },
     "output": {
       "int64": { "strategy": "integer", "binding": "echo_int" },

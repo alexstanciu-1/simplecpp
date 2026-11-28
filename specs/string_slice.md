@@ -198,3 +198,12 @@ Reserve requests a minimum capacity in parts or bytes according to the type.
 A negative request raises ValueError. Clear empties the builder. A snapshot
 owns its bytes independently, and take additionally empties the text builder
 for reuse. Capacity after take is unspecified.
+
+## PHP scalar byte helpers
+
+`ord(s)` reads the first unsigned byte and yields zero for an empty string.
+`chr(n)` writes the low eight bits of the integer as a single byte, including
+NUL. These use the PHP 8.5 value results, without emitting PHP deprecation
+notices. `strrev(s)` reverses the bytes. `str_rot13(s)` rotates ASCII letters
+and preserves every other byte. `chop(s[,mask])` shares both published PHP
+rtrim forms, including the explicit byte-mask behavior.

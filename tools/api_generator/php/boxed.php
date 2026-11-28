@@ -32,7 +32,7 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         requireThat(in_array('mixed', $requested, true), 'Mixed predicates require mixed');
         requireThat(preg_match('/^is_[a-z]+$/D', $name) === 1, 'Invalid mixed predicate name');
         $kind = at(at($m, 'mixed_predicates'), $name);
-        requireThat(in_array($kind, ['boolean', 'integer', 'floating'], true), 'Unsupported mixed predicate kind');
+        requireThat(in_array($kind, ['boolean', 'integer', 'floating', 'string', 'container', 'null'], true), 'Unsupported mixed predicate kind');
         $plan['mixed_predicates'][$name] = $kind;
     }
     $convert = boolean(at($p, 'scalar_conversions'));

@@ -104,6 +104,7 @@ try {
 		file_put_contents($destination, $text);
 	}
 	$result = ['ok' => true, 'stages' => $report->stages, 'units' => $output->translation_units()];
+	if ($output->source_root !== null) $result['uses_source_paths'] = true;
 } catch (Throwable $error) {
 	$result = ['ok' => false, 'stages' => $report->stages, 'error' => $error->getMessage()];
 }

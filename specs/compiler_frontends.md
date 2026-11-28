@@ -142,7 +142,7 @@ positions. PHP uses `function f(int $value): int`, C++ `int f(int value)`, and J
 `function f(value: int): int`. Signature types settle before body preparation; each
 body indexes its signature-owned parameters alongside its local declarations.
 The bounded [echo slice](../compiler/docs/output_slice.md) accepts one or more comma-separated int64 or string operands
-in all flavors. Operands are evaluated and printed once in source order; empty lists and trailing commas reject. Typed string locals admit literals and same-type copies; globals and text conversions remain deferred.
+in all flavors. PHP also admits native bool, null, other published integer widths and float. Operands are evaluated and printed once in source order; empty lists and trailing commas reject. Typed string locals admit literals and same-type copies; globals and text conversions remain deferred.
 Same-type [scalar comparisons](../compiler/docs/comparisons.md), mixed int64/float64
 ordering and [equality](../compiler/docs/mixed_equality.md), exact [string equality](../compiler/docs/string_equality.md), and parentheses are implemented in all flavors.
 Int/int64 binary `+ - * / %` are implemented through the same metadata-driven path.

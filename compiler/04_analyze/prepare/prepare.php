@@ -407,8 +407,10 @@ final class Preparation
 				foreach ($statement->values as $value) {
 					$this->guard_reads = [];
 					$this->value($value);
-					if (!$value->type_def()->supports_output()) {
-						throw new diagnostic($value->source(), $value->byte_start(), 'Echo currently supports only int64 and string values');
+					if (!$value->type_def()->supports_output($source->flavor)) {
+						throw new diagnostic($value->source(), $value->byte_start(), $source->flavor === flavor::php
+							? 'Echo requires a printable scalar; received ' . $value->type_def()->name
+							: 'Echo currently supports only int64 and string values');
 					}
 				}
 			}
@@ -2161,6 +2163,11 @@ final class Preparation
 	{
 		$this->name_lookups++;
 		$name = $syntax->name;
+		if ($syntax->constant_only && str_starts_with($name, '__') && $syntax::class === ast_name_expression::class
+			&& $syntax->source()->flavor === flavor::php && ($path = php_source_path::tryFrom(strtoupper($name))) !== null) {
+			$syntax->settle_source_path($path);
+			return true;
+		}
 		if ($syntax instanceof ast_ancestor_name || $syntax instanceof ast_called_type_name || $syntax instanceof ast_qualified_data) {
 			$lookup = match (true) {
 				$syntax instanceof ast_called_type_name => $this->called_record($syntax, 'Late-static access')->definition,
@@ -2391,6 +2398,18 @@ final class Preparation
 		if ($callback_group !== null) {
 			$prepared = $operands[$runtime->argument_index] ?? throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 			$runtime = $this->regex_callback_binding($runtime, $prepared);
+		}
+		if ($runtime instanceof php_kind_predicate) {
+			if (count($operands) !== 1) throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
+			$arg = $operands[0];
+			$this->value($arg, destination: $arg instanceof ast_collection_expression ? type_mixed::instance() : null);
+			$type = $arg->type_def();
+			$kind = $type instanceof vector_type_definition || $type instanceof hash_type_definition ? 'container' : $type->predicate_kind();
+			if ($kind === '' && !($type instanceof boxed_type_definition)) {
+				throw new diagnostic($arg->source(), $arg->byte_start(), $call->name . ' requires a scalar, vector, hash or box; received ' . $type->name);
+			}
+			$call->settle_runtime(new prepared_kind_predicate($call->name, $type, $runtime->kind, $kind === '' ? null : $kind === $runtime->kind));
+			return;
 		}
 		if ($runtime instanceof runtime_overloads) {
 			$variants = $runtime->by_arity[count($operands)] ?? null;
@@ -3017,6 +3036,10 @@ final class Preparation
 					$this->runtime_call($call, $vector->filled_function(), $fill);
 					return;
 				}
+				if ($runtime === runtime_factory::in_array) {
+					$this->collection_membership($call);
+					return;
+				}
 				if ($runtime instanceof runtime_factory) {
 					$this->collection_transform($call, $runtime, $initializing);
 					return;
@@ -3358,12 +3381,42 @@ final class Preparation
 		}
 	}
 
+	/** The typed PHP membership slice compares exact scalar elements with their published equality. */
+	private function collection_membership(ast_call_expression $call): void
+	{
+		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
+		$count = count($call->arguments);
+		if ($count !== 2 && $count !== 3) throw new diagnostic($call->source(), $call->byte_start(), 'in_array requires a needle, a collection and an optional strict flag');
+		[$needle, $source] = $call->arguments;
+		$this->value($needle);
+		$type = $needle->type_def();
+		$this->value($source, destination: $source instanceof ast_collection_expression ? Type_Resolution::collection('vector', $type, null) : null);
+		$input = $source->type_def();
+		if (!($input instanceof vector_type_definition || $input instanceof hash_type_definition)
+			|| $type !== $input->iteration_value_type() || $type->predicate_kind() === ''
+			|| $type->binary_result(binary_operator::equal, $type) !== type_bool::instance()) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'in_array requires a typed vector or hash with a matching comparable scalar needle');
+		}
+		$parameters = [$type, $input];
+		if ($count === 3) {
+			$flag = $call->arguments[2];
+			$this->value($flag);
+			if ($flag->type_def() !== type_bool::instance()) throw new diagnostic($flag->source(), $flag->byte_start(), 'in_array strict flag requires bool');
+			$parameters[] = type_bool::instance();
+		}
+		$this->retain_member_place($source);
+		$call->settle_runtime(new collection_membership_function('in_array', $parameters, type_bool::instance(), '', $input->cpp_headers()[0]));
+	}
+
 	/** Select a concrete traversal and result using the settled input and callback types. */
 	private function collection_transform(ast_call_expression $call, runtime_factory $operation, ?string $initializing): void
 	{
 		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
-		if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires a collection and a callback');
-		[$source, $callback] = $call->arguments;
+		$implicit_filter = $operation === runtime_factory::array_filter && count($call->arguments) === 1;
+		if (!$implicit_filter && count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires a collection and a callback');
+		$map = $operation === runtime_factory::array_map;
+		$source = $call->arguments[$map ? 1 : 0];
+		$callback = $call->arguments[$map ? 0 : 1] ?? null;
 		$this->value($source, $initializing);
 		$input = $source->type_def();
 		if ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
@@ -3372,13 +3425,24 @@ final class Preparation
 		} elseif ($input instanceof hash_type_definition && !in_array($operation, [runtime_factory::sequence_map, runtime_factory::sequence_filter], true)) {
 			$element = $input->value_type;
 			$key = $input->key_type;
-		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter], true)) {
+		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter, runtime_factory::array_map, runtime_factory::array_filter], true)) {
 			$element = $input;
 			$key = null;
 		} else {
 			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
 		}
-		$filter = in_array($operation, [runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
+		$filter = in_array($operation, [runtime_factory::array_filter, runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
+		$filter_output = $operation === runtime_factory::array_filter && $input instanceof vector_type_definition
+			? Type_Resolution::collection('hash', $element, type_int64::instance()) : $input;
+		if ($filter_output === null) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
+		if ($implicit_filter) {
+			if (!$element->supports_scalar_condition()) {
+				throw new diagnostic($source->source(), $source->byte_start(), 'array_filter requires a callback for this element type');
+			}
+			$this->retain_member_place($source);
+			$call->settle_runtime(new collection_transform_function($operation, $input, null, $filter_output, true));
+			return;
+		}
 		if ($callback instanceof ast_callable_reference) {
 			$this->callback_reference($callback, null, $element);
 		} elseif ($callback instanceof ast_lambda_expression && !($this->owner->parent->return_type_def() instanceof generator_type_definition)) {
@@ -3404,7 +3468,7 @@ final class Preparation
 		} else {
 			$this->dependencies?->callable_site($this->owner, $call);
 		}
-		$output = ($filter || $input instanceof boxed_type_definition) ? $input : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+		$output = ($filter || $input instanceof boxed_type_definition) ? $filter_output : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
 		if ($output === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable collection result for ' . $operation->name);
 		$this->retain_member_place($source);
 		$call->settle_runtime(new collection_transform_function($operation, $input, $type, $output, $filter));

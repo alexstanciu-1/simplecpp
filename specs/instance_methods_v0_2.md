@@ -116,7 +116,7 @@ Property and method names occupy separate lookup categories and may coincide.
 
 Ordinary methods require an explicit return type and use the ordinary callable
 argument/default/conversion and return rules. Defaults are not a second method-specific
-mechanism. Constructor-specific `set:` inputs remain constructor-only. The bounded
+mechanism. Declare instance fields in the class body and initialize them explicitly in the constructor, for example `$this->name = $name;`. The historical constructor shorthand `set:$name` is deferred. The bounded
 implementation admits value/void and bounded same-origin reference returns. Overloads, inheritance/virtual dispatch and
 bound callable values remain separate slices, not implicit support from this contract.
 Named arguments on fixed instance signatures use the receiver's visible method

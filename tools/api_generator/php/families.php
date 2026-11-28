@@ -81,6 +81,10 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     }
     prepareHashes($metadata, $publication, $plan);
     foreach (names(property_exists($publication, 'collection_transforms') ? $publication->collection_transforms : [], 'Duplicate collection transform') as $name) {
+        if (in_array($name, ['array_map', 'array_filter', 'in_array'], true)) {
+            if ($plan['vectors'] !== [] || isset($plan['hashes'])) $plan['collection_transforms'][] = $name;
+            continue;
+        }
         requireThat(preg_match('/^(collection|sequence|keyed)_(map|filter)$/D', $name, $match) === 1, 'Unknown collection transform');
         if (($match[1] !== 'keyed' && $plan['vectors'] !== []) || ($match[1] !== 'sequence' && isset($plan['hashes']))
             || ($match[1] === 'collection' && isset($plan['boxed_dispatch']))) {
@@ -222,12 +226,12 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $signature = match ($implementation) {
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
             'join_bytes' => ['parameters' => ['vector<string>', 'string'], 'result' => 'string'],
-            'byte_length' => ['parameters' => ['string'], 'result' => $count],
-            'checked_single_byte' => ['parameters' => ['int64'], 'result' => 'string'],
+            'byte_length', 'first_byte' => ['parameters' => ['string'], 'result' => $count],
+            'checked_single_byte', 'low_byte' => ['parameters' => ['int64'], 'result' => 'string'],
             'count_matches' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'find', 'rfind' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'hex_decode' => ['parameters' => ['string'], 'result' => 'result_or_false<string>'],
-            'hex_encode', 'ascii_lower', 'ascii_upper', 'trim_bytes' => ['parameters' => ['string'], 'result' => 'string'],
+            'hex_encode', 'ascii_lower', 'ascii_upper', 'trim_bytes', 'reverse_bytes', 'ascii_rot13' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
                 ? ['string', 'int64', 'string', 'int64'] : ['string', 'int64', 'string'], 'result' => 'string', 'required_parameters' => 2],
             'format_number' => ['parameters' => ['int64', 'int64', 'string', 'string'], 'result' => 'string'],
@@ -267,7 +271,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $firstByte = boolean($function->first_byte_only ?? false);
         requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
             'First-byte case requires an ASCII case operation');
-        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode'], true) || $firstByte;
+        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13'], true) || $firstByte
+            || ($implementation === 'trim_bytes' && isset($function->flavors));
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
         if ($padding) {

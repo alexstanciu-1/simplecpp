@@ -201,16 +201,12 @@ and follows the mixed or dynamic ownership rule above. A missing leaf suppresses
 evaluation on the initial read and prevents reinsertion at write-back. These additions
 introduce no public object layout or additional boxed kinds.
 
-## Exact mixed type predicates
+## Kind predicates
 
-The general API and PHP flavor publish `is_bool(mixed): bool`,
-`is_int(mixed): bool`, and `is_float(mixed): bool`. Each observes its single
-argument once, by const reference, and tests its stored kind. False has boolean
-kind, zero has integer kind, and an integral-valued float has floating kind.
-Null, strings (including numeric strings), and containers return false for all
-three. The operation only reads the tag, including for a temporary mixed value.
-
-The argument must already have source type mixed. Passing a plain scalar,
-dynamic or a nullable scalar is a type error. The returned bool is a snapshot
-and introduces no flow-sensitive narrowing. Each predicate lowers to the same
-native function for both its PHP and general spelling.
+PHP publishes `is_bool`, `is_int`, `is_float`, `is_string`, `is_null` and
+`is_array`. For a native scalar, vector or hash, the compiler knows the answer
+from the declared type. Both vectors and hashes satisfy `is_array`. Mixed
+and dynamic operands inspect the stored tag, including the container tag.
+Every argument evaluates once even if its type settles the answer. The
+predicate returns a bool snapshot. Carrier inputs require explicit extraction.
+The general API predicates retain their exact mixed input.

@@ -183,7 +183,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 			'Compound retained the previous imported constant');
 		file_put_contents($lib, $const('VALUE', 'bool', 'false'));
 		$session = $compiler->frontend($directory, $session);
-		rejects(fn() => Incremental_Preparation::prepare($session, $target), 'Echo currently supports');
+		rejects(fn() => Incremental_Preparation::prepare($session, $target), $flavor === flavor::php ? 'compound' : 'Echo currently supports');
 		file_put_contents($lib, $const('VALUE', 'int64', '8'));
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 1, 'Type recovery');

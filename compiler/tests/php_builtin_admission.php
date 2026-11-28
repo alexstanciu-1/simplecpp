@@ -36,7 +36,7 @@ echo count($v);
 return 8;
 SCPP;
 $cpp = $compile($source);
-foreach (['scpp::str::byte_length(var_s_0)', 'scpp::boxed_mixed_typed_destination_string(', '::scpp::is_bool(',
+foreach (['scpp::str::byte_length(var_s_0)', 'scpp::boxed_mixed_typed_destination_string(', 'boxed_kind::boolean',
 	'scpp::str::byte_length((var_s_1).value())', 'var_n_3)', 'method_receiver.remove((var_index_10).value())'] as $fragment) {
 	if (!str_contains($cpp, $fragment)) throw new RuntimeException('Missing builtin lowering: ' . $fragment);
 }
@@ -64,9 +64,7 @@ foreach ([
 	'str_replace("x", 7, "x")' => 'str_replace argument 2 (replace) requires string, received int64',
 	'$n ?int = 0; str_replace("x","y","x",$n)' => 'str_replace argument 4 (count) requires writable int64 storage, received nullable<int64>',
 	'str_replace("x","y","x",1)' => 'str_replace argument 4 (count)',
-	'is_bool(false)' => 'is_bool argument 1 (value) requires exact mixed, received bool_t',
-	'$v dynamic = false; is_bool($v)' => 'requires exact mixed, received dynamic',
-	'$v result<bool> = false; is_bool($v)' => 'requires exact mixed, received result<bool_t>',
+	'$v result<bool> = false; is_bool($v)' => 'requires a scalar, vector, hash or box; received result<bool_t>',
 ] as $expression => $expected) {
 	try {
 		$compile($expression . '; return 8;');

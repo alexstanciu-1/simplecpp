@@ -132,6 +132,10 @@ final class Cpp_Bundle
 			|| (!is_array($data['translation_units'] ?? null)) || (!array_is_list($data['translation_units']))) {
 			throw new \RuntimeException('Unsupported program manifest');
 		}
+		if (isset($data['source_root']) && (!is_string($data['source_root']) || !str_starts_with($data['source_root'], '/')
+			|| str_contains($data['source_root'], "\0"))) {
+			throw new \RuntimeException('Invalid program source root');
+		}
 		if (!is_array($data['headers'] ?? []) || !array_is_list($data['headers'] ?? [])) {
 			throw new \RuntimeException('Invalid header inventory');
 		}
@@ -297,6 +301,7 @@ final class Cpp_Bundle
 		}
 		$data = ['format' => self::FORMAT, 'entry' => $output->entry_path,
 			'sources' => (object) $output->source_units, 'translation_units' => $output->translation_units(), 'headers' => $output->headers()];
+		if ($output->source_root) $data['source_root'] = $output->source_root;
 		if ($output->link_inputs !== []) {
 			$data['link_inputs'] = $output->link_inputs;
 		}

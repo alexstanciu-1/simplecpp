@@ -178,7 +178,7 @@ function renderString(array $plan, array &$groups): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('strings/string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $usesClassicStorage = array_intersect($classic, ['format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes']);
+    $usesClassicStorage = array_intersect($classic, ['reverse_bytes', 'ascii_rot13', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'replace_bytes', 'pad_bytes', 'join_bytes']);
     $vars['classic_storage'] = ($usesClassicStorage || isset($plan['json'])) ? template('strings/string_own', ['n' => $n]) : '';
     if ($usesClassicStorage) $vars['classic_storage'] .= template('strings/string_classic_storage', ['n' => $n]);
     $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
@@ -363,6 +363,10 @@ function renderString(array $plan, array &$groups): array {
             $body = match ($method) {
                 'ascii_lower', 'ascii_upper' => 'return detail::string_access::ascii_case(value, ' . ($method === 'ascii_upper' ? 'true' : 'false')
                     . ', ' . (isset($function['first_byte_only']) ? 'true' : 'false') . ');',
+                'first_byte' => 'return value.size() == 0 ? 0 : static_cast<unsigned char>(value.data()[0]);',
+                'low_byte' => 'const char byte = static_cast<char>(static_cast<unsigned char>(value)); return string{&byte, 1};',
+                'reverse_bytes' => "const auto bytes = $bytes(value); return detail::string_access::own(std::string(bytes.rbegin(), bytes.rend()));",
+                'ascii_rot13' => trim(template('strings/ascii_rot13', [])),
                 'repeat' => "return detail::string_access::own(detail::repeat_bytes($bytes(value), other));",
                 default => "return $bytes(value).$method($bytes(other));",
             };

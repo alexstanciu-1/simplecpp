@@ -4,6 +4,8 @@ Doc Status: planning
 
 [Filesystem donor audit and implemented boundary](filesystem_audit.md)
 
+[PHP array and string inventory, including vector, hash, mixed and dynamic admission](php_array_string_inventory.md)
+
 [Current Stage 1 family inventory, deferrals and remaining decisions](intake_inventory.md) · [Family and receiver index](donor_surfaces.tsv) · [Native family methods](donor_native_methods.tsv) · [Operation crosswalk](intake.tsv) · [Donor types, constants and members](donor_entities.tsv)
 
 The [family integration process](integration_process.md) records how the promoted contracts govern new work. The design discussion and single-operation suggestions below describe the earlier pilot. The current inventory records the implemented visibility rules.
