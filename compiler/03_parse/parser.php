@@ -354,7 +354,17 @@ final class Parser
 			return $this->call_statement($value);
 		}
 		if ($this->property_statement_start()) {
-			$target = $this->primary(field_target: true);
+			$target = $this->atom();
+			if ($target instanceof ast_name_expression && $this->computed_member_start()) {
+				$key = $this->computed_member_key();
+				if ($this->cursor->is(token_kind::assign)) {
+					$this->cursor->take(token_kind::assign, '=');
+					$value = $this->assignment_value();
+					return new ast_computed_member_assignment($target, $key, $value, $this->statement_end(token_kind::semicolon));
+				}
+				$target = new ast_computed_member_read($target, $key, $this->cursor->position());
+			}
+			$target = $this->postfix($target, field_target: true);
 			if ($target instanceof ast_call_expression || $target instanceof ast_nullsafe_member) {
 				return $this->call_statement($target);
 			}
@@ -1607,6 +1617,25 @@ final class Parser
 		return $this->postfix($this->atom($argument_operand), $field_target);
 	}
 
+	private function computed_member_start(): bool
+	{
+		return $this->cursor->tokens->source->flavor === flavor::php && $this->cursor->is(token_kind::member)
+			&& $this->cursor->next_is(token_kind::lbrace);
+	}
+
+	/** Read the string-key expression shared by PHP computed reads and plain local stores. */
+	private function computed_member_key(): ast_expression
+	{
+		$this->cursor->take(token_kind::member, '->');
+		$this->cursor->take(token_kind::lbrace, '{');
+		$key = $this->value();
+		$this->cursor->take(token_kind::rbrace, '}');
+		if ($this->cursor->is(token_kind::lparen)) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Computed member calls are not supported');
+		}
+		return $key;
+	}
+
 	/** Read the field or method after a consumed instance access operator. */
 	private function instance_member(ast_expression $receiver): ast_field_expression|ast_call_expression
 	{
@@ -1666,17 +1695,12 @@ final class Parser
 				return $value;
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
-				$this->cursor->take(token_kind::member, '->');
-				if ($flavor === flavor::php && $this->cursor->is(token_kind::lbrace)) {
-					$this->cursor->take(token_kind::lbrace, '{');
-					$key = $this->value();
-					$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
-					if ($this->cursor->is(token_kind::lparen)) {
-						throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Computed member calls are not supported');
-					}
-					$value = new ast_computed_member_read($value, $key, $end);
+				if ($this->computed_member_start()) {
+					$key = $this->computed_member_key();
+					$value = new ast_computed_member_read($value, $key, $this->cursor->position());
 					continue;
 				}
+				$this->cursor->take(token_kind::member, '->');
 				$value = $this->instance_member($value);
 				continue;
 			}
