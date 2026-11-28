@@ -236,7 +236,7 @@ final class ast_append_statement extends ast_statement
 }
 
 /** Keyed store, e.g. values["count"] = 8; owns syntax and retains the approved value conversion. */
-final class ast_index_assignment extends ast_statement
+class ast_index_assignment extends ast_statement
 {
 	/** PROPERTIES */
 	/** Native owning writable storage expression. */
@@ -282,6 +282,10 @@ final class ast_index_assignment extends ast_statement
 		$this->conversion = null;
 		$this->boxed_root = null;
 	}
+}
+
+/** PHP $d->{name()} = rhs() uses a string name on local dynamic storage and the ordinary ordered indexed store. */
+final class ast_computed_member_assignment extends ast_index_assignment {
 }
 
 /** Non-owning prepared root shared by indexed compound and update statements. */

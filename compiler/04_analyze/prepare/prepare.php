@@ -361,6 +361,9 @@ final class Preparation
 					}
 				}
 				$type = $statement->receiver->type_def();
+				if ($statement instanceof ast_computed_member_assignment && (!($binding instanceof ast_local_binding) || !($type instanceof type_dynamic))) {
+					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a local dynamic receiver');
+				}
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
 				}
@@ -368,6 +371,9 @@ final class Preparation
 					throw new diagnostic($source, $statement->byte_start(), 'Python indexed write requires a typed vector or hash, or a boxed collection');
 				}
 				$this->value($statement->index);
+				if ($statement instanceof ast_computed_member_assignment && $statement->index->type_def() !== type_string::instance()) {
+					throw new diagnostic($statement->source(), $statement->index->byte_start(), 'Computed member name requires a string');
+				}
 				$type->prepare_key($statement->index);
 				$this->collection_element($statement->value, $type->write_type(), null);
 				$this->retain_member_place($receiver);
