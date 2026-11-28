@@ -34,3 +34,24 @@ this bounded slice. They reject during preparation, including in unreachable cod
 The type-aware compiler retains one statement with ordered operands. The legacy
 exporter's sibling `AST_ECHO` representation remains an implementation detail; both
 lower to sequential runtime calls. See legacy output rules.
+
+## PHP diagnostic output
+
+With the structural Encoder published, `var_dump($value)` evaluates one operand
+once and returns void. It writes bytes to the same standard output destination
+as `echo`. The operation works with JSON disabled. Its scalar inputs are the
+published Encoder leaves (int64, float64, bool, string and their published
+nullable forms), plus null. Strings report byte length and include their raw
+bytes between quotes.
+
+Mixed tables print as `array(n)` and dynamic tables as `object(dynamic)(n)`.
+Integer and string keys remain distinct in the output. A typed vector prints
+numeric positions. A field-derived data struct or class prints its declared
+name, field count, and fields in schema order. Preparation checks the fields and
+vector elements against the same Encoder capabilities. A missing owner or
+nullable value prints `NULL`. Revisiting an active ancestor prints
+`*RECURSION*`; shared siblings are visited independently.
+
+Multiple arguments, Result carriers, direct typed hashes and ordinary classes
+remain outside this initial diagnostic surface. FastCGI applications still
+choose their response body explicitly.

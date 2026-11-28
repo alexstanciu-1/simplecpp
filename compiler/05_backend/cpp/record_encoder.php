@@ -21,9 +21,26 @@ trait Cpp_Record_Encoder
 		$count = $vector->lower_cpp_cardinality(collection_cardinality::count, $source);
 		$read = $vector->lower_cpp_element_read($source, 'i');
 		$method = self::encode_method($vector->write_type());
-		return "out.begin_array();\n    for (::scpp::int64 i = 0, count = $count; i < count; ++i) {\n"
+		return "out.sequence($count);\n    for (::scpp::int64 i = 0, count = $count; i < count; ++i) {\n"
 			. "        if (out.stable_record_elements()) ($source).scpp_escape_read_slot(i).$method(out);\n"
 			. "        else ($read).$method(out);\n    }\n    out.end_array();";
+	}
+
+	/** @param mixed[] $declarations */
+	private function encode_value(type_definition $type, string $source, array &$declarations): string
+	{
+		if ($type === type_null::instance()) return "(void)($source); out.write_null();";
+		if (!($type instanceof native_sequence_type)) return $this->encode_leaf($type, $source, $declarations);
+		if ($type instanceof application_collection_type) $this->concrete_collections->request($type);
+		$leaf = $type->write_type();
+		if ($leaf instanceof record_type_definition) {
+			$declarations[$leaf->declaration->symbol_key()] = $leaf->declaration;
+			return self::record_vector_walk($type, $source);
+		}
+		$count = $type->lower_cpp_cardinality(collection_cardinality::count, $source);
+		$read = $type->lower_cpp_element_read($source, 'i');
+		$write = $this->encode_leaf($leaf, $read, $declarations);
+		return "out.sequence($count); for (::scpp::int64 i = 0, count = $count; i < count; ++i) { $write } out.end_array();";
 	}
 
 	/** @param mixed[] $declarations @param bool[] $headers */
@@ -31,27 +48,16 @@ trait Cpp_Record_Encoder
 	{
 		$name = $record->cpp_type();
 		$method = self::encode_method($record);
-		$lines = ['out.begin_object();'];
+		$label = Cpp_String_Literals::bytes($record->name);
+		$count = count($record->declaration->data_constructor->parameters);
+		$lines = ["out.record($label, $count);"];
 		foreach ($record->declaration->data_constructor->parameters as $field) {
 			$type = $field->type_def();
 			$member = Cpp_Identifier::source($field->short_name);
 			$read = $field->parent === $record->declaration ? "this->$member"
 				: 'static_cast<const ' . $field->parent->definition->cpp_type() . '&>(*this).' . $member;
 			$lines[] = 'out.field(' . Cpp_String_Literals::bytes($field->short_name) . ');';
-			if ($type instanceof native_sequence_type) {
-				if ($type->write_type() instanceof record_type_definition) {
-					$nested = $type->write_type()->declaration;
-					$declarations[$nested->symbol_key()] = $nested;
-					$lines[] = self::record_vector_walk($type, $read);
-					continue;
-				}
-				$count = $type->lower_cpp_cardinality(collection_cardinality::count, $read);
-				$element = $type->lower_cpp_element_read($read, 'i');
-				$write = $this->encode_leaf($type->write_type(), $element, $declarations);
-				$lines[] = 'out.begin_array();';
-				$lines[] = "for (::scpp::int64 i = 0, count = $count; i < count; ++i) { $write }";
-				$lines[] = 'out.end_array();';
-			} else $lines[] = $this->encode_leaf($type, $read, $declarations);
+			$lines[] = $this->encode_value($type, $read, $declarations);
 		}
 		$lines[] = 'out.end_object();';
 		$walk = "void {$name}::{$method}(::scpp::Encoder& out) const {\n    " . implode("\n    ", $lines) . "\n}\n"

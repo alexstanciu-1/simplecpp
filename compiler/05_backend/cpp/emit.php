@@ -3454,6 +3454,14 @@ CPP;
 					$owner = $function instanceof record_encode_function ? $function->parameters[0] : $target->default_type();
 					if ($owner instanceof shared_record_type_definition) $declarations[$owner->name] = $owner;
 				}
+				if ($function instanceof dump_function) {
+					$type = $function->parameters[0];
+					foreach ($type->cpp_headers() as $header) $required_headers[$header] = true;
+					$required_headers[$function->header] = true;
+					$arg = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
+					$walk = $this->encode_value($type, 'item', $declarations);
+					return "::scpp::dump_value($arg, +[](const " . $type->cpp_type() . "& item, ::scpp::Encoder& out) { $walk })";
+				}
 				if ($function instanceof prepared_kind_predicate) {
 					$arg = $this->value($value->arguments[0], $global_references, $declarations, $required_headers);
 					if ($function->answer !== null) return '(static_cast<void>(' . $arg . '), ' . ($function->answer ? 'true' : 'false') . ')';

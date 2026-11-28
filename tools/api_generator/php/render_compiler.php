@@ -480,6 +480,14 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
     $runtimeCases = array_merge(compilerJsonCases($runtime, $runtimeTypes), compilerResourceCases($runtime, $runtimeTypes));
+    if (isset($runtime['structural_encoder'])) {
+        $leaves = [];
+        foreach ($runtime['structural_encoder'] as $name => $_) {
+            if (isset($runtimeTypes[$name])) $leaves[] = "type_{$runtimeTypes[$name]}::class => true";
+        }
+        $context = isset($runtimeTypes['mixed']) ? 'type_mixed::instance()' : 'null';
+        $runtimeCases[] = "\t\t\t'php:func:var_dump' => \$bindings[\$key] ??= new dump_contract([" . implode(', ', $leaves) . "], $context),";
+    }
     if (isset($runtime['query_builder'])) $runtimeCases[] = compilerQueryBuilder($runtime['query_builder'], $runtimeTypes);
     foreach ($runtime['regex']['callbacks'] ?? [] as $name => $binding) {
         $key = $binding['callbackSurface'] . ':func:' . $name;

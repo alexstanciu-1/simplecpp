@@ -2505,6 +2505,22 @@ final class Preparation
 			$prepared = $operands[$runtime->argument_index] ?? throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 			$runtime = $this->regex_callback_binding($runtime, $prepared);
 		}
+		if ($runtime instanceof dump_contract) {
+			if (count($operands) !== 1) throw new diagnostic($call->source(), $call->byte_start(), 'var_dump requires one value');
+			$arg = $operands[0];
+			$this->value($arg, destination: $arg instanceof ast_collection_expression ? $runtime->list_context : null);
+			$type = $arg->type_def();
+			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
+			$record = $leaf instanceof shared_record_type_definition ? $leaf->payload : $leaf;
+			if ($record instanceof record_type_definition && $record->declaration->data_constructor !== null && $record->constructor() === null) {
+				$seen = [];
+				$this->check_encode_schema($record, $runtime->leaves, $arg, $seen, 'var_dump');
+			} elseif (!isset($runtime->leaves[$leaf::class]) && $type !== type_null::instance()) {
+				throw new diagnostic($arg->source(), $arg->byte_start(), 'Unsupported var_dump type: ' . $type->name);
+			}
+			$call->settle_runtime(new dump_function($type));
+			return;
+		}
 		if ($runtime instanceof php_kind_predicate) {
 			if (count($operands) !== 1) throw new diagnostic($call->source(), $call->byte_start(), 'Argument count mismatch for function: ' . $call->name);
 			$arg = $operands[0];
@@ -2699,15 +2715,17 @@ final class Preparation
 		if (!($record instanceof record_type_definition)) return null;
 		if ($record->declaration->data_constructor === null || $record->constructor() !== null) return null;
 		$seen = [];
-		$this->check_encode_schema($record, $encoders, $site, $seen);
+		$this->check_encode_schema($record, $encoders->by_arity[1], $site, $seen, 'JSON');
 		$this->dependencies?->watch($this->symbols->entry($record->declaration->symbol_key()), $this->owner, dependency_use::record_json_encode->value);
 		$variants = $encoders->by_arity[1];
 		$published = reset($variants);
 		return new record_encode_function($record, $input, $published, $encoders);
 	}
 
-	/** Check the declared fields of every reachable schema and subscribe the call to layout changes. @param bool[] $seen */
-	private function check_encode_schema(record_type_definition $record, json_encoder_overloads $encoders, ast_expression $site, array &$seen): void
+	/** Check the declared fields of every reachable schema and subscribe the call to layout changes.
+	 * @param array<class-string<type_definition>,bool|runtime_function> $leaves
+	 * @param bool[] $seen */
+	private function check_encode_schema(record_type_definition $record, array $leaves, ast_expression $site, array &$seen, string $format): void
 	{
 		if (isset($seen[$record->name])) return;
 		$seen[$record->name] = true;
@@ -2715,13 +2733,13 @@ final class Preparation
 		foreach ($record->declaration->data_constructor->parameters as $field) {
 			$type = $field->type_def();
 			$leaf = $type instanceof native_sequence_type ? $type->write_type() : $type;
-			if (isset($encoders->by_arity[1][$leaf::class])) continue;
+			if (isset($leaves[$leaf::class])) continue;
 			$nested = $leaf instanceof shared_record_type_definition ? $leaf->payload : $leaf;
 			if ($nested instanceof record_type_definition && $nested->declaration->data_constructor !== null && $nested->constructor() === null) {
-				$this->check_encode_schema($nested, $encoders, $site, $seen);
+				$this->check_encode_schema($nested, $leaves, $site, $seen, $format);
 				continue;
 			}
-			throw new diagnostic($site->source(), $site->byte_start(), 'No JSON encoder for ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ')');
+			throw new diagnostic($site->source(), $site->byte_start(), 'No ' . $format . ' encoder for ' . $record->name . '::$' . $field->short_name . ' (' . $type->name . ')');
 		}
 	}
 
