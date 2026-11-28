@@ -289,3 +289,13 @@ soft break at CRLF, CR or LF, including intervening spaces and tabs after
 the equals sign. A final equals sign followed only by spaces or tabs is
 discarded. Other malformed escapes pass through. As observed on PHP 8.5.12,
 a literal NUL ends the encoded input; `=00` emits a NUL and decoding continues.
+
+PHP publishes four byte-string URL component helpers with one string parameter
+named `string` and an owning string result. Both encoders pass ASCII letters,
+digits and `-_.` and use uppercase percent escapes. `urlencode` spells space
+as plus. `rawurlencode` passes tilde and spells space as `%20`.
+Both decoders consume each valid percent escape once, accepting either hex
+case and any decoded byte. A malformed percent sign passes through, and
+scanning resumes at the following byte. `urldecode` maps literal plus to space;
+`rawurldecode` preserves it. Applications requiring strict escapes validate
+the original component.

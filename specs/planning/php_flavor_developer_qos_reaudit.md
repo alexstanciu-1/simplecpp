@@ -85,7 +85,7 @@ operand. [Interpolation checks](../../compiler/tests/interpolation.php)
 | 26 | Traverse a producer | Intentional difference | A typed iterator resumed after break and the keyed producer yielded its keys. PHP's Generator name and yield delegation remain outside the tested slice. |
 | 27 | Organize multiple files | Fixed | Include/require diagnostics identify manifest source selection. On Linux, `__FILE__` and `__DIR__` resolve relative to the executable; the source-file/parent-directory probe succeeded. |
 | 28 | Read HTTP input and send status | Intentional difference | Superglobals, `php://input` and PHP header/session helpers did not supply request state. The explicit FastCGI exchange handled the request, headers and status in the live apps. |
-| 29 | Build or decode a URL, HTML or CSV | Still reproducible | Form/query encoding and decoding, HTML escaping and CSV helpers remain unavailable under the probed PHP names. The form app still needed its own component decoder. URL components, HTML text and CSV fields require separate contracts. |
+| 29 | Build or decode a URL, HTML or CSV | Still reproducible | Scalar URL component helpers are published. The form app retains its stricter input validation. Query structures, HTML escaping and CSV helpers remain open. |
 | 30 | Use timestamps or a regex | Still reproducible | PHP `time`, `date` and `strtotime` were unknown with datetime enabled; the general UTC formatter worked. The old mixed-captures workaround is obsolete for numbered strings: a fresh `vector<string>` capture probe printed `2:a`. Miss and invalid-pattern controls still distinguished present zero from failure. |
 | 31 | Call a remote endpoint | Still reproducible | The compiled curl client handled HTTP errors, invalid upstream data and connection failure. `CURLINFO_HTTP_CODE` still rejected while the published response-code spelling worked. This is a narrow naming issue; the exercise gives no reason to map every curl selector. |
 | 32 | Prepare and bind a SQL query | Fixed | The ticket report guards the prepare result, extracts the statement and binds a named slot. On dev002 it handled a failed prepare and read each changed state on subsequent MariaDB executions. The temporary-slot and unproven-alias probes still reject. |
@@ -97,12 +97,24 @@ The current classification of the original 33 tasks is **16 fixed, 3 still repro
 
 | Priority | Task | Evidence and proposed scope |
 |---|---|---|
-| 1 | 29 · Web inputs and output | Audit the four scalar URL component helpers together: `urlencode`, `urldecode`, `rawurlencode` and `rawurldecode`. Each takes and returns one string. The [form preview decoder](../../samples/php-developer-qos/form-preview/component.php) treats malformed percent escapes as errors; stock PHP preserves them. Compare both policies before changing that sample. |
-| 2 | 29 · HTML | The [catalog view](../../samples/php-developer-qos/catalog-view/view.php) escapes text nodes with three replacements. Audit `htmlspecialchars` separately, including quotes, flags, encoding, invalid bytes and repeated escaping. PHP query structures and CSV field lists go with the later collection review. |
-| 3 | 30 · Dates | Start with the zero-argument `time()` spelling against the existing Unix-seconds operation `dt_now`. The timezone, formatting vocabulary and parser required by `date` and `strtotime` deserve their own decision. Native regex capture output already addresses the regex part of this task. |
-| 4 | 31 · curl | Consider the single `CURLINFO_HTTP_CODE` synonym for `CURLINFO_RESPONSE_CODE`. The HTTP client already reads the status through the published selector. |
+| 1 | 29 · HTML | The [catalog view](../../samples/php-developer-qos/catalog-view/view.php) escapes text nodes with three replacements. Audit `htmlspecialchars` separately, including quotes, flags, encoding, invalid bytes and repeated escaping. PHP query structures and CSV field lists go with the later collection review. |
+| 2 | 30 · Dates | Start with the zero-argument `time()` spelling against the existing Unix-seconds operation `dt_now`. The timezone, formatting vocabulary and parser required by `date` and `strtotime` deserve their own decision. Native regex capture output already addresses the regex part of this task. |
+| 3 | 31 · curl | Consider the single `CURLINFO_HTTP_CODE` synonym for `CURLINFO_RESPONSE_CODE`. The HTTP client already reads the status through the published selector. |
 
-For the component audit, compare space, literal plus, tilde, embedded NUL, non-ASCII bytes and incomplete or malformed percent escapes against PHP. For example, stock PHP decodes `A+B%2BC` as `A B+C` with form decoding and `A+B+C` with raw decoding. Both leave `%zz` intact. The form application also validates field names, duplicates and UTF-8 independently of percent decoding.
+### Task 29 · URL component audit at `87d31d524`
+
+The audit at this revision found four missing PHP names. The subsequent implementation publishes all four through string metadata with one typed input and an owning string result. The [compiled PHP comparison](../../compiler/tests/php_string_search_slices.py) exercises all byte values and malformed escapes.
+
+| Operation | Observed stock PHP behavior |
+|---|---|
+| `urlencode` | Pass ASCII letters, digits and `-_.`. Encode space as `+` and every other byte as uppercase `%HH`. |
+| `rawurlencode` | Also pass `~`. Encode space as `%20`. Both encoders escape literal plus as `%2B` and slash as `%2F`. |
+| `urldecode` | Decode a valid pair of ASCII hex digits after `%` into one byte and map a literal plus to space. |
+| `rawurldecode` | Decode the same pairs and preserve literal plus. |
+
+Local stock PHP 8.5.7 passed checks on all 256 byte values in each mode, uppercase and lowercase escapes, and whole-buffer round trips including NUL. Both decoders consume their input once: `%252F` becomes `%2F`. A malformed percent sign survives and scanning continues: `%2G` stays `%2G`, while `%%41` becomes `%A`. Empty input produces an empty string. [PHP form encoding](https://www.php.net/manual/en/function.urlencode.php) · [Raw encoding](https://www.php.net/manual/en/function.rawurlencode.php) · [Form decoding](https://www.php.net/manual/en/function.urldecode.php) · [Raw decoding](https://www.php.net/manual/en/function.rawurldecode.php)
+
+Keep the form application's strict `component(string): ?string` boundary. It splits on literal delimiters first, then checks every percent escape in each original key and value. Its current one-pass decoder already implements that contract. If the sample later delegates decoding to `urldecode`, validate the original component first and decode exactly once. A check for percent signs in the decoded value would reject valid input such as `label=%25zz`. UTF-8, allowed fields and duplicate decoded keys remain application checks. On dev002 the native form regression and six extra cases passed, including malformed keys and values, encoded NUL, an escaped percent and a duplicate spelled with an escaped key. [Component decoder](../../samples/php-developer-qos/form-preview/component.php) · [Form validation](../../samples/php-developer-qos/form-preview/main.php)
 
 ### Follow-up to task 13 — PHP free builtin inputs
 

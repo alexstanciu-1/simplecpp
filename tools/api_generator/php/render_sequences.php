@@ -203,7 +203,7 @@ function renderString(array $plan, array &$groups): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('strings/string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $usesClassicStorage = array_intersect($classic, ['reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'quoted_printable_encode', 'quoted_printable_decode', 'chunk_bytes', 'wrap_words', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'increment_alnum', 'decrement_alnum', 'replace_bytes', 'ascii_replace_bytes', 'translate_bytes', 'pad_bytes', 'join_bytes']);
+    $usesClassicStorage = array_intersect($classic, ['urlencode', 'rawurlencode', 'urldecode', 'rawurldecode', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'quoted_printable_encode', 'quoted_printable_decode', 'chunk_bytes', 'wrap_words', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'increment_alnum', 'decrement_alnum', 'replace_bytes', 'ascii_replace_bytes', 'translate_bytes', 'pad_bytes', 'join_bytes']);
     $vars['classic_storage'] = ($usesClassicStorage || isset($plan['json'])) ? template('strings/string_own', ['n' => $n]) : '';
     if ($usesClassicStorage) $vars['classic_storage'] .= template('strings/string_classic_storage', ['n' => $n]);
     $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
@@ -248,7 +248,9 @@ function renderString(array $plan, array &$groups): array {
     }
     if (array_intersect($classic, ['compare_bytes', 'compare_prefix', 'compare_window'])) $d .= template('strings/string_compare_views');
     if (array_intersect($classic, ['increment_alnum', 'decrement_alnum'])) $d .= template('strings/step_alnum');
-    if (array_intersect($classic, ['hex_decode', 'quoted_printable_decode'])) $d .= template('strings/hex_digit');
+    if (array_intersect($classic, ['hex_decode', 'quoted_printable_decode', 'urldecode', 'rawurldecode'])) $d .= template('strings/hex_digit');
+    if (array_intersect($classic, ['urlencode', 'rawurlencode'])) $d .= template('strings/url_encode_component');
+    if (array_intersect($classic, ['urldecode', 'rawurldecode'])) $d .= template('strings/url_decode_component');
     $comparisonSymbols = [];
     $windowPositionEmitted = false;
     $needsMatcher = array_intersect($classic, ['substring_tail', 'ascii_substring_tail', 'ascii_replace_bytes']);
@@ -417,6 +419,10 @@ function renderString(array $plan, array &$groups): array {
             $body = match ($method) {
                 'ascii_lower', 'ascii_upper' => 'return detail::string_access::ascii_case(value, ' . ($method === 'ascii_upper' ? 'true' : 'false')
                     . ', ' . (isset($function['first_byte_only']) ? 'true' : 'false') . ');',
+                'urlencode' => 'return encode_component<false>(value);',
+                'rawurlencode' => 'return encode_component<true>(value);',
+                'urldecode' => 'return decode_component<false>(value);',
+                'rawurldecode' => 'return decode_component<true>(value);',
                 'increment_alnum' => 'return step_alnum<true>(value);',
                 'decrement_alnum' => 'return step_alnum<false>(value);',
                 'first_byte' => 'return value.size() == 0 ? 0 : static_cast<unsigned char>(value.data()[0]);',
