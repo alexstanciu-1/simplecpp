@@ -31,6 +31,7 @@ file(GLOB_RECURSE generator_sources CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.php.tpl
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.concrete.json)
 list(APPEND generator_sources ${php_generator_source}
+  ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/boxed/value_kinds.def
   ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/json/record_output.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/structure/record_fields.hpp)
 set(api_tooling ${CMAKE_CURRENT_BINARY_DIR}/scpp-api-tooling)

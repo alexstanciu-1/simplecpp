@@ -40,7 +40,8 @@ def main():
             probe_source.mkdir(parents=True)
             boxed_source = work / 'source/runtime/src/boxed'
             boxed_source.mkdir(parents=True)
-            shutil.copy2(source / 'runtime/src/boxed/boxed_value.hpp', boxed_source / 'boxed_value.hpp')
+            for name in ('boxed_value.hpp', 'value_kinds.def'):
+                shutil.copy2(source / 'runtime/src/boxed' / name, boxed_source / name)
             for name in ['probe.py', 'probe.cpp']:
                 shutil.copy2(driver.parent / name, probe_source / name)
             probe_driver = probe_source / 'probe.py'

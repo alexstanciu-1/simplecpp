@@ -173,7 +173,7 @@ final readonly class collection_transform_function extends runtime_function
 /** PHP kind observations inspect a box at runtime or use the prepared source type. */
 final readonly class php_kind_predicate extends runtime_overloads
 {
-	public function __construct(public string $kind)
+	public function __construct(public value_kind $kind)
 	{
 		parent::__construct([]);
 	}
@@ -187,7 +187,7 @@ final readonly class collection_membership_function extends runtime_function
 /** The argument still evaluates once when its kind is statically known. */
 final readonly class prepared_kind_predicate extends runtime_function
 {
-	public function __construct(string $name, type_definition $type, public string $kind, public ?bool $answer)
+	public function __construct(string $name, type_definition $type, public value_kind $kind, public ?bool $answer)
 	{
 		parent::__construct($name, [$type], type_bool::instance(), $name, '', const_reference_mask: 1);
 	}

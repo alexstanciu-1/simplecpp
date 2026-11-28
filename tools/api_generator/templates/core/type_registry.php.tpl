@@ -8,6 +8,12 @@ require_once __DIR__ . '/carriers.php';
 require_once __DIR__ . '/hashes.php';
 @optional_requires@
 // Generated from runtime compiler module metadata. Do not edit.
+/** Value kinds shared by static providers and runtime tag observations. */
+enum value_kind
+{
+	@value_kinds@
+}
+
 /** Direct source-name registration; no runtime metadata parsing, descriptor lookup or per-use allocation. */
 final class type_registry
 {

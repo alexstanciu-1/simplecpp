@@ -1384,7 +1384,7 @@ final class Preparation
 		Readonly_Access::write($root, $payload, $field);
 		if ($payload && $this->check_indexed_field_owner($root)) return $field;
 		$owner = $root->receiver;
-		if (($conditional_field || ($assignment !== null && $root->source()->flavor === flavor::php && $root->type_def()->predicate_kind() !== ''))
+		if (($conditional_field || ($assignment !== null && $root->source()->flavor === flavor::php && $root->type_def()->scalar_kind() !== null))
 			&& $owner->type_def() instanceof shared_record_type_definition
 			&& ($owner instanceof ast_call_expression || $this->check_indexed_field_owner($root))) {
 			if ($assignment !== null) $assignment->retain_selected_owner = true;
@@ -2484,11 +2484,11 @@ final class Preparation
 			$arg = $operands[0];
 			$this->value($arg, destination: $arg instanceof ast_collection_expression ? type_mixed::instance() : null);
 			$type = $arg->type_def();
-			$kind = $type instanceof php_container_type ? 'container' : $type->predicate_kind();
-			if ($kind === '' && !($type instanceof php_runtime_kind_type)) {
+			$kind = $type instanceof container_type ? value_kind::container : $type->scalar_kind();
+			if ($kind === null && !($type instanceof runtime_kind_type)) {
 				throw new diagnostic($arg->source(), $arg->byte_start(), $call->name . ' requires a type with a PHP kind; received ' . $type->name);
 			}
-			$call->settle_runtime(new prepared_kind_predicate($call->name, $type, $runtime->kind, $kind === '' ? null : $kind === $runtime->kind));
+			$call->settle_runtime(new prepared_kind_predicate($call->name, $type, $runtime->kind, $kind === null ? null : $kind === $runtime->kind));
 			return;
 		}
 		if ($runtime instanceof runtime_overloads) {
@@ -3488,7 +3488,7 @@ final class Preparation
 		$this->value($source, destination: $source instanceof ast_collection_expression ? Type_Resolution::collection('vector', $type, null) : null);
 		$input = $source->type_def();
 		if (!($input instanceof collection_value_source)
-			|| $type !== $input->iteration_value_type() || $type->predicate_kind() === ''
+			|| $type !== $input->iteration_value_type() || $type->scalar_kind() === null
 			|| $type->binary_result(binary_operator::equal, $type) !== type_bool::instance()) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'in_array requires value traversal with a matching comparable scalar needle');
 		}

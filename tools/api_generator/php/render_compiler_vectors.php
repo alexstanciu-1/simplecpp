@@ -5,9 +5,9 @@ namespace Scpp\Api;
 /** Publish provider guarantees directly on the generated type. Consumers only inspect the interface. */
 function compilerAccessInterfaces(mixed $provider, bool $indexed = true, bool $runtimeKind = false): string {
     $contracts = names($provider->access_contracts ?? []);
-    if (in_array('php_runtime_kind', $contracts, true)) {
-        requireThat($runtimeKind && !in_array('php_container', $contracts, true),
-            'PHP runtime kind requires a tag binding and no static container guarantee');
+    if (in_array('runtime_kind', $contracts, true)) {
+        requireThat($runtimeKind && !in_array('container', $contracts, true),
+            'Runtime kind observation requires a tag binding and no static container guarantee');
     }
     $readModes = array_intersect($contracts, ['python_index_read', 'python_index_read_snapshot']);
     requireThat(count($readModes) <= 1 && (!$readModes || $indexed), 'Python index access requires one bound read mode');
@@ -15,8 +15,8 @@ function compilerAccessInterfaces(mixed $provider, bool $indexed = true, bool $r
     foreach (generalTransforms($provider) as $form) $interfaces .= ', ' . $form . '_source';
     foreach ($contracts as $contract) {
         $interfaces .= match ($contract) {
-            'php_container' => ', php_container_type',
-            'php_runtime_kind' => ', php_runtime_kind_type',
+            'container' => ', container_type',
+            'runtime_kind' => ', runtime_kind_type',
             'readonly_slot' => ', readonly_collection_slot',
             'python_index_read' => ', python_index_read_type',
             'python_index_read_snapshot' => ', python_snapshot_index_read_type',
