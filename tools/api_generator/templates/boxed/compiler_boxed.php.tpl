@@ -11,6 +11,8 @@ final class type_@name@ extends boxed_type_definition implements subset_source, 
 
 	public function supports_static_property(): bool { return false; }
 
+	public function supports_default_static_property(): bool { return @static_default@; }
+
 	public function cardinality_result(collection_cardinality $operation): type_definition
 	{
 		return $operation === collection_cardinality::count ? type_int64::instance() : type_bool::instance();

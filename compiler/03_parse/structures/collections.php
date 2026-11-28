@@ -157,8 +157,12 @@ class ast_index_expression extends ast_expression
 		}
 		if ($root === $row && !$computed_key) return null;
 		$place = $root->type_def() instanceof boxed_type_definition ? self::collection_storage_root($root) : null;
+		if ($computed_key && $root instanceof ast_name_expression && $root->source()->flavor === flavor::php
+			&& !($root instanceof ast_qualified_data || $root instanceof ast_called_type_name)
+			&& $root->type_def() instanceof type_dynamic && $root->declaration() instanceof ast_global_declaration
+			&& $root->declaration()->parent instanceof ast_record_declaration) return $root;
 		if ($computed_key && (!($root->type_def() instanceof type_dynamic) || $place === null)) {
-			throw new diagnostic($row->source(), $row->byte_start(), 'Computed member write requires a dynamic local or stable dynamic instance field');
+			throw new diagnostic($row->source(), $row->byte_start(), 'Computed member write requires a dynamic local, stable instance field or named static property');
 		}
 		return $root === $row ? null : $place;
 	}

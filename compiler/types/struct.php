@@ -210,12 +210,12 @@ final class record_type_definition extends type_definition implements dependency
 			$interface->prepare_layout($symbols, $active, $work);
 			$this->interfaces[] = $interface;
 		}
-		// An uninitialized static callable depends on the signature types in this record's scope.
+		// Resolve default-initialized static storage in the declaring record's scope.
 		foreach ($this->declaration->static_properties as $property) {
 			if ($property->initializer !== null) continue;
 			$property->reset_preparation();
 			$type = Type_Resolution::storage($property->type_reference, $symbols, $this->declaration->namespace, $this, $this->dependencies);
-			if (!$type?->supports_static_property()) throw new diagnostic($property->source(), $property->byte_start(), 'Unsupported static property type');
+			if (!$type?->supports_default_static_property()) throw new diagnostic($property->source(), $property->byte_start(), 'Unsupported static property type');
 			$property->settle_type($type);
 		}
 		$data = $this->constructor() === null ? $this->declaration->data_constructor : null;

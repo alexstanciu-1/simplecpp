@@ -86,8 +86,8 @@ Park parameters (all modes), globals, static properties, new direct carrier fami
 
 Other D4 decisions outside conditional assignment:
 
-- Computed dynamic calls and their method-name/data-key collision rule.
-- Computed dynamic writes through storage beyond the admitted local and instance-field roots.
+- Computed dynamic calls are deferred pending a use case.
+- Named PHP static dynamic properties now support all four computed write forms. The `computed_static` fixture checks cross-file reads, replacement and rename recovery. Globals remain deferred.
 - Nullsafe write targets, including when an absent receiver skips keys or RHS effects.
 
 Fixed arrays are tracked separately. General interpolation expressions remain deferred beyond the completed single-field slice.

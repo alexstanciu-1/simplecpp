@@ -14,12 +14,14 @@ function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &
         'string_keys' => 'classified_bytes', 'read' => 'same_family_null_on_miss', 'conversion' => 'explicit_scalar_only']);
     requireThat(names(at($m, 'families'), 'Duplicate boxed policy') === ['dynamic', 'mixed'], 'Unsupported boxed families');
     $source = at($m, 'source_collection');
-    fields($source, ['count_method', 'empty_method', 'append_method', 'instance_field_default', 'key_types', 'methods']);
+    fields($source, ['count_method', 'empty_method', 'append_method', 'instance_field_default', 'null_static_properties', 'key_types', 'methods']);
     literals($source, ['count_method' => 'container_size', 'empty_method' => 'empty', 'append_method' => 'append', 'instance_field_default' => 'null']);
     requireThat(names(at($source, 'key_types')) === ['int64', 'string'], 'Unsupported boxed source keys');
     fields($source->methods, ['has', 'remove', 'clear']);
     literals($source->methods, ['has' => 'source_has', 'remove' => 'source_remove', 'clear' => 'clear']);
-    $sourceCollection = ['count_method' => $source->count_method, 'empty_method' => $source->empty_method, 'append_method' => $source->append_method, 'instance_field_default' => $source->instance_field_default, 'key_types' => names($source->key_types),
+    $nullStatics = names($source->null_static_properties ?? [], 'Duplicate boxed static property family');
+    requireThat(array_diff($nullStatics, $m->families) === [], 'Unknown boxed static property family');
+    $sourceCollection = ['null_static_properties' => $nullStatics, 'count_method' => $source->count_method, 'empty_method' => $source->empty_method, 'append_method' => $source->append_method, 'instance_field_default' => $source->instance_field_default, 'key_types' => names($source->key_types),
         'methods' => (array) $source->methods];
     if (!property_exists($publication, 'boxed')) return;
     $p = $publication->boxed;

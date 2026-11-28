@@ -289,16 +289,55 @@ def computed_field_missing(work, flavor):
         guard(work, flavor, case, model + api + main, 'boxed_missing_key', expected_stdout=trace)
 
 
+def computed_static(work, flavor):
+    model = 'class Registry {public static dynamic $data;}'
+    reader = """
+        function valueAt(string $k):int {return (int)Registry::$data[$k];}
+        function key(string $k):string {echo "K";return $k;}
+        function install(dynamic $next):int {echo "R";Registry::$data=$next;return 3;}
+    """
+    main = """
+        echo is_null(Registry::$data);
+        $old dynamic={"n":4};$next dynamic={"n":90};Registry::$data=$old;
+        Registry::$data->{key("n")}+=install($next);
+        echo valueAt("n"),(int)$old["n"];
+        ++Registry::$data->{key("n")};echo valueAt("n");
+        Registry::$data->{key("n")}--;echo valueAt("n");
+        Registry::$data->{key("n")}++;echo valueAt("n");
+        --Registry::$data->{key("n")};echo valueAt("n");
+        Registry::$data->{key("n")}=install($old);echo valueAt("n"),(int)$next["n"];
+        $a dynamic=[10];$b dynamic=[20,30];
+        $old["list"]=$a;$next["list"]=$b;
+        Registry::$data->{key("list")}[]=install($next);
+        echo count($a),count($b),(int)$b[2];
+        Registry::$data->{key("list")}[0]+=2;echo (int)$b[0];
+        Registry::$data["list"]->{key("0")}=11;echo (int)$b[0];return 8;
+    """
+    trace = b'1KR74K8K7K8K7KR37KR133K22K11'
+    revisions(work, flavor, dict(main=main, model=model, reader=reader), [
+        (None, None, trace), ('model', model.replace('$data;', '$other;'), 'Unknown static property'),
+        ('model', model.replace('$data;', '$data=null;'), trace)])
+
+
+def computed_static_limits(work, flavor):
+    model = 'struct Registry {public static dynamic $data;}'
+    revisions(work, flavor, dict(main='return 8;'), [
+        ('main', model + 'Registry::$data->{"x"} ??= 1;return 8;', 'requires a local or writable instance field'),
+        ('main', model.replace('$data;', '$data=7;') + 'return 8;', 'Static dynamic property starts as null'),
+        ('main', 'global $data dynamic = 7;return 8;', 'globals are deferred')])
+    guard(work, flavor, 'null', model + 'Registry::$data->{"x"}=1;return 8;', 'dynamic_requires_container')
+
+
 def computed_admission(work, flavor):
     setup = '$d dynamic=[];$name="key";'
     cases = [
         ('$d mixed=[];$x=$d->{"key"};', 'Computed member read requires a dynamic receiver'),
         ('class H {public int $key;}$h=new H();$x=$h->{"key"};', 'Computed member read requires a dynamic receiver'),
         (setup + '$x=$d->{$name}();', 'Computed member calls are not supported'),
-        ('$d mixed=[];$d->{"key"}=7;', 'Computed member assignment requires a dynamic local or writable dynamic instance field'),
-        ('class H {public mixed $data;}$h=new H();$h->data->{"key"}=7;', 'Computed member assignment requires a dynamic local or writable dynamic instance field'),
+        ('$d mixed=[];$d->{"key"}=7;', 'Computed member assignment requires a dynamic local, writable instance field or named static property'),
+        ('class H {public mixed $data;}$h=new H();$h->data->{"key"}=7;', 'Computed member assignment requires a dynamic local, writable instance field or named static property'),
         ('$d mixed=[];$d->{"key"}+=7;', 'Computed member read requires a dynamic receiver'),
-        ('function make():dynamic {$d dynamic=[];return $d;} ++make()->{"mid"}["key"];', 'Computed member write requires a dynamic local or stable dynamic instance field'),
+        ('function make():dynamic {$d dynamic=[];return $d;} ++make()->{"mid"}["key"];', 'Computed member write requires a dynamic local, stable instance field or named static property'),
         (setup + '$d[0]->{1}=7;', 'Computed member name requires a string'),
     ]
     revisions(work, flavor, dict(main='return 8;'), [('main', source + 'return 8;', error) for source, error in cases])
@@ -311,6 +350,6 @@ with TemporaryDirectory(prefix='dynamic-arrow-') as tmp:
      'computed_append': computed_append, 'computed_append_missing': computed_append_missing,
      'computed_nested_mutation': computed_nested_mutation, 'computed_nested_mutation_failure': computed_nested_mutation_failure,
      'computed_deep': computed_deep, 'computed_deep_missing': computed_deep_missing,
-     'computed_field_store': computed_field_store, 'computed_field_mutation': computed_field_mutation,
+     'computed_static': computed_static, 'computed_static_limits': computed_static_limits, 'computed_field_store': computed_field_store, 'computed_field_mutation': computed_field_mutation,
      'computed_field_readonly': computed_field_readonly, 'computed_field_missing': computed_field_missing,
      'exercise': exercise}[sys.argv[1]](Path(tmp), sys.argv[2])
