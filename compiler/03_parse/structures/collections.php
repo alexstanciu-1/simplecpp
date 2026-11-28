@@ -146,13 +146,17 @@ class ast_index_expression extends ast_expression
 	}
 
 	/** STATIC METHODS */
-	/** A boxed mutation requires a local or stable instance field. */
-	public static function boxed_path_root(ast_expression $row): ast_name_expression|ast_field_expression|null
+	/** Find writable boxed storage, requiring a local dynamic root for computed names. */
+	public static function boxed_path_root(ast_expression $row, bool $computed_key = false): ast_name_expression|ast_field_expression|null
 	{
 		if ($row->source()->flavor === flavor::python) return null;
 		$root = $row;
 		while ($root instanceof ast_index_expression || ($root instanceof ast_field_expression && $root->is_dynamic_key())) {
+			$computed_key = $computed_key || $root instanceof ast_computed_member_read;
 			$root = $root->receiver;
+		}
+		if ($computed_key && !($root instanceof ast_name_expression && $root->local_binding() !== null && $root->type_def() instanceof type_dynamic)) {
+			throw new diagnostic($row->source(), $row->byte_start(), 'Computed member write requires a local dynamic receiver');
 		}
 		if ($root === $row) return null;
 		if (!($root->type_def() instanceof boxed_type_definition)) return null;

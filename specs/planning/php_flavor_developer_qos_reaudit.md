@@ -4,7 +4,11 @@ Doc Status: planning
 
 The [original field report](php_flavor_developer_qos.md) describes the experience at `356b6ff15`. The first full replay used `4e035377d`. On November 27 we reran the full study on dev002 with the PHP onboarding changes, then repeated it on the merged compiler at `da940c179`. The unit of assessment is the developer's task. **Fixed** means the original blocking operation now works under its intended v0.2 contract. **Still reproducible** means at least one concrete usability issue remains for discussion, including misleading diagnostics. **Intentional difference** means the tested behavior follows a language or library boundary we can explain to a PHP developer. A reproducible inconvenience is evidence for discussion, not a commitment to implement PHP compatibility.
 
-## Evidence
+## November 28 refresh on the pushed Stringable merge
+
+At `87ca872a9`, we replayed all 250 isolated PHP snippets on dev002. There were 143 expected outputs, 93 compiler rejections and 14 runtime failures after reconciling two stale expectations. The published PHP byte helpers now produce `chr(65) === "A"` and `ord("A") === 65`; both corrected probes passed on rerun. The Stringable native and incremental checks passed, as did both field/order interpolation tests and the form-preview and catalog-view applications. The remaining study drivers retain their earlier dated evidence. [Snippet runner](../../samples/php-developer-qos/snippets.py) · [Stringable checks](../../compiler/tests/stringable_native.py)
+
+## November 27 full-replay evidence
 
 On dev002, all ten [study drivers](../../samples/php-developer-qos/) completed successfully with PHP 8.5.12 and Clang 18.1.3. All 250 isolated snippets matched their recorded observations. Of these, 129 ran and printed the expected output, 107 reported the expected compiler error, and 14 raised the expected runtime failure. An expected rejection can still be an onboarding issue. The default compiler and runtime suite passed all 618 tests before integration and all 629 on the merged revision.
 
@@ -49,7 +53,7 @@ with a mixed row. A typed string-keyed hash supports the same spelling.
 A failed lookup or formatting check prints no part of that interpolated
 operand. [Interpolation checks](../../compiler/tests/interpolation.php)
 
-## Task verdicts at the full replay
+## Current task verdicts
 
 | # | Original developer task | Verdict | Current evidence and scope |
 |---|---|---|---|
@@ -58,28 +62,28 @@ operand. [Interpolation checks](../../compiler/tests/interpolation.php)
 | 3 | Default a missing value | Intentional difference | Nullable coalescing preserved zero and `hash_find` supplied the fallback on a miss. Direct hash reads and falseable search results still reject `??`. Presence, a false sentinel and key lookup have distinct contracts. |
 | 4 | Ask whether a key exists | Fixed | `isset($h[$k])` now compiles for typed hashes, including a stored zero. The nullable-value probe separately exercises absence. Boxed `has` can distinguish an explicit null from an absent key. |
 | 5 | Read a form integer | Fixed | `(int)"42"` printed 42. A function casting its string parameter printed 1234 for decimal input and raised `invalid_decimal_text` for bad text. A mixed slot holding text still fails direct integer extraction with `boxed_scalar_kind`; extract its string first. |
-| 6 | Print a value | Still reproducible | Echoing a bool, indexed byte or boxed read reports the same int64/string restriction. An extracted integer prints. Bool interpolation prints `true` or `false`. The diagnostic omits the received type. |
+| 6 | Print a value | Fixed | Scalar echo uses PHP output spelling. Classes that implement Stringable and both text builders work with echo, interpolation and explicit string casts. A direct mixed read still requires extraction, and the diagnostic names mixed. |
 | 7 | Handle a bad request | Intentional difference | Invalid JSON returned a checked failure. A user exception exposed `get_message()`; a range guard ran finally and exited. The filesystem result forwarded its failure, but the PHP-style attempt `$r->error()` still has no such method. |
 | 8 | Read a nested JSON property | Fixed | Both `$v->user->name` and `$v["user"]["name"]` printed Ana directly. |
 | 9 | Copy a row and change it | Fixed | The nested indexed write printed Jo. The explicit copy/edit/write-back control preserved Ana in the original. Mixed copies and shared dynamic aliases retain their intended distinct behavior. |
-| 10 | Validate an unknown value | Still reproducible | Ordinary JSON decode supplied dynamic, while `is_bool` required exact mixed. `is_string` and `is_array` were unknown. A successful mixed predicate followed by explicit typed extraction worked. |
+| 10 | Validate an unknown value | Fixed | The published kind predicates accept mixed, dynamic and native inputs. A decoded dynamic boolean passed `is_bool`, and `is_int(1)` also succeeded. |
 | 11 | Round-trip a JSON API response | Intentional difference | The boxed table encoded an empty object as `[]`; document parsing retained object identity. The wire corpus exercised numeric-looking keys, exact large-number tokens and duplicate names. Use documents for wire fidelity. |
 | 12 | Distinguish malformed bytes from an invalid schema | Intentional difference | Boxed decoding accepted raw invalid UTF-8, while the document parser reported `utf8@1`. The settings endpoint distinguished malformed input (400), valid input with the wrong shape (422) and valid false (200). |
 | 13 | Pass a checked or boxed value to a function | Fixed | Source functions, methods and builtins share by-value argument admission. The document-root chain printed `array` for a valid parse and raised `carrier_no_value` before the next statement for a failed parse. Both observations reproduced in the full replay. |
 | 14 | Move between domain objects and JSON | Intentional difference | Direct encode of the tested Product class and typed vector rejected. Explicit field projection encoded `{"id":7}`. This verdict applies to those inputs and does not generalize to every record API. |
-| 15 | Use familiar collection operations | Still reproducible | The former list/foreach/strlen snag is fixed (printed 11). Typed `collection_map` worked. PHP `array_map`, `array_filter`, `in_array` and the broad `array` parameter remain unavailable in these probes. |
+| 15 | Use familiar collection operations | Fixed | Single-input PHP array_map, key-preserving array_filter and strict in_array work on the tested typed inputs. The broad PHP array parameter remains a separate type-system difference. Further collection work awaits standardization. |
 | 16 | Update or remove elements | Intentional difference | An indexed vector element could not bind the writable argument. Passing a named vector by reference updated its caller. Removing an index with the vector method preserved dense positions. |
 | 17 | Keep a loop variable or reference | Intentional difference | A newly introduced element stayed loop-local, a predeclared variable survived empty traversal, and writable foreach left no alias to the last element. Structural mutation during that traversal rejected. |
 | 18 | Start a script | Fixed | An echo-only entry printed hello and exited zero. An opening tag works with one deprecation warning per compiler execution. The strict-types diagnostic explains how to fix the file. PHP CLI globals remain a separate flavor decision. |
 | 19 | Choose an inferred type | Fixed | The compact typed declaration `$v vector<int>=[];` builds. Bare null still requires a type. |
 | 20 | Select defaults and branches | Intentional difference | The shorthand ternary now works. With `$label="0"`, `$label ?: "anon"` printed anon. The full ternary with incompatible arms still rejected, and the match with a default returned 405. |
 | 21 | Compare or divide request values | Intentional difference | Integer division produced 3 and floating division 3.5. Text comparisons remained lexical. The PHP differential found one equality and three ordering differences on numeric-looking strings; all 60 byte-position comparisons agreed. |
-| 22 | Render a template | Still reproducible | Field interpolation reported “Expected closing interpolation brace”; interpolating a local worked. The byte/codepoint control gave 6 versus 2 for the same string, as intended. |
+| 22 | Render a template | Fixed | A template can interpolate a local, a declared field, a quoted key on a mixed row or typed hash, and an opted-in Stringable value. A throwing formatter prints no prefix from its interpolated operand. |
 | 23 | Call a function | Intentional difference | Typed named parameters, literal defaults, variadics and vector unpack at the call worked. Untyped named parameters, expression defaults, list spread and assignment destructuring rejected. |
-| 24 | Declare a model | Still reproducible | The original optional-field read `$u?->name ?? "guest"` printed guest. Constructor promotion still reported “Expected identifier”. |
+| 24 | Declare a model | Fixed | Optional reads and nullable scalar instance fields work. Constructor promotion remains an intentional syntax difference. Its diagnostic now directs the author to declare the field in the class body. |
 | 25 | Dispatch through a type | Intentional difference | The missing-override diagnostic named the fix. PHP enum member lookup rejected; the published enum value/lookup helpers worked. A hint to those helpers would aid discovery. |
 | 26 | Traverse a producer | Intentional difference | A typed iterator resumed after break and the keyed producer yielded its keys. PHP's Generator name and yield delegation remain outside the tested slice. |
-| 27 | Organize multiple files | Still reproducible | All four include/require spellings now point to source selection in module.json. The __DIR__ probe still reported “Unknown constant: __DIR__”. |
+| 27 | Organize multiple files | Fixed | Include/require diagnostics identify manifest source selection. On Linux, `__FILE__` and `__DIR__` resolve relative to the executable; the source-file/parent-directory probe succeeded. |
 | 28 | Read HTTP input and send status | Intentional difference | Superglobals, `php://input` and PHP header/session helpers did not supply request state. The explicit FastCGI exchange handled the request, headers and status in the live apps. |
 | 29 | Build or decode a URL, HTML or CSV | Still reproducible | Form/query encoding and decoding, HTML escaping and CSV helpers remain unavailable under the probed PHP names. The form app still needed its own component decoder. URL components, HTML text and CSV fields require separate contracts. |
 | 30 | Use timestamps or a regex | Still reproducible | PHP `time`, `date` and `strtotime` were unknown with datetime enabled; the general UTC formatter worked. The old mixed-captures workaround is obsolete for numbered strings: a fresh `vector<string>` capture probe printed `2:a`. Miss and invalid-pattern controls still distinguished present zero from failure. |
@@ -87,16 +91,18 @@ operand. [Interpolation checks](../../compiler/tests/interpolation.php)
 | 32 | Prepare and bind a SQL query | Fixed | The ticket report guards the prepare result, extracts the statement and binds a named slot. On dev002 it handled a failed prepare and read each changed state on subsequent MariaDB executions. The temporary-slot and unproven-alias probes still reject. |
 | 33 | Bring a filesystem snippet | Intentional difference | The two-argument PHP write alias rejected the append-flag call. The journal used append mode and a checked byte count; contention left the file untouched. POSIX lexical path behavior and general-API visibility remained as specified. |
 
-## Decisions to discuss
+## Remaining work after Stringable
 
-| Group | Tasks | Smallest useful discussion |
+The current classification of the original 33 tasks is **16 fixed, 3 still reproducible and 14 intentional differences**. The November 27 full replay counted 10, 9 and 14 respectively. The six changes are tasks 6, 10, 15, 22, 24 and 27. A fixed task can still have a deliberate boundary, such as explicit extraction of a boxed value before echo.
+
+| Priority | Task | Evidence and proposed scope |
 |---|---|---|
-| Editing and inspecting boxed data | 10 | Decide which predicates are useful on decoded data within the existing set of boxed kinds. |
-| First-file and everyday diagnostics | 6, 22, 24, 27 | Give the PHP developer a usable next line of code: show the actual echo operand type and identify unsupported interpolation, model and path syntax. |
-| Web data boundaries | 29 | Start with form component encode/decode, which removes handwritten parsing from a working app. Discuss query multiplicity, HTML escaping contexts and CSV rules independently. |
-| Familiar library names | 15, 30, 31 | Inventory typed collection counterparts and useful datetime aliases. For curl, decide only whether the response-code synonym pays its way. Native regex captures already address the original regex complaint. |
+| 1 | 29 · Web inputs and output | Audit the four scalar URL component helpers together: `urlencode`, `urldecode`, `rawurlencode` and `rawurldecode`. Each takes and returns one string. The [form preview decoder](../../samples/php-developer-qos/form-preview/component.php) treats malformed percent escapes as errors; stock PHP preserves them. Compare both policies before changing that sample. |
+| 2 | 29 · HTML | The [catalog view](../../samples/php-developer-qos/catalog-view/view.php) escapes text nodes with three replacements. Audit `htmlspecialchars` separately, including quotes, flags, encoding, invalid bytes and repeated escaping. PHP query structures and CSV field lists go with the later collection review. |
+| 3 | 30 · Dates | Start with the zero-argument `time()` spelling against the existing Unix-seconds operation `dt_now`. The timezone, formatting vocabulary and parser required by `date` and `strtotime` deserve their own decision. Native regex capture output already addresses the regex part of this task. |
+| 4 | 31 · curl | Consider the single `CURLINFO_HTTP_CODE` synonym for `CURLINFO_RESPONSE_CODE`. The HTTP client already reads the status through the published selector. |
 
-**November 27 full replay of the 33 tasks:** 10 fixed, 9 still reproducible, 14 intentional differences. All nine outstanding tasks reproduced on dev002. The native CLI alias decision and wider regex family work belong to the separate helper inventory. Neither is an extra task in this tally.
+For the component audit, compare space, literal plus, tilde, embedded NUL, non-ASCII bytes and incomplete or malformed percent escapes against PHP. For example, stock PHP decodes `A+B%2BC` as `A B+C` with form decoding and `A+B+C` with raw decoding. Both leave `%zz` intact. The form application also validates field names, duplicates and UTF-8 independently of percent decoding.
 
 ### Follow-up to task 13 — PHP free builtin inputs
 
