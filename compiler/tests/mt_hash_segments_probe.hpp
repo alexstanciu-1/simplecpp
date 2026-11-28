@@ -8,6 +8,8 @@
 using Int = scpp::int64;
 namespace App {
 Int record_hash_();
+scpp::vector_int64 ordered_results_(scpp::vector_int64&, scpp::hash_int64_int64&);
+scpp::vector_int64 repeated_results_(scpp::vector_int64&, Int);
 scpp::vector_int64 hash_write_pair_(scpp::hash_int64_int64&, scpp::hash_int64_int64&, Int);
 scpp::vector_int64 hash_write_read_(scpp::hash_int64_int64&, scpp::hash_int64_int64&);
 scpp::vector_int64 vector_write_pair_(scpp::vector_int64&);
@@ -29,6 +31,12 @@ static void check_hash_segments() {
     assert(crossing.at(0) == 101330 && crossing.at(1) == 101330);
     scpp::vector_int64 values;
     for (Int value : {9, 4, 7, 2}) values.append(value);
+    auto ordered = App::ordered_results_(values, table);
+    assert(ordered.size() == 3 && ordered.at(0) == 94 && ordered.at(1) == 101330 && ordered.at(2) == 72);
+    auto empty_results = App::repeated_results_(values, 0);
+    assert(empty_results.size() == 0);
+    auto repeated = App::repeated_results_(values, 2);
+    assert(repeated.size() == 2 && repeated.at(0) == 9 && repeated.at(1) == 4);
     auto middle = App::vector_read_pair_(values);
     assert(middle.at(0) == 47 && middle.at(1) == 47);
     auto writes = App::vector_write_pair_(values);

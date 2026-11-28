@@ -20,6 +20,7 @@ final class type_registry
 	@record_result_header@public const bool HAS_MT_SEGMENTS = @mt_available@;
 	public const bool HAS_ASYNC_FRAMES = @async_available@;
 
+@mt_result_binding@
 	/** Runtime concrete values eligible for task storage when requested by an application. */
 	public static function async_value(type_definition $type): bool
 	{

@@ -69,7 +69,7 @@ final class Mt_Provisioning
 			$launch->settle_function($symbol, $conversions);
 		}
 		if ($batch->suspending_operands) self::reject($batch, 'Await batch inputs before the parallel block');
-		$batch->settle_mt('mt_join', type_registry::specialize('vector', type_int64::instance()));
+		$batch->settle_mt('mt_join', type_registry::mt_join_result());
 	}
 
 	/** Infer inline parameters from the admitted element or match a declared worker parameter. */

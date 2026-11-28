@@ -93,10 +93,25 @@ foreach ([false, true] as $enabled) {
     $runtimeFiles = render($mtPlan);
     $registry = renderCompiler($functionMetadata, $facts, $mtPlan)['types/registry.php'];
     requireThat(str_contains($registry, 'HAS_MT_SEGMENTS = ' . ($enabled ? 'true;' : 'false;'))
+        && str_contains($registry, 'function mt_join_result()') === $enabled
+        && str_contains($registry, 'const string MT_JOIN_COLLECT') === $enabled
         && isset($runtimeFiles['public/scpp/mt_segment.hpp']) === $enabled
         && isset($runtimeFiles['public/scpp/mt_segments.hpp']) === $enabled
         && str_contains($runtimeFiles['public/' . $mtPlan['vectors_header']], 'mt_data()') === $enabled,
         'Compiler and runtime disagree on exclusive segment availability');
+}
+$resultProvider = (object)['default_construction' => 'empty', 'append_value' => (object)['member' => 'push_item', 'result' => 'void']];
+$resultMethods = [['name' => 'push_item', 'result' => 'void', 'arguments' => ['int64'], 'mutates' => true]];
+$resultPlan = $mtPlan;
+$resultPlan['mt_join_result'] = mtJoinResultBinding($resultProvider, $mtPlan['mt_join_result']['type'], 'int64', $resultMethods);
+requireThat(str_contains(renderCompiler($functionMetadata, $facts, $resultPlan)['types/registry.php'], 'results.push_item('),
+    'MT result builder ignored the selected append member');
+unset($resultProvider->default_construction);
+try {
+    mtJoinResultBinding($resultProvider, 'test_result', 'int64', $resultMethods);
+    throw new \LogicException('Accepted an MT result builder without empty construction');
+} catch (\RuntimeException $expected) {
+    requireThat(str_contains($expected->getMessage(), 'empty construction'), 'Unexpected MT result rejection');
 }
 $asyncDemand = clone $demand;
 foreach ([false, true] as $enabled) {

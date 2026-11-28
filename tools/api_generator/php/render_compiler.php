@@ -717,7 +717,15 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
     }
     array_push($runtimeCases, ...compilerModuleFunctionCases($runtime, $runtimeTypes));
+    $mtResultBinding = '';
     if ($runtime['mt_segments'] ?? false) {
+        $result = $runtime['mt_join_result'];
+        $type = $runtimeTypes[$result['type']] ?? throw new \RuntimeException('MT join result has no compiler type');
+        $collect = trim(template('collections/mt_join_result', [
+            'type' => typeExport($runtime['submodules'], $result['type'])['symbol'], 'append' => $result['append'],
+        ]));
+        $mtResultBinding = "\tpublic static function mt_join_result(): type_definition { return type_$type::instance(); }\n"
+            . "\tpublic const string MT_JOIN_COLLECT = " . var_export($collect, true) . ";\n";
         $cases[] = "\t\t\t'segment_range' => type_segment_range::instance(),";
         $runtimeCases[] = "\t\t\t'func:balanced_range' => \$bindings[\$key] ??= new runtime_function('balanced_range', "
             . "[type_int64::instance(), type_int64::instance(), type_int64::instance()], type_segment_range::instance(), "
@@ -763,6 +771,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@value_kinds@' => implode("\n\t", array_map(static fn(string $kind): string => "case $kind;", array_keys(valueKinds()))),
         '@record_result_header@' => isset($runtime['structural_decoder'])
             ? 'public const ?string RECORD_RESULT_HEADER = ' . var_export($runtime['carriers_header'] ?? null, true) . ";\n\t" : '',
+        '@mt_result_binding@' => $mtResultBinding,
         '@mt_available@' => ($runtime['mt_segments'] ?? false) ? 'true' : 'false',
         '@async_available@' => ($runtime['async_frames'] ?? false) ? 'true' : 'false',
         '@async_value_types@' => implode(', ', [...$asyncTypes, 'type_void::class']),

@@ -1,10 +1,12 @@
 {
+  "default_construction": "empty",
   "segment": {"element": "iteration_value", "key": "none", "read": "::scpp::mt::job::borrow_read", "write": "::scpp::mt::job::borrow"},
   "private_copy_allocation_only": ["e"],
   "declarations": {"inferred_local": true, "instance_field": true},
   "fill_factory": {"source": "vector_filled", "member": "filled"},
   "subset_result": {"family": "hash"},
   "map_result": {"family": "vector", "key": "none"},
+  "append_value": {"member": "append", "result": "void"},
   "indexed_read": {"member": "at", "protocol": "checked_position"},
   "indexed_store": {"member": "set", "missing": "reject"},
   "indexed_entry_types": {"protocol": "traversal_value_exact_key", "key_diagnostic": "Vector index requires"},

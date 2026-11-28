@@ -4255,7 +4255,7 @@ CPP;
 			$lines[] = '::scpp::mt::job jobs[]{' . implode(', ', $jobs) . '};';
 			$lines[] = '::scpp::mt::join(jobs, ' . count($jobs) . "$cap);";
 		}
-		$lines[] = $value->type_def()->cpp_type() . ' results; for (const auto& job : jobs) results.append(static_cast<::scpp::int64>(job.result)); return results;';
+		$lines[] = type_registry::MT_JOIN_COLLECT;
 		return '([&]() { ' . implode(' ', [...$snapshots, ...$lines]) . ' }())';
 	}
 

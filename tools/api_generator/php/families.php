@@ -117,7 +117,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     if (property_exists($publication, 'mt_segments')) {
         requireThat(is_bool($publication->mt_segments), 'Invalid MT segment selection');
         if ($publication->mt_segments) {
-            requireThat(in_array('int64', array_column($plan['vectors'], 'element'), true), 'MT segments require vector<int64> results');
+            if (!isset($plan['mt_join_result'])) throw new \RuntimeException('MT segments require ' . mtJoinResultRecipe()->result . ' results');
             $plan['mt_segments'] = true;
         }
     }
@@ -506,6 +506,24 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($transfer) $plan['string']['transfer_assignment'] = true;
 }
 
+/** Resolve the batch result request before the sequence provider publishes its specializations. */
+function mtJoinResultRecipe(): object {
+    $recipe = decode(readFile(__DIR__ . '/../templates/collections/mt_join.concrete.json'), 'MT join result');
+    fields($recipe, ['result', 'builder']);
+    textValue(at($recipe, 'result'));
+    literals($recipe, ['builder' => 'default_construct_append']);
+    return $recipe;
+}
+
+/** Publish the provider bindings needed by the default-construct/append result builder. */
+function mtJoinResultBinding(object $provider, string $identity, string $element, array $methods): array {
+    requireThat(($provider->default_construction ?? null) === 'empty' && $element === 'int64',
+        'MT join requires empty construction and integer elements');
+    $append = collectionAppendMember($provider, $methods, $element);
+    requireThat($append !== '', 'MT join requires integer append');
+    return ['type' => $identity, 'append' => $append];
+}
+
 /** One storage-to-recipe selection shared by runtime and application compiler generation. */
 function vectorConcreteRecipe(array $vector): string {
     requireThat($vector['storage'] === 'concrete_buffer', 'Unsupported vector concrete storage');
@@ -579,6 +597,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     requireThat(hasType($plan, $count) && hasNative($plan, 'long long'), 'Vector requires published count and native long long construction');
     requireThat(hasValue($plan, 'bool_t'), 'Vector requires published boolean type');
     if ($reserve) checkHeader($plan, 'scpp/value_error.hpp');
+    $mtResult = ($publication->mt_segments ?? false) === true ? mtJoinResultRecipe()->result : null;
     $vectors = [];
     $demands = [];
     foreach(listValue(at($p, 'specializations')) as $item) {
@@ -668,6 +687,10 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
                 'Vector initializer name conflicts with capacity helper');
         }
         $vectors[$name] = ($capacity ? ['capacity_helpers' => true] : []) + ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'transfer_assignment' => $transfer, 'enable_reserve' => $reserve ? '1' : '', 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
+        if ($mtResult === $vectors[$name]['source_type']) {
+            $providerRecipe = concreteRecipe(vectorConcreteRecipe($vectors[$name]));
+            $plan['mt_join_result'] = mtJoinResultBinding($providerRecipe, $name, $element, $methods);
+        }
     }
     requireThat($vectors !== [], 'Empty vector publication');
     ksort($vectors, SORT_STRING);

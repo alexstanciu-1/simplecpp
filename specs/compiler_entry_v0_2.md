@@ -558,7 +558,9 @@ $totals = parallel {
 ```
 
 This form has the same worker contracts, whole-batch admission, join and
-submission-order integer results as the built-in `mt_join(...)`. A block used as
+result type as the built-in `mt_join(...)`. Both return an owned `vector<int>` with one
+integer per expanded worker in submission order. If all repetitions expand to zero jobs,
+the result is an empty `vector<int>`. The source collections do not affect this result type. A block used as
 a statement still joins all workers. This slice requires the MT segment runtime
 publication and fresh compilation.
 

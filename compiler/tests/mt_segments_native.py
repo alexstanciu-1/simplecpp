@@ -249,6 +249,17 @@ function entry_digits(read_hash_segment<int,int> $s): int {
     foreach ($s as $key => $value) { $digits = $digits*1000 + $key*100 + $value; }
     return $digits;
 }
+function ordered_results(vector<int> &$values, hash<int,int> &$table): vector<int> {
+    $results vector<int> = mt_join(vector_digits(segment($values,0,2)),
+                                   entry_digits(segment($table,0,2)),
+                                   vector_digits(segment($values,2,2)));
+    return $results;
+}
+function repeated_results(vector<int> &$values, int $parts): vector<int> {
+    return parallel {
+        job (each: $i in 0 ..< $parts, read: $s = segment($values,$i,1)) { return $s[0]; }
+    };
+}
 function hole_read_pair(hash<int,int> &$table): vector<int> {
     return parallel {
         entry_digits(segment($table,0,2));
