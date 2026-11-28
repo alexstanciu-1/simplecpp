@@ -14,6 +14,13 @@ $hashes = readFile($root.'/tests/hash/publication.json');
 $datetime = readFile($root.'/tests/datetime/publication.json');
 $owners = readFile($root.'/tests/ownership/publication.json');
 $prepare = fn(string $m, string $p): array => prepareRuntime(decode($m,'metadata'), decode($p,'publication'), $facts);
+$core = readFile($root.'/runtime/metadata/publication.json');
+$m = decode($metadata, 'metadata');
+$m->text_builders->text_builder->to_string = ['write', 'string'];
+rejects(fn() => $prepare(encode($m), $core), 'Invalid to_string builder');
+$m = decode($metadata, 'metadata');
+unset($m->capabilities->to_string);
+requireThat(!isset($prepare(encode($m), $core)['to_string']), 'Unpublished text capability');
 $hashPlan = $prepare($metadata, $hashes);
 requireThat(count($hashPlan['hashes']['specializations']) === 4, 'Hash specializations lost');
 foreach (['missing', 'throwing', 'incomplete'] as $invalid) {

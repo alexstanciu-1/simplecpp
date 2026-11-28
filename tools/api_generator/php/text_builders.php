@@ -50,8 +50,10 @@ function renderTextBuilders(array $plan, array &$files): void {
             $const = $op['mode'] === 'read' ? ' const' : '';
             $methods .= "    {$op['result']} $method(" . implode(', ', $args) . ")$const;\n";
         }
+        $forward = isset($plan['to_string']['builders'][$type])
+            ? "inline string to_string(const $type& value) { return value.to_string(); }\n" : '';
         $files['public/' . $builder['header']] = moduleHeaderBody([$plan['string']['header']], 'scpp',
-            template('strings/builder_type', ['type' => $type, 'methods' => $methods]));
+            template('strings/builder_type', ['type' => $type, 'methods' => $methods]) . $forward);
         $files['src/runtime.cpp'] .= includeHeader($builder['header']) . "#include <charconv>\n#include <vector>\n#include <utility>\nnamespace scpp {\n"
             . template("strings/$type") . template('strings/builder_value', ['type' => $type]) . "}\n";
     }

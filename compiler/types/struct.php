@@ -493,7 +493,7 @@ final class record_type_definition extends type_definition implements dependency
 	{
 		for ($type = $this; $type !== null; $type = $type->base()) {
 			$dependencies?->watch($symbols->entry($type->declaration->symbol_key()), $watcher);
-			$symbol = $symbols->entry('method:' . $type->name . '::' . $name);
+			$symbol = ($type->declaration->root()->scope->parent ?? $symbols)->entry('method:' . $type->name . '::' . $name);
 			$dependencies?->watch($symbol, $watcher);
 			if ($symbol->declaration() instanceof ast_function_declaration) return $symbol;
 			if (isset($type->hook_slots[$name])) return $type->hook_slots[$name];
@@ -513,7 +513,7 @@ final class record_type_definition extends type_definition implements dependency
 				}
 			}
 		}
-		$symbol = $symbols->entry($selected->symbol_key());
+		$symbol = ($selected->root()->scope->parent ?? $symbols)->entry($selected->symbol_key());
 		$dependencies?->watch($symbol, $watcher);
 		return $symbol;
 	}

@@ -49,6 +49,9 @@ final class scope
 	/** @var symbol_entry[] Native non-owning index of live entries whose per-pass status needs resetting. */
 	private array $recent_entries /** array<string,symbol_entry> */ = [];
 
+	/** Owned core nominal declaration, published before preparing application types. */
+	public ?ast_record_declaration $stringable = null;
+
 	/** CONSTRUCTOR */
 	public function __construct(?scope $parent = null, ?string $namespace = null)
 	{

@@ -295,6 +295,7 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
     $plan = submodulePlan($metadata);
     $aliases = object(at($metadata, 'integer_aliases'));
     $identities = array_map(fn(string $name): string => $aliases[$name] ?? $name, names(at($publication, 'types')));
+    $integers = $identities;
     $identities = array_merge($identities, names(at($publication, 'values')));
     $providers = exportProviders($plan, $identities);
     foreach (['output', 'conversions', 'string', 'vectors', 'carriers', 'hashes'] as $group) {
@@ -308,6 +309,10 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         foreach ($publication->boxed->families as $family) $providers[] = $plan['groups'][$family]['provider'];
     }
     $headers = array_map(fn(string $id): string => providerHeader($plan, $id), array_unique($providers));
+    if (isset($metadata->capabilities->to_string, $publication->string)) {
+        $headers[] = 'scpp/to_string.hpp';
+        if (array_diff($integers, $publication->string->explicit_formatters ?? [])) $headers[] = 'scpp/numeric/to_string.hpp';
+    }
     if (in_array('array_filter', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_filter.hpp';
     if (publishedMaps($metadata, $publication) !== []) $headers[] = 'scpp/collection_map.hpp';
     if (in_array('in_array', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_scan.hpp';

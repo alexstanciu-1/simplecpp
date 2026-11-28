@@ -42,4 +42,32 @@ final class Source_Frontend
 		$file = $this->collect($source, $publication);
 		return Program_Preparation::prepare('entry', ['entry' => $file], $target, $publication->publish(['entry' => $file]))->entry;
 	}
+
+	/** Publish the core prototype once per compilation before source-owned preparation jobs start. @param ast_file_node[] $changed */
+	public static function prepare_core_interfaces(scope $symbols, array $changed /** array<string,ast_file_node> */): void
+	{
+		if (Stringable_Contract::SOURCE === null) return;
+		$key = 'class:' . Stringable_Contract::NAME;
+		if ($symbols->stringable !== null) return;
+		foreach ($changed as $file) {
+			// Includes import aliases and every source flavor. A mention in trivia only prepares an unused prototype.
+			if (str_contains($file->tokens->source->content, Stringable_Contract::NAME)) {
+				$symbols->stringable = self::core_interface($key);
+				return;
+			}
+		}
+	}
+
+	/** Build a nominal signature through the same declaration and signature checks as authored interfaces. */
+	private static function core_interface(string $key): ast_record_declaration
+	{
+		$source = new source_file('<Stringable>', Stringable_Contract::SOURCE, flavor::cpp);
+		$file = (new Source_Frontend())->parse($source);
+		$files = ['<Stringable>' => $file];
+		$core = Symbol_Publication::completed($files);
+		$dependencies = new Dependency_Watches();
+		Program_Preparation::layouts($files, $core, $dependencies);
+		Function_Preparation::declarations($core, $dependencies);
+		return $core->resolve($key);
+	}
 }

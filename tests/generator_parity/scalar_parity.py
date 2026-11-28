@@ -33,7 +33,7 @@ def main():
     metadata = json.loads((root / 'runtime/metadata/runtime.json').read_text())
     captured = {}
     # Explicit scalar boundary: optional-family validation belongs to the composed runtime planner.
-    scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'text_helpers']}
+    scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'text_helpers', 'capabilities']}
     # Positional subset construction belongs to collection preparation.
     scalar_metadata['compiler'] = dict(scalar_metadata['compiler'])
     scalar_metadata['compiler'].pop('positional_subset_family', None)

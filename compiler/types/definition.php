@@ -577,6 +577,12 @@ abstract class type_definition
 	/** Generated native member signature on this canonical type, independent of concrete publication location. */
 	public function runtime_method(string $name): runtime_function|runtime_overloads|null
 	{
+		return $name === Stringable_Contract::METHOD ? $this->native_string_formatter() : null;
+	}
+
+	/** Published native formatter for the common to_string capability. */
+	public function native_string_formatter(): ?runtime_function
+	{
 		return null;
 	}
 

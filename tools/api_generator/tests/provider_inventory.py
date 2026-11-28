@@ -10,6 +10,10 @@ def prepared_provider_headers(plan, runtime):
         headers.add('scpp/collection_map.hpp')
     if 'in_array' in plan.get('collection_transforms', []):
         headers.add('scpp/collection_scan.hpp')
+    if 'to_string' in plan:
+        headers.add('scpp/to_string.hpp')
+    if plan.get('to_string', {}).get('integers'):
+        headers.add('scpp/numeric/to_string.hpp')
     if 'structural_decoder' in plan:
         headers.add('scpp/decoder.hpp')
     if 'structural_encoder' in plan:

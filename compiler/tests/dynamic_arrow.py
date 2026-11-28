@@ -77,6 +77,61 @@ def computed_write(work, flavor):
         ('api', api, trace)])
 
 
+def computed_mutation(work, flavor):
+    api = 'function name():string {echo "K";return "remove";}'
+    main = """
+        function change(dynamic $d):int {echo "R";$d["remove"]=99;return 3;}
+        $d dynamic=[];$d["remove"]=4;
+        $d->{name()}+=change($d);echo (int)$d["remove"];
+        ++$d->{name()};echo (int)$d["remove"];
+        $d->{name()}++;echo (int)$d["remove"];
+        --$d->{name()};echo (int)$d["remove"];
+        $d->{name()}--;echo (int)$d["remove"];
+        $d["remove"]="a";$d->{name()}.="b";echo (string)$d["remove"];return 8;
+    """
+    trace = b'KR7K8K9K8K7Kab'
+    revisions(work, flavor, dict(main=main, api=api), [
+        (None, None, trace), ('api', 'function name():int {return 0;}', 'Computed member name requires a string'),
+        ('api', api, trace)])
+
+
+def computed_mutation_failure(work, flavor):
+    source = """
+        function name():string {echo "K";return "key";}
+        function removeKey(dynamic $d):int {echo "R";$d->remove("key");return 2;}
+        $d dynamic=[];
+    """
+    operation = 'try {$d->{name()}+=removeKey($d);} finally {echo count($d);}return 0;'
+    for label, setup, trace in [('missing', '', b'K0'), ('removed', '$d["key"]=4;', b'KR0')]:
+        guard(work, flavor, label, source + setup + operation, 'boxed_missing_key', expected_stdout=trace)
+
+
+NESTED_TARGETS = ('$d->{groupKey()}[leafKey()]', '$d[groupKey()]->{leafKey()}', '$d->{groupKey()}->{leafKey()}')
+NESTED_KEYS = 'function groupKey():string {echo "G";return "group";} function leafKey():string {echo "K";return "leaf";}'
+
+
+def computed_nested(work, flavor):
+    api = NESTED_KEYS + 'function replaceChild(dynamic $d,dynamic $fresh):int {echo "R";$d["group"]=$fresh;return 9;}'
+    main = ''
+    for i, target in enumerate(NESTED_TARGETS):
+        main += f'function run{i}():void {{'
+        main += '$d dynamic=[];$old dynamic=[];$fresh dynamic=[];$old["leaf"]=2;$d["group"]=$old;'
+        main += target + '=replaceChild($d,$fresh);'
+        main += 'echo (int)$old["leaf"],(int)$d["group"]["leaf"],(int)$fresh["leaf"];}'
+        main += f'run{i}();'
+    trace = b'GKR299' * len(NESTED_TARGETS)
+    bad_api = api.replace('groupKey():string', 'groupKey():int').replace('return "group"', 'return 1')
+    revisions(work, flavor, dict(main=main + 'return 8;', api=api), [
+        (None, None, trace), ('api', bad_api, 'Computed member name requires a string'), ('api', api, trace)])
+
+
+def computed_nested_missing(work, flavor):
+    for label, target in zip(('first', 'second'), NESTED_TARGETS[:2]):
+        source = NESTED_KEYS + 'function rhs():int {echo "R";return 9;} $d dynamic=[];'
+        guard(work, flavor, label, source + 'try {' + target + '=rhs();} finally {echo count($d);}return 0;',
+              'boxed_missing_key', expected_stdout=b'GKR0')
+
+
 def computed_admission(work, flavor):
     setup = '$d dynamic=[];$name="key";'
     cases = [
@@ -85,13 +140,17 @@ def computed_admission(work, flavor):
         (setup + '$x=$d->{$name}();', 'Computed member calls are not supported'),
         ('$d mixed=[];$d->{"key"}=7;', 'Computed member assignment requires a local dynamic receiver'),
         ('class H {public dynamic $data;}$h=new H();$h->data->{"key"}=7;', 'Expected writable struct field'),
-        (setup + '$d->{$name}+=7;', 'Expected writable struct field'),
-        (setup + '++$d->{$name};', 'Computed member reads cannot be used as write targets'),
-        (setup + '$d->{$name}["leaf"]=7;', 'Expected writable struct field'),
+        ('$d mixed=[];$d->{"key"}+=7;', 'Computed member read requires a dynamic receiver'),
+        ('class H {public dynamic $data;}$h=new H();++$h->data->{"key"};', 'Computed member mutation requires a local dynamic receiver'),
+        (setup + '++$d->{$name}["leaf"];', 'Computed member reads cannot be used as write targets'),
+        (setup + '$d->{$name}["leaf"]+=7;', 'Computed member reads cannot be used as write targets'),
+        (setup + '$d[0]->{1}=7;', 'Computed member name requires a string'),
     ]
     revisions(work, flavor, dict(main='return 8;'), [('main', source + 'return 8;', error) for source, error in cases])
 
 
 with TemporaryDirectory(prefix='dynamic-arrow-') as tmp:
     {'missing': missing, 'computed': computed, 'computed_write': computed_write, 'computed_admission': computed_admission,
+     'computed_mutation': computed_mutation, 'computed_mutation_failure': computed_mutation_failure,
+     'computed_nested': computed_nested, 'computed_nested_missing': computed_nested_missing,
      'exercise': exercise}[sys.argv[1]](Path(tmp), sys.argv[2])

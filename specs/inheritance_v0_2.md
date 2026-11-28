@@ -671,3 +671,25 @@ same-named declarations leave no unique call contract, reject the call; an expli
 compatible redeclaration selects the contract/defaults. Identity diamonds remain
 unambiguous. Reference-return cycle checking includes interface implementations and
 inherited forwarders, using original source callable identities.
+
+## Core Stringable interface
+
+Simple C++ supplies the nominal interface `Stringable`. A class opts in with
+its flavor's ordinary interface syntax. Its instance method `to_string()` is
+public, takes zero arguments and returns an owning `string` by value. Ordinary
+override, inheritance, dispatch and exception rules apply. A method with the
+same spelling on an unrelated class remains callable directly. Passing the
+object to a `Stringable` parameter requires the nominal relationship.
+
+Native value types publish the same operation through the runtime
+`to_string` capability. A source member call on a native value resolves to its
+published concrete binding. Integer widths use decimal digits, bool uses
+`true` or `false`, and binary64 uses the explicit decimal formatter, including
+its nonfinite-value error. A string preserves all bytes. Both text builders
+return an independent snapshot and remain usable after the call. Native C++
+callers use the corresponding `scpp::to_string(value)` overload.
+
+Interface parameters use the existing class-owner representation. The native
+capability grants a concrete operation and introduces no scalar or builder
+boxing. This slice covers explicit calls. Each flavor's existing rules still
+govern output, interpolation, casts and implicit argument conversions.

@@ -1358,6 +1358,17 @@
       }
     }
   },
+  "capabilities": {
+    "to_string": {
+      "interface": "Stringable",
+      "method": "to_string",
+      "result": "string",
+      "scalars": "explicit_formatters",
+      "integers": "decimal",
+      "identity": "string",
+      "builders": ["string_parts_builder", "text_builder"]
+    }
+  },
   "text_builders": {
     "string_parts_builder": {
       "create": ["create", "string_parts_builder"],
