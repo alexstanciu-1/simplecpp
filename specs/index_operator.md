@@ -15,6 +15,11 @@ write-only use, container mutation, integer indexing or writability solely from
 bracket syntax. A future overload may give the zero-argument form any supported
 meaning. General user-defined operator declarations and resolution are separate work.
 
+For vector, hash and fixed-array reads, preparation applies the provider’s key
+rule to the prepared index expression and assigns the provider’s entry value type
+to the read. Each reached receiver and key evaluates once. A failed lookup in
+a nested read prevents evaluation of the next key.
+
 ## Optional key inputs
 
 A typed optional key expression uses the existing checked by-value argument conversion

@@ -588,6 +588,8 @@ if(BUILD_TESTING)
     ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
   add_test(NAME compiler_collection_map COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_map.py)
+  add_test(NAME compiler_indexed_entry_reads COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/indexed_entry_reads.py)
   add_test(NAME compiler_collection_subset COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_subset.py)
   add_test(NAME compiler_collection_value_scan COMMAND ${Python3_EXECUTABLE} -B
@@ -1151,6 +1153,7 @@ if(BUILD_TESTING)
   add_test(NAME compiler_strlen COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strlen.php)
   scpp_fixture_test(strlen php php-split-join php-count-window)
   add_test(NAME compiler_php_source_paths COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_source_paths.py)
+  add_test(NAME compiler_php_htmlspecialchars COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_htmlspecialchars.py)
   add_test(NAME compiler_php_string_search_slices COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_string_search_slices.py)
   add_test(NAME compiler_strings_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings_native.py)
   add_test(NAME compiler_strings COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/strings.php)
