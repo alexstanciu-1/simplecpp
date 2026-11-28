@@ -44,6 +44,15 @@ def literal(data):
 
 
 transforms = []
+all_bytes = bytes(range(256))
+for name in ('urlencode', 'rawurlencode'):
+    for data in (b'', b'a b+~/', all_bytes):
+        transforms.append(f'{name}(string:{literal(data)})')
+escaped = b''.join(b'%%%02X' % byte for byte in all_bytes)
+for name in ('urldecode', 'rawurldecode'):
+    for data in (b'', all_bytes, escaped, escaped.lower(), b'A+B%2BC', b'%00%ff%2F',
+                 b'%', b'%2', b'%GG', b'%2G', b'%+%A', b'%%41', b'%2%41', b'%252F', b'%25zz'):
+        transforms.append(f'{name}(string:{literal(data)})')
 for data in (b'', b'a\r\nb', b'a\rb\nc', b'\n\r', b'  \r\n', b' \n', b' \r', b'end ',
              b'\t \t\r\n', b'A\0B=Z', bytes(range(256)), b'x' * 75 + b'\r\ny'):
     transforms.append(f'quoted_printable_encode(string:{literal(data)})')
