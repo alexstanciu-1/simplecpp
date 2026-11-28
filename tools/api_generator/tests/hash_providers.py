@@ -50,7 +50,8 @@ def proof(work, quick=False):
 
     observations = [['int64', '(receiver).size()'], ['bool_t', '(receiver).empty()']]
     default = emit(metadata, publication)
-    assert len(default['hashes']['specializations']) == 4
+    assert {row['name'] for row in default['hashes']['specializations']} == {
+        'hash_uint8_int64', 'hash_int64_int64', 'hash_int64_string', 'hash_string_int64', 'hash_string_string'}
     for specialization in default['hashes']['specializations']:
         assert default['submodules']['type_exports'][specialization['name']]['provider'] == 'core.hashes'
     assert default['submodules']['nodes']['core.hashes']['requires'] == ['core.carriers', 'core.scalars', 'core.string']

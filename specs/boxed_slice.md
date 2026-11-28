@@ -125,6 +125,10 @@ In the PHP and Simple C++ flavors, `d->name` on a `dynamic` receiver selects the
 
 On a declared record, the receiver type selects its declared field as usual. Thus `holder->data->name` can select a real field followed by a dynamic key. A call such as `d->remove("name")` resolves the published method, while `d->remove` reads the data key. PHP, Simple C++ and JavaScript also admit consecutive bracket reads on dynamic.
 
+PHP also admits `$d->{expr}` as a read when the receiver has type `dynamic` and the expression has type `string`. Evaluate the receiver once, then the name once, and use the ordinary boxed bracket lookup. Thus `"0"` selects integer key zero, `"01"` remains a string key, and a missing key returns boxed null without insertion. The name `"remove"` selects the data key even though a method has that name.
+
+For a local `dynamic` receiver, PHP also admits plain assignment `$d->{expr} = rhs();`. Evaluate and normalize the string key once, then evaluate and box the RHS, then insert or replace the saved key using the ordinary bracket store. A throwing RHS performs no store. A computed name of `"remove"` writes the data key. Computed calls, nonlocal targets, nested writes through computed names, compounds and updates remain deferred.
+
 ## Plain two-key assignment on boxed locals
 
 For `data[group][key] = value` in PHP, C++ and JavaScript, evaluate and normalize

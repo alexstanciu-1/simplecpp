@@ -216,12 +216,34 @@ the advance call. Exhaustion leaves outputs unchanged. Existing bounds, holes, m
 and receiver-lifetime rules apply equally to reference outputs and construction-aware slots.
 The slot owns its copied value through normal loop completion and suspended-cursor cleanup.
 
+## Python indexed reads
+
+A provider admits Python subscripting with `python_index_read`. It supplies key
+validation, the result type, and the checked read. Vector and typed hash publish
+this contract. Positional worker segments bind it directly and hash segments
+reject indexed keys during validation. Boxed providers publish the
+`python_index_read_snapshot` variant to keep the selected receiver alive by value
+across an awaited key. The default string byte accessor stays limited to its
+existing flavors. Indexed writes have their own admission rules.
+
 ## PHP array helpers
 
-`array_map(callback, source)` maps one vector, typed hash or boxed table and
-retains its keys. `array_filter(source, predicate)` retains matching entries in
-encounter order. A vector therefore produces `hash<T,int>` keyed by its original
-positions. Omitting the predicate uses the published scalar condition of each
+`array_map(callback, source)` visits each entry of one source in encounter order and calls the callback once per entry.
+The provider selects the result builder from the callback return type. Vectors and
+one-dimensional fixed byte arrays build a dense vector of mapped values. Typed hashes
+preserve their key type and keys, including sparse integers. Boxed tables build a fresh
+table of the same family and require that family as the callback result. Preparation
+rejects a missing builder before code generation. A throwing callback discards the
+partial result.
+
+`array_filter(source, predicate)` retains matching entries in
+encounter order. The source supplies an entry cursor and an associated result type.
+The result builder creates an empty collection and inserts each retained value at
+its original key. Vectors and one-dimensional fixed byte arrays use the positional
+result family from metadata. For example, filtering `[10,20,30]` for `30` produces
+one entry at key `2`. The default fixed-byte-array result is `hash<byte,int>`.
+Typed hashes, mixed and dynamic use their own keyed result builders. Preparation
+requires an available builder for the element type. Omitting the predicate uses the published scalar condition of each
 element, including the false string `"0"`. Boxed tables require a callback.
 The callback contracts are the same as for the general transforms above.
 

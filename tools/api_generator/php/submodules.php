@@ -285,6 +285,8 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         $headers[] = 'scpp/to_string.hpp';
         if (array_diff($integers, $publication->string->explicit_formatters ?? [])) $headers[] = 'scpp/numeric/to_string.hpp';
     }
+    if (in_array('array_filter', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_filter.hpp';
+    if (in_array('array_map', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_map.hpp';
     if (in_array('in_array', $publication->collection_transforms ?? [], true)) $headers[] = 'scpp/collection_scan.hpp';
     if (in_array('implode', $publication->string->functions ?? [], true)
         && in_array('string', array_column($publication->hashes->specializations ?? [], 'value'), true)) {

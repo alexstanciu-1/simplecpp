@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements collection_value_source, readonly_index_lookup_type, writable_iteration_type, nested_index_storage_type, counted_collection_type, membership_type
+abstract class hash_type_definition extends type_definition implements subset_source, map_source, mapped_result_builder, keyed_result_builder, readonly_index_lookup_type, writable_iteration_type, nested_index_storage_type, counted_collection_type, membership_type
 {
+	use same_type_subset;
+	use keyed_map_insert;
 	use checked_indexed_mutation;
 	use collection_specializations;
 	use concrete_value_storage;
@@ -25,6 +27,11 @@ abstract class hash_type_definition extends type_definition implements collectio
 	}
 
 	/** METHODS */
+	public function mapped_result_type(type_definition $element): ?type_definition
+	{
+		return type_registry::mapped_keyed($element, $this->key_type);
+	}
+
 	/** A keyed probe of a nullable shared value inspects the stored owner after lookup. */
 	public function probes_stored_owner(): bool
 	{
@@ -54,6 +61,11 @@ abstract class hash_type_definition extends type_definition implements collectio
 	public function supports_instance_field(): bool
 	{
 		return true;
+	}
+
+	public function cpp_entry_key_type(): string
+	{
+		return $this->key_type->cpp_type();
 	}
 
 	public function write_type(): type_definition

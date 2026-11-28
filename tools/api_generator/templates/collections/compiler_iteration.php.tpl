@@ -10,6 +10,12 @@
 			. "return $receiver.@next@(position, limit, item); }";
 	}
 
+	public function lower_cpp_entry_cursor(string $receiver): string
+	{
+		return "[&$receiver, position = scpp::int64{}, limit = $receiver.@limit@()](auto& key, auto& item) mutable { "
+			. "return $receiver.@next@(position, limit, @entry_key@, item); }";
+	}
+
 	public function iteration_key_type(): ?type_definition
 	{
 		return @key@;

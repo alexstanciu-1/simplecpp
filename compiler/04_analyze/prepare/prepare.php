@@ -361,6 +361,9 @@ final class Preparation
 					}
 				}
 				$type = $statement->receiver->type_def();
+				if ($statement instanceof ast_computed_member_assignment && (!($binding instanceof ast_local_binding) || !($type instanceof type_dynamic))) {
+					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a local dynamic receiver');
+				}
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
 				}
@@ -368,6 +371,9 @@ final class Preparation
 					throw new diagnostic($source, $statement->byte_start(), 'Python indexed write requires a typed vector or hash, or a boxed collection');
 				}
 				$this->value($statement->index);
+				if ($statement instanceof ast_computed_member_assignment && $statement->index->type_def() !== type_string::instance()) {
+					throw new diagnostic($statement->source(), $statement->index->byte_start(), 'Computed member name requires a string');
+				}
 				$type->prepare_key($statement->index);
 				$this->collection_element($statement->value, $type->write_type(), null);
 				$this->retain_member_place($receiver);
@@ -1932,14 +1938,20 @@ final class Preparation
 		if ($syntax instanceof ast_index_expression) {
 			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
 			$type = $syntax->receiver->type_def();
+			if ($syntax instanceof ast_computed_member_read) {
+				if ($deep_write_path) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member reads cannot be used as write targets');
+				if (!($type instanceof type_dynamic)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member read requires a dynamic receiver');
+			}
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
-			if ($syntax->source()->flavor === flavor::python
-				&& !($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type || $type instanceof boxed_type_definition)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash, or a boxed collection');
+			if ($syntax->source()->flavor === flavor::python && !($type instanceof python_index_read_type)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Provider does not support Python indexed reads');
 			}
 			$this->value($syntax->index, $initializing);
+			if ($syntax instanceof ast_computed_member_read && $syntax->index->type_def() !== type_string::instance()) {
+				throw new diagnostic($syntax->source(), $syntax->index->byte_start(), 'Computed member name requires a string');
+			}
 			if ($deep_write_path && $type instanceof boxed_type_definition) $type->prepare_index($syntax, deep_path: true);
 			else $type->prepare_index($syntax);
 			if (!$syntax->index->is_effect_free_literal()) $this->retain_member_place($syntax->receiver);
@@ -1952,6 +1964,12 @@ final class Preparation
 				if ($part instanceof ast_interpolation_index && !($part->receiver->type_def() instanceof hash_type_definition)
 					&& !($part->receiver->type_def() instanceof type_mixed)) {
 					throw new diagnostic($part->source(), $part->receiver->byte_start(), 'Keyed interpolation requires a hash or mixed row');
+				}
+				if ($part instanceof ast_interpolation_field) {
+					$receiver = $part->receiver->member_type();
+					if (!($receiver instanceof record_type_definition || $receiver instanceof shared_record_type_definition)) {
+						throw new diagnostic($part->source(), $part->byte_start(), 'Field interpolation requires a declared record field');
+					}
 				}
 				if (!($part instanceof ast_interpolation_text)) {
 					$part->prepare_text($string);
@@ -2800,7 +2818,7 @@ final class Preparation
 				: Type_Resolution::signature($syntax, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
 			if ($index === $variadic) Function_Preparation::require_pack_type($parameter, $type);
 			if ($parameter->mode === passing_mode::readonly_reference && !Type_Resolution::readonly_collection_input($type)) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only callable references require a vector or hash input');
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only callable references require a borrowable collection input');
 			}
 			if (!Type_Resolution::callback_component($type) && !($transform_element !== null && $type instanceof record_type_definition)) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');
@@ -3468,22 +3486,28 @@ final class Preparation
 		$callback = $call->arguments[$map ? 0 : 1] ?? null;
 		$this->value($source, $initializing);
 		$input = $source->type_def();
-		if ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
+		$filter_output = $input;
+		if ($operation === runtime_factory::array_filter) {
+			if (!($input instanceof subset_source)) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for array_filter');
+			$element = $input->iteration_value_type();
+			$filter_output = $input->subset_result_type();
+			if (!($filter_output instanceof keyed_result_builder)) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
+		} elseif ($map) {
+			if (!($input instanceof map_source)) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for array_map');
+			$element = $input->iteration_value_type();
+		} elseif ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
 			$element = $input->element_type;
 			$key = null;
 		} elseif ($input instanceof hash_type_definition && !in_array($operation, [runtime_factory::sequence_map, runtime_factory::sequence_filter], true)) {
 			$element = $input->value_type;
 			$key = $input->key_type;
-		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter, runtime_factory::array_map, runtime_factory::array_filter], true)) {
+		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter], true)) {
 			$element = $input;
 			$key = null;
 		} else {
 			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
 		}
 		$filter = in_array($operation, [runtime_factory::array_filter, runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
-		$filter_output = $operation === runtime_factory::array_filter && $input instanceof vector_type_definition
-			? Type_Resolution::collection('hash', $element, type_int64::instance()) : $input;
-		if ($filter_output === null) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
 		if ($implicit_filter) {
 			if (!$element->supports_scalar_condition()) {
 				throw new diagnostic($source->source(), $source->byte_start(), 'array_filter requires a callback for this element type');
@@ -3504,7 +3528,7 @@ final class Preparation
 		if (!($signature instanceof callback_type_definition) || $signature->inputs !== [$element]
 			|| $signature->input_mode(0) !== passing_mode::value || $signature->reference_origin !== null
 			|| ($type instanceof lambda_type_definition && $type->has_defaults)
-			|| (!$filter && $input instanceof boxed_type_definition && $signature->result !== $input)
+			|| (!$map && !$filter && $input instanceof boxed_type_definition && $signature->result !== $input)
 			|| $signature->result === type_void::instance() || ($filter && $signature->result !== type_bool::instance())) {
 			throw new diagnostic($callback->source(), $callback->byte_start(), 'Invalid callback signature for ' . $operation->name);
 		}
@@ -3517,7 +3541,12 @@ final class Preparation
 		} else {
 			$this->dependencies?->callable_site($this->owner, $call);
 		}
-		$output = ($filter || $input instanceof boxed_type_definition) ? $filter_output : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+		if ($map) {
+			$output = $input->mapped_result_type($signature->result);
+			if (!($output instanceof mapped_result_builder)) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable mapped result builder for array_map');
+		} else {
+			$output = ($filter || $input instanceof boxed_type_definition) ? $filter_output : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+		}
 		if ($output === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable collection result for ' . $operation->name);
 		$this->retain_member_place($source);
 		$call->settle_runtime(new collection_transform_function($operation, $input, $type, $output, $filter));

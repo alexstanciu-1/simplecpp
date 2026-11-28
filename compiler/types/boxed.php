@@ -6,7 +6,15 @@ namespace scpp\compiler;
 /** Canonical tagged scalar family. Runtime checks consume the actual payload, e.g. (int)$boxed. */
 abstract class boxed_type_definition extends type_definition implements indexed_mutation_type, membership_type
 {
+	use same_type_subset;
+	use keyed_map_insert;
+
 	use collection_keyed_store;
+
+	public function mapped_result_type(type_definition $element): ?type_definition
+	{
+		return $element === $this ? $this : null;
+	}
 
 	public function prepare_membership(ast_binary_expression $site): void
 	{
@@ -41,6 +49,11 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		}
 		$this->prepare_key($value->index);
 		$value->settle_element($this);
+	}
+
+	public function cpp_entry_key_type(): string
+	{
+		return 'scpp::boxed_text_key';
 	}
 
 	public function write_type(): type_definition

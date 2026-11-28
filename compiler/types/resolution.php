@@ -159,7 +159,7 @@ final class Type_Resolution
 			}
 			if ($part instanceof ast_callable_reference_component) {
 				if ($part->mode === passing_mode::readonly_reference && ($types === [] || !self::readonly_collection_input($type))) {
-					throw new diagnostic($part->source(), $part->byte_start(), 'Read-only callable references require a vector or hash input');
+					throw new diagnostic($part->source(), $part->byte_start(), 'Read-only callable references require a borrowable collection input');
 				}
 				if ($types !== []) $modes[count($types) - 1] = $part->mode;
 			}
@@ -179,7 +179,7 @@ final class Type_Resolution
 
 	public static function readonly_collection_input(?type_definition $type): bool
 	{
-		return $type instanceof vector_type_definition || $type instanceof hash_type_definition;
+		return $type instanceof readonly_collection_slot;
 	}
 
 	/** Inline values and intersection projection are outside the fixed by-value callback ABI. */

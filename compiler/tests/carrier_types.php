@@ -57,8 +57,13 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$returning = str_replace('void', $family . '<int>', signature($flavor, $family . '<int>'));
 		$returning = str_replace('return;', 'return ' . ($flavor === flavor::php ? '$value' : 'value') . ';', $returning);
 		$frontend->prepare(new source_file('carrier-values', $returning . 'return 8;', $flavor), new entry_target(31));
+		if ($family === 'nullable') {
+			verify($resolve('nullable<byte>')->payload_type === type_registry::resolve('byte'), 'Byte hash lookup payload missing');
+		} else {
+			rejects(fn() => $resolve($family . '<byte>'), 'Unavailable runtime specialization');
+		}
 		foreach ([$family => 'exactly one', $family . '<int,string>' => 'exactly one',
-			$family . '<byte>' => 'Unavailable runtime specialization', $family . '<null>' => 'Unavailable runtime specialization',
+			$family . '<null>' => 'Unavailable runtime specialization',
 			$family . '<vector<int>>' => 'Unavailable runtime specialization',
 			$family . '<nullable<int>>' => 'Unavailable runtime specialization', $family . '<Missing>' => 'Unknown or unsupported type'] as $text => $message) {
 			rejects(fn() => $resolve($text), $message);

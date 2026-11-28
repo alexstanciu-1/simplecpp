@@ -770,6 +770,10 @@
     "specializations": [
       {
         "family": "nullable",
+        "payload": "uint8"
+      },
+      {
+        "family": "nullable",
         "payload": "int64",
         "instance_field": true
       },
@@ -844,6 +848,10 @@
   },
   "hashes": {
     "specializations": [
+      {
+        "value": "uint8",
+        "key": "int64"
+      },
       {
         "value": "int64",
         "key": "int64"

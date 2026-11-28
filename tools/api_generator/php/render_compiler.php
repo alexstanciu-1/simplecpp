@@ -58,7 +58,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     $metadata = compilerProviderMetadata($metadata, $providers);
     $types = registry($metadata, $facts);
     $compiler = at($metadata, 'compiler');
-    fields($compiler, ['php_builtin_admission', 'published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'php_scalar_output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
+    fields($compiler, ['positional_subset_family', 'php_builtin_admission', 'published_transport_types', 'generic_syntax', 'interfaces', 'modules', 'integer_literals', 'value_types', 'conversions', 'floating_literals', 'conditions', 'comparisons', 'arithmetic', 'updates', 'unary', 'promotions', 'runtime_bindings', 'lowering_strategies', 'output', 'php_scalar_output', 'entry', 'integer_operators', 'conversion_families', 'mixed_numeric_operators', 'shifts', 'concatenation', 'strict_identity', 'three_way', 'power', 'exception', 'division']);
     $phpAdmission = object($compiler->php_builtin_admission ?? new \stdClass());
     if (isset($metadata->string->functions, $metadata->boxed->mixed_predicates)) {
         foreach ($phpAdmission as $name => $_) {
@@ -268,6 +268,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
         if ($identity === 'string' && isset($runtime['string'])) {
             $indexInterface .= $indexInterface === '' ? ' implements counted_collection_type' : ', counted_collection_type';
+            $indexInterface .= compilerAccessInterfaces($metadata->string, isset($runtime['string_index_read']));
             $methods .= "\n" . readFile(__DIR__ . '/../templates/strings/string_cardinality.php.tpl');
         }
         if ($identity === 'string' && ($runtime['string']['transfer_assignment'] ?? false)) {
@@ -317,7 +318,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $specializations .= "\t\tif (\$family === $name) {\n$hashCases\n\t\t\treturn null;\n\t\t}\n";
     }
     if (isset($runtime['boxed_dispatch'])) {
-        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases);
+        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases, compilerAccessInterfaces($metadata->boxed));
     }
     $runtimeTypes = [];
     foreach ($definitions as $identity => $definition) $runtimeTypes[$identity] = $definition['class'];
@@ -578,6 +579,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $numericScalars[] = 'type_' . $definition['class'] . '::instance()';
         }
     }
+    $subsetFamily = $compiler->positional_subset_family ?? null;
+    requireThat($subsetFamily === null || (is_string($subsetFamily) && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $subsetFamily)), 'Invalid positional subset family');
     $files['types/registry.php'] = strtr(readFile(__DIR__ . '/../templates/core/type_registry.php.tpl'), [
         '@record_result_header@' => isset($runtime['structural_decoder'])
             ? 'public const ?string RECORD_RESULT_HEADER = ' . var_export($runtime['carriers_header'] ?? null, true) . ";\n\t" : '',
@@ -592,6 +595,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         '@integer_constants@' => implode("\n", $constantCases), '@runtime_cases@' => implode("\n", $runtimeCases), '@family_cases@' => $families['cases'], '@family_accessors@' => $families['accessors'],
         '@optional_requires@' => $optionalRequires . (isset($files['types/boxed.php']) ? "require_once __DIR__ . '/boxed.php';\n" : ''),
         '@extent_families@' => implode(', ', $extentFamilies),
+        '@mapped_sequence@' => $vectorFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($vectorFamily, true) . ', $element, null)',
+        '@mapped_keyed@' => $hashFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($hashFamily, true) . ', $element, $key)',
+        '@positional_subset@' => $subsetFamily === null ? 'null' : 'Type_Resolution::collection(' . var_export($subsetFamily, true) . ', $element, self::integer())',
         '@generic_arity@' => implode("\n", $arity), '@specializations@' => $specializations, '@application_specializations@' => $applicationVectors . $applicationHashes,
         '@cases@' => implode("\n", $cases), '@literal_cases@' => implode("\n", $literalCases),
     ]);

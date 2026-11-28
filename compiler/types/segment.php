@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Borrowed worker parameter. Only the joined launch can create a view over collection slots. */
-final class segment_type extends type_definition implements index_read_type, index_write_type, counted_collection_type
+final class segment_type extends type_definition implements python_index_read_type, index_write_type, counted_collection_type
 {
 	public function __construct(public readonly type_definition $element, public readonly bool $read_only, public readonly ?type_definition $key = null)
 	{

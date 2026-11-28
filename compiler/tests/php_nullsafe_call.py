@@ -82,19 +82,29 @@ PROBES = """
 
 
 def terminal_index(work, case):
-    vector = case == 'index_vector'
-    collection = 'vector<int>' if vector else 'hash<int,string>'
+    vector = case != 'index_hash'
+    strings = case == 'index_string_vector'
+    element = 'string' if strings else 'int'
+    collection = f'vector<{element}>' if vector else 'hash<int,string>'
     key = 'function key():int {echo "K";return 0;}' if vector else 'function key():string {echo "K";return "home";}'
-    fill = '$this->scores[]=0;' if vector else '$this->scores["home"]=0;'
-    team = 'class Team {public ' + collection + ' $scores; public function fill():void {' + fill + '}}'
+    slot = '[]' if vector else '["home"]'
+    stored = '"hit"' if strings else '0'
+    fallback = '"absent"' if strings else '9'
+    team = f'class Team {{public {collection} $scores; public function fill():void {{$this->scores{slot}={stored};}}}}'
     probe = 'function probe(?Team $t):?Team {echo "P";return $t;}'
-    read = 'function read(?Team $t):nullable<int> {return probe($t)?->scores[key()];}'
-    main = key + probe + read + 'echo read(null) ?? 9;$t=new Team();$t->fill();echo read($t) ?? 9;return 8;'
-    changed = team.replace('<int', '<string').replace('=0;', '="zero";')
-    revisions(work, 'php', dict(main=main, team=team), [
-        (None, None, b'P9PK0'), ('team', changed, 'Unsupported explicit conversion from string to int64'), ('team', team, b'P9PK0')])
+    read = f'function read(?Team $t):nullable<{element}> {{return probe($t)?->scores[key()];}}'
+    main = key + probe + read + f'echo read(null) ?? {fallback};$t=new Team();$t->fill();echo read($t) ?? {fallback};return 8;'
+    trace = b'PabsentPKhit' if strings else b'P9PK0'
+    grouped = main.replace('probe($t)?->scores[', '(probe($t)?->scores)[')
+    diagnostic = ('Indexed read requires a vector, hash, boxed container or readable string' if strings else
+                  'No optional representation for field type ' + ('vector<int64>' if vector else 'hash<int64,string>'))
+    edits = [('main', grouped, diagnostic), ('main', main, trace)]
+    if not strings:
+        changed = team.replace('<int', '<string').replace('=0;', '="zero";')
+        edits.extend([('team', changed, 'Unsupported explicit conversion from string to int64'), ('team', team, trace)])
+    revisions(work, 'php', dict(main=main, team=team), edits)
     error = 'sequence_index_out_of_range' if vector else 'hash_missing_key'
-    guard(work, 'php', 'missing', team + key + probe + read + 'echo read(new Team()) ?? 9;return 8;',
+    guard(work, 'php', 'missing', team + key + probe + read + f'echo read(new Team()) ?? {fallback};return 8;',
           error, exception_type='std::out_of_range', expected_stdout=b'PK')
 
 
@@ -660,7 +670,7 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
         callable_field(Path(tmp), case)
     elif case.startswith('terminal_index_call_') and case.endswith(('vector', 'hash')):
         terminal_index_call(Path(tmp), case)
-    elif case in ('index_vector', 'index_hash'):
+    elif case in ('index_vector', 'index_hash', 'index_string_vector'):
         terminal_index(Path(tmp), case)
     elif case in ('index_ordinary', 'index_ordinary_failures'):
         index_ordinary(Path(tmp), case)

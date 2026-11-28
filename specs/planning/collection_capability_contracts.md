@@ -62,6 +62,13 @@ Use the same capability definitions for compiler admission and runtime helper im
 
 The pilot uses the existing cardinality query and a borrowed value cursor. Generated collection bindings use their published limit and next-value operations. Fixed arrays bind the cursor to their logical extent. A single runtime `any_value` loop consumes either cursor and the prepared element equality. Boxed cursors remain subject to the helper’s exact scalar equality rule. [Third-provider regression](../../compiler/tests/collection_value_scan.py) · [Runtime algorithm](../../tools/api_generator/templates/collections/value_scan.cpp.tpl)
 
+## PHP key-preserving filter
+
+PHP `array_filter` uses the source's associated result builder and one runtime entry loop.
+The native regression covers sparse positional results from vectors and fixed byte arrays,
+typed hash keys, mixed value isolation, dynamic child identity, and a callback replacing
+the owner of an indexed row. [Regression](../../compiler/tests/collection_subset.py) · [Runtime loop](../../tools/api_generator/templates/collections/filter_entries.cpp.tpl)
+
 ## Delivery and review gates
 
 | Stage | Proposed work | Acceptance evidence |

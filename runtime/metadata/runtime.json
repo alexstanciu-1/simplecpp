@@ -683,6 +683,7 @@
     "symbol_prefix": "checked_"
   },
   "vector": {
+    "access_contracts": ["readonly_slot", "python_index_read"],
     "provider": "core.vectors",
     "source_type": "vector",
     "initialization": {
@@ -796,6 +797,7 @@
     "const_pointee": "explicit_add_const"
   },
   "hash": {
+    "access_contracts": ["readonly_slot", "python_index_read"],
     "transfer_assignment": "private_value_nothrow",
     "initialization": {
       "mode": "ordered_keyed",
@@ -818,6 +820,7 @@
       "string"
     ],
     "value_types": [
+      "uint8",
       "int64",
       "string",
       "vector_string"
@@ -1437,6 +1440,7 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
+    "access_contracts": ["python_index_read_snapshot"],
     "mixed_predicates": {"is_bool": "boolean", "is_int": "integer", "is_float": "floating", "is_string": "string", "is_array": "container", "is_null": "null"},
     "initialization": "ordered_family_literals",
     "transfer_assignment": "private_value_nothrow",
@@ -1479,6 +1483,7 @@
     ]
   },
   "compiler": {
+    "positional_subset_family": "hash",
     "php_builtin_admission": {
       "number_format": [["value", "typed"], ["decimals", "typed"], ["decimal_separator", "typed"], ["thousands_separator", "typed"]],
       "strlen": [["string", "typed"]],

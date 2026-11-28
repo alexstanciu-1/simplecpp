@@ -340,7 +340,7 @@ check($vector->initializer instanceof scpp\compiler\ast_collection_expression
 
 foreach ([
 	["for item in 1:\n    pass\nreturn 8", 'Python for requires a typed vector'],
-	["text: string = \"a\"\nreturn text[0]", 'Python indexed read requires a typed vector or hash'],
+	["text: string = \"a\"\nreturn text[0]", 'Provider does not support Python indexed reads'],
 	["text: string = \"a\"\ntext[0] = 2\nreturn 8", 'Python indexed write requires a typed vector or hash'],
 	["items: vector<int> = []\nitems[] = 1\nreturn 8", 'Python indexed write requires one key and ='],
 	["items: vector<int> = {}\nreturn 8", 'Keyed initializer requires an explicitly typed published keyed destination'],

@@ -44,5 +44,54 @@ def missing(work, flavor):
               'boxed_missing_key', expected_stdout=b'R')
 
 
+def computed(work, flavor):
+    api = 'function makeName():string {echo "K";return "remove";}'
+    main = """
+        function receiver(dynamic $d):dynamic {echo "R";return $d;}
+        $d dynamic=[];$d[0]=3;$d["01"]=4;$d["remove"]=7;
+        echo (int)receiver($d)->{makeName()};
+        $name="0";echo (int)$d->{$name},(int)$d->{"0" . "1"};
+        echo is_null($d->{"absent"}),$d->has("absent") ? 1 : 0;
+        $d->remove("remove");echo is_null($d->{"remove"});return 8;
+    """
+    trace = b'RK734101'
+    revisions(work, flavor, dict(main=main, api=api), [
+        (None, None, trace), ('api', 'function makeName():int {return 0;}', 'Computed member name requires a string'),
+        ('api', api, trace)])
+
+
+def computed_write(work, flavor):
+    api = 'function name():string {echo "K";return "remove";}'
+    main = """
+        function rhs(bool $fail):int {
+            echo "R";if ($fail) {throw new Exception("stop");}return 7;
+        }
+        $d dynamic=[];$d->{"remove"}=3;echo (int)$d["remove"];
+        $d->{name()}=rhs(false);echo (int)$d["remove"];
+        try {$d->{name()}=rhs(true);} catch (Exception $e) {echo $e->get_message();}
+        echo (int)$d->remove;$d->remove("remove");echo is_null($d["remove"]);return 8;
+    """
+    trace = b'3KR7KRstop71'
+    revisions(work, flavor, dict(main=main, api=api), [
+        (None, None, trace), ('api', 'function name():int {return 1;}', 'Computed member name requires a string'),
+        ('api', api, trace)])
+
+
+def computed_admission(work, flavor):
+    setup = '$d dynamic=[];$name="key";'
+    cases = [
+        ('$d mixed=[];$x=$d->{"key"};', 'Computed member read requires a dynamic receiver'),
+        ('class H {public int $key;}$h=new H();$x=$h->{"key"};', 'Computed member read requires a dynamic receiver'),
+        (setup + '$x=$d->{$name}();', 'Computed member calls are not supported'),
+        ('$d mixed=[];$d->{"key"}=7;', 'Computed member assignment requires a local dynamic receiver'),
+        ('class H {public dynamic $data;}$h=new H();$h->data->{"key"}=7;', 'Expected writable struct field'),
+        (setup + '$d->{$name}+=7;', 'Expected writable struct field'),
+        (setup + '++$d->{$name};', 'Computed member reads cannot be used as write targets'),
+        (setup + '$d->{$name}["leaf"]=7;', 'Expected writable struct field'),
+    ]
+    revisions(work, flavor, dict(main='return 8;'), [('main', source + 'return 8;', error) for source, error in cases])
+
+
 with TemporaryDirectory(prefix='dynamic-arrow-') as tmp:
-    (missing if sys.argv[1] == 'missing' else exercise)(Path(tmp), sys.argv[2])
+    {'missing': missing, 'computed': computed, 'computed_write': computed_write, 'computed_admission': computed_admission,
+     'exercise': exercise}[sys.argv[1]](Path(tmp), sys.argv[2])

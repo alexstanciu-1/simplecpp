@@ -125,6 +125,71 @@ interface collection_value_source
 	public function lower_cpp_value_cursor(string $receiver): string;
 }
 
+/** Entry traversal supplies the key and value from the same successful advance. */
+interface collection_entry_source extends collection_value_source
+{
+	public function cpp_entry_key_type(): string;
+	public function lower_cpp_entry_cursor(string $receiver): string;
+}
+
+/** Associated builder for a key-preserving subset. */
+interface subset_source extends collection_entry_source
+{
+	public function subset_result_type(): ?type_definition;
+}
+
+/** Resolve a builder after the callback has supplied its result type. */
+interface map_source extends collection_entry_source
+{
+	public function mapped_result_type(type_definition $element): ?type_definition;
+}
+
+/** Construct a complete mapped result in encounter order. Dense builders may append. */
+interface mapped_result_builder
+{
+	public function lower_cpp_empty(): string;
+	public function lower_cpp_mapped_entry(string $receiver, string $key, string $value): string;
+}
+
+/** Preserve the entry cursor's key with the provider's normal keyed store. */
+trait keyed_map_insert
+{
+	public function lower_cpp_mapped_entry(string $receiver, string $key, string $value): string
+	{
+		return $this->lower_cpp_write($receiver, $key, $value);
+	}
+}
+
+/** Empty construction and insertion with the key supplied by the entry cursor. */
+interface keyed_result_builder
+{
+	public function lower_cpp_empty(): string;
+	public function lower_cpp_write(string $receiver, string $key, string $value): string;
+}
+
+/** A dense sequence can produce sparse subsets through the configured positional result family. */
+trait positional_subset
+{
+	public function subset_result_type(): ?type_definition
+	{
+		return type_registry::positional_subset($this->iteration_value_type());
+	}
+
+	public function cpp_entry_key_type(): string
+	{
+		return type_int64::instance()->cpp_type();
+	}
+}
+
+/** A keyed provider builds subsets with its own empty construction and keyed store. */
+trait same_type_subset
+{
+	public function subset_result_type(): type_definition
+	{
+		return $this;
+	}
+}
+
 /** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
 interface iterable_type
 {
@@ -227,6 +292,21 @@ interface index_read_type
  * the element type's own copy and destruction effects.
  */
 interface readonly_index_lookup_type extends index_read_type
+{
+}
+
+/** An exact named slot can bind to const T& and observe replacement through a separate writer. */
+interface readonly_collection_slot
+{
+}
+
+/** The provider admits Python subscripting and owns key validation, result type and checked lookup. */
+interface python_index_read_type extends index_read_type
+{
+}
+
+/** Hold the selected receiver by value across suspension while computing a Python index. */
+interface python_snapshot_index_read_type extends python_index_read_type
 {
 }
 

@@ -159,7 +159,7 @@ function renderBoxedDispatch(array $plan, string $family): array {
     return [$api, $impl];
 }
 
-function compilerBoxedDefinitions(array $runtime, array &$cases): string {
+function compilerBoxedDefinitions(array $runtime, array &$cases, string $access): string {
     $plan = $runtime['boxed_dispatch'];
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n// Generated from boxed kinds and validated scalar plans.\n";
     foreach ($runtime['boxed']['families'] as $family) {
@@ -237,7 +237,7 @@ function compilerBoxedDefinitions(array $runtime, array &$cases): string {
             '@empty_method@' => $family['source_collection']['empty_method'],
             '@count_method@' => $family['source_collection']['count_method'],
             '@iteration@' => compilerTraversalMethods($family['traversal'], 'self::instance()', isset($runtime['submodules']['type_exports']['mixed']) ? 'type_mixed::instance()' : 'null', true),
-            '@name@' => $name, '@header@' => $header, '@ops@' => $ops, '@factories@' => $factories,
+            '@access@' => $access, '@name@' => $name, '@header@' => $header, '@ops@' => $ops, '@factories@' => $factories,
             '@targets@' => $destinations, '@sources@' => implode(', ', array_map(fn($s) => "'$s'", array_keys($input))),
         ]);
     }

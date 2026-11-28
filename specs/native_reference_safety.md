@@ -41,6 +41,12 @@ overrides and interface implementations must preserve both the canonical collect
 type and the read-only reference mode. Dispatch preserves the caller’s slot.
 [Method and signature-edit tests](../compiler/tests/readonly_collection_methods_native.py).
 
+The provider contract `readonly_slot` admits a whole collection as a read-only
+input to declarations and callable signatures. The argument binder still checks
+canonical type, stable storage and passing mode. This grant is independent of
+indexed lookup and of copy-elision eligibility. The default vector and hash
+providers publish it. [Provider admission regression](../tools/api_generator/tests/collection_access.py)
+
 ## Constructor collection borrows
 
 A PHP class or struct constructor may declare a required fixed parameter such as

@@ -241,7 +241,7 @@ final class Compilation_Inspection
 		if ($value instanceof ast_interpolated_string) {
 			$row['parts'] = array_map(self::value(...), $value->parts);
 		}
-		if (($value instanceof ast_interpolation_name || $value instanceof ast_interpolation_index) && $value->parent instanceof ast_interpolated_string) {
+		if ($value->parent instanceof ast_interpolated_string && !($value instanceof ast_interpolation_text)) {
 			$row['conversion'] = value_conversion::name($value->conversion());
 		}
 		if ($value instanceof ast_cast_expression) {

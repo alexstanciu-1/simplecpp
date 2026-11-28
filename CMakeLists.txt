@@ -585,6 +585,10 @@ if(BUILD_TESTING)
   add_test(NAME compiler_text_helpers_native COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/text_helpers_native.py
     ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
+  add_test(NAME compiler_collection_map COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_map.py)
+  add_test(NAME compiler_collection_subset COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_subset.py)
   add_test(NAME compiler_collection_value_scan COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_value_scan.py)
   add_test(NAME compiler_collection_transforms COMMAND ${Python3_EXECUTABLE} -B
@@ -900,6 +904,10 @@ if(BUILD_TESTING)
       add_test(NAME compiler_dynamic_arrow_${case}_${flavor} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/dynamic_arrow.py ${case} ${flavor})
     endforeach()
   endforeach()
+  foreach(case computed computed_write computed_admission)
+    add_test(NAME compiler_dynamic_arrow_${case}_php COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/dynamic_arrow.py ${case} php)
+  endforeach()
   foreach(effect replace_child replace_holder remove_leaf index_replace_present index_replace_missing)
     add_test(NAME compiler_php_dynamic_compound_${effect} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/indexed_dynamic_compound.py ${effect})
   endforeach()
@@ -933,6 +941,10 @@ if(BUILD_TESTING)
   add_test(NAME compiler_string_index COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/string_index.php)
   scpp_fixture_test(string_index php)
   add_test(NAME compiler_interpolation COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/interpolation.php)
+  foreach(case fields order)
+    add_test(NAME compiler_interpolation_php_${case} COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/interpolation_field_native.py ${case})
+  endforeach()
   scpp_fixture_test(interpolation php php-keys php-typed-miss php-mixed-miss)
   add_test(NAME compiler_shared_upcasts_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/shared_upcasts_quick.py)
   set_tests_properties(compiler_shared_upcasts_native PROPERTIES TIMEOUT 300)
@@ -975,7 +987,7 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_typed_label_extraction_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_carrier_dispatch_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_dispatch_native.py)
   set_tests_properties(compiler_carrier_dispatch_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
-  foreach(case named lifetime suspended dispatch admission chain indexed_callable indexed_callable_missing ordinary_suffix empty_intermediate suspended_suffix chained_indexed_callable ordinary_indexed_callable ordinary_indexed_empty mixed_chain mixed_failure mixed_suspended terminal_void terminal_void_empty terminal_void_suspended index_vector index_hash index_suspended index_owner index_admission enum_method enum_selected_case enum_properties enum_property_admission index_member_vector index_member_hash hash_vector vector_hash hash_vector_missing vector_hash_missing repeated_index_owner index_ordinary index_ordinary_failures index_ordinary_owner terminal_index_call_vector terminal_index_call_hash terminal_index_call_missing_vector terminal_index_call_missing_hash terminal_index_call_admission callable_field_absent callable_field_empty callable_field_recovery)
+  foreach(case named lifetime suspended dispatch admission chain indexed_callable indexed_callable_missing ordinary_suffix empty_intermediate suspended_suffix chained_indexed_callable ordinary_indexed_callable ordinary_indexed_empty mixed_chain mixed_failure mixed_suspended terminal_void terminal_void_empty terminal_void_suspended index_vector index_hash index_string_vector index_suspended index_owner index_admission enum_method enum_selected_case enum_properties enum_property_admission index_member_vector index_member_hash hash_vector vector_hash hash_vector_missing vector_hash_missing repeated_index_owner index_ordinary index_ordinary_failures index_ordinary_owner terminal_index_call_vector terminal_index_call_hash terminal_index_call_missing_vector terminal_index_call_missing_hash terminal_index_call_admission callable_field_absent callable_field_empty callable_field_recovery)
     add_test(NAME compiler_php_nullsafe_call_${case} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_nullsafe_call.py ${case})
   endforeach()
   foreach(case reads admission nominal index_key)
@@ -1184,6 +1196,8 @@ if(BUILD_TESTING)
   add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)
   add_test(NAME compiler_lowering_generation COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/compiler.php ${native_facts} ${native_context})
+  add_test(NAME collection_access_contracts COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/collection_access.py)
   add_test(NAME collection_argument_targets COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/collection_arguments.py ${native_facts} ${native_context})
   add_test(NAME iterator_contract_metadata COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/iterator_contract.py)

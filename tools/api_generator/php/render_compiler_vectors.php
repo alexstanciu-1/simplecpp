@@ -2,6 +2,23 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
+/** Publish provider guarantees directly on the generated type. Consumers only inspect the interface. */
+function compilerAccessInterfaces(mixed $provider, bool $indexed = true): string {
+    $contracts = names($provider->access_contracts ?? []);
+    $readModes = array_intersect($contracts, ['python_index_read', 'python_index_read_snapshot']);
+    requireThat(count($readModes) <= 1 && (!$readModes || $indexed), 'Python index access requires one bound read mode');
+    $interfaces = '';
+    foreach ($contracts as $contract) {
+        $interfaces .= match ($contract) {
+            'readonly_slot' => ', readonly_collection_slot',
+            'python_index_read' => ', python_index_read_type',
+            'python_index_read_snapshot' => ', python_snapshot_index_read_type',
+            default => throw new \RuntimeException("Unknown collection access contract: $contract"),
+        };
+    }
+    return $interfaces;
+}
+
 /** The checked sequence read has one preparation and member-call shape for strings and vectors. */
 function compilerIndexRead(string $receiver, string $count, string $element, string $method): string {
     return strtr(readFile(__DIR__ . '/../templates/collections/index_read.php.tpl'), [
@@ -66,6 +83,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n\n// Generated from validated runtime publication. Do not edit.\n";
     $cases = [];
     $application = false;
+    $access = compilerAccessInterfaces($metadata->vector ?? null);
     $family = isset($metadata->vector) ? textValue(at($metadata->vector, 'source_type')) : null;
     foreach (array_keys($runtime['regex_shapes'] ?? []) as $type) $definitions[$type] = ['class' => $type];
     foreach ($runtime['regex_modes'] ?? [] as $mode) $definitions[$mode['cell']] = ['class' => $mode['cell']];
@@ -115,7 +133,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             '@element@' => $elementClass . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true), '@count@' => $countClass,
             '@append@' => $append['name'], '@index@' => $index['name'], '@set@' => $set['name'],
-            '@interfaces@' => ' implements iterable_type' . $sequence . $transfer,
+            '@interfaces@' => ' implements iterable_type' . $access . $sequence . $transfer,
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($vector['source_type'], true) . ", $elementClass::instance());\n$initializationSetup\t}\n",
             '@factory@' => "\tpublic static function instance(): self\n\t{\n\t\treturn self::\$instance ??= new self();\n\t}",
         ];
@@ -138,7 +156,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             $applicationMethods = compilerCollectionMethods($vector, $definitions, applicationVector: true);
             $code .= strtr($template, array_replace($bindings, [
                 '@methods@' => $applicationMethods,
-                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type, iterable_type' . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
+                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements application_collection_type, iterable_type' . $access . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
                 '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true)
                     . ($vector['enable_reserve'] === '1' ? ", 'scpp/value_error.hpp'" : ''),
@@ -171,7 +189,7 @@ function compilerTraversalMethods(array $plan, string $value, string $key, bool 
 
 PHP);
     return $output . $keys . strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
-        '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
+        '@entry_key@' => $boxed ? 'key.index, key.text' : 'key', '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
         '@limit@' => $plan['limit_method'], '@next@' => $plan['next_method'],
         '@arguments@' => $arguments, '@publish@' => $publish,
     ]);
