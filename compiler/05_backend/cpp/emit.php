@@ -3917,7 +3917,7 @@ CPP;
 			$name = $selected;
 		} elseif ($callback && $value->callable_binding()->type_def() instanceof owned_callable_type) {
 			foreach ($operands as $index => $argument) {
-				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index] ?? $pack->element_type, $value->conversion($index))) continue;
+				if ($argument instanceof ast_name_expression || self::inert_literal_argument($argument, $parameters[$index] ?? $pack->write_type(), $value->conversion($index))) continue;
 				// An argument can replace the slot through a closure that borrows it.
 				$selected = 'selected_callable_' . $call_position;
 				$steps[] = 'const auto ' . $selected . ' = ' . $name . ';';
@@ -4122,18 +4122,18 @@ CPP;
 	 * @param bool[] $headers
 	 * @param list<string> $steps
 	 */
-	private function variadic_pack(ast_call_expression|ast_construction_expression $site, int $start, vector_type_definition $pack,
+	private function variadic_pack(ast_call_expression|ast_construction_expression $site, int $start, sequence_initializer_type $pack,
 		array &$globals, array &$declarations, array &$headers, array &$steps): string
 	{
 		$name = 'pack_' . $site->start . '_' . $site->end;
-		$steps[] = $pack->cpp_type() . " $name{};";
+		$steps[] = $pack->lower_cpp_empty_local($name) . ';';
 		if ($pack instanceof application_collection_type) $this->concrete_collections->request($pack);
 		for ($i = $start; $i < count($site->arguments); ++$i) {
 			$element = $site->arguments[$i];
 			[$operand, $prerequisites] = $this->staged_operand($element, $globals, $declarations, $headers);
 			array_push($steps, ...$prerequisites);
 			$conversion = $site->conversion($i);
-			foreach ($pack->element_type->conversion_headers($conversion) as $header) $headers[$header] = true;
+			foreach ($pack->write_type()->conversion_headers($conversion) as $header) $headers[$header] = true;
 			$steps[] = $pack->lower_cpp_sequence_append($element, $conversion, $name, $operand, $this->inline_adapters) . ';';
 		}
 		return $name;

@@ -3722,7 +3722,7 @@ final class Preparation
 			if ($variadic !== null && $slot >= $variadic) $slot = $variadic;
 			$parameter = $callback ? null : $function->parameters[$slot];
 			$type = $parameter === null ? $function->inputs[$slot] : $parameter->type_def();
-			if ($slot === $variadic && !$unpacked) $type = $type->element_type;
+			if ($slot === $variadic && !$unpacked) $type = $type->write_type();
 			if ($type instanceof callback_view_type) {
 				// The first binding accounts for the closure’s writes. Forwarding carries that same view.
 				$local = $argument::class === ast_name_expression::class && !$argument->constant_only && $argument->name !== $initializing

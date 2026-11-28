@@ -72,6 +72,11 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $this->cpp_type() . '::container()';
 	}
 
+	public function lower_cpp_empty_local(string $name): string
+	{
+		return "auto $name = " . $this->lower_cpp_empty();
+	}
+
 	/** Keep the selected Python receiver alive across an effectful index expression. */
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
 	{

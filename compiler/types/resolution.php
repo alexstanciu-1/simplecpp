@@ -6,6 +6,14 @@ namespace scpp\compiler;
 /** Resolve written types once at declaration/cast boundaries; generated registration owns available families and exports. */
 final class Type_Resolution
 {
+	private const string VARIADIC_FAMILY = 'vector';
+
+	/** Contextual packs must have the same canonical storage as a written T... signature. */
+	public static function supports_variadic_pack(?type_definition $type): bool
+	{
+		return $type instanceof sequence_initializer_type && self::collection(self::VARIADIC_FAMILY, $type->write_type(), null) === $type;
+	}
+
 	/** Runtime types resolve directly. Application types register a body watch even when lookup fails. */
 	public static function local(ast_type_reference $syntax, scope $symbols, ast_function_body $body, ?Dependency_Watches $dependencies): ?type_definition
 	{
@@ -149,7 +157,7 @@ final class Type_Resolution
 		for ($part = $syntax->first_child; $part !== null; $part = $part->next_sibling) {
 			$type = self::named($part, $symbols, $namespace, $watcher, $dependencies, $types === []);
 			if ($part instanceof ast_variadic_type_reference) {
-				if ($types === [] || !($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
+				if ($types === [] || !self::supports_variadic_pack($type)) {
 					throw new diagnostic($part->source(), $part->byte_start(), 'Variadic marker requires a trailing input with a supported vector element');
 				}
 				$variadic = count($types) - 1;
@@ -275,19 +283,20 @@ final class Type_Resolution
 	public static function resolve(ast_type_reference $syntax, bool $allow_void = false, ?scope $symbols = null,
 		?string $namespace = null, ?dependency_watcher $watcher = null, ?Dependency_Watches $dependencies = null): ?type_definition
 	{
-		$arity = type_registry::generic_arity($syntax->name);
+		$family = $syntax instanceof ast_variadic_type_reference ? self::VARIADIC_FAMILY : $syntax->name;
+		$arity = type_registry::generic_arity($family);
 		$child = $syntax->first_child;
 		if ($arity === null) {
 			if ($child?->next_sibling instanceof ast_extent_reference) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Fixed arrays require inline local or instance-field storage');
 			}
 			if ($child !== null) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type does not accept arguments: ' . $syntax->name);
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type does not accept arguments: ' . $family);
 			}
-			$type = ($allow_void && $syntax->name === 'void') ? type_void::instance() : type_registry::resolve($syntax->name);
-			$module = type_registry::required_module($syntax->name);
+			$type = ($allow_void && $family === 'void') ? type_void::instance() : type_registry::resolve($family);
+			$module = type_registry::required_module($family);
 			if ($type !== null && $module !== null && !$syntax->root()->type_availability->allows($module)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type ' . $syntax->name . ' requires module ' . $module);
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Type ' . $family . ' requires module ' . $module);
 			}
 			return $type;
 		}
@@ -296,14 +305,14 @@ final class Type_Resolution
 		if (($child === null) || (($arity === 1) && ($second !== null))
 			|| (($arity === 2) && (($second === null) || ($second->next_sibling !== null)))) {
 			throw new diagnostic($syntax->source(), $syntax->byte_start(),
-				'Type requires exactly ' . ($arity === 1 ? 'one argument: ' : 'two arguments: ') . $syntax->name);
+				'Type requires exactly ' . ($arity === 1 ? 'one argument: ' : 'two arguments: ') . $family);
 		}
 		$element = $child->name === 'function' && $child->first_child !== null && $symbols !== null && $watcher !== null
-			&& ($syntax->name === 'vector' || $syntax->name === 'hash')
+			&& ($family === 'vector' || $family === 'hash')
 			? callable_signature_index::element(self::callback_signature($child, $symbols, $namespace, $watcher, $dependencies))
 			: self::argument($child, $symbols, $namespace, $watcher, $dependencies);
 		$key = $second === null ? null : self::argument($second, $symbols, $namespace, $watcher, $dependencies);
-		if ($syntax->name === 'result') {
+		if ($family === 'result') {
 			$record = $element instanceof shared_record_type_definition ? $element->payload : $element;
 			if ($record instanceof record_type_definition && $record->default_type() === $element && $record->declaration->is_data
 				&& $syntax->root()->type_availability->allows('runtime-json') && runtime_functions::resolve('php:func:json_decode_as') !== null) {
@@ -312,7 +321,7 @@ final class Type_Resolution
 				return $record->record_result();
 			}
 		}
-		return self::collection($syntax->name, $element, $key)
+		return self::collection($family, $element, $key)
 			?? throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unavailable runtime specialization: ' . $syntax->spelling());
 	}
 

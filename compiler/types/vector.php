@@ -23,6 +23,11 @@ abstract class vector_type_definition extends type_definition implements readonl
 		$this->element_type = $element;
 	}
 
+	public function lower_cpp_empty_local(string $name): string
+	{
+		return $this->cpp_type() . " $name{}";
+	}
+
 	public function structural_encoding(): ?encoding_shape
 	{
 		return encoding_shape::sequence;

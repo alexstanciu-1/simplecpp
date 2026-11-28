@@ -22,7 +22,7 @@ final class callback_type_definition extends type_definition
 	public function input_spelling(int $index): string
 	{
 		$type = $this->inputs[$index];
-		return $index === $this->variadic_slot ? $type->element_type->name . '...' : $this->input_mode($index)->qualify($type->name);
+		return $index === $this->variadic_slot ? $type->write_type()->name . '...' : $this->input_mode($index)->qualify($type->name);
 	}
 
 	public function result_suffix(): string

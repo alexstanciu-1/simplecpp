@@ -349,7 +349,7 @@ final class Function_Preparation
 	/** Named and contextual variadics share the same owned vector storage contract. */
 	public static function require_pack_type(ast_parameter_declaration $parameter, ?type_definition $type): void
 	{
-		if (!($type instanceof vector_type_definition && $type instanceof sequence_initializer_type)) {
+		if (!Type_Resolution::supports_variadic_pack($type)) {
 			throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Variadic parameter requires a supported vector element');
 		}
 	}

@@ -430,6 +430,7 @@ interface indexed_collection_type extends index_read_type
 /** Metadata-approved ordered initialization, using the existing checked element and append contracts. */
 interface sequence_initializer_type extends indexed_collection_type
 {
+	public function lower_cpp_empty_local(string $name): string;
 	/** Null selects ordered append; a binding selects private bulk transport. */
 	public function list_initialization(): ?initialization_transport;
 	public function write_type(): type_definition;

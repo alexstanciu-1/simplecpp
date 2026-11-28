@@ -80,7 +80,7 @@ final class ast_variadic_type_reference extends ast_type_reference
 {
 	public function __construct(?ast_type_reference $element, int $end, public readonly bool $read_only = false)
 	{
-		parent::__construct($element?->start ?? $end - 1, $end, 'vector', $element);
+		parent::__construct($element?->start ?? $end - 1, $end, '...', $element);
 	}
 
 	public function spelling(): string
