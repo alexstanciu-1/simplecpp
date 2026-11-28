@@ -71,7 +71,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $publishedProbe = $regexProbe || in_array($hash['value'], $probeValues, true);
         $probeHeader = $regexProbe ? 'scpp/php/regex_hash_isset.hpp' : 'scpp/php/hash_isset.hpp';
         $provider = concreteRecipe(hashConcreteRecipe($hash));
-        $indexedTypes = textValue(at($provider, 'indexed_entry_types'));
+        $indexedTypes = at($provider, 'indexed_entry_types');
         $bindings = compilerCollectionBuilders($provider) + [
             '@copy_effect@' => compilerPrivateCopyEffect($provider, ['k' => '$this->key_type', 'v' => '$this->value_type']),
             '@declarations@' => compilerCollectionDeclarations($provider),
@@ -91,7 +91,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             '@lookup_property@' => $lookup === '' ? '' : "\tprivate readonly runtime_function \$lookup_binding;",
             '@lookup@' => $lookup === '' ? '' : "\tpublic function lookup_function(): runtime_function\n\t{\n\t\treturn \$this->lookup_binding;\n\t}\n",
 
-            '@key@' => $key . '::instance()', '@cpp@' => var_export($export['symbol'], true),
+            '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export(providerHeader($runtime['submodules'], $export['provider']), true),
             '@interfaces@' => ' implements nested_index_storage_type, conditional_index_store_type, key_iterable_type, key_presence_type' . ($publishedProbe ? ', indexed_presence_type' : '') . $writableInterface . $access . ($lookup === '' ? '' : ', key_lookup_type') . $transfer . ($initialization !== '' ? ', keyed_initializer_type' : '') . ($hash['key'] === 'int64' ? ', appendable_collection_type' : ''),
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($hash['source_family'], true) . " . '<' . $value::instance()->name . ',' . $key::instance()->name . '>', $value::instance(), $key::instance());\n" . $presence . $lookup . $initializationSetup . "\t}\n",
@@ -125,7 +125,6 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
                 '@lookup_property@' => "\tprivate readonly ?runtime_function \$shared_lookup;",
                 '@lookup@' => "\tpublic function shared_lookup_function(): ?runtime_function { return \$this->shared_lookup; }\n", '@initialization@' => $appInitialization,
                 '@append_method@' => $append ? compilerHashAppend($hash) : '',
-                '@key@' => '$this->key_type',
                 '@methods@' => compilerCollectionMethods($hash, $definitions, '$this->key_type'),
                 '@class@' => $app, '@interfaces@' => ' implements nested_index_storage_type, conditional_index_store_type, application_collection_type, key_presence_type, shared_value_lookup_type, key_iterable_type' . ($applicationProbe === '' ? '' : ', application_indexed_presence_type') . $writableInterface . $access . ($appInitialization !== '' ? ', keyed_initializer_type' : '') . $transfer . ($append ? ', appendable_collection_type' : ''),
                 '@iteration@' => compilerTraversalMethods($hash['traversal'], '$this->value_type', '$this->key_type', constructed: true, indexedTypes: $indexedTypes),

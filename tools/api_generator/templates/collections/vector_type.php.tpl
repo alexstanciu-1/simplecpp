@@ -30,13 +30,6 @@ final class @class@ extends vector_type_definition@interfaces@, subset_source, m
 		return [@header@];
 	}
 
-	public function prepare_key(ast_expression $key): void
-	{
-		if ($key->type_def() !== @count@::instance()) {
-			throw new diagnostic($key->source(), $key->byte_start(), 'Vector index requires ' . @count@::instance()->name);
-		}
-	}
-
 	public function lower_cpp_empty(): string
 	{
 		return $this->cpp_type() . '{}';

@@ -22,6 +22,14 @@ if(cli_argc()===5){ $b=$rows[rowPos(0)][pos(1)]; return 99; }
 $v string=numbers()[pos(0)];
 $h int=labels()[keyText("05")];
 $b byte=$rows[rowPos(0)][pos(0)];
+function tracedKey(string $mark,string $key):string {echo $mark;return $key;}
+struct Item {public int $n; public function __construct(int $n){$this->n=$n;}}
+$left Item(5); $right Item(7);
+$items vector<Item>=[$left]; $items[rowPos(0)]=$right;
+$named hash<Item,string>=[tracedKey("A","05")=>$left,tracedKey("B","5")=>$right];
+$named[tracedKey("W","5")]=$items[pos(0)];
+$found=$named[tracedKey("C","05")] ?? throw new Exception("missing");
+if($found->n!==5 || $named[tracedKey("D","5")]->n!==7){return 97;}
 if($v!=="vector" || $h!==37 || (int)$b!==29){return 98;}
 return 0;
 '''
@@ -52,7 +60,7 @@ with tempfile.TemporaryDirectory(prefix='indexed-entry-reads-') as tmp:
     manifest = json.loads((out / 'manifest.json').read_text())
     units = [out / name for name in manifest['translation_units']]
     subprocess.run(write_build(work, units), cwd=work, check=True)
-    for argc, trace, error in [(1, b'VIHKRI', b''), (2, b'VI', b'sequence_index_out_of_range\n'),
+    for argc, trace, error in [(1, b'VIHKRIRABWICD', b''), (2, b'VI', b'sequence_index_out_of_range\n'),
                                (3, b'HK', b'hash_missing_key\n'), (4, b'R', b'sequence_index_out_of_range\n'),
                                (5, b'RI', b'sequence_index_out_of_range\n')]:
         result = subprocess.run([work / 'program', *(['x'] * (argc - 1))], capture_output=True)

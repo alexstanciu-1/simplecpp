@@ -44,7 +44,9 @@ NUL. The compiler will own materialization of a source-language key binding.
 
 The provider binding `traversal_value_exact_key` uses the traversed value type
 as the indexed write destination. The traversed key type supplies the native entry
-key type and lowers an admitted index with the identity conversion.
+key type. Preparation requires that exact type and reports a mismatch at the key
+expression using the provider’s diagnostic prefix. Lowering uses the same type
+for the identity conversion.
 
 ## Ownership and mutation
 

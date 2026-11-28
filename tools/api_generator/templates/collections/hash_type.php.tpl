@@ -38,14 +38,6 @@ final class @class@ extends hash_type_definition@interfaces@, coalescing_index_r
 		return [@header@];
 	}
 
-	/** Strict keys are identities, not bool/float/text coercion boundaries. */
-	public function prepare_key(ast_expression $key): void
-	{
-		if ($key->type_def() !== @key@) {
-			throw new diagnostic($key->source(), $key->byte_start(), 'Hash key requires ' . @key@->name);
-		}
-	}
-
 	public function lower_cpp_empty(): string
 	{
 		return $this->cpp_type() . '{}';
