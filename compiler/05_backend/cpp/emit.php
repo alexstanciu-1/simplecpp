@@ -2860,7 +2860,7 @@ CPP;
 			$owner = $receiver->type_def();
 			$operand = $this->value($receiver, $global_references, $declarations, $required_headers);
 			foreach ($value_type->conversion_headers($value->conversion) as $header) $required_headers[$header] = true;
-			$test = $owner->lower_cpp_condition('owner');
+			$test = $receiver->member_borrow?->lower_cpp_presence('owner') ?? $owner->lower_cpp_condition('owner');
 			$result_type = $value_type->cpp_type();
 			if (!$value->has_suffix() && $member instanceof ast_field_expression) {
 				$present = $this->conversion($value_type, $value->conversion, 'owner->' . Cpp_Identifier::source($member->field), $member);
@@ -2868,7 +2868,7 @@ CPP;
 			}
 			$before = $this->suspensions;
 			$start = count($this->async_steps);
-			if ($value->has_suffix()) {
+			if ($value->has_suffix() || $receiver->member_borrow !== null) {
 				$outer_receiver = $this->guarded_receiver;
 				$this->guarded_receiver = $receiver;
 				try {

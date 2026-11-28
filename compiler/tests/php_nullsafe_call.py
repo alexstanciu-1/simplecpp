@@ -223,6 +223,37 @@ def mixed_failure(work):
               'ownership_empty_access', expected_stdout=b'P')
 
 
+def enum_method(work):
+    kind = """
+        enum Kind:string {
+            case Empty="";case Other="other";
+            public function score(int $n):int {echo enum_name($this);return $n;}
+        }
+    """
+    main = """
+        function input(string $s):string {echo "I";return $s;}
+        function key():int {echo "K";return 0;}
+        function read(string $s):int {return enum_try_from_value(Kind::class,input($s))?->score(key()) ?? 9;}
+        echo read("missing"),read("");return 8;
+    """
+    trace = b'I9IKEmpty0'
+    revisions(work, 'php', dict(main=main, kind=kind), [
+        (None, None, trace), ('kind', kind.replace('function score', 'function renamed'), 'Unknown method Kind::score'),
+        ('kind', kind, trace)])
+
+
+def enum_selected_case(work):
+    main = """
+        enum Rank {case First=0;case Last=2;
+            public function show(int $n):void {echo enum_name($this),$n;}
+        }
+        function replace(?Rank &$r):int {$r=Rank::Last;echo "K";return 1;}
+        $r ?Rank=null;$r?->show(replace($r));
+        $r=Rank::First;$r?->show(replace($r));echo enum_name($r ?? Rank::First);return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'KFirst1Last')])
+
+
 def dispatch(work):
     main = """
         class Base {public virtual function score(int $left):int {return $left;}}
@@ -371,7 +402,7 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     elif case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
-        {'index_admission': index_admission, 'index_owner': index_owner, 'index_suspended': index_suspended, 'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
+        {'enum_selected_case': enum_selected_case, 'enum_method': enum_method, 'index_admission': index_admission, 'index_owner': index_owner, 'index_suspended': index_suspended, 'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
          'terminal_void_suspended': terminal_void_suspended, 'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
          'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
          'dispatch': dispatch, 'admission': admission, 'ordinary_suffix': ordinary_suffix,

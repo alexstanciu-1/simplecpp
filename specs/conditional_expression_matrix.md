@@ -40,6 +40,12 @@ arguments in written order and dispatch through the declared receiver type.
 A synchronous method returning by value uses the same optional result rule as
 a field. Exceptions from selected arguments and the method propagate.
 
+A nullable enum can guard a public instance method call. For example,
+`enum_try_from_value(Kind::class, input())?->score(key())` evaluates the
+lookup once. A miss skips `key()` and the method. On a hit, even a case
+backed by the empty string is present. The method receives the selected case
+by value, and its result follows the same optional-result rule.
+
 Consecutive `?->` hops compose from left to right. In
 `findTeam()?->captain?->scoreFor(key())`, each selected receiver is evaluated
 once. If either owner is absent, the result is absent and `key()` is skipped.

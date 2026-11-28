@@ -80,7 +80,7 @@ a design decision. Continue through independent batches and collect decisions fo
 | 3 · G10 lookup and execution | `VAR-ORDER-001`, `NS-USE-003`, `NS-QUALIFIED-003`, `NS-EXEC-001` through `003` and `005`, `RESOLVE-001`, `CLASS-NS-001` through `004` | Start with scopes, namespaces and imports. Check which declaration resolves, execution and return order, and which source location rejects. Reuse the recorded import and multi-block evidence. |
 | 4 · G11 member lookup | `CLASS-CONST-001` through `005`, `CLASS-PROP-002B/C/D`, `CLASS-PROP-006B/C`, `CLASS-PROP-007`, `CLASS-STATIC-NS-001` through `003` | Check selected declarations and observable reads or writes with distinct base and child values. Start with protected static data and expression-qualified static fixtures. |
 | 5 · G11/G13 member restrictions | `CLASS-PROP-009/010`, `CLASS-CALL-009/011`, `CLASS-MEMBER-009` | Probe undeclared and dynamic members, explicit destructor calls, and abstract static methods. Confirm the intended restriction before classifying a rejection. |
-| 6 · G12/G14 existing equivalents | `ENUM-003`, `LIT-CONST-001` | Link the existing typed enum lookup hit/miss evidence and retain the deferred nullsafe syntax. Probe source-level `PHP_INT_MAX` and compare with the exact int64 limit. A host PHP assertion alone cannot settle source spelling. |
+| 6 · G12/G14 existing equivalents | `ENUM-003`, `LIT-CONST-001` | Link the existing typed enum lookup hit/miss evidence and the PHP nullsafe enum method contract. Probe source-level `PHP_INT_MAX` and compare with the exact int64 limit. A host PHP assertion alone cannot settle source spelling. |
 
 The goal ends with one donor-by-donor result table and a short list of decisions.
 A missing language feature can be recorded and the batch can advance. Captures,
@@ -106,7 +106,7 @@ All 36 queued donor IDs were checked. Migration means that the indicated v0.2 sp
 | 4 | CLASS-PROP-007, CLASS-STATIC-NS-001/002/003 | Verified | Expression-qualified writes change the selected storage. Local, rooted and object-qualified static calls each return 9. The differing-runtime-class fixture distinguishes declared-type selection (2) from explicit child selection (9). |
 | 5 | CLASS-PROP-009, CLASS-CALL-011, CLASS-MEMBER-009 | Verified rejection | Diagnostics identify the undeclared field `A.y`, forbid explicit destructor invocation and restrict virtual modifiers to instance methods, respectively. |
 | 5 | CLASS-PROP-010, CLASS-CALL-009 | Verified rejection | Variable member names after `->` report `Expected identifier` at the computed name. Literal-name controls succeed. The catalog specifies rejection during parsing. |
-| 6 | ENUM-003 | Migration, partial | `enum_try_from_value` returns the typed case on a hit and null on a miss. The native trace `!Zeros!Zero` checks single evaluation. Nullsafe chaining stays deferred. |
+| 6 | ENUM-003 | Migration, partial | `enum_try_from_value` returns the typed case on a hit and null on a miss. The native trace `!Zeros!Zero` checks single evaluation. PHP supports nullsafe public enum method calls on this result under the [conditional selection contract](../conditional_expression_matrix.md#php-nullsafe-access). |
 | 6 | LIT-CONST-001 | Bootstrap migration | Source `PHP_INT_MAX` reports `Unknown constant: PHP_INT_MAX`. Use the exact int64 literal `9223372036854775807` in bootstrap source. The native probe prints that value. |
 
 Captures, closure defaults and writable iteration stay deferred.
