@@ -133,7 +133,10 @@ final class ast_index_expression extends ast_expression
 	public function in_nullsafe_index_run(): bool
 	{
 		$read = $this;
-		while ($read->parent instanceof ast_index_expression && $read->parent->receiver === $read) $read = $read->parent;
+		while (($parent = $read->parent) instanceof ast_index_expression || $parent instanceof ast_field_expression || $parent instanceof ast_call_expression) {
+			if ($parent->receiver !== $read) return false;
+			$read = $parent;
+		}
 		return $read->parent instanceof ast_nullsafe_member && $read->parent->operand === $read;
 	}
 

@@ -133,6 +133,57 @@ def index_member(work, case):
           error, exception_type='std::out_of_range', expected_stdout=b'PK')
 
 
+def index_ordinary(work, case):
+    team = """
+        class Team {
+            public hash<vector<?Player>,string> $groups;
+            public function fill(?Player $p):void {$row vector<?Player> = [];$row[]=$p;$this->groups["g"]=$row;}
+        }
+    """
+    readers = """
+        function probe(?Team $t):?Team {echo "P";return $t;}
+        function groupKey():string {echo "G";return "g";}
+        function slot():int {echo "K";return 0;}
+        function swap(?Team $t):int {echo "A";$p=new Player();$p->points=8;$t->fill($p);return 1;}
+        function field(?Team $t):int {return probe($t)?->groups[groupKey()][slot()]->points ?? 9;}
+        function callPlayer(?Team $t):int {return probe($t)?->groups[groupKey()][slot()]->score(swap($t)) ?? 9;}
+    """
+    players = PLAYERS.replace('public int $points;', 'public int $points;public function __destruct() {echo "D",$this->points;}')
+    if case == 'index_ordinary_failures':
+        source = players + team + readers + '$t=new Team();'
+        for label, setup, error, trace in [
+                ('missing_group', '', 'hash_missing_key', b'PG'),
+                ('missing_player', '$t->groups["g"]=[];', 'sequence_index_out_of_range', b'PGK')]:
+            guard(work, 'php', label, source + setup + 'echo callPlayer($t);return 8;', error,
+                  exception_type='std::out_of_range', expected_stdout=trace)
+        guard(work, 'php', 'empty', source + '$t->fill(null);echo callPlayer($t);return 8;',
+              'ownership_empty_access', expected_stdout=b'PGK')
+        return
+    main = readers + """
+        echo field(null),callPlayer(null);$t=new Team();$t->fill(new Player());
+        echo field($t),callPlayer($t),field($t);return 8;
+    """
+    trace = b'P9P9PGK0PGKAMD00PGK8D8'
+    revisions(work, 'php', dict(main=main, team=team, players=players), [
+        (None, None, trace), ('players', players.replace('function score(', 'function renamed('), 'Unknown method Player::score'),
+        ('players', players, trace)])
+
+
+def index_ordinary_owner(work):
+    main = PLAYERS + """
+        class Roster {
+            public vector<?Player> $players;
+            public function __construct(int $n) {$p=new Player();$p->points=$n;$this->players[]=$p;}
+            public function __destruct() {echo "D",$this->players[0]->points;}
+        }
+        class Team {public ?Roster $roster;}
+        function key(?Team $t):int {echo "K";$t->roster=new Roster(8);return 0;}
+        function read(?Team $t):int {return $t?->roster->players[key($t)]->points ?? 9;}
+        $t=new Team();$t->roster=new Roster(7);echo read($t);return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'KD77D8')])
+
+
 def repeated_index(work, case):
     hash_first = case.startswith('hash_vector')
     outer = 'hash<vector<int>,string>' if hash_first else 'vector<hash<int,string>>'
@@ -526,12 +577,14 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
         repeated_index(Path(tmp), case)
     elif case in ('index_vector', 'index_hash'):
         terminal_index(Path(tmp), case)
+    elif case in ('index_ordinary', 'index_ordinary_failures'):
+        index_ordinary(Path(tmp), case)
     elif case in ('index_member_vector', 'index_member_hash'):
         index_member(Path(tmp), case)
     elif case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
-        {'repeated_index_owner': repeated_index_owner, 'enum_properties': enum_properties, 'enum_property_admission': enum_property_admission,
+        {'index_ordinary_owner': index_ordinary_owner, 'repeated_index_owner': repeated_index_owner, 'enum_properties': enum_properties, 'enum_property_admission': enum_property_admission,
          'enum_selected_case': enum_selected_case, 'enum_method': enum_method, 'index_admission': index_admission, 'index_owner': index_owner, 'index_suspended': index_suspended, 'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
          'terminal_void_suspended': terminal_void_suspended, 'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
          'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,

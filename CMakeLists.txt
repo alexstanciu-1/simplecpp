@@ -904,7 +904,7 @@ if(BUILD_TESTING)
   foreach(case await_replace await_remove await_both suspended_owner empty_callable throw_key throw_arg
       failed_store shallow_failure conversion_failure selection call_modes anchor bounds_string bounds_vector
       bounds_fixed bounds_hash terminal_void mixed_read grouped_absent grouped_present factory_match factory_ternary
-      arithmetic_failure predicate_after_write qualified_receiver)
+      arithmetic_failure predicate_after_write qualified_receiver declared_match declared_ternary signatures_match signatures_ternary)
     add_test(NAME compiler_expression_path_${case} COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/expression_access_paths.py ${case})
   endforeach()
@@ -966,7 +966,7 @@ if(BUILD_TESTING)
   set_tests_properties(compiler_typed_label_extraction_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
   add_test(NAME compiler_carrier_dispatch_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/carrier_dispatch_native.py)
   set_tests_properties(compiler_carrier_dispatch_native PROPERTIES TIMEOUT 120 ENVIRONMENT "XDEBUG_MODE=off")
-  foreach(case named lifetime suspended dispatch admission chain indexed_callable indexed_callable_missing ordinary_suffix empty_intermediate suspended_suffix chained_indexed_callable ordinary_indexed_callable ordinary_indexed_empty mixed_chain mixed_failure mixed_suspended terminal_void terminal_void_empty terminal_void_suspended index_vector index_hash index_suspended index_owner index_admission enum_method enum_selected_case enum_properties enum_property_admission index_member_vector index_member_hash hash_vector vector_hash hash_vector_missing vector_hash_missing repeated_index_owner)
+  foreach(case named lifetime suspended dispatch admission chain indexed_callable indexed_callable_missing ordinary_suffix empty_intermediate suspended_suffix chained_indexed_callable ordinary_indexed_callable ordinary_indexed_empty mixed_chain mixed_failure mixed_suspended terminal_void terminal_void_empty terminal_void_suspended index_vector index_hash index_suspended index_owner index_admission enum_method enum_selected_case enum_properties enum_property_admission index_member_vector index_member_hash hash_vector vector_hash hash_vector_missing vector_hash_missing repeated_index_owner index_ordinary index_ordinary_failures index_ordinary_owner)
     add_test(NAME compiler_php_nullsafe_call_${case} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_nullsafe_call.py ${case})
   endforeach()
   foreach(case reads admission nominal index_key)
