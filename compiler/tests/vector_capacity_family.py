@@ -6,6 +6,7 @@ import sys
 import tempfile
 
 from app_namespace_native import artifacts, invoke, service
+from extends_native import source_edit
 
 root = Path(__file__).resolve().parents[2]
 cxx, linker, runtime = sys.argv[1:]
@@ -58,7 +59,7 @@ with tempfile.TemporaryDirectory(prefix='vector-capacity-') as tmp:
     manifest = app / 'module.json'
     manifest.write_text('{"general_api":true}')
     main = app / 'main.php'
-    main.write_text(source)
+    source_edit(main, source)
     model = app / 'types.php'
     declarations = 'struct OnlyTemporary {} struct Point { public int $x = 7; } class Node { public int $x = 0; } function capacity_of(const vector<string> &$v): int { return $v->capacity(); } function counted_fill(int &$calls): string { $calls++; return "unused"; }'
     model.write_text(declarations)
@@ -96,11 +97,17 @@ static_assert(requires(const scpp::vector_string& v) { v.capacity(); });
         model.write_text(declarations.replace('int $x = 7', 'string $text = ""'))
         check('x')
         model.write_text(declarations)
-        main.write_text('$v = vector_filled(2, 1); $v->resize(3, "wrong"); return 0;')
+        source_edit(main, '$v = vector_filled(2, 1); $v->resize(3, "wrong"); return 0;')
         check('requires')
-        main.write_text('vector_filled(1); return 0;')
+        source_edit(main, 'vector_filled(1); return 0;')
         check('count and fill')
-        main.write_text(source)
+        source_edit(main, 'vector_filled(count: 1, fill: 9); return 0;')
+        check('Named arguments')
+        source_edit(main, 'vector_filled(true, 9); return 0;')
+        check()
+        source_edit(main, 'vector_filled(2, null); return 0;')
+        check('Unsupported vector_filled element type')
+        source_edit(main, source)
         check()
         fresh = work / 'fresh'
         assert 'error' not in run_once(app, fresh)

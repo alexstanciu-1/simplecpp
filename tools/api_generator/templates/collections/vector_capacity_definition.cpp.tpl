@@ -23,7 +23,7 @@
         throw;
     }
 }
-@inline@@n@ @n@::filled(@count@ count, @qual@@e@@ref@ fill) {
+@inline@@n@ @n@::@fill_member@(@count@ count, @qual@@e@@ref@ fill) {
     @n@ values;
     values.resize(count, fill);
     return values;

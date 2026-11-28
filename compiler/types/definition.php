@@ -418,6 +418,12 @@ interface native_sequence_type extends counted_collection_type
 	public function lower_cpp_append_value(string $receiver, string $value): string;
 }
 
+/** Construct this concrete result by repeating one fill value a checked number of times. */
+interface filled_collection_type
+{
+	public function filled_function(): runtime_function;
+}
+
 /** Source append on a writable receiver with a published value parameter. */
 interface appendable_collection_type
 {

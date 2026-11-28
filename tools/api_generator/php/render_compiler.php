@@ -350,7 +350,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $literalCases[] = "\t\t\t" . var_export($word, true) . ' => type_' . $definition['class'] . '::instance(),';
         }
     }
-    [$vectorCode, $vectorCases, $vectorFamily, $applicationVectors] = compilerVectorTypes($metadata, $runtime, $definitions);
+    [$vectorCode, $vectorCases, $vectorFamily, $applicationVectors, $fillFactories] = compilerVectorTypes($metadata, $runtime, $definitions);
     $files['types/vectors.php'] = $vectorCode;
     [$carrierCode, $carrierCases, $carrierLiterals, $carrierTypes] = compilerCarrierTypes($runtime, $definitions);
     $files['types/carriers.php'] = $carrierCode . compilerPeerEquality($metadata->carriers ?? null, $definitions, $promotions, $binary);
@@ -380,10 +380,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     }
     $runtimeTypes = [];
     foreach ($definitions as $identity => $definition) $runtimeTypes[$identity] = $definition['class'];
-    $vectorFactory = false;
     foreach ($runtime['vectors'] ?? [] as $vector) {
         if (isset($definitions[$vector['element']])) {
-            $vectorFactory = $vectorFactory || !empty($vector['capacity_helpers']);
             $runtimeTypes[$vector['name']] = $runtimeTypes[$vector['source_type']] = $vector['name'];
         }
     }
@@ -434,8 +432,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $surface = in_array($name, ['array_map', 'array_filter', 'in_array'], true) ? 'php' : 'general';
         $runtimeCases[] = "\t\t\t'$surface:func:$name' => runtime_factory::$name,";
     }
-    if ($vectorFactory) {
-        $runtimeCases[] = "\t\t\t'general:func:vector_filled' => runtime_factory::vector_filled,";
+    foreach ($fillFactories as $source => $resultFamily) {
+        $family = var_export($resultFamily, true);
+        $runtimeCases[] = "\t\t\t'general:func:$source' => \$bindings[\$key] ??= new collection_fill_factory('$source', $family),";
     }
     // Published aliases delegate to the same canonical type-owned signatures as application concrete types.
     foreach (array_merge($runtime['vectors'] ?? [], $runtime['hashes']['specializations'] ?? []) as $collection) {

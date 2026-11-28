@@ -467,8 +467,9 @@ function renderVectors(array $plan, string $access = 'vector_access'): array {
     foreach($plan['vectors'] as $v) {
         $h .= "class {$v['name']};\n";
         $element = new RuntimeConcreteType($plan, $v['element']);
+        $borrowFill = !empty($v['capacity_helpers']) && collectionFillBorrows($v);
         $instances[$v['name']] = concreteTemplate(vectorConcreteRecipe($v), ['e' => $element],
-            ['mt_segments' => !empty($plan['mt_segments']) ? '1' : '', 'capacity_helpers' => !empty($v['capacity_helpers']) ? '1' : '', 'qual' => ($v['element'] === 'string' || $access !== 'vector_access') ? 'const ' : '', 'ref' => ($v['element'] === 'string' || $access !== 'vector_access') ? '&' : '', 'enable_reserve' => $v['enable_reserve'], 'n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::' . $access] + $v['traversal'], 'scpp');
+            ['mt_segments' => !empty($plan['mt_segments']) ? '1' : '', 'capacity_helpers' => !empty($v['capacity_helpers']) ? '1' : '', 'qual' => $borrowFill ? 'const ' : '', 'ref' => $borrowFill ? '&' : '', 'enable_reserve' => $v['enable_reserve'], 'n' => $v['name'], 'count' => $v['count_type'], 'inline' => '', 'buffer' => 'detail', 'access' => 'detail::' . $access] + $v['traversal'], 'scpp');
         $d .= $instances[$v['name']]['storage'];
     }
     $d .= "namespace detail { struct $access {\n";
@@ -536,7 +537,7 @@ function renderVectors(array $plan, string $access = 'vector_access'): array {
         $h .= scalarInputFences($plan, 'at', array_map(static fn(string $type): array => [$type], $indices), false, ' const');
         if (!empty($v['capacity_helpers'])) {
             $fill = [[$count, scalarInput($e)]];
-            $h .= scalarInputFences($plan, 'filled', $fill, static: true);
+            $h .= scalarInputFences($plan, concreteRecipe(vectorConcreteRecipe($v))->fill_factory->member, $fill, static: true);
             $h .= scalarInputFences($plan, 'resize', $fill);
             $h .= scalarInputFences($plan, 'compact', [[$count]]);
         }

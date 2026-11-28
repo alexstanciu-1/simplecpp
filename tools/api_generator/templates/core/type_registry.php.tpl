@@ -142,12 +142,12 @@ final class type_registry
 /** Published fixed-arity runtime call signatures, shared across source units. */
 final class runtime_functions
 {
-	public static function free(string $key, flavor $flavor): runtime_function|runtime_overloads|runtime_factory|null
+	public static function free(string $key, flavor $flavor): runtime_function|runtime_overloads|inferred_runtime_factory|null
 	{
 		return self::resolve($key) ?? self::resolve($flavor->name . ':' . $key);
 	}
 
-	public static function resolve(string $key): runtime_function|runtime_overloads|runtime_factory|null
+	public static function resolve(string $key): runtime_function|runtime_overloads|inferred_runtime_factory|null
 	{
 		static $bindings = [];
 		return match ($key) {

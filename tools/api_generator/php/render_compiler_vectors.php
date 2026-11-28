@@ -85,12 +85,21 @@ function compilerCollectionMethods(array $collection, array $definitions, ?strin
     return strtr(readFile(__DIR__ . '/../templates/collections/compiler_methods.php.tpl'), ['@bindings@' => implode("\n", $bindings)]);
 }
 
+/** Emit the static factory's exact native signature on its canonical result type. */
+function compilerFillBinding(object $factory, string $countClass, bool $borrow): string {
+    return strtr(readFile(__DIR__ . '/../templates/collections/compiler_fill_factory.php.tpl'), [
+        '@source@' => var_export($factory->source, true), '@member@' => $factory->member,
+        '@count@' => $countClass, '@mask@' => $borrow ? '2' : '0',
+    ]);
+}
+
 /** Emit concrete identities and bounded member handlers from validated runtime specializations. */
 function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definitions): array {
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n\n// Generated from validated runtime publication. Do not edit.\n";
     $cases = [];
     $traits = [];
     $application = false;
+    $fillFactories = [];
     $access = compilerAccessInterfaces($metadata->vector ?? null);
     $family = isset($metadata->vector) ? textValue(at($metadata->vector, 'source_type')) : null;
     foreach (array_keys($runtime['regex_shapes'] ?? []) as $type) $definitions[$type] = ['class' => $type];
@@ -134,7 +143,11 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         }
         $writable = compilerWritableIteration(vectorConcreteRecipe($vector), $vector['traversal'], $traits, $code);
         $writableInterface = $writable === '' ? '' : ', writable_iteration_type';
+        $fillFactory = empty($vector['capacity_helpers']) ? null : concreteRecipe(vectorConcreteRecipe($vector))->fill_factory;
+        if ($fillFactory !== null) $fillFactories[$fillFactory->source] = $family;
+        $fillInterface = $fillFactory === null ? '' : ', filled_collection_type';
         $bindings = [
+            '@fill_binding@' => $fillFactory === null ? '' : compilerFillBinding($fillFactory, $countClass, collectionFillBorrows($vector)),
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
             '@entry_presence@' => compilerEntryPresence(vectorConcreteRecipe($vector), null, $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(vectorConcreteRecipe($vector)),
@@ -146,7 +159,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             '@element@' => $elementClass . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true), '@count@' => $countClass,
             '@append@' => $append['name'], '@index@' => $index['name'], '@set@' => $set['name'],
-            '@interfaces@' => ' implements conditional_index_store_type, iterable_type' . $writableInterface . $access . $sequence . $transfer,
+            '@interfaces@' => ' implements conditional_index_store_type, iterable_type' . $fillInterface . $writableInterface . $access . $sequence . $transfer,
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($vector['source_type'], true) . ", $elementClass::instance());\n$initializationSetup\t}\n",
             '@factory@' => "\tpublic static function instance(): self\n\t{\n\t\treturn self::\$instance ??= new self();\n\t}",
         ];
@@ -168,8 +181,9 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             $recipe = ['mt_segments' => !empty($runtime['mt_segments']) ? '1' : '', 'capacity_helpers' => !empty($vector['capacity_helpers']) ? '1' : '', 'qual' => 'const ', 'ref' => '&', 'enable_reserve' => $vector['enable_reserve'], 'count' => 'scpp::' . $vector['count_type'], 'limit_method' => $vector['traversal']['limit_method'], 'next_method' => $vector['traversal']['next_method']];
             $applicationMethods = compilerCollectionMethods($vector, $definitions, applicationVector: true);
             $code .= strtr($template, array_replace($bindings, [
+                '@fill_binding@' => $fillFactory === null ? '' : compilerFillBinding($fillFactory, $countClass, true),
                 '@methods@' => $applicationMethods,
-                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements conditional_index_store_type, application_collection_type, iterable_type' . $writableInterface . $access . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
+                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements conditional_index_store_type, application_collection_type, iterable_type' . $fillInterface . $writableInterface . $access . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
                 '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true)
                     . ($vector['enable_reserve'] === '1' ? ", 'scpp/value_error.hpp'" : ''),
@@ -179,7 +193,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $cases[] = "\t\t\t$elementClass::instance() => $class::instance(),";
     }
     $applicationCase = $application ? "\t\tif (\$family === " . var_export($family, true) . " && \$second === null) return new application_vector_type(\$element);\n" : '';
-    return [$code, implode("\n", $cases), $family, $applicationCase];
+    return [$code, implode("\n", $cases), $family, $applicationCase, $fillFactories];
 }
 
 /** Bind the common traversal protocol from a validated runtime publication row. */

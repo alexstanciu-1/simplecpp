@@ -193,10 +193,28 @@ final readonly class prepared_kind_predicate extends runtime_function
 	}
 }
 
-/** Published free functions whose signatures depend on source operand types. */
-enum runtime_factory
+/** Free factory names are visible before their operand-dependent signatures are known. */
+interface inferred_runtime_factory
 {
-	case vector_filled;
+}
+
+/** Publication selects the result family. The resolved provider supplies its count and fill signature. */
+final readonly class collection_fill_factory implements inferred_runtime_factory
+{
+	public function __construct(public string $name, private string $family)
+	{
+	}
+
+	public function bind(type_definition $element): ?runtime_function
+	{
+		$collection = Type_Resolution::collection($this->family, $element, null);
+		return $collection instanceof filled_collection_type ? $collection->filled_function() : null;
+	}
+}
+
+/** Published free functions whose signatures depend on source operand types. */
+enum runtime_factory implements inferred_runtime_factory
+{
 	case array_map;
 	case array_filter;
 	case in_array;

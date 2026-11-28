@@ -259,6 +259,10 @@ semantics. Struct values copy independently and copied class handles share the
 same object. A vector indexed read produces a value, so an indexed fill from
 the receiver stays valid during growth.
 
+The provider recipe publishes the factory's source name and native member.
+Preparation infers the element type from the fill argument, resolves the published
+result family, and asks that concrete collection for its count and fill signature.
+
 The free factory belongs to the general surface. C++ admits it by default.
 PHP, JS and Python require `"general_api": true` in the root manifest.
 Receiver methods follow the collection surface independently of the flag.

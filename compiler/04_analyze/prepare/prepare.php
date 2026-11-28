@@ -3135,22 +3135,22 @@ final class Preparation
 			}
 			if ($call->unpacked ?? false) throw new diagnostic($call->source(), $call->byte_start(), 'Unpacking requires a variadic target');
 			$runtime = $file->type_availability->runtime_function($file->runtime_function_key($call->name, $key), $file->source()->flavor);
-			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof runtime_factory ? null : $runtime->required_module)) {
+			if ($runtime !== null && $class !== null && $file->type_availability->allows($runtime instanceof inferred_runtime_factory ? null : $runtime->required_module)) {
 				$this->ambiguous_construction($call);
 			}
 			if ($runtime !== null && $class === null) {
-				if (!($runtime instanceof runtime_factory) && !$file->type_availability->allows($runtime->required_module)) {
+				if (!($runtime instanceof inferred_runtime_factory) && !$file->type_availability->allows($runtime->required_module)) {
 					throw new diagnostic($call->source(), $call->byte_start(),
 						'Function ' . $call->name . ' requires module ' . $runtime->required_module);
 				}
-				if ($runtime === runtime_factory::vector_filled) {
+				if ($runtime instanceof collection_fill_factory) {
 					if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
-					if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), 'vector_filled requires a count and fill value');
+					if (count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $runtime->name . ' requires a count and fill value');
 					$fill = $call->arguments[1];
 					$this->value($fill, $initializing);
-					$vector = Type_Resolution::collection('vector', $fill->type_def(), null);
-					if (!($vector instanceof vector_type_definition)) throw new diagnostic($fill->source(), $fill->byte_start(), 'Unsupported vector_filled element type');
-					$this->runtime_call($call, $vector->filled_function(), $fill);
+					$binding = $runtime->bind($fill->type_def());
+					if ($binding === null) throw new diagnostic($fill->source(), $fill->byte_start(), 'Unsupported ' . $runtime->name . ' element type');
+					$this->runtime_call($call, $binding, $fill);
 					return;
 				}
 				if ($runtime === runtime_factory::in_array) {

@@ -1,4 +1,5 @@
 {
+  "fill_factory": {"source": "vector_filled", "member": "filled"},
   "writable_iteration": "dense_index",
   "entry_presence": {"protocol": "checked_slot"},
   "checked_slot": {"method": "checked_slot", "key": "index", "value": "e", "missing": "sequence_index_out_of_range"},

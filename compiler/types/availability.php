@@ -27,7 +27,7 @@ final readonly class type_availability
 	}
 
 	/** Select a published free name under this project's source-surface policy. */
-	public function runtime_function(string $key, flavor $flavor): runtime_function|runtime_overloads|runtime_factory|null
+	public function runtime_function(string $key, flavor $flavor): runtime_function|runtime_overloads|inferred_runtime_factory|null
 	{
 		if ($flavor === flavor::php && isset($this->modules['compiler-private-frontend']) && str_starts_with($key, 'func:host_')) {
 			require_once __DIR__ . '/../examples/retained_frontend/socket/bindings.php';

@@ -46,6 +46,7 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
         $values += compact('hash', 'equal');
     }
     requireThat(!array_key_exists('type_contracts', $values), 'Concrete type contracts are generated');
+    if (isset($recipe->fill_factory)) $values['fill_member'] = $recipe->fill_factory->member;
     if (isset($recipe->checked_slot)) $values['checked_slot'] = checkedSlotMethod($recipe);
     if (isset($recipe->entry_presence->owner_probe)) $values['owner_probe'] = $recipe->entry_presence->owner_probe;
     $values['type_contracts'] = $contracts;
@@ -72,7 +73,13 @@ function concreteRecipe(string $name): mixed {
     static $recipes = [];
     if (isset($recipes[$name])) return $recipes[$name];
     $recipe = decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values', 'fill_factory']);
+    if (isset($recipe->fill_factory)) {
+        fields($recipe->fill_factory, ['source', 'member']);
+        foreach (['source', 'member'] as $field) {
+            requireThat(recordIdentifier(textValue(at($recipe->fill_factory, $field))), 'Invalid collection fill factory identifier');
+        }
+    }
     if (isset($recipe->entry_presence)) {
         $presence = $recipe->entry_presence;
         switch (at($presence, 'protocol')) {

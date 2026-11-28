@@ -510,6 +510,19 @@ function vectorConcreteRecipe(array $vector): string {
     return 'collections/vector';
 }
 
+/** The published resize and static factory share one count and fill parameter ABI. */
+function collectionFillBorrows(array $provider): bool {
+    foreach ($provider['methods'] as $method) {
+        if ($method['adaptation'] !== 'resize_copy_fill') continue;
+        [$count, $fill] = $method['arguments'];
+        $element = $provider['element'];
+        requireThat($count === $provider['count_type'] && in_array($fill, [$element, "const $element&"], true),
+            'Invalid collection fill signature');
+        return $fill !== $element;
+    }
+    throw new \RuntimeException('Missing collection fill signature');
+}
+
 /** Validate the bounded positional transport contract; runtime families supply element/result identities. */
 function listInitializationPlan(mixed $init, string $family, string $element, string $result, string $count): ?array {
     if ($init === null) return null;
@@ -649,7 +662,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
         if ($bulk !== null) requireThat(!in_array('iteration_reference', [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null], true), 'Vector initializer name conflicts with iteration reference');
         if ($reserve && $bulk !== null) requireThat(!in_array('reserve', [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null], true), 'Vector initializer name conflicts with reserve');
         if ($capacity && $bulk !== null) {
-            requireThat(!array_intersect(['capacity', 'compact', 'filled', 'resize'], [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null]),
+            requireThat(!array_intersect(['capacity', 'compact', concreteRecipe('collections/vector')->fill_factory->member, 'resize'], [$bulk['input'], $bulk['read_only'], $bulk['consume'] ?? null]),
                 'Vector initializer name conflicts with capacity helper');
         }
         $vectors[$name] = ($capacity ? ['capacity_helpers' => true] : []) + ['name' => $name, 'element' => $element, 'source_type' => "vector<$element>", 'transfer_assignment' => $transfer, 'enable_reserve' => $reserve ? '1' : '', 'count_type' => $count, 'storage' => 'concrete_buffer', 'lifecycle' => 'owned_copy_noexcept_move', 'read' => 'checked_index_value_copy', 'set' => 'checked_index_move_value', 'native_index' => $nativeIndex, 'native_value' => $native === 'none' ? '':$native, 'operations' => $operations, 'methods' => $methods, 'casts_from' => [], 'traversal' => collectionTraversalPlan(), 'initialization' => $initialization];
