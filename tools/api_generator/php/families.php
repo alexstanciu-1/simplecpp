@@ -67,7 +67,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
             $export = typeExport($plan['submodules'], $vector);
             $plan['string_functions'][$name]['header'] = providerHeader($plan['submodules'], $export['provider']);
         }
-        if ($binding['implementation'] === 'hex_decode') {
+        if ($binding['result'] === 'result_or_false<string>') {
             $export = $plan['source_types']->{$binding['result']} ?? null;
             requireThat($export !== null, "$name requires published " . $binding['result']);
             $plan['string_functions'][$name]['result_header'] = $plan['carriers_header'];
@@ -221,7 +221,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     $memberNames = [];
     foreach (names($p->functions ?? [], 'Duplicate string function') as $name) {
         $function = at(at($m, 'functions'), $name);
-        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'direct_provider', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'numeric_inputs', 'selector', 'arities', 'ascii_fold']);
+        fields($function, ['parameters', 'result', 'symbol', 'implementation', 'members', 'direct_provider', 'flavor_adapters', 'signatures', 'side', 'required_parameters', 'limit_policy', 'bound', 'replace_mode', 'pad_side', 'first_byte_only', 'flavors', 'constants', 'free_names', 'php_aliases', 'numeric_inputs', 'selector', 'arities', 'ascii_fold']);
         $implementation = textValue(at($function, 'implementation'));
         $signature = match ($implementation) {
             'split_bytes' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'vector<string>', 'required_parameters' => 2],
@@ -230,6 +230,8 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             'checked_single_byte', 'low_byte' => ['parameters' => ['int64'], 'result' => 'string'],
             'count_matches' => ['parameters' => ['string', 'string', 'int64', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
             'find', 'rfind' => ['parameters' => ['string', 'string', 'int64'], 'result' => 'int64', 'required_parameters' => 2],
+            'substring_tail', 'ascii_substring_tail', 'last_byte_tail' => ['parameters' => ['string', 'string', 'bool_t'], 'result' => 'result_or_false<string>', 'required_parameters' => 2],
+            'byte_set_tail' => ['parameters' => ['string', 'string'], 'result' => 'result_or_false<string>'],
             'hex_decode' => ['parameters' => ['string'], 'result' => 'result_or_false<string>'],
             'hex_encode', 'ascii_lower', 'ascii_upper', 'trim_bytes', 'reverse_bytes', 'ascii_rot13' => ['parameters' => ['string'], 'result' => 'string'],
             'pad_bytes' => ['parameters' => ($function->pad_side ?? null) === 'argument'
@@ -271,7 +273,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $firstByte = boolean($function->first_byte_only ?? false);
         requireThat(!isset($function->first_byte_only) || in_array($implementation, ['ascii_lower', 'ascii_upper'], true),
             'First-byte case requires an ASCII case operation');
-        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13'], true) || $firstByte
+        $phpOnly = in_array($implementation, ['format_number', 'replace_window', 'compare_bytes', 'compare_prefix', 'compare_window', 'hex_encode', 'hex_decode', 'substring_tail', 'ascii_substring_tail', 'last_byte_tail', 'byte_set_tail', 'first_byte', 'low_byte', 'reverse_bytes', 'ascii_rot13'], true) || $firstByte
             || ($implementation === 'trim_bytes' && isset($function->flavors));
         requireThat(($padding || $phpOnly) === isset($function->flavors), 'Invalid string adapter flavor selection');
         if (in_array($implementation, STRING_VALUE_ERROR_IMPLEMENTATIONS, true)) checkHeader($plan, 'scpp/value_error.hpp');
@@ -327,6 +329,15 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $symbols[$symbol] = $implementation;
         $plan['string_functions'][$name] = $signature + [
             'symbol' => $symbol, 'implementation' => $implementation, 'header' => $libraryHeader, 'members' => $members];
+        if (isset($function->php_aliases)) {
+            $aliases = names($function->php_aliases, 'Duplicate PHP string alias');
+            foreach ($aliases as $alias) {
+                requireThat(preg_match('/^[a-z_][a-z_0-9]*$/D', $alias) && !isset($m->functions->$alias)
+                    && !isset($memberNames['php'][$alias]) && $phpOnly, 'Invalid PHP string alias');
+                $memberNames['php'][$alias] = true;
+            }
+            $plan['string_functions'][$name]['php_aliases'] = $aliases;
+        }
         if (isset($function->direct_provider)) {
             requireThat(in_array($implementation, ['starts_with', 'find'], true) && ($function->flavor_adapters ?? false) === true, 'Unsupported direct string binding');
             $direct = textValue($function->direct_provider);
@@ -365,6 +376,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
             requireThat($search || $members !== [] || isset($function->flavors), 'Flavor adapters require flavor-specific string spellings');
             foreach ($spellings as $flavor => $spelling) {
                 $options = [];
+                if (in_array($implementation, ['substring_tail', 'ascii_substring_tail', 'last_byte_tail'], true)) $options['before_needle'] = true;
                 if ($compare) $options['ascii_fold'] = boolean($function->ascii_fold);
                 if ($split) {
                     $policy = $limits[$flavor] ?? null;
@@ -389,9 +401,9 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
                     if (isset($signatures[$flavor]->parameter_names)) {
                         $options += fields($signatures[$flavor], ['parameter_names']);
                         $labels = listValue($options['parameter_names']);
-                        requireThat(($flavor === 'php' || isset($freeNames[$flavor])) && !isset($signature['required_parameters'])
+                        requireThat(($flavor === 'php' || isset($freeNames[$flavor])) && (!isset($signature['required_parameters']) || $signature['required_parameters'] === count($signature['parameters']) - 1)
                             && !isset($function->arities) && count($labels) === count($signature['parameters']),
-                            'Parameter names require a fixed-arity free function and one name per parameter');
+                            'Parameter names require a free function with at most one trailing default and one name per parameter');
                         foreach ($labels as $label) requireThat(preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', textValue($label)) === 1, 'Invalid parameter name');
                         requireThat(count(array_unique($labels)) === count($labels), 'Duplicate parameter name');
                     } elseif ($trim) {

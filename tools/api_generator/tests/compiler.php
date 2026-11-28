@@ -193,7 +193,7 @@ foreach (['strcmp' => 'compare_bytes(arg0, arg1, false)', 'strcasecmp' => 'compa
         'Isolated byte comparison publication mismatch');
 }
 // A flavor result is part of the public signature and must be available in this publication.
-foreach (['strpos' => 'int64', 'hex2bin' => 'string'] as $name => $payload) {
+foreach (['strpos' => 'int64', 'hex2bin' => 'string', 'strstr' => 'string', 'strpbrk' => 'string'] as $name => $payload) {
     $restricted = unserialize(serialize($demand));
     $restricted->string->functions = [$name];
     $restricted->carriers->specializations = array_values(array_filter($restricted->carriers->specializations,
