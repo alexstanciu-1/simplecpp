@@ -16,6 +16,16 @@ $n=json_decode_mixed("null"); if(!isset($n)){return 3;}
 if($n!==null || null!==json_decode("null") || json_decode("false")===null){return 59;}
 if(json_decode("{")===null || null===json_decode_mixed("{") || json_decode("{")!==false){return 60;}
 $m mixed=$n; $s string=json_encode($m); if($s!=="null"){return 4;}
+$shape mixed=json_decode_mixed('{"a":[1,2]}');
+try { $shape["a"]["0"]=9; return 61; } catch (Exception $e) {}
+try { $shape["a"][3]=9; return 62; } catch (Exception $e) {}
+if ((string)json_encode($shape)!=='{"a":[1,2]}') { return 63; }
+$itemsAlias dynamic=json_decode("[1,2,3]");
+$peer=$itemsAlias;
+try { $peer->remove("0"); return 64; } catch (Exception $e) {}
+try { $peer["x"]=9; return 65; } catch (Exception $e) {}
+$peer->remove(1);
+if ((string)json_encode($itemsAlias)!=="[1,3]") { return 66; }
 $bad=json_decode("{"); if(isset($bad)){return 5;}
 $x ?int=null; $none string=json_encode($x); $x=0; $zero string=json_encode($x);
 $b ?bool=false; $boolean string=json_encode($b);

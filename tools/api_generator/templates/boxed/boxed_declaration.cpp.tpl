@@ -37,6 +37,8 @@ public:
     bool_t empty() const;
     int64 container_size() const;
     bool_t is_packed_container() const;
+    bool_t is_json_array() const noexcept;
+    bool_t is_json_object() const noexcept;
     void clean() noexcept;
     void clear();
     // Compiler traversal API; key_index == -1 selects key_text. No table owner is retained.

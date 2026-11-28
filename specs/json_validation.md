@@ -47,8 +47,9 @@ core can be built without a JSON dependency.
 No performance claim, exhaustive fuzzing, hostile nesting/resource budget, public
 traversal, typed JSON extraction/container encoding or source compiler registration is claimed.
 The reader/writer still recurse. Raw input strings preserve donor byte acceptance;
-Unicode escapes are validated separately. Persistent empty object identity remains
-outside the hash-derived container model.
+Unicode escapes are validated separately. The boxed JSON consumer verifies nested
+array/object identity, dense removal, clear, and ordinary table behavior. The PHP
+caller exercises rejected string and sparse writes before observing the original value.
 
 ## Production profile follow-up
 
