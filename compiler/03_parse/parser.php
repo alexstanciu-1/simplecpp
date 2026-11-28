@@ -362,6 +362,8 @@ final class Parser
 					$value = $this->assignment_value();
 					return new ast_computed_member_assignment($target, $key, $value, $this->statement_end(token_kind::semicolon));
 				}
+				$mutation = $this->indexed_mutation($target, $key, $this->cursor->position(), computed_member: true);
+				if ($mutation !== null) return $mutation;
 				$target = new ast_computed_member_read($target, $key, $this->cursor->position());
 			}
 			$target = $this->postfix($target, field_target: true);
@@ -1556,18 +1558,19 @@ final class Parser
 	}
 
 	/** Consume a compound or postfix update after a subscript, leaving other continuations to the caller. */
-	private function indexed_mutation(ast_expression $receiver, ?ast_expression $index, int $end /** uint32 */): ?ast_statement
+	private function indexed_mutation(ast_expression $receiver, ?ast_expression $index, int $end /** uint32 */, bool $computed_member = false): ?ast_statement
 	{
-		if ($this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement)) {
-			if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed update requires a key');
-			$target = new ast_index_expression($receiver, $index, $end);
-			$operator = $this->take_update_operator();
-			return new ast_index_update($target->start, $this->cursor->take(token_kind::semicolon, ';') + 1, $target, $operator, true);
-		}
+		$update = $this->cursor->is(token_kind::increment) || $this->cursor->is(token_kind::decrement);
 		$operator = $this->compound_operator();
-		if ($operator === null) return null;
-		if ($index === null) throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Indexed compound requires a key');
-		$target = new ast_index_expression($receiver, $index, $end);
+		if (!$update && $operator === null) return null;
+		if ($index === null) {
+			throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), $update ? 'Indexed update requires a key' : 'Indexed compound requires a key');
+		}
+		$target = $computed_member ? new ast_computed_member_read($receiver, $index, $end) : new ast_index_expression($receiver, $index, $end);
+		if ($update) {
+			$direction = $this->take_update_operator();
+			return new ast_index_update($target->start, $this->cursor->take(token_kind::semicolon, ';') + 1, $target, $direction, true);
+		}
 		$this->cursor->take($this->cursor->tokens->tokens[$this->cursor->position()]->kind, 'compound assignment');
 		$value = $this->assignment_value();
 		return new ast_index_compound($target, $value, $operator, $this->cursor->take(token_kind::semicolon, ';') + 1);

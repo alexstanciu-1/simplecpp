@@ -77,6 +77,35 @@ def computed_write(work, flavor):
         ('api', api, trace)])
 
 
+def computed_mutation(work, flavor):
+    api = 'function name():string {echo "K";return "remove";}'
+    main = """
+        function change(dynamic $d):int {echo "R";$d["remove"]=99;return 3;}
+        $d dynamic=[];$d["remove"]=4;
+        $d->{name()}+=change($d);echo (int)$d["remove"];
+        ++$d->{name()};echo (int)$d["remove"];
+        $d->{name()}++;echo (int)$d["remove"];
+        --$d->{name()};echo (int)$d["remove"];
+        $d->{name()}--;echo (int)$d["remove"];
+        $d["remove"]="a";$d->{name()}.="b";echo (string)$d["remove"];return 8;
+    """
+    trace = b'KR7K8K9K8K7Kab'
+    revisions(work, flavor, dict(main=main, api=api), [
+        (None, None, trace), ('api', 'function name():int {return 0;}', 'Computed member name requires a string'),
+        ('api', api, trace)])
+
+
+def computed_mutation_failure(work, flavor):
+    source = """
+        function name():string {echo "K";return "key";}
+        function removeKey(dynamic $d):int {echo "R";$d->remove("key");return 2;}
+        $d dynamic=[];
+    """
+    operation = 'try {$d->{name()}+=removeKey($d);} finally {echo count($d);}return 0;'
+    for label, setup, trace in [('missing', '', b'K0'), ('removed', '$d["key"]=4;', b'KR0')]:
+        guard(work, flavor, label, source + setup + operation, 'boxed_missing_key', expected_stdout=trace)
+
+
 def computed_admission(work, flavor):
     setup = '$d dynamic=[];$name="key";'
     cases = [
@@ -85,8 +114,9 @@ def computed_admission(work, flavor):
         (setup + '$x=$d->{$name}();', 'Computed member calls are not supported'),
         ('$d mixed=[];$d->{"key"}=7;', 'Computed member assignment requires a local dynamic receiver'),
         ('class H {public dynamic $data;}$h=new H();$h->data->{"key"}=7;', 'Expected writable struct field'),
-        (setup + '$d->{$name}+=7;', 'Expected writable struct field'),
-        (setup + '++$d->{$name};', 'Computed member reads cannot be used as write targets'),
+        ('$d mixed=[];$d->{"key"}+=7;', 'Computed member read requires a dynamic receiver'),
+        ('class H {public dynamic $data;}$h=new H();++$h->data->{"key"};', 'Computed member mutation requires a local dynamic receiver'),
+        (setup + '++$d->{$name}["leaf"];', 'Computed member reads cannot be used as write targets'),
         (setup + '$d->{$name}["leaf"]=7;', 'Expected writable struct field'),
     ]
     revisions(work, flavor, dict(main='return 8;'), [('main', source + 'return 8;', error) for source, error in cases])
@@ -94,4 +124,5 @@ def computed_admission(work, flavor):
 
 with TemporaryDirectory(prefix='dynamic-arrow-') as tmp:
     {'missing': missing, 'computed': computed, 'computed_write': computed_write, 'computed_admission': computed_admission,
+     'computed_mutation': computed_mutation, 'computed_mutation_failure': computed_mutation_failure,
      'exercise': exercise}[sys.argv[1]](Path(tmp), sys.argv[2])

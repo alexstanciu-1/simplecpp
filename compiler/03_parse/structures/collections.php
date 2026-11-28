@@ -185,7 +185,7 @@ class ast_index_expression extends ast_expression
 	}
 }
 
-/** PHP $d->{expr} retains the computed-member spelling for read-only admission, then lowers as an indexed read. */
+/** PHP $d->{expr} retains the computed spelling for string-key reads and local read-modify-write targets. */
 final class ast_computed_member_read extends ast_index_expression
 {
 }

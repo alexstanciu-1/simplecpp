@@ -127,7 +127,7 @@ On a declared record, the receiver type selects its declared field as usual. Thu
 
 PHP also admits `$d->{expr}` as a read when the receiver has type `dynamic` and the expression has type `string`. Evaluate the receiver once, then the name once, and use the ordinary boxed bracket lookup. Thus `"0"` selects integer key zero, `"01"` remains a string key, and a missing key returns boxed null without insertion. The name `"remove"` selects the data key even though a method has that name.
 
-For a local `dynamic` receiver, PHP also admits plain assignment `$d->{expr} = rhs();`. Evaluate and normalize the string key once, then evaluate and box the RHS, then insert or replace the saved key using the ordinary bracket store. A throwing RHS performs no store. A computed name of `"remove"` writes the data key. Computed calls, nonlocal targets, nested writes through computed names, compounds and updates remain deferred.
+For a local `dynamic` receiver, PHP also admits plain assignment `$d->{expr} = rhs();`. Evaluate and normalize the string key once, then evaluate and box the RHS, then insert or replace the saved key using the ordinary bracket store. A throwing RHS performs no store. A computed name of `"remove"` writes the data key. Local computed names also support the same compound operators and standalone prefix/postfix `++` and `--` as bracket targets. Evaluate the name once and save the existing value before the RHS. A missing key skips the RHS and raises `boxed_missing_key`. If the RHS removes the saved key, write-back raises the same error and leaves the key absent. Computed calls, nonlocal targets and nested writes through computed names remain deferred.
 
 ## Plain two-key assignment on boxed locals
 
