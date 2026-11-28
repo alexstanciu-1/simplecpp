@@ -3481,39 +3481,42 @@ final class Preparation
 		if ($call instanceof ast_named_call) throw new diagnostic($call->source(), $call->byte_start(), ast_named_call::UNSUPPORTED_TARGET);
 		$implicit_filter = $operation === runtime_factory::array_filter && count($call->arguments) === 1;
 		if (!$implicit_filter && count($call->arguments) !== 2) throw new diagnostic($call->source(), $call->byte_start(), $operation->name . ' requires a collection and a callback');
-		$map = $operation === runtime_factory::array_map;
-		$source = $call->arguments[$map ? 1 : 0];
-		$callback = $call->arguments[$map ? 0 : 1] ?? null;
+		$callback_first = $operation === runtime_factory::array_map;
+		$source = $call->arguments[$callback_first ? 1 : 0];
+		$callback = $call->arguments[$callback_first ? 0 : 1] ?? null;
 		$this->value($source, $initializing);
 		$input = $source->type_def();
-		$filter_output = $input;
-		if ($operation === runtime_factory::array_filter) {
+		$filter = in_array($operation, [runtime_factory::array_filter, runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
+		$output = $input;
+		if (!$filter) {
+			$admitted = match ($operation) {
+				runtime_factory::array_map => $input instanceof map_source,
+				runtime_factory::collection_map => $input instanceof collection_map_source,
+				runtime_factory::sequence_map => $input instanceof sequence_map_source,
+				runtime_factory::keyed_map => $input instanceof keyed_map_source,
+			};
+			if (!$admitted) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
+			$element = $input->iteration_value_type();
+		} elseif ($operation === runtime_factory::array_filter) {
 			if (!($input instanceof subset_source)) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for array_filter');
 			$element = $input->iteration_value_type();
-			$filter_output = $input->subset_result_type();
-			if (!($filter_output instanceof keyed_result_builder)) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
-		} elseif ($map) {
-			if (!($input instanceof map_source)) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for array_map');
-			$element = $input->iteration_value_type();
-		} elseif ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
+			$output = $input->subset_result_type();
+			if (!($output instanceof keyed_result_builder)) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
+		} elseif ($input instanceof vector_type_definition && $operation !== runtime_factory::keyed_filter) {
 			$element = $input->element_type;
-			$key = null;
-		} elseif ($input instanceof hash_type_definition && !in_array($operation, [runtime_factory::sequence_map, runtime_factory::sequence_filter], true)) {
+		} elseif ($input instanceof hash_type_definition && $operation !== runtime_factory::sequence_filter) {
 			$element = $input->value_type;
-			$key = $input->key_type;
-		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter], true)) {
+		} elseif ($input instanceof boxed_type_definition && $operation === runtime_factory::collection_filter) {
 			$element = $input;
-			$key = null;
 		} else {
 			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
 		}
-		$filter = in_array($operation, [runtime_factory::array_filter, runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
 		if ($implicit_filter) {
 			if (!$element->supports_scalar_condition()) {
 				throw new diagnostic($source->source(), $source->byte_start(), 'array_filter requires a callback for this element type');
 			}
 			$this->retain_member_place($source);
-			$call->settle_runtime(new collection_transform_function($operation, $input, null, $filter_output, true));
+			$call->settle_runtime(new collection_transform_function($operation, $input, null, $output, true));
 			return;
 		}
 		if ($callback instanceof ast_callable_reference) {
@@ -3528,7 +3531,7 @@ final class Preparation
 		if (!($signature instanceof callback_type_definition) || $signature->inputs !== [$element]
 			|| $signature->input_mode(0) !== passing_mode::value || $signature->reference_origin !== null
 			|| ($type instanceof lambda_type_definition && $type->has_defaults)
-			|| (!$map && !$filter && $input instanceof boxed_type_definition && $signature->result !== $input)
+			|| (!$callback_first && !$filter && $input instanceof same_family_map_source && $signature->result !== $input)
 			|| $signature->result === type_void::instance() || ($filter && $signature->result !== type_bool::instance())) {
 			throw new diagnostic($callback->source(), $callback->byte_start(), 'Invalid callback signature for ' . $operation->name);
 		}
@@ -3541,13 +3544,13 @@ final class Preparation
 		} else {
 			$this->dependencies?->callable_site($this->owner, $call);
 		}
-		if ($map) {
+		if (!$filter) {
 			$output = $input->mapped_result_type($signature->result);
-			if (!($output instanceof mapped_result_builder)) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable mapped result builder for array_map');
-		} else {
-			$output = ($filter || $input instanceof boxed_type_definition) ? $filter_output : Type_Resolution::collection($key === null ? 'vector' : 'hash', $signature->result, $key);
+			if (!($output instanceof mapped_result_builder)) {
+				$message = $callback_first ? 'Unavailable mapped result builder for array_map' : 'Unavailable collection result for ' . $operation->name;
+				throw new diagnostic($call->source(), $call->byte_start(), $message);
+			}
 		}
-		if ($output === null) throw new diagnostic($call->source(), $call->byte_start(), 'Unavailable collection result for ' . $operation->name);
 		$this->retain_member_place($source);
 		$call->settle_runtime(new collection_transform_function($operation, $input, $type, $output, $filter));
 	}

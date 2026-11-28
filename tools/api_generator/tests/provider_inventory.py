@@ -6,7 +6,7 @@ def prepared_provider_headers(plan, runtime):
     headers = {graph['nodes'][provider]['header'] for provider in graph['published']}
     if 'array_filter' in plan.get('collection_transforms', []):
         headers.add('scpp/collection_filter.hpp')
-    if 'array_map' in plan.get('collection_transforms', []):
+    if {'array_map', 'collection_map', 'sequence_map', 'keyed_map'}.intersection(plan.get('collection_transforms', [])):
         headers.add('scpp/collection_map.hpp')
     if 'in_array' in plan.get('collection_transforms', []):
         headers.add('scpp/collection_scan.hpp')

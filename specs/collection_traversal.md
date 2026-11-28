@@ -153,6 +153,12 @@ default. Other flavors select it with the project setting `"general_api": true`.
 | `sequence_map`, `sequence_filter` | Same vector operations | Unsupported |
 | `keyed_map`, `keyed_filter` | Unsupported | Same hash operations |
 
+For maps, each provider declares its general map domain in metadata. Sequence
+and keyed providers also admit `collection_map`. A collection-only provider
+admits that form alone. Preparation resolves the mapped result builder from
+the callback return type. All three forms use the same runtime entry loop as
+PHP's single-input `array_map`, with source-first arguments on the general API.
+
 T is the input value type, K the hash key type and U the map callback's result.
 The result must be an available runtime or application collection specialization.
 For table-valued `mixed` and `dynamic`, the two `collection_*` helpers preserve

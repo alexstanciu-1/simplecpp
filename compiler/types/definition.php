@@ -144,6 +144,26 @@ interface map_source extends collection_entry_source
 	public function mapped_result_type(type_definition $element): ?type_definition;
 }
 
+/** A provider admitted by the general collection_map surface. */
+interface collection_map_source extends map_source
+{
+}
+
+/** A general map source whose mapped output is a dense sequence. */
+interface sequence_map_source extends collection_map_source
+{
+}
+
+/** A general map source preserving a statically typed key domain. */
+interface keyed_map_source extends collection_map_source
+{
+}
+
+/** Map callbacks must produce another value of this source family. */
+interface same_family_map_source extends map_source
+{
+}
+
 /** Construct a complete mapped result in encounter order. Dense builders may append. */
 interface mapped_result_builder
 {

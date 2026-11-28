@@ -3981,25 +3981,27 @@ CPP;
 	private function collection_transform(ast_call_expression $call, collection_transform_function $function,
 		array &$globals, array &$declarations, array &$headers): string
 	{
-		$map = $function->name() === 'array_map';
-		$input = $call->arguments[$map ? 1 : 0];
-		$callback = $call->arguments[$map ? 0 : 1] ?? null;
+		$callback_first = $function->name() === 'array_map';
+		$input = $call->arguments[$callback_first ? 1 : 0];
+		$callback = $call->arguments[$callback_first ? 0 : 1] ?? null;
 		$type = $input->type_def();
 		$out = $function->return_type_def();
 		$result = $out->cpp_type();
 		$owner_steps = [];
 		$receiver = $this->retained_place($input, $globals, $declarations, $headers, $owner_steps, full_expression: true);
 		$callable = $callback === null ? null : $this->value($callback, $globals, $declarations, $headers);
-		if ($map) {
+		if (!$function->filter) {
 			$headers['scpp/collection_map.hpp'] = true;
 			$element = $type->iteration_value_type()->cpp_type();
 			$slot = $type->iteration_output_type();
 			$item = $slot === null ? 'item' : 'item.value';
 			$insert = $out->lower_cpp_mapped_entry('result', 'key', 'static_cast<decltype(mapped)&&>(mapped)');
-			return '[](auto callback, const auto& source) { auto result = ' . $out->lower_cpp_empty()
+			$params = $callback_first ? 'auto callback, const auto& source' : 'const auto& source, auto callback';
+			$args = $callback_first ? "$callable, $receiver" : "$receiver, $callable";
+			return "[]($params) { auto result = " . $out->lower_cpp_empty()
 				. '; ::scpp::detail::map_entries<' . $type->cpp_entry_key_type() . ', ' . ($slot ?? $element) . '>(' . $type->lower_cpp_entry_cursor('source')
 				. ", [&](auto& item) { return callback(static_cast<$element&&>($item)); }, "
-				. "[&]([[maybe_unused]] auto& key, auto&& mapped) { $insert; }); return result; }($callable, $receiver)";
+				. "[&]([[maybe_unused]] auto& key, auto&& mapped) { $insert; }); return result; }($args)";
 		}
 		if ($function->name() === 'array_filter') {
 			$headers['scpp/collection_filter.hpp'] = true;
@@ -4030,9 +4032,9 @@ CPP;
 		$lines[] = $type->lower_cpp_iteration_storage($keyed && !$boxed) . $type->lower_cpp_iteration_initialize('source');
 		$next = $boxed ? $type->lower_cpp_iteration_next_classified('source', 'item', 'key') : $type->lower_cpp_iteration_next('source', 'item', $key);
 		$lines[] = "while ($next) {";
-		$value = $function->filter ? "static_cast<$element&&>($item)" : "callback(static_cast<$element&&>($item))";
+		$value = "static_cast<$element&&>($item)";
 		$insert = ($keyed ? $out->lower_cpp_write('result', 'key', $value) : $out->lower_cpp_append_value('result', $value)) . ';';
-		$lines[] = $function->filter ? "if (callback($item)) $insert" : $insert;
+		$lines[] = "if (callback($item)) $insert";
 		$lines[] = '} return result;';
 		// A selected owned callable survives reassignment of its source slot by the callback.
 		return '[](const auto& source, auto callback) { ' . implode(' ', $lines) . " }($receiver, $callable)";
