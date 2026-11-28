@@ -6,11 +6,20 @@ namespace Scpp\Api;
 function prepareResourceModules(object $publication, array &$plan): void {
     $catalogs = object($publication->resource_modules ?? (object)[]);
     requireThat(!isset($catalogs['filesystem']), 'Filesystem resources belong to the filesystem publication');
+    requireThat(!isset($catalogs['boxed_php']), 'Boxed PHP operations belong to the boxed publication');
     if (isset($publication->filesystem->resources)) $catalogs['filesystem'] = $publication->filesystem->resources;
+    if (isset($publication->boxed->php_operations)) {
+        requireThat(isset($plan['string_functions']['urldecode']), 'PHP query helpers require urldecode');
+        $catalogs['boxed_php'] = (object)['types' => (object)[], 'operations' => $publication->boxed->php_operations];
+    }
     foreach ($catalogs as $module => $catalog) {
-        requireThat(in_array($module, ['io', 'process', 'curl', 'mysqli', 'ui', 'webview', 'fcgi', 'filesystem'], true), 'Unknown resource module');
+        requireThat(in_array($module, ['io', 'process', 'curl', 'mysqli', 'ui', 'webview', 'fcgi', 'filesystem', 'boxed_php'], true), 'Unknown resource module');
         fields($catalog, ['types', 'operations', 'constants']);
-        $base = $module === 'filesystem' ? substr($plan['filesystem']['header'], 0, -4) . '/' : "scpp/$module/";
+        $base = match ($module) {
+            'filesystem' => substr($plan['filesystem']['header'], 0, -4) . '/',
+            'boxed_php' => 'scpp/php/',
+            default => "scpp/$module/",
+        };
         $types = [];
         foreach (object(at($catalog, 'types')) as $name => $type) {
             requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid module type');
@@ -117,6 +126,7 @@ function prepareResourceModules(object $publication, array &$plan): void {
 }
 
 function resourceNamespace(string $module): string {
+    if ($module === 'boxed_php') return 'php';
     if ($module === 'filesystem') return 'fs';
     return in_array($module, ['mysqli','webview'], true) ? $module . '_api' : $module;
 }
@@ -170,6 +180,7 @@ function renderResourceModules(array $plan, array &$files): void {
             $files['public/' . $op['header']] = moduleHeaderBody($op['includes'], 'scpp::' . resourceNamespace($module), $decl);
             $bridge .= includeHeader($op['header']);
         }
+        if ($module === 'boxed_php') continue;
         $prefix = $module === 'filesystem' ? 'filesystem_locks' : $module;
         $files["private/{$prefix}_provider.hpp"] = "#pragma once\n" . $bridge;
         $files["private/{$prefix}_values.hpp"] = includeHeader('carrier_semantics.hpp') . $defs;
@@ -194,7 +205,8 @@ function compilerResourceCases(?array $runtime, array $types): array {
                     $accepted = array_map(fn($t) => "type_{$types[$t]}::class => true", $op['retainsSlots']);
                     $member .= ', retained_slot_types: [' . implode(', ', $accepted) . ']';
                 }
-                $call = "new runtime_function('$name', [" . implode(', ', $args) . "], type_{$types[$op['result']]}::instance(), '::scpp::$namespace::$native', '{$op['header']}', required_parameters: {$op['required']}, const_reference_mask: {$op['mask']}, required_module: 'runtime-$module'$member)";
+                $require = $module === 'boxed_php' ? '' : ", required_module: 'runtime-$module'";
+                $call = "new runtime_function('$name', [" . implode(', ', $args) . "], type_{$types[$op['result']]}::instance(), '::scpp::$namespace::$native', '{$op['header']}', required_parameters: {$op['required']}, const_reference_mask: {$op['mask']}$require$member)";
                 $groups[$key][] = [$op, $call];
             }
         }
