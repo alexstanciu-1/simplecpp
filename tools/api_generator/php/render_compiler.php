@@ -529,8 +529,8 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings[\$key] ??= $call,";
     }
     foreach ($runtime['datetime']['operations'] ?? [] as $op) {
-        $name = $op['source_name'];
-        if ($name === null) continue;
+        $sourceNames = array_filter(['general' => $op['source_name'], 'php' => $op['php_name']]);
+        if ($sourceNames === []) continue;
         foreach ([...$op['parameters'], $op['result']] as $type) {
             requireThat($type === 'void' || isset($runtimeTypes[$type]), 'Datetime binding requires a compiler type: ' . $type);
         }
@@ -538,8 +538,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $result = $op['result'] === 'void' ? 'void' : $runtimeTypes[$op['result']];
         $symbol = '::' . $runtime['datetime']['namespace'] . '::' . $op['name'];
         $mask = (1 << count($arguments)) - 1;
-        $runtimeCases[] = "\t\t\t'general:func:$name' => \$bindings[\$key] ??= new runtime_function('$name', ["
-            . implode(', ', $arguments) . "], type_$result::instance(), '$symbol', '{$op['header']}', const_reference_mask: $mask, required_module: 'runtime-datetime', exact_arguments: true),";
+        foreach ($sourceNames as $surface => $name) {
+            $runtimeCases[] = "\t\t\t'$surface:func:$name' => \$bindings[\$key] ??= new runtime_function('$name', ["
+                . implode(', ', $arguments) . "], type_$result::instance(), '$symbol', '{$op['header']}', const_reference_mask: $mask, required_module: 'runtime-datetime', exact_arguments: true),";
+        }
     }
     array_push($runtimeCases, ...compilerModuleFunctionCases($runtime, $runtimeTypes));
     if ($runtime['mt_segments'] ?? false) {
