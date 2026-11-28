@@ -904,7 +904,7 @@ if(BUILD_TESTING)
       add_test(NAME compiler_dynamic_arrow_${case}_${flavor} COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/dynamic_arrow.py ${case} ${flavor})
     endforeach()
   endforeach()
-  foreach(case computed computed_write computed_admission computed_mutation computed_mutation_failure)
+  foreach(case computed computed_write computed_admission computed_mutation computed_mutation_failure computed_nested computed_nested_missing)
     add_test(NAME compiler_dynamic_arrow_${case}_php COMMAND ${Python3_EXECUTABLE} -B
       ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/dynamic_arrow.py ${case} php)
   endforeach()
