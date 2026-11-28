@@ -361,9 +361,10 @@ final class Preparation
 					}
 				}
 				$type = $statement->receiver->type_def();
-				if ($statement instanceof ast_computed_member_assignment && (!($binding instanceof ast_local_binding) || !($type instanceof type_dynamic)
-					|| ($receiver instanceof ast_index_expression && $boxed_root === null))) {
-					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a local dynamic receiver');
+				if ($statement instanceof ast_computed_member_assignment && (!($type instanceof type_dynamic)
+					|| ($receiver instanceof ast_index_expression && $boxed_root === null)
+					|| ($receiver instanceof ast_name_expression && !($binding instanceof ast_local_binding)))) {
+					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a dynamic local or writable dynamic instance field');
 				}
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
