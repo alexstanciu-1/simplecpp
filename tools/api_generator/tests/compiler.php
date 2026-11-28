@@ -787,6 +787,19 @@ foreach (['missing', 'unknown', 'incompatible', 'unregistered_keywords', 'duplic
     } catch (\RuntimeException $expected) {
     }
 }
+// A partial component proof must never enable collection copy elision.
+$copyProvider = clone concreteRecipe('collections/hash');
+unset($copyProvider->private_copy_allocation_only);
+requireThat(compilerPrivateCopyEffect($copyProvider, []) === '', 'Missing copy grant emitted a proof');
+foreach (['k', 'v'] as $onlyComponent) {
+    $copyProvider->private_copy_allocation_only = [$onlyComponent];
+    try {
+        compilerPrivateCopyEffect($copyProvider, []);
+        throw new \LogicException('Accepted an incomplete copy-effect proof');
+    } catch (\RuntimeException $error) {
+        requireThat(str_contains($error->getMessage(), 'all concrete type parameters'), 'Unexpected copy-effect validation error');
+    }
+}
 // Declaration flags drive queries; omission and nonboolean policy cannot silently enable a declaration.
 $policy = unserialize(serialize($metadata));
 $policy->compiler->value_types->int64->declarations->inferred_local = false;

@@ -19,7 +19,9 @@ struct Mark {public int $x=0;public function __destruct(){echo "D";}}
 function marked(vector<Mark> $items):int {return count($items);}
 function markedSnapshot(const vector<Mark> &$items):int {$snapshot=$items;return count($snapshot);}
 function markedPair(const vector<Mark> &$items):int {$snapshot=$items;$first=count($snapshot);return $first+count($snapshot);}
-function textKeys(hash<int,string> $items):int {return count($items);}
+function textKeys(hash<int,string> $items):int {$savedKeys=$items;return count($savedKeys);}
+function textValues(hash<string,int> $items):int {$savedValues=$items;return count($savedValues);}
+function textElements(vector<string> $items):int {$savedElements=$items;return count($savedElements);}
 function invokeWidth(callback<int,vector<int>> $cb,vector<int> &$v):int {return $cb($v);}
 function snapshot(vector<int> $view,vector<int> &$writer):int {clean($writer);return count($view);}
 """
@@ -28,6 +30,8 @@ $v vector<int> = [1,2];$h hash<int,int> = [];$h[1]=1;
 $h[42]=7;echo first($v),lookup($h),$v[0],$h[42];
 try {echo width($v),invokeWidth(width(...),$v);} catch (Exception $e) {echo "E";}
 echo count($v),keys($h),snapshot($v,$v),count($v);
+$words vector<string>=["ok"];$labels hash<string,int>=[5=>"ok"];
+if(textElements($words)!==1 || textValues($labels)!==1){return 90;}
 $text hash<int,string> = [];$text["a"]=1;echo textKeys($text);
 $m Mark;$marks vector<Mark> = [$m];echo "[";echo marked($marks);echo "]";echo markedSnapshot($marks);echo markedPair($marks);
 return 8;
@@ -53,7 +57,11 @@ with TemporaryDirectory(prefix='scpp-private-count-') as directory:
         assert symbol + '_collection_reader(var_' in units
         body = re.search(symbol + r'_collection_reader\(const [^;{]+\)\s*\{([^}]+)', units)
         assert body and operation in body[1], (symbol, body)
-    assert 'marked_collection_reader' not in units and 'textKeys_collection_reader' not in units
+    for symbol in ('marked', 'textKeys', 'textValues', 'textElements'):
+        assert symbol + '_collection_reader' not in units
+    for local in ('savedKeys', 'savedValues', 'savedElements'):
+        assert 'const auto& var_' + local + '_' not in units
+        assert ' var_' + local + '_' in units
     assert '&width_' in units and '&width_collection_reader' not in units
 
 keyed_reader = """

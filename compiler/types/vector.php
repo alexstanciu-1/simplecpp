@@ -24,11 +24,6 @@ abstract class vector_type_definition extends type_definition implements readonl
 		$this->element_type = $element;
 	}
 
-	public function private_copy_allocation_only(): bool
-	{
-		return $this->element_type->copy_has_no_observable_effects();
-	}
-
 	/** Admit the scalar and shared-owner equality domains that have Python representations. */
 	public function prepare_membership(ast_binary_expression $site): void
 	{

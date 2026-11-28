@@ -796,6 +796,20 @@ function compilerLiteralFamilies(array $definitions): array {
     return ['cases' => implode("\n", $cases), 'accessors' => implode("\n\n", $accessors)];
 }
 
+/** A private backing allocation may be elided only if every stored component has inert copy and destruction. */
+function compilerPrivateCopyEffect(object $provider, array $componentTypes): string {
+    if (!property_exists($provider, 'private_copy_allocation_only')) return '';
+    $components = names($provider->private_copy_allocation_only);
+    requireThat($components !== [] && $components === array_keys(object(at($provider, 'parameters'))),
+        'Private copy effects must account for all concrete type parameters');
+    $checks = [];
+    foreach ($components as $component) {
+        requireThat(isset($componentTypes[$component]), 'Missing compiler binding for copy component: ' . $component);
+        $checks[] = $componentTypes[$component] . '->copy_has_no_observable_effects()';
+    }
+    return "\n\tpublic function private_copy_allocation_only(): bool\n\t{\n\t\treturn " . implode(' && ', $checks) . ";\n\t}\n";
+}
+
 /** Omitted provider grants inherit the type definition's conservative defaults. */
 function compilerCollectionDeclarations(object $provider): string {
     if (!property_exists($provider, 'declarations')) return '';

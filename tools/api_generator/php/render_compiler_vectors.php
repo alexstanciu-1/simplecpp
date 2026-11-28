@@ -149,6 +149,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $provider = concreteRecipe(vectorConcreteRecipe($vector));
         $indexedTypes = textValue(at($provider, 'indexed_entry_types'));
         $bindings = compilerCollectionBuilders($provider) + [
+            '@copy_effect@' => compilerPrivateCopyEffect($provider, ['e' => '$this->element_type']),
             '@declarations@' => compilerCollectionDeclarations($provider),
             '@fill_binding@' => $fillFactory === null ? '' : compilerFillBinding($fillFactory, $countClass, collectionFillBorrows($vector)),
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",

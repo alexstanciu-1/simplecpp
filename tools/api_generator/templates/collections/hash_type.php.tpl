@@ -16,6 +16,7 @@ final class @class@ extends hash_type_definition@interfaces@, subset_source, map
 @initialization@
 @identity@
 	/** METHODS */
+@copy_effect@
 @declarations@
 @subset_result@
 @map_result@

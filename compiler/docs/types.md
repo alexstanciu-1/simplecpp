@@ -190,6 +190,13 @@ Arithmetic helpers, checked-conversion wrappers and string storage use [named ru
 
 Copy semantics and operation-local lowering safety are declared in compiler metadata; see [safety ownership and verification](runtime_bindings.md#copy-semantics-and-lowering-safety).
 
+For providers that grant `private_copy_allocation_only`, the recipe lists every
+stored type parameter. Skipping a collection copy may suppress private backing
+allocation failure only when copying and destroying each component has no
+observable effect. The generator emits a direct check on the vector element or
+on both hash key and value. Providers without the grant inherit the default false
+proof. Reader and snapshot borrowing still require their existing use-site proofs.
+
 ## Declaration support policy
 
 Each `compiler.value_types` record explicitly declares `declarations.inferred_local`
