@@ -1834,7 +1834,7 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_nullsafe_member) {
 			$member = $syntax->operand;
-			$this->value($member, $initializing);
+			$this->value($member, $initializing, destination: $syntax->parent instanceof ast_discard_statement ? type_void::instance() : null);
 			$guarded = $syntax->guarded_member;
 			$kind = $guarded instanceof ast_call_expression ? 'method call' : 'field read';
 			$owner = $guarded->receiver->type_def();
@@ -1845,9 +1845,10 @@ final class Preparation
 			for ($hop = $member; $hop !== $guarded->receiver; $hop = $hop->receiver) {
 				if ($hop instanceof ast_call_expression) $this->check_nullsafe_method($hop);
 			}
-			$result = $payload instanceof carrier_type_definition && $payload->family === 'nullable' ? $payload : Type_Resolution::nullable_value($payload);
+			$result = $payload === type_void::instance() || ($payload instanceof carrier_type_definition && $payload->family === 'nullable')
+				? $payload : Type_Resolution::nullable_value($payload);
 			if ($result === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'No optional representation for ' . ($member instanceof ast_call_expression ? 'method result' : 'field type') . ' ' . $payload->name);
-			$syntax->settle_optional($result);
+			$syntax->settle_result($result);
 			return;
 		}
 		if ($syntax instanceof ast_field_expression) {
@@ -2147,12 +2148,12 @@ final class Preparation
 		throw new \LogicException('Unhandled expression preparation');
 	}
 
-	/** Only synchronous instance calls returning values participate in a guarded chain. */
+	/** Guarded calls use synchronous instance dispatch and never return a reference. */
 	private function check_nullsafe_method(ast_call_expression $call): void
 	{
 		$method = $call->function_def();
-		if (!($method instanceof ast_function_declaration) || !$method->has_receiver() || $method->returns_reference || $method->is_async || $call->type_def() === type_void::instance()) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Nullsafe call requires an instance method returning a value');
+		if (!($method instanceof ast_function_declaration) || !$method->has_receiver() || $method->returns_reference || $method->is_async) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Nullsafe call requires a synchronous instance method without a reference return');
 		}
 	}
 

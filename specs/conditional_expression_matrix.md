@@ -58,6 +58,11 @@ yields absence. An empty captain or coach raises the ordinary empty-owner
 failure. All four paths skip `key()`. With every owner present, `key()` and
 `score()` each run once, and a score of zero stays present.
 
+A standalone call such as `$team?->coach->notify(key());` may end in a
+synchronous `void` method. An absent team skips the arguments and invocation.
+With a present team, the ordinary receiver check runs before `key()`. An
+assignment or another member access requires the call to produce a value.
+
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 
 Statement-form `$n ??= fallback;` accepts an existing declared local whose type

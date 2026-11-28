@@ -2872,7 +2872,7 @@ CPP;
 				$outer_receiver = $this->guarded_receiver;
 				$this->guarded_receiver = $receiver;
 				try {
-					$selected = $this->value($member, $global_references, $declarations, $required_headers);
+					$selected = $this->value($member, $global_references, $declarations, $required_headers, inside_scope: $value_type === type_void::instance());
 				} finally {
 					$this->guarded_receiver = $outer_receiver;
 				}
@@ -2883,8 +2883,9 @@ CPP;
 				$selected = $this->invocation($member, $method, $name, $member->type_def(), $global_references, $declarations, $required_headers,
 					selected_receiver: '*owner.operator->()');
 			}
-			$present = $this->conversion($value_type, $value->conversion, $selected, $member);
 			$argument_steps = implode(' ', array_splice($this->async_steps, $start));
+			if ($value_type === type_void::instance()) return "if (auto owner = $operand; $test) { $argument_steps $selected; }";
+			$present = $this->conversion($value_type, $value->conversion, $selected, $member);
 			if ($before === $this->suspensions) {
 				return '([&](' . $owner->cpp_type() . " owner) -> $result_type { if ($test) { $argument_steps return $present; } return {}; }($operand))";
 			}

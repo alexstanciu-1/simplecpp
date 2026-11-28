@@ -181,11 +181,48 @@ def dispatch(work):
 def admission(work):
     main = '$p ?Player=null;$n=0;$p?->score($n);return 8;'
     method = 'class Player {public function score(int &$n):int {return $n;}}'
-    denied = 'Nullsafe call requires an instance method returning a value'
+    denied = 'Nullsafe call requires a synchronous instance method without a reference return'
     revisions(work, 'php', dict(main=main, player=method), [
         ('player', method.replace('function score', 'final function &score'), denied),
-        ('player', method.replace(':int {return $n;', ':void {return;'), 'Void call cannot be used as a value'),
+        ('player', method.replace(':int {return $n;', ':void {return;'), b''),
         ('player', method, b'')])
+
+
+NOTIFY = """
+    class Coach {public function notify(int $n):void {echo "N",$n;}}
+    class Team {public ?Coach $coach;}
+"""
+
+
+def terminal_void(work):
+    main = PROBES + """
+        function run(?Team $t):void {probe($t)?->coach->notify(key());}
+        run(null);$t=new Team();$t->coach=new Coach();run($t);return 8;
+    """
+    trace = b'PPKN1'
+    expression = 'probe($t)?->coach->notify(key())'
+    assignment = main.replace(expression, '$saved=' + expression)
+    returns_value = NOTIFY.replace(':void {echo "N",$n;', ':int {echo "N",$n;return $n;')
+    revisions(work, 'php', dict(main=main, model=NOTIFY), [
+        (None, None, trace),
+        ('main', assignment, 'Void call cannot be used as a value'),
+        ('model', returns_value, trace),
+        ('model', NOTIFY, 'Void call cannot be used as a value'),
+        ('main', main, trace)])
+
+
+def terminal_void_empty(work):
+    source = NOTIFY + PROBES + '$t ?Team=new Team();probe($t)?->coach->notify(key());return 8;'
+    guard(work, 'php', 'empty', source, 'ownership_empty_access', expected_stdout=b'P')
+
+
+def terminal_void_suspended(work):
+    main = PROBES + """
+        async function later():int {await async_sleep_ms(1);return key();}
+        async function run(?Team $t):void {probe($t)?->coach->notify(await later());}
+        await run(null);$t=new Team();$t->coach=new Coach();await run($t);return 8;
+    """
+    revisions(work, 'php', dict(main=main, model=NOTIFY), [(None, None, b'PPKN1')])
 
 
 def lifetime(work):
@@ -277,7 +314,8 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     if case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
-        {'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
+        {'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
+         'terminal_void_suspended': terminal_void_suspended, 'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
          'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
          'dispatch': dispatch, 'admission': admission, 'ordinary_suffix': ordinary_suffix,
          'empty_intermediate': empty_intermediate, 'suspended_suffix': suspended_suffix}[case](Path(tmp))

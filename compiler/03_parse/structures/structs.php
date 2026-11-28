@@ -360,9 +360,9 @@ final class ast_nullsafe_member extends ast_expression
 		return $this->operand !== $this->guarded_member;
 	}
 
-	public function settle_optional(type_definition $type): void
+	public function settle_result(type_definition $type): void
 	{
-		$this->conversion = $type->prepare_conversion($this->operand, conversion_context::typed_destination);
+		if ($type !== type_void::instance()) $this->conversion = $type->prepare_conversion($this->operand, conversion_context::typed_destination);
 		$this->settle_value($type, null);
 	}
 
