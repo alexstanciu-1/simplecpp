@@ -40,6 +40,12 @@ arguments in written order and dispatch through the declared receiver type.
 A synchronous method returning by value uses the same optional result rule as
 a field. Exceptions from selected arguments and the method propagate.
 
+A nullable enum can guard a public instance method call. For example,
+`enum_try_from_value(Kind::class, input())?->score(key())` evaluates the
+lookup once. A miss skips `key()` and the method. On a hit, even a case
+backed by the empty string is present. The method receives the selected case
+by value, and its result follows the same optional-result rule.
+
 Consecutive `?->` hops compose from left to right. In
 `findTeam()?->captain?->scoreFor(key())`, each selected receiver is evaluated
 once. If either owner is absent, the result is absent and `key()` is skipped.
@@ -57,6 +63,18 @@ For `$team?->captain->club?->coach->score(key())`, an absent team or club
 yields absence. An empty captain or coach raises the ordinary empty-owner
 failure. All four paths skip `key()`. With every owner present, `key()` and
 `score()` each run once, and a score of zero stays present.
+
+A chain may end in one checked read from a typed vector or hash, for example
+`$team?->scores[key()]`. An absent guarded receiver skips the key and yields
+absence. On a selected path the collection and key each run once, and the
+element uses its type's optional representation. A stored zero stays present.
+An invalid vector index or missing hash key raises the ordinary lookup failure,
+including when a coalescing fallback follows the chain.
+
+A standalone call such as `$team?->coach->notify(key());` may end in a
+synchronous `void` method. An absent team skips the arguments and invocation.
+With a present team, the ordinary receiver check runs before `key()`. An
+assignment or another member access requires the call to produce a value.
 
 ## v0.2 conditional nullable-local assignment — 2026-11-18
 

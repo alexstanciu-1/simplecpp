@@ -81,6 +81,61 @@ PROBES = """
 """
 
 
+def terminal_index(work, case):
+    vector = case == 'index_vector'
+    collection = 'vector<int>' if vector else 'hash<int,string>'
+    key = 'function key():int {echo "K";return 0;}' if vector else 'function key():string {echo "K";return "home";}'
+    fill = '$this->scores[]=0;' if vector else '$this->scores["home"]=0;'
+    team = 'class Team {public ' + collection + ' $scores; public function fill():void {' + fill + '}}'
+    probe = 'function probe(?Team $t):?Team {echo "P";return $t;}'
+    read = 'function read(?Team $t):nullable<int> {return probe($t)?->scores[key()];}'
+    main = key + probe + read + 'echo read(null) ?? 9;$t=new Team();$t->fill();echo read($t) ?? 9;return 8;'
+    changed = team.replace('<int', '<string').replace('=0;', '="zero";')
+    revisions(work, 'php', dict(main=main, team=team), [
+        (None, None, b'P9PK0'), ('team', changed, 'Unsupported explicit conversion from string to int64'), ('team', team, b'P9PK0')])
+    error = 'sequence_index_out_of_range' if vector else 'hash_missing_key'
+    guard(work, 'php', 'missing', team + key + probe + read + 'echo read(new Team()) ?? 9;return 8;',
+          error, exception_type='std::out_of_range', expected_stdout=b'PK')
+
+
+def index_admission(work):
+    main = 'function read(?Team $t):nullable<int> {return $t?->scores[0];}return 8;'
+    model = 'class Team {public vector<int> $scores;}'
+    revisions(work, 'php', dict(main=main, model=model), [
+        ('model', model.replace('vector<int>', 'string'), 'Nullsafe indexed read requires a typed vector or hash'),
+        ('model', model, b'')])
+
+
+def index_owner(work):
+    main = """
+        class Scores {
+            public vector<int> $values;
+            public function __construct(int $n) {$this->values[]=$n;}
+            public function __destruct() {echo "D",$this->values[0];}
+        }
+        class Team {public ?Scores $scores;}
+        function replace(Team $t):int {$t->scores=new Scores(9);echo "K";return 0;}
+        function pick(Team $t):?Team {return $t;}
+        $t=new Team();$t->scores=new Scores(7);
+        $n=pick($t)?->scores->values[replace($t)];echo "R",$n ?? 0;return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'KD7R7D9')])
+
+
+def index_suspended(work):
+    main = """
+        class Team {
+            public function scores():vector<int> {echo "S";$v vector<int> = [0];return $v;}
+        }
+        class Club {public ?Team $team;}
+        async function key():int {await async_sleep_ms(1);echo "K";return 0;}
+        async function read(?Club $c):int {return $c?->team?->scores()[await key()] ?? 9;}
+        echo await read(null);$c=new Club();echo await read($c);
+        $c->team=new Team();echo await read($c);return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'99SK0')])
+
+
 def ordinary_suffix(work):
     main = PROBES + """
         function check(?Team $t):void {
@@ -168,6 +223,37 @@ def mixed_failure(work):
               'ownership_empty_access', expected_stdout=b'P')
 
 
+def enum_method(work):
+    kind = """
+        enum Kind:string {
+            case Empty="";case Other="other";
+            public function score(int $n):int {echo enum_name($this);return $n;}
+        }
+    """
+    main = """
+        function input(string $s):string {echo "I";return $s;}
+        function key():int {echo "K";return 0;}
+        function read(string $s):int {return enum_try_from_value(Kind::class,input($s))?->score(key()) ?? 9;}
+        echo read("missing"),read("");return 8;
+    """
+    trace = b'I9IKEmpty0'
+    revisions(work, 'php', dict(main=main, kind=kind), [
+        (None, None, trace), ('kind', kind.replace('function score', 'function renamed'), 'Unknown method Kind::score'),
+        ('kind', kind, trace)])
+
+
+def enum_selected_case(work):
+    main = """
+        enum Rank {case First=0;case Last=2;
+            public function show(int $n):void {echo enum_name($this),$n;}
+        }
+        function replace(?Rank &$r):int {$r=Rank::Last;echo "K";return 1;}
+        $r ?Rank=null;$r?->show(replace($r));
+        $r=Rank::First;$r?->show(replace($r));echo enum_name($r ?? Rank::First);return 8;
+    """
+    revisions(work, 'php', dict(main=main), [(None, None, b'KFirst1Last')])
+
+
 def dispatch(work):
     main = """
         class Base {public virtual function score(int $left):int {return $left;}}
@@ -181,11 +267,48 @@ def dispatch(work):
 def admission(work):
     main = '$p ?Player=null;$n=0;$p?->score($n);return 8;'
     method = 'class Player {public function score(int &$n):int {return $n;}}'
-    denied = 'Nullsafe call requires an instance method returning a value'
+    denied = 'Nullsafe call requires a synchronous instance method without a reference return'
     revisions(work, 'php', dict(main=main, player=method), [
         ('player', method.replace('function score', 'final function &score'), denied),
-        ('player', method.replace(':int {return $n;', ':void {return;'), 'Void call cannot be used as a value'),
+        ('player', method.replace(':int {return $n;', ':void {return;'), b''),
         ('player', method, b'')])
+
+
+NOTIFY = """
+    class Coach {public function notify(int $n):void {echo "N",$n;}}
+    class Team {public ?Coach $coach;}
+"""
+
+
+def terminal_void(work):
+    main = PROBES + """
+        function run(?Team $t):void {probe($t)?->coach->notify(key());}
+        run(null);$t=new Team();$t->coach=new Coach();run($t);return 8;
+    """
+    trace = b'PPKN1'
+    expression = 'probe($t)?->coach->notify(key())'
+    assignment = main.replace(expression, '$saved=' + expression)
+    returns_value = NOTIFY.replace(':void {echo "N",$n;', ':int {echo "N",$n;return $n;')
+    revisions(work, 'php', dict(main=main, model=NOTIFY), [
+        (None, None, trace),
+        ('main', assignment, 'Void call cannot be used as a value'),
+        ('model', returns_value, trace),
+        ('model', NOTIFY, 'Void call cannot be used as a value'),
+        ('main', main, trace)])
+
+
+def terminal_void_empty(work):
+    source = NOTIFY + PROBES + '$t ?Team=new Team();probe($t)?->coach->notify(key());return 8;'
+    guard(work, 'php', 'empty', source, 'ownership_empty_access', expected_stdout=b'P')
+
+
+def terminal_void_suspended(work):
+    main = PROBES + """
+        async function later():int {await async_sleep_ms(1);return key();}
+        async function run(?Team $t):void {probe($t)?->coach->notify(await later());}
+        await run(null);$t=new Team();$t->coach=new Coach();await run($t);return 8;
+    """
+    revisions(work, 'php', dict(main=main, model=NOTIFY), [(None, None, b'PPKN1')])
 
 
 def lifetime(work):
@@ -274,10 +397,13 @@ def indexed_callable(work, case):
 
 with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     case = sys.argv[1]
-    if case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
+    if case in ('index_vector', 'index_hash'):
+        terminal_index(Path(tmp), case)
+    elif case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
-        {'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
+        {'enum_selected_case': enum_selected_case, 'enum_method': enum_method, 'index_admission': index_admission, 'index_owner': index_owner, 'index_suspended': index_suspended, 'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
+         'terminal_void_suspended': terminal_void_suspended, 'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
          'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,
          'dispatch': dispatch, 'admission': admission, 'ordinary_suffix': ordinary_suffix,
          'empty_intermediate': empty_intermediate, 'suspended_suffix': suspended_suffix}[case](Path(tmp))

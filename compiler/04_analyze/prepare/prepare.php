@@ -1836,20 +1836,29 @@ final class Preparation
 		}
 		if ($syntax instanceof ast_nullsafe_member) {
 			$member = $syntax->operand;
-			$this->value($member, $initializing);
+			$this->value($member, $initializing, destination: $syntax->parent instanceof ast_discard_statement ? type_void::instance() : null);
 			$guarded = $syntax->guarded_member;
 			$kind = $guarded instanceof ast_call_expression ? 'method call' : 'field read';
 			$owner = $guarded->receiver->type_def();
-			if (!($owner instanceof shared_record_type_definition) || $owner->required) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe ' . $kind . ' requires an optional shared owner');
+			$enum_call = $owner instanceof nullable_enum_type_definition && $guarded instanceof ast_call_expression;
+			if (!$enum_call && !($owner instanceof shared_record_type_definition && !$owner->required)) {
+				$expected = $guarded instanceof ast_call_expression ? 'an optional shared owner or nullable enum' : 'an optional shared owner';
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Nullsafe ' . $kind . ' requires ' . $expected);
+			}
+			if ($member instanceof ast_index_expression && !($member->receiver->type_def() instanceof readonly_index_lookup_type)) {
+				throw new diagnostic($member->source(), $member->byte_start(), 'Nullsafe indexed read requires a typed vector or hash');
 			}
 			$payload = $member->type_def();
 			for ($hop = $member; $hop !== $guarded->receiver; $hop = $hop->receiver) {
 				if ($hop instanceof ast_call_expression) $this->check_nullsafe_method($hop);
 			}
-			$result = $payload instanceof carrier_type_definition && $payload->family === 'nullable' ? $payload : Type_Resolution::nullable_value($payload);
-			if ($result === null) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'No optional representation for ' . ($member instanceof ast_call_expression ? 'method result' : 'field type') . ' ' . $payload->name);
-			$syntax->settle_optional($result);
+			$result = $payload === type_void::instance() || ($payload instanceof carrier_type_definition && $payload->family === 'nullable')
+				? $payload : Type_Resolution::nullable_value($payload);
+			if ($result === null) {
+				$kind = $member instanceof ast_index_expression ? 'indexed element' : ($member instanceof ast_call_expression ? 'method result' : 'field type');
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'No optional representation for ' . $kind . ' ' . $payload->name);
+			}
+			$syntax->settle_result($result);
 			return;
 		}
 		if ($syntax instanceof ast_field_expression) {
@@ -2149,12 +2158,12 @@ final class Preparation
 		throw new \LogicException('Unhandled expression preparation');
 	}
 
-	/** Only synchronous instance calls returning values participate in a guarded chain. */
+	/** Guarded calls use synchronous instance dispatch and never return a reference. */
 	private function check_nullsafe_method(ast_call_expression $call): void
 	{
 		$method = $call->function_def();
-		if (!($method instanceof ast_function_declaration) || !$method->has_receiver() || $method->returns_reference || $method->is_async || $call->type_def() === type_void::instance()) {
-			throw new diagnostic($call->source(), $call->byte_start(), 'Nullsafe call requires an instance method returning a value');
+		if (!($method instanceof ast_function_declaration) || !$method->has_receiver() || $method->returns_reference || $method->is_async) {
+			throw new diagnostic($call->source(), $call->byte_start(), 'Nullsafe call requires a synchronous instance method without a reference return');
 		}
 	}
 

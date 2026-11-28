@@ -2873,7 +2873,7 @@ CPP;
 			$owner = $receiver->type_def();
 			$operand = $this->value($receiver, $global_references, $declarations, $required_headers);
 			foreach ($value_type->conversion_headers($value->conversion) as $header) $required_headers[$header] = true;
-			$test = $owner->lower_cpp_condition('owner');
+			$test = $receiver->member_borrow?->lower_cpp_presence('owner') ?? $owner->lower_cpp_condition('owner');
 			$result_type = $value_type->cpp_type();
 			if (!$value->has_suffix() && $member instanceof ast_field_expression) {
 				$present = $this->conversion($value_type, $value->conversion, 'owner->' . Cpp_Identifier::source($member->field), $member);
@@ -2881,11 +2881,11 @@ CPP;
 			}
 			$before = $this->suspensions;
 			$start = count($this->async_steps);
-			if ($value->has_suffix()) {
+			if ($value->has_suffix() || $receiver->member_borrow !== null) {
 				$outer_receiver = $this->guarded_receiver;
 				$this->guarded_receiver = $receiver;
 				try {
-					$selected = $this->value($member, $global_references, $declarations, $required_headers);
+					$selected = $this->value($member, $global_references, $declarations, $required_headers, inside_scope: $value_type === type_void::instance());
 				} finally {
 					$this->guarded_receiver = $outer_receiver;
 				}
@@ -2896,8 +2896,9 @@ CPP;
 				$selected = $this->invocation($member, $method, $name, $member->type_def(), $global_references, $declarations, $required_headers,
 					selected_receiver: '*owner.operator->()');
 			}
-			$present = $this->conversion($value_type, $value->conversion, $selected, $member);
 			$argument_steps = implode(' ', array_splice($this->async_steps, $start));
+			if ($value_type === type_void::instance()) return "if (auto owner = $operand; $test) { $argument_steps $selected; }";
+			$present = $this->conversion($value_type, $value->conversion, $selected, $member);
 			if ($before === $this->suspensions) {
 				return '([&](' . $owner->cpp_type() . " owner) -> $result_type { if ($test) { $argument_steps return $present; } return {}; }($operand))";
 			}
@@ -3052,7 +3053,10 @@ CPP;
 				$base = $field;
 				while ($base instanceof ast_field_expression && $base->member_borrow === null) $base = $base->receiver;
 				$steps = [];
-				$receiver = $base->member_borrow !== null && !$value->index->is_effect_free_literal()
+				// A key can replace the last shared owner of a selected field inside the guard.
+				$guarded_field = $value->parent instanceof ast_nullsafe_member && $field instanceof ast_field_expression
+					&& $field->receiver !== $this->guarded_receiver;
+				$receiver = ($guarded_field || $base->member_borrow !== null) && !$value->index->is_effect_free_literal()
 					? $this->retained_place($field, $global_references, $declarations, $required_headers, $steps, full_expression: true)
 					: $this->value($field, $global_references, $declarations, $required_headers);
 			}
