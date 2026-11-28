@@ -10,6 +10,12 @@ require_once __DIR__ . '/render_compiler_carriers.php';
 require_once __DIR__ . '/render_compiler_hashes.php';
 require_once __DIR__ . '/boxed_dispatch.php';
 
+/** Bind published and application types to the same concrete member. */
+function compilerCheckedSlot(string $recipe): string {
+    return str_replace('@method@', checkedSlotMethod(concreteRecipe($recipe)),
+        readFile(__DIR__ . '/../templates/collections/compiler_checked_slot.php.tpl'));
+}
+
 /** Bind the two source observations to checked, nullary runtime member signatures. */
 function compilerCardinalityMethods(array $methods, string $count, array $definitions): string {
     $bindings = [];

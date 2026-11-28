@@ -29,6 +29,7 @@ function renderHashTypes(array $plan, array $specializations, bool $lookup): arr
         $lh = template('core/lifecycle_declaration', ['n' => $n]);
         $vars = compact('n', 'k', 'v', 'count', 'nullable', 'lh') + $hash['traversal'] + ['inline' => '', 'mt_segments' => $mt ? '1' : ''];
         $vars['lookup'] = $lookup ? "    $nullable find(const $k& key) const;\n" : '';
+        $vars['checked_slot'] = checkedSlotMethod(concreteRecipe(hashConcreteRecipe($hash)));
         $vars['methods'] = template('collections/hash_value_methods_declaration', $vars);
         $h .= template('collections/hash_declaration', $vars) . template('collections/hash_key_iteration_declaration', $vars);
         if ($hash['initialization'] !== null) {

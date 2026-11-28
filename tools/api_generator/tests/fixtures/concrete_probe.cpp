@@ -132,6 +132,7 @@ int main() {
         assert(Probe::authored == authored);
         try { (void)values.iteration_reference(0); assert(false); } catch (const std::out_of_range&) {}
         values.append(Probe{5}); values.append(Probe{6});
+        assert(&values.checked_slot(0) == &values.iteration_reference(0));
         assert(values.iteration_reference(0).value == 5);
         try { (void)values.iteration_reference(2); assert(false); } catch (const std::out_of_range&) {}
         Probe::copy_budget = 0;
@@ -164,6 +165,7 @@ int main() {
         try { (void)values.iteration_current_value(position); assert(false); } catch (int code) { assert(code == 42); }
         assert(position == 2 && key == 1 && !output.active && Probe::live == 2);
         assert(values.iteration_reference(position).value == 11);
+        assert(values.checked_slot(position).value == 12); // Key 2 and cursor position 2 select different entries.
         // Cursor 1 names the erased entry and cursor 4 is past the physical end.
         for (int invalid : {0, 1, 4}) {
             try { (void)values.iteration_reference(invalid); assert(false); } catch (const std::out_of_range&) {}
