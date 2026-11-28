@@ -1,6 +1,6 @@
 
 /** Canonical published @class@ identity; empty construction, checked element writes and value-copy indexing. */
-final class @class@ extends vector_type_definition@interfaces@, map_source, @entry_builder@
+final class @class@ extends vector_type_definition@interfaces@, subset_source, map_source, @entry_builder@
 {
 	use @entry_insert@;
 	use collection_keyed_store;
@@ -13,6 +13,7 @@ final class @class@ extends vector_type_definition@interfaces@, map_source, @ent
 @identity@
 @initialization@
 	/** METHODS */
+@subset_result@
 @map_result@
 @iteration@
 @methods@

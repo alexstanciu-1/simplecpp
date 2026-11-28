@@ -4,10 +4,9 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
-abstract class hash_type_definition extends type_definition implements subset_source, readonly_index_lookup_type, indexed_mutation_type, counted_collection_type, membership_type
+abstract class hash_type_definition extends type_definition implements readonly_index_lookup_type, indexed_mutation_type, counted_collection_type, membership_type
 {
 	use indexed_entry_read;
-	use same_type_subset;
 	use checked_indexed_mutation;
 	use collection_specializations;
 	use concrete_value_storage;

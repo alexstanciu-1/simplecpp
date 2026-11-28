@@ -8,6 +8,7 @@ final class fixed_array_type extends type_definition implements container_type, 
 {
 	use indexed_entry_read;
 	use positional_subset;
+	use positional_entry_key;
 
 	/** CONSTANTS */
 	public const int PAYLOAD_LIMIT /** uint32 */ = 4294967295;

@@ -70,7 +70,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $regexProbe = isset($runtime['regex_shapes'][$hash['name']]);
         $publishedProbe = $regexProbe || in_array($hash['value'], $probeValues, true);
         $probeHeader = $regexProbe ? 'scpp/php/regex_hash_isset.hpp' : 'scpp/php/hash_isset.hpp';
-        $bindings = compilerMapBuilder(concreteRecipe(hashConcreteRecipe($hash))) + [
+        $bindings = compilerCollectionBuilders(concreteRecipe(hashConcreteRecipe($hash))) + [
             '@indexed_probe@' => $publishedProbe ? "\tpublic function supports_indexed_presence(): bool { return true; }\n"
                 . "\tpublic function require_entry_probe(Cpp_Concrete_Collections \$collections, array &\$headers): void { \$headers['$probeHeader'] = true; }\n" : '',
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",

@@ -10,8 +10,23 @@ require_once __DIR__ . '/render_compiler_carriers.php';
 require_once __DIR__ . '/render_compiler_hashes.php';
 require_once __DIR__ . '/boxed_dispatch.php';
 
-/** Bind the input's mapped result type independently of how this provider builds an output. */
-function compilerMapBuilder(object $recipe): array {
+/** Key-preserving subsets retain the source type or specialize a family with the traversed value and key. */
+function compilerSubsetResult(object $result): string {
+    if (isset($result->family)) {
+        fields($result, ['family']);
+        $family = textValue($result->family);
+        requireThat(recordIdentifier($family), 'Invalid subset result family');
+        $type = 'Type_Resolution::collection(' . var_export($family, true) . ', $this->iteration_value_type(), $this->iteration_key_type())';
+    } else {
+        fields($result, ['source']);
+        requireThat(at($result, 'source') === true, 'Invalid subset result source');
+        $type = '$this';
+    }
+    return "\n\tpublic function subset_result_type(): ?type_definition\n\t{\n\t\treturn $type;\n\t}\n";
+}
+
+/** Bind associated result types independently of how this provider builds an output. */
+function compilerCollectionBuilders(object $recipe): array {
     $result = at($recipe, 'map_result');
     fields($result, ['family', 'key']);
     $family = textValue(at($result, 'family'));
@@ -26,7 +41,7 @@ function compilerMapBuilder(object $recipe): array {
         'keyed_store' => ['keyed_result_builder', 'keyed_entry_insert'],
         default => throw new \RuntimeException('Invalid collection entry insertion protocol'),
     };
-    return ['@entry_builder@' => $builder, '@entry_insert@' => $insert,
+    return ['@subset_result@' => compilerSubsetResult(at($recipe, 'subset_result')), '@entry_builder@' => $builder, '@entry_insert@' => $insert,
         '@map_result@' => "\n\tpublic function mapped_result_type(type_definition \$element): ?type_definition\n\t{\n"
             . "\t\treturn Type_Resolution::collection(" . var_export($family, true) . ", \$element, $key);\n\t}\n"];
 }

@@ -1,5 +1,6 @@
 {
   "fill_factory": {"source": "vector_filled", "member": "filled"},
+  "subset_result": {"family": "hash"},
   "map_result": {"family": "vector", "key": "none"},
   "entry_insertion": "append",
   "writable_iteration": "dense_index",

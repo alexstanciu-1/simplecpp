@@ -229,7 +229,11 @@ trait positional_subset
 	{
 		return type_registry::positional_subset($this->iteration_value_type());
 	}
+}
 
+/** Dense entry cursors expose their original integer position. */
+trait positional_entry_key
+{
 	public function cpp_entry_key_type(): string
 	{
 		return type_int64::instance()->cpp_type();

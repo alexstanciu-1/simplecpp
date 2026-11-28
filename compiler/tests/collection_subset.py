@@ -28,6 +28,14 @@ $blank fixed_array<byte,0> = [];
 if(count(array_filter($blank,fn(byte $x):bool=>true))!==0){return 3;}
 $h hash<int,string>=["03"=>0,"05"=>1,"02"=>2];
 foreach(array_filter($h) as $k=>$n){echo $k,"/";}
+struct Item {public int $n; public function __construct(int $n){$this->n=$n;}}
+function item(int $n):Item {$i Item($n);return $i;}
+$items=array_map(item(...),$v);
+$kept=array_filter($items,fn($i):bool=>$i->n===30);
+if(count($kept)!==1 || $kept[2]->n!==30){return 10;}
+$named hash<Item,string>=["05"=>item(5),"5"=>item(50),"drop"=>item(0)];
+$positive=array_filter($named,fn($i):bool=>$i->n>0);
+if(count($positive)!==2 || $positive["05"]->n!==5 || $positive["5"]->n!==50){return 11;}
 $m mixed=[];$m["child"]=7;$m[2]=1;
 $mc=array_filter($m,fn(mixed $x):bool=>(int)$x===7);
 $mc["child"]=8;

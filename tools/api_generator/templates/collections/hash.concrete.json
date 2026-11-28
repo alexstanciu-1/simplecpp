@@ -1,5 +1,6 @@
 {
   "hash_key": "k",
+  "subset_result": {"source": true},
   "map_result": {"family": "hash", "key": "source"},
   "entry_insertion": "keyed_store",
   "writable_iteration": "live_key_cursor",

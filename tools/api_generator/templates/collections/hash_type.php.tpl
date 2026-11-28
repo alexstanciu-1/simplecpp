@@ -1,6 +1,6 @@
 
 /** Canonical published hash<V,K> identity; empty construction, checked keyed writes and copied reads. */
-final class @class@ extends hash_type_definition@interfaces@, map_source, @entry_builder@
+final class @class@ extends hash_type_definition@interfaces@, subset_source, map_source, @entry_builder@
 {
 	use @entry_insert@;
 	use collection_keyed_store;
@@ -16,6 +16,7 @@ final class @class@ extends hash_type_definition@interfaces@, map_source, @entry
 @initialization@
 @identity@
 	/** METHODS */
+@subset_result@
 @map_result@
 @iteration@
 @methods@

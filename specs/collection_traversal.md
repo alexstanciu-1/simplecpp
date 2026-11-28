@@ -162,7 +162,9 @@ return type. The output provider recipe selects append or keyed insertion. Gener
 filters build a fresh result of the input type. Its builder appends survivors
 for a dense sequence or inserts them under the observed key for a keyed table.
 All four filter forms use the same runtime entry loop. PHP `array_filter`
-selects a key-preserving subset builder even for a dense source. All four map
+selects a key-preserving subset builder even for a dense source. The vector recipe
+selects a hash specialized with the traversed value and position types. The hash
+recipe selects its own specialization. All four map
 forms likewise share one map loop.
 
 T is the input value type, K the hash key type and U the map callback's result.

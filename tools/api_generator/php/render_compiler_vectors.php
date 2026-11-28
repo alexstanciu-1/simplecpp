@@ -146,7 +146,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
         $fillFactory = empty($vector['capacity_helpers']) ? null : concreteRecipe(vectorConcreteRecipe($vector))->fill_factory;
         if ($fillFactory !== null) $fillFactories[$fillFactory->source] = $family;
         $fillInterface = $fillFactory === null ? '' : ', filled_collection_type';
-        $bindings = compilerMapBuilder(concreteRecipe(vectorConcreteRecipe($vector))) + [
+        $bindings = compilerCollectionBuilders(concreteRecipe(vectorConcreteRecipe($vector))) + [
             '@fill_binding@' => $fillFactory === null ? '' : compilerFillBinding($fillFactory, $countClass, collectionFillBorrows($vector)),
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
             '@entry_presence@' => compilerEntryPresence(vectorConcreteRecipe($vector), null, $traits, $code),
