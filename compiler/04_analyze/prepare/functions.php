@@ -322,10 +322,10 @@ final class Function_Preparation
 				if ($declaration->parent instanceof ast_method_owner) {
 					if (!$collection || !($declaration->parent instanceof ast_record_declaration)
 						|| $declaration->is_destructor()) {
-						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const method references require a vector or hash on an ordinary class, struct or interface method');
+						throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const method references require a borrowable collection on an ordinary class, struct or interface method');
 					}
 				} elseif (!$collection && !($parameter_type instanceof text_builder_type)) {
-					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a vector, hash or text builder parameter');
+					throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Const references require a borrowable collection or text builder parameter');
 				}
 			}
 			if ($parameter->type_reference instanceof ast_variadic_type_reference) {

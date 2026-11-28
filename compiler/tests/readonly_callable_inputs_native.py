@@ -67,7 +67,7 @@ def signatures(work):
         edits.append(('main', bad, 'conversion'))
     edits += [('main', main.replace('return $slot;', 'return $view;'), 'must originate in its writable parameter'),
               ('main', '$f function<vector<int>&(const vector<int>&)>;return 8;', 'exactly one writable parameter'),
-              ('main', '$f function<int(const int&)>;return 8;', 'vector or hash input'),
+              ('main', '$f function<int(const int&)>;return 8;', 'borrowable collection input'),
               ('main', main, b'1000')]
     revisions(work, 'php', dict(main=main), edits)
 

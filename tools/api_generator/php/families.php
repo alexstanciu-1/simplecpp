@@ -178,7 +178,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
     if ($m === null) {
         return;
     }
-    fields($m, ['type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'library_provider', 'functions', 'trim_defaults', 'search_policy_provider', 'search_offsets', 'explicit_formatters', 'index_read', 'index_write', 'transfer_assignment']);
+    fields($m, ['access_contracts', 'type', 'source_type', 'storage', 'count_type', 'construction', 'null_pointer', 'text_casts', 'operations', 'provider', 'library_provider', 'functions', 'trim_defaults', 'search_policy_provider', 'search_offsets', 'explicit_formatters', 'index_read', 'index_write', 'transfer_assignment']);
     $transfer = privateValueTransfer($m);
     literals($m, ['type' => 'string', 'source_type' => 'string', 'storage' => 'inline_22_private_std_string', 'construction' => 'explicit', 'null_pointer' => 'reject']);
     $count = textValue(at($m, 'count_type'));
@@ -532,7 +532,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     if ($m === null) {
         return;
     }
-    fields($m, ['provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations', 'initialization', 'reserve', 'transfer_assignment']);
+    fields($m, ['access_contracts', 'provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations', 'initialization', 'reserve', 'transfer_assignment']);
     $transfer = privateValueTransfer($m);
     $reserve = property_exists($m, 'reserve');
     if ($reserve) literals($m, ['reserve' => 'checked_capacity_preserve_size']);
@@ -830,7 +830,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     if($m === null) {
         return;
     }
-    fields($m, ['provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization', 'transfer_assignment']);
+    fields($m, ['access_contracts', 'provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization', 'transfer_assignment']);
     $transfer = privateValueTransfer($m);
     literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
     $keys = names(at($m, 'key_types'), 'Duplicate hash key type');

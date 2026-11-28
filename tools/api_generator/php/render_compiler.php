@@ -250,6 +250,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         }
         if ($identity === 'string' && isset($runtime['string'])) {
             $indexInterface .= $indexInterface === '' ? ' implements counted_collection_type' : ', counted_collection_type';
+            $indexInterface .= compilerAccessInterfaces($metadata->string, isset($runtime['string_index_read']));
             $methods .= "\n" . readFile(__DIR__ . '/../templates/strings/string_cardinality.php.tpl');
         }
         if ($identity === 'string' && ($runtime['string']['transfer_assignment'] ?? false)) {
@@ -299,7 +300,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         $specializations .= "\t\tif (\$family === $name) {\n$hashCases\n\t\t\treturn null;\n\t\t}\n";
     }
     if (isset($runtime['boxed_dispatch'])) {
-        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases);
+        $files['types/boxed.php'] = compilerBoxedDefinitions($runtime, $cases, compilerAccessInterfaces($metadata->boxed));
     }
     $runtimeTypes = [];
     foreach ($definitions as $identity => $definition) $runtimeTypes[$identity] = $definition['class'];

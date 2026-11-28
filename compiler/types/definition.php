@@ -268,6 +268,21 @@ interface readonly_index_lookup_type extends index_read_type
 {
 }
 
+/** An exact named slot can bind to const T& and observe replacement through a separate writer. */
+interface readonly_collection_slot
+{
+}
+
+/** The provider admits Python subscripting and owns key validation, result type and checked lookup. */
+interface python_index_read_type extends index_read_type
+{
+}
+
+/** Hold the selected receiver by value across suspension while computing a Python index. */
+interface python_snapshot_index_read_type extends python_index_read_type
+{
+}
+
 /** An immutable descriptor can reuse this provider's checked read while the owner is stable. */
 interface scoped_byte_read_type extends index_read_type
 {

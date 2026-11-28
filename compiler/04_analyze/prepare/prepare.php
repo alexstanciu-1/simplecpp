@@ -1935,9 +1935,8 @@ final class Preparation
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
-			if ($syntax->source()->flavor === flavor::python
-				&& !($type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof segment_type || $type instanceof boxed_type_definition)) {
-				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash, or a boxed collection');
+			if ($syntax->source()->flavor === flavor::python && !($type instanceof python_index_read_type)) {
+				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Provider does not support Python indexed reads');
 			}
 			$this->value($syntax->index, $initializing);
 			if ($deep_write_path && $type instanceof boxed_type_definition) $type->prepare_index($syntax, deep_path: true);
@@ -2800,7 +2799,7 @@ final class Preparation
 				: Type_Resolution::signature($syntax, $this->symbols, $function, $this->dependencies, watcher: $this->owner);
 			if ($index === $variadic) Function_Preparation::require_pack_type($parameter, $type);
 			if ($parameter->mode === passing_mode::readonly_reference && !Type_Resolution::readonly_collection_input($type)) {
-				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only callable references require a vector or hash input');
+				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Read-only callable references require a borrowable collection input');
 			}
 			if (!Type_Resolution::callback_component($type) && !($transform_element !== null && $type instanceof record_type_definition)) {
 				throw new diagnostic($parameter->source(), $parameter->byte_start(), 'Lambda requires supported value or mutable reference parameters');

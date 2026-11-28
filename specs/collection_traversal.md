@@ -216,6 +216,16 @@ the advance call. Exhaustion leaves outputs unchanged. Existing bounds, holes, m
 and receiver-lifetime rules apply equally to reference outputs and construction-aware slots.
 The slot owns its copied value through normal loop completion and suspended-cursor cleanup.
 
+## Python indexed reads
+
+A provider admits Python subscripting with `python_index_read`. It supplies key
+validation, the result type, and the checked read. Vector and typed hash publish
+this contract. Positional worker segments bind it directly and hash segments
+reject indexed keys during validation. Boxed providers publish the
+`python_index_read_snapshot` variant to keep the selected receiver alive by value
+across an awaited key. The default string byte accessor stays limited to its
+existing flavors. Indexed writes have their own admission rules.
+
 ## PHP array helpers
 
 `array_map(callback, source)` maps one vector, typed hash or boxed table and

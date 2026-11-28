@@ -3093,8 +3093,8 @@ CPP;
 				$steps = [];
 				$receiver = 'indexed_receiver_' . $value->start . '_' . $value->end;
 				$place = $this->retained_place($field, $global_references, $declarations, $required_headers, $steps, owner_name: $receiver . '_owner');
-				$python_box = $type instanceof boxed_type_definition && $value->source()->flavor === flavor::python;
-				$steps[] = ($python_box ? 'const auto ' : 'auto&& ') . $receiver . ' = ' . $place . ';';
+				$snapshot = $value->source()->flavor === flavor::python && $type instanceof python_snapshot_index_read_type;
+				$steps[] = ($snapshot ? 'const auto ' : 'auto&& ') . $receiver . ' = ' . $place . ';';
 				array_push($this->async_steps, ...$steps, ...$key_steps);
 			} else {
 				$base = $field;

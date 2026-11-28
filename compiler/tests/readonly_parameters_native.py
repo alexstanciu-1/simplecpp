@@ -50,11 +50,11 @@ def prove(work):
             ('$rows[0]', '$rows vector<vector<int>> = [];', 'stable variable storage'),
             ('$strings', '$strings vector<string> = [];', 'exact storage type')]:
         edits.append(('main', prefix + 'return size(' + argument + ');', error))
-    edits.extend([('size', 'function size(const int &$v): int { return $v; }', 'vector, hash or text builder'),
+    edits.extend([('size', 'function size(const int &$v): int { return $v; }', 'borrowable collection or text builder'),
                   ('size', 'function size(const vector<int> &$v): Iterator<int> { yield count($v); }', 'Yield producers require by-value'),
                   ('size', size.replace('&$v', '$v'), '& after const parameter type'),
                   ('size', size.replace('&$v', '&$v = null'), 'Reference parameter defaults'),
-                  ('size', 'class Reader { public virtual ' + size.replace('vector<int>', 'int') + ' }', 'Const method references require a vector or hash'),
+                  ('size', 'class Reader { public virtual ' + size.replace('vector<int>', 'int') + ' }', 'Const method references require a borrowable collection'),
                   ('size', size, 'exact storage type'), ('main', body, b'')])
     revisions(work, 'php', {'main': body, 'size': size}, edits)
 
