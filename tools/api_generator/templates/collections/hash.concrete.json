@@ -1,6 +1,7 @@
 {
   "hash_key": "k",
   "writable_iteration": "live_key_cursor",
+  "entry_presence": {"protocol": "key_lookup", "owner_probe": "has_present_owner"},
   "checked_slot": {"method": "checked_slot", "key": "k", "value": "v", "missing": "hash_missing_key"},
   "parameters": {
     "k": {"alias": "key_type", "requires": ["copy_constructible", "nothrow_move_constructible", "nothrow_move_assignable", "nothrow_destructible"]},

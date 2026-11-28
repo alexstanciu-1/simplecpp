@@ -1,1 +1,1 @@
-    bool has_present_owner(const @k@& key) const;
+    bool @owner_probe@(const @k@& key) const;

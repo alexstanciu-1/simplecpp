@@ -1,5 +1,6 @@
 {
   "writable_iteration": "dense_index",
+  "entry_presence": {"protocol": "checked_slot"},
   "checked_slot": {"method": "checked_slot", "key": "index", "value": "e", "missing": "sequence_index_out_of_range"},
   "parameters": {
     "e": {"alias": "element_type", "requires": ["copy_constructible", "nothrow_move_constructible", "nothrow_move_assignable", "nothrow_destructible"]}

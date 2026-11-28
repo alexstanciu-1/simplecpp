@@ -47,6 +47,7 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
     }
     requireThat(!array_key_exists('type_contracts', $values), 'Concrete type contracts are generated');
     if (isset($recipe->checked_slot)) $values['checked_slot'] = checkedSlotMethod($recipe);
+    if (isset($recipe->entry_presence->owner_probe)) $values['owner_probe'] = $recipe->entry_presence->owner_probe;
     $values['type_contracts'] = $contracts;
     $result = [];
     foreach (object(at($recipe, 'fragments')) as $section => $fragments) {
@@ -69,9 +70,25 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
 /** Read immutable generator-owned recipe data once; callers supply only settled type contracts. */
 function concreteRecipe(string $name): mixed {
     static $recipes = [];
-    $recipe = $recipes[$name] ??= decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration']);
-    return $recipe;
+    if (isset($recipes[$name])) return $recipes[$name];
+    $recipe = decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence']);
+    if (isset($recipe->entry_presence)) {
+        $presence = $recipe->entry_presence;
+        switch (at($presence, 'protocol')) {
+            case 'checked_slot':
+                fields($presence, ['protocol']);
+                checkedSlotMethod($recipe);
+                break;
+            case 'key_lookup':
+                fields($presence, ['protocol', 'owner_probe']);
+                requireThat(recordIdentifier(textValue(at($presence, 'owner_probe'))), 'Invalid entry owner probe');
+                break;
+            default:
+                throw new \RuntimeException('Invalid entry presence protocol');
+        }
+    }
+    return $recipes[$name] = $recipe;
 }
 
 /** Checked slots borrow an existing element from a mutable lvalue for one immediate access. */

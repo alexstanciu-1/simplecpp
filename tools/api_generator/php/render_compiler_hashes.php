@@ -6,7 +6,7 @@ namespace Scpp\Api;
 function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions): array {
     $code = "<?php\ndeclare(strict_types=1);\nnamespace scpp\\compiler;\n\n// Generated from validated runtime publication. Do not edit.\n";
     $cases = [];
-    $writableTraits = [];
+    $traits = [];
     $applicationCases = [];
     $access = compilerAccessInterfaces($metadata->hash ?? null);
     $family = isset($metadata->hash) ? textValue(at($metadata->hash, 'source_type')) : null;
@@ -64,10 +64,11 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             $initialization = "\tprivate readonly initialization_transport \$initialization;\n\tpublic function keyed_initialization(): initialization_transport { return \$this->initialization; }\n";
             $initializationSetup = "\t\t\$this->initialization = new initialization_transport($entry, $input, $factory, {$init['inline_entries']});\n";
         }
-        $writable = compilerWritableIteration(hashConcreteRecipe($hash), $hash['traversal'], $writableTraits, $code);
+        $writable = compilerWritableIteration(hashConcreteRecipe($hash), $hash['traversal'], $traits, $code);
         $writableInterface = $writable === '' ? '' : ', writable_iteration_type';
         $bindings = [
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
+            '@entry_presence@' => compilerEntryPresence(hashConcreteRecipe($hash), $at['name'], $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(hashConcreteRecipe($hash)),
             '@initialization@' => $initialization,
             '@append_method@' => compilerHashAppend($hash),

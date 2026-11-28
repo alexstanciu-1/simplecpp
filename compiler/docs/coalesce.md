@@ -63,7 +63,10 @@ retains the selected receiver and binds the field once before checking presence.
 A local PHP hash keeps the normalized key across its entry presence probe and the guarded
 keyed store. No slot reference survives fallback evaluation. Nullable shared elements
 use the same owner-presence probe as indexed `isset`.
-A vector uses checked slot access for the presence probe, avoiding element copies.
+Concrete recipes select the entry-presence binding for published and application collection types.
+The `key_lookup` protocol uses the validated keyed read and supplies the fused owner probe's
+native name to both the compiler and the concrete runtime generator.
+The `checked_slot` protocol uses checked slot access for the presence probe, avoiding element copies.
 Only the saved index survives that probe. The ordinary vector setter checks bounds
 again after the fallback, including when the vector has been rebound or cleared.
 For an indexed instance field, the collection root lowering retains the holder and

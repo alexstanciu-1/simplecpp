@@ -39,15 +39,6 @@ abstract class vector_type_definition extends type_definition implements subset_
 		return $this->lower_cpp_append_value($receiver, $value);
 	}
 
-	public function lower_cpp_entry_presence(string $receiver, string $key): string
-	{
-		$slot = $this->lower_cpp_slot($receiver, $key);
-		if ($this->element_type instanceof presence_test_type) return $this->element_type->lower_cpp_presence($slot);
-		if ($this->element_type instanceof shared_record_type_definition && !$this->element_type->required) return $this->element_type->lower_cpp_condition($slot);
-		// Even an always-present element must pass the bounds check, without copying its payload.
-		return '((void)' . $slot . ', true)';
-	}
-
 	public function private_copy_allocation_only(): bool
 	{
 		return $this->element_type->copy_has_no_observable_effects();
