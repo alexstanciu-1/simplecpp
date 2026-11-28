@@ -82,6 +82,11 @@ final class type_registry
 @application_specializations@		return null;
 	}
 
+	public static function positional_subset(type_definition $element): ?type_definition
+	{
+		return @positional_subset@;
+	}
+
 	public static function specialize(string $family, type_definition $element, ?type_definition $second = null): ?type_definition
 	{
 @specializations@		return null;

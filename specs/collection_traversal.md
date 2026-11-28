@@ -220,8 +220,13 @@ The slot owns its copied value through normal loop completion and suspended-curs
 
 `array_map(callback, source)` maps one vector, typed hash or boxed table and
 retains its keys. `array_filter(source, predicate)` retains matching entries in
-encounter order. A vector therefore produces `hash<T,int>` keyed by its original
-positions. Omitting the predicate uses the published scalar condition of each
+encounter order. The source supplies an entry cursor and an associated result type.
+The result builder creates an empty collection and inserts each retained value at
+its original key. Vectors and one-dimensional fixed byte arrays use the positional
+result family from metadata. For example, filtering `[10,20,30]` for `30` produces
+one entry at key `2`. The default fixed-byte-array result is `hash<byte,int>`.
+Typed hashes, mixed and dynamic use their own keyed result builders. Preparation
+requires an available builder for the element type. Omitting the predicate uses the published scalar condition of each
 element, including the false string `"0"`. Boxed tables require a callback.
 The callback contracts are the same as for the general transforms above.
 

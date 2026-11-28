@@ -1,6 +1,6 @@
 
 /** Published @name@ scalar box and its generated admission and lowering bindings. */
-final class type_@name@ extends boxed_type_definition implements collection_value_source, iterable_type, counted_collection_type, appendable_collection_type@literal_interfaces@@transfer@
+final class type_@name@ extends boxed_type_definition implements subset_source, keyed_result_builder, iterable_type, counted_collection_type, appendable_collection_type@literal_interfaces@@transfer@
 {
 @literal_methods@
 @iteration@

@@ -85,11 +85,11 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     }
     prepareHashes($metadata, $publication, $plan);
     foreach (names(property_exists($publication, 'collection_transforms') ? $publication->collection_transforms : [], 'Duplicate collection transform') as $name) {
-        if ($name === 'in_array') {
+        if ($name === 'in_array' || $name === 'array_filter') {
             $plan['collection_transforms'][] = $name;
             continue;
         }
-        if (in_array($name, ['array_map', 'array_filter'], true)) {
+        if ($name === 'array_map') {
             if ($plan['vectors'] !== [] || isset($plan['hashes'])) $plan['collection_transforms'][] = $name;
             continue;
         }
@@ -835,9 +835,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
     $keys = names(at($m, 'key_types'), 'Duplicate hash key type');
     $values = names(at($m, 'value_types'), 'Duplicate hash value type');
-    requireThat($keys === ['int64', 'string'] && in_array($values, [
-        ['int64', 'string'], ['int64', 'string', 'vector_string'],
-    ], true), 'Unsupported hash type policy');
+    requireThat($keys === ['int64', 'string'] && !array_diff($values, ['uint8', 'int64', 'string', 'vector_string']), 'Unsupported hash type policy');
     $initialization = $m->initialization ?? null;
     $callables = [];
     if ($initialization !== null) {

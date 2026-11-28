@@ -3463,22 +3463,25 @@ final class Preparation
 		$callback = $call->arguments[$map ? 0 : 1] ?? null;
 		$this->value($source, $initializing);
 		$input = $source->type_def();
-		if ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
+		$filter_output = $input;
+		if ($operation === runtime_factory::array_filter) {
+			if (!($input instanceof subset_source)) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for array_filter');
+			$element = $input->iteration_value_type();
+			$filter_output = $input->subset_result_type();
+			if (!($filter_output instanceof keyed_result_builder)) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
+		} elseif ($input instanceof vector_type_definition && !in_array($operation, [runtime_factory::keyed_map, runtime_factory::keyed_filter], true)) {
 			$element = $input->element_type;
 			$key = null;
 		} elseif ($input instanceof hash_type_definition && !in_array($operation, [runtime_factory::sequence_map, runtime_factory::sequence_filter], true)) {
 			$element = $input->value_type;
 			$key = $input->key_type;
-		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter, runtime_factory::array_map, runtime_factory::array_filter], true)) {
+		} elseif ($input instanceof boxed_type_definition && in_array($operation, [runtime_factory::collection_map, runtime_factory::collection_filter, runtime_factory::array_map], true)) {
 			$element = $input;
 			$key = null;
 		} else {
 			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
 		}
 		$filter = in_array($operation, [runtime_factory::array_filter, runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
-		$filter_output = $operation === runtime_factory::array_filter && $input instanceof vector_type_definition
-			? Type_Resolution::collection('hash', $element, type_int64::instance()) : $input;
-		if ($filter_output === null) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
 		if ($implicit_filter) {
 			if (!$element->supports_scalar_condition()) {
 				throw new diagnostic($source->source(), $source->byte_start(), 'array_filter requires a callback for this element type');

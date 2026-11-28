@@ -3711,7 +3711,7 @@ CPP;
 	{
 		if ($receiver instanceof ast_index_expression && $receiver->receiver->type_def() instanceof fixed_array_type) {
 			$type = $receiver->receiver->type_def();
-			$place = $this->retained_place($receiver->receiver, $globals, $declarations, $headers, $steps);
+			$place = $this->retained_place($receiver->receiver, $globals, $declarations, $headers, $steps, owner_name: $owner_name, full_expression: $full_expression);
 			$key = $this->value($receiver->index, $globals, $declarations, $headers);
 			return $type->lower_cpp_index($receiver->index, $place, $key);
 		}
@@ -3966,6 +3966,23 @@ CPP;
 		$owner_steps = [];
 		$receiver = $this->retained_place($input, $globals, $declarations, $headers, $owner_steps, full_expression: true);
 		$callable = $callback === null ? null : $this->value($callback, $globals, $declarations, $headers);
+		if ($function->name() === 'array_filter') {
+			$headers['scpp/collection_filter.hpp'] = true;
+			$slot = $type->iteration_output_type();
+			$item = $slot === null ? 'item' : 'item.value';
+			$element = $type->iteration_value_type();
+			$test = "callback($item)";
+			if ($callback === null) {
+				foreach ($element->condition_headers() as $header) $headers[$header] = true;
+				$test = $element->lower_cpp_condition($item);
+			}
+			$store = $out->lower_cpp_write('result', 'key', 'static_cast<' . $element->cpp_type() . '&&>(' . $item . ')');
+			$params = $callback === null ? 'const auto& source' : 'const auto& source, auto callback';
+			$args = $callback === null ? $receiver : "$receiver, $callable";
+			return "[]($params) { auto result = " . $out->lower_cpp_empty() . '; ::scpp::detail::filter_entries<'
+				. $type->cpp_entry_key_type() . ', ' . ($slot ?? $element->cpp_type()) . '>(' . $type->lower_cpp_entry_cursor('source')
+				. ", [&](auto& item) { return $test; }, [&](auto& key, auto& item) { $store; }); return result; }($args)";
+		}
 		$boxed = $type instanceof boxed_type_definition;
 		$keyed = $boxed || $out instanceof hash_type_definition;
 		$key = $keyed ? 'key' : null;
@@ -3980,17 +3997,11 @@ CPP;
 		$lines[] = "while ($next) {";
 		$value = $function->filter ? "static_cast<$element&&>($item)" : "callback(static_cast<$element&&>($item))";
 		$insert = ($keyed ? $out->lower_cpp_write('result', 'key', $value) : $out->lower_cpp_append_value('result', $value)) . ';';
-		$test = "callback($item)";
-		if ($callback === null) {
-			$element_type = $type->iteration_value_type();
-			foreach ($element_type->condition_headers() as $header) $headers[$header] = true;
-			$test = $element_type->lower_cpp_condition($item);
-		}
-		$lines[] = $function->filter ? "if ($test) $insert" : $insert;
+		$lines[] = $function->filter ? "if (callback($item)) $insert" : $insert;
 		$lines[] = '} return result;';
 		// A selected owned callable survives reassignment of its source slot by the callback.
-		$params = $callback === null ? 'const auto& source' : ($map ? 'auto callback, const auto& source' : 'const auto& source, auto callback');
-		$args = $callback === null ? $receiver : ($map ? "$callable, $receiver" : "$receiver, $callable");
+		$params = $map ? 'auto callback, const auto& source' : 'const auto& source, auto callback';
+		$args = $map ? "$callable, $receiver" : "$receiver, $callable";
 		return "[]($params) { " . implode(' ', $lines) . " }($args)";
 	}
 

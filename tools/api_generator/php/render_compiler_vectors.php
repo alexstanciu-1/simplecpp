@@ -171,7 +171,7 @@ function compilerTraversalMethods(array $plan, string $value, string $key, bool 
 
 PHP);
     return $output . $keys . strtr(readFile(__DIR__ . '/../templates/collections/compiler_iteration.php.tpl'), [
-        '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
+        '@entry_key@' => $boxed ? 'key.index, key.text' : 'key', '@value@' => $value, '@key@' => $key, '@state@' => var_export($state, true),
         '@limit@' => $plan['limit_method'], '@next@' => $plan['next_method'],
         '@arguments@' => $arguments, '@publish@' => $publish,
     ]);

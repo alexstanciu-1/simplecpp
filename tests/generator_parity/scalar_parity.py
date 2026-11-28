@@ -34,6 +34,9 @@ def main():
     captured = {}
     # Explicit scalar boundary: optional-family validation belongs to the composed runtime planner.
     scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json', 'text_helpers']}
+    # Positional subset construction belongs to collection preparation.
+    scalar_metadata['compiler'] = dict(scalar_metadata['compiler'])
+    scalar_metadata['compiler'].pop('positional_subset_family', None)
     scalar_metadata['type_exports'] = [row for row in scalar_metadata['type_exports'] if row['identity'] != 'string']
     # The scalar fixture omits the string declaration and its dependent providers together.
     scalar_metadata['submodules'] = {name: row for name, row in metadata['submodules'].items()

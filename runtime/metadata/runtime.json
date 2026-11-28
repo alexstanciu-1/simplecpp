@@ -818,6 +818,7 @@
       "string"
     ],
     "value_types": [
+      "uint8",
       "int64",
       "string",
       "vector_string"
@@ -1468,6 +1469,7 @@
     ]
   },
   "compiler": {
+    "positional_subset_family": "hash",
     "php_builtin_admission": {
       "number_format": [["value", "typed"], ["decimals", "typed"], ["decimal_separator", "typed"], ["thousands_separator", "typed"]],
       "strlen": [["string", "typed"]],

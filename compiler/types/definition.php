@@ -125,6 +125,44 @@ interface collection_value_source
 	public function lower_cpp_value_cursor(string $receiver): string;
 }
 
+/** Ordered entry traversal and the associated type used to build a key-preserving subset. */
+interface subset_source extends collection_value_source
+{
+	public function subset_result_type(): ?type_definition;
+	public function cpp_entry_key_type(): string;
+	public function lower_cpp_entry_cursor(string $receiver): string;
+}
+
+/** Empty construction and insertion with the key supplied by the entry cursor. */
+interface keyed_result_builder
+{
+	public function lower_cpp_empty(): string;
+	public function lower_cpp_write(string $receiver, string $key, string $value): string;
+}
+
+/** A dense sequence can produce sparse subsets through the configured positional result family. */
+trait positional_subset
+{
+	public function subset_result_type(): ?type_definition
+	{
+		return type_registry::positional_subset($this->iteration_value_type());
+	}
+
+	public function cpp_entry_key_type(): string
+	{
+		return type_int64::instance()->cpp_type();
+	}
+}
+
+/** A keyed provider builds subsets with its own empty construction and keyed store. */
+trait same_type_subset
+{
+	public function subset_result_type(): type_definition
+	{
+		return $this;
+	}
+}
+
 /** Published value traversal capability; concrete generated types supply key/value identity and native calls. */
 interface iterable_type
 {
