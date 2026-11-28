@@ -78,6 +78,13 @@ element uses its type's optional representation. A stored zero stays present.
 An invalid vector index or missing hash key raises the ordinary lookup failure,
 including when a coalescing fallback follows the chain.
 
+A checked index may also feed a further nullsafe member access, for example
+`$team?->players[key()]?->points` or `$team?->players[key()]?->score(arg())`.
+An absent team skips the key. A missing slot raises the collection's checked
+lookup failure. An existing empty handle yields absence at the second guard.
+Only a present player reaches the field or call. The call retains that player
+through argument evaluation, including when an argument replaces the slot.
+
 A standalone call such as `$team?->coach->notify(key());` may end in a
 synchronous `void` method. An absent team skips the arguments and invocation.
 With a present team, the ordinary receiver check runs before `key()`. An
