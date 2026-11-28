@@ -1530,10 +1530,10 @@ CPP;
 				}
 				while ($nested_else_blocks-- > 0) $lines[] = "\t}";
 			}
-			elseif (($statement instanceof ast_index_assignment && $statement->boxed_root !== null)
+			elseif (($statement instanceof ast_index_assignment && $statement->prepared_root?->type_def() instanceof boxed_type_definition)
 				|| ($statement instanceof ast_field_assignment && $statement->target instanceof ast_field_expression && $statement->target->key_write_root !== null)) {
 				if ($statement instanceof ast_index_assignment) {
-					$root = $statement->boxed_root;
+					$root = $statement->prepared_root;
 					$receiver = $statement->receiver;
 					$key = $statement->index;
 					$conversion = $statement->conversion();
@@ -1585,7 +1585,7 @@ CPP;
 			elseif ($statement instanceof ast_index_assignment) {
 				/** @var index_write_type $type */
 				$type = $statement->receiver->type_def();
-				$root = ast_index_expression::nested_collection_root($statement->receiver);
+				$root = $statement->prepared_root;
 				if ($root !== null) {
 					$steps = [];
 					$row_place = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
@@ -1647,10 +1647,10 @@ CPP;
 				/** @var appendable_collection_type $type */
 				$type = $statement->receiver->type_def();
 				$steps = [];
-				$boxed_root = $statement->boxed_root;
-				$root = $boxed_root ?? ast_index_expression::nested_collection_root($statement->receiver);
-				if ($boxed_root !== null) {
-					$receiver = $this->collection_root_place($boxed_root, $global_references, $declarations, $required_headers, $steps);
+				$root = $statement->prepared_root;
+				$boxed_path = $root?->type_def() instanceof boxed_type_definition;
+				if ($boxed_path) {
+					$receiver = $this->collection_root_place($root, $global_references, $declarations, $required_headers, $steps);
 					$parent_keys = $this->boxed_path_keys($statement->receiver, null, $global_references, $declarations, $required_headers, $steps);
 				} elseif ($root !== null) {
 					$receiver = $this->nested_collection_place($root, $statement->receiver, $global_references, $declarations, $required_headers, $steps);
@@ -1675,7 +1675,7 @@ CPP;
 					$required_headers['utility'] = true;
 					$value = 'std::move(append_value)';
 				}
-				$append = $boxed_root !== null ? $type->lower_cpp_path_store($receiver, $parent_keys, null, $value)
+				$append = $boxed_path ? $type->lower_cpp_path_store($receiver, $parent_keys, null, $value)
 					: $type->lower_cpp_append_value($receiver, $value) . ';';
 				$lines[] = $this->async_statement($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
@@ -2113,12 +2113,12 @@ CPP;
 			$steps = [];
 			$row = $entry->receiver;
 			$parents = [];
-			if ($statement->boxed_root !== null) {
-				$receiver = $this->collection_root_place($statement->boxed_root, $globals, $declarations, $headers, $steps);
+			if ($statement->prepared_root?->type_def() instanceof boxed_type_definition) {
+				$receiver = $this->collection_root_place($statement->prepared_root, $globals, $declarations, $headers, $steps);
 				$parents = $this->boxed_path_keys($row, null, $globals, $declarations, $headers, $steps);
 			} else {
-				$receiver = $row instanceof ast_index_expression
-					? $this->nested_collection_place(ast_index_expression::nested_collection_root($row), $row, $globals, $declarations, $headers, $steps)
+				$receiver = $statement->prepared_root !== null
+					? $this->nested_collection_place($statement->prepared_root, $row, $globals, $declarations, $headers, $steps)
 					: $this->collection_root_place($row, $globals, $declarations, $headers, $steps);
 			}
 			array_push($this->async_steps, ...$steps);
@@ -2382,14 +2382,13 @@ CPP;
 	{
 		$target = $statement->target;
 		$collection = $target->receiver->type_def();
-		$boxed_root = $target instanceof ast_field_expression ? $target->key_write_root : $statement->boxed_root;
-		if ($boxed_root !== null) {
-			$place = $this->collection_root_place($boxed_root, $globals, $declarations, $headers, $steps);
+		$root = $target instanceof ast_field_expression ? $target->key_write_root : $statement->prepared_root;
+		if ($root?->type_def() instanceof boxed_type_definition) {
+			$place = $this->collection_root_place($root, $globals, $declarations, $headers, $steps);
 			$parent_keys = $this->boxed_path_keys($target->receiver, $target instanceof ast_field_expression ? $target->field : $target->index, $globals, $declarations, $headers, $steps);
 			return [$collection->lower_cpp_path_read($place, $parent_keys, 'element_index'),
 				$collection->lower_cpp_path_store($place, $parent_keys, 'element_index', $result, true)];
 		}
-		$root = ast_index_expression::nested_collection_root($target->receiver);
 		if ($root !== null) {
 			$place = $this->nested_collection_place($root, $target->receiver, $globals, $declarations, $headers, $steps);
 		} else {

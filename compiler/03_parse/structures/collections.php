@@ -218,8 +218,8 @@ final class ast_append_statement extends ast_statement
 	public readonly ast_expression $value;
 
 	/** PREP FACTS */
-	/** Prepared fact: non-owning root of a checked boxed path; null after reset. */
-	public ast_name_expression|ast_field_expression|null $boxed_root = null;
+	/** Prepared fact: non-owning root of a checked typed or boxed path; null for a direct receiver or after reset. */
+	public ast_name_expression|ast_field_expression|null $prepared_root = null;
 	/** Prepared fact: checked element conversion; null until preparation succeeds or after reset. */
 	protected ?int $conversion /** uint16 */ = null;
 
@@ -235,10 +235,10 @@ final class ast_append_statement extends ast_statement
 	}
 
 	/** METHODS */
-	public function settle_append(int $conversion /** uint16 */, ast_name_expression|ast_field_expression|null $boxed_root): void
+	public function settle_append(int $conversion /** uint16 */, ast_name_expression|ast_field_expression|null $prepared_root): void
 	{
 		$this->conversion = $conversion;
-		$this->boxed_root = $boxed_root;
+		$this->prepared_root = $prepared_root;
 	}
 
 	public function conversion(): int /** uint16 */
@@ -249,7 +249,7 @@ final class ast_append_statement extends ast_statement
 	public function reset_preparation(): void
 	{
 		$this->conversion = null;
-		$this->boxed_root = null;
+		$this->prepared_root = null;
 	}
 }
 
@@ -265,8 +265,8 @@ class ast_index_assignment extends ast_statement
 	public readonly ast_expression $value;
 
 	/** PREP FACTS */
-	/** Prepared fact: non-owning root of a checked boxed path; null after reset. */
-	public ast_name_expression|ast_field_expression|null $boxed_root = null;
+	/** Prepared fact: non-owning root of a checked typed or boxed path; null for a direct receiver or after reset. */
+	public ast_name_expression|ast_field_expression|null $prepared_root = null;
 	/** Prepared fact: value conversion; null before successful preparation or after reset. */
 	protected ?int $conversion /** uint16 */ = null;
 
@@ -284,10 +284,10 @@ class ast_index_assignment extends ast_statement
 	}
 
 	/** METHODS */
-	public function settle_write(int $conversion /** uint16 */, ast_name_expression|ast_field_expression|null $boxed_root): void
+	public function settle_write(int $conversion /** uint16 */, ast_name_expression|ast_field_expression|null $prepared_root): void
 	{
 		$this->conversion = $conversion;
-		$this->boxed_root = $boxed_root;
+		$this->prepared_root = $prepared_root;
 	}
 
 	public function conversion(): int /** uint16 */
@@ -298,7 +298,7 @@ class ast_index_assignment extends ast_statement
 	public function reset_preparation(): void
 	{
 		$this->conversion = null;
-		$this->boxed_root = null;
+		$this->prepared_root = null;
 	}
 }
 
@@ -307,22 +307,22 @@ final class ast_computed_member_assignment extends ast_index_assignment {
 }
 
 /** Non-owning prepared root shared by indexed compound and update statements. */
-trait prepared_boxed_mutation
+trait prepared_index_mutation
 {
 	/** Prepared fact: storage selected before evaluating the keys. */
-	public ast_name_expression|ast_field_expression|null $boxed_root = null;
+	public ast_name_expression|ast_field_expression|null $prepared_root = null;
 
 	public function reset_preparation(): void
 	{
 		parent::reset_preparation();
-		$this->boxed_root = null;
+		$this->prepared_root = null;
 	}
 }
 
 /** Indexed compound, e.g. factory()->items[key()] += rhs(); reuses compound facts on one indexed target. */
 final class ast_index_compound extends ast_assignment_statement
 {
-	use prepared_boxed_mutation;
+	use prepared_index_mutation;
 
 	/** Native owning indexed target; its receiver is any prepared collection expression. */
 	public readonly ast_index_expression $target;
@@ -345,7 +345,7 @@ final class ast_index_compound extends ast_assignment_statement
 /** Discarded indexed update, e.g. factory()->items[key()]++; shares generated numeric update admission. */
 final class ast_index_update extends ast_update_statement
 {
-	use prepared_boxed_mutation;
+	use prepared_index_mutation;
 
 	/** Native owning indexed target; receiver and key are evaluated once. */
 	public readonly ast_index_expression $target;
