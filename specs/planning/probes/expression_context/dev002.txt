@@ -1,0 +1,35 @@
+literal-tree TREE indexed callable(index(index($something, index(func(index($an_expression_may_go_here, 12)), 10)), a_constant), $arg_1)
+anchor-statement NATIVE b'IMAC6'
+anchor-value NATIVE b'IMAC68'
+integer-callee AFTER PARSE integer-callee/app/main.php:1:23: Invocation requires an owned callable: indexed callable
+bad-key AFTER PARSE bad-key/app/main.php:1:30: Vector index requires int64
+stored-local NATIVE b'8'
+grouped-local PARSE audit.php:1:70: Expected ;
+grouped-index NATIVE b'8'
+returned-call PARSE audit.php:1:76: Expected ;
+returned-call-local NATIVE b'8'
+field-read NATIVE b'3'
+field-write PARSE audit.php:1:144: Expected call statement
+field-write-local NATIVE b'7'
+owner-field AFTER PARSE owner-field/app/main.php:1:123: Field assignment requires writable local storage
+wrong-arity AFTER PARSE wrong-arity/app/main.php:1:55: Argument count mismatch for function: indexed callable
+php-value-write NATIVE b'8'
+cpp-value-write NATIVE b'8'
+js-value-write NATIVE b'8'
+py-read NATIVE b''
+py-write NATIVE b''
+exact-native NATIVE b'MC6'
+py-typed-nested-write AFTER PARSE py-typed-nested-write/app/main.py:2:1: Nested indexed write requires inline fixed-array storage, a typed vector/hash path on local or instance-field storage, or a shared Python container
+reference-index AFTER PARSE reference-index/app/main.php:1:64: Reference argument requires stable variable storage: a named local or parameter
+value-argument NATIVE b''
+lazy-key NATIVE b''
+typed-callee-replaced NATIVE b'A8:26'
+grouped-target AFTER PARSE grouped-target/app/main.php:1:124: Field assignment requires writable local storage
+cpp-callee-syntax PARSE audit.cpp:1:14: Expected ;
+js-callee-syntax PARSE audit.js:1:14: Expected ;
+py-callee-syntax PARSE audit.py:1:14: Expected NEWLINE
+cpp-method-key NATIVE b''
+js-method-key NATIVE b''
+py-method-key NATIVE b''
+php 0 passed
+php 2 passed
