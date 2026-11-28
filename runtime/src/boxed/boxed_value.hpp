@@ -16,7 +16,11 @@ enum class boxed_family { mixed, dynamic };
 
 template<boxed_family Family> class boxed_value final {
 public:
-    enum class kind { null, boolean, integer, floating, string, container, tuple };
+    enum class kind {
+#define SCPP_VALUE_KIND(name, category) name,
+#include "value_kinds.def"
+#undef SCPP_VALUE_KIND
+    };
 private:
     friend struct boxed_inspection;
     using table = packed_table<boxed_value>;

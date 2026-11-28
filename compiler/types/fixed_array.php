@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Inline byte storage, e.g. fixed_array<fixed_array<byte,5>,3>. Each dimension keeps its logical bound. */
-final class fixed_array_type extends type_definition implements php_container_type, subset_source, map_source, indexed_collection_type, index_write_type, counted_collection_type
+final class fixed_array_type extends type_definition implements container_type, subset_source, map_source, indexed_collection_type, index_write_type, counted_collection_type
 {
 	use positional_subset;
 

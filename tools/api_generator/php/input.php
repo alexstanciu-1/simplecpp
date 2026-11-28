@@ -2,6 +2,21 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 
+/** Native tag order and classification, shared with private boxed storage before publication. */
+function valueKinds(): array {
+    static $kinds = null;
+    if ($kinds !== null) return $kinds;
+    $rows = [];
+    $source = readFile(__DIR__ . '/../../../runtime/src/boxed/value_kinds.def');
+    foreach (explode("\n", trim($source)) as $line) {
+        requireThat(preg_match('/^SCPP_VALUE_KIND\(([a-z]+), (scalar|collection)\)$/D', trim($line), $match) === 1,
+            'Invalid value kind definition');
+        requireThat(!isset($rows[$match[1]]), 'Duplicate value kind');
+        $rows[$match[1]] = $match[2];
+    }
+    return $kinds = $rows;
+}
+
 function requireThat(bool $condition, string $message): void {
     if (!$condition) {
         throw new \RuntimeException($message);

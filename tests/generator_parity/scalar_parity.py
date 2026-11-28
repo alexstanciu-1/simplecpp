@@ -37,6 +37,7 @@ def main():
     # Positional subset construction belongs to collection preparation.
     scalar_metadata['compiler'] = dict(scalar_metadata['compiler'])
     scalar_metadata['compiler'].pop('positional_subset_family', None)
+    scalar_metadata['compiler'].pop('php_kind_predicates', None)  # Published with the omitted boxed helpers.
     scalar_metadata['type_exports'] = [row for row in scalar_metadata['type_exports'] if row['identity'] != 'string']
     # The scalar fixture omits the string declaration and its dependent providers together.
     scalar_metadata['submodules'] = {name: row for name, row in metadata['submodules'].items()

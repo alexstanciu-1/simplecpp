@@ -23,8 +23,8 @@ def prove(work):
     metadata['string']['access_contracts'] = ['readonly_slot', 'python_index_read']
     metadata['vector']['access_contracts'].remove('python_index_read')
     metadata['hash']['access_contracts'].remove('readonly_slot')
-    metadata['vector']['access_contracts'].remove('php_container')
-    metadata['boxed']['access_contracts'].remove('php_runtime_kind')
+    metadata['vector']['access_contracts'].remove('container')
+    metadata['boxed']['access_contracts'].remove('runtime_kind')
     fixture = work / 'metadata.json'
     fixture.write_text(json.dumps(metadata))
     subprocess.run(['php', GENERATOR, 'emit-compiler', fixture, ROOT / 'runtime/metadata/publication.json',
