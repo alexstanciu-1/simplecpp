@@ -443,6 +443,13 @@ A typed vector or hash can store an owned callable, for example
 `$ops vector<function<int(int)>> = [fn($n) => $n + 1];` or
 `$ops hash<function<int(int)>,string> = ["add" => fn($n) => $n + 1];`.
 Literals, indexed writes and appends use the element signature and its ownership checks.
+PHP also admits `(expression)(arguments)` when the grouped expression produces
+an owned callable. For example, `($left ? $a : $b)(7)` and
+`(match ($key) { 1 => $a, default => $b })(7)` evaluate only the selected arm.
+The call saves the selected callable before evaluating its arguments, including
+arguments that replace the source binding. Grouped local calls keep their
+existing signature and argument-binding rules.
+
 An indexed call such as `$ops["add"](arg())` selects the target before evaluating
 arguments. Container copies own independent entries. Keyed `isset` requires every
 index on the path to exist and the final callable to be present. A missing index

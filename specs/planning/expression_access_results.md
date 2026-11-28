@@ -31,7 +31,7 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 | 🟢 F2 fixed after audit | Homogeneous nullable integers and identical shared class handles are implemented. Their both-empty outcomes differ. The registered tests check the domain error for integers and the empty result for optional handles. [Compiler contract](../../compiler/docs/coalesce.md) |
 | 🟢 D1. Python nested typed-write diagnostic | Fixed in workspace 03. The preparation diagnostic identifies the storage available in Python. The default regression checks rejection, repair and native execution of both working controls. Typed-vector write admission remains a separate decision. |
 | 🟢 D2. Plain PHP scalar stores through computed shared class handles | Grouped and ungrouped indexed receivers and shared factory results retain the selected allocation through the store. The native regression observes the original and replacement values, throwing RHS behavior and readonly edit/recovery. [Evaluation contract](../expression_evaluation.md#php-scalar-field-stores-through-selected-shared-owners) |
-| D3. Decide computed callee and flavor boundaries | In PHP a grouped stored callable field and grouped local work; `(true ? $a : $b)(7)` stopped at the invocation suffix. The direct `ops[0](6)` syntax probe still stopped in parsing in C++, JS and Python. These are admission decisions independent of F1. No cross-flavor extension was assumed. |
+| D3. Decide computed callee and flavor boundaries | PHP now accepts parenthesized expressions producing an owned callable. The registered ternary and match cases verify lazy selection, replacement during argument evaluation and recovery after a provider edit. The direct `ops[0](6)` syntax probe still stopped in parsing in C++, JS and Python. These are admission decisions independent of F1. No cross-flavor extension was assumed. |
 | D4. Decide additional access syntax and grouping expectations | A grouped optional field followed by an ordinary field access checks the resulting owner. On an absent outer receiver it raised `ownership_empty_access`; the continuous guarded member chain produced absence. A grouped scalar optional can feed coalescing. Computed PHP member names, nullsafe writes, nonlocal/indexed `??=` and field interpolation remain limited. Field interpolation still reports a closing-brace parse error. Decide each surface before broadening admission; a grouping comparison alone does not prove a language bug. |
 | D5. Keep existing bounded semantics explicit | Non-Python mixed nested value reads, references escaping into movable slots and the sampled lexical comparisons of numeric-looking strings have existing boundaries. No evidence in this audit calls for changing boxed ownership, reference origins or comparison semantics. |
 | A1. Consider preparing typed destinations once | Preparation records boxed roots. The emitter also calls `nested_collection_root` on typed stores, appends and mutations. This is duplicated classification, with incremental invalidation implications. The retained-owner and write-back probes did not reproduce another lost write. Treat a refactor as a separate engineering decision. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Lowering](../../compiler/05_backend/cpp/emit.php) |
@@ -70,10 +70,14 @@ in 90.66 s. These figures apply to the workspace 03 snapshot.
   leaves the factory result at 3 and a previously written hash-held object at 7.
   On dev002 the D2 compiler/test patch (`cedd25a45ff9`) passed 15/15 focused
   checks and 663/663 default tests with `ctest --preset default -j24` in 45.80 s.
-- **D3, parser.** Replayed direct `return ops[0](6)` in C++, JS and Python,
-  and PHP `(true ? $a : $b)(7)` with owned callable locals. All stop at the
-  invocation suffix. PHP terminal guarded indexed invocation in `5b2388267`
-  does not settle general computed-callee or other-flavor syntax.
+- **D3, parser.** At the handoff, direct `return ops[0](6)` in C++, JS and
+  Python and PHP `(true ? $a : $b)(7)` all stopped at the invocation suffix.
+  The PHP slice on base `a2aac22c9` reuses stored-call preparation and lowering
+  for parenthesized owned callable results. In both conditional fixtures only
+  the selected arm runs. After an argument replaces both bindings, the pending
+  call returns 8 or 9 according to the selected arm, and the next call returns
+  17. On dev002, 11/11 focused checks and 665/665 default tests passed.
+  Indexed invocation in the other three flavors remains open.
 - **D4, PHP.** The registered `grouped_absent` and `grouped_present` fixtures
   distinguish a grouped empty receiver's runtime failure from absence propagated
   by the continuous chain. Repeated checked reads (`adaee7bba`), ordinary
