@@ -203,6 +203,15 @@ class ast_index_expression extends ast_expression
 	}
 }
 
+/** Each destination uses the ordinary checked index provider. The last write ends the receiver lifetime. */
+final class ast_destructure_read extends ast_index_expression
+{
+	public function __construct(ast_name_expression $receiver, ast_expression $index, int $end /** uint32 */, public readonly bool $last)
+	{
+		parent::__construct($receiver, $index, $end);
+	}
+}
+
 /** PHP $d->{expr} retains the computed spelling for string-key reads and local read-modify-write targets. */
 final class ast_computed_member_read extends ast_index_expression
 {

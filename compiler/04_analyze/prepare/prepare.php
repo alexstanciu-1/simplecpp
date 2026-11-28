@@ -1269,6 +1269,18 @@ final class Preparation
 					'Cannot infer a local type from null; write an explicit type');
 			}
 		}
+		if ($declaration instanceof ast_destructure_source) {
+			if (!($type instanceof indexed_collection_type)) {
+				throw new diagnostic($source, $declaration->initializer->byte_start(), 'Destructuring requires an indexed collection');
+			}
+			$place = $declaration->initializer;
+			if ($place instanceof ast_field_expression && $place->shares_receiver_storage()
+				&& ($place->receiver->type_def() instanceof shared_record_type_definition || $place->receiver->type_def() instanceof record_type_definition)) {
+				$place = $place->receiver;
+			}
+			$slot = $place instanceof ast_name_expression ? $place->local_binding() : null;
+			$declaration->borrow = $slot !== null && ast_writable_element::origin($slot) === null;
+		}
 		$conversion = $this->prepare_local_initialization($declaration, $type);
 		$declaration->settle_type($type, $type->evaluate_constant($conversion, $declaration->initializer), true, $conversion);
 		$this->local_frames[count($this->local_frames) - 1][$name] = $declaration;
@@ -1279,6 +1291,27 @@ final class Preparation
 		}
 	}
 
+	/** Retain a receiver across potentially aliasing writes. Charge inline storage only for an actual snapshot. */
+	private function destructure_read(ast_destructure_read $read, type_definition $type): void
+	{
+		$source = $read->receiver->local_def();
+		if ($read->last) {
+			if (!$source->borrow && $type instanceof fixed_array_type) $this->reserve_array_bytes($type->bytes, $source);
+			return;
+		}
+		$write = $read->parent;
+		if ($write instanceof ast_assignment_statement) {
+			$target = $this->find_local($write->name);
+			$target_type = $target?->type_def();
+			$scalar_write = $target_type?->scalar_kind() !== null
+				&& ($read->type_def()->scalar_kind() !== null || $read->type_def() instanceof boxed_type_definition);
+			if ($target_type === null || ast_writable_element::origin($target) !== null || $target_type === $type
+				|| (!$scalar_write && !$target_type->copy_has_no_observable_effects())) $source->borrow = false;
+		}
+		// Copying an inline record can run user cleanup between reads.
+		if ($read->type_def() instanceof record_type_definition) $source->borrow = false;
+	}
+
 	/** Owned locals and capture fields initialize through the same source conversion and layout rules. */
 	private function prepare_local_initialization(ast_local_declaration $declaration, type_definition $type): int /** uint16 */
 	{
@@ -1286,7 +1319,7 @@ final class Preparation
 			if ($declaration instanceof ast_closure_capture || $declaration->parent instanceof ast_for_statement || $this->enclosing_lambda !== null || $this->owner->parent->return_type_def() instanceof generator_type_definition) {
 				throw new diagnostic($declaration->source(), $declaration->byte_start(), 'Declare fixed-array locals in an ordinary statement block');
 			}
-			$this->reserve_array_bytes($type->bytes, $declaration);
+			if (!($declaration instanceof ast_destructure_source)) $this->reserve_array_bytes($type->bytes, $declaration);
 		}
 		elseif ($type instanceof record_type_definition) {
 			if ($declaration->type_reference === null) $this->require_inline_cleanup($type, $declaration);
@@ -1976,6 +2009,7 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->index->byte_start(), 'Computed member name requires a string');
 			}
 			$type->prepare_index($syntax);
+			if ($syntax instanceof ast_destructure_read) $this->destructure_read($syntax, $type);
 			if (!$syntax->index->is_effect_free_literal()) $this->retain_member_place($syntax->receiver);
 			return;
 		}
@@ -2225,6 +2259,10 @@ final class Preparation
 			if ($syntax->type_def() === type_void::instance() && $destination !== type_void::instance()) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Void call cannot be used as a value');
 			}
+			return;
+		}
+		if ($syntax instanceof ast_destructure_position) {
+			$syntax->settle_integer($syntax->position);
 			return;
 		}
 		if (($syntax instanceof ast_integer_expression) || ($syntax instanceof ast_float_expression)
