@@ -2118,6 +2118,21 @@ CPP;
 	 */
 	private function conditional_assignment(ast_assignment_statement $statement, array &$globals, array &$declarations, array &$headers): string
 	{
+		if ($statement instanceof ast_index_compound) {
+			$entry = $statement->target;
+			$collection = $entry->receiver->type_def();
+			$receiver = $this->name($entry->receiver->local_binding());
+			$key = $this->value($entry->index, $globals, $declarations, $headers);
+			$this->async_steps[] = 'const auto coalesce_key = ' . $collection->lower_cpp_key($entry->index, $key) . ';';
+			$present = $collection->lower_cpp_entry_presence($receiver, 'coalesce_key');
+			$element = $collection->write_type();
+			[$value, $rhs] = $this->staged_operand($statement->value, $globals, $declarations, $headers);
+			$conversion = $statement->conversion();
+			foreach ($element->conversion_headers($conversion) as $header) $headers[$header] = true;
+			$value = $element->lower_cpp_exact_argument($statement->value, $conversion, $value, $this->inline_adapters);
+			$rhs[] = $collection->lower_cpp_write($receiver, 'coalesce_key', $value) . ';';
+			return $this->async_statement('if (!(' . $present . ')) { ' . implode(' ', $rhs) . ' }');
+		}
 		$field = $statement instanceof ast_property_compound;
 		$destination = $field ? $statement->target : $statement->local_def();
 		/** @var carrier_type_definition $type */

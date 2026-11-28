@@ -23,6 +23,10 @@ declaration header. The native umbrella includes the selected operation headers.
 | dt_format_now(string format) | format_local_now | string |
 | dt_parse(string value) | parse_common_local | result<int> |
 
+PHP also exposes `time(): int` when the project selects `datetime` and the build publishes
+`now_unix_seconds`. This PHP name needs no `general_api` opt-in and binds directly to
+the same native symbol and declaration header as `dt_now()`.
+
 When published, uint64 supports exact typed storage, parameters and returns.
 Its native representation preserves all 64 unsigned bits. This transport
 contract introduces no arithmetic, conversions or unsigned source literals.
@@ -84,7 +88,8 @@ precision is a host property and consecutive readings may be equal. Micro/nanose
 results are unsigned, as required by the existing contracts.
 
 Private checked duration conversion widens the count before multiplying by a unit
-ratio, then divides with truncation toward zero and checks the destination range.
+ratio and checks the destination range after division. Unix seconds round down to
+the containing second, including before the epoch. Other units truncate toward zero.
 Out-of-range conversion throws a runtime error rather than overflowing or producing
 an error sentinel. The supported Clang implementation uses private 128-bit arithmetic
 for integral duration representations up to 64 bits; it does not expose that type.
@@ -164,8 +169,7 @@ must build without the legacy runtime tree, including with tests disabled.
 
 ## Deferred scope
 
-The legacy source callable catalog remains unchanged. This slice does not claim
-additional flavor-specific bindings. Custom DST resolution, PHP time/date/strtotime/microtime adapters, named zones, locale-aware
+The legacy source callable catalog remains unchanged. Custom DST resolution, PHP date/strtotime/microtime adapters, named zones, locale-aware
 formatters, calendar arithmetic and general module/plugin discovery are separate work.
 
 Donor provenance and initial validation are recorded in `datetime_validation.md`;

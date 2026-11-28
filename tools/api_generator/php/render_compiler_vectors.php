@@ -141,7 +141,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             '@element@' => $elementClass . '::instance()', '@cpp@' => var_export($export['symbol'], true),
             '@header@' => var_export($header, true), '@count@' => $countClass,
             '@append@' => $append['name'], '@index@' => $index['name'], '@set@' => $set['name'],
-            '@interfaces@' => ' implements nested_index_storage_type, iterable_type' . $access . $sequence . $transfer,
+            '@interfaces@' => ' implements conditional_index_store_type, iterable_type' . $access . $sequence . $transfer,
             '@identity@' => "\tprivate static ?self \$instance = null;\n\n\tprivate function __construct()\n\t{\n\t\tparent::__construct(" . var_export($vector['source_type'], true) . ", $elementClass::instance());\n$initializationSetup\t}\n",
             '@factory@' => "\tpublic static function instance(): self\n\t{\n\t\treturn self::\$instance ??= new self();\n\t}",
         ];
@@ -164,7 +164,7 @@ function compilerVectorTypes(mixed $metadata, ?array $runtime, array $definition
             $applicationMethods = compilerCollectionMethods($vector, $definitions, applicationVector: true);
             $code .= strtr($template, array_replace($bindings, [
                 '@methods@' => $applicationMethods,
-                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements nested_index_storage_type, application_collection_type, iterable_type' . $access . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
+                '@initialization@' => "\tpublic function list_initialization(): ?initialization_transport { return null; }\n", '@class@' => 'application_vector_type', '@interfaces@' => ' implements conditional_index_store_type, application_collection_type, iterable_type' . $access . $sequence . $transfer . $destinationInterface, '@identity@' => $identity,
                 '@iteration@' => compilerTraversalMethods($vector['traversal'], '$this->element_type', $countClass . '::instance()', constructed: true), '@element@' => '$this->element_type', '@cpp@' => '$this->native_name',
                 '@header@' => var_export(providerHeader($runtime['submodules'], typeExport($runtime['submodules'], $vector['count_type'])['provider']), true)
                     . ($vector['enable_reserve'] === '1' ? ", 'scpp/value_error.hpp'" : ''),

@@ -922,13 +922,18 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
     if($m === null) {
         return;
     }
-    fields($m, ['binding', 'utc_years', 'parse_failure', 'format_failure', 'operations', 'local_dst', 'general_names']);
+    fields($m, ['binding', 'utc_years', 'parse_failure', 'format_failure', 'operations', 'local_dst', 'general_names', 'php_names']);
     literals($m, ['binding' => 'native_datetime', 'utc_years' => '0000_9999', 'local_dst' => 'host_normalize_and_select', 'parse_failure' => 'result_error', 'format_failure' => 'throw_runtime_error']);
     $registered = names(at($m, 'operations'), 'Duplicate datetime operation policy');
     requireThat($registered !== [], 'Empty datetime policy');
     $generalNames = object($m->general_names ?? new \stdClass());
     requireThat(array_diff(array_keys($generalNames), $registered) === [], 'Unregistered datetime source mapping');
     names(array_values($generalNames), 'Duplicate datetime source name');
+    $phpNames = object($m->php_names ?? new \stdClass());
+    requireThat(array_diff(array_keys($phpNames), $registered) === [], 'Unregistered PHP datetime source mapping');
+    foreach (names(array_values($phpNames), 'Duplicate PHP datetime source name') as $name) {
+        requireThat(preg_match('/^[a-z][a-z_0-9]*$/D', $name) === 1, 'Invalid PHP datetime source name');
+    }
     foreach($registered as $name) {
         if (isset($generalNames[$name])) requireThat(preg_match('/^dt_[a-z_0-9]+$/D', $generalNames[$name]) === 1, 'Invalid datetime source name');
         requireThat(isset(DATETIME_SIGNATURES[$name]), "Unsupported datetime operation: $name");
@@ -958,7 +963,7 @@ function prepareDatetime(mixed $metadata, mixed $publication, array &$plan): voi
         $identities = array_diff(array_unique([...$args, $result]), ['void']);
         $includes = array_map(fn(string $id): string => providerHeader($plan['submodules'], $id),
             exportProviders($plan['submodules'], $identities));
-        $operations[] = ['name' => $name, 'source_name' => $generalNames[$name] ?? null, 'parameters' => $args,
+        $operations[] = ['name' => $name, 'source_name' => $generalNames[$name] ?? null, 'php_name' => $phpNames[$name] ?? null, 'parameters' => $args,
             'header' => moduleOperationHeader($header, $name), 'includes' => $includes, 'result' => $result, 'arguments' => array_map(fn(string $a):string => "const $a&", $args)];
     }
     requireThat($operations !== [], 'Empty datetime publication');

@@ -314,12 +314,21 @@ final class Preparation
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
 				$this->prepare_index_mutation($statement);
-				if (!($receiver->type_def() instanceof indexed_mutation_type)) {
-					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
+				if ($statement->operator === binary_operator::coalesce && $source->flavor === flavor::php
+					&& $receiver instanceof ast_name_expression && $receiver->local_binding() instanceof ast_local_declaration
+					&& $receiver->type_def() instanceof conditional_index_store_type) {
+					$element = $receiver->type_def()->write_type();
+					$this->collection_element($statement->value, $element, null);
+					$statement->prepare_conditional_store($element);
+					$this->latest_writes[$receiver->local_binding()->storage_id()] = null;
+				} else {
+					if (!($receiver->type_def() instanceof indexed_mutation_type)) {
+						throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
+					}
+					$this->value($statement->value);
+					$this->retain_member_place($receiver);
+					$statement->prepare_storage_compound($statement->target->type_def());
 				}
-				$this->value($statement->value);
-				$this->retain_member_place($receiver);
-				$statement->prepare_storage_compound($statement->target->type_def());
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$binding = null;

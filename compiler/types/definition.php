@@ -429,6 +429,12 @@ interface nested_index_storage_type extends indexed_mutation_type
 	public function lower_cpp_write(string $receiver, string $key, string $value): string;
 }
 
+/** Conditional indexed stores probe the saved key before evaluating a fallback. */
+interface conditional_index_store_type extends nested_index_storage_type
+{
+	public function lower_cpp_entry_presence(string $receiver, string $key): string;
+}
+
 /** Collections whose normal read already rejects missing elements reuse that check for mutations. */
 trait checked_indexed_mutation
 {

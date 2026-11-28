@@ -7,15 +7,19 @@
 
 namespace scpp::detail::datetime {
 // Widen BEFORE multiplication. Both a 64-bit count and intmax_t ratio fit in
-// signed 128 bits, including uint64 counts. Truncation matches duration_cast.
+// signed 128 bits, including uint64 counts.
 // This private target-specific implementation is supported by the Clang build.
-template<class ToDuration, class Rep, class Period>
+template<class ToDuration, bool Floor = false, class Rep, class Period>
 auto checked_duration_count(std::chrono::duration<Rep, Period> duration) -> typename ToDuration::rep {
     using To = typename ToDuration::rep;
     using Scale = std::ratio_divide<Period, typename ToDuration::period>;
     static_assert(std::is_integral_v<Rep> && std::is_integral_v<To>);
     static_assert(sizeof(Rep) <= 8 && sizeof(To) <= 8);
-    const __int128 scaled = static_cast<__int128>(duration.count()) * Scale::num / Scale::den;
+    const __int128 numerator = static_cast<__int128>(duration.count()) * Scale::num;
+    __int128 scaled = numerator / Scale::den;
+    if constexpr (Floor) {
+        if (numerator % Scale::den < 0) --scaled;
+    }
     if (scaled < static_cast<__int128>(std::numeric_limits<To>::min()) ||
         scaled > static_cast<__int128>(std::numeric_limits<To>::max()))
         throw std::runtime_error("datetime duration is outside target range");

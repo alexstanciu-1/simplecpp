@@ -1415,6 +1415,7 @@
   },
   "datetime": {
     "binding": "native_datetime",
+    "php_names": {"now_unix_seconds": "time"},
     "general_names": {
       "now_unix_seconds": "dt_now",
       "now_unix_millis": "dt_now_ms",

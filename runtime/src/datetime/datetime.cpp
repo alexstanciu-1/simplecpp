@@ -101,7 +101,7 @@ void write_digits(std::array<char,20>& out, std::size_t offset, unsigned value, 
 }
 }
 std::int64_t now_unix_seconds() {
-    return checked_duration_count<seconds_t>(std::chrono::system_clock::now().time_since_epoch());
+    return checked_duration_count<seconds_t, true>(std::chrono::system_clock::now().time_since_epoch());
 }
 std::int64_t now_unix_millis() {
     return checked_duration_count<millis_t>(std::chrono::system_clock::now().time_since_epoch());
