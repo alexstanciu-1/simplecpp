@@ -336,7 +336,7 @@ final class ast_field_expression extends ast_expression
 	}
 }
 
-/** A PHP ?-> guards member access and an optional terminal index. */
+/** A PHP ?-> guards member access and any consecutive checked indices. */
 final class ast_nullsafe_member extends ast_expression
 {
 	/** PROPERTIES */

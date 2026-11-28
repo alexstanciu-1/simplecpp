@@ -71,12 +71,14 @@ yields absence. An empty captain or coach raises the ordinary empty-owner
 failure. All four paths skip `key()`. With every owner present, `key()` and
 `score()` each run once, and a score of zero stays present.
 
-A chain may end in one checked read from a typed vector or hash, for example
-`$team?->scores[key()]`. An absent guarded receiver skips the key and yields
-absence. On a selected path the collection and key each run once, and the
-element uses its type's optional representation. A stored zero stays present.
-An invalid vector index or missing hash key raises the ordinary lookup failure,
-including when a coalescing fallback follows the chain.
+A chain may end in consecutive checked reads from typed vectors and hashes,
+for example `$team?->groups[groupKey()][playerKey()]`. An absent guarded
+receiver skips all keys and yields absence. Each selected key runs once, from
+left to right. A missing hash key or out-of-range vector index raises the
+ordinary lookup failure before any later key or coalescing fallback runs.
+Each lookup returns its element by value. When that element is a collection,
+the next lookup sees the selected snapshot, even if its key suspends and
+replaces the original outer slot. A stored zero stays present through `??`.
 
 A checked index may also feed a further nullsafe member access, for example
 `$team?->players[key()]?->points` or `$team?->players[key()]?->score(arg())`.
