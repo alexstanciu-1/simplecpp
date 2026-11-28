@@ -247,7 +247,7 @@ $n=2; adjust($n); echo $n; return 0;''', output='3'),
     Probe('interface-override', '''interface Label {public function title():string;}
 class Page implements Label {public override function title():string{return "Hello";}}
 function render(Label $view): string{return $view->title();} echo render(new Page()); return 0;''', output='Hello'),
-    Probe('nullable-field', 'class User {public ?int $limit=10;} $u=new User(); echo $u->limit ?? 20; return 0;', reject='Unsupported instance field type: nullable<int>'),
+    Probe('nullable-field', 'class User {public ?int $limit=10;} $u=new User(); echo $u->limit ?? 20; return 0;', output='10'),
     Probe('nullable-text-field', 'class User {public ?string $name=null;} $u=new User(); echo $u->name ?? "guest"; return 0;', output='guest'),
     Probe('nullable-by-ref', '''function reset_limit(?int &$n):void {$n=null;}
 $limit ?int=0; reset_limit($limit); echo $limit ?? 10; return 0;''', output='10'),
