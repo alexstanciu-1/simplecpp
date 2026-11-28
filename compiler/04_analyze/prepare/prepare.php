@@ -315,14 +315,27 @@ final class Preparation
 				$receiver = $statement->target->receiver;
 				$this->prepare_index_mutation($statement);
 				if ($statement->operator === binary_operator::coalesce && $source->flavor === flavor::php
-					&& $receiver->type_def() instanceof conditional_index_store_type
-					&& (($receiver instanceof ast_name_expression && $receiver->local_binding() instanceof ast_local_declaration)
-						|| ($receiver instanceof ast_field_expression && ast_index_expression::collection_storage_root($receiver) !== null))) {
+					&& $receiver->type_def() instanceof conditional_index_store_type) {
+					$root = $receiver;
+					if ($receiver instanceof ast_index_expression) {
+						$root = $receiver->receiver;
+						$parent = $root->type_def();
+						$child = $receiver->type_def();
+						if (!(($parent instanceof hash_type_definition && $child instanceof vector_type_definition)
+							|| ($parent instanceof vector_type_definition && $child instanceof hash_type_definition))) {
+							throw new diagnostic($source, $receiver->byte_start(), 'Nested coalescing assignment requires a hash of vectors or a vector of hashes');
+						}
+					}
+					if ($root instanceof ast_field_expression && ast_index_expression::collection_storage_root($root) !== null) {
+						if ($root !== $receiver) $this->check_indexed_field_owner($root);
+						$this->retain_member_place($root);
+					} elseif (!($root instanceof ast_name_expression && $root->local_binding() instanceof ast_local_declaration)) {
+						throw new diagnostic($source, $root->byte_start(), 'Indexed coalescing assignment requires a local or writable instance field');
+					}
 					$element = $receiver->type_def()->write_type();
 					$this->collection_element($statement->value, $element, null);
 					$statement->prepare_conditional_store($element);
-					if ($receiver instanceof ast_field_expression) $this->retain_member_place($receiver);
-					else $this->latest_writes[$receiver->local_binding()->storage_id()] = null;
+					if ($root instanceof ast_name_expression) $this->latest_writes[$root->local_binding()->storage_id()] = null;
 				} else {
 					if (!($receiver->type_def() instanceof indexed_mutation_type)) {
 						throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Indexed compounds require a mutable collection');
