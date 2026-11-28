@@ -8,7 +8,7 @@ namespace scpp\compiler;
  * Canonical int64 identity and literal preparation; int and int64 facts share this single object.
  * Example: global $count int = 10; attaches this definition to its declaration and checked literal.
  */
-final class type_@name@ extends type_definition
+final class type_@name@ extends type_definition@reset_interface@
 {
 @type_traits@	/** CONSTANTS */
 	public const int MINIMUM /** int64 */ = (-@maximum@ - 1);

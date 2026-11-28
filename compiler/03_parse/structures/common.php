@@ -409,8 +409,7 @@ final class ast_clean_statement extends ast_reset_statement
 	public function prepare_reset(ast_local_binding $local): void
 	{
 		$type = $local->type_def();
-		if (!(type_registry::is_numeric_scalar($type) || $type === type_bool::instance() || $type === type_string::instance()
-			|| $type instanceof vector_type_definition || $type instanceof hash_type_definition || $type instanceof boxed_type_definition || $type instanceof owned_callable_type)) {
+		if (!($type instanceof default_reset_type)) {
 			throw new diagnostic($this->source(), $this->byte_start(), 'Cannot clean storage of type ' . $type->name);
 		}
 		$this->settle_binding($local);

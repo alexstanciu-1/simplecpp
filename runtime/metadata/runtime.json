@@ -689,6 +689,7 @@
     "symbol_prefix": "checked_"
   },
   "vector": {
+    "default_reset": true,
     "transform_domain": {"operations": ["map", "filter"], "kind": "sequence", "publication": "vectors.specializations"},
     "access_contracts": ["container", "readonly_slot", "python_index_read"],
     "provider": "core.vectors",
@@ -804,6 +805,7 @@
     "const_pointee": "explicit_add_const"
   },
   "hash": {
+    "default_reset": true,
     "transform_domain": {"operations": ["map", "filter"], "kind": "keyed", "publication": "hashes.specializations"},
     "access_contracts": ["container", "readonly_slot", "python_index_read"],
     "transfer_assignment": "private_value_nothrow",
@@ -1451,6 +1453,7 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
+    "default_reset": true,
     "transform_domain": {"operations": ["map", "filter"], "kind": "collection", "publication": "boxed.scalar_dispatch"},
     "access_contracts": ["runtime_kind", "python_index_read_snapshot"],
     "initialization": "ordered_family_literals",
@@ -1551,6 +1554,7 @@
     },
     "value_types": {
       "int64": {
+        "default_reset": true,
         "class": "int64",
         "constant_dispatch": "integer_switch",
         "literal_family": "integer",
@@ -1580,6 +1584,7 @@
         }
       },
       "bool_t": {
+        "default_reset": true,
         "class": "bool",
         "literal_family": "keyword",
         "declarations": {
@@ -1596,6 +1601,7 @@
         }
       },
       "uint8": {
+        "default_reset": true,
         "class": "uint8",
         "constant_dispatch": "integer_switch",
         "literal_family": null,
@@ -1610,6 +1616,7 @@
         ]
       },
       "float64": {
+        "default_reset": true,
         "class": "float64",
         "literal_family": "floating",
         "declarations": {
@@ -1624,6 +1631,7 @@
         "cpp_type": "double"
       },
       "string": {
+        "default_reset": true,
         "class": "string",
         "constant_dispatch": "byte_equality",
         "literal_family": "string",
@@ -1642,6 +1650,7 @@
         }
       },
       "int8": {
+        "default_reset": true,
         "class": "int8",
         "constant_dispatch": "integer_switch",
         "literal_family": null,
@@ -1656,6 +1665,7 @@
         ]
       },
       "int16": {
+        "default_reset": true,
         "class": "int16",
         "constant_dispatch": "integer_switch",
         "literal_family": null,
@@ -1670,6 +1680,7 @@
         ]
       },
       "int32": {
+        "default_reset": true,
         "class": "int32",
         "constant_dispatch": "integer_switch",
         "literal_family": null,
@@ -1684,6 +1695,7 @@
         ]
       },
       "uint16": {
+        "default_reset": true,
         "class": "uint16",
         "constant_dispatch": "integer_switch",
         "literal_family": null,
@@ -1698,6 +1710,7 @@
         ]
       },
       "uint32": {
+        "default_reset": true,
         "class": "uint32",
         "constant_dispatch": "integer_switch",
         "literal_family": null,

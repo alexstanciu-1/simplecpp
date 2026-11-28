@@ -20,6 +20,11 @@ final class initialization_transport
 	}
 }
 
+/** An initialized writable slot of this type can be cleaned by assigning its native default. */
+interface default_reset_type
+{
+}
+
 /** Presence can be observed directly without converting or copying the stored payload. */
 interface presence_test_type
 {

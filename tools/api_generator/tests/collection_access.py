@@ -25,6 +25,8 @@ def prove(work):
     metadata['hash']['access_contracts'].remove('readonly_slot')
     metadata['vector']['access_contracts'].remove('container')
     metadata['boxed']['access_contracts'].remove('runtime_kind')
+    del metadata['hash']['default_reset']
+    metadata['compiler']['value_types']['int64']['default_reset'] = False
     fixture = work / 'metadata.json'
     fixture.write_text(json.dumps(metadata))
     subprocess.run(['php', GENERATOR, 'emit-compiler', fixture, ROOT / 'runtime/metadata/publication.json',
@@ -51,8 +53,17 @@ def prove(work):
         $v vector<int>=[7]; if(first($v)!==7){return 1;}
         $fixed fixed_array<byte,1>=[1]; $h hash<int,int>=[];
         if(!is_array($fixed) || is_int($fixed) || !is_array($h)){return 2;}
+        $map hash<int,string>=["key"=>4];
+        $map["key"]=7;
+        if ($map["key"]!==7) {return 4;}
+        $map->clear();
+        if (count($map)!==0) {return 5;}
+        clean($v);
+        if (count($v)!==0) {return 6;}
         $s="x"; return read($s,$s);
     ''')
+    for declaration in ('$x int=8;', '$x hash<int,string>=[];', 'struct Item {public int $n;} $x hash<Item,int>=[];'):
+        emit('php', declaration + ' clean($x); return 8;', 'Cannot clean storage of type')
     emit('php', 'function f(const hash<int,int> &$h):int{return count($h);} return 8;',
          'Const references require a borrowable collection')
     emit('php', 'function f(const string &$s):int{$s="changed";return 8;} return 8;',

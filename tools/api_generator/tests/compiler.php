@@ -589,6 +589,7 @@ try {
     require $root . '/compiler/03_parse/structures/abstract.php';
     require $root . '/compiler/03_parse/structures/common.php';
     $type = \scpp\compiler\type_int64::instance();
+    requireThat($type instanceof \scpp\compiler\default_reset_type, 'Integer literal provider omitted its default reset grant');
     requireThat(\scpp\compiler\type_registry::resolve('int') === $type && \scpp\compiler\type_registry::resolve('int64') === $type, 'Registration identity differs');
     requireThat(\scpp\compiler\type_registry::resolve('vector') === null, 'Out-of-scope type registered');
     requireThat($type::MINIMUM === PHP_INT_MIN && $type::MAXIMUM === PHP_INT_MAX, 'Generated bounds differ');

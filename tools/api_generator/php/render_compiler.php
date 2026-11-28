@@ -188,6 +188,11 @@ function compilerPhpAdmission(array $policies, string $name, int $arity, array $
     return ', php_argument_labels: [' . implode(', ', $labels) . "], php_exact_inputs: $exact";
 }
 
+/** A provider explicitly permits whole-slot assignment of the native default by clean(). */
+function compilerDefaultResetInterface(?object $provider, string $prefix = ', '): string {
+    return boolean($provider->default_reset ?? false) ? $prefix . 'default_reset_type' : '';
+}
+
 /** Generate the supported core scalar definitions; module membership determines availability. */
 function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): array {
     // A null plan is the scalar-only generator test surface; production always supplies a validated runtime plan.
@@ -345,6 +350,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
                 default => throw new \RuntimeException('Unsupported native signed integer literal type'),
             };
             $files['types/' . $definition['class'] . '.php'] = strtr(readFile(__DIR__ . '/../templates/scalars/signed_integer.php.tpl'), [
+                '@reset_interface@' => compilerDefaultResetInterface($compiler->value_types->$identity, ' implements '),
                 '@radix_cases@' => implode(', ', array_map(static fn(string $prefix, int $radix): string => var_export($prefix, true) . ' => ' . $radix, array_keys(object($compiler->integer_literals->prefixes)), array_values(object($compiler->integer_literals->prefixes)))),
                 '@native_suffix@' => var_export($nativeSuffix, true),
                 '@native_minimum@' => var_export('(-' . $definition['maximum'] . $nativeSuffix . ' - 1' . $nativeSuffix . ')', true),
@@ -417,6 +423,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         if ($identity === 'string' && ($runtime['string']['transfer_assignment'] ?? false)) {
             $indexInterface .= $indexInterface === '' ? ' implements private_value_transfer_type' : ', private_value_transfer_type';
         }
+        $indexInterface .= compilerDefaultResetInterface($compiler->value_types->$identity ?? null, $indexInterface === '' ? ' implements ' : ', ');
         $hostChecks = $identity === 'float64' ? "\t\tif ((PHP_FLOAT_DIG !== 15) || (PHP_FLOAT_EPSILON !== 2.0 ** (1 - " . $facts['double']['digits'] . "))\n"
             . "\t\t\t|| (PHP_FLOAT_MIN !== 2.0 ** (2 - " . $facts['double']['max_exponent'] . "))) {\n"
             . "\t\t\tthrow new \\RuntimeException('Compiler host requires IEEE binary64');\n\t\t}\n" : '';

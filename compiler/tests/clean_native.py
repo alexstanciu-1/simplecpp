@@ -63,6 +63,22 @@ def prove(work):
     edits.extend([('main', '$v vector<int> = [1]; clean($v[0]); return 8;', 'single whole-variable clean operand'),
                   ('main', 'clean($missing); return 8;', 'requires an existing local'),
                   ('main', main, b'')])
+    # The reference follows the reset slot. The copied handle keeps the old collection alive.
+    alias_reset = """
+        $a dynamic=["key"=>7]; $copy=$a; $alias =& $a;
+        clean($a);
+        if (!is_null($alias) || (int)$copy["key"]!==7) {return 1;}
+        struct Point {public int $n=7;}
+        $p Point; $list vector<Point>=[$p]; $table hash<Point,string>=["p"=>$p];
+        clean($list); clean($table);
+        if (count($list)!==0 || count($table)!==0) {return 3;}
+        function identity(int $n):int {return $n;}
+        $cb function<int(int)>=identity(...); clean($cb);
+        if (isset($cb)) {return 4;}
+        $values vector<int>=[3]; foreach ($values as &$v) {clean($v);}
+        return $values[0]===0 ? 8 : 2;
+    """
+    edits.extend([('main', alias_reset, b''), ('main', main, b'')])
     revisions(work, 'php', {'main': main, 'provider': provider}, edits)
 
     # Observe the exact boxed tag through the native API.

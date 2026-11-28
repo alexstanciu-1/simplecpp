@@ -179,7 +179,7 @@ final class callable_signature_index
 }
 
 /** Explicit callable storage owns a copy of its target and has an absent default state. */
-final class owned_callable_type extends type_definition implements presence_test_type
+final class owned_callable_type extends type_definition implements presence_test_type, default_reset_type
 {
 	use collection_specializations;
 	use concrete_value_storage;

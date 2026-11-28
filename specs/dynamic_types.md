@@ -71,6 +71,8 @@ compliance. See the implementation handoff.
   whether the old or new value is scalar or container.
 - Default dynamic is null. There is one null state, distinct from a constructed
   empty container. No old absent-handle versus boxed-null distinction survives.
+- Providers grant `default_reset` to admit `clean` on an initialized writable binding.
+  Preparation checks the grant independently of collection operations such as `clear`.
 - `clean($value)` resets mixed or dynamic storage to its own null state, including
   through a native alias or reference parameter. It does not clear a shared dynamic
   container in place; other copied bindings preserve their object. Whole-variable

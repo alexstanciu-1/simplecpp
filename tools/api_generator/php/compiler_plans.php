@@ -78,7 +78,7 @@ function compilerTypePlan(mixed $metadata, array $facts, array $types, ?array $p
     $owners = [];
     $classes = [];
     foreach ($rows as $identity => $row) {
-        fields($row, ['class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family', 'member_visibility', 'constant_dispatch']);
+        fields($row, ['default_reset', 'class', 'source_names', 'cpp_type', 'literals', 'storage_binding', 'copy_semantics', 'declarations', 'literal_family', 'member_visibility', 'constant_dispatch']);
         $family = at($row, 'literal_family');
         requireThat($family === null || in_array($family, ['integer', 'floating', 'string', 'keyword'], true), 'Unsupported literal family');
         $declarations = fields(at($row, 'declarations'), ['inferred_local', 'global_storage', 'instance_field']);

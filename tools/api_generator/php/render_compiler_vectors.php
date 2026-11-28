@@ -11,7 +11,7 @@ function compilerAccessInterfaces(mixed $provider, bool $indexed = true, bool $r
     }
     $readModes = array_intersect($contracts, ['python_index_read', 'python_index_read_snapshot']);
     requireThat(count($readModes) <= 1 && (!$readModes || $indexed), 'Python index access requires one bound read mode');
-    $interfaces = '';
+    $interfaces = compilerDefaultResetInterface($provider);
     foreach (generalTransforms($provider) as $form) $interfaces .= ', ' . $form . '_source';
     foreach ($contracts as $contract) {
         $interfaces .= match ($contract) {
