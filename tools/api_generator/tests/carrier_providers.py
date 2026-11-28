@@ -121,6 +121,8 @@ def proof(work):
         return any(result.partition('<')[0] in metadata['carriers']['families'] for result in types)
     absent['string']['functions'] = [name for name in absent['string']['functions'] if not needs_carrier(name)]
     del absent['cli_helpers']['environment']
+    # The query builder's separator is a nullable string.
+    del absent['boxed']['query_builder']
     absent['text_helpers'].remove('string_byte_find')
     removed = emit(metadata, absent)
     assert 'nullable_int64' not in removed['submodules']['type_exports']

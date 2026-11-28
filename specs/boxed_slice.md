@@ -107,6 +107,12 @@ The PHP core binding `parse_str(string $string, mixed &$result): void` requires 
 
 The compiled runtime uses the PHP defaults of 1,000 input fields and 64 bracket levels. Each nonempty field counts, including duplicates and ignored names. An extra field emits a warning on stderr and publishes the first 1,000 fields. An over-depth path deletes its top-level entry and parsing continues. A canonical signed 64-bit PHP integer key outside the mixed key domain, or an append past its maximum, throws a source-catchable exception and preserves the previous output. A decimal spelling outside the PHP integer domain remains a string key.
 
+### PHP form query building
+
+`http_build_query(data[, numeric_prefix[, arg_separator[, encoding_type]]])` returns a string. The PHP binding borrows each published scalar vector or hash admitted by its metadata, or traverses a mixed table depth first. Typed hash keys retain their declared type. A mixed scalar root or tuple raises an exception. Each integer root key gets the literal numeric prefix. Nested keys use encoded brackets; iteration order and sparse keys are preserved. Null and empty containers contribute no pairs, empty strings emit an empty value, and booleans emit 1 or 0.
+
+The default separator is `&`, also used for null. Explicit separators are copied verbatim. PHP_QUERY_RFC3986 selects raw URL encoding, and the default PHP_QUERY_RFC1738 selects form encoding. As in PHP, other integer modes use form encoding. Floating-point leaves use PHP's default 14 significant digits before URL encoding.
+
 ## Linking and next scope
 
 Compile generated `src/boxed.cpp` alongside that publication's `src/runtime.cpp`;

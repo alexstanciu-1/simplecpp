@@ -98,6 +98,10 @@ string(JSON hash_publication_type ERROR_VARIABLE hash_publication_error TYPE "${
 if(hash_publication_type STREQUAL "OBJECT")
   list(APPEND runtime_outputs ${runtime_generated}/src/hash.cpp)
 endif()
+if("${runtime_generated}/public/scpp/php/http_build_query.hpp" IN_LIST runtime_outputs)
+  set(query_builder_source ${runtime_generated}/src/http_build_query.cpp)
+  list(APPEND runtime_outputs ${query_builder_source})
+endif()
 if(SCPP_ENABLE_DATETIME)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/datetime.hpp ${runtime_generated}/src/datetime.cpp)
   if("${runtime_generated}/public/scpp/datetime/php_strtotime.hpp" IN_LIST runtime_outputs)
@@ -148,7 +152,7 @@ add_custom_target(scpp_runtime_publication
   BYPRODUCTS ${runtime_outputs}
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
-add_library(scpp_runtime STATIC runtime/src/sequence/fixed_array.cpp ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
+add_library(scpp_runtime STATIC ${query_builder_source} runtime/src/sequence/fixed_array.cpp ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp runtime/src/ownership/owner_access.cpp runtime/src/numeric/arithmetic.cpp)
 if("${runtime_generated}/public/scpp/string.hpp" IN_LIST runtime_outputs)
   target_sources(scpp_runtime PRIVATE runtime/src/entry/source_path.cpp)
 endif()
@@ -748,6 +752,8 @@ if(BUILD_TESTING)
       set_tests_properties(compiler_fcgi_apache_native PROPERTIES TIMEOUT 60)
     endif()
   endif()
+  add_test(NAME compiler_php_http_build_query COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_http_build_query.py ${CMAKE_CXX_COMPILER})
   add_test(NAME compiler_php_parse_str_native COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/php_parse_str_native.py ${CMAKE_CXX_COMPILER})
   if(SCPP_ENABLE_IO)

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 require_once __DIR__ . '/boxed.php';
+require_once __DIR__ . '/query_builder.php';
 require_once __DIR__ . '/json.php';
 require_once __DIR__ . '/resource_modules.php';
 require_once __DIR__ . '/module_functions.php';
@@ -109,6 +110,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareJson($metadata, $publication, $plan);
     foreach (FUNCTION_MODULES as $family) prepareModuleFunctions($family, $metadata, $publication, $plan);
     prepareResourceModules($publication, $plan);
+    prepareQueryBuilder($publication, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     finalizePublicationProviders($plan);

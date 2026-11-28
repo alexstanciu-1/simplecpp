@@ -330,6 +330,7 @@ function publicationProviderHeaders(mixed $metadata, mixed $publication): array 
         && in_array('string', array_column($publication->hashes->specializations ?? [], 'value'), true)) {
         $headers[] = 'scpp/php/implode_hash.hpp';
     }
+    if (isset($publication->boxed->query_builder)) $headers[] = 'scpp/php/' . $publication->boxed->query_builder->name . '.hpp';
     foreach ($publication->boxed->php_operations ?? [] as $row) $headers[] = 'scpp/php/' . $row->native . '.hpp';
     foreach (array_keys(object($publication->cli_helpers ?? (object)[])) as $name) {
         $headers[] = cliHelperHeader($name);

@@ -416,6 +416,7 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
     $runtimeCases = array_merge(compilerJsonCases($runtime, $runtimeTypes), compilerResourceCases($runtime, $runtimeTypes));
+    if (isset($runtime['query_builder'])) $runtimeCases[] = compilerQueryBuilder($runtime['query_builder'], $runtimeTypes);
     foreach ($runtime['regex']['callbacks'] ?? [] as $name => $binding) {
         $key = $binding['callbackSurface'] . ':func:' . $name;
         $input = 'type_' . $runtimeTypes[$binding['input']] . '::instance()';

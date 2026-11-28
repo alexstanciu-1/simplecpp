@@ -5,7 +5,12 @@
   "async_frames": true,
   "mt_segments": true,
   "modules": ["numeric"],
-  "boxed": {"php_operations": [
+  "boxed": {"query_builder": {
+    "name": "http_build_query",
+    "vector_elements": ["int64", "float64", "bool_t", "string"],
+    "hash_keys": ["int64", "string"], "hash_values": ["uint8", "int64", "string"],
+    "constants": {"PHP_QUERY_RFC1738": 1, "PHP_QUERY_RFC3986": 2}
+  }, "php_operations": [
     {"native": "parse_str", "php": ["parse_str"], "parameters": ["string", "mixed"], "mutable_parameters": [1], "result": "void"}
   ], "mixed_predicates": ["is_bool", "is_int", "is_float", "is_string", "is_array", "is_null"], "header": "scpp/boxed.hpp", "families": ["mixed", "dynamic"], "scalar_conversions": false, "scalar_dispatch": true},
   "namespace": "scpp",
