@@ -1656,6 +1656,10 @@ final class Parser
 							$member = $this->instance_member($member);
 						} else break;
 					}
+					if ($member instanceof ast_index_expression && $this->cursor->is(token_kind::lparen)) {
+						$call = $this->call_arguments($member->start, 'indexed callable', null, $member, call_qualifier::stored_value);
+						return new ast_nullsafe_member($call, $guarded);
+					}
 					$value = new ast_nullsafe_member($member, $guarded);
 				} while ($this->cursor->is(token_kind::nullsafe_member));
 				return $value;
