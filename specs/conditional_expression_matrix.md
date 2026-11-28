@@ -87,6 +87,14 @@ lookup failure. An existing empty handle yields absence at the second guard.
 Only a present player reaches the field or call. The call retains that player
 through argument evaluation, including when an argument replaces the slot.
 
+An ordinary member can also follow one or more checked indices, as in
+`$team?->groups[$group][$slot]->points` and
+`$team?->groups[$group][$slot]->score(arg())`. An absent team skips both keys
+and the argument. A missing slot raises its usual lookup failure. If the slot
+contains an empty owner, ordinary `->` raises the empty-owner failure before
+evaluating the argument. A present player stays alive through the call even
+when the argument replaces the slot.
+
 A standalone call such as `$team?->coach->notify(key());` may end in a
 synchronous `void` method. An absent team skips the arguments and invocation.
 With a present team, the ordinary receiver check runs before `key()`. An
