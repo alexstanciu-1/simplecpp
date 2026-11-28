@@ -22,9 +22,9 @@ function retention_run(string $app, string $flavor, int $cycles /** uint32 */): 
 	file_put_contents($app . '/module.json', '{}');
 	$function = static fn(string $name, string $body): string => ($flavor === 'cpp'
 		? "void $name()" : "function $name(): void") . '{' . $body . '}';
-	file_put_contents($app . '/main.' . $flavor, 'value(); return 8;');
-	file_put_contents($app . '/stable.' . $flavor, $function('stable', ''));
-	file_put_contents($app . '/library.' . $flavor, $function('value', 'stable(); echo 0;'));
+	file_put_contents($app . '/main.' . \scpp\compiler\flavor::from($flavor)->source_extension(), 'value(); return 8;');
+	file_put_contents($app . '/stable.' . \scpp\compiler\flavor::from($flavor)->source_extension(), $function('stable', ''));
+	file_put_contents($app . '/library.' . \scpp\compiler\flavor::from($flavor)->source_extension(), $function('value', 'stable(); echo 0;'));
 	$project = new Incremental_Project($app, $app . '/out', new entry_target(31));
 	$probe = new Retention_Inspection();
 	$rows = [];
@@ -36,8 +36,8 @@ function retention_run(string $app, string $flavor, int $cycles /** uint32 */): 
 	{
 		$phase = $step === 0 ? 'initial' : (($step % 2) === 1 ? 'edit' : 'noop');
 		if ($phase === 'edit') {
-			file_put_contents($app . '/library.' . $flavor, $function('value', 'stable(); echo ' . $step . ';'));
-			touch($app . '/library.' . $flavor, ++$stamp);
+			file_put_contents($app . '/library.' . \scpp\compiler\flavor::from($flavor)->source_extension(), $function('value', 'stable(); echo ' . $step . ';'));
+			touch($app . '/library.' . \scpp\compiler\flavor::from($flavor)->source_extension(), ++$stamp);
 		}
 		$started = hrtime(true);
 		$result = $project->run();

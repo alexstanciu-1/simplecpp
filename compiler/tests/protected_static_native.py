@@ -1,4 +1,5 @@
 """Declaring-type protected static calls, lexical access and incremental/fresh equivalence."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 import tempfile
@@ -42,10 +43,10 @@ def rejections(work, flavor, src, helpers):
             ('main', f'echo Child{qualifier}hidden();return 8;', 'Cannot call protected method'),
         ]
         for name, text, message in cases:
-            source_edit(app/(name+'.'+flavor), text)
+            source_edit(app/(name+'.'+source_suffix(flavor)), text)
             got = invoke(p)
             assert message in got.get('error', ''), (flavor, message, got)
-            source_edit(app/(name+'.'+flavor), src[name])
+            source_edit(app/(name+'.'+source_suffix(flavor)), src[name])
             assert 'error' not in invoke(p)
     finally:
         p.stdin.close()

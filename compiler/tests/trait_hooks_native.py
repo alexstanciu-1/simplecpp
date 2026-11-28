@@ -1,4 +1,5 @@
 """Bodyless trait hooks on concrete consumers, including inherited implementations and uncalled requirements."""
+from source_suffix import source_suffix
 import argparse
 import tempfile
 from pathlib import Path
@@ -56,7 +57,7 @@ def prove(work, flavor):
         ('extra', additional.replace(hook('unused', 'public'), ''), b'385'),
         ('base', base(static_idle), 'Trait hook requires a concrete instance method'),
         ('base', base(idle), ok),
-    ], unaffected_source='local.' + flavor)
+    ], unaffected_source='local.' + source_suffix(flavor))
     assert artifacts(work / f'{flavor}-fresh-12') == artifacts(work / f'{flavor}-fresh-13'), 'Hooks changed native output'
 
 

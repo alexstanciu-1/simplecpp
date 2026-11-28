@@ -12,10 +12,10 @@ def cpp_files(directory):
 
 
 def write_function(app, name, expression):
-    (app/(name+'.php')).write_text(f'function {name}(): int {{ return {expression}; }}')
+    (app/(name+'.phs')).write_text(f'function {name}(): int {{ return {expression}; }}')
 
 
-def default(app, value, kind='int', filename='pick.php'):
+def default(app, value, kind='int', filename='pick.phs'):
     (app/filename).write_text(f'function pick({kind} $v = {value}): int {{ return $v; }}')
 
 
@@ -23,7 +23,7 @@ def verify(work, exe, cxx, linker, adapter, service, sequence):
     app = work/'project'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return caller();')
+    (app/'main.phs').write_text('return caller();')
     generated = app/'generated'
     facts = Path(adapter).parent/'native-layout/facts.json'
     write_function(app, 'caller', 'pick()')
@@ -37,7 +37,7 @@ def verify(work, exe, cxx, linker, adapter, service, sequence):
             ru, pu, links = emitted_units(app, facts, work/'production', generated)
             if prepared is not None:
                 for actual, expected in [(worklist, prepared), (units, prepared if emitted is None else emitted)]:
-                    assert set(filter(None, actual.split(','))) == {n+'.php' for n in expected}, (actual, expected)
+                    assert set(filter(None, actual.split(','))) == {n+'.phs' for n in expected}, (actual, expected)
                 expected_files = {ru[n].name for n in objects}.union(removed)
                 assert set(filter(None, writes.split(','))) == expected_files, (writes, expected_files)
                 assert all(not (generated/name).exists() for name in removed)
@@ -86,13 +86,13 @@ def verify(work, exe, cxx, linker, adapter, service, sequence):
             results = {'caller': 11, 'control': 7}
             step(results)
             before = cpp_files(generated)
-            default(app, '11', filename='replacement.php')
+            default(app, '11', filename='replacement.phs')
             failure, prepared, emitted, writes = request('lower').split('|')
             assert 'Duplicate function: pick' in failure and prepared == emitted == writes == ''
             assert cpp_files(generated) == before
-            (app/'pick.php').unlink()
-            step(results, {'replacement'}, {'replacement'}, removed=['unit-pick.php.cpp'])
-            default(app, '17', filename='replacement.php')
+            (app/'pick.phs').unlink()
+            step(results, {'replacement'}, {'replacement'}, removed=['unit-pick.phs.cpp'])
+            default(app, '17', filename='replacement.phs')
             step({'caller': 17, 'control': 7}, {'replacement', 'caller'}, {'caller'}, fresh=True)
         elif sequence == 'publication':
             step({'caller': 11, 'control': 7})
@@ -102,7 +102,7 @@ def verify(work, exe, cxx, linker, adapter, service, sequence):
                 default(app, '13')
                 status, prepared, _, writes = request('lower').split('|')
                 assert status == 'Output bundle busy' and writes == ''
-                assert set(filter(None, prepared.split(','))) == {'caller.php', 'pick.php'}
+                assert set(filter(None, prepared.split(','))) == {'caller.phs', 'pick.phs'}
                 assert cpp_files(generated) == before
                 default(app, '17')
             step({'caller': 17, 'control': 7}, {'caller', 'pick'}, {'caller'}, fresh=True)
@@ -115,10 +115,10 @@ def verify(work, exe, cxx, linker, adapter, service, sequence):
 
 def verify_entry(work, app, request, exe, service, cxx, linker, facts):
     generated = app/'generated'
-    (app/'caller.php').unlink()
-    main = app/'main.php'
+    (app/'caller.phs').unlink()
+    main = app/'main.phs'
     main.write_text('return pick();')
-    other = app/'other.php'
+    other = app/'other.phs'
     other.write_text('function other(int $v = 13): int { return $v; }')
     for stage, result, changed in [('cold', 11, None), ('switch', 13, {'definition', 'pick', 'main'}),
                                    ('old-default', 13, set()), ('new-default', 17, {'main'})]:
@@ -133,13 +133,13 @@ def verify_entry(work, app, request, exe, service, cxx, linker, facts):
         ru, pu, links = emitted_units(app, facts, work/'production', generated, 'definition')
         if stage != 'cold':
             expected = {'switch': {'main'}, 'old-default': {'pick'}, 'new-default': {'main', 'other'}}[stage]
-            assert set(filter(None, prepared.split(','))) == {n+'.php' for n in expected}, prepared
+            assert set(filter(None, prepared.split(','))) == {n+'.phs' for n in expected}, prepared
             if stage == 'switch':
                 expected = {'other', 'main', 'pick'}
-            assert set(filter(None, emitted.split(','))) == {n+'.php' for n in expected}, emitted
+            assert set(filter(None, emitted.split(','))) == {n+'.phs' for n in expected}, emitted
             files = {ru[n].name for n in changed}
             if stage == 'switch':
-                files.add('unit-other.php.cpp')
+                files.add('unit-other.phs.cpp')
             assert set(filter(None, written.split(','))) == files, written
         builds = [('retained', ru, False, changed), ('production', pu, True, None)]
         if stage == 'new-default':

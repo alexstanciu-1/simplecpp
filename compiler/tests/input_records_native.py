@@ -1,4 +1,5 @@
 """Compare fixed source records and the derived path index with the PHP input scanner."""
+from source_suffix import source_suffix
 import json
 import os
 from pathlib import Path
@@ -60,7 +61,7 @@ def snapshots(work):
     (root / 'sub').mkdir(parents=True)
     (root / 'main.cpp').write_text('return 8;')
     (root / 'facts.json').write_text('{}')
-    helper = root / 'sub/helper.php'
+    helper = root / 'sub/helper.phs'
     cases = []
     for i, content in enumerate((b'', b'// edit', None, b'')):
         if content is None:
@@ -71,9 +72,9 @@ def snapshots(work):
             os.utime(helper, (stamp, stamp))
         inputs = []
         for path in sorted(root.rglob('*')):
-            if path.suffix in ('.cpp', '.php'):
+            if path.suffix in ('.cpp', '.phs'):
                 stat = path.stat()
-                inputs.append((path.relative_to(root).as_posix(), path.suffix[1:], int(stat.st_mtime), stat.st_size))
+                inputs.append((path.relative_to(root).as_posix(), 'php' if path.suffix == '.phs' else path.suffix[1:], int(stat.st_mtime), stat.st_size))
         bundle = work / f'bundle-{i}'
         index = json.loads(subprocess.check_output(['php', ORACLE, 'capture', root, bundle]))
         state = json.loads((bundle / 'manifest.json').read_bytes())['build']['inputs']
@@ -97,7 +98,7 @@ def prove(work, flavor, root, cases):
     mains = [program(flavor, root, inputs) for inputs, _, _ in cases]
     edits = [(None, None, cases[0][1])] + [
         ('main', mains[i], cases[i][1]) for i in range(1, len(cases))]
-    revisions(work, flavor, {'records': records, 'main': mains[0]}, edits, unaffected_source='records.' + flavor)
+    revisions(work, flavor, {'records': records, 'main': mains[0]}, edits, unaffected_source='records.' + source_suffix(flavor))
     for i, (_, expected, bundle) in enumerate(cases):
         run = subprocess.run([work / f'{flavor}-native-{i}' / 'program'], capture_output=True)
         assert run.returncode == 8 and run.stdout == expected

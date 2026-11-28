@@ -1,4 +1,5 @@
 """Demanded static bodies survive sibling edits and retire when their last root disappears."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 import subprocess
@@ -50,7 +51,7 @@ def prove(work, flavor, *, quick=False):
         return
     app = work / flavor
     subprocess.run(['php', Path(__file__).with_name('called_method_lifetime.php'), app,
-                    work / (flavor + '-lifetime'), app / ('caller.' + flavor)], check=True)
+                    work / (flavor + '-lifetime'), app / ('caller.' + source_suffix(flavor))], check=True)
 
 
 def forwarding(work, flavor):

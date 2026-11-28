@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-strtotime-') as tmp:
     work = Path(tmp)
     app, out = work/'app', work/'out'
     app.mkdir()
-    (app/'main.php').write_text(fixed + now)
+    (app/'main.phs').write_text(fixed + now)
     manifest = app/'module.json'
     manifest.write_text(json.dumps({'dependencies': {'runtime': {'modules': ['datetime']}}}))
     proc = service(app, out)

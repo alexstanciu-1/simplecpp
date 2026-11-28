@@ -40,12 +40,12 @@ def main():
         programs = {}
         for name in ['access-log', 'stock-ledger', 'route-table']:
             case = args.build.resolve() / '0' / name
-            source = case / 'app/main.php'
-            if source.read_bytes() != (HERE / name / 'main.php').read_bytes():
+            source = case / 'app/main.phs'
+            if source.read_bytes() != (HERE / name / 'main.phs').read_bytes():
                 raise ValueError('Not the baseline source: ' + name)
             manifest = json.loads((case / 'out/manifest.json').read_text())
             units = [case / 'out' / f for f in manifest['translation_units']]
-            app = case / 'out' / manifest['sources']['app/main.php']
+            app = case / 'out' / manifest['sources']['app/main.phs']
             report['sizes'][name] = dict(source=source.stat().st_size, app_cpp=app.stat().st_size,
                                          app_lines=len(app.read_bytes().splitlines()),
                                          entry_cpp=(case / 'out/entry.cpp').stat().st_size,

@@ -1,4 +1,5 @@
 """Run the scanner lifetime fixture against default and renamed string read providers."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 import shutil
@@ -15,19 +16,19 @@ SCANNER = PROJECT / 'specs/planning/benchmarks/tokenizer'
 def emit_scanner(work, flavor, method, driver):
     app = work / flavor
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
-    source = (SCANNER / ('scanner.' + flavor)).read_text()
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
+    source = (SCANNER / ('scanner.' + source_suffix(flavor))).read_text()
     # Read the first byte of each token through the ordinary string binding.
     # Identifier continuation and keyword checks still read from the scoped view.
     field = {'php': '$out->source[$i]', 'cpp': 'out->source[i]', 'js': 'out.source[i]'}[flavor]
     parameter = '$text[$i]' if flavor == 'php' else 'text[i]'
     assert field in source
-    (app / ('scanner.' + flavor)).write_text(source.replace(field, parameter, 1))
-    (app / ('main.' + flavor)).write_text(fixture(flavor)['infer']('r', 'scan("if",0)') + 'return 8;')
+    (app / ('scanner.' + source_suffix(flavor))).write_text(source.replace(field, parameter, 1))
+    (app / ('main.' + source_suffix(flavor))).write_text(fixture(flavor)['infer']('r', 'scan("if",0)') + 'return 8;')
     out = work / (flavor + '-out')
     run = subprocess.run(['php', driver, app, out], input='"run"\n', capture_output=True, text=True, check=True)
     assert 'error' not in json.loads(run.stdout), run.stdout
-    unit = out / json.loads((out / 'manifest.json').read_text())['sources'][f'{flavor}/scanner.{flavor}']
+    unit = out / json.loads((out / 'manifest.json').read_text())['sources'][f'{flavor}/scanner.{source_suffix(flavor)}']
     code = unit.read_text()
     assert f').{method}(' in code and 'scpp_byte_view.read(' in code
     assert code.count('.checked_bytes()') == 1

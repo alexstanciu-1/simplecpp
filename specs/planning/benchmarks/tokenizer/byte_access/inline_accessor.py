@@ -53,7 +53,7 @@ def measure(root, runtime, work, view=False, split=False):
         for flavor in ('cpp','php','js'):
             out=root/(flavor+'-out')
             corpus=root/flavor
-            src=out/json.loads((out/'manifest.json').read_text())['sources'][f'{flavor}/scanner.{flavor}']
+            src=out/json.loads((out/'manifest.json').read_text())['sources'][f'{flavor}/scanner.{"phs" if flavor == "php" else flavor}']
             folder=work/(cc+flavor)
             folder.mkdir(exist_ok=True)
             (folder/'adapter.hpp').write_text(f'''#include "{src.with_suffix('.hpp').name}"

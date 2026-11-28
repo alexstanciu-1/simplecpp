@@ -31,7 +31,7 @@ To reproduce, build the datetime-enabled configuration on dev002, then run from
 the repository root:
 
 ```sh
-git show 9f3a1ca3d:compiler/examples/translated_path/frontend.php.scpp > /tmp/baseline-frontend.scpp
+git show 9f3a1ca3d:compiler/examples/translated_path/frontend.phs > /tmp/baseline-frontend.scpp
 XDEBUG_MODE=off taskset -c 6 python3 -B specs/planning/benchmarks/tokenizer/quotes/measure.py /tmp/baseline-frontend.scpp
 ```
 

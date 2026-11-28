@@ -1,1 +1,1 @@
-{"sources":["main.php"],"general_api":true,"dependencies":{"runtime":{"modules":["fcgi","json"]}}}
+{"sources":["main.phs"],"general_api":true,"dependencies":{"runtime":{"modules":["fcgi","json"]}}}

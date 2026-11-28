@@ -1,4 +1,5 @@
 """Protected instance access, virtual visibility and all-flavor incremental/fresh recovery."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 from classes_native import fixture
@@ -45,21 +46,21 @@ def rejects(work, flavor, src, call):
         for text,message in [
             (s['infer']('p','new Child()')+f'echo {v}p{a}hook();return 8;','Cannot call protected method'),
         ]:
-            source_edit(work/flavor/('main.'+flavor),text)
+            source_edit(work/flavor/('main.'+source_suffix(flavor)),text)
             assert message in invoke(p).get('error','')
-        source_edit(work/flavor/('main.'+flavor),src['main'])
+        source_edit(work/flavor/('main.'+source_suffix(flavor)),src['main'])
         # Context Child cannot use a base-typed receiver for protected instance access.
         for target in ['Base','Sibling']:
             bad=klass('Child',method('ancestor','return 3;')+method('hook','return 7;',visibility='protected',intent='override')
                 +method('call',f'return {v}other{a}hidden();',[('other',target)]),'Base')
-            source_edit(work/flavor/('sibling.'+flavor),klass('Sibling','','Base'))
-            source_edit(work/flavor/('child.'+flavor),bad)
+            source_edit(work/flavor/('sibling.'+source_suffix(flavor)),klass('Sibling','','Base'))
+            source_edit(work/flavor/('child.'+source_suffix(flavor)),bad)
             assert 'Cannot call protected method' in invoke(p).get('error','')
-        source_edit(work/flavor/('child.'+flavor),src['child'])
+        source_edit(work/flavor/('child.'+source_suffix(flavor)),src['child'])
         # Public virtual slots cannot narrow their visibility.
-        source_edit(work/flavor/('base.'+flavor),src['base'].replace('protected: virtual','public: virtual').replace('protected virtual','public virtual'))
+        source_edit(work/flavor/('base.'+source_suffix(flavor)),src['base'].replace('protected: virtual','public: virtual').replace('protected virtual','public virtual'))
         assert 'narrow visibility' in invoke(p).get('error','')
-        source_edit(work/flavor/('base.'+flavor),src['base'])
+        source_edit(work/flavor/('base.'+source_suffix(flavor)),src['base'])
         assert 'error' not in invoke(p)
     finally:p.stdin.close();p.wait()
 

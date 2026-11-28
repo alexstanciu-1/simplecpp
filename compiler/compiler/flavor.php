@@ -15,6 +15,23 @@ enum flavor: string
 	case js = 'js';
 	case python = 'py';
 
+	/** Canonical application source extension for this syntax flavor. */
+	public function source_extension(): string
+	{
+		return $this === self::php ? 'phs' : $this->value;
+	}
+
+	/** Classic PHP scripts are outside the Simple C++ source inventory. */
+	public static function require_source_path(string $path, ?self $selected = null): void
+	{
+		if (str_ends_with($path, '.php')) {
+			throw new \RuntimeException("Classic PHP file '$path' cannot be compiled as Simple C++; use .phs for PHP-flavor source");
+		}
+		if ($selected !== null && $selected !== self::php && str_ends_with($path, '.phs')) {
+			throw new \RuntimeException("Source '$path' requires the php flavor");
+		}
+	}
+
 	/** Space-separated lexical inventory shared with the native scanner generator. */
 	public function keyword_spellings(): string
 	{

@@ -27,8 +27,8 @@ with TemporaryDirectory(prefix="scpp-coalesce-scope-") as tmp:
     work = Path(tmp)
     app = work / "app"
     app.mkdir()
-    (app / "module.json").write_text('{"entry":"main.php"}')
-    source = app / "main.php"
+    (app / "module.json").write_text('{"entry":"main.phs"}')
+    source = app / "main.phs"
     source_edit(source, "return 8;")
     proc = service(app, work / "out")
     try:

@@ -121,7 +121,7 @@ function record_resolution(Dashboard $book, RequestCase $request, vector<RouteRu
 
 
 def source_parts(name):
-    text = (BASE / name / 'main.php').read_text()
+    text = (BASE / name / 'main.phs').read_text()
     # A separate entry keeps the original task and its output directly comparable.
     text = text.replace('function analyze(string &$input): void {',
                         'function process_input(string &$input, Dashboard $book, bool $details): void {')
@@ -233,6 +233,6 @@ if __name__ == '__main__':
             directory = HERE / f'{size}k' / name
             directory.mkdir(parents=True, exist_ok=True)
             text, used = materialize(name, size*1000)
-            (directory / 'main.php').write_text(text)
+            (directory / 'main.phs').write_text(text)
             (directory / 'module.json').write_bytes((BASE / name / 'module.json').read_bytes())
             print(size, name, len(text.encode()), len(used))

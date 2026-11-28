@@ -10,8 +10,8 @@ def check(work):
     app, out = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('echo probe(); return 8;')
-    probe, job = app/'probe.php', app/'job.php'
+    (app/'main.phs').write_text('echo probe(); return 8;')
+    probe, job = app/'probe.phs', app/'job.phs'
     source = 'function probe():int {return async_wait(job(7));}'
     declaration = 'async function job(int $n):int {return $n;}'
     source_edit(probe, source)
@@ -24,12 +24,12 @@ def check(work):
         published = artifacts(out), (out/'manifest.json').read_bytes()
         source_edit(job, declaration.removeprefix('async '))
         failure = invoke(process).get('error', '')
-        assert 'probe.php:1:30: async_wait requires an async function' in failure, failure
+        assert 'probe.phs:1:30: async_wait requires an async function' in failure, failure
         assert published == (artifacts(out), (out/'manifest.json').read_bytes())
         source_edit(job, declaration)
         source_edit(probe, source.replace('job(7)', '7'))
         failure = invoke(process).get('error', '')
-        assert 'probe.php:1:30: async_wait requires one direct async call' in failure, failure
+        assert 'probe.phs:1:30: async_wait requires one direct async call' in failure, failure
         assert published == (artifacts(out), (out/'manifest.json').read_bytes())
         source_edit(probe, source.replace('7', '9'))
         assert 'error' not in invoke(process)
@@ -45,9 +45,9 @@ def check(work):
     translated = work/'translated'
     translated.mkdir()
     (translated/'module.json').write_text('{}')
-    (translated/'main.php').write_text('check_wait(); return 8;')
-    shutil.copyfile(TRANSLATION, translated/'preparation.php')
-    shutil.copyfile(TRANSLATION.with_name('blocking_wait.php.scpp'), translated/'wait.php')
+    (translated/'main.phs').write_text('check_wait(); return 8;')
+    shutil.copyfile(TRANSLATION, translated/'preparation.phs')
+    shutil.copyfile(TRANSLATION.with_name('blocking_wait.phs'), translated/'wait.phs')
     generated = work/'generated'
     result = fresh_build(translated, generated)
     assert 'error' not in result, result

@@ -12,9 +12,9 @@ with tempfile.TemporaryDirectory(prefix='boxed-record-casts-') as folder:
     root = Path(folder)
     app, out = root/'app', root/'out'
     app.mkdir()
-    (app/'module.json').write_text('{"entry":"main.php"}')
-    record = app/'packet.php'
-    child = app/'point.php'
+    (app/'module.json').write_text('{"entry":"main.phs"}')
+    record = app/'packet.phs'
+    child = app/'point.phs'
     point = 'data struct Point { public int $x; public vector<int> $samples; }'
     source_edit(child, point)
     schema = '''data struct Packet {
@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='boxed-record-casts-') as folder:
     source_edit(record, schema)
     source_edit(app/'export.cpp', 'mixed asMixed(Packet p) {return (mixed)p;}')
     source_edit(app/'export.js', 'function asDynamic(p:Packet):dynamic {return (dynamic)p;}')
-    main = app/'main.php'
+    main = app/'main.phs'
     program = '''
 function once(Packet $p):Packet {echo "!";return $p;}
 $p Packet = {right:{samples:[8],x:9},left:{samples:[5],x:4},tags:["long text beyond inline string capacity","z"],data:[2,7]};

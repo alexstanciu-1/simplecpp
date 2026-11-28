@@ -31,7 +31,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$valid_body = 'apply(fn(' . $param('nested') . '):int => ' . $var . 'nested, ' . $var . 'nextName' . $access . 'field)';
 	$text = $prefix . 'fn(' . $param('inner') . "):int =>\n" . $failure_line . "\n" . $probe
 		. 'fn(' . $param('nextName', 'Box') . '):int => ' . $valid_body . ';' . $probe;
-	$source = new source_file('lambda.' . $flavor->name, $text, $flavor);
+	$source = new source_file('lambda.' . $flavor->source_extension(), $text, $flavor);
 	$parser = new Parser($frontend->scan($source));
 	try {
 		$parser->parse();
@@ -82,7 +82,7 @@ $text = '$factor=3; $f=fn(int $n):int => apply(fn(int $x):int => $factor+$x+$n+$
 	. '$g=fn(int $factor):int => apply(fn():int => $factor);'
 	. '$h=fn():int => apply(function () use ($factor):int { $inside=4; return $inside; });'
 	. '$i=fn():int => apply(function ():int { return $factor; }); return 8;';
-$source = new source_file('nested.php', $text, flavor::php);
+$source = new source_file('nested.phs', $text, flavor::php);
 $statements = (new Parser($frontend->scan($source)))->parse()->main()->body()->statements;
 foreach ([[1, ['factor'], ['factor', 'n']], [2, [], ['factor']], [3, ['factor'], ['factor']], [4, [], []]] as [$index, $outer, $inner]) {
 	$arrow = $statements[$index]->initializer;

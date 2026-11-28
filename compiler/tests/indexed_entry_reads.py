@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix='indexed-entry-reads-') as tmp:
     app, out = work / 'app', work / 'out'
     app.mkdir()
     (app / 'module.json').write_text('{}')
-    main = app / 'main.php'
+    main = app / 'main.phs'
     compiler = service(app, out)
     try:
         for declaration, message in [
@@ -49,7 +49,7 @@ with tempfile.TemporaryDirectory(prefix='indexed-entry-reads-') as tmp:
         ]:
             main.write_text(declaration + '\nreturn (int)$a[false];')
             result = invoke(compiler)
-            assert f'main.php:2:16: {message}' in result.get('error', ''), result
+            assert f'main.phs:2:16: {message}' in result.get('error', ''), result
         main.write_text(source)
         result = invoke(compiler)
         assert 'error' not in result, result

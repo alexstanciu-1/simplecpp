@@ -20,9 +20,9 @@ try {
 		file_put_contents($app . '/module.json', '{}');
 		$fn = static fn(string $name, string $body): string => ($flavor === 'cpp'
 			? "void $name()" : "function $name(): void") . '{' . $body . '}';
-		$main = $app . '/main.' . $flavor;
-		$library = $app . '/library.' . $flavor;
-		$foreign = $app . '/foreign.' . $flavor;
+		$main = $app . '/main.' . \scpp\compiler\flavor::from($flavor)->source_extension();
+		$library = $app . '/library.' . \scpp\compiler\flavor::from($flavor)->source_extension();
+		$foreign = $app . '/foreign.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 		$local = $fn('local', 'value();') . $fn('local_peer', 'value();');
 		file_put_contents($main, 'value(); value(); return 8;');
 		file_put_contents($library, $fn('value', '') . $local);
@@ -44,7 +44,7 @@ try {
 		verify(Incremental_Preparation::prepare($session, $target) === ['prepared' => 0, 'reused' => 5], 'No-op invalidated bodies');
 		verify($watches->observer_count($slot) === 4, 'No-op lost retained groups');
 		// Movement retires the old source bucket and registers the replacement under the new key.
-		$moved = $app . '/moved.' . $flavor;
+		$moved = $app . '/moved.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 		rename($foreign, $moved);
 		$session = $compiler->frontend($app, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 1, 'Move preparation scope');

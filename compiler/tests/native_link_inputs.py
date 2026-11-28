@@ -40,7 +40,7 @@ def verify(exe, root):
     bundle = root/'bundle'
     runtime = write('sdk/module.json', {'name': 'runtime', 'artifacts': None})
     app = write('app/module.json', {'name': 'app', 'artifacts': ['unused.o']})
-    (app.parent/'main.php').write_text('return 0;')
+    (app.parent/'main.phs').write_text('return 0;')
     assert compare(exe, app, bundle, runtime)['link_inputs'] == []
     common = str(root/'shared absolute.a')
     left = {'name': 'left', 'artifacts': ['z.a', common, 'z.a'],

@@ -207,9 +207,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
+		$main = $directory . '/main.' . $flavor->source_extension();
 		file_put_contents($main, 'for (' . $decl('i', 'int', '0') . $var('i') . '<2;' . $var('i') . '+=step(' . $var('i') . '),step(0)) { continue; } return 8;');
-		$lib = $directory . '/lib.' . $flavor->name;
+		$lib = $directory . '/lib.' . $flavor->source_extension();
 		$write = static function (string $type, string $value) use ($lib, $fn, $parameter): void {
 			file_put_contents($lib, $fn('step', $parameter, $type, 'return ' . $value . ';'));
 		};

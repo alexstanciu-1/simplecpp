@@ -165,8 +165,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
-		$library = $directory . '/lib.' . $flavor->name;
+		$main = $directory . '/main.' . $flavor->source_extension();
+		$library = $directory . '/lib.' . $flavor->source_extension();
 		file_put_contents($main, $decl('vector<int>', 'values', '[]') . $v . '[] = number();' . $v . '[0] = number(); echo ' . $v . '[0]; return 8;');
 		$revision = time();
 		$write = static function (?string $type, string $value = '') use ($library, &$revision, $function): void {

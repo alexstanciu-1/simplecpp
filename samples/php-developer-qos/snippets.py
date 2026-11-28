@@ -171,7 +171,7 @@ $doc=json_document_parse("{",$diag); $root=json_document_root($doc); echo "after
     Probe('try-accessor', '''try { throw new Exception("declined"); } catch (Exception $e) { echo $e->get_message(); } return 0;''', output='declined'),
     Probe('catch-throwable', '''try { throw new Exception("declined"); } catch (Throwable $e) { echo "caught"; } return 0;''', reject='Throw and catch require core Exception or a shared descendant'),
     Probe('catch-range', '''$v vector<int> = []; try {echo $v[0];} catch (Exception $e) {echo "caught";} finally {echo "cleanup";} return 0;''', runtime_error="sequence_index_out_of_range; stdout=b'cleanup'"),
-    Probe('require-once', '''require_once "settings.php"; return 0;''', reject='select project sources in module.json'),
+    Probe('require-once', '''require_once "settings.phs"; return 0;''', reject='select project sources in module.json'),
     Probe('header-function', '''header("Content-Type: application/json"); return 0;''', reject='Unknown function: header'),
     Probe('preg-unbound-output', '''$found=preg_match("/(ok)/","ok",$matches); return 0;''', modules=('regex',), reject='Unknown or not-yet-initialized local/global: matches'),
     Probe('preg-output', '''$matches mixed=[]; $r=preg_match("/(ok)/","ok",$matches); $found int=$r;
@@ -204,7 +204,7 @@ $node json_node=json_document_root($doc); $kind string=json_node_kind($node); ec
     Probe('exclusive-write-flag', '$r=file_put_contents("x","line",FILE_APPEND); return 0;', modules=('filesystem',), reject='Argument count mismatch for function: file_put_contents'),
     Probe('namespace-import', '''namespace Billing {function cents(int $n): int {return $n*100;}}
 namespace {use function Billing\\cents as money; echo money(2); return 0;}''', reject='Only one namespace body per file is supported'),
-    Probe('dir-constant', 'echo __FILE__ === __DIR__ . "/main.php" ? "ok" : "bad";', output='ok'),
+    Probe('dir-constant', 'echo __FILE__ === __DIR__ . "/main.phs" ? "ok" : "bad";', output='ok'),
     Probe('switch-status', '$s=405; switch($s){case 405: echo "method"; break; default: echo "other";} return 0;', output='method'),
     Probe('throw-expression', '''function required(?string $s): string { return $s ?? throw new Exception("required"); }
 try {echo required(null);} catch(Exception $e) {echo $e->get_message();} return 0;''', output='required'),
@@ -365,7 +365,7 @@ if (isset($n) && isset($r)) {$len int=$n; $data string=$r; echo $len,":",strlen(
 def exercise(probe, work):
     app = work/'app'
     app.mkdir()
-    (app/'main.php').write_text(probe.code+'\n')
+    (app/'main.phs').write_text(probe.code+'\n')
     (app/'module.json').write_text(json.dumps({'general_api': probe.general,
                                                'dependencies': {'runtime': {'modules': probe.modules}}}))
     try:

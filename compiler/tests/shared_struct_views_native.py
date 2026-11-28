@@ -1,4 +1,5 @@
 """Explicit shared struct views, concrete destruction, checked access and retained recovery."""
+from source_suffix import source_suffix
 import argparse
 import subprocess
 import tempfile
@@ -52,7 +53,7 @@ def prove(work, flavor, memcheck):
         ('api',api+ref+unary('badBind','void','Leaf',f'bind({n});'),'Reference argument requires exact storage type'),
         ('api',api+fn('widen','vector<Node>',[('items','vector<Leaf>')],f'return {v}items;'),'Unsupported explicit conversion'),
         ('api',api,ok),
-    ], unaffected_source='idle.'+flavor)
+    ], unaffected_source='idle.'+source_suffix(flavor))
     # Run the recovered fresh bundle independently as well as comparing its emitted artifacts.
     measure(work/f'{flavor}-fresh-13', work/f'{flavor}-fresh-native', ok)
     if memcheck:

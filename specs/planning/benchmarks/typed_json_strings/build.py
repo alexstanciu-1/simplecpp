@@ -14,14 +14,14 @@ root, work = args.root.resolve(), args.work.resolve()
 app, out = work/'app', work/'out'
 app.mkdir(parents=True, exist_ok=True)
 (app/'module.json').write_text('{"dependencies":{"runtime":{"modules":["json"]}},"general_api":true}')
-(app/'records.php').write_text('data struct Scalar {public string $value;} data struct Words {public vector<string> $value;}')
-(app/'main.php').write_text('$s Scalar=json_decode_as("{}",Scalar::class);$w Words=json_decode_as("{}",Words::class);return 0;')
+(app/'records.phs').write_text('data struct Scalar {public string $value;} data struct Words {public vector<string> $value;}')
+(app/'main.phs').write_text('$s Scalar=json_decode_as("{}",Scalar::class);$w Words=json_decode_as("{}",Words::class);return 0;')
 generated = subprocess.run(['php', root/'compiler/tests/incremental_executable.php', app, out],
                            input='"run"\n', text=True, capture_output=True, check=True,
                            env={**os.environ, 'XDEBUG_MODE':'off'})
 assert 'error' not in json.loads(generated.stdout), generated.stdout
 manifest = json.loads((out/'manifest.json').read_text())
-unit = out/manifest['sources']['app/records.php']
+unit = out/manifest['sources']['app/records.phs']
 expected = 'd.read_strings(field_0)' if args.batched else '.append(d.read_string())'
 assert expected in unit.read_text(), f'Expected generated string-vector operation {expected}'
 flags = ['clang++', '-O3', '-DNDEBUG', '-stdlib=libc++', '-std=c++23', '-I', root/'runtime/generated/public']

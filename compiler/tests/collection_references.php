@@ -133,10 +133,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		rejects(fn() => $prepare($function('void', 'bad', $ref($type, 'x') . ' = null', 'return;') . 'return 8;'), 'Reference parameter defaults');
 		$directory = sys_get_temp_dir() . '/scpp-collection-ref-' . bin2hex(random_bytes(8)); mkdir($directory);
 		try {
-			$path = $directory . '/library.' . $flavor->name;
-			file_put_contents($directory . '/main.' . $flavor->name, $main);
-			file_put_contents($directory . '/model.' . $flavor->name, $model);
-			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name, 'sources' => ['main.' . $flavor->name, 'model.' . $flavor->name, basename($path)]]));
+			$path = $directory . '/library.' . $flavor->source_extension();
+			file_put_contents($directory . '/main.' . $flavor->source_extension(), $main);
+			file_put_contents($directory . '/model.' . $flavor->source_extension(), $model);
+			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension(), 'sources' => ['main.' . $flavor->source_extension(), 'model.' . $flavor->source_extension(), basename($path)]]));
 			$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp=time(); $caller=null;
 			$edits = [$provider, str_replace($mutation, str_replace($second, $first, $mutation), $provider),
 				str_replace($mutation, str_replace($ref($type, 'x'), $param($type, 'x'), $mutation), $provider),

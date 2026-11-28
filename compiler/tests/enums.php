@@ -182,14 +182,14 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$directory = sys_get_temp_dir() . '/scpp-enums-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'provider.' . $flavor->name]]));
+		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension(), 'provider.' . $flavor->source_extension()]]));
 		$sep = match ($flavor) {
 			flavor::php => '\\', flavor::cpp => '::', flavor::js => '.',
 		};
 		$main = 'use Lib' . $sep . 'Kind; use function Lib' . $sep . 'pick;'
 			. $decl('Kind', 'x', 'pick()') . 'echo (int)enum_value(' . $var('x') . '),":",(int)(' . $var('x') . '===' . $case_ref('Kind', 'Second') . ');return 8;';
-		file_put_contents($directory . '/main.' . $flavor->name, $main);
-		$path = $directory . '/provider.' . $flavor->name;
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), $main);
+		$path = $directory . '/provider.' . $flavor->source_extension();
 		$stamp = time();
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31));
 		$caller = null;
@@ -217,12 +217,12 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 			verify($project->run()['preparation']['prepared'] === 0, 'No-op prepared bodies');
 		}
 		// Header publication can change while the declaring unit's AST stays untouched.
-		$provider_ast = $project->session()->entry->sources['provider.' . $flavor->name]->ast;
+		$provider_ast = $project->session()->entry->sources['provider.' . $flavor->source_extension()]->ast;
 		foreach (['return 8;', $main] as $index => $code) {
-			file_put_contents($directory . '/main.' . $flavor->name, $code);
-			touch($directory . '/main.' . $flavor->name, ++$stamp);
+			file_put_contents($directory . '/main.' . $flavor->source_extension(), $code);
+			touch($directory . '/main.' . $flavor->source_extension(), ++$stamp);
 			$project->run();
-			verify($project->session()->entry->sources['provider.' . $flavor->name]->ast === $provider_ast,
+			verify($project->session()->entry->sources['provider.' . $flavor->source_extension()]->ast === $provider_ast,
 				'Header visibility edit reparsed the unchanged provider');
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
 			$fresh->run();

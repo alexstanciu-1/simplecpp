@@ -34,7 +34,7 @@ def measure(root, runtime):
         out=root/(flavor+'-out')
         units=out/'units'
         manifest=json.loads((out/'manifest.json').read_text())
-        generated=out/manifest['sources'][f'{flavor}/scanner.{flavor}']
+        generated=out/manifest['sources'][f'{flavor}/scanner.{"phs" if flavor == "php" else flavor}']
         header=next(p for p in units.glob('*.hpp') if 'Scan scan_(' in p.read_text())
         for native in (True,False):
             label='handwritten' if native else 'generated'

@@ -42,7 +42,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-query-') as directory:
     app, output = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    main = app/'main.php'
+    main = app/'main.phs'
     failures = ''
     for q in ['ok=new&a[-1]=x', 'ok=new&2147483648=x', 'a[2147483647]=x&a[]=y']:
         failures += '$out=["original"=>"ok"]; try {parse_str("' + q + '",$out);return 1;} catch (Exception $e) {dump_query($out);}'

@@ -22,12 +22,12 @@ def signature(arms):
 def emit(work):
     app, output = work/'app', work/'output'
     app.mkdir()
-    (app/'module.json').write_text('{"entry":"main.php"}')
+    (app/'module.json').write_text('{"entry":"main.phs"}')
     models = 'class Expr { public int $mark = 0; }\n'
     models += '\n'.join(f'class {name} extends Expr {{}}' for name in ARMS)
-    (app/'model.php').write_text(models)
-    (app/'api.php').write_text('function examine(Expr $value): int {return $value->mark;}')
-    (app/'main.php').write_text('\n'.join(f'examine(new {name}());' for name in ARMS)+'\nreturn 8;')
+    (app/'model.phs').write_text(models)
+    (app/'api.phs').write_text('function examine(Expr $value): int {return $value->mark;}')
+    (app/'main.phs').write_text('\n'.join(f'examine(new {name}());' for name in ARMS)+'\nreturn 8;')
     server = service(app, output)
     try:
         report = invoke(server)

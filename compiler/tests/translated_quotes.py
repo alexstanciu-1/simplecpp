@@ -57,7 +57,7 @@ def verify(work, cxx, linker):
         main.append(f'show(hex2bin("{source.encode().hex()}"), Scan_Flavor::{mode});')
     for mode in ('php', 'cpp', 'js', 'python'):
         main.append(f'repair(Scan_Flavor::{mode});')
-    (app/'main.php').write_text('\n'.join([*main, 'return 8;']))
+    (app/'main.phs').write_text('\n'.join([*main, 'return 8;']))
     generated = work/'generated'
     manifest = fresh(app, generated)
     exe = work/'probe'

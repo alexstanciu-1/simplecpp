@@ -62,7 +62,7 @@ existing explicit-global literal inference or implement nullable types.
 
 ## Bootstrap parser proof for fixed locals
 
-The [translated global declaration parser](../examples/global_declaration/parser.php.scpp)
+The [translated global declaration parser](../examples/global_declaration/parser.phs)
 ports the non-static flavor branches of `Global_Syntax::read` with one explicit
 nullable written-type local. It consumes a kind-and-spelling projection of the
 production token stream. The proof uses integer initializers and simple written

@@ -1,4 +1,5 @@
 """Shared identity hash keys: strong retention, empty keys, views and incremental/fresh recovery."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 from classes_native import fixture
@@ -59,15 +60,15 @@ def reject(work,flavor,src):
     try:
         bad_types=['hash<int,weak<Point>>','hash<int,Point>','hash<int,vector<int>>']
         for t in bad_types:
-            source_edit(app/('main.'+flavor),s['local']('bad',t)+'return 8;')
+            source_edit(app/('main.'+source_suffix(flavor)),s['local']('bad',t)+'return 8;')
             result=invoke(proc);assert 'Unavailable runtime specialization' in result.get('error',''),result
         bad=src['main'].replace(f'{v}table[{v}p]=1;',f'{v}table[null]=1;')
-        source_edit(app/('main.'+flavor),bad);assert 'Hash key requires' in invoke(proc).get('error','')
+        source_edit(app/('main.'+source_suffix(flavor)),bad);assert 'Hash key requires' in invoke(proc).get('error','')
         for replacement, message in [(f'{v}table[new Payload()]=1;', 'Hash key requires'),
                 (f'{v}table[]=1;', 'Append requires an appendable collection')]:
-            source_edit(app/('main.'+flavor),src['main'].replace(f'{v}table[{v}p]=1;',replacement))
+            source_edit(app/('main.'+source_suffix(flavor)),src['main'].replace(f'{v}table[{v}p]=1;',replacement))
             assert message in invoke(proc).get('error','')
-        source_edit(app/('main.'+flavor),src['main']);assert 'error' not in invoke(proc)
+        source_edit(app/('main.'+source_suffix(flavor)),src['main']);assert 'error' not in invoke(proc)
     finally:proc.stdin.close();proc.wait()
 
 

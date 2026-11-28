@@ -48,7 +48,7 @@ def emitted_units(app, facts, production, retained, definition_name='caller'):
     manifest = json.loads((production/'manifest.json').read_text())
     by_unit = {v: Path(k).stem for k, v in manifest['sources'].items()}
     php_units = {by_unit.get(path, Path(path).stem): production/path for path in manifest['translation_units']}
-    retained_units = {p.name.removeprefix('unit-').removesuffix('.cpp').removesuffix('.php'): p
+    retained_units = {p.name.removeprefix('unit-').removesuffix('.cpp').removesuffix('.phs'): p
                       for p in retained.glob('*.cpp')}
     retained_units[definition_name] = retained_units.pop('definition')
     return retained_units, php_units, manifest['link_inputs']
@@ -58,14 +58,14 @@ def verify(work, exe, cxx, linker, adapter, service, forwarding=False):
     app = work/'parameters'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return caller();')
+    (app/'main.phs').write_text('return caller();')
     target = 'relay' if forwarding else 'identity'
     if forwarding:
-        (app/'relay.php').write_text('function relay(int $value): int { return identity($value); }')
+        (app/'relay.phs').write_text('function relay(int $value): int { return identity($value); }')
     dependents = {'identity', 'relay'} if forwarding else {'identity', 'caller', 'large'}
     for name, operand in [('caller', f'{target}(7)'), ('large', f'{target}(9007199254740993)'), ('quiet', '42')]:
-        (app/f'{name}.php').write_text(f'function {name}(): int {{ return {operand}; }}')
-    definition = app/'identity.php'
+        (app/f'{name}.phs').write_text(f'function {name}(): int {{ return {operand}; }}')
+    definition = app/'identity.phs'
     retained = app/'generated'
     production = work/'php-bundle'
     facts = Path(adapter).parent/'native-layout/facts.json'
@@ -87,14 +87,14 @@ def verify(work, exe, cxx, linker, adapter, service, forwarding=False):
         for stage, parameter, body, expected, large in stages:
             if stage in ('float-relay', 'restore-relay'):
                 relay_type = 'float' if stage == 'float-relay' else 'int'
-                (app/'relay.php').write_text(f'function relay({relay_type} $value): int {{ return identity($value); }}')
+                (app/'relay.phs').write_text(f'function relay({relay_type} $value): int {{ return identity($value); }}')
             elif stage != 'unchanged':
                 definition.write_text(f'function identity({parameter} {body}): int {{ return {body}; }}')
             status, prepared, emitted, written = request('lower').split('|')
             assert status == 'ok', status
             if expected is not None:
-                assert set(filter(None, prepared.split(','))) == {n+'.php' for n in expected}, prepared
-                assert set(filter(None, emitted.split(','))) == {n+'.php' for n in expected}, emitted
+                assert set(filter(None, prepared.split(','))) == {n+'.phs' for n in expected}, prepared
+                assert set(filter(None, emitted.split(','))) == {n+'.phs' for n in expected}, emitted
             retained_units, php_units, links = emitted_units(app, facts, production, retained)
             results = {'caller': 7, 'large': large}
             # A rename changes the PHP parameter spelling in C++. The retained unit
@@ -117,26 +117,26 @@ def verify(work, exe, cxx, linker, adapter, service, forwarding=False):
         assert request('lower').startswith('ok|')
         assert {p.name: p.read_bytes() for p in retained.glob('*.cpp')} == saved
         if forwarding:
-            relay = app/'relay.php'
+            relay = app/'relay.phs'
             original = relay.read_text()
             relay.write_text(original.replace('identity($value)', 'identity($missing)'))
             failed = request('lower')
-            assert f'relay.php:{relay.read_text().index("$missing")}: Unknown parameter' in failed and failed.endswith('||'), failed
+            assert f'relay.phs:{relay.read_text().index("$missing")}: Unknown parameter' in failed and failed.endswith('||'), failed
             relay.write_text(original)
             assert request('lower').startswith('ok|')
             assert {p.name: p.read_bytes() for p in retained.glob('*.cpp')} == saved
     cold = work/'fresh-parameters'
     cold.mkdir()
-    for path in app.glob('*.php'):
+    for path in app.glob('*.phs'):
         shutil.copyfile(path, cold/path.name)
     with service(exe, cold) as request:
         assert request('lower').startswith('ok|')
         assert {p.name: p.read_bytes() for p in (cold/'generated').glob('*.cpp')} == saved
-        (cold/'main.php').write_text('return identity(7);')
+        (cold/'main.phs').write_text('return identity(7);')
         assert request('lower').startswith('ok|')
-        (cold/'identity.php').write_text('function identity(float $value): int { return $value; }')
+        (cold/'identity.phs').write_text('function identity(float $value): int { return $value; }')
         status, prepared, emitted, written = request('lower').split('|')
-        assert status == 'ok' and 'main.php,' in prepared and 'main.php,' in emitted and 'main.cpp,' in written
+        assert status == 'ok' and 'main.phs,' in prepared and 'main.phs,' in emitted and 'main.cpp,' in written
         main = (cold/'generated/main.cpp').read_text()
         assert 'static_cast<scpp::float64>(7LL)' in main
         assert request('lower') == 'ok|||'
@@ -148,14 +148,14 @@ def verify_multiple(work, exe, cxx, linker, adapter, service):
     app = work/'multiple'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return caller();')
-    (app/'caller.php').write_text('function caller(): int { return relay(9007199254740993); }')
-    (app/'relay.php').write_text('function relay(int $value): int { return pick(7, $value); }')
+    (app/'main.phs').write_text('return caller();')
+    (app/'caller.phs').write_text('function caller(): int { return relay(9007199254740993); }')
+    (app/'relay.phs').write_text('function relay(int $value): int { return pick(7, $value); }')
     # A separate three-slot call checks that forwarded arguments use the caller's slot.
-    (app/'third.php').write_text('function third(int $a, float $b, int $c): int { return $c; }')
-    (app/'swap.php').write_text('function swap(int $a, int $b): int { return third($a, 0, $b); }')
-    (app/'quiet.php').write_text('function quiet(): int { return swap(5, -17); }')
-    pick = app/'pick.php'
+    (app/'third.phs').write_text('function third(int $a, float $b, int $c): int { return $c; }')
+    (app/'swap.phs').write_text('function swap(int $a, int $b): int { return third($a, 0, $b); }')
+    (app/'quiet.phs').write_text('function quiet(): int { return swap(5, -17); }')
+    pick = app/'pick.phs'
     retained = app/'generated'
     signature = 'function pick(int $first, {} $second): int {{ return $second; }}'
     affected = {'pick', 'relay'}
@@ -169,7 +169,7 @@ def verify_multiple(work, exe, cxx, linker, adapter, service):
             ru, pu, links = emitted_units(app, Path(adapter).parent/'native-layout/facts.json', work/'production', retained)
             if changes is not None:
                 for paths in (prepared, emitted):
-                    assert set(filter(None, paths.split(','))) == {n+'.php' for n in changes}, paths
+                    assert set(filter(None, paths.split(','))) == {n+'.phs' for n in changes}, paths
                 assert set(filter(None, written.split(','))) == {ru[n].name for n in changes}, written
             results = {'caller': result, 'quiet': -17}
             native(work/'retained-objects', ru, links, changes, results, False, cxx, linker)
@@ -191,7 +191,7 @@ def verify_multiple(work, exe, cxx, linker, adapter, service):
         assert {p.name: p.read_bytes() for p in retained.glob('*.cpp')} == saved
     cold = work/'cold'
     cold.mkdir()
-    for source in app.glob('*.php'):
+    for source in app.glob('*.phs'):
         shutil.copyfile(source, cold/source.name)
     with service(exe, cold) as request:
         assert request('lower').startswith('ok|')
@@ -202,9 +202,9 @@ def verify_named(work, exe, cxx, linker, adapter, service):
     app = work/'named'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return caller();')
-    (app/'caller.php').write_text('function caller(): int { return pick(7, 11); }')
-    pick, named = app/'pick.php', app/'labeled.php'
+    (app/'main.phs').write_text('return caller();')
+    (app/'caller.phs').write_text('function caller(): int { return pick(7, 11); }')
+    pick, named = app/'pick.phs', app/'labeled.phs'
     pick.write_text('function pick(int $data, int $second): int { return $second; }')
     named.write_text('function labeled(): int { return pick(second: 13, data: 5); }')
     generated = app/'generated'
@@ -226,19 +226,19 @@ def verify_named(work, exe, cxx, linker, adapter, service):
         pick.write_text(pick.read_text().replace('$second', '$result'))
         status, worklist, emitted, written = request('lower').split('|')
         offset = named.read_text().index('second:')
-        assert f'labeled.php:{offset}: Unknown named argument: second' in status, status
-        assert set(filter(None, worklist.split(','))) == {'labeled.php', 'pick.php'}, worklist
+        assert f'labeled.phs:{offset}: Unknown named argument: second' in status, status
+        assert set(filter(None, worklist.split(','))) == {'labeled.phs', 'pick.phs'}, worklist
         assert emitted == written == '' and snapshot(generated) == saved
         rejected = subprocess.run(['php', ROOT/'compiler/main.php', 'project', app, facts, work/'production'],
                                   text=True, capture_output=True)
         assert rejected.returncode and 'Unknown named argument: second' in rejected.stderr, rejected.stderr
         repaired = named.read_text().replace('second:', 'result:')
         named.write_text(repaired.replace('function labeled', 'function while'))
-        assert request('lower') == 'labeled.php:9: Expected function name|||'
+        assert request('lower') == 'labeled.phs:9: Expected function name|||'
         assert snapshot(generated) == saved
         named.write_text(repaired)
         status, worklist, emitted, written = request('lower').split('|')
-        assert status == 'ok' and 'caller.php' not in (worklist + emitted), (status, worklist, emitted)
+        assert status == 'ok' and 'caller.phs' not in (worklist + emitted), (status, worklist, emitted)
         assert written == '' and snapshot(generated) == saved
         compare(set(), 13)
         assert request('lower') == 'ok|||'
@@ -249,7 +249,7 @@ def verify_named(work, exe, cxx, linker, adapter, service):
         # Both types stay int. The named call must follow the labels to their new slots.
         pick.write_text('function pick(int $result, int $data): int { return $data; }')
         status, worklist, emitted, written = request('lower').split('|')
-        assert status == 'ok' and 'caller.php' not in (worklist + emitted), (status, worklist, emitted)
+        assert status == 'ok' and 'caller.phs' not in (worklist + emitted), (status, worklist, emitted)
         compare({'labeled'}, 5)
         for operands, message in [('7, result: 8', 'Parameter supplied twice: result'),
                                   ('result: 7, 8', 'Positional argument after named argument')]:
@@ -262,10 +262,10 @@ def verify_defaults(work, exe, cxx, linker, adapter, service):
     app = work/'defaults'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return caller();')
-    (app/'caller.php').write_text('function caller(): int { return pick(7); }')
-    (app/'supplied.php').write_text('function supplied(): int { return pick(7, second: 11); }')
-    pick = app/'pick.php'
+    (app/'main.phs').write_text('return caller();')
+    (app/'caller.phs').write_text('function caller(): int { return pick(7); }')
+    (app/'supplied.phs').write_text('function supplied(): int { return pick(7, second: 11); }')
+    pick = app/'pick.phs'
     signature = 'function pick(int $first, int $second%s): int { return $second; }'
     retained = app/'generated'
     facts = Path(adapter).parent/'native-layout/facts.json'
@@ -280,14 +280,14 @@ def verify_defaults(work, exe, cxx, linker, adapter, service):
                 pick.write_text(signature % '')
                 failed = request('lower')
                 assert 'Wrong argument count for pick' in failed and failed.endswith('||'), failed
-                assert 'supplied.php' not in failed and snapshot(retained) == prior
+                assert 'supplied.phs' not in failed and snapshot(retained) == prior
             pick.write_text(signature % f' = {value}')
             status, prepared, emitted, written = request('lower').split('|')
             assert status == 'ok', status
             ru, pu, links = emitted_units(app, facts, work/'production', retained)
             if stage != 'cold':
                 for paths in (prepared, emitted):
-                    assert set(filter(None, paths.split(','))) == {'pick.php', 'caller.php'}, paths
+                    assert set(filter(None, paths.split(','))) == {'pick.phs', 'caller.phs'}, paths
                 assert written == 'definition.cpp,', written
             results = {'caller': value, 'supplied': 11}
             expected = None if stage == 'cold' else {'caller'}
@@ -305,9 +305,9 @@ def verify_defaults(work, exe, cxx, linker, adapter, service):
         native(work/'fresh-objs', fresh_units, links, None, results, False, cxx, linker)
         # A named argument may skip an earlier optional float. Check the literal
         # even when every caller supplies that slot explicitly.
-        pick = cold/'pick.php'
+        pick = cold/'pick.phs'
         pick.write_text('function pick(float $first = -3.75, int $second = 0): int { return $first; }')
-        (cold/'caller.php').write_text('function caller(): int { return pick(second: 11); }')
+        (cold/'caller.phs').write_text('function caller(): int { return pick(second: 11); }')
         assert request('lower').startswith('ok|')
         ru, pu, links = emitted_units(cold, facts, work/'float-production', cold/'generated')
         for units, php in [(ru, False), (pu, True)]:
@@ -327,7 +327,7 @@ def verify_rebinding_stage(work, app, exe, request, service, cxx, linker, adapte
     ru, pu, links = emitted_units(app, facts, work/'production', generated)
     if sources is not None:
         for paths in (prepared, emitted):
-            assert set(filter(None, paths.split(','))) == {n+'.php' for n in sources}, (stage, paths)
+            assert set(filter(None, paths.split(','))) == {n+'.phs' for n in sources}, (stage, paths)
         assert set(filter(None, written.split(','))) == {ru[n].name for n in objects}, (stage, written)
     native(work/'retained-objs', ru, links, objects, results, False, cxx, linker)
     native(work/'production-objs', pu, links, production_objects, results, True, cxx, linker)
@@ -347,9 +347,9 @@ def verify_default_rebinding(work, exe, cxx, linker, adapter, service):
     app = work/'rebinding'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return caller();')
-    (app/'caller.php').write_text('function caller(): int { return pick(first: 7); }')
-    (app/'positional.php').write_text('function positional(): int { return pick(7, 8); }')
+    (app/'main.phs').write_text('return caller();')
+    (app/'caller.phs').write_text('function caller(): int { return pick(first: 7); }')
+    (app/'positional.phs').write_text('function positional(): int { return pick(7, 8); }')
 
     # Each edit is applied to the same session. Source work includes emission
     # attempts, while the expected objects identify units whose bytes changed.
@@ -361,7 +361,7 @@ def verify_default_rebinding(work, exe, cxx, linker, adapter, service):
     ]
     with service(exe, app) as request:
         for stage, left, right, named, positional, sources, objects in stages:
-            (app/'pick.php').write_text(f'function pick(int ${left}, int ${right}): int {{ return $second; }}')
+            (app/'pick.phs').write_text(f'function pick(int ${left}, int ${right}): int {{ return $second; }}')
             verify_rebinding_stage(work, app, exe, request, service, cxx, linker, adapter, stage,
                                    sources, objects, {'caller': named, 'positional': positional})
 
@@ -370,14 +370,14 @@ def verify_call_retargeting(work, exe, cxx, linker, adapter, service):
     app = work/'retarget'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return caller();')
-    (app/'control.php').write_text('function control(): int { return left(); }')
+    (app/'main.phs').write_text('return caller();')
+    (app/'control.phs').write_text('function control(): int { return left(); }')
 
     def target(name, default):
         return f'function {name}(int $value = {default}): int {{ return $value; }}'
 
-    (app/'left.php').write_text(target('left', 11))
-    (app/'right.php').write_text(target('right', 11))
+    (app/'left.phs').write_text(target('left', 11))
+    (app/'right.phs').write_text(target('right', 11))
     stages = [
         ('initial', 'caller', 'function caller(): int { return left(); }', 11, 11, None, None),
         ('switch', 'caller', 'function caller(): int { return right(); }', 11, 11, {'caller'}, {'caller'}),
@@ -386,7 +386,7 @@ def verify_call_retargeting(work, exe, cxx, linker, adapter, service):
     ]
     with service(exe, app) as request:
         for stage, source, contents, caller, control, sources, objects in stages:
-            (app/(source+'.php')).write_text(contents)
+            (app/(source+'.phs')).write_text(contents)
             verify_rebinding_stage(work, app, exe, request, service, cxx, linker, adapter, stage,
                                    sources, objects, {'caller': caller, 'control': control},
                                    production_objects={'caller', 'right'} if stage == 'switch' else objects)
@@ -396,11 +396,11 @@ def verify_missing_call_repair(work, exe, cxx, linker, adapter, service):
     app = work/'missing-call'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return caller();')
-    caller = app/'caller.php'
+    (app/'main.phs').write_text('return caller();')
+    caller = app/'caller.phs'
     caller.write_text('function caller(): int { return left(); }')
-    (app/'control.php').write_text('function control(): int { return left(); }')
-    left = app/'left.php'
+    (app/'control.phs').write_text('function control(): int { return left(); }')
+    left = app/'left.phs'
     left.write_text('function left(int $value = 11): int { return $value; }')
     generated = app/'generated'
     facts = Path(adapter).parent/'native-layout/facts.json'
@@ -417,9 +417,9 @@ def verify_missing_call_repair(work, exe, cxx, linker, adapter, service):
         native(objects, ru, links, None, initial, False, cxx, linker)
         saved = published()
         caller.write_text('function caller(): int { return right(); }')
-        error = f'caller.php:{caller.read_text().index("right()")}: Unknown function: right'
+        error = f'caller.phs:{caller.read_text().index("right()")}: Unknown function: right'
 
-        for stage, expected in [('retarget', {'caller.php'}), ('left-edit', {'left.php', 'caller.php'})]:
+        for stage, expected in [('retarget', {'caller.phs'}), ('left-edit', {'left.phs', 'caller.phs'})]:
             if stage == 'left-edit':
                 left.write_text(left.read_text().replace('11', '13'))
             status, prepared, emitted, written = request('lower').split('|')
@@ -428,11 +428,11 @@ def verify_missing_call_repair(work, exe, cxx, linker, adapter, service):
             assert published() == saved
             native(objects, ru, links, set(), initial, False, cxx, linker)
 
-        (app/'right.php').write_text('function right(int $value = 17): int { return $value; }')
+        (app/'right.phs').write_text('function right(int $value = 17): int { return $value; }')
         status, prepared, emitted, written = request('lower').split('|')
         assert status == 'ok', status
-        assert set(filter(None, prepared.split(','))) == {'caller.php', 'right.php', 'control.php'}, prepared
-        assert set(filter(None, emitted.split(','))) == {'caller.php', 'control.php', 'left.php', 'right.php'}, emitted
+        assert set(filter(None, prepared.split(','))) == {'caller.phs', 'right.phs', 'control.phs'}, prepared
+        assert set(filter(None, emitted.split(','))) == {'caller.phs', 'control.phs', 'left.phs', 'right.phs'}, emitted
         ru, pu, links = emitted_units(app, facts, work/'production', generated)
         rebuilt = {'caller', 'right', 'control'}
         assert set(filter(None, written.split(','))) == {ru[name].name for name in rebuilt}, written

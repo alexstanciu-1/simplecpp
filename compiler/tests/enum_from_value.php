@@ -130,7 +130,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	mkdir($directory);
 	try {
 		$paths = [];
-		foreach (['main', 'kind', 'idle'] as $name) $paths[$name] = $directory . '/' . $name . '.' . $flavor->name;
+		foreach (['main', 'kind', 'idle'] as $name) $paths[$name] = $directory . '/' . $name . '.' . $flavor->source_extension();
 		file_put_contents($directory . '/module.json', json_encode(['entry' => basename($paths['main']), 'sources' => array_map('basename', array_values($paths))]));
 		file_put_contents($paths['idle'], $flavor === flavor::cpp ? 'int idle(){return 9;}' : 'function idle():int{return 9;}');
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31));

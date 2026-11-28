@@ -36,9 +36,9 @@ def exercise(work, executable):
     app = work/('service "project" ' * 7)/'app'
     app.mkdir(parents=True)
     (app/'module.json').write_text('{}')
-    definition = app/'definition.php'
+    definition = app/'definition.phs'
     definition.write_text('function answer(): int { return 1; }')
-    main = app/'main.php'
+    main = app/'main.phs'
     main.write_text('return answer();')
     native = [executable, 'frontend', app]
     php = ['php', ROOT/'compiler/main.php', 'frontend', app]

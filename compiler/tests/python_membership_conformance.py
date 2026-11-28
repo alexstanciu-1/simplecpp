@@ -1,4 +1,5 @@
 """Compare Python-flavor membership against the host Python interpreter. Exit 1 on a mismatch."""
+from source_suffix import source_suffix
 import ast
 import json
 import operator
@@ -106,7 +107,7 @@ if "1" not in mapping or 1 in mapping:
     return 9
 return 8 if 0 in receiver and 7 not in receiver else 9"""
     write_app(case/'app', 'py', {'main': body})
-    (case/'app'/f'provider.{flavor}').write_text(source)
+    (case/'app'/f'provider.{source_suffix(flavor)}').write_text(source)
     result = fresh_build(case/'app', case/'bundle')
     assert 'error' not in result, result
     manifest = json.loads((case/'bundle/manifest.json').read_text())

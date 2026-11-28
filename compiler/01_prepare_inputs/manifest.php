@@ -193,6 +193,7 @@ final class Module_Loader
 			if (!is_string($document->entry)) {
 				throw new \RuntimeException('entry must be a relative source path');
 			}
+			flavor::require_source_path($document->entry);
 			$definition['entry'] = $document->entry;
 		}
 		$this->documents[$path] = $document;
@@ -271,6 +272,7 @@ final class Module_Loader
 		if ($selection instanceof \stdClass)
 		{
 			foreach ($selection as $path => $label) {
+				flavor::require_source_path((string) $path);
 				if ((!is_string($label)) || (($flavor = flavor::tryFrom($label)) === null)
 					|| (($type === 'c++') && ($flavor !== flavor::cpp))) {
 					throw new \RuntimeException('Invalid source flavor: ' . $path);
@@ -281,6 +283,7 @@ final class Module_Loader
 		else
 		{
 			foreach ($this->strings($selection, 'sources') as $path) {
+				flavor::require_source_path($path);
 				if (isset($result[$path])) {
 					throw new \RuntimeException('Duplicate source: ' . $path);
 				}
@@ -297,7 +300,7 @@ final class Module_Loader
 		$extension = pathinfo($path, \PATHINFO_EXTENSION);
 		return $type === 'c++' ? (in_array($extension, ['cpp', 'cc', 'cxx'], true) ? flavor::cpp : null)
 			: match ($extension) {
-			'cpp' => flavor::cpp, 'php' => flavor::php, 'js' => flavor::js, 'py' => flavor::python, default => null
+			'cpp' => flavor::cpp, flavor::php->source_extension() => flavor::php, 'js' => flavor::js, 'py' => flavor::python, default => null
 		};
 	}
 

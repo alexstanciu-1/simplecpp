@@ -1,4 +1,5 @@
 """Emit the bounded scanner in each source flavor and produce production lexer oracles."""
+from source_suffix import source_suffix
 import argparse
 import json
 from pathlib import Path
@@ -21,13 +22,13 @@ def prepare(work):
     for flavor in ('cpp','php','js'):
         path = work/flavor
         path.mkdir(exist_ok=True)
-        (path/'module.json').write_text(json.dumps({'entry':'main.'+flavor}))
-        (path/('scanner.'+flavor)).write_bytes((COMPILER.parent/'specs/planning/benchmarks/tokenizer'/('scanner.'+flavor)).read_bytes())
+        (path/'module.json').write_text(json.dumps({'entry':'main.'+source_suffix(flavor)}))
+        (path/('scanner.'+source_suffix(flavor))).write_bytes((COMPILER.parent/'specs/planning/benchmarks/tokenizer'/('scanner.'+source_suffix(flavor))).read_bytes())
         s=fixture(flavor)
-        (path/('main.'+flavor)).write_text(s['infer']('r','scan("if",0)')+'return 8;')
+        (path/('main.'+source_suffix(flavor))).write_text(s['infer']('r','scan("if",0)')+'return 8;')
         out=work/(flavor+'-out')
         proc=service(path,out)
-        main=path/('main.'+flavor)
+        main=path/('main.'+source_suffix(flavor))
         original=main.read_text()
         try:
             row=invoke(proc)
@@ -43,7 +44,7 @@ def prepare(work):
                     assert current.get('error') and current['error']==clean.get('error')
                     assert artifacts(out)==before
                 else:
-                    assert current['emitted_sources']==[flavor+'/main.'+flavor],current
+                    assert current['emitted_sources']==[flavor+'/main.'+source_suffix(flavor)],current
                     assert artifacts(out)==artifacts(work/(flavor+'-fresh'))
             assert invoke(proc)['preparation']['prepared']==0
         finally: proc.stdin.close(); proc.wait()

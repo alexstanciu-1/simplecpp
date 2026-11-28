@@ -6,10 +6,10 @@ function require_state(bool $valid, string $message): void {
 function check_descriptor(Runtime_Descriptor $descriptor, string $argument_cpp, string $parameter_cpp, int $offset): void {
     $compiler = new Incremental_Preparation();
     $compiler->symbols->runtime["strlen"] = $descriptor;
-    $syntax = new Return_Syntax("probe.php", "probe", "", "strlen", $offset);
+    $syntax = new Return_Syntax("probe.phs", "probe", "", "strlen", $offset);
     $syntax->argument_type = "string";
     $syntax->argument_cpp = $argument_cpp;
-    $quiet = new Return_Syntax("quiet.php", "quiet", "5", "", 0);
+    $quiet = new Return_Syntax("quiet.phs", "quiet", "5", "", 0);
     $caller = $compiler->publish_declaration($syntax);
     $other = $compiler->publish_declaration($quiet);
     $compiler->run();
@@ -17,7 +17,7 @@ function check_descriptor(Runtime_Descriptor $descriptor, string $argument_cpp, 
     $original = $compiler->output["probe"];
     echo $original;
 
-    $source = new Return_Syntax("strlen.php", "strlen", "9", "", 0);
+    $source = new Return_Syntax("strlen.phs", "strlen", "9", "", 0);
     $source->required_parameters = 1;
     $source->parameter_type = "string";
     $source->parameter_cpp = $parameter_cpp;
@@ -28,14 +28,14 @@ function check_descriptor(Runtime_Descriptor $descriptor, string $argument_cpp, 
     $published = $compiler->output;
     echo $published["strlen"], $published["probe"];
 
-    $bad = new Return_Syntax("strlen.php", "strlen", "9", "", 0);
+    $bad = new Return_Syntax("strlen.phs", "strlen", "9", "", 0);
     $bad->required_parameters = 2;
     $compiler->publish_declaration($bad);
     $rejected = false;
     try {
         $compiler->run();
     } catch (Preparation_Diagnostic $error) {
-        $rejected = $error->source === "probe.php" && $error->offset === $offset && $error->detail === "Argument count mismatch";
+        $rejected = $error->source === "probe.phs" && $error->offset === $offset && $error->detail === "Argument count mismatch";
     }
     require_state($rejected && !$caller->prepared(), "invalid shadow accepted or wrong diagnostic");
     require_state(count($compiler->output) === count($published), "failed edit changed bundle membership");

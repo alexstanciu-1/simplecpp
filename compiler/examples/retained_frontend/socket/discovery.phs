@@ -1,6 +1,6 @@
 // The default application accepts these four case-sensitive source extensions.
 function source_flavor(string $path): string {
-    if (str_ends_with($path, ".php")) return "php";
+    if (str_ends_with($path, ".phs")) return "php";
     if (str_ends_with($path, ".cpp")) return "cpp";
     if (str_ends_with($path, ".js")) return "js";
     if (str_ends_with($path, ".py")) return "py";
@@ -49,6 +49,8 @@ function explicit_sources(json_node $selection, hash<string,string> &$sources): 
             $path = json_node_string($item);
             $label = source_flavor($path);
         }
+        if (str_ends_with($path, ".php")) throw Exception::make("Classic PHP file: " . $path . "; use .phs for PHP-flavor source");
+        if (str_ends_with($path, ".phs") && $label !== "php") throw Exception::make("Source requires the php flavor: " . $path);
         if ($label !== "php" && $label !== "cpp" && $label !== "js" && $label !== "py")
             throw Exception::make("Unsupported source flavor: " . $path);
         if (isset($sources[$path])) throw Exception::make("Duplicate source: " . $path);

@@ -24,7 +24,7 @@ python3 -B samples/php-developer-qos/check_apps.py
 python3 -B samples/php-developer-qos/input_corpus.py
 ```
 
-The runner copies each project to a temporary directory, invokes the public compiler build command and executes the native program. It compares exit status and output for accepted and rejected inputs. The corpus adds generated input cases with independent controls. To inspect one program, open its `main.php` and `module.json` side by side. The ticket report also builds `checked-count.php` for immediate SQL parameters and `query-states.php` for separate result-set and status paths. Both use temporary application manifests.
+The runner copies each project to a temporary directory, invokes the public compiler build command and executes the native program. It compares exit status and output for accepted and rejected inputs. The corpus adds generated input cases with independent controls. To inspect one program, open its `main.phs` and `module.json` side by side. The ticket report also builds `checked-count.phs` for immediate SQL parameters and `query-states.phs` for separate result-set and status paths. Both use temporary application manifests.
 
 ## Reproduce one finding
 

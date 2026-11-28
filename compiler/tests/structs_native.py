@@ -1,4 +1,5 @@
 """Two-unit inline structs: native value semantics, layout watches and recovery versus fresh builds."""
+from source_suffix import source_suffix
 import hashlib
 import json
 import os
@@ -93,9 +94,9 @@ int main() {
 def boolean_fields(work, flavor):
     app = work / ('bool-' + flavor)
     app.mkdir()
-    entry, model = [app / (name + '.' + flavor) for name in ('main', 'switch')]
+    entry, model = [app / (name + '.' + source_suffix(flavor)) for name in ('main', 'switch')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
-    (app / 'nested.php').write_text('struct Panel { public SwitchState $state; }')
+    (app / 'nested.phs').write_text('struct Panel { public SwitchState $state; }')
     definition, setup, copy, original, copied = {
         'php': ('struct SwitchState { public bool $enabled; }', '$p Panel;', '$q=$p;',
                 '$p->state->enabled', '$q->state->enabled'),
@@ -144,9 +145,9 @@ def boolean_fields(work, flavor):
 def byte_fields(work, flavor):
     app = work / ('byte-' + flavor)
     app.mkdir()
-    entry, model = [app / (name + '.' + flavor) for name in ('main', 'meter')]
+    entry, model = [app / (name + '.' + source_suffix(flavor)) for name in ('main', 'meter')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
-    (app / 'panel.php').write_text('struct Panel { public Meter $meter; }')
+    (app / 'panel.phs').write_text('struct Panel { public Meter $meter; }')
     definition, setup, copy, field, other, call, loop = {
         'php': ('struct Meter { public byte $level; public function bump():void { $this->level+=1; } }',
                 '$p Panel;', '$q=$p;', '$p->meter->level', '$q->meter->level', '$p->meter->bump();',
@@ -224,9 +225,9 @@ int main() {
 def float_fields(work, flavor):
     app = work / ('float-' + flavor)
     app.mkdir()
-    entry, model = [app / (name + '.' + flavor) for name in ('main', 'measurement')]
+    entry, model = [app / (name + '.' + source_suffix(flavor)) for name in ('main', 'measurement')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
-    (app / 'sensor.php').write_text('struct Sensor { public Measurement $reading; }')
+    (app / 'sensor.phs').write_text('struct Sensor { public Measurement $reading; }')
     record, setup, copy, field, other, negate = {
         'php': ('struct Measurement { public float $amount; public function negative():void { $this->amount=-0.0; } }',
                 '$s Sensor;', '$c=$s;', '$s->reading->amount', '$c->reading->amount', '$s->reading->negative();'),
@@ -302,9 +303,9 @@ int main() {
 def string_fields(work, flavor):
     app = work / ('string-' + flavor)
     app.mkdir()
-    entry, model = [app / (name + '.' + flavor) for name in ('main', 'label')]
+    entry, model = [app / (name + '.' + source_suffix(flavor)) for name in ('main', 'label')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
-    (app / 'envelope.php').write_text('struct Envelope { public Label $label; }')
+    (app / 'envelope.phs').write_text('struct Envelope { public Label $label; }')
     record, declare, copy, access = {
         'php': ('struct Label { public string $text; }', '$NAME Envelope;', '$COPY=$ORIGINAL;', '->'),
         'cpp': ('struct Label { public: string text; };', 'Envelope NAME;', 'auto COPY=ORIGINAL;', '->'),
@@ -353,8 +354,8 @@ def prove(work, flavor):
     record, body = PROGRAMS[flavor]
     app = work / ('app-' + flavor)
     app.mkdir()
-    owner = app / ('point.' + flavor)
-    entry = app / ('main.' + flavor)
+    owner = app / ('point.' + source_suffix(flavor))
+    entry = app / ('main.' + source_suffix(flavor))
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     owner.write_text(record)
     entry.write_text(body)
@@ -431,7 +432,7 @@ def nested(work, flavor):
             + f'echo {low}, ",", {high}, ",", {qlow}, ",", ' + path('s.marker.at.mm') + '; return 8;')
     app = work / ('nested-app-' + flavor)
     app.mkdir()
-    entry, owner, mid, inner, leaf = [app / f'{name}.{flavor}' for name in ('main', 'outer', 'middle', 'inner', 'leaf')]
+    entry, owner, mid, inner, leaf = [app / f'{name}.{source_suffix(flavor)}' for name in ('main', 'outer', 'middle', 'inner', 'leaf')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     for file, content in [(owner, scene), (mid, bounds + marker), (inner, point), (leaf, position), (entry, body)]:
         file.write_text(content)
@@ -521,8 +522,8 @@ int main() {
 def native_names(work):
     app = work / 'spelling'
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.php', 'cpp_namespace': 'company::app'}))
-    (app / 'main.php').write_text(
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.phs', 'cpp_namespace': 'company::app'}))
+    (app / 'main.phs').write_text(
         'struct point { public int $x; } struct Point { public point $point; } '
         'struct owner_point { public int $alignas; } '
         'struct Z_plane { public Point $scpp_records; public owner_point $owner_point; } '
@@ -543,8 +544,8 @@ def native_names(work):
 def direct_construction(work):
     app = work / 'direct-new'
     app.mkdir()
-    (app / 'module.json').write_text('{"entry":"main.php"}')
-    (app / 'model.php').write_text('namespace Geo; struct Point { public int $x; }')
+    (app / 'module.json').write_text('{"entry":"main.phs"}')
+    (app / 'model.phs').write_text('namespace Geo; struct Point { public int $x; }')
     # Root-qualified construction in three different syntaxes, followed by mutation from another flavor.
     factories = {
         'php': r'function fromPhp(): shared<Point> { $p = new \Geo\Point(); return $p; }',
@@ -554,7 +555,7 @@ def direct_construction(work):
     namespaces = {'php': 'namespace Geo; ', 'cpp': 'namespace Geo { ', 'js': 'namespace Geo { '}
     for flavor, factory in factories.items():
         end = '' if flavor == 'php' else '}'
-        (app / ('factory.' + flavor)).write_text(namespaces[flavor] + factory + end)
+        (app / ('factory.' + source_suffix(flavor))).write_text(namespaces[flavor] + factory + end)
     (app / 'touch.js').write_text('namespace Geo { function touch(p: shared<Point>): shared<Point> { p.x=9; return p; } }')
     (app / 'touch.cpp').write_text('namespace Geo { shared<Point> touchCpp(shared<Point> p) { p->x=9; return p; } }')
     source = 'namespace Geo; '
@@ -562,11 +563,11 @@ def direct_construction(work):
         name = '$' + factory
         source += (f'{name}={factory}(); echo {name}->x; '
                    f'if ({touch}({name}) !== {name}) {{ return 1; }} echo {name}->x; ')
-    (app / 'main.php').write_text(source + 'return 8;')
+    (app / 'main.phs').write_text(source + 'return 8;')
     out = work / 'new-output'
     edits = [(None, '', None)]
     for flavor in factories:
-        path = app / ('factory.' + flavor)
+        path = app / ('factory.' + source_suffix(flavor))
         original = path.read_text()
         qualified = {'php': r'new \Geo\Point()', 'cpp': 'new ::Geo::Point()', 'js': r'new \Geo.Point()'}[flavor]
         short = original.replace(qualified, 'new Point()')
@@ -602,8 +603,8 @@ def direct_construction(work):
 def shared_functions(work):
     app = work / 'shared-functions'
     app.mkdir()
-    (app / 'module.json').write_text('{"entry":"main.php"}')
-    record, api, main = [app / name for name in ('point.php', 'factory.php', 'main.php')]
+    (app / 'module.json').write_text('{"entry":"main.phs"}')
+    record, api, main = [app / name for name in ('point.phs', 'factory.phs', 'main.phs')]
     layout = 'struct Point { public int $x; }'
     record.write_text(layout)
     factory = ('function makePoint(): shared<Point> { return new Point(); } '
@@ -657,9 +658,9 @@ def shared_functions(work):
 def empty_owners(work, flavor):
     app = work / ('empty-' + flavor)
     app.mkdir()
-    entry = app / ('main.' + flavor)
+    entry = app / ('main.' + source_suffix(flavor))
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
-    model = app / 'model.php'
+    model = app / 'model.phs'
     definitions = ('struct Point { public int $x; } '
                    'function makePoint(): shared<Point> { return new Point(); } '
                    'function absent(): null { echo "N"; return null; } '
@@ -731,9 +732,9 @@ int main() {
 def shared_fields(work, flavor):
     app = work / ('fields-' + flavor)
     app.mkdir()
-    entry, segment, point, node = [app / (name + '.' + flavor) for name in ('main', 'segment', 'point', 'node')]
+    entry, segment, point, node = [app / (name + '.' + source_suffix(flavor)) for name in ('main', 'segment', 'point', 'node')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
-    (app / 'factory.php').write_text('function makePoint(): shared<Point> { return new Point(); } '
+    (app / 'factory.phs').write_text('function makePoint(): shared<Point> { return new Point(); } '
                                      'function makeNode(): shared<Node> { return new Node(); }')
 
     def record(name, **fields):
@@ -790,7 +791,7 @@ def shared_fields(work, flavor):
         segment.write_text(record('Segment', start='shared<Point>', end='shared<Point>', head='Node'))
         node.write_text(record('Node', parent='shared<Segment>', value='int', next='shared<Node>'))
         # The old destination is the last owner of the field being copied from.
-        factory = app / 'factory.php'
+        factory = app / 'factory.phs'
         factory.write_text(factory.read_text() + ' function makeSegment(): shared<Segment> { return new Segment(); }')
         overlap = 'S.head.parent=makeSegment(); S.head.parent.head.value=8; S.head=S.head.parent.head; echo S.head.value;'
         entry.write_text(source.replace('return 8;', overlap.replace('S.', mark+'s.').replace('.', sep) + 'return 8;'))
@@ -805,7 +806,7 @@ def shared_fields(work, flavor):
         # Put all layouts in a single private unit, including the mixed cycle, and remove every external user.
         entry.write_text(segment.read_text() + point.read_text() + node.read_text() + declare
                          + f'if (!{mark}s{sep}head{sep}parent) {{ return 8; }} return 1;')
-        for path in (segment, point, node, app / 'factory.php'):
+        for path in (segment, point, node, app / 'factory.phs'):
             path.unlink()
         result = invoke(resident)
         fresh_out = work / ('fields-private-' + flavor)

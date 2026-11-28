@@ -47,7 +47,7 @@ with tempfile.TemporaryDirectory() as directory:
     app = work / 'app'
     app.mkdir()
     (app / 'module.json').write_text('{}')
-    (app / 'main.php').write_text(checks + body)
+    (app / 'main.phs').write_text(checks + body)
     config = work / 'toolchain.json'
     config.write_text(json.dumps({'cxx': 'clang++', 'flags': ['-std=c++23', '-stdlib=libc++', '-I',
         str(root / 'runtime/generated/public')], 'cache': str(root / 'build/clang/native-qualification')}))

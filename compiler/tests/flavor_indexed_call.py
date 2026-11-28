@@ -28,7 +28,7 @@ def declaration(flavor, name, type_name, value):
 with TemporaryDirectory(prefix='flavor-indexed-call-') as directory:
     work = Path(directory)
     flavor, case = sys.argv[1:]
-    support = {'provider.php': PROVIDER}
+    support = {'provider.phs': PROVIDER}
     end = '\n' if flavor == 'py' else ';\n'
     vector = 'vector<function<int(int)>>'
     table = 'hash<function<int(int)>,string>'

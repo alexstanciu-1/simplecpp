@@ -1,4 +1,5 @@
 """Application vector recipe reuse, value/owner copies and incremental/fresh equivalence."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -50,9 +51,9 @@ def prove(work, flavor, libraries, memcheck):
     main = 'return 8 + exercise();'
     idle = s['function']('idle','int',[],'return 4;')
     app, out = work/flavor, work/(flavor+'-out'); app.mkdir()
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}))
     for name,text in {'node':node,'leaf':leaf,'point':point+factory,'use':use,'main':main,'idle':idle}.items():
-        source_edit(app/(name+'.'+flavor),text)
+        source_edit(app/(name+'.'+source_suffix(flavor)),text)
     edits = [(None,None,b'7:9:11:101:13',None), (None,None,b'7:9:11:101:13',None),
              ('point',point+factory.replace('(7)','(8)'),b'8:9:11:101:13',None),
              ('point',point.replace(s['field']('x','int','0'),s['field']('x','int','0')+s['field']('extra','int','2'))+factory,b'7:9:11:101:13',None),
@@ -78,10 +79,10 @@ def prove(work, flavor, libraries, memcheck):
         for revision,(name,text,expected,error) in enumerate(edits):
             before=artifacts(out)
             if name=='namespace':
-                source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor,'cpp_namespace':text}))
+                source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor),'cpp_namespace':text}))
             elif name:
                 if name=='other':other_present=text is not None
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             current=invoke(resident); fresh_out=work/f'{flavor}-fresh-{revision}'; fresh=service(app,fresh_out)

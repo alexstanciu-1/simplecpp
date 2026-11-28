@@ -11,11 +11,11 @@ with tempfile.TemporaryDirectory() as temporary:
     package = work / "first package"
     source = package / "src"
     source.mkdir(parents=True)
-    (package / "module.json").write_text(json.dumps({"name": "relocation", "entry": "src/main.php"}))
-    (source / "main.php").write_text('echo __FILE__, "\\n", helper();')
+    (package / "module.json").write_text(json.dumps({"name": "relocation", "entry": "src/main.phs"}))
+    (source / "main.phs").write_text('echo __FILE__, "\\n", helper();')
     nested = source / "nested"
     nested.mkdir()
-    helper = nested / "other.php"
+    helper = nested / "other.phs"
     body = r'''function helper():string {
         if (ord("") !== 0 || ord(chr(-1)) !== 255 || ord(chr(256)) !== 0) { return "byte"; }
         if (strrev("a\0" . chr(255)) !== chr(255) . "\0a") { return "reverse"; }
@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory() as temporary:
         return subprocess.run(cmd, capture_output=True, text=True, env=env)
     def verify(root):
         actual = subprocess.check_output([work/'launcher'], cwd=work, text=True)
-        assert actual == f"{root}/src/main.php\n{root}/src/nested|{root}/src/nested/other.php", actual
+        assert actual == f"{root}/src/main.phs\n{root}/src/nested|{root}/src/nested/other.phs", actual
     built = compile_project()
     assert built.returncode == 0, built.stderr
     (work/'launcher').symlink_to(native/'program')
@@ -53,4 +53,4 @@ with tempfile.TemporaryDirectory() as temporary:
     (work/'launcher').symlink_to(relocated/'bin/program')
     verify(relocated)
     generated = ''.join(unit.read_text() for unit in bundle.rglob('*.cpp'))
-    assert str(package) not in generated and '"src/nested/other.php"' in generated
+    assert str(package) not in generated and '"src/nested/other.phs"' in generated

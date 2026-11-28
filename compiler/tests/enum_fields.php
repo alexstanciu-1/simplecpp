@@ -113,10 +113,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$directory = sys_get_temp_dir() . '/scpp-enum-fields-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name, 'sources' => array_map(
-			static fn(string $name): string => $name . '.' . $flavor->name, ['main', 'kind', 'token', 'idle'])]));
+		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension(), 'sources' => array_map(
+			static fn(string $name): string => $name . '.' . $flavor->source_extension(), ['main', 'kind', 'token', 'idle'])]));
 		$paths = [];
-		foreach (['main', 'kind', 'token', 'idle'] as $name) $paths[$name] = $directory . '/' . $name . '.' . $flavor->name;
+		foreach (['main', 'kind', 'token', 'idle'] as $name) $paths[$name] = $directory . '/' . $name . '.' . $flavor->source_extension();
 		file_put_contents($paths['main'], $main);
 		file_put_contents($paths['idle'], $flavor === flavor::cpp ? 'int idle(){return 9;}' : 'function idle():int{return 9;}');
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31));
@@ -148,7 +148,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 			$fresh->run();
 			$caller ??= $project->session()->entry->entry->ast;
 			verify($project->session()->entry->entry->ast === $caller, 'Caller was reparsed');
-			$current = $project->session()->entry->sources['token.' . $flavor->name]->ast;
+			$current = $project->session()->entry->sources['token.' . $flavor->source_extension()]->ast;
 			if ($index === 1 || $index === 5) verify($current === $token, 'Enum edit reparsed record');
 			$token = $current;
 			verify(artifacts($directory . '/out') === artifacts($directory . '/fresh'), 'Incremental enum field artifacts differ from fresh');

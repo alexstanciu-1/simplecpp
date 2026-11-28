@@ -7,7 +7,7 @@ import tempfile
 from collection_goal_native import revisions
 
 HERE = Path(__file__).resolve().parent
-EXAMPLE = HERE.parent / 'examples' / 'global_declaration' / 'parser.php.scpp'
+EXAMPLE = HERE.parent / 'examples' / 'global_declaration' / 'parser.phs'
 
 
 def source(flavor, annotation):
@@ -50,4 +50,4 @@ if __name__ == '__main__':
                    ('main', explicit, explicit_output),
                    ('main', unresolved, unresolved_output),
                    ('main', inferred, inferred_output)],
-                  unaffected_source='parser.php')
+                  unaffected_source='parser.phs')

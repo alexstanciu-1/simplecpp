@@ -247,7 +247,7 @@ def prove_indexed_arguments(work):
         return 8;
     """
     invalid = '$items vector<int> = [10];\nbump($items[0]);\nreturn 8;'
-    diagnostic = 'main.php:2:6: Reference argument requires stable variable storage'
+    diagnostic = 'main.phs:2:6: Reference argument requires stable variable storage'
     work.mkdir(parents=True)
     revisions(work, 'php', dict(worker=worker, main=main), [
         (None, None, b'20:1'),

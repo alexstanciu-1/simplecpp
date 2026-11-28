@@ -23,7 +23,7 @@ def instrument(out, dest, flavor):
     units = dest / 'units'
     shutil.copytree(out/'units', units, dirs_exist_ok=True)
     manifest = json.loads((out/'manifest.json').read_text())
-    unit = dest / manifest['sources'][f'{flavor}/scanner.{flavor}']
+    unit = dest / manifest['sources'][f'{flavor}/scanner.{"phs" if flavor == "php" else flavor}']
     api = unit.with_suffix('.hpp')
     s = unit.read_text()
     decl = re.search(r'(scpp_vector_\w+) (var_items_\d+) = [^;]+;', s)

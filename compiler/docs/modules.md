@@ -22,7 +22,7 @@ validation, and Simple C++ declaration export/import are [deferred debt](../../s
 
 A directory means its `module.json`; an explicit manifest path is also accepted.
 A minimal application manifest is `{}`: discover its sources, select a single
-root-level `main.cpp`, `main.php` or `main.js`, and include the runtime's defaults.
+root-level `main.cpp`, `main.phs`, `main.js` or `main.py`, and include the runtime's defaults.
 
 ```json
 {
@@ -100,7 +100,7 @@ failure channels, typed directory listing and Linux checked read.
 
 ## Application discovery and inventory
 
-Application extensions are `.cpp`, `.php`, `.js`. Discovery is recursive and stable,
+Application extensions are `.cpp`, `.phs`, `.js`, and `.py`. Classic PHP scripts use `.php`; discovery skips them and explicit source selection rejects them. The PHP flavor label is `php`. Discovery is recursive and stable,
 skipping hidden entries, symlinks, build/generated/vendor/node_modules directories,
 nested module roots, known dependency directories, and the current output directory.
 Application files may use different flavors in the same module.

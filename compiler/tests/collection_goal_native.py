@@ -1,4 +1,5 @@
 """Shared collection-goal proof runner: incremental/fresh equivalence and native stage timings."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 from app_namespace_native import artifacts, invoke, service
@@ -9,15 +10,15 @@ from entry_probe import raw_entry
 
 def revisions(work,flavor,sources,edits, *, unaffected_source=None, unaffected_revisions=None, support_sources=None):
     app=work/flavor;app.mkdir();out=work/(flavor+'-out');rows=[]
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}))
     for name,text in (support_sources or {}).items():source_edit(app/name,text)
-    for name,text in sources.items():source_edit(app/(name+'.'+flavor),text)
+    for name,text in sources.items():source_edit(app/(name+'.'+source_suffix(flavor)),text)
     proc=service(app,out)
     try:
         for revision,(name,text,expected) in enumerate(edits):
             before=artifacts(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:
                     if path.exists():path.unlink()
                 else:source_edit(path,text)
@@ -44,7 +45,7 @@ def revisions(work,flavor,sources,edits, *, unaffected_source=None, unaffected_r
 
 def guard(work,flavor,label,source,error=None, *, retry_entry=False, expected_stdout=b'', exception_type='std::exception', exception_header='stdexcept', support_sources=None):
     app=work/(flavor+'-'+label);app.mkdir();out=work/(flavor+'-'+label+'-out')
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}));source_edit(app/('main.'+flavor),source)
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}));source_edit(app/('main.'+source_suffix(flavor)),source)
     for name,text in (support_sources or {}).items():source_edit(app/name,text)
     p=service(app,out)
     try:got=invoke(p)

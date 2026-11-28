@@ -171,13 +171,13 @@ function snapshot($root, ast_type_reference $type): array {
 }
 
 $frontend = new Source_Frontend();
-$current = $frontend->parse(new source_file('same.php', $argv[2], flavor::php));
+$current = $frontend->parse(new source_file('same.phs', $argv[2], flavor::php));
 $old = $current;
 $type = $old->main()->body()->statements[0]->type_reference;
 $first = $type->first_child;
 $child = $first->next_sibling;
 $leaf = $child->first_child;
-$current = $frontend->parse(new source_file('same.php', $argv[3], flavor::php));
+$current = $frontend->parse(new source_file('same.phs', $argv[3], flavor::php));
 $new_type = $current->main()->body()->statements[0]->type_reference;
 if ($old === $current || $child->root() !== $old || $first->parent !== $type || $child->parent !== $type ||
     $leaf->parent !== $child || $type->source_text() !== 'hash<int, vector<string>>' ||
@@ -228,7 +228,7 @@ def native_source(name, text, snapshot, leaf):
     return f'''
 function {name}(): ast_file_node {{
     $tokens vector<token> = [{tokens}];
-    $token_list = new token_list(new source_file("same.php", {content}), $tokens);
+    $token_list = new token_list(new source_file("same.phs", {content}), $tokens);
     $leaf = ast_type_reference::make({last}, "{leaf}");
     $vector = ast_type_reference::make({nested}, "vector", $leaf);
     $first = ast_type_reference::make({first}, "int", null, $vector);

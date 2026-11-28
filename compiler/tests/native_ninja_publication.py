@@ -14,8 +14,8 @@ def verify(work, publisher, cxx, linker):
     app.mkdir()
     manifest = app/'module.json'
     manifest.write_text('{"dependencies":{"runtime":{"modules":["filesystem"]}}}')
-    (app/'main.php').write_text('echo number(); return 8;')
-    body = app/'number.php'
+    (app/'main.phs').write_text('echo number(); return 8;')
+    body = app/'number.phs'
     body.write_text('function number(): int { return 1; }')
     config = {'cxx': cxx, 'flags': ['-std=c++23', '-stdlib=libc++', '-I', str(ROOT/'runtime/generated/public'),
                                     "-DUNUSED_TEXT=\"a $b's\""],
@@ -58,7 +58,7 @@ def verify(work, publisher, cxx, linker):
     data = lower()
     units = data['translation_units']
     assert len(units) == 3 and data['link_inputs'], data
-    changed, = [unit for key, unit in data['sources'].items() if key.endswith('/number.php')]
+    changed, = [unit for key, unit in data['sources'].items() if key.endswith('/number.phs')]
     publish()
     graph = nativedir/'build.ninja'
     timestamp = graph.stat().st_mtime_ns

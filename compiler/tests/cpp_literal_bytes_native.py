@@ -7,7 +7,7 @@ import tempfile
 from collection_goal_native import revisions
 
 HERE = Path(__file__).resolve().parent
-EMITTER = HERE.parent / 'examples' / 'cpp_literal_bytes' / 'emitter.php.scpp'
+EMITTER = HERE.parent / 'examples' / 'cpp_literal_bytes' / 'emitter.phs'
 BOOT = HERE.parent / 'boot.php'
 
 
@@ -54,5 +54,5 @@ if __name__ == '__main__':
         revisions(work, 'php', {'emitter': EMITTER.read_text(), 'main': initial},
                   [(None, None, initial_output), (None, None, initial_output),
                    ('main', updated, updated_output), ('main', initial, initial_output)],
-                  unaffected_source='emitter.php')
+                  unaffected_source='emitter.phs')
         round_trip(work, extended)

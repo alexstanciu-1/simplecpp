@@ -13,6 +13,8 @@ import time
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'tools/compiler_panel'))
 from native_build import write_build
+sys.path.insert(0, str(ROOT / 'compiler/tests'))
+from source_suffix import source_suffix
 ENV = {**os.environ, 'XDEBUG_MODE': 'off'}
 PHP = os.environ.get('PHP_EXECUTABLE', 'php')
 WORKER = Path(__file__).with_suffix('.php')
@@ -91,11 +93,11 @@ def prove(work, quick=False):
         stamp = int(time.time())
         def install(sources):
             nonlocal stamp
-            for p in app.glob('*.' + flavor):
+            for p in app.glob('*.' + source_suffix(flavor)):
                 if p.stem not in sources:
                     p.unlink()
             for name, text in sources.items():
-                p = app / (name + '.' + flavor)
+                p = app / (name + '.' + source_suffix(flavor))
                 if not p.exists() or p.read_text() != text:
                     p.write_text(text)
                     stamp += 1

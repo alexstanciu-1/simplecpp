@@ -118,9 +118,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
+		$main = $directory . '/main.' . $flavor->source_extension();
 		file_put_contents($main, 'do { continue; } while (predicate()); return 8;');
-		$lib = $directory . '/lib.' . $flavor->name;
+		$lib = $directory . '/lib.' . $flavor->source_extension();
 		$write = static function (string $type, string $value) use ($lib, $fn): void {
 			file_put_contents($lib, $fn('predicate', '', $type, 'return ' . $value . ';'));
 		};

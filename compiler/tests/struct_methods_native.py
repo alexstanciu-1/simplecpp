@@ -1,4 +1,5 @@
 """Ordinary struct methods reuse the source-function pipeline across units and flavors."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -12,9 +13,9 @@ from structs_native import build, check_empty_access
 def prove(work, flavor):
     app = work / flavor
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
-    model = app / ('point.' + flavor)
-    entry = app / ('main.' + flavor)
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
+    model = app / ('point.' + source_suffix(flavor))
+    entry = app / ('main.' + source_suffix(flavor))
     model_src, source, field = {
         'php': ('struct Point { public int $x; public function getX(): int { return $this->x; } }',
                 '$p Point; $q=new Point(); $p->x=7; $q->x=9; echo $p->getX(),$q->getX(),other($q);', '$this->x'),
@@ -36,7 +37,7 @@ def prove(work, flavor):
               'js': 'struct Box { point:Point; } let b:Box; echo b.point.x(),(new Point()).x();'}[flavor]
     source = nested + source
     # A foreign caller and a second receiver type with the same method name.
-    foreign = app / ('foreign.cpp' if flavor == 'php' else 'foreign.php')
+    foreign = app / ('foreign.cpp' if flavor == 'php' else 'foreign.phs')
     if foreign.suffix == '.cpp':
         other = 'struct Other { int getX() { return 4; } }; int other(shared<Point> p) { Other x; return p->getX()+x->getX(); }'
     else:
@@ -74,7 +75,7 @@ def prove(work, flavor):
                'let box=new Holder(); echo box.p.add(replaceHolder(box),2),":",box.p.x;',
                'let p:shared<Point>; echo p.add(side(),side());'),
     }[flavor]
-    (app / 'helpers.php').write_text(
+    (app / 'helpers.phs').write_text(
         'struct Holder { public Point $p; } '
         'function replacePoint(shared<Point> &$p):int { $p=new Point(); return 3; } '
         'function replaceHolder(shared<Holder> &$h):int { $h=new Holder(); return 6; } '
@@ -218,7 +219,7 @@ def prove(work, flavor):
         'cpp': ('static Counter make() { Counter x; return x; }', 'Counter::make();'),
         'js': ('static make():Counter { let x:Counter; return x; }', 'Counter.make();'),
     }[flavor]
-    foreign_namespace = app / 'namespace.php'
+    foreign_namespace = app / 'namespace.phs'
     factory_model = static_model[:static_model.rindex('}')] + factory + ' }'
     revisions.extend([
         (model, factory_model, None, b'777'),
@@ -228,7 +229,7 @@ def prove(work, flavor):
         (foreign_namespace, '', None, b'777'),
     ])
     # A same-spelled namespace function must never capture a declaring-type call.
-    (app / 'collision.php').write_text('namespace Meter { function tick():int { return 99; } }')
+    (app / 'collision.phs').write_text('namespace Meter { function tick():int { return 99; } }')
     lexical_model, lexical_entry, qualifier, storage = {
         'php': ('struct Meter { public const int STEP=2; public static int $total=0; '
                 'public function __construct() { self::tick(); } '
@@ -321,7 +322,7 @@ def prove(work, flavor):
     temporary = 'CounterValue.make()' if flavor == 'js' else 'CounterValue::make()'
     receiver_calls = (receiver_setup + f'{c}{member}twice(); {inner}{member}bump(); {shared}{member}bump(); '
                       f'{temporary}{member}bump(); echo {c}{member}n,{inner}{member}n,{shared}{member}n; return 8;')
-    receiver_file = app / 'receivers.php'
+    receiver_file = app / 'receivers.phs'
     revisions.extend([(receiver_file, receiver_model, None, b'47'), (entry, receiver_calls, None, b'211')])
     with service(app, out) as resident:
         for rev, (path, text, error, stdout) in enumerate(revisions):
@@ -358,7 +359,7 @@ def prove(work, flavor):
 def bare_this(work, flavor):
     app = work / ('this-' + flavor)
     app.mkdir()
-    entry, record, helper = [app / (name + '.' + flavor) for name in ('main', 'pair', 'helper')]
+    entry, record, helper = [app / (name + '.' + source_suffix(flavor)) for name in ('main', 'pair', 'helper')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     var, member = ('$' if flavor == 'php' else ''), ('.' if flavor == 'js' else '->')
     fields, method, mutate, local, bind, param = {
@@ -419,7 +420,7 @@ def bare_this(work, flavor):
 def value_signatures(work, flavor):
     app = work / ('values-' + flavor)
     app.mkdir()
-    model, api, entry = [app / (n + '.' + flavor) for n in ('record', 'transform', 'main')]
+    model, api, entry = [app / (n + '.' + source_suffix(flavor)) for n in ('record', 'transform', 'main')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     param, byref, var, access, local, inferred, method, function, ctor = {
         'php': ('Packet $p', 'Packet &$p', '$', '->', '$NAME TYPE;', '$NAME=EXPR;',
@@ -445,7 +446,7 @@ def value_signatures(work, flavor):
     transform = (function.replace('NAME', 'shifted').replace('ARG', param) + '{' + declare('worker', 'Worker')
                  + p + x + '+=1;return ' + var + 'worker' + access + 'shift(' + p + ');}')
     api.write_text(make + transform)
-    methods = app / ('worker.' + flavor)
+    methods = app / ('worker.' + source_suffix(flavor))
     methods.write_text('struct Worker {' + shift + '}')
     # The entry never names Packet or Cell. Their types arrive only through callable signatures.
     q = var + 'q'

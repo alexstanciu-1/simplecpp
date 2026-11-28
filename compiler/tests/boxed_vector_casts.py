@@ -1,4 +1,5 @@
 """Source-level vector snapshots, admission and incremental recovery in a JSON-off-capable runtime."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 import subprocess
@@ -12,16 +13,16 @@ with tempfile.TemporaryDirectory(prefix='boxed-vector-casts-') as folder:
     root = Path(folder)
     app, out = root/'app', root/'out'
     app.mkdir()
-    (app/'module.json').write_text('{"entry":"main.php"}')
-    main = app/'main.php'
-    helpers = app/'helpers.php'
+    (app/'module.json').write_text('{"entry":"main.phs"}')
+    main = app/'main.phs'
+    helpers = app/'helpers.phs'
     library = 'function numbers():vector<int> { echo "N"; $v vector<int> = [2,7]; return $v; }'
     source_edit(helpers, library)
     for flavor, code in {
         'js': 'function jsList(v:vector<string>):dynamic { return (dynamic)v; }',
         'cpp': 'mixed cppList(vector<int> v) { return (mixed)v; }',
     }.items():
-        source_edit(app/('export.'+flavor), code)
+        source_edit(app/('export.'+source_suffix(flavor)), code)
     program = '''
 $v vector<int> = [2,7];
 $s vector<string> = ["long string beyond inline capacity", "last"];

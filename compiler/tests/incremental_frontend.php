@@ -33,8 +33,8 @@ namespace
 			$app = $root . '/' . $flavor;
 			mkdir($app);
 			file_put_contents($app . '/module.json', '{}');
-			$main_path = $app . '/main.' . $flavor;
-			$helper_path = $app . '/helper.' . $flavor;
+			$main_path = $app . '/main.' . \scpp\compiler\flavor::from($flavor)->source_extension();
+			$helper_path = $app . '/helper.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 			$main_name = basename($main_path);
 			$helper_name = basename($helper_path);
 			$declaration = $flavor === 'cpp' ? 'void helper() {}' : 'function helper(): void {}';
@@ -83,7 +83,7 @@ namespace
 				'Stable index was replaced');
 			verify($second->entry->sources[$helper_name]->ast->tokens->source->content === $declaration,
 				'Previous content overwritten');
-			$moved_path = $app . '/moved.' . $flavor;
+			$moved_path = $app . '/moved.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 			rename($helper_path, $moved_path);
 			$moved = $compiler->frontend($app, $third);
 			verify((count($moved->removed_sources) === 1) && ($moved->removed_sources[0]->status === change_status::removed),
@@ -94,7 +94,7 @@ namespace
 				'Move did not redirect key');
 			/** @var \scpp\compiler\ast_function_declaration $moved_declaration */
 			$moved_declaration = $moved->scope->resolve($key);
-			$duplicate_path = $app . '/duplicate.' . $flavor;
+			$duplicate_path = $app . '/duplicate.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 			file_put_contents($duplicate_path, $declaration . ' ' . $declaration);
 			$ambiguous = $compiler->frontend($app, $moved);
 			verify($ambiguous->scope->declarations[$key]->duplicate_element()?->duplicate_element() === $moved_declaration,
@@ -122,7 +122,7 @@ namespace
 				'Removed symbol still resolves');
 			verify($removed->entry->sources[$main_name]->ast === $main,
 				'Unresolved call caused frontend mutation');
-			$failure_path = $app . '/zbad.' . $flavor;
+			$failure_path = $app . '/zbad.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 			file_put_contents($failure_path, 'this is invalid syntax');
 			try {
 				$compiler->frontend($app, $removed);

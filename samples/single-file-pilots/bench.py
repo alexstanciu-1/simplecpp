@@ -49,9 +49,9 @@ def sample(root, work, name):
     case = HERE / name
     app, out = work / "app", work / "out"
     app.mkdir(parents=True)
-    for filename in ["module.json", "main.php"]:
+    for filename in ["module.json", "main.phs"]:
         shutil.copyfile(case / filename, app / filename)
-    source = app / "main.php"
+    source = app / "main.phs"
     flags = ["clang++", "-std=c++23", "-stdlib=libc++", "-O2", "-g0",
              "-I" + str(root / "runtime/generated/public")]
     args = ["php", root / "compiler/tests/incremental_executable.php", app, out]
@@ -102,7 +102,7 @@ def sample(root, work, name):
 def package_runtime(root, output, name):
     # Package the unedited source and both verified fixture reports for the remote host.
     case = HERE / name
-    shutil.copyfile(case / "main.php", output / "app/main.php")
+    shutil.copyfile(case / "main.phs", output / "app/main.phs")
     args = ["php", root / "compiler/tests/incremental_executable.php", output / "app", output / "out"]
     response = json.loads(run(args, input=b'"run"\n').stdout)
     if "error" in response:

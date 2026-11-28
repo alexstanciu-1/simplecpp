@@ -50,7 +50,7 @@ return 8 if count(slots) == 33 and slots[-1] == 32 else 1
 """
     write_app(app, 'py', {'main': source})
     (app / 'peer.cpp').write_text('dynamic cppPass(dynamic x) {return x;} int mark(int x) {echo x; return x;}')
-    (app / 'peer.php').write_text('function phpPass(dynamic $x): dynamic {return $x;}')
+    (app / 'peer.phs').write_text('function phpPass(dynamic $x): dynamic {return $x;}')
     (app / 'peer.js').write_text('function jsPass(x: dynamic): dynamic {return x;}')
     result = fresh_build(app, out)
     assert 'error' not in result, result

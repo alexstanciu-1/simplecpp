@@ -89,11 +89,11 @@ def main():
         app.mkdir()
         (app/'module.json').write_text('{"dependencies":{"runtime":{"modules":["filesystem"]}}}')
         same_source = '$p=strpos("abc","x"); echo isset($p)?"present":"absent"; return 0;'
-        (app/'main.php').write_text(same_source)
+        (app/'main.phs').write_text(same_source)
         check = subprocess.check_output([build(app, work)])
         stock = subprocess.check_output(['php', '-n', '-r', same_source])
         print(f'Identical source, isset on a missed search: Simple C++ {check!r}, PHP {stock!r}')
-        (app/'main.php').write_text(entry(False))
+        (app/'main.phs').write_text(entry(False))
         exe = build(app, work)
         control = work/'control.php'
         control.write_text(entry(True))

@@ -51,7 +51,7 @@ int main() {
     for flavor in ('cpp', 'php', 'js'):
         data = work/flavor
         out = work/(flavor+'-out')
-        unit = out/json.loads((out/'manifest.json').read_text())['sources'][f'{flavor}/scanner.{flavor}']
+        unit = out/json.loads((out/'manifest.json').read_text())['sources'][f'{flavor}/scanner.{"phs" if flavor == "php" else flavor}']
         source = unit.read_text()
         original, = [line for line in source.splitlines() if 'var_i_5 - var_start_7' in line and '105LL' in line]
         patterns = ['if', 'while'] + {'js':['let'], 'cpp':['auto'], 'php':[]}[flavor]

@@ -22,12 +22,12 @@ def build_service(work, cxx, linker):
         ('host_directory()', 'void'), ('host_listen()', 'void'), ('host_request()', 'string'),
         ('host_reply(string $response)', 'void'), ('host_close()', 'void'),
     ]
-    (tool/'host.php').write_text('\n'.join(
+    (tool/'host.phs').write_text('\n'.join(
         f'function {signature}: {result} {{ throw Exception::make("Native adapter required"); }}'
         for signature, result in declarations))
     bundle = work/'bundle'
     manifest = fresh(tool, bundle)
-    host, = [unit for source, unit in manifest['sources'].items() if source.endswith('/host.php')]
+    host, = [unit for source, unit in manifest['sources'].items() if source.endswith('/host.phs')]
     flags = [cxx, '-std=c++23', '-stdlib=libc++', '-I', ROOT/'runtime/generated/public']
     def compile_adapter(name):
         obj = work/f'{name}.o'
@@ -46,8 +46,8 @@ def build_service(work, cxx, linker):
 def exercise(work, exe):
     app = work/'app'
     app.mkdir()
-    (app/'definition.php').write_text('function answer(): int { return 1; }')
-    (app/'main.php').write_text('return answer();')
+    (app/'definition.phs').write_text('function answer(): int { return 1; }')
+    (app/'main.phs').write_text('return answer();')
     state = app/'.scpp'
     endpoint, lock = state/'compiler.sock', state/'compiler.lock'
     children = []
@@ -103,7 +103,7 @@ def exercise(work, exe):
         assert stat.S_IMODE(endpoint.stat().st_mode) == 0o600
         assert stat.S_IMODE(state.stat().st_mode) == 0o700
         lock_identity = lock.stat().st_dev, lock.stat().st_ino
-        cold = b'ok|1|definition.php,main.php,|definition.php,main.php,|'
+        cold = b'ok|1|definition.phs,main.phs,|definition.phs,main.phs,|'
         assert request(b'run') == (pid, cold)
         with connect() as peer:
             peer.sendall(b'sto')  # Disconnect halfway through a command.
@@ -111,7 +111,7 @@ def exercise(work, exe):
         with connect() as peer:
             peer.sendall(b'run\n')  # Abandon the reply to a complete request.
         assert request(b'status') == (pid, b'2')
-        assert request(b'run') == (pid, b'ok|3|||definition.php,main.php,')
+        assert request(b'run') == (pid, b'ok|3|||definition.phs,main.phs,')
         assert request(b'stop') == (pid, b'stopped')
         assert owner.wait(timeout=5) == 0 and not endpoint.exists()
         assert (lock.stat().st_dev, lock.stat().st_ino) == lock_identity
@@ -120,7 +120,7 @@ def exercise(work, exe):
         assert request(b'run', starting=True) == (crashed.pid, cold)
         crashed.kill()
         assert crashed.wait(timeout=5) == -signal.SIGKILL and endpoint.is_socket()
-        (app/'definition.php').write_text('function answer(): int { return 9; }')
+        (app/'definition.phs').write_text('function answer(): int { return 9; }')
         restarted = start()
         assert request(b'status', starting=True) == (restarted.pid, b'0')
         assert request(b'run') == (restarted.pid, cold)

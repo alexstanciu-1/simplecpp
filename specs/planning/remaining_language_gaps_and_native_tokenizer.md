@@ -213,7 +213,7 @@ validator on 33 byte strings against the production tokenizer in all four flavor
 It covers boundary code points, truncated and overlong sequences, surrogates,
 and an invalid continuation after an earlier lexical error. The runtime helper
 accepts valid input directly. On invalid input the native fixture locates the
-first malformed sequence. [Native fixture](../../compiler/examples/tokenizer/utf8.php.scpp)
+first malformed sequence. [Native fixture](../../compiler/examples/tokenizer/utf8.phs)
 
 The bounded PHP-flavor compiler now validates each changed source before
 recognizing its first token. The filesystem-enabled `compiler_translated_path`
@@ -222,7 +222,7 @@ against the production frontend, and verifies that failures preserve the last
 published binding, declaration and output. After repair, the old token still
 addresses its original spelling, and every new token's kind, offset and length
 agrees with a fresh compilation. Full flavor-specific token streams and Python
-layout remain open. [Translated scanner](../../compiler/examples/translated_path/frontend.php.scpp)
+layout remain open. [Translated scanner](../../compiler/examples/translated_path/frontend.phs)
 
 **Freeze checkpoint for punctuation.** The build-time emitter reads production
 token IDs, spellings, flavor membership and Python admission rules. The native
@@ -256,7 +256,7 @@ The bridge still supplies prepared names, the SHA-256 artifact key and include
 dependencies. File installation, caller lowering and base link planning remain
 host responsibilities. This qualifies native rendering for the selected vector
 recipe; the production backend continues to use PHP for rendering.
-[Native renderer](../../compiler/examples/concrete_vector/render.php.scpp) ·
+[Native renderer](../../compiler/examples/concrete_vector/render.phs) ·
 [Build-time publisher](../../compiler/examples/concrete_vector/publish.php) ·
 [Differential test](../../compiler/tests/translated_vector_recipe.py)
 
@@ -304,10 +304,10 @@ with no replacement. A failed second installation restored the first file's
 original bytes, inode and timestamp. An identical-input retry reused preparation
 and published both pending units. The final file set matched a fresh session and
 compiled and ran on dev002.
-[Native unit lowering](../../compiler/examples/retained_frontend/lowering.php.scpp) ·
-[Session](../../compiler/examples/retained_frontend/session.php.scpp) ·
+[Native unit lowering](../../compiler/examples/retained_frontend/lowering.phs) ·
+[Session](../../compiler/examples/retained_frontend/session.phs) ·
 [Five-case comparison](../../compiler/tests/translated_retained_frontend.py)
-[Driver](../../compiler/examples/native_driver/main.php.scpp) ·
+[Driver](../../compiler/examples/native_driver/main.phs) ·
 [Native comparison](../../compiler/tests/translated_native_driver.py)
 
 **Native Unix-socket lifecycle on Linux.** A compiled frontend serves its

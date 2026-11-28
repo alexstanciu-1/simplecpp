@@ -49,7 +49,8 @@ def verify(app, exe):
         assert oracle.returncode and oracle.stderr
 
     (app/'module.json').write_text('{"name":"sample"}')
-    (app/'main.php').write_text('return 0;')
+    (app/'main.phs').write_text('return 0;')
+    (app/'main.php').write_text('<?php echo "classic";')
     (app/'empty.js').touch()
     path = app/'binary.py'
     # Two whole 64 KiB reads plus a short final read, including NUL and high bytes.
@@ -57,7 +58,7 @@ def verify(app, exe):
     path.write_bytes(original)
     first = compare()
     key = 'sample/binary.py'
-    assert set(first) == {key, 'sample/empty.js', 'sample/main.php'}
+    assert set(first) == {key, 'sample/empty.js', 'sample/main.phs'}
     assert first['sample/empty.js']['sha256'] == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
     stat = path.stat()
     path.write_bytes(original[:-1] + b'!')
@@ -81,31 +82,32 @@ def verify(app, exe):
         'modules': {'plugin': '../plugin/custom.json'}}))
     (app/'inner/custom.json').write_text('{"name":"inner"}')
     (app/'plugin/custom.json').write_text('{"name":"plugin"}')
-    (app/'src.php').touch()
+    (app/'src.phs').touch()
     (app/'src/unit.CPP').touch()
-    (app/'.hidden.php').touch()
+    (app/'.hidden.custom').touch()
     (app/'link.js').symlink_to(path)
     (app/'cycle').symlink_to(app, target_is_directory=True)
     manifest = app/'module.json'
     manifest.write_text(json.dumps({'dependencies': {'dep': {'path': 'dep/custom.json', 'modules': ['plugin']}}}))
     rows = compare(app/'out')
     assert [key.removeprefix(app.name + '/') for key in rows] == [
-        'binary.py', 'empty.js', 'main.php', 'src.php', 'src/unit.cpp']
-    manifest.write_text(json.dumps({'sources': ['src/unit.cpp', 'main.php', 'empty.js']}))
+        'binary.py', 'empty.js', 'main.phs', 'src.phs', 'src/unit.cpp']
+    manifest.write_text(json.dumps({'sources': ['src/unit.cpp', 'main.phs', 'empty.js']}))
     assert len(compare()) == 3
     (app/'input.custom').touch()
     manifest.write_text(json.dumps({'name': 'mapped', 'entry': 'input.custom', 'sources': {
-        'src/unit.cpp': 'py', 'input.custom': 'js', '.hidden.php': 'cpp'}}))
+        'src/unit.cpp': 'py', 'input.custom': 'js', '.hidden.custom': 'cpp'}}))
     assert {key: row['flavor'] for key, row in compare().items()} == {
-        'mapped/.hidden.php': 'cpp', 'mapped/input.custom': 'js', 'mapped/src/unit.cpp': 'py'}
+        'mapped/.hidden.custom': 'cpp', 'mapped/input.custom': 'js', 'mapped/src/unit.cpp': 'py'}
     (app/'main').touch()
     manifest.write_text(json.dumps({'sources': {'main': 'php'}}))
     assert len(compare()) == 1
-    manifest.write_text(json.dumps({'sources': {'main': 'php', 'main.php': 'php'}}))
+    manifest.write_text(json.dumps({'sources': {'main': 'php', 'main.phs': 'php'}}))
     reject()
-    for sources in [['main.php', 'main.php'], ['main.php', 'missing.php'],
-                    ['main.php', '../escape.php'], ['main.php', 'binary.py', 'link.js'],
-                    ['main.php', 'unsupported.extension'], {'main.php': 'unknown'}]:
+    for sources in [['main.phs', 'main.phs'], ['main.phs', 'missing.phs'],
+                    ['main.phs', '../escape.phs'], ['main.phs', 'binary.py', 'link.js'],
+                    ['main.phs', 'unsupported.extension'], {'main.phs': 'unknown'}, ['main.php'],
+                    {'main.php': 'php'}, {'main.phs': 'js'}]:
         manifest.write_text(json.dumps({'sources': sources}))
         reject()
     print('Discovery, lists, flavor overrides, exclusions, ordering and digest edits matched PHP.')

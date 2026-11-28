@@ -63,7 +63,7 @@ def verify(work):
         main.append(f'echo "{mode}\\n"; exercise($text, Scan_Flavor::{mode});')
     assert set(modes) == {'cpp', 'php', 'js', 'python'}
     app = scanner_project(work)
-    (app/'main.php').write_text('\n'.join([*main, 'return 8;']))
+    (app/'main.phs').write_text('\n'.join([*main, 'return 8;']))
     generated = work/'generated'
     result = fresh_build(app, generated)
     assert 'error' not in result, result

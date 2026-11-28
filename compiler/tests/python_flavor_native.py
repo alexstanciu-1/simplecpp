@@ -1,4 +1,5 @@
 """Compare mixed Python-flavor execution with the existing flavors and check edit recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import tempfile
@@ -77,8 +78,8 @@ LOGICAL_CALLEES = {
 def logical(work, flavor, library):
     app, bundle = work/'logical', work/'logical-bundle'
     write_app(app, 'py', {'main': LOGICAL_ENTRY})
-    source_edit(app/f'probe.{flavor}', LOGICAL_CALLEES[flavor])
-    skipped = app/f'skipped.{flavor}'
+    source_edit(app/f'probe.{source_suffix(flavor)}', LOGICAL_CALLEES[flavor])
+    skipped = app/f'skipped.{source_suffix(flavor)}'
     def skipped_body(result, value):
         signature = f'{result} skipped()' if flavor == 'cpp' else f'function skipped(): {result}'
         return signature + f' {{ echo "S"; return {value}; }}'
@@ -176,7 +177,7 @@ BODY_CALLEES = {
 def everyday_bodies(work, flavor, library):
     app, bundle = work/'bodies', work/'bodies-bundle'
     write_app(app, 'py', {'main': BODY_ENTRY})
-    peer = app/f'peer.{flavor}'
+    peer = app/f'peer.{source_suffix(flavor)}'
     peer_body = LOGICAL_CALLEES[flavor] + BODY_CALLEES[flavor]
 
     def with_fallback(result, value):
@@ -288,7 +289,7 @@ def traversal_provider(flavor, element='int'):
 def typed_updates_and_traversal(work, flavor, library):
     app, bundle = work/'traversal', work/'traversal-bundle'
     write_app(app, 'py', {'main': TRAVERSAL_ENTRY})
-    peer = app/f'provider.{flavor}'
+    peer = app/f'provider.{source_suffix(flavor)}'
     provider = traversal_provider(flavor)
     source_edit(peer, provider)
     resident = service(app, bundle)
@@ -329,7 +330,7 @@ def compatible_element_edit(work, flavor, library):
     app, bundle = work/'element-edit', work/'element-bundle'
     caller = "count: int = 0\nfor item in items(True):\n    count += 1\nreturn count"
     write_app(app, 'py', {'main': caller})
-    peer = app/f'provider.{flavor}'
+    peer = app/f'provider.{source_suffix(flavor)}'
     source_edit(peer, traversal_provider(flavor))
     resident = service(app, bundle)
     try:
@@ -385,7 +386,7 @@ def key_traversal(work, flavor, library):
                      'if (value != 40 || h[key] != 41) { return 9; } '
                      'echo key; count += 1; } return count; }')
     source_edit(bridge, bridge_source)
-    peer = app/f'provider.{flavor}'
+    peer = app/f'provider.{source_suffix(flavor)}'
     source_edit(peer, hash_provider(flavor))
     resident = service(app, bundle)
     try:
@@ -514,7 +515,7 @@ def items_provider(flavor, key='int', value='int', trace='A', vector=False):
 def paired_items(work, flavor, library):
     app, bundle = work/'items', work/'items-bundle'
     write_app(app, 'py', {'main': ITEMS_ENTRY, 'idle': 'def idle() -> int:\n    return 17'})
-    peer = app/f'items-peer.{flavor}'
+    peer = app/f'items-peer.{source_suffix(flavor)}'
     source_edit(peer, items_provider(flavor))
     resident = service(app, bundle)
     try:
@@ -635,7 +636,7 @@ def typed_collections(work, flavor, library):
     app, bundle = work/'collections', work/'collections-bundle'
     write_app(app, 'py', {'main': COLLECTION_ENTRY})
     main = app/'main.py'
-    peer = app/f'collection-peer.{flavor}'
+    peer = app/f'collection-peer.{source_suffix(flavor)}'
     provider = COLLECTION_PEERS[flavor]
     source_edit(peer, provider)
     resident = service(app, bundle)
@@ -728,7 +729,7 @@ def division(work, flavor, library):
     app, bundle = work/'division', work/'division-bundle'
     caller = "q: float = inputNumber() / 2\nreturn 8 if q > 3.0 else 1"
     write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 17'})
-    peer = app/f'division-peer.{flavor}'
+    peer = app/f'division-peer.{source_suffix(flavor)}'
     provider = DIVISION_PEERS[flavor]
     source_edit(peer, provider)
     main = app/'main.py'
@@ -821,7 +822,7 @@ return 8 if key() + 1 not in mapping() else 3
 """
     app, bundle = work/'membership', work/'membership-bundle'
     write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 17'})
-    peer = app/f'provider.{flavor}'
+    peer = app/f'provider.{source_suffix(flavor)}'
     replace = {
         'cpp': 'hash<int,int> replaceKey(int &k) { k = 7; return mapping(); }',
         'php': 'function replaceKey(int &$k): hash<int,int> { $k = 7; return mapping(); }',
@@ -986,12 +987,12 @@ return 8
         'php': 'function replaceValue(int &$v): int { $v = 100; return 3; }',
         'js': 'function replaceValue(&v: int): int { v = 100; return 3; }',
     }[flavor]
-    calls = app/f'calls.{flavor}'
+    calls = app/f'calls.{source_suffix(flavor)}'
     providers = replace + ''.join(
         fn(name, 'int', [], f'echo "{mark}"; return {value};')
         for name, mark, value in [('low', 'L', 1), ('middle', 'M', 2), ('high', 'H', 3)])
     source_edit(calls, providers)
-    peer = app/f'last.{flavor}'
+    peer = app/f'last.{source_suffix(flavor)}'
     valid = fn('skipped', 'int', [], 'echo "X"; return 4;')
     source_edit(peer, valid)
     resident = service(app, bundle)
@@ -1073,8 +1074,8 @@ return 8 if probe() is None else 9
     separator = '.' if flavor == 'js' else '::'
     records += fn('findKind', 'nullable<Kind>', [('text', 'string')],
                   f'echo "K"; return enum_try_from_value(Kind{separator}class, {syntax["v"]}text);')
-    source_edit(app/f'owners.{flavor}', records)
-    peer = app/f'probe.{flavor}'
+    source_edit(app/f'owners.{source_suffix(flavor)}', records)
+    peer = app/f'probe.{source_suffix(flavor)}'
     empty = fn('probe', 'nullable<int>', [], 'echo "P"; return null;')
     present = empty.replace('return null;', 'return 0;')
     source_edit(peer, empty)
@@ -1215,7 +1216,7 @@ return 8
 """
     app, bundle = work/'bitwise', work/'bitwise-bundle'
     write_app(app, 'py', {'main': caller, 'idle': 'def idle() -> int:\n    return 7'})
-    peer = app/f'masks.{flavor}'
+    peer = app/f'masks.{source_suffix(flavor)}'
 
     def provider(result, value):
         return mutate + function('mask', result, [], f'echo "M"; return {value};')
@@ -1394,9 +1395,9 @@ finally:
 def records_and_exceptions(work, flavor, library):
     app, bundle = work/'records', work/'records-bundle'
     write_app(app, 'py', {'main': RECORD_ENTRY, 'records': RECORD_SOURCE})
-    peer = app/f'peer.{flavor}'
+    peer = app/f'peer.{source_suffix(flavor)}'
     source_edit(peer, RECORD_PEERS[flavor])
-    cleanup = app/f'cleanup.{flavor}'
+    cleanup = app/f'cleanup.{source_suffix(flavor)}'
     source_edit(cleanup, RECORD_CLEANUP[flavor])
     records = app/'records.py'
     resident = service(app, bundle)
@@ -1438,7 +1439,7 @@ def records_and_exceptions(work, flavor, library):
         assert artifacts(bundle) == artifacts(fresh) == previous
         native(bundle, work/'records-recovered', (9, b'GGGGG', b''), library)
 
-        collision = app/f'collision.{flavor}'
+        collision = app/f'collision.{source_suffix(flavor)}'
         source_edit(collision, CONSTRUCTOR_COLLISIONS[flavor])
         failed = invoke(resident)
         fresh_failure = fresh_build(app, work/'collision-failure')
@@ -1518,10 +1519,10 @@ def inheritance(work, flavor, library):
         'child': INHERITANCE,
         'idle': 'def idle() -> int:\n    return 17',
     })
-    peer = app/f'base.{flavor}'
-    source_edit(app/f'grandparent.{flavor}', klass('Grandparent', far_score))
+    peer = app/f'base.{source_suffix(flavor)}'
+    source_edit(app/f'grandparent.{source_suffix(flavor)}', klass('Grandparent', far_score))
     source_edit(peer, base)
-    source_edit(app/f'api.{flavor}', api)
+    source_edit(app/f'api.{source_suffix(flavor)}', api)
     resident = service(app, bundle)
     try:
         result = invoke(resident)
@@ -1538,7 +1539,7 @@ def inheritance(work, flavor, library):
         changed = invoke(resident)
         assert 'error' not in changed and changed['preparation']['reused'], changed
         assert {Path(path).name for path in changed['emitted_sources']} == {
-            peer.name, f'api.{flavor}', 'child.py', 'main.py',
+            peer.name, f'api.{source_suffix(flavor)}', 'child.py', 'main.py',
         }, changed
         previous = artifacts(bundle)
         assert previous.keys() == initial.keys()
@@ -1604,7 +1605,7 @@ def prove(work, library):
         case.mkdir()
         app, output = case/'app', case/'out'
         write_app(app, 'py', {'main': PYTHON_ENTRY, 'helper': PYTHON_HELPER})
-        source_edit(app/f'bridge.{flavor}', bridge)
+        source_edit(app/f'bridge.{source_suffix(flavor)}', bridge)
         control, bundle = case/'control', case/'control-bundle'
         main, helper = CONTROLS[flavor]
         write_app(control, flavor, {'main': main, 'bridge': bridge, 'helper': helper})
@@ -1643,7 +1644,7 @@ def incremental(work, flavor, app, output, library):
         source_edit(helper, compatible)
         changed = invoke(resident)
         assert 'error' not in changed and changed['preparation']['reused'], changed
-        assert {Path(path).name for path in changed['emitted_sources']} == {f'bridge.{flavor}', 'helper.py'}, changed
+        assert {Path(path).name for path in changed['emitted_sources']} == {f'bridge.{source_suffix(flavor)}', 'helper.py'}, changed
         fresh = work/'compatible-fresh'
         assert 'error' not in fresh_build(app, fresh)
         assert artifacts(output) == artifacts(fresh)

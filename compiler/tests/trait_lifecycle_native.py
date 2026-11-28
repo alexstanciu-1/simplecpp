@@ -1,4 +1,5 @@
 """Ordinary and contributed destructor selection, storage lifetime and incremental recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 from pathlib import Path
@@ -61,8 +62,8 @@ def prove(work, flavor):
     methods = methods[:pos]+destructor('Guard', 'echo "unexpected";')+methods[pos:]
     methods = methods.replace('struct Guard', 'trait GuardInit').replace(' Guard(', ' GuardInit(').replace('~Guard(', '~GuardInit(')
     app = work/flavor
-    (app/('guard.'+flavor)).write_text(methods+s['record']('Guard','use GuardInit;')+functions)
-    (app/'support.php').write_text('struct Token { public int $v; } function makeToken():shared<Token>{return new Token();}')
+    (app/('guard.'+source_suffix(flavor))).write_text(methods+s['record']('Guard','use GuardInit;')+functions)
+    (app/'support.phs').write_text('struct Token { public int $v; } function makeToken():shared<Token>{return new Token();}')
     out = work/(flavor+'-cleanup-out')
     proc = service(app, out)
     try:
@@ -75,8 +76,8 @@ def prove(work, flavor):
 
     # Force a native move, with two live objects, then release a shared object whose destructor throws.
     broken = s['local']('absent', 'shared<Token>') + 'echo '+s['v']+'absent'+s['access']+'v;'
-    (app/('doomed.'+flavor)).write_text(s['record']('Doomed',destructor('Doomed',broken)))
-    (app/'factory.php').write_text('function doomed():void { $o=new Doomed(); }')
+    (app/('doomed.'+source_suffix(flavor))).write_text(s['record']('Doomed',destructor('Doomed',broken)))
+    (app/'factory.phs').write_text('function doomed():void { $o=new Doomed(); }')
     proc = service(app, out)
     try:
         result = invoke(proc)

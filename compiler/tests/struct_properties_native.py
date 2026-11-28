@@ -1,4 +1,5 @@
 """Compare cross-unit static property writes and edits and recovery with fresh native builds."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -13,8 +14,8 @@ from structs_native import build, check_empty_access
 def prove(work, flavor):
     app = work / flavor
     app.mkdir()
-    entry = app / ('main.' + flavor)
-    model = app / ('model.' + flavor)
+    entry = app / ('main.' + source_suffix(flavor))
+    model = app / ('model.' + source_suffix(flavor))
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     prop, reader, writer, source = {
         'php': ('public static int $count = 2;', 'public function readCount():int { return Point::$count; }',
@@ -32,7 +33,7 @@ def prove(work, flavor):
         source = ('struct Local { count:int; } function check(Point:shared<Local>):int { '
                   'Point.count=42; return Point.count; } if (check(new Local()) != 42) { return 1; } ') + source
     entry.write_text(source + 'return 8;')
-    (app / ('writer.' + flavor)).write_text(writer)
+    (app / ('writer.' + source_suffix(flavor))).write_text(writer)
     out = work / ('out-' + flavor)
     with service(app, out) as resident:
         for rev, (member, error, value) in enumerate([
@@ -62,17 +63,17 @@ def prove(work, flavor):
 def compounds(work, flavor):
     app = work / ('compound-' + flavor)
     app.mkdir()
-    entry = app / ('main.' + flavor)
+    entry = app / ('main.' + source_suffix(flavor))
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     prop, prop_ref, lexical, method = {
         'php': ('public static byte $n=250;', 'Gauge::$n', 'self::$n', 'public static function scale():void'),
         'cpp': ('static byte n=250;', 'Gauge::n', 'Self::n', 'static void scale()'),
         'js': ('static n:byte=250;', 'Gauge.n', 'class.n', 'static scale():void'),
     }[flavor]
-    model = app / ('gauge.' + flavor)
+    model = app / ('gauge.' + source_suffix(flavor))
     record = 'struct Gauge { '+prop+method+' { '+lexical+'-=5; '+lexical+'*=2; '+lexical+'/=2; '+lexical+'%=9; } }'
     # The cross-unit reader is also invoked by native code after an exception.
-    (app / 'reader.php').write_text('function observe():int { return (int)Gauge::$n; }')
+    (app / 'reader.phs').write_text('function observe():int { return (int)Gauge::$n; }')
     call = 'Gauge.scale();' if flavor == 'js' else 'Gauge::scale();'
     def source(delta):
         return (prop_ref+'+='+str(delta)+'; echo observe(); '+prop_ref+'-=245; '+call+' echo observe(); return 8;')
@@ -81,7 +82,7 @@ def compounds(work, flavor):
     record = record.replace(prop, prop+floating)
     float_ref = prop_ref[:-1]+'f'
     # mutate() overwrites f while evaluating the RHS. The compound's original left operand is 8.0.
-    (app / 'effect.php').write_text('function mutate():int { Gauge::$f=100.0; return 2; }')
+    (app / 'effect.phs').write_text('function mutate():int { Gauge::$f=100.0; return 2; }')
     effect = float_ref+'+=mutate(); '+float_ref+'*=2; '+float_ref+'/=4; '+float_ref+'-=1; echo (int)'+float_ref+'; return 8;'
     bit_source = ''.join(prop_ref + op + ';' for op in ('&=15', '|=16', '^=3', '<<=1', '>>=2')) + 'echo observe(); return 8;'
     out = work / ('compound-out-' + flavor)
@@ -142,8 +143,8 @@ int main() {
 def instance_compounds(work, flavor):
     app = work / ('fields-' + flavor)
     app.mkdir()
-    entry = app / ('main.' + flavor)
-    model = app / 'model.php'
+    entry = app / ('main.' + source_suffix(flavor))
+    model = app / 'model.phs'
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     definitions = ('struct Point { public int $x; } struct Box { public Point $p; } '
                    'function replaceBox(shared<Box> &$b):int { $b->p->x=90; $b=new Box(); echo "R"; return 3; } '
@@ -206,7 +207,7 @@ def instance_compounds(work, flavor):
 def updates(work, flavor):
     app = work / ('updates-' + flavor)
     app.mkdir()
-    entry, model = [app / (name + '.' + flavor) for name in ('main', 'model')]
+    entry, model = [app / (name + '.' + source_suffix(flavor)) for name in ('main', 'model')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     field, prop, sample, step, lexical, access, scope, sigil, setup, empty = {
         'php': ('public int $x;', 'public static int $n=4;', 'public static byte $b=255; public static float $f=2.5;',
@@ -216,7 +217,7 @@ def updates(work, flavor):
         'js': ('public x:int;', 'public static n:int=4;', 'static b:byte=255; static f:float=2.5;',
                'public step():void', 'class.', '.', '.', '', 'let q=new Box();', 'let q:shared<Box>;'),
     }[flavor]
-    (app / 'box.php').write_text('struct Box { public Point $p; }')
+    (app / 'box.phs').write_text('struct Box { public Point $p; }')
     n = 'Point' + scope + sigil + 'n'
     b = 'Point' + scope + sigil + 'b'
     f = 'Point' + scope + sigil + 'f'
@@ -278,8 +279,8 @@ def string_properties(work, flavor):
     """One reader, writer and record across units; compare every edit with a fresh compiler."""
     app = work / ('strings-' + flavor)
     app.mkdir()
-    entry = app / ('main.' + flavor)
-    model = app / ('model.' + flavor)
+    entry = app / ('main.' + source_suffix(flavor))
+    model = app / ('model.' + source_suffix(flavor))
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     prop, common, ref, decl, copy, field, cat = {
         'php': ('public string $text', 'public static string $sharedText', 'Label::$sharedText',
@@ -291,9 +292,9 @@ def string_properties(work, flavor):
     }[flavor]
     a, b = (field.replace('V', v) for v in ('a', 'b'))
     # This extra unit only writes the static member; the entry reads its initial and updated values.
-    (app / 'writer.php').write_text('function publish():void { Label::$sharedText="published"; }')
+    (app / 'writer.phs').write_text('function publish():void { Label::$sharedText="published"; }')
     # All fixtures also consume a PHP-authored record, exercising typed scalar and empty-owner defaults.
-    (app / 'defaults.php').write_text('struct Defaults { public bool $active=true; public byte $code=65; '
+    (app / 'defaults.phs').write_text('struct Defaults { public bool $active=true; public byte $code=65; '
         'public int $delta=-2; public float $ratio=1.5; public shared<Label> $link=null; } '
         'function defaultsOK():bool { $d Defaults; return $d->active && $d->code==65 && $d->delta==-2 '
         '&& $d->ratio==1.5 && $d->link==null; }')

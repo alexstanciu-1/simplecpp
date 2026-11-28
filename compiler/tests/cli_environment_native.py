@@ -1,4 +1,5 @@
 """Exercise argument transport through generated main and source-visible environment lookup."""
+from source_suffix import source_suffix
 import json
 import os
 from pathlib import Path
@@ -17,9 +18,9 @@ def project(work, source, *, general=False, helper=None, flavor="php"):
     app, out = work/'app', work/'out'
     app.mkdir(parents=True)
     (app/'module.json').write_text(json.dumps({'general_api': general}))
-    (app/f'main.{flavor}').write_text(source)
+    (app/f'main.{source_suffix(flavor)}').write_text(source)
     if helper:
-        (app/'helper.php').write_text(helper)
+        (app/'helper.phs').write_text(helper)
     proc = service(app, out)
     try:
         response = invoke(proc)

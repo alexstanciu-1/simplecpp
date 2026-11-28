@@ -196,9 +196,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$directory = sys_get_temp_dir() . '/scpp-string-equality-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'provider.' . $flavor->name]], JSON_THROW_ON_ERROR));
-		file_put_contents($directory . '/main.' . $flavor->name, 'if ((value() ' . $concat . ' "") >= "ok" && value() < "z" && (value() <=> "ok") == 0) { echo ("" ' . $concat . ' "Y"); } return 8;');
-		$path = $directory . '/provider.' . $flavor->name;
+		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension(), 'provider.' . $flavor->source_extension()]], JSON_THROW_ON_ERROR));
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'if ((value() ' . $concat . ' "") >= "ok" && value() < "z" && (value() <=> "ok") == 0) { echo ("" ' . $concat . ' "Y"); } return 8;');
+		$path = $directory . '/provider.' . $flavor->source_extension();
 		$stamp = time();
 		$write = static function (string $type, string $expression) use ($path, $fn, &$stamp): void {
 			file_put_contents($path, $fn('value', '', $type, 'return ' . $expression . ';'));
@@ -236,17 +236,17 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$project->run();
 		$fresh->run();
 		verify(artifacts($directory . '/out') === artifacts($directory . '/fresh'), 'Deletion recovery differs from fresh');
-		file_put_contents($directory . '/main.' . $flavor->name,
+		file_put_contents($directory . '/main.' . $flavor->source_extension(),
 			'if ("bad" != value()) { echo "Y"; } return 8;');
-		touch($directory . '/main.' . $flavor->name, ++$stamp);
+		touch($directory . '/main.' . $flavor->source_extension(), ++$stamp);
 		verify($project->run()['preparation']['prepared'] === 1, 'Operator edit prepared unchanged provider');
 		$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
 		$fresh->run();
 		verify(artifacts($directory . '/out') === artifacts($directory . '/fresh'), 'Operator edit differs from fresh output');
 		$fixtures[$flavor->name . '_operator_edit'] = ['files' => artifacts($directory . '/out'), 'stdout_hex' => bin2hex('Y')];
 		verify($project->run()['preparation']['prepared'] === 0, 'No-op prepared bodies');
-		file_put_contents($directory . '/main.' . $flavor->name, 'if (value() == null) { echo "N"; } return 8;');
-		touch($directory . '/main.' . $flavor->name, ++$stamp);
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'if (value() == null) { echo "N"; } return 8;');
+		touch($directory . '/main.' . $flavor->source_extension(), ++$stamp);
 		$write('null', 'null');
 		$project->run();
 		$null_caller = $project->session()->entry->entry->ast;
@@ -262,8 +262,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		verify($project->session()->entry->entry->ast === $null_caller, 'Null caller AST replaced');
 		$fixtures[$flavor->name . '_null_recovery'] = ['files' => artifacts($directory . '/out'), 'stdout_hex' => bin2hex('N')];
 		verify($project->run()['preparation']['prepared'] === 0, 'Null no-op prepared bodies');
-		file_put_contents($directory . '/main.' . $flavor->name, 'if (value() === (byte)1) { echo "T"; } else { echo "F"; } return 8;');
-		touch($directory . '/main.' . $flavor->name, ++$stamp);
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'if (value() === (byte)1) { echo "T"; } else { echo "F"; } return 8;');
+		touch($directory . '/main.' . $flavor->source_extension(), ++$stamp);
 		foreach ([['byte', '1', 'T'], ['int', '1', 'F'], ['float', '1.0', 'F'],
 			['string', '"1"', 'F'], ['null', 'null', 'F'], ['uint8', '1', 'T']] as [$type, $literal, $output]) {
 			$write($type, $literal);
@@ -284,8 +284,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$fresh->run();
 		verify(artifacts($directory . '/out') === artifacts($directory . '/fresh'), 'Identity deletion recovery differs');
 		verify($project->run()['preparation']['prepared'] === 0, 'Identity no-op prepared bodies');
-		file_put_contents($directory . '/main.' . $flavor->name, 'echo (value() <=> (byte)1); return 8;');
-		touch($directory . '/main.' . $flavor->name, ++$stamp);
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'echo (value() <=> (byte)1); return 8;');
+		touch($directory . '/main.' . $flavor->source_extension(), ++$stamp);
 		foreach ([['byte', '0', '-1'], ['int', '1', '0'], ['float', '1.5', '1']] as [$type, $literal, $output]) {
 			$write($type, $literal);
 			$project->run();

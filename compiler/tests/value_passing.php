@@ -105,10 +105,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$prepare($reference . 'return 8;');
 		$directory = sys_get_temp_dir() . '/scpp-value-passing-' . bin2hex(random_bytes(8)); mkdir($directory);
 		try {
-			$path = $directory . '/library.' . $flavor->name;
-			file_put_contents($directory . '/main.' . $flavor->name, $main);
-			file_put_contents($directory . '/model.' . $flavor->name, $model);
-			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name, 'sources' => ['main.' . $flavor->name, 'model.' . $flavor->name, basename($path)]]));
+			$path = $directory . '/library.' . $flavor->source_extension();
+			file_put_contents($directory . '/main.' . $flavor->source_extension(), $main);
+			file_put_contents($directory . '/model.' . $flavor->source_extension(), $model);
+			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension(), 'sources' => ['main.' . $flavor->source_extension(), 'model.' . $flavor->source_extension(), basename($path)]]));
 			$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp=time(); $caller=null;
 			foreach ([$provider, str_replace($factory($first), $factory($second), $provider),
 				str_replace($factory($first), $function('int', 'make', '', 'return 2;'), $provider), '', $provider] as $index => $text) {

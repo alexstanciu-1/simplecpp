@@ -27,7 +27,7 @@ if __name__ == '__main__':
         work = Path(tmp)
         app, out = work / 'app', work / 'out'
         write_app(app, 'py', {'main': MAIN})
-        peer = app / 'peer.php'
+        peer = app / 'peer.phs'
         source_edit(peer, PEER)
         resident = service(app, out)
         try:

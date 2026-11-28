@@ -186,10 +186,10 @@ CPP;
 
 		$directory = sys_get_temp_dir() . '/scpp-yield-foreach-' . bin2hex(random_bytes(8)); mkdir($directory);
 		try {
-			$provider = $directory . '/library.' . $flavor->name;
-			file_put_contents($directory . '/main.' . $flavor->name, $entry_source);
-			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name,
-				'sources' => ['main.' . $flavor->name, basename($provider)]]));
+			$provider = $directory . '/library.' . $flavor->source_extension();
+			file_put_contents($directory . '/main.' . $flavor->source_extension(), $entry_source);
+			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension(),
+				'sources' => ['main.' . $flavor->source_extension(), basename($provider)]]));
 			$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp = time(); $caller = null;
 			foreach ([$base, $changed, $invalid, '', $temporary, $base] as $step => $text) {
 				file_put_contents($provider, $text); touch($provider, ++$stamp);

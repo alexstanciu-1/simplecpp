@@ -26,9 +26,9 @@ def translated_unit(work, reference):
     app = work / 'translated'
     app.mkdir()
     codes = f"const int CONVERSION_IDENTITY={reference['identity']};\nconst int CONVERSION_BOOLEAN_INTEGER={reference['boolean_integer']};\n"
-    source = codes + '\n'.join((SOURCES / name).read_text() for name in ('constant_fact.php.scpp', 'integer_conversion.php.scpp'))
-    (app / 'main.php').write_text(source + '\nreturn 8;')
-    (app / 'module.json').write_text('{"entry":"main.php"}')
+    source = codes + '\n'.join((SOURCES / name).read_text() for name in ('constant_fact.phs', 'integer_conversion.phs'))
+    (app / 'main.phs').write_text(source + '\nreturn 8;')
+    (app / 'module.json').write_text('{"entry":"main.phs"}')
     out = work / 'out'
     with service(app, out) as proc:
         response = invoke(proc)

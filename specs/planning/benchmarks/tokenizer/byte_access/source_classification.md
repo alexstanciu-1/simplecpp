@@ -14,7 +14,7 @@ Each row uses 32 alternating pairs, after warmup. Nine batches of 128 scans per 
 | cpp | [scanner.cpp](../scanner.cpp) | 1,822 | 486 | 779.1 | 798.5 | +2.9% | +1.4% to +4.4% |
 | cpp | [core.scpp](../../../../../samples/capability-benchmarks/medium/support/core.scpp) | 2,355 | 651 | 669.7 | 713.8 | +6.9% | +5.8% to +7.8% |
 | php | [batch_000.phs](../../../../../samples/capability-benchmarks/medium/billing/batch_000.phs) | 3,801 | 907 | 701.1 | 794.3 | +13.6% | +11.2% to +14.9% |
-| php | [scanner.php](../scanner.php) | 1,853 | 444 | 692.4 | 778.3 | +12.9% | +11.4% to +15.3% |
+| php | [scanner.phs](../scanner.phs) | 1,853 | 444 | 692.4 | 778.3 | +12.9% | +11.4% to +15.3% |
 | php | [main.phs](../../../../../samples/capability-benchmarks/medium/main.phs) | 2,701 | 804 | 617.6 | 680.0 | +9.8% | +8.6% to +11.8% |
 | js | [batch_002.jss](../../../../../samples/capability-benchmarks/medium/billing/batch_002.jss) | 3,717 | 949 | 715.5 | 800.9 | +12.4% | +11.3% to +13.4% |
 | js | [scanner.js](../scanner.js) | 1,807 | 492 | 749.1 | 753.1 | +0.6% | -0.3% to +1.6% |

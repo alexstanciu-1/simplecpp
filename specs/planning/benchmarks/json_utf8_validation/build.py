@@ -14,13 +14,13 @@ app, out = work/'app', work/'out'
 app.mkdir(parents=True, exist_ok=True)
 (app/'module.json').write_text('{"dependencies":{"runtime":{"modules":["json"]}},"general_api":true}')
 fields = {'Scalar': 'string', 'Words': 'vector<string>', 'Numbers': 'vector<int>'}
-(app/'records.php').write_text('\n'.join(f'data struct {r} {{public {t} $value;}}' for r,t in fields.items()))
-(app/'main.php').write_text('\n'.join(f'${r.lower()} {r}=json_decode_as("{{}}",{r}::class);' for r in fields)+'\nreturn 0;')
+(app/'records.phs').write_text('\n'.join(f'data struct {r} {{public {t} $value;}}' for r,t in fields.items()))
+(app/'main.phs').write_text('\n'.join(f'${r.lower()} {r}=json_decode_as("{{}}",{r}::class);' for r in fields)+'\nreturn 0;')
 generated = subprocess.run(['php', root/'compiler/tests/incremental_executable.php', app, out],
                            input='"run"\n', text=True, capture_output=True, check=True)
 assert 'error' not in json.loads(generated.stdout), generated.stdout
 manifest = json.loads((out/'manifest.json').read_text())
-unit = out/manifest['sources']['app/records.php']
+unit = out/manifest['sources']['app/records.phs']
 native = root/'runtime/src/json'
 reader = (native/'structural_reader.hpp').read_text()
 if 'static void validate_bytes(' in reader:

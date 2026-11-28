@@ -427,7 +427,7 @@ final class Translation {
 
 	public function compile(?string $definition_text, string $entry_text): string {
 		$sources hash<string,string> = [];
-		if ($definition_text !== null) $sources["definition.php"] = $definition_text;
+		if ($definition_text !== null) $sources["definition.phs"] = $definition_text;
 		return $this->compile_sources($sources, $entry_text);
 	}
 
@@ -444,7 +444,7 @@ final class Translation {
 		}
 		$call = $this->entry_syntax();
 		if ($call === null || $entry_text !== $call->source->text) {
-			$parser = new Translation_Parser(new Translation_Source("main.php", $entry_text));
+			$parser = new Translation_Parser(new Translation_Source("main.phs", $entry_text));
 			$call = $parser->parse_entry();
 		}
 		$work = "";

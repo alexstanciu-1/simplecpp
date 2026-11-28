@@ -66,9 +66,9 @@ def check(work):
     translated = work/'translated'
     translated.mkdir()
     (translated/'module.json').write_text('{}')
-    (translated/'main.php').write_text('check_construction(); return 8;')
-    shutil.copyfile(TRANSLATION, translated/'preparation.php')
-    shutil.copyfile(TRANSLATION.with_name('construction.php.scpp'), translated/'construction.php')
+    (translated/'main.phs').write_text('check_construction(); return 8;')
+    shutil.copyfile(TRANSLATION, translated/'preparation.phs')
+    shutil.copyfile(TRANSLATION.with_name('construction.phs'), translated/'construction.phs')
     generated = work/'generated'
     report = fresh_build(translated, generated)
     assert 'error' not in report, report

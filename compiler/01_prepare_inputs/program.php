@@ -119,6 +119,7 @@ final class Program_Loader
 		{
 			$path = (string) $path;
 			self::require_relative($path);
+			flavor::require_source_path($path, $flavor);
 			$unit = new source_unit($module, $path, $flavor);
 			if ($disk) {
 				$resolved = self::disk_path($unit);

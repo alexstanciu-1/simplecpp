@@ -1,4 +1,5 @@
 """Application vector/hash traversal and construction-aware output lifetime, including suspended loops."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -54,8 +55,8 @@ def prove(work,flavor,libraries):
     body+=f'{v}box{a}items=make();'+loop('owned('+v+'box)',f'echo {v}number;',value='number')+'return 8;'
     expected=b'99:0:7;1:8;7:3:7;1:8;-2:7;2:7:7:11:78:78:78:788:788:78'
     app=work/flavor;out=work/(flavor+'-out');app.mkdir()
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
-    for name,text in dict(types=types,factory=make+table+vacant,producer=producers,main=body).items():source_edit(app/(name+'.'+flavor),text)
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}))
+    for name,text in dict(types=types,factory=make+table+vacant,producer=producers,main=body).items():source_edit(app/(name+'.'+source_suffix(flavor)),text)
     edits=[(None,None,expected),(None,None,expected),
            ('producer',producers.replace(f'yield {v}item{a}x;',f'yield {v}item{a}x+1;'),expected.replace(b':78:78:788:788:78',b':89:89:899:899:89')),
            ('producer',producers,expected),('types',None,None),(None,None,None),('types',types,expected),
@@ -66,9 +67,9 @@ def prove(work,flavor,libraries):
     try:
         for rev,(name,text,wanted) in enumerate(edits):
             before=artifacts(out)
-            if name=='namespace':source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor,'cpp_namespace':text}))
+            if name=='namespace':source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor),'cpp_namespace':text}))
             elif name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             got=invoke(proc);fresh_out=work/f'{flavor}-fresh-{rev}';fresh=service(app,fresh_out)
@@ -98,7 +99,7 @@ def prove(work,flavor,libraries):
 
 def lifetime_probe(work, flavor, libraries, sanitize=False):
     s=fixture(flavor);v,a=s['v'],s['access'];app=work/flavor;out=work/(flavor+'-out')
-    path=app/('producer.'+flavor)
+    path=app/('producer.'+source_suffix(flavor))
     if 'failing(' not in path.read_text(): source_edit(path,path.read_text()+s['function']('failing','Iterator<int>',[('box','shared<Box>'),('zero','int')],
         f'foreach ({v}box{a}items as {v}value) {{yield {v}value{a}x; yield 1/{v}zero;}}'))
     proc=service(app,out)

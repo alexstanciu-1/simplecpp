@@ -1,4 +1,5 @@
 """An abstract consumer supplies one callable slot to siblings and reuses existing methods."""
+from source_suffix import source_suffix
 import argparse
 import tempfile
 from pathlib import Path
@@ -39,7 +40,7 @@ def prove(work, flavor):
         ('base', base, b'759'),
         ('plain', klass('Plain'), 'must implement abstract method: step'),
         ('plain', plain, b'759'),
-    ], unaffected_source='right.' + flavor, unaffected_revisions={1, 5, 6})
+    ], unaffected_source='right.' + source_suffix(flavor), unaffected_revisions={1, 5, 6})
     for revision in (0, 7, 10):
         files = artifacts(work / f'{flavor}-fresh-{revision}')
         assert sum(code.count(b'scpp_virtual_step() = 0;') for code in files.values()) == 1

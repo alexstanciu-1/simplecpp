@@ -1,4 +1,5 @@
 """Compare cross-unit member constant edits and recovery with fresh native builds."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -12,8 +13,8 @@ from structs_native import build
 def prove(work, flavor, quick=False):
     app = work / flavor
     app.mkdir()
-    entry = app / ('main.' + flavor)
-    model = app / ('model.' + flavor)
+    entry = app / ('main.' + source_suffix(flavor))
+    model = app / ('model.' + source_suffix(flavor))
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     field, limit, label, use = {
         'php': ('public int $LIMIT;', 'public const int LIMIT = 2;', 'public const string LABEL = "ok";',
@@ -27,7 +28,7 @@ def prove(work, flavor, quick=False):
     }[flavor]
     sep = '.' if flavor == 'js' else '::'
     space_sep = {'php': '\\', 'cpp': '::', 'js': '.'}[flavor]
-    (app / ('other.' + flavor)).write_text('namespace Other { struct Point { ' + limit.replace('2', '8') + ' } }')
+    (app / ('other.' + source_suffix(flavor))).write_text('namespace Other { struct Point { ' + limit.replace('2', '8') + ' } }')
     entry.write_text(use + f'echo Other{space_sep}Point{sep}LIMIT; return 8;')
     out = work / ('out-' + flavor)
     prefix = b'79' if flavor == 'js' else b''
@@ -60,7 +61,7 @@ def prove(work, flavor, quick=False):
 def private_members(work, flavor, quick=False):
     app = work / ('private-' + flavor)
     app.mkdir()
-    entry, model = [app / (name + '.' + flavor) for name in ('main', 'counter')]
+    entry, model = [app / (name + '.' + source_suffix(flavor)) for name in ('main', 'counter')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     modifier = 'public: ' if flavor == 'cpp' else 'public '
     prop, const, helper, api, qualifier, scope, variable = {

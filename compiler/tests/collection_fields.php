@@ -129,9 +129,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		rejects(fn()=>$prepare($private . $empty_local('a') . $insert($path('a'),$first).'return 8;'),'private');
 		$directory=sys_get_temp_dir().'/scpp-collection-fields-'.bin2hex(random_bytes(8));mkdir($directory);
 		try {
-			$path_file=$directory.'/model.'.$flavor->name;
-			file_put_contents($directory.'/main.'.$flavor->name,$helpers.$main);
-			file_put_contents($directory.'/module.json',json_encode(['entry'=>'main.'.$flavor->name,'sources'=>['main.'.$flavor->name,basename($path_file)]]));
+			$path_file=$directory.'/model.'.$flavor->source_extension();
+			file_put_contents($directory.'/main.'.$flavor->source_extension(),$helpers.$main);
+			file_put_contents($directory.'/module.json',json_encode(['entry'=>'main.'.$flavor->source_extension(),'sources'=>['main.'.$flavor->source_extension(),basename($path_file)]]));
 			$project=new Incremental_Project($directory,$directory.'/out',new entry_target(31));$stamp=time();$caller=null;
 			$edits=[$model,$record('Inner',$field($type,'items').$field('string','extra').$method).$record('Outer',$field('Inner','inner')),
 				str_replace($field($type,'items'),$field('int','items'),$model),str_replace($field($type,'items'),'',$model),$model];

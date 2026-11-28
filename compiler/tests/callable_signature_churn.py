@@ -14,8 +14,8 @@ def verify(work, compiler, build):
     app, out = work/'app', work/'out'
     app.mkdir()
     fixture = ROOT/'compiler/examples/signature_interning'
-    shutil.copyfile(fixture/'index.php.scpp', app/'index.php')
-    shutil.copyfile(fixture/'churn.php.scpp', app/'main.php')
+    shutil.copyfile(fixture/'index.phs', app/'index.phs')
+    shutil.copyfile(fixture/'churn.phs', app/'main.phs')
     (app/'module.json').write_text(json.dumps({
         'dependencies': {'runtime': {'modules': ['datetime']}}, 'general_api': True}))
     result = fresh_build(app, out)

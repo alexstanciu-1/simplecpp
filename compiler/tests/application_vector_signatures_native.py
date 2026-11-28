@@ -1,4 +1,5 @@
 """Application vector by-value signatures, cross-unit publication and incremental recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import tempfile
@@ -42,8 +43,8 @@ def prove(work, flavor, libraries, collection='vector'):
         index='"item"' if key=='string' else '0'
         return text.replace('[0]', '['+index+']').replace('[]=', '['+index+']=')
     app, out = work/flavor, work/(flavor+'-out'); app.mkdir()
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
-    for name,text in {'point':point,'node':node,'worker':worker,'api':api,'main':main}.items():source_edit(app/(name+'.'+flavor),source(text))
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}))
+    for name,text in {'point':point,'node':node,'worker':worker,'api':api,'main':main}.items():source_edit(app/(name+'.'+source_suffix(flavor)),source(text))
     expected=b'7:9:9:13'
     edits=[(None,None,expected), (None,None,expected),
            ('api',api.replace('x=9','x=11'),b'7:11:9:13'), ('api',api,expected),
@@ -62,11 +63,11 @@ def prove(work, flavor, libraries, collection='vector'):
         for rev,(name,text,wanted) in enumerate(edits):
             before=artifacts(out)
             if name=='retire':
-                for source_name in ['point','node','worker','api']:(app/(source_name+'.'+flavor)).unlink()
-                source_edit(app/('main.'+flavor),'return 8;')
-            elif name=='namespace':source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor,'cpp_namespace':text}))
+                for source_name in ['point','node','worker','api']:(app/(source_name+'.'+source_suffix(flavor))).unlink()
+                source_edit(app/('main.'+source_suffix(flavor)),'return 8;')
+            elif name=='namespace':source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor),'cpp_namespace':text}))
             elif name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,source(text))
             got=invoke(proc);fresh_out=work/f'{flavor}-fresh-{rev}';fresh=service(app,fresh_out)

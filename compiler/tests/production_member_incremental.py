@@ -70,13 +70,13 @@ def prove(work, category, compiler, library):
     sources, edits = {'properties': properties, 'methods': methods, 'constants': constants,
                       'construction': construction}[category]()
     for name, text in sources.items():
-        source_edit(app/(name+'.php'), text)
+        source_edit(app/(name+'.phs'), text)
     edits.append((None, '', edits[-1][2]))
     with service(app, out) as resident:
         for i, (name, text, expected) in enumerate(edits):
             before = artifacts(out)
             if name:
-                source_edit(app/(name+'.php'), text)
+                source_edit(app/(name+'.phs'), text)
             got = invoke(resident)
             clean = work/f'fresh-{i}'
             with service(app, clean) as fresh:

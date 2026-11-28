@@ -1,4 +1,5 @@
 """Concrete virtual methods: dispatch, explicit intent and retained/native dependency recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -34,7 +35,7 @@ def prove(work, flavor, libraries):
     v = s['v']
     app, out = work / flavor, work / (flavor + '-out')
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     base = klass('Node', method('virtual', v+'delta', default='1'))
     leaf = klass('Leaf', method('override', '8 + '+v+'delta'), 'Node')
     twig = klass('Twig', '', 'Leaf')
@@ -47,7 +48,7 @@ def prove(work, flavor, libraries):
     converter = klass('Converter', convert)
     sources = {'node': base, 'leaf': leaf, 'twig': twig, 'api': api, 'main': main, 'converter': converter,
                'idle': s['function']('unrelated', 'int', [], 'return 17;')}
-    paths = {name: app / (name + '.' + flavor) for name in sources}
+    paths = {name: app / (name + '.' + source_suffix(flavor)) for name in sources}
     for name, text in sources.items(): source_edit(paths[name], text)
     steps = [
         (None, None, b'910', None), (None, None, b'910', None),
@@ -121,7 +122,7 @@ def prove(work, flavor, libraries):
             assert now == artifacts(fresh_out), (revision, 'retained/fresh differs')
             for path in adapters_before.keys() - adapter_files(out).keys(): assert not (out / path).exists()
             if revision:
-                assert not any(p.endswith('/idle.'+flavor) for p in current['emitted_sources']), current
+                assert not any(p.endswith('/idle.'+source_suffix(flavor)) for p in current['emitted_sources']), current
             if revision == 1:
                 assert current['preparation']['prepared'] == 0 and current['emitted_sources'] == [], current
             manifest = json.loads((out / 'manifest.json').read_text())
@@ -158,7 +159,7 @@ def behavior(work, flavor, libraries):
     v, access = s['v'], s['access']
     app, out = work/(flavor+'-behavior'), work/(flavor+'-behavior-out')
     app.mkdir()
-    (app/'module.json').write_text(json.dumps({'entry': 'main.'+flavor}))
+    (app/'module.json').write_text(json.dumps({'entry': 'main.'+source_suffix(flavor)}))
     identity = s['function']('identity', 'Node', [('n','Node')], f'return {v}n;')
     if flavor == 'cpp': identity = 'virtual '+identity
     elif flavor == 'php': identity = 'public virtual '+identity
@@ -172,7 +173,7 @@ def behavior(work, flavor, libraries):
     fail = s['function']('fail', 'int', [], s['infer']('b','new Box()')+f'return {v}b{access}value{access}evaluate(mark());')
     shared = s['function']('sharedResult', 'Node', [('n','Node')], f'return {v}n{access}identity({v}n);')
     source = base+leaf+box+reset+mark+run+fail+shared+'return 8;'
-    source_edit(app/('main.'+flavor),source)
+    source_edit(app/('main.'+source_suffix(flavor)),source)
     process = service(app,out)
     try:
         result = invoke(process)
@@ -202,7 +203,7 @@ int main() {
     facts=work/'facts.json'
     facts.write_text(json.dumps({'schema':1,'native_integers':{'int':{'signed':True,'digits':31}}}))
     cpp=work/(flavor+'-standalone.cpp')
-    result=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,app/('main.'+flavor),facts,cpp],capture_output=True,text=True)
+    result=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,app/('main.'+source_suffix(flavor)),facts,cpp],capture_output=True,text=True)
     assert result.returncode==0,result.stderr
     for cc,library in libraries.items():
         binary=work/(flavor+'-standalone-'+cc)
@@ -220,10 +221,10 @@ int main() {
         assert 'error' not in invoke(resident)
         for invalid in [optional_parameter, reference_parameter, optional_result]:
             bad_leaf = klass('Leaf', method('override', '8 + '+v+'delta')+invalid, 'Node')
-            source_edit(app/('main.'+flavor), source.replace(leaf, bad_leaf))
+            source_edit(app/('main.'+source_suffix(flavor)), source.replace(leaf, bad_leaf))
             failed = invoke(resident)
             assert 'Override signature must match exactly' in failed.get('error', ''), failed
-            source_edit(app/('main.'+flavor), source)
+            source_edit(app/('main.'+source_suffix(flavor)), source)
             assert 'error' not in invoke(resident)
     finally:
         resident.stdin.close(); resident.wait()
@@ -236,8 +237,8 @@ def namespace_shadow(work, flavor, libraries):
     source += s['infer']('n', 'new LeafShadow()') + f'echo {s["v"]}n{s["access"]}evaluate(); return 8;'
     app, out = work/(flavor+'-shadow'), work/(flavor+'-shadow-out')
     app.mkdir()
-    (app/'module.json').write_text(json.dumps({'entry':'main.'+flavor}))
-    path = app/('main.'+flavor)
+    (app/'module.json').write_text(json.dumps({'entry':'main.'+source_suffix(flavor)}))
+    path = app/('main.'+source_suffix(flavor))
     source_edit(path, source)
     resident = service(app, out)
     try:
@@ -272,9 +273,9 @@ def ownership(work, flavor, libraries, memcheck):
     s['leaf'] = klass('Leaf', method('override', f'{v}this{access}x + {v}delta'), 'Literal')
     app, out = work / (flavor+'-ownership'), work / (flavor+'-ownership-out')
     app.mkdir()
-    (app/'module.json').write_text(json.dumps({'entry': 'main.'+flavor}))
+    (app/'module.json').write_text(json.dumps({'entry': 'main.'+source_suffix(flavor)}))
     for name in ['node', 'token', 'other', 'literal', 'leaf', 'alternate', 'explicit', 'fail', 'holder', 'api', 'main']:
-        source_edit(app/(name+'.'+flavor), s[name])
+        source_edit(app/(name+'.'+source_suffix(flavor)), s[name])
     resident = service(app, out)
     try:
         current = invoke(resident)

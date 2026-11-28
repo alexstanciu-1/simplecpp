@@ -12,12 +12,12 @@ def check(work):
     app, out = work / 'app', work / 'out'
     app.mkdir()
     (app / 'module.json').write_text('{}')
-    (app / 'main.php').write_text('return probe();')
+    (app / 'main.phs').write_text('return probe();')
     probe = 'function probe():int {return strlen("abc");}'
-    (app / 'probe.php').write_text(probe)
-    (app / 'quiet.php').write_text('function quiet():int {return 5;}')
+    (app / 'probe.phs').write_text(probe)
+    (app / 'quiet.phs').write_text('function quiet():int {return 5;}')
     offset = probe.index('strlen')
-    shadow = app / 'strlen.php'
+    shadow = app / 'strlen.phs'
     process = service(app, out)
     try:
         assert 'error' not in invoke(process)
@@ -35,7 +35,7 @@ def check(work):
         before = artifacts(out), (out/'manifest.json').read_bytes()
         source_edit(shadow, 'function strlen(string $s, int $extra):int {return 9;}')
         error = invoke(process).get('error', '')
-        assert f'probe.php:1:{offset+1}: Argument count mismatch' in error, error
+        assert f'probe.phs:1:{offset+1}: Argument count mismatch' in error, error
         assert before == (artifacts(out), (out/'manifest.json').read_bytes())
         shadow.unlink()
         assert 'error' not in invoke(process)
@@ -55,9 +55,9 @@ echo json_encode([$d->name(), $d->required_parameters, $d->parameters[0]->name, 
     translated = work/'translated'
     translated.mkdir()
     (translated/'module.json').write_text('{}')
-    shutil.copyfile(TRANSLATION, translated/'preparation.php')
-    shutil.copyfile(TRANSLATION.with_name('runtime_descriptor.php.scpp'), translated/'proof.php')
-    (translated/'main.php').write_text(f'''
+    shutil.copyfile(TRANSLATION, translated/'preparation.phs')
+    shutil.copyfile(TRANSLATION.with_name('runtime_descriptor.phs'), translated/'proof.phs')
+    (translated/'main.phs').write_text(f'''
 $contract = new Return_Syntax("publication", "{name}", "", "", 0);
 $contract->required_parameters = {count};
 $contract->parameter_type = "{param}";

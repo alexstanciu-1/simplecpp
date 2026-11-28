@@ -37,11 +37,11 @@ def prove(work):
     )
     revisions(work, 'php', sources, [
         (None, None, b'zero/miss/hit|read/miss/hit'),
-        ('numbers', integer_switch('$local'), 'numbers.php:5:14: Switch label requires a literal, named constant or enum case'),
-        ('numbers', integer_switch('0'), 'numbers.php:5:14: Duplicate switch label'),
+        ('numbers', integer_switch('$local'), 'numbers.phs:5:14: Switch label requires a literal, named constant or enum case'),
+        ('numbers', integer_switch('0'), 'numbers.phs:5:14: Duplicate switch label'),
         ('numbers', integer_switch('-1'), b'zero/hit/miss|read/miss/hit'),
-        ('modes', enum_match('Mode::Read'), 'modes.php:4:9: Duplicate match label'),
-        ('modes', enum_match('OtherMode::Read'), 'modes.php:4:9: Match label type must equal subject type'),
+        ('modes', enum_match('Mode::Read'), 'modes.phs:4:9: Duplicate match label'),
+        ('modes', enum_match('OtherMode::Read'), 'modes.phs:4:9: Match label type must equal subject type'),
         ('modes', enum_match('Mode::Write'), b'zero/hit/miss|read/hit/miss'),
     ])
 

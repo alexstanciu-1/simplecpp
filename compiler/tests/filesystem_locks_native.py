@@ -10,14 +10,14 @@ import time
 from app_namespace_native import invoke, service
 
 root = Path(__file__).resolve().parents[2]
-fixture = root/'compiler/tests/fixtures/resource_modules/file_locks.php'
+fixture = root/'compiler/tests/fixtures/resource_modules/file_locks.phs'
 settings = {'general_api': True, 'dependencies': {'runtime': {'modules': ['filesystem']}}}
 
 with tempfile.TemporaryDirectory(prefix='scpp-file-lock-') as tmp:
     work = Path(tmp)
     app, out = work/'app', work/'out'
     app.mkdir()
-    manifest, main = app/'module.json', app/'main.php'
+    manifest, main = app/'module.json', app/'main.phs'
     manifest.write_text(json.dumps(settings))
     main.write_text(fixture.read_text())
     compiler = service(app, out)

@@ -79,8 +79,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$directory = sys_get_temp_dir() . '/scpp-declaration-policy-' . bin2hex(random_bytes(8));
 		mkdir($directory);
 		try {
-			file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name]], JSON_THROW_ON_ERROR));
-			$path = $directory . '/main.' . $flavor->name;
+			file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension()]], JSON_THROW_ON_ERROR));
+			$path = $directory . '/main.' . $flavor->source_extension();
 			$stamp = time();
 			$write = static function (string $value, ?string $type = null) use ($path, $flavor, $kind, &$stamp): void {
 				file_put_contents($path, ($kind === 'global' ? 'global ' : '') . declaration($flavor, $type, $value) . 'echo "ok"; return 8;');

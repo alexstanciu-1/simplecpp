@@ -116,9 +116,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
-		$lib = $directory . '/lib.' . $flavor->name;
-		file_put_contents($directory . '/unrelated.' . $flavor->name, $function('int', 'unrelated', 'return 42;'));
+		$main = $directory . '/main.' . $flavor->source_extension();
+		$lib = $directory . '/lib.' . $flavor->source_extension();
+		file_put_contents($directory . '/unrelated.' . $flavor->source_extension(), $function('int', 'unrelated', 'return 42;'));
 		file_put_contents($main, $decl('hash<int,int>', 'values', '[1 => number(), 3 => 3]') . 'echo ' . $v . '[1]; return 8;');
 		$compiler = new Project_Compiler();
 		$target = new entry_target(31);

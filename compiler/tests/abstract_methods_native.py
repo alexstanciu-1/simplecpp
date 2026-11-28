@@ -1,4 +1,5 @@
 """Abstract class contracts without synthetic bodies: ownership and retained/native recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -54,7 +55,7 @@ def prove(work,flavor,libraries):
         for revision,(name,text,expected,error) in enumerate(edits):
             before=artifacts(out);stamps={p:(out/p).stat().st_mtime_ns for p in before}
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             result=invoke(resident);fresh_out=work/f'{flavor}-fresh-{revision}';fresh=service(app,fresh_out)
@@ -119,7 +120,7 @@ int main() {
 ''')
     facts=work/'facts.json';facts.write_text(json.dumps({'schema':1,'native_integers':{'int':{'signed':True,'digits':31}}}))
     cpp=work/(flavor+'-standalone.cpp')
-    r=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,app/('main.'+flavor),facts,cpp],capture_output=True,text=True);assert r.returncode==0,r.stderr
+    r=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,app/('main.'+source_suffix(flavor)),facts,cpp],capture_output=True,text=True);assert r.returncode==0,r.stderr
     for cc,library in libraries.items():
         for path,label,code,stdout in [(probe,'ownership',0,b''),(cpp,'standalone',8,b'9')]:
             exe=work/(flavor+'-'+label+'-'+cc)
@@ -152,7 +153,7 @@ def invalid_contracts(work,flavor,libraries):
         good=invoke(resident);assert 'error' not in good,good
         for revision,(bad,error) in enumerate(cases):
             for attempt,text in enumerate([bad,bad,base]):
-                before=artifacts(out);source_edit(app/('node.'+flavor),text)
+                before=artifacts(out);source_edit(app/('node.'+source_suffix(flavor)),text)
                 result=invoke(resident)
                 fresh_out=work/f'{flavor}-invalid-fresh-{revision}-{attempt}';fresh=service(app,fresh_out)
                 try:comparison=invoke(fresh)

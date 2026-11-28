@@ -1,4 +1,5 @@
 """Common application vector/hash references: slot mutation, copies, aliasing and recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import tempfile
@@ -47,8 +48,8 @@ def prove(work, flavor, libraries):
     types+=s['record']('Worker',methods)+s['record']('Holder',s['field']('items','vector<Point>'))
     main=s['infer']('worker','new Worker()')+main+'return 8;'
     app=work/flavor;out=work/(flavor+'-out');app.mkdir()
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
-    for name,text in dict(types=types,api=api,main=main).items():source_edit(app/(name+'.'+flavor),source(text))
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}))
+    for name,text in dict(types=types,api=api,main=main).items():source_edit(app/(name+'.'+source_suffix(flavor)),source(text))
     edits=[(None,None,expected),(None,None,expected),
         ('api',api.replace('x=9','x=11'),expected.replace(b'9:',b'11:')),('api',api,expected),
         ('types',None,None),(None,None,None),('types',types,expected),
@@ -62,7 +63,7 @@ def prove(work, flavor, libraries):
         for rev,(name,text,wanted) in enumerate(edits):
             before=artifacts(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,source(text))
             got=invoke(proc);fresh_out=work/f'{flavor}-fresh-{rev}';fresh=service(app,fresh_out)

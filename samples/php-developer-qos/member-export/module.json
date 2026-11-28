@@ -1,1 +1,1 @@
-{"sources":["main.php","member.php","formats.php"],"general_api":true,"dependencies":{"runtime":{"modules":["json"]}}}
+{"sources":["main.phs","member.phs","formats.phs"],"general_api":true,"dependencies":{"runtime":{"modules":["json"]}}}

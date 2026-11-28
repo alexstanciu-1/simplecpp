@@ -1,4 +1,5 @@
 """Nested lexical trait uses, diamond deduplication and transitive incremental invalidation."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 import tempfile
@@ -21,7 +22,7 @@ def prove(work, flavor):
     host = klass('Host', 'use Both;')
     main = s['infer']('h', 'new Host()') + f'echo {s["v"]}h{s["access"]}read(); return 8;'
     idle = s['function']('idle', 'int', [], 'return 0;')
-    origin_error = f'right.{flavor}:2:'
+    origin_error = f'right.{source_suffix(flavor)}:2:'
     revisions(work, flavor, dict(core=core, left=left, right=right, top=top, host=host, main=main, idle=idle), [
         (None, None, b'4'), (None, None, b'4'),
         ('core', core.replace('=4', '=9'), b'9'),
@@ -40,7 +41,7 @@ def prove(work, flavor):
         ('unused', trait('Unused', 'use Unused;'), b'4'),
         ('host', klass('Host', 'use Both, Unused;'), 'Cyclic trait use: Unused'),
         ('host', host, b'4'),
-    ], unaffected_source='idle.' + flavor)
+    ], unaffected_source='idle.' + source_suffix(flavor))
 
 
 if __name__ == '__main__':

@@ -127,7 +127,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-service-test-') as temporary:
         # Separate application, separate process and publication.
         other = Path(temporary) / 'other'
         other.mkdir()
-        (other / 'main.php').write_text('return 8;')
+        (other / 'main.phs').write_text('return 8;')
         (other / 'module.json').write_text('{}')
         try:
             independent = invoke(other)

@@ -29,6 +29,7 @@ function source_inventory(string $directory, bool $from_bytes, string $output, s
     }
     if (json_node_has($node, "entry")) {
         $entry = member_text($node, "entry");
+        if (str_ends_with($entry, ".php")) throw Exception::make("Classic PHP file: " . $entry . "; use .phs for PHP-flavor source");
         if (!isset($sources[$entry])) throw Exception::make("Entry missing from source inventory");
     } elseif ($main_count !== 1) throw Exception::make("Entry requires one root-level main source");
     $graph->validate_order();

@@ -1,4 +1,5 @@
 """Guaranteed cleanup through normal, exceptional, and delayed-return paths."""
+from source_suffix import source_suffix
 import argparse
 from functools import partial
 import json
@@ -29,8 +30,8 @@ def prove(work, flavor, library, quick=False, run_native=native):
     app = work / 'app'
     app.mkdir(parents=True)
     output = work / 'output'
-    entry = app / f'main.{flavor}'
-    provider = app / f'finish.{flavor}'
+    entry = app / f'main.{source_suffix(flavor)}'
+    provider = app / f'finish.{source_suffix(flavor)}'
     source_edit(app / 'module.json', json.dumps({'entry': entry.name}))
     finish = function('finish', 'void', [], 'echo "inner:";')
     source_edit(provider, finish)

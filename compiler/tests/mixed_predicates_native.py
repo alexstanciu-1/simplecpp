@@ -1,4 +1,5 @@
 """Exercise exact mixed observations through the project compiler and generated ABI."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 import subprocess
@@ -14,7 +15,7 @@ with tempfile.TemporaryDirectory(prefix='mixed-predicates-') as temp:
     app, out = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'predicates.php').write_text('''
+    (app/'predicates.phs').write_text('''
 function classify(mixed $value): int {
     if (is_bool($value)) {return 1;}
     if (is_int($value)) {return 2;}
@@ -25,7 +26,7 @@ function vectorOnce(int &$calls):vector<int> { $calls+=1; return []; }
 function integerOnce(int &$calls):int { $calls+=1; return 0; }
 function once(int &$calls): mixed { $calls += 1; return false; }
 ''')
-    main = app/'main.php'
+    main = app/'main.phs'
     source = '''
 $x mixed=false; if(classify($x)!==1 || is_int($x) || is_float($x)){return 1;}
 $x=0; if(classify($x)!==2 || is_bool($x) || is_float($x)){return 2;}
@@ -79,7 +80,7 @@ return 0;
         folder = work/f'{flavor}-{general}'
         folder.mkdir()
         (folder/'module.json').write_text(json.dumps({'general_api': general}))
-        (folder/f'main.{flavor}').write_text(code)
+        (folder/f'main.{source_suffix(flavor)}').write_text(code)
         proc = service(folder, folder.parent/(folder.name+'-out'))
         try:
             result = invoke(proc)

@@ -195,7 +195,7 @@ def main():
             directory = work / mode / str(iteration)
             app, out = directory / 'app', directory / 'out'
             app.mkdir(parents=True)
-            for file in ('main.php', 'module.json'):
+            for file in ('main.phs', 'module.json'):
                 shutil.copyfile(HERE / '100k' / sample / file, app / file)
             compiler = root / 'compiler' if mode == 'old' else options.compiler.resolve()
             start = time.perf_counter()

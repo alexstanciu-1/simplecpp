@@ -13,10 +13,10 @@ From the repository root, after building the runtime with its default CMake pres
 (`cmake --preset default` and `cmake --build --preset default` from the repository root):
 
 ```sh
-php compiler/main.php parse php compiler/examples/entry.php.scpp
-php compiler/main.php collect php compiler/examples/entry.php.scpp
-php compiler/main.php prepare php compiler/examples/entry.php.scpp build/clang/native-layout/facts.json
-php compiler/main.php cpp php compiler/examples/entry.php.scpp build/clang/native-layout/facts.json build/entry-slice/entry.cpp
+php compiler/main.php parse php compiler/examples/entry.phs
+php compiler/main.php collect php compiler/examples/entry.phs
+php compiler/main.php prepare php compiler/examples/entry.phs build/clang/native-layout/facts.json
+php compiler/main.php cpp php compiler/examples/entry.phs build/clang/native-layout/facts.json build/entry-slice/entry.cpp
 clang++ -std=c++23 -stdlib=libc++ -I runtime/generated/public build/entry-slice/entry.cpp build/clang/libscpp_runtime.a -o build/entry-slice/entry
 ```
 

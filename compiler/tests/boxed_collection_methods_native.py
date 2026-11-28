@@ -1,4 +1,5 @@
 """Boxed count/empty/has/remove: normalized keys, copy policies, guards and incremental recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import re
@@ -29,7 +30,7 @@ def prove(work,flavor):
         expected+=b'4011111103'+(b'4' if family=='mixed' else b'3')+b'1111000411'
     main=re.sub(r'echo ([^;]+);',lambda m:'echo '+','.join('(int)('+x+')' for x in m[1].split(','))+';',main)+'return 8;'
     app=work/flavor;app.mkdir();out=work/(flavor+'-out')
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}));source_edit(app/('main.'+flavor),main)
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}));source_edit(app/('main.'+source_suffix(flavor)),main)
     edits=[(provider,main,expected),(provider,main,expected),
         (provider.replace(']=7;',']=8;'),main,expected),
         (provider,main,expected),(None,main,None),(None,main,None),(provider,main,expected),
@@ -41,11 +42,11 @@ def prove(work,flavor):
     proc=service(app,out)
     try:
         for rev,(api,body,wanted) in enumerate(edits):
-            before=artifacts(out);path=app/('api.'+flavor)
+            before=artifacts(out);path=app/('api.'+source_suffix(flavor))
             if api is None:
                 if path.exists():path.unlink()
             else:source_edit(path,api)
-            source_edit(app/('main.'+flavor),body);got=invoke(proc)
+            source_edit(app/('main.'+source_suffix(flavor)),body);got=invoke(proc)
             fresh_out=work/f'{flavor}-fresh-{rev}';fresh=service(app,fresh_out)
             try:clean=invoke(fresh)
             finally:fresh.stdin.close();fresh.wait()
@@ -69,8 +70,8 @@ def prove(work,flavor):
                                  ('negative',f'{v}x{a}has(-1)','packed_integer_key_limit'),
                                  ('large',f'{v}x{a}remove(2147483648)','packed_integer_key_limit')]:
             value='7' if 'scalar' in label else '[]' if label in ['negative','large'] else 'null'
-            source_edit(app/('main.'+flavor),decl('x',family,value)+'if ('+expr+') {} return 8;')
-            path=app/('api.'+flavor)
+            source_edit(app/('main.'+source_suffix(flavor)),decl('x',family,value)+'if ('+expr+') {} return 8;')
+            path=app/('api.'+source_suffix(flavor))
             if path.exists():path.unlink()
             probe=work/(flavor+'-'+family+'-'+label);p=service(app,probe)
             try:got=invoke(p)
@@ -86,8 +87,8 @@ def prove(work,flavor):
 def free_overload_probe(work):
     # Existing operand-zero dispatch must retain all six PHP number_format signatures.
     app=work/'free-overload';app.mkdir();out=work/'free-overload-out'
-    source_edit(app/'module.json',json.dumps({'entry':'main.php'}))
-    source_edit(app/'main.php','echo number_format(1234),"|",number_format(1234.5),"|",'
+    source_edit(app/'module.json',json.dumps({'entry':'main.phs'}))
+    source_edit(app/'main.phs','echo number_format(1234),"|",number_format(1234.5),"|",'
         'number_format(1234,2),"|",number_format(1234.5,2),"|",'
         'number_format(1234,2,",","."),"|",number_format(1234.5,2,",",".");return 8;')
     proc=service(app,out)

@@ -1,1 +1,1 @@
-{"general_api":true,"sources":["main.php"],"dependencies":{"runtime":{"modules":["curl","json"]}}}
+{"general_api":true,"sources":["main.phs"],"dependencies":{"runtime":{"modules":["curl","json"]}}}

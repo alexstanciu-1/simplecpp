@@ -102,6 +102,7 @@ for name, ext, source, expected in cases:
         print(name, 'TREE', tree, flush=True)
         assert tree == 'indexed callable(index(index($something, index(func(index($an_expression_may_go_here, 12)), 10)), a_constant), $arg_1)'
         continue
+    ext = 'phs' if ext == 'php' else ext
     app, out = site/'app', site/'out'
     app.mkdir()
     (app/'module.json').write_text(json.dumps({'entry':'main.'+ext}))

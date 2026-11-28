@@ -59,7 +59,7 @@ threading remain deferred. This proof makes no performance-improvement claim.
 
 ## Checked staged writes and weak symbol entries
 
-The [staged ownership example](../examples/staged_ownership/declarations.php.scpp)
+The [staged ownership example](../examples/staged_ownership/declarations.phs)
 uses ordinary private fields and checked operations to stage a parent link and
 complete a function. The compiler rejects writes to those private fields from
 other classes. The operation checks repeat writes at runtime.
@@ -99,7 +99,7 @@ entry. A reader can retain the old source generation until it finishes.
 Withdrawing a declaration clears the entry's weak reference and leaves the
 entry available for later publication.
 
-The [native proof](../examples/staged_ownership/proof.php.scpp) checks rejection
+The [native proof](../examples/staged_ownership/proof.phs) checks rejection
 of cycles, repeated completion and reattachment after expiry, and publication
 of unfinished functions. The [test harness](../tests/staged_ownership_native.py)
 checks that direct private writes reject and that repair reuses unaffected

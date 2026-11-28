@@ -26,7 +26,7 @@ function measure(Project_Compiler $compiler, string $app, ?compilation_session $
 }
 
 [, $app, $flavor, $edit] = $argv;
-$path = "$app/provider0.$flavor";
+$path = "$app/provider0." . flavor::from($flavor)->source_extension();
 $initial = file_get_contents($path);
 $changed = file_get_contents($edit);
 $rows = [];

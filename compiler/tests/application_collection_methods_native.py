@@ -1,4 +1,5 @@
 """Generated methods on application collections, receiver lifetime and incremental recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import re
@@ -79,8 +80,8 @@ def prove(work,flavor):
     body+=f'echo {v}box{a}items{a}remove(reset({v}box)),empty({v}box{a}items),lock({v}old)===null;'
     expected+=b'111'
     main=re.sub(r'echo ([^;]+);',lambda m:'echo '+','.join('(int)('+x+')' for x in m[1].split(','))+';',body)+'return 8;'
-    app=work/flavor;app.mkdir();out=work/(flavor+'-out');source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
-    for name,text in [('types',types),('api',api),('main',main)]:source_edit(app/(name+'.'+flavor),text)
+    app=work/flavor;app.mkdir();out=work/(flavor+'-out');source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}))
+    for name,text in [('types',types),('api',api),('main',main)]:source_edit(app/(name+'.'+source_suffix(flavor)),text)
     edits=[(None,None,expected),(None,None,expected),('api',api.replace('Point(7)','Point(8)'),expected),
            ('types',None,None),(None,None,None),('types',types,expected),
            ('main',main.replace('has(0)','has("bad")'),None),('main',main,expected),
@@ -90,7 +91,7 @@ def prove(work,flavor):
         for rev,(name,text,wanted) in enumerate(edits):
             previous=artifacts(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             got=invoke(proc);fresh_out=work/f'{flavor}-fresh-{rev}';fresh=service(app,fresh_out)

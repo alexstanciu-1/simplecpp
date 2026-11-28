@@ -1,4 +1,5 @@
 """Bootstrap proof of one signature consumer shared by unrelated source and runtime declarations."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 import tempfile
@@ -31,7 +32,7 @@ def prove(work, flavor):
 
     output = work/(flavor+'-out')
     units = json.loads((output/'manifest.json').read_text())['sources']
-    unit = output/units[f'{flavor}/inspect.{flavor}']
+    unit = output/units[f'{flavor}/inspect.{source_suffix(flavor)}']
     signature = unit.with_suffix('.hpp').read_text()
     assert 'owner_Signature var_target_0' in signature
     assert 'owner_Source' not in signature and 'owner_Runtime' not in signature

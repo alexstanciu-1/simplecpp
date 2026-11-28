@@ -63,14 +63,14 @@ with tempfile.TemporaryDirectory(prefix='text-helpers-') as tmp:
     work = Path(tmp)
     app, out = work/'app', work/'out'
     app.mkdir()
-    main = app/'main.php'
+    main = app/'main.phs'
     main.write_text(source)
     declarations = """
 function append_one(text_builder &$writer): void { text_builder_append_bool($writer,true); }
 function observe(const text_builder &$view): int { return text_builder_byte_len($view); }
 function changed_copy(text_builder $copy): text_builder { append_one($copy); return $copy; }
 """
-    helpers = app/'builder_functions.php'
+    helpers = app/'builder_functions.phs'
     helpers.write_text(declarations)
     manifest = app/'module.json'
     manifest.write_text('{"general_api":true}')

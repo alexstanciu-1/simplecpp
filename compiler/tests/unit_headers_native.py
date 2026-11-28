@@ -1,4 +1,5 @@
 """Usage-based headers: first/last foreign watcher, private declarations, and header-only dependent rebuilds."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -31,7 +32,7 @@ def prove(work):
         stamp = int(time.time())
         def write(name, text):
             nonlocal stamp
-            path = app / (name + '.' + flavor)
+            path = app / (name + '.' + source_suffix(flavor))
             path.write_text(text); stamp += 1; os.utime(path, (stamp, stamp))
         write('main', 'return 8;')
         write('provider', provider())
@@ -50,7 +51,7 @@ def prove(work):
             assert len(manifest['headers']) == int(exported), manifest
             assert {str(p.relative_to(generated)) for p in generated.rglob('*.hpp')} == set(manifest['headers'])
             paths = {key.split('/')[-1]: generated / value for key, value in manifest['sources'].items()}
-            main = paths['main.' + flavor]; library = paths['provider.' + flavor]
+            main = paths['main.' + source_suffix(flavor)]; library = paths['provider.' + source_suffix(flavor)]
             visible = 'visible_'
             hidden = 'hidden_'
             if exported:

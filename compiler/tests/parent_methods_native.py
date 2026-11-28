@@ -1,4 +1,5 @@
 """Fixed ancestor calls: ordinary call contracts, current-object lifetime and retained/native recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -27,8 +28,8 @@ def syntax(flavor):
 
 def write_app(app,flavor,sources):
     app.mkdir()
-    (app/'module.json').write_text(json.dumps({'entry':'main.'+flavor}))
-    for name,text in sources.items():source_edit(app/(name+'.'+flavor),text)
+    (app/'module.json').write_text(json.dumps({'entry':'main.'+source_suffix(flavor)}))
+    for name,text in sources.items():source_edit(app/(name+'.'+source_suffix(flavor)),text)
 
 
 def incremental(work,flavor,libraries):
@@ -62,7 +63,7 @@ def incremental(work,flavor,libraries):
         for revision,(name,text,expected,error) in enumerate(edits):
             before=artifacts(out);stamps={p:(out/p).stat().st_mtime_ns for p in before}
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             current=invoke(resident)
@@ -216,7 +217,7 @@ def boundaries(work,flavor,libraries):
         for name,text,error in cases:
             for content,expected in [(text,error),(text,error),(good[name],None)]:
                 before=artifacts(out)
-                source_edit(app/(name+'.'+flavor),content)
+                source_edit(app/(name+'.'+source_suffix(flavor)),content)
                 result=invoke(resident)
                 fresh_out=work/f'{flavor}-boundary-fresh-{revision}';fresh=service(app,fresh_out)
                 try:comparison=invoke(fresh)
@@ -239,7 +240,7 @@ def boundaries(work,flavor,libraries):
           'php':'public function __construct() {parent::initializeValue();}',
           'js':'constructor() {super.initializeValue();}'}[flavor]
     descendant=klass('Child',ctor+method('run','return '+call+';'),'Base')
-    for name,text in [('base',root),('child',descendant)]:source_edit(app/(name+'.'+flavor),text)
+    for name,text in [('base',root),('child',descendant)]:source_edit(app/(name+'.'+source_suffix(flavor)),text)
     resident=service(app,out)
     try:
         result=invoke(resident);assert 'error' not in result,result
@@ -248,14 +249,14 @@ def boundaries(work,flavor,libraries):
         base_ctor={'cpp':'public: Base(int x=1) {this->x=x;}',
                    'php':'public function __construct(int $x=1) {$this->x=$x;}',
                    'js':'constructor(x:int=1) {this.x=x;}'}[flavor]
-        source_edit(app/('base.'+flavor),klass('Base',s['field']('x','int','1')+base_ctor+set_method+method('get',f'return {v}this{acc}x;')))
+        source_edit(app/('base.'+source_suffix(flavor)),klass('Base',s['field']('x','int','1')+base_ctor+set_method+method('get',f'return {v}this{acc}x;')))
         bad_ctor={'cpp':'public: Child() : Base(Base::get()) {}',
                   'php':'public function __construct() {parent::__construct(parent::get());}',
                   'js':'constructor() {super(super.get());}'}[flavor]
-        source_edit(app/('child.'+flavor),klass('Child',bad_ctor+method('run','return '+call+';'),'Base'))
+        source_edit(app/('child.'+source_suffix(flavor)),klass('Child',bad_ctor+method('run','return '+call+';'),'Base'))
         result=invoke(resident);assert 'unavailable during base initialization' in result.get('error',''),result
         retry=invoke(resident);assert retry['error']==result['error'],retry
-        source_edit(app/('child.'+flavor),descendant)
+        source_edit(app/('child.'+source_suffix(flavor)),descendant)
         recovered=invoke(resident);assert 'error' not in recovered,recovered
         fresh_out=work/(flavor+'-ctor-recovered');fresh=service(app,fresh_out)
         try:comparison=invoke(fresh);assert 'error' not in comparison,comparison
@@ -306,7 +307,7 @@ int main() {
     body=f'use Trees{sep}Base as Alias;'+plain+leaf+s['infer']('c','new Child()')+f'echo {v}c{acc}run(); return 8;'
     text='namespace Trees;'+body if flavor=='php' else 'namespace Trees {'+body+'}'
     for storage,text in [('class',text),('struct',text.replace('class ','struct ').replace(s['infer']('c','new Child()'),s['local']('c','Child')))]:
-        path=work/(flavor+'-'+storage+'-standalone.'+flavor);source_edit(path,text)
+        path=work/(flavor+'-'+storage+'-standalone.'+source_suffix(flavor));source_edit(path,text)
         facts=work/'facts.json';facts.write_text(json.dumps({'schema':1,'native_integers':{'int':{'signed':True,'digits':31}}}))
         cpp=work/(flavor+'-'+storage+'-standalone-generated.cpp')
         result=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,path,facts,cpp],capture_output=True,text=True)

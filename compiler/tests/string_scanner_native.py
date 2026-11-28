@@ -107,7 +107,7 @@ use scpp\compiler\{ast_file_node, ast_interpolation_text, ast_string_expression,
     flavor, source_file, String_Literals, token, token_kind, token_list};
 [$prefix, $cases] = json_decode($argv[2], true, flags: JSON_THROW_ON_ERROR);
 foreach ($cases as [$label, $text, $mode, $part]) {
-    $source = new source_file('scanner.php', $prefix . $text, flavor::from($mode));
+    $source = new source_file('scanner.phs', $prefix . $text, flavor::from($mode));
     $start = strlen($prefix);
     $length = strlen($text);
     $part_offset = $part ? 2 : 0;

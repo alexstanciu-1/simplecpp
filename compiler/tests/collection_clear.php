@@ -119,8 +119,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		if (!in_array($type, ['vector<int>', 'hash<int,string>'], true)) continue;
 		$directory = sys_get_temp_dir() . '/scpp-clear-' . bin2hex(random_bytes(8)); mkdir($directory);
 		try {
-			$provider = $directory . '/library.' . $flavor->name; file_put_contents($directory . '/main.' . $flavor->name, $main);
-			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name, 'sources' => ['main.' . $flavor->name, basename($provider)]]));
+			$provider = $directory . '/library.' . $flavor->source_extension(); file_put_contents($directory . '/main.' . $flavor->source_extension(), $main);
+			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension(), 'sources' => ['main.' . $flavor->source_extension(), basename($provider)]]));
 			$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp = time(); $caller = null;
 			$initial = $model . $helpers;
 			foreach ([$initial, str_replace('echo "R"', 'echo "E"', $initial), $record('Box', $field('int', 'items')) . $helpers, $helpers, $initial] as $index => $text) {

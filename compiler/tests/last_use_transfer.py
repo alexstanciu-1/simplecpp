@@ -1,4 +1,5 @@
 """Prove scanner publication and fallback through resident and fresh compiler sessions."""
+from source_suffix import source_suffix
 import argparse
 import json
 import shutil
@@ -17,9 +18,9 @@ def signature_edits(root, flavor):
     s = fixture(flavor)
     app = root / (flavor + '-contracts')
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     def unit(name):
-        return app / (name + '.' + flavor)
+        return app / (name + '.' + source_suffix(flavor))
     def record(namespace, field):
         body = s['record']('Payload', s['field'](field, 'int', '1'))
         return f'namespace {namespace}; {body}' if flavor == 'php' else f'namespace {namespace} {{ {body} }}'
@@ -55,7 +56,7 @@ def signature_edits(root, flavor):
             else:
                 assert 'error' not in row and 'error' not in clean, (label, row, clean)
                 for caller in ('main', 'observer'):
-                    assert f'{app.name}/{caller}.{flavor}' in row['emitted_sources'], (label, row)
+                    assert f'{app.name}/{caller}.{source_suffix(flavor)}' in row['emitted_sources'], (label, row)
                 assert artifacts(out) == artifacts(fresh_out)
     finally:
         resident.stdin.close()
@@ -66,7 +67,7 @@ def parameter_modes(root, flavor, libraries):
     s = fixture(flavor)
     app = root / (flavor + '-modes')
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     v, access = s['v'], s['access']
     field = v + 'out' + access + 'source'
     body = s['local']('out', 'Packet') + field + '="previous destination with heap storage";'
@@ -76,19 +77,19 @@ def parameter_modes(root, flavor, libraries):
               'js': ('text:string', '&text:string')}[flavor]
     definitions = s['record']('Packet', s['field']('source', 'string'))
     definitions += publish + publish.replace('publish', 'borrow').replace(*by_ref)
-    source_edit(app / ('packet.' + flavor), definitions)
+    source_edit(app / ('packet.' + source_suffix(flavor)), definitions)
     message = 'original heap-backed caller bytes'
     main = s['infer']('input', '"' + message + '"')
     for name in ('publish', 'borrow'):
         main += s['infer'](name + 'd', name + '(' + v + 'input)')
         main += 'echo ' + v + name + 'd' + access + 'source,' + v + 'input;'
-    source_edit(app / ('main.' + flavor), main + 'return 8;')
+    source_edit(app / ('main.' + source_suffix(flavor)), main + 'return 8;')
     out = root / (app.name + '-out')
     proc = service(app, out)
     try:
         row = invoke(proc)
         assert 'error' not in row, row
-        path = json.loads((out / 'manifest.json').read_text())['sources'][app.name + '/packet.' + flavor]
+        path = json.loads((out / 'manifest.json').read_text())['sources'][app.name + '/packet.' + source_suffix(flavor)]
         code = (out / path).read_text()
         assert code.count('.source = std::move(var_text_') == code.count('.source = var_text_') == 1
         for cc, lib in libraries.items():
@@ -135,7 +136,7 @@ def provider_changes(root, libraries):
                                  capture_output=True, check=True)
             row = json.loads(run.stdout)
             assert 'error' not in row, row
-            unit = json.loads((out / 'manifest.json').read_text())['sources'][f'{flavor}/scanner.{flavor}']
+            unit = json.loads((out / 'manifest.json').read_text())['sources'][f'{flavor}/scanner.{source_suffix(flavor)}']
             code = (out / unit).read_text()
             assert ('.tokens = std::move(var_items_' in code) == vector
             assert ('.tokens = var_items_' in code) == (not vector)
@@ -155,16 +156,16 @@ def prove(root):
     libraries = {'clang++': runtime(root, 'clang++')}
     for flavor in ('cpp', 'php', 'js'):
         app = root / flavor
-        path = app / ('scanner.' + flavor)
+        path = app / ('scanner.' + source_suffix(flavor))
         scanner = path.read_text()
         signature = 'Scan scan(' if flavor == 'cpp' else 'function scan('
         start = scanner.index(signature)
-        source_edit(app / ('records.' + flavor), scanner[:start])
+        source_edit(app / ('records.' + source_suffix(flavor)), scanner[:start])
         original = scanner[start:]
         source_edit(path, original)
         var = '$' if flavor == 'php' else ''
         member = '.' if flavor == 'js' else '->'
-        main = app / ('main.' + flavor)
+        main = app / ('main.' + source_suffix(flavor))
         source_edit(main, main.read_text().replace('return 8;', f'echo count({var}r{member}tokens), {var}r{member}error; return 8;'))
         tail = f'{var}out{member}tokens={var}items;'
         infer = fixture(flavor)['infer']
@@ -185,12 +186,12 @@ def prove(root):
                   'cpp': 'vector<Token> items = [];'}[flavor]
         touch = {'php': 'function touch(vector<Token> &$v):void {}', 'cpp': 'void touch(vector<Token>& v) {}',
                  'js': 'function touch(&v:vector<Token>):void {}'}[flavor]
-        source_edit(app / ('touch.' + flavor), touch.replace('{}', '{' + var + 'v' + member + 'clear();}'))
+        source_edit(app / ('touch.' + source_suffix(flavor)), touch.replace('{}', '{' + var + 'v' + member + 'clear();}'))
         out = root / (flavor + '-out')
         resident = service(app, out)
         timings = {}
         try:
-            key = flavor + '/scanner.' + flavor
+            key = flavor + '/scanner.' + source_suffix(flavor)
             for label, text, move in [
                 ('move', original, True),
                 ('text-later', original.replace(tail, f'if ({var}size > 0) {{echo {var}text;}}' + tail), True),
@@ -232,8 +233,8 @@ def prove(root):
                 assert 'error' not in row and 'error' not in clean, (label, row, clean)
                 assert artifacts(out) == artifacts(clean_out)
                 if label != 'move':
-                    assert key in row['emitted_sources'] and flavor + '/records.' + flavor not in row['emitted_sources'], (label, row)
-                    assert flavor + '/main.' + flavor not in row['emitted_sources'], (label, row)
+                    assert key in row['emitted_sources'] and flavor + '/records.' + source_suffix(flavor) not in row['emitted_sources'], (label, row)
+                    assert flavor + '/main.' + source_suffix(flavor) not in row['emitted_sources'], (label, row)
                     assert row['preparation'] == {'prepared': 1, 'reused': 2}, (label, row)
                 unit = json.loads((out / 'manifest.json').read_text())['sources'][key]
                 expected = {'text-later': b'if1-1', 'block-read': b'if1-1', 'try-read': b'if1-1', 'reference': b'0-1', 'field-replaced': b'00', 'owner-replaced': b'00'}.get(label, b'1-1')
@@ -242,7 +243,7 @@ def prove(root):
                     if label != 'move':
                         paths = json.loads((out / 'manifest.json').read_text())['sources']
                         for name in ('main', 'records'):
-                            assert paths[f'{flavor}/{name}.{flavor}'] not in changed, (label, changed)
+                            assert paths[f'{flavor}/{name}.{source_suffix(flavor)}'] not in changed, (label, changed)
                 code = (out / unit).read_text()
                 assert ('.tokens = std::move(var_items_' in code) == move, (flavor, label)
                 assert ('#include <utility>' in code) == ('std::move(' in code)

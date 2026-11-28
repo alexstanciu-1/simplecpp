@@ -1,4 +1,5 @@
 """Polymorphic struct values, abstract storage restrictions and checked shared downcasts."""
+from source_suffix import source_suffix
 import argparse
 import subprocess
 import tempfile
@@ -74,7 +75,7 @@ def prove(work, flavor, memcheck):
     self_copy = infer('copy',v+'this')+'return 2;'
     edits.extend([('marker','abstract '+rec('Marker',method('', '2').replace('return 2;',self_copy)),invalid),
                   ('marker',marker,b'9')])
-    revisions(work,flavor,src,edits,unaffected_source='idle.'+flavor)
+    revisions(work,flavor,src,edits,unaffected_source='idle.'+source_suffix(flavor))
     measure(work/f'{flavor}-fresh-{len(edits)-1}',work/f'{flavor}-recovered-fresh',b'9')
     if memcheck:
         run = subprocess.run(['valgrind','--leak-check=full','--errors-for-leak-kinds=all','--error-exitcode=99',

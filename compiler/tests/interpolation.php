@@ -171,12 +171,12 @@ SCPP;
 	$dir = sys_get_temp_dir() . '/scpp-interpolation-' . bin2hex(random_bytes(8));
 	mkdir($dir);
 	try {
-		$lib = "$dir/lib." . $flavor->name;
+		$lib = "$dir/lib." . $flavor->source_extension();
 		file_put_contents("$dir/module.json", '{}');
 		$init = match ($flavor) {
 			flavor::php => '$v = word();', flavor::cpp => 'auto v = word();', flavor::js => 'let v = word();',
 		};
-		file_put_contents("$dir/main." . $flavor->name, $init . 'echo ' . $quote('[' . $field('v') . ']') . '; return 8;');
+		file_put_contents("$dir/main." . $flavor->source_extension(), $init . 'echo ' . $quote('[' . $field('v') . ']') . '; return 8;');
 		$valid = $function('bool', 'word', 'return false;');
 		$compiler = new Project_Compiler();
 		$session = null;

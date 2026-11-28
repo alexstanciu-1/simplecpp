@@ -30,9 +30,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-manifest-native-') as temporary:
     (native/'module.json').write_text('{"type":"c++","artifacts":["helper.o"]}')
     # Native syntax must never enter the Simple C++ tokenizer/parser.
     (native/'helper.cpp').write_text('#include <cstdint>\nstatic_assert(sizeof(std::int64_t) == 8);\n')
-    (app/'main.cpp').write_text('helper(); return 8;')
-    (app/'helper.php').write_text('function helper(): void { echo "module"; }')
-    (lib/'helper.php').write_text('function helper(): void { echo "module"; }')
+    (app/'main.php').write_text('<?php echo "classic";')
+    assert success(run(php, app/'main.php')).stdout == 'classic'
+    (app/'main.phs').write_text('helper(); return 8;')
+    (app/'helper.cpp').write_text('void helper() { echo "module"; }')
+    (lib/'helper.phs').write_text('function helper(): void { echo "module"; }')
     success(run('clang++', '-std=c++23', '-stdlib=libc++', '-c', native/'helper.cpp', '-o', native/'helper.o'))
     output = work/'bundle'
     command = [php, root/'compiler/main.php', 'project', app,

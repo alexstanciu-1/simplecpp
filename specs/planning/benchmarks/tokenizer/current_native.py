@@ -58,7 +58,7 @@ def prepare_package(dest):
                     if mode == 'selected':
                         command.append('--optimize-function=scan')
                     subprocess.run(command, check=True, stdout=subprocess.DEVNULL)
-                    unit = out/json.loads((out/'manifest.json').read_text())['sources'][f'{f}/scanner.{f}']
+                    unit = out/json.loads((out/'manifest.json').read_text())['sources'][f'{f}/scanner.{"phs" if f == "php" else f}']
                     assert ('destination_' in unit.read_text()) == (mode=='selected')
                     shutil.copy(unit, sub/'scanner.cpp')
                     for h in unit.parent.glob('*.hpp'):

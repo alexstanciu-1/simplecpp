@@ -6,9 +6,10 @@ use scpp\compiler\{Cpp_Emitter, Last_Use_Transfer, Preparation, Program_Frontend
 // One resident benchmark worker. The driver interleaves batches with a control worker.
 [$script, $boot, $fixtures, $language, $case, $mode] = $argv;
 require $boot;
+$suffix = $language === 'php' ? 'phs' : $language;
 $flavor = flavor::from($language);
 $text = $language === 'php' ? '$text' : 'text';
-$source = file_get_contents("$fixtures/scanner.$language");
+$source = file_get_contents("$fixtures/scanner.$suffix");
 $assignment = 'source=' . $text . ';';
 if (substr_count($source, $assignment) !== 1) throw new RuntimeException('Scanner source assignment changed');
 $source = match ($case) {
@@ -17,10 +18,10 @@ $source = match ($case) {
     'live' => str_replace($assignment, $assignment . 'echo ' . $text . ';', $source),
 };
 $entry = new entry_target(31);
-$path = "scanner.$language";
-$program = (new Program_Frontend())->prepare_sources("main.$language", [
+$path = "scanner.$suffix";
+$program = (new Program_Frontend())->prepare_sources("main.$suffix", [
     $path => new source_file($path, $source, $flavor),
-    "main.$language" => new source_file("main.$language", 'return 8;', $flavor),
+    "main.$suffix" => new source_file("main.$suffix", 'return 8;', $flavor),
 ], $entry);
 $symbols = Symbol_Publication::completed($program->files);
 $file = $program->files[$path];

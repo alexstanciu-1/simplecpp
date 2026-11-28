@@ -21,8 +21,8 @@ function failure_case(string $app, string $flavor): array /** list<array<string,
 		? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 	$stamp = time();
 	$write = static function (string $name, string $text) use ($app, $flavor, &$stamp): void {
-		file_put_contents($app . '/' . $name . '.' . $flavor, $text);
-		touch($app . '/' . $name . '.' . $flavor, ++$stamp);
+		file_put_contents($app . '/' . $name . '.' . \scpp\compiler\flavor::from($flavor)->source_extension(), $text);
+		touch($app . '/' . $name . '.' . \scpp\compiler\flavor::from($flavor)->source_extension(), ++$stamp);
 	};
 	$write('main', 'echo value(); return 8;');
 	$write('quiet', $function('quiet', 'void', ''));
@@ -120,13 +120,13 @@ function failure_case(string $app, string $flavor): array /** list<array<string,
 		$run('duplicate_failure', 'Duplicate function');
 		failure_check($project->session()->dependency_watches->observer_count($slot) === 1, 'Ambiguity lost consumer watch');
 	}
-	unlink($app . '/duplicate.' . $flavor);
+	unlink($app . '/duplicate.' . \scpp\compiler\flavor::from($flavor)->source_extension());
 	$run('duplicate_recovery', null, 1);
 	// Block an existing output path after preparation; repairing it requires no source edit.
 	$data = json_decode(file_get_contents($app . '/out/manifest.json'), true, flags: \JSON_THROW_ON_ERROR);
 	$provider_path = null;
 	foreach ($data['sources'] as $key => $path) {
-		if (str_ends_with($key, 'provider.' . $flavor)) {
+		if (str_ends_with($key, 'provider.' . \scpp\compiler\flavor::from($flavor)->source_extension())) {
 			$provider_path = $app . '/out/' . $path;
 		}
 	}

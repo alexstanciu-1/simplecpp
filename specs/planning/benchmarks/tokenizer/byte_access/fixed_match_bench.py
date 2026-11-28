@@ -26,7 +26,7 @@ def package(dest, cache_pointer=False):
         for flavor in FLAVORS:
             data = work/flavor
             out = work/(flavor+'-out')
-            unit = out/json.loads((out/'manifest.json').read_text())['sources'][f'{flavor}/scanner.{flavor}']
+            unit = out/json.loads((out/'manifest.json').read_text())['sources'][f'{flavor}/scanner.{"phs" if flavor == "php" else flavor}']
             folder = dest/flavor
             folder.mkdir()
             shutil.copy(unit, folder/'ordinary.cpp')

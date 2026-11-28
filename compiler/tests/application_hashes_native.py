@@ -1,4 +1,5 @@
 """Application hash values use the common collection signature/recovery proof for both strict key types."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -50,7 +51,7 @@ def behavior(work, flavor, libraries, memcheck=False):
     code+=shared_slots
     code+=s['infer']('missing',v+'a[-1]')+'return 90;'
     app=work/(flavor+'-behavior');out=work/(flavor+'-behavior-out');app.mkdir()
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}));source_edit(app/('main.'+flavor),code)
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}));source_edit(app/('main.'+source_suffix(flavor)),code)
     proc=service(app,out)
     try:
         result=invoke(proc);assert 'error' not in result,result

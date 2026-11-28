@@ -1,4 +1,5 @@
 """Checked staged writes and weak symbol entries using the existing source types."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 import shutil
@@ -19,8 +20,8 @@ def prove(work, flavor):
     app.mkdir(parents=True)
     (app / 'module.json').write_text('{}')
     for name in ('declarations', 'proof'):
-        shutil.copyfile(EXAMPLE / f'{name}.php.scpp', app / f'{name}.php')
-    main = app / f'main.{flavor}'
+        shutil.copyfile(EXAMPLE / f'{name}.phs', app / f'{name}.phs')
+    main = app / f'main.{source_suffix(flavor)}'
     entry = 'prove_staged_ownership(); return 8;'
     source_edit(main, entry)
     resident = service(app, output)

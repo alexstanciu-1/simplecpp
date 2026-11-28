@@ -1,1 +1,1 @@
-{"sources":["main.php","view.php"],"general_api":true,"dependencies":{"runtime":{"modules":["filesystem","json"]}}}
+{"sources":["main.phs","view.phs"],"general_api":true,"dependencies":{"runtime":{"modules":["filesystem","json"]}}}

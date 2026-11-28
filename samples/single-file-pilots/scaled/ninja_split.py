@@ -192,7 +192,7 @@ def main():
         parser.error("mold and Ninja are required")
     rng = random.Random(146)
     rows, runtime, memory_rows = [], [], []
-    source = (SOURCE / "main.php").read_text()
+    source = (SOURCE / "main.phs").read_text()
     assert source.count(OLD) == 1
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
@@ -209,7 +209,7 @@ def main():
                 app = work / "app"
                 app.mkdir(parents=True)
                 shutil.copyfile(SOURCE / "module.json", app / "module.json")
-                src = app / "main.php"
+                src = app / "main.phs"
                 src.write_text(source)
                 fresh = build(root,args.php,mold,app,work,config,memory=i==-1)
                 native = work / "native"

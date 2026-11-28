@@ -44,10 +44,10 @@ def verify(root, exe):
 
     runtime = write('sdk/module.json', {'name': 'runtime'})
     app = write('app/module.json', {'name': 'app', 'dependencies': {'runtime': {'modules': ['json']}}})
-    (app.parent/'main.php').write_text('return 0;')
+    (app.parent/'main.phs').write_text('return 0;')
     real = compare(exe, app)
     assert 'runtime-boxed' in real['runtime-json'] and real['app'] == ['runtime']
-    base = {'name': 'app', 'sources': ['main.php'], 'dependencies': {
+    base = {'name': 'app', 'sources': ['main.phs'], 'dependencies': {
         'left': {'path': '../left.json', 'modules': ['extension', 'extension']},
         'right': {'path': '../right.json'}}}
     left = {'name': 'left', 'defaults': ['extension'], 'modules': {'extension': 'ext.json', 'unused': 'missing.json'},
@@ -81,7 +81,7 @@ def verify(root, exe):
         {'dependencies': {'left': {'path': '../left.json', 'modules': ['missing']}}},
     ]
     for bad in failures:
-        write('app/module.json', {'name': 'app', 'sources': ['main.php'], **bad})
+        write('app/module.json', {'name': 'app', 'sources': ['main.phs'], **bad})
         compare(exe, app, runtime, rejects=True)
     write('app/module.json', base)
     write('right.json', {'name': 'right', 'dependencies': {'app': {'path': 'app'}}})

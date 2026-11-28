@@ -7,7 +7,7 @@ from collection_goal_native import revisions
 
 if __name__ == '__main__':
     root = Path(__file__).resolve().parents[2]
-    source = (root / 'specs/planning/benchmarks/tokenizer/scanner.php').read_text()
+    source = (root / 'specs/planning/benchmarks/tokenizer/scanner.phs').read_text()
     records, scanner = source.split('function scan(', 1)
     scanner = 'function scan(' + scanner
     field_store = '$out->tokens=$items;'
@@ -19,7 +19,7 @@ if __name__ == '__main__':
             (None, None, b'1-1'),
             ('scanner', also_read, b'1if1-1'),
             ('scanner', scanner, b'1-1'),
-        ], unaffected_source='main.php')
+        ], unaffected_source='main.phs')
         for revision, moved in enumerate([True, False, True]):
             units = (work / f'php-fresh-{revision}' / 'units').glob('*.cpp')
             body, = [code for unit in units if '.tokens = ' in (code := unit.read_text())]

@@ -110,7 +110,7 @@ foreach([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$fixtures[$flavor->name.'_fields']=['cpp'=>(new Cpp_Emitter())->emit($prepare($enum().$record.'return 8;')),'stdout_hex'=>bin2hex("a\0b")];
 	$directory=sys_get_temp_dir().'/scpp-string-enum-'.bin2hex(random_bytes(8));mkdir($directory);
 	try {
-		$main=$directory.'/main.'.$flavor->name;$provider=$directory.'/kind.'.$flavor->name;
+		$main=$directory.'/main.'.$flavor->source_extension();$provider=$directory.'/kind.'.$flavor->source_extension();
 		file_put_contents($directory.'/module.json',json_encode(['entry'=>basename($main),'sources'=>[basename($main),basename($provider)]]));
 		file_put_contents($main,'echo enum_name(enum_from_value(Kind'.$sep.'class,enum_value(Kind'.$sep.'Binary))),":",'
 			. 'enum_value(Kind'.$sep.'Binary),":",enum_name('.$lookup.'"a\\0b") ?? Kind'.$sep.'Empty);return 8;');

@@ -27,7 +27,7 @@ def prove(module, source, disabled_call, helper='', failures=()):
         manifest = app/'module.json'
         deps = dict(general_api=True, dependencies={'runtime': {'modules': module.split('+')}})
         manifest.write_text(json.dumps(deps))
-        main = app/'main.php'
+        main = app/'main.phs'
         main.write_text(source)
         if helper:
             (app/'helper.cpp').write_text(helper)

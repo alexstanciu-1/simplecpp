@@ -26,7 +26,7 @@ def prove(work, flavor, case):
         """
         main = setup + f'{v}root=null;{v}row=null;'
         main += f'echo (int){data}[groupKey()][await replace({v}h)];echo (int){data}[0][0];return 8;'
-        revisions(work, flavor, dict(main=main), [(None, None, b'ASR79')], support_sources={'api.php': api})
+        revisions(work, flavor, dict(main=main), [(None, None, b'ASR79')], support_sources={'api.phs': api})
         return
     main = setup + declaration(flavor, 'missing', 'null', f'{data}["absent"][key()]')
     main += declaration(flavor, 'storedNull', 'null', f'{data}["nil"][key()]')
@@ -37,10 +37,10 @@ def prove(work, flavor, case):
     main += 'return 8;'
     invalid = main.replace('[key()]', '[true]', 1)
     revisions(work, flavor, dict(main=invalid), [(None, None, 'Boxed container key requires int or string'),
-                                                 ('main', main, b'KK2727')], support_sources={'api.php': api})
+                                                 ('main', main, b'KK2727')], support_sources={'api.phs': api})
     bad = declaration(flavor, 'items', 'mixed', '[1]') + f'echo (int){v}items[0][key()][key()];return 8;'
     guard(work, flavor, 'scalar', bad, 'boxed_expected_container', expected_stdout=b'K',
-          support_sources={'api.php': api})
+          support_sources={'api.phs': api})
 
 
 with TemporaryDirectory(prefix='nested-mixed-read-') as directory:

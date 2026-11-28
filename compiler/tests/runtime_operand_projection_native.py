@@ -1,4 +1,5 @@
 """Native bootstrap proof for reading runtime operands directly from call syntax."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 import subprocess
@@ -76,4 +77,4 @@ if __name__ == '__main__':
             revisions(Path(directory), flavor, sources, [
                 (None, None, original), ('main', fixture(flavor, edited)['main'], changed),
                 ('main', sources['main'], original),
-            ], unaffected_source='projection.' + flavor)
+            ], unaffected_source='projection.' + source_suffix(flavor))

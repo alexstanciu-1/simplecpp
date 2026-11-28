@@ -35,8 +35,8 @@ function handle_request(Frontend_Session $session, string $directory, string $co
 		$status = $error->path . ":" . (string)$error->offset . ": " . $error->detail;
 	}
 	$reused = "";
-	if ($previous_scope !== null && $session->scope === $previous_scope) $reused .= "definition.php,";
-	if ($previous_entry !== null && $session->entry === $previous_entry) $reused .= "main.php,";
+	if ($previous_scope !== null && $session->scope === $previous_scope) $reused .= "definition.phs,";
+	if ($previous_entry !== null && $session->entry === $previous_entry) $reused .= "main.phs,";
 	return $status . "|" . (string)$session->generation . "|" . $session->tokenized
 		. "|" . $session->parsed . "|" . $reused;
 }

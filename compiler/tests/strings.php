@@ -103,15 +103,15 @@ $directory = sys_get_temp_dir() . '/scpp-strings-' . bin2hex(random_bytes(8));
 mkdir($directory);
 try
 {
-	file_put_contents($directory . '/module.json', '{"entry":"main.php"}');
-	file_put_contents($directory . '/main.php', 'show(); return 8;');
-	file_put_contents($directory . '/lib.php', 'function show(): void { $s string = "old"; echo $s; }');
+	file_put_contents($directory . '/module.json', '{"entry":"main.phs"}');
+	file_put_contents($directory . '/main.phs', 'show(); return 8;');
+	file_put_contents($directory . '/lib.phs', 'function show(): void { $s string = "old"; echo $s; }');
 	$compiler = new Project_Compiler();
 	$session = $compiler->frontend($directory);
 	Incremental_Preparation::prepare($session, new entry_target(31));
 	$caller = $session->entry->entry->ast;
 	$old_body = $session->scope->resolve('func:show')->body();
-	file_put_contents($directory . '/lib.php', 'function show(): void { $s string = "new bytes"; echo $s; }');
+	file_put_contents($directory . '/lib.phs', 'function show(): void { $s string = "new bytes"; echo $s; }');
 	$session = $compiler->frontend($directory, $session);
 	verify(Incremental_Preparation::prepare($session, new entry_target(31))['prepared'] === 1, 'String edit scope');
 	verify($session->entry->entry->ast === $caller, 'Unchanged caller reparsed');

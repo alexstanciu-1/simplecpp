@@ -1,4 +1,5 @@
 """Required shared fields across successful construction, failure and retained recovery."""
+from source_suffix import source_suffix
 from pathlib import Path
 import argparse
 import tempfile
@@ -73,7 +74,7 @@ def prove(work, flavor, quick=False):
          b'77'),
     ]
     selected = [0, 2, 4, 14, 15, 16, 17] if quick else list(range(len(edits)))
-    revisions(work, flavor, sources, [edits[i] for i in selected], unaffected_source='idle.' + flavor)
+    revisions(work, flavor, sources, [edits[i] for i in selected], unaffected_source='idle.' + source_suffix(flavor))
     for original, checked in [(0, False), (15, True), (17, False)]:
         revision = selected.index(original)
         units = (work / f'{flavor}-fresh-{revision}' / 'units').iterdir()

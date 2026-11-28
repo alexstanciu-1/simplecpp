@@ -1,4 +1,5 @@
 """Constant dispatch, case-local flow, protected exits and incremental publication."""
+from source_suffix import source_suffix
 import json
 import argparse
 import tempfile
@@ -69,7 +70,7 @@ def prove(work, flavor, library, cxx_flags=()):
                 (None,None,None,expected.replace(b'S23S23S3',b'S23S3S23'))]):
             before = artifacts(out)
             if unit:
-                path = app/(unit+'.'+flavor)
+                path = app/(unit+'.'+source_suffix(flavor))
                 if source is None: path.unlink()
                 else: source_edit(path,source)
             got = invoke(session)

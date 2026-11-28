@@ -170,7 +170,7 @@ int verify_take() {
     if (App::bool_state_(scpp::result_or_bool_int64::from_true()) != -1 ||
         App::bool_state_(scpp::result_or_bool_int64::from_false()) != -1) return 98;
     for (const auto& message : {scpp::string{"failure"}, scpp::string{}}) {
-        scpp::error_t error{message, scpp::int64{37}, scpp::string{"input.php"}};
+        scpp::error_t error{message, scpp::int64{37}, scpp::string{"input.phs"}};
         const scpp::result_int64 expected{error};
         if (App::diagnostic_guard_(scpp::result_string{error}).error().ptr != error.ptr ||
             App::diagnostic_arm_(scpp::result_string{error}).error().ptr != error.ptr) return 88;

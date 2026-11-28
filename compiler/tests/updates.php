@@ -178,7 +178,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
+		$main = $directory . '/main.' . $flavor->source_extension();
 		$inferred = match ($flavor) {
 			flavor::php => '$x=source();',
 			flavor::cpp => 'auto x=source();',
@@ -186,7 +186,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		};
 		$postfix_main = $inferred . $decl('escape', 'int64', $x . '++') . 'echo ' . $escape . '; echo ","; echo ' . $x . '; return 8;';
 		file_put_contents($main, $postfix_main);
-		$lib = $directory . '/lib.' . $flavor->name;
+		$lib = $directory . '/lib.' . $flavor->source_extension();
 		file_put_contents($lib, $fn('source', '', 'int', 'return 1;'));
 		$compiler = new Project_Compiler();
 		$session = $compiler->frontend($directory);

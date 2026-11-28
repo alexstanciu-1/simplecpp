@@ -168,6 +168,7 @@ def proof(work, quick=False, cache_only=False):
         protocol.write_text(source.replace("__DIR__ . '/../boot.php'", repr(str(boot))))
 
         for flavor in ('cpp', 'php', 'js'):
+            suffix = 'phs' if flavor == 'php' else flavor
             app, out = directory / flavor / 'app', directory / flavor / 'out'
             app.mkdir(parents=True, exist_ok=True)
             (app / 'module.json').write_text('{}')
@@ -176,7 +177,7 @@ def proof(work, quick=False, cache_only=False):
             stamp = int(time.time())
             def write(name, text):
                 nonlocal stamp
-                target = app / f'{name}.{flavor}'
+                target = app / f'{name}.{suffix}'
                 target.write_text(text)
                 stamp += 1
                 os.utime(target, (stamp, stamp))
@@ -631,18 +632,19 @@ def cached_application_proof(work, original, facts, context, publication, quick=
         run(['php', generator, 'emit-runtime', metadata, publication, facts, context, runtime])
         run(['php', generator, 'emit-compiler', metadata, publication, facts, context, compiler / 'generated'])
     for flavor in (('php',) if quick else ('cpp', 'php', 'js')):
+        suffix = 'phs' if flavor == 'php' else flavor
         app, out, native = (work / flavor / name for name in ('app', 'out', 'native'))
         for directory in (app, out, native):
             directory.mkdir(parents=True, exist_ok=True)
         (app / 'module.json').write_text('{}')
         local = {'cpp': 'string text = "cached";', 'php': '$text string = "cached";',
                  'js': 'let text: string = "cached";'}[flavor]
-        source = app / ('main.' + flavor)
+        source = app / ('main.' + suffix)
         narrowed = {'cpp': 'byte narrowed = (byte) value(); return (int) narrowed;',
                     'php': '$narrowed byte = (byte) value(); return (int) $narrowed;',
                     'js': 'let narrowed: byte = (byte) value(); return (int) narrowed;'}[flavor]
         source.write_text(local + ('echo $text;' if flavor == 'php' else 'echo text;') + narrowed)
-        provider_source = app / ('value.' + flavor)
+        provider_source = app / ('value.' + suffix)
         provider_source.write_text(('int value()' if flavor == 'cpp' else 'function value(): int') + '{return 8;}')
         provider_before = provider_source.stat().st_mtime_ns, provider_source.read_bytes()
         source_before = source.stat().st_mtime_ns, source.read_bytes()

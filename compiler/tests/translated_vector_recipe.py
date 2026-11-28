@@ -56,9 +56,9 @@ def vector_bundles(work, cxx, linker):
     tool = work/'tool'
     tool.mkdir()
     (tool/'module.json').write_text('{"general_api":true}')
-    with (tool/'recipe.php').open('wb') as output:
+    with (tool/'recipe.phs').open('wb') as output:
         subprocess.run(['php', fixture/'publish.php'], stdout=output, check=True)
-    shutil.copyfile(fixture/'render.php.scpp', tool/'main.php')
+    shutil.copyfile(fixture/'render.phs', tool/'main.phs')
     bundle = work/'tool-out'
     renderer = work/'native-renderer'
     tool_manifest = fresh(tool, bundle)
@@ -67,10 +67,10 @@ def vector_bundles(work, cxx, linker):
     app, out = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text(json.dumps({'cpp_namespace': NAMESPACE}))
-    (app/'main.php').write_text('echo left(), right(); return 8;')
-    (app/'record.php').write_text('struct Record { public int $n = 7; }')
+    (app/'main.phs').write_text('echo left(), right(); return 8;')
+    (app/'record.phs').write_text('struct Record { public int $n = 7; }')
     for owner in OWNERS:
-        source_edit(app/f'{owner}.php', source(owner, False))
+        source_edit(app/f'{owner}.phs', source(owner, False))
     # Header-only lowering should preserve the link plan of the vector-free application.
     links = fresh(app, work/'base')['link_inputs']
     process = service(app, out)
@@ -81,7 +81,7 @@ def vector_bundles(work, cxx, linker):
         for revision, active in enumerate((OWNERS, ('right',), ())):
             for owner in OWNERS:
                 if revision == 0 or (owner in previous) != (owner in active):
-                    source_edit(app/f'{owner}.php', source(owner, owner in active))
+                    source_edit(app/f'{owner}.phs', source(owner, owner in active))
             result = invoke(process)
             assert 'error' not in result, result
             clean = work/f'fresh-{revision}'

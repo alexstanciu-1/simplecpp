@@ -1,4 +1,5 @@
 """Conflict provenance, data/storage, called-type methods and constructors from trait sources."""
+from source_suffix import source_suffix
 import argparse
 import tempfile
 from pathlib import Path
@@ -42,7 +43,7 @@ def prove(work, flavor):
         (None, None, initial), (None, None, initial),
         ('storage', storage.replace('STEP=2','STEP=3').replace('STEP:int=2','STEP:int=3'), b'4,15,21,15'),
         ('storage', storage.replace('bonus()', 'unknown()'), 'ancestor method'),
-        (None, None, 'storage.' + flavor), ('storage', storage, initial),
+        (None, None, 'storage.' + source_suffix(flavor)), ('storage', storage, initial),
         ('host', klass('Host', local_ctor + 'use Storage;', 'Base'), b'7,14,19,14'),
         ('host', klass('Host', local_ctor + 'use Storage, Other;', 'Base'), 'Storage and Other'),
         ('host', host, initial),

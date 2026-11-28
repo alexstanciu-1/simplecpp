@@ -24,7 +24,7 @@ static_assert(std::is_same_v<decltype(&scpp::str::{operation}), scpp::{result_ty
     app.mkdir()
     manifest = app/'module.json'
     manifest.write_text('{"general_api":true}')
-    main = app/'main.php'
+    main = app/'main.phs'
     main.write_text('return hash_string("abc")==="e71fa2190541574b" ? 0 : 1;')
     proc = service(app, out)
     try:
@@ -43,8 +43,8 @@ static_assert(std::is_same_v<decltype(&scpp::str::{operation}), scpp::{result_ty
         assert 'requires module runtime-numeric' in invoke(proc).get('error', '')
         manifest.write_text(json.dumps({'general_api': True, 'dependencies': {'runtime': {'modules': ['numeric']}}}))
         main.write_text('bits_value("abc"); return hex_value("abc")==="e71fa2190541574b" ? 0 : 1;')
-        (app/'hex.php').write_text('function hex_value(string $s): string {return hash_string($s);}')
-        (app/'bits.php').write_text('function bits_value(string $s): uint64 {return stable_hash_string_u64($s);}')
+        (app/'hex.phs').write_text('function hex_value(string $s): string {return hash_string($s);}')
+        (app/'bits.phs').write_text('function bits_value(string $s): uint64 {return stable_hash_string_u64($s);}')
         result = invoke(proc)
         assert 'error' not in result, result
     finally:

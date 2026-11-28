@@ -1,4 +1,5 @@
 """Exercise selected and ordinary users of the same application vector through real publication and Ninja."""
+from source_suffix import source_suffix
 import hashlib
 import json
 import re
@@ -42,15 +43,15 @@ def reduced_provider(work, app, baseline):
 def prove(work, flavor, library, *, quick=False):
     app = work / ('app-' + flavor)
     app.mkdir()
-    source_edit(app / 'module.json', json.dumps({'entry': 'main.' + flavor}))
-    fixture = (SCANNER / ('scanner.' + flavor)).read_text()
+    source_edit(app / 'module.json', json.dumps({'entry': 'main.' + source_suffix(flavor)}))
+    fixture = (SCANNER / ('scanner.' + source_suffix(flavor))).read_text()
     split = fixture.index('Scan scan(' if flavor == 'cpp' else 'function scan(')
     records, body = fixture[:split], fixture[split:]
-    layout = app / ('records.' + flavor)
+    layout = app / ('records.' + source_suffix(flavor))
     source_edit(layout, records)
     names = ['scan', 'again']
     for name in names:
-        source_edit(app / (name + '.' + flavor), body.replace('scan(', name + '('))
+        source_edit(app / (name + '.' + source_suffix(flavor)), body.replace('scan(', name + '('))
     # The entry consumes both results, one with growth and the other with spare capacity.
     main = {'cpp': 'auto a=scan("if ===",0); auto b=again("if ===",6); echo count(a->tokens),count(b->tokens);',
             'php': '$a=scan("if ===",0); $b=again("if ===",6); echo count($a->tokens),count($b->tokens);',
@@ -61,7 +62,7 @@ def prove(work, flavor, library, *, quick=False):
         local = var + 'token' + name
         main[flavor] += f'{decl}{local}={var}{name}{access}tokens[1];'
         main[flavor] += 'echo ' + ','.join(local + access + field for field in ('offset', 'length', 'kind')) + ';'
-    source_edit(app / ('main.' + flavor), main[flavor] + 'return 8;')
+    source_edit(app / ('main.' + source_suffix(flavor)), main[flavor] + 'return 8;')
     output, fresh = work / ('out-' + flavor), work / ('fresh-' + flavor)
     resident = service(app, output)
 
@@ -73,7 +74,7 @@ def prove(work, flavor, library, *, quick=False):
         current = artifacts(output)
         helpers = [p for p, text in current.items() if p.suffix == '.hpp' and b'static void append(' in text and b'auto* storage = target.storage_;' in text]
         assert len(helpers) == bool(expected_users), (flavor, selection, helpers, report)
-        relative = lambda n: f'{app.name}/{n}.{flavor}'
+        relative = lambda n: f'{app.name}/{n}.{source_suffix(flavor)}'
         unit = lambda n: 'units/' + hashlib.sha256(relative(n).encode()).hexdigest() + '.cpp'
         for name in names:
             assert (b'::append(' in current[Path(unit(name))] and b'destination_' in current[Path(unit(name))]) == (name in expected_users)
@@ -111,7 +112,7 @@ def prove(work, flavor, library, *, quick=False):
         run(['again'], ['again'], ['scan'])
         assert run([], [], ['again']) == baseline
         assert run(['scan'], ['scan'], ['scan']) == selected
-        path = app / ('scan.' + flavor)
+        path = app / ('scan.' + source_suffix(flavor))
         spelling = {'cpp': 'item->offset=start;', 'js': 'item.offset=start;', 'php': '$item->offset=$start;'}[flavor]
         assert spelling in body
         source_edit(path, body.replace(spelling, ''))

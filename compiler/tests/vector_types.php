@@ -79,8 +79,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
-		$library = $directory . '/lib.' . $flavor->name;
+		$main = $directory . '/main.' . $flavor->source_extension();
+		$library = $directory . '/lib.' . $flavor->source_extension();
 		file_put_contents($main, 'echo "ok"; return 8;');
 		$revision = time();
 		$write = static function (string $type) use ($library, $flavor, &$revision): void {

@@ -1,4 +1,5 @@
 """Exercise the generated filesystem module from application selection through native execution."""
+from source_suffix import source_suffix
 import json
 import os
 from pathlib import Path
@@ -218,7 +219,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-filesystem-native-') as directory:
             echo {variable}bytes; return 0;
             '''
         )
-        (app / f'main.{flavor}').write_text(source)
+        (app / f'main.{source_suffix(flavor)}').write_text(source)
         output = work / f'{flavor}-out'
         run(php, '-r', incremental, root / 'compiler/boot.php', app, root / 'runtime',
             output, work / f'{flavor}-fresh')

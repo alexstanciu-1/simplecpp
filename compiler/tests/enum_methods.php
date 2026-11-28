@@ -113,8 +113,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	rejects(fn() => $prepare($definition() . $decl . $v . $member . 'number(1,2);return 8;'), 'Argument count mismatch');
 	$directory = sys_get_temp_dir() . '/scpp-enum-methods-' . bin2hex(random_bytes(8)); mkdir($directory);
 	try {
-		$main_path = $directory . '/main.' . $flavor->name;
-		$provider = $directory . '/kind.' . $flavor->name;
+		$main_path = $directory . '/main.' . $flavor->source_extension();
+		$provider = $directory . '/kind.' . $flavor->source_extension();
 		file_put_contents($directory . '/module.json', json_encode(['entry' => basename($main_path), 'sources' => [basename($main_path),basename($provider)]]));
 		file_put_contents($main_path, $main);
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31));

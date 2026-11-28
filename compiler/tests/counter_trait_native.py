@@ -1,4 +1,5 @@
 """Counter trait composition: source provenance, independent consumers and incremental publication."""
+from source_suffix import source_suffix
 import argparse
 import json
 import re
@@ -41,7 +42,7 @@ def prove(work, flavor):
     app = work / flavor
     app.mkdir()
     output = work / (flavor + '-out')
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     proc = service(app, output)
     timings = []
     s = fixture(flavor)
@@ -80,10 +81,10 @@ def prove(work, flavor):
             first_unit = None
             if before:
                 manifest = json.loads((output / 'manifest.json').read_text())
-                first_unit = next(output / unit for path, unit in manifest['sources'].items() if Path(path).name == 'first.' + flavor)
+                first_unit = next(output / unit for path, unit in manifest['sources'].items() if Path(path).name == 'first.' + source_suffix(flavor))
                 first_stamp = first_unit.stat().st_mtime_ns
             for name, text in edits.items():
-                path = app / f'{name}.{flavor}'
+                path = app / f'{name}.{source_suffix(flavor)}'
                 if text is None:
                     path.unlink()
                 else:
@@ -95,20 +96,20 @@ def prove(work, flavor):
                 assert expected in current.get('error', '') and current['error'] == clean.get('error'), current
                 if expected == 'Argument count mismatch':
                     error = current['error']
-                    assert re.search(rf'counter\.{flavor}:4:\d+:', error) and 'step' in error, error
+                    assert re.search(rf'counter\.{source_suffix(flavor)}:4:\d+:', error) and 'step' in error, error
                     assert first_unit.stat().st_mtime_ns == first_stamp
                 assert before == artifacts(output)
                 continue
             if expected is None:
                 error = current.get('error', '')
-                assert error == clean.get('error') and re.search(rf'counter\.{flavor}:4:\d+:', error), error
+                assert error == clean.get('error') and re.search(rf'counter\.{source_suffix(flavor)}:4:\d+:', error), error
                 assert before == artifacts(output)
                 continue
             assert 'error' not in current and 'error' not in clean, (flavor, index, current, clean)
             assert artifacts(output) == artifacts(reference)
             if first_unit and 'second' in edits and 'first' not in edits:
                 assert first_unit.stat().st_mtime_ns == first_stamp
-                assert not any(Path(path).name == 'first.' + flavor for path in current['emitted_sources']), current
+                assert not any(Path(path).name == 'first.' + source_suffix(flavor) for path in current['emitted_sources']), current
             if not edits:
                 assert current['preparation']['prepared'] == 0
             if not edits:
@@ -124,9 +125,9 @@ def prove(work, flavor):
     def namespace(name, code):
         return f'namespace {name} {{ {code} }}'
     helper = fixture(flavor)['function']('step', 'int', [], 'return 3;')
-    source_edit(app / ('counter.' + flavor), namespace('Lib', trait.replace('+= 1', '+= step()') + helper))
+    source_edit(app / ('counter.' + source_suffix(flavor)), namespace('Lib', trait.replace('+= 1', '+= step()') + helper))
     for name, consumer in [('first', first), ('second', second)]:
-        source_edit(app / (name + '.' + flavor), 'use Lib' + sep + 'Counter;' + consumer)
+        source_edit(app / (name + '.' + source_suffix(flavor)), 'use Lib' + sep + 'Counter;' + consumer)
     reference = work / (flavor + '-imports')
     result = fresh(app, reference)
     assert 'error' not in result, result
@@ -134,7 +135,7 @@ def prove(work, flavor):
 
     (work / (flavor + '-timings.json')).write_text(json.dumps(timings, indent=2))
     # Exercise the separate standalone preparation/publication path with a same-file trait and consumer.
-    combined = work / ('single.' + flavor)
+    combined = work / ('single.' + source_suffix(flavor))
     combined.write_text(trait + first + second + entry(True))
     facts = work / 'facts.json'
     facts.write_text(json.dumps({'schema': 1, 'native_integers': {'int': {'signed': True, 'digits': 31}}}))

@@ -1,4 +1,5 @@
 """Named callable signatures, pointer lowering, incremental reuse and recovery."""
+from source_suffix import source_suffix
 import argparse
 import hashlib
 import json
@@ -21,7 +22,7 @@ def prove(work, flavor):
     fn, v = forms['function'], forms['v']
 
     def source(name):
-        return app / f'{name}.{flavor}'
+        return app / f'{name}.{source_suffix(flavor)}'
 
     signature = 'callback<int,int,int>'
     compute = fn('compute', 'int', [('a', 'int'), ('b', 'int')], f'return {v}a * 10 + {v}b;')
@@ -68,7 +69,7 @@ def prove(work, flavor):
         result = invoke(resident)
         assert 'error' not in result, (flavor, result)
         if emitted is not None:
-            assert sorted(result['emitted_sources']) == sorted(f'app/{name}.{flavor}' for name in emitted), result
+            assert sorted(result['emitted_sources']) == sorted(f'app/{name}.{source_suffix(flavor)}' for name in emitted), result
             assert result['preparation']['prepared'] == len(emitted), result
         manifest = json.loads(manifest_path.read_text())
         units = [output / name for name in manifest['translation_units']]
@@ -110,7 +111,7 @@ def prove(work, flavor):
     def rejection(message, label):
         before = artifacts(output), manifest_path.read_bytes()
         failed = invoke(resident)
-        assert message in failed.get('error', '') and f'main.{flavor}:' in failed['error'], failed
+        assert message in failed.get('error', '') and f'main.{source_suffix(flavor)}:' in failed['error'], failed
         assert invoke(resident)['error'] == failed['error'], failed
         control, _ = fresh(label)
         assert control['error'] == failed['error'], (control, failed)

@@ -1,4 +1,5 @@
 """One trait binds an ancestor instance call independently in two consumer classes."""
+from source_suffix import source_suffix
 import argparse
 import tempfile
 from pathlib import Path
@@ -23,7 +24,7 @@ def prove(work, flavor):
     main += f'echo {s["v"]}l{s["access"]}position(),",",{s["v"]}r{s["access"]}position(); return 8;'
     sources = dict(positioned=trait, left=left, right=right, left_base=base('LeftBase', 10),
                    right_base=base('RightBase', 20), main=main)
-    origin = f'positioned.{flavor}:3:'
+    origin = f'positioned.{source_suffix(flavor)}:3:'
     edits = [
         (None, None, b'11,21'), (None, None, b'11,21'),
         ('right_base', base('RightBase', 30), b'11,31'),
@@ -38,7 +39,7 @@ def prove(work, flavor):
         ('right_base', base('RightBase', 40), origin),
         ('right', right, b'11,41'),
     ]
-    revisions(work, flavor, sources, edits, unaffected_source='left.' + flavor)
+    revisions(work, flavor, sources, edits, unaffected_source='left.' + source_suffix(flavor))
 
 
 if __name__ == '__main__':
