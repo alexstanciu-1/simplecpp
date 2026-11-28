@@ -1,7 +1,7 @@
 {
     "name": "runtime-regex",
     "type": "c++",
-    "sources": ["src/regex/regex.cpp"],
+    "sources": ["src/regex/regex.cpp", "src/regex/graphemes.cpp"],
     "dependencies": {"runtime": {}},
     "artifacts": ["../build/clang/libscpp_regex.a", "../build/clang/regex-deps/libpcre2-8.so"]
 }

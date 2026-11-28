@@ -30,6 +30,7 @@ def fixture(flavor):
         statements.append(declarations[flavor] + ' = ' + expr + ';')
         return ('$' if flavor == 'php' else '') + name
 
+    statements.append('if (string_grapheme_count("A🇷🇴B") !== 3 || string_grapheme_slice("A🇷🇴B", 1, 1) !== "🇷🇴") { return 99; }')
     for name, pattern, subject, expected in [
         ('hit', '/(a)(b)/i', 'xABy', 1), ('miss', '/c/', 'ab', 0),
         ('nul', '/a\\0b/', 'xa\\0by', 1), ('pastnul', '/b$/', 'a\\0b', 1),

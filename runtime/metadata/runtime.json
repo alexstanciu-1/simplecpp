@@ -954,6 +954,12 @@
         "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}],
         "result": "string"
       },
+      "string_grapheme_count": {
+        "native_name": "grapheme_count", "parameters": [{"type": "string", "native_passing": "const_reference"}], "result": "int64"
+      },
+      "string_grapheme_slice": {
+        "native_name": "grapheme_slice", "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "value"}], "result": "string"
+      },
       "regex_find_span": {
         "native_name": "find_span",
         "parameters": [{"type": "string", "native_passing": "const_reference"}, {"type": "string", "native_passing": "const_reference"}, {"type": "int64", "native_passing": "value"}, {"type": "int64", "native_passing": "reference"}],
