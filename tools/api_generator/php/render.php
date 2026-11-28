@@ -80,6 +80,7 @@ function render(array $plan): array {
     if(isset($plan['string'])) {
         $d .= includeHeader(providerHeader($plan['submodules'], $plan['string_library']['provider'])) . includeHeader('sequence_semantics.hpp');
     }
+    if (in_array('html_escape', $valueErrors, true)) $d .= includeHeader('utf8_codepoints.hpp');
     if (isset($plan['json'])) $d .= includeHeader('own_string.hpp');
     if(isset($plan['vectors_header'])) {
         $d .= includeHeader($plan['vectors_header']) . includeHeader('vector_buffer.hpp');

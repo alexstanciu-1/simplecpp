@@ -125,12 +125,20 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         }
                         $arguments[] = "::scpp::str::split_policy::$policy";
                     }
+                    foreach ($adapter['constants'] ?? [] as $constant => $number) {
+                        $files[$path] .= "namespace scpp::php { inline constexpr ::scpp::int64 $constant = $number; }\n";
+                    }
+                    if ($binding['implementation'] === 'html_escape') {
+                        $short = array_slice($parameters, 0, 2);
+                        $short[1] .= ' = ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401';
+                        $files[$path] .= stringAdapterOverload($flavor, $adapter, $result, $short, $binding['symbol'],
+                            ['arg0', 'arg1', 'nullptr', 'true']);
+                        $parameters[3] .= ' = true';
+                        $arguments[2] = 'arg2.has_value() ? &arg2.checked_ref() : nullptr';
+                    }
                     if (isset($adapter['pad_side'])) {
                         $parameters[2] .= ' = ::scpp::string{" ", 1}';
                         if ($adapter['pad_side'] === 'argument') {
-                            foreach ($plan['php_integer_constants'] as $constant => $number) {
-                                $files[$path] .= "namespace scpp::php { inline constexpr ::scpp::int64 $constant = $number; }\n";
-                            }
                             $parameters[3] .= ' = STR_PAD_RIGHT';
                             $arguments[] = 'true';
                         } else {
@@ -203,7 +211,7 @@ function renderString(array $plan, array &$groups): array {
     if ($write) $h .= "    void {$write['name']}({$write['key']} index, {$write['value']} value);\n";
     $h .= template('strings/string_methods_declaration', $vars);
     $classic = array_column($plan['string_functions'] ?? [], 'implementation');
-    $usesClassicStorage = array_intersect($classic, ['urlencode', 'rawurlencode', 'urldecode', 'rawurldecode', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'quoted_printable_encode', 'quoted_printable_decode', 'chunk_bytes', 'wrap_words', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'increment_alnum', 'decrement_alnum', 'replace_bytes', 'ascii_replace_bytes', 'translate_bytes', 'pad_bytes', 'join_bytes']);
+    $usesClassicStorage = array_intersect($classic, ['html_escape', 'urlencode', 'rawurlencode', 'urldecode', 'rawurldecode', 'reverse_bytes', 'ascii_rot13', 'ascii_words', 'newline_breaks', 'add_slashes', 'strip_slashes', 'quoted_printable_encode', 'quoted_printable_decode', 'chunk_bytes', 'wrap_words', 'format_number', 'hex_encode', 'hex_decode', 'repeat', 'ascii_lower', 'ascii_upper', 'increment_alnum', 'decrement_alnum', 'replace_bytes', 'ascii_replace_bytes', 'translate_bytes', 'pad_bytes', 'join_bytes']);
     $vars['classic_storage'] = ($usesClassicStorage || isset($plan['json'])) ? template('strings/string_own', ['n' => $n]) : '';
     if ($usesClassicStorage) $vars['classic_storage'] .= template('strings/string_classic_storage', ['n' => $n]);
     $d = template('strings/string_storage', $vars) . template('strings/string_methods_definition', $vars);
@@ -351,6 +359,12 @@ function renderString(array $plan, array &$groups): array {
             $signature = "string $name(const string& value, int64 start, int64 bound, slice_bound mode)";
             $h .= "namespace str { enum class slice_bound { to_end, length, exclusive_end }; $signature; }\n";
             $d .= template('strings/string_slice', ['signature' => $signature]);
+            continue;
+        }
+        if ($function['implementation'] === 'html_escape') {
+            $signature = "string $name(const string& value, int64 flags, const string* encoding, bool_t double_encode)";
+            $h .= "namespace str { $signature; }\n";
+            $d .= template('strings/html_escape', ['signature' => $signature]);
             continue;
         }
         if ($function['implementation'] === 'byte_span') {

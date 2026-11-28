@@ -299,3 +299,18 @@ case and any decoded byte. A malformed percent sign passes through, and
 scanning resumes at the following byte. `urldecode` maps literal plus to space;
 `rawurldecode` preserves it. Applications requiring strict escapes validate
 the original component.
+
+PHP `htmlspecialchars(string, flags = 11, encoding = null, double_encode = true)`
+returns an owning string. The v0.2 encoding is UTF-8, including when omitted or
+null. Explicit `UTF-8` accepts ASCII case differences. HTML 4.01 escapes ampersand
+and both angle brackets. `ENT_NOQUOTES` preserves quotes, `ENT_COMPAT` escapes
+double quotes, and `ENT_QUOTES` also escapes apostrophes as `&#039;`. The default
+flags are `ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401`. Every ampersand is escaped,
+including one in an existing entity.
+
+For malformed UTF-8, `ENT_IGNORE` drops the invalid sequence and takes precedence
+over `ENT_SUBSTITUTE`, which emits U+FFFD. Without either flag, malformed input
+produces an empty result. Valid NUL and other control bytes survive. Unsupported
+flags (including other document types and `ENT_DISALLOWED`), an explicit encoding
+outside UTF-8 (including empty), and false double encoding raise a value error
+before processing any bytes.

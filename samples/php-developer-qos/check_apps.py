@@ -199,6 +199,8 @@ def catalog_view(exe, work):
         ('[]', 0, '<ul>\n</ul>\n'),
         ('[{"label":"A&B <sale>","units":0},{"label":"0","units":2}]', 0,
          '<ul>\n<li>A&amp;B &lt;sale&gt; (0)</li>\n<li>0 (2)</li>\n</ul>\n'),
+        (json.dumps([{'label': 'A\'" &amp; <tag>', 'units': 1}]), 0,
+         '<ul>\n<li>A\'" &amp;amp; &lt;tag&gt; (1)</li>\n</ul>\n'),
         ('{}', 1, 'expected array\n'),
         ('[{"label":"first","units":1},{"label":"missing"}]', 1, 'invalid product 1\n'),
         ('[{"label":"bad","units":"1"}]', 1, 'invalid product 0\n'),

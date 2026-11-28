@@ -1,8 +1,6 @@
 // The output inserts labels into HTML text nodes.
 function html_text(string $text): string {
-    $safe = str_replace("&", "&amp;", $text);
-    $safe = str_replace("<", "&lt;", $safe);
-    return str_replace(">", "&gt;", $safe);
+    return htmlspecialchars($text, ENT_NOQUOTES | ENT_SUBSTITUTE);
 }
 
 class Product {
