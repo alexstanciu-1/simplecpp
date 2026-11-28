@@ -7,7 +7,7 @@ namespace scpp\compiler;
 abstract class boxed_type_definition extends type_definition implements indexed_mutation_type, membership_type
 {
 	use same_type_subset;
-	use keyed_map_insert;
+	use keyed_entry_insert;
 
 	use collection_keyed_store;
 

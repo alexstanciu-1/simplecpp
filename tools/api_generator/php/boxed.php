@@ -6,7 +6,7 @@ require_once __DIR__ . '/boxed_dispatch.php';
 function prepareBoxed(mixed $metadata, mixed $publication, array $facts, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'boxed', 'boxed', 'Boxed');
     if ($m === null) return;
-    fields($m, ['map_domain', 'access_contracts', 'mixed_predicates', 'binding', 'families', 'providers', 'scalar_kinds', 'integer_keys', 'string_keys', 'read', 'conversion', 'source_collection', 'transfer_assignment', 'initialization']);
+    fields($m, ['transform_domain', 'access_contracts', 'mixed_predicates', 'binding', 'families', 'providers', 'scalar_kinds', 'integer_keys', 'string_keys', 'read', 'conversion', 'source_collection', 'transfer_assignment', 'initialization']);
     $literalInput = $m->initialization ?? null;
     requireThat($literalInput === null || $literalInput === 'ordered_family_literals', 'Unsupported boxed initialization');
     $transfer = privateValueTransfer($m);

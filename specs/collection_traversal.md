@@ -153,11 +153,15 @@ default. Other flavors select it with the project setting `"general_api": true`.
 | `sequence_map`, `sequence_filter` | Same vector operations | Unsupported |
 | `keyed_map`, `keyed_filter` | Unsupported | Same hash operations |
 
-For maps, each provider declares its general map domain in metadata. Sequence
-and keyed providers also admit `collection_map`. A collection-only provider
-admits that form alone. Preparation resolves the mapped result builder from
-the callback return type. All three forms use the same runtime entry loop as
-PHP's single-input `array_map`, with source-first arguments on the general API.
+Providers declare their general transform domain and supported operations in
+metadata. Each sequence or keyed form also admits its corresponding collection
+helper. A collection-only provider admits the collection form alone.
+Preparation selects the map builder from the callback return type. General
+filters build a fresh result of the input type. Its builder appends survivors
+for a dense sequence or inserts them under the observed key for a keyed table.
+All four filter forms use the same runtime entry loop. PHP `array_filter`
+selects a key-preserving subset builder even for a dense source. All four map
+forms likewise share one map loop.
 
 T is the input value type, K the hash key type and U the map callback's result.
 The result must be an available runtime or application collection specialization.

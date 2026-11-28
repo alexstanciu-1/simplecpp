@@ -7,7 +7,7 @@ namespace scpp\compiler;
  * Resolved vector<T> identity supplied by runtime publication, with checked element access and mutation.
  * Copies and by-value calls use the common conversion path; instance fields default to empty.
  */
-abstract class vector_type_definition extends type_definition implements subset_source, map_source, mapped_result_builder, readonly_index_lookup_type, writable_iteration_type, appendable_collection_type, nested_index_storage_type, native_sequence_type, iterable_type, membership_type
+abstract class vector_type_definition extends type_definition implements subset_source, map_source, entry_result_builder, readonly_index_lookup_type, writable_iteration_type, appendable_collection_type, nested_index_storage_type, native_sequence_type, iterable_type, membership_type
 {
 	use positional_subset;
 
@@ -33,7 +33,7 @@ abstract class vector_type_definition extends type_definition implements subset_
 		return type_registry::mapped_sequence($element);
 	}
 
-	public function lower_cpp_mapped_entry(string $receiver, string $key, string $value): string
+	public function lower_cpp_insert_entry(string $receiver, string $key, string $value): string
 	{
 		return $this->lower_cpp_append_value($receiver, $value);
 	}

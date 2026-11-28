@@ -683,7 +683,7 @@
     "symbol_prefix": "checked_"
   },
   "vector": {
-    "map_domain": {"kind": "sequence", "publication": "vectors.specializations"},
+    "transform_domain": {"operations": ["map", "filter"], "kind": "sequence", "publication": "vectors.specializations"},
     "access_contracts": ["readonly_slot", "python_index_read"],
     "provider": "core.vectors",
     "source_type": "vector",
@@ -798,7 +798,7 @@
     "const_pointee": "explicit_add_const"
   },
   "hash": {
-    "map_domain": {"kind": "keyed", "publication": "hashes.specializations"},
+    "transform_domain": {"operations": ["map", "filter"], "kind": "keyed", "publication": "hashes.specializations"},
     "access_contracts": ["readonly_slot", "python_index_read"],
     "transfer_assignment": "private_value_nothrow",
     "initialization": {
@@ -1442,7 +1442,7 @@
     "local_dst": "host_normalize_and_select"
   },
   "boxed": {
-    "map_domain": {"kind": "collection", "publication": "boxed.scalar_dispatch"},
+    "transform_domain": {"operations": ["map", "filter"], "kind": "collection", "publication": "boxed.scalar_dispatch"},
     "access_contracts": ["python_index_read_snapshot"],
     "mixed_predicates": {"is_bool": "boolean", "is_int": "integer", "is_float": "floating", "is_string": "string", "is_array": "container", "is_null": "null"},
     "initialization": "ordered_family_literals",

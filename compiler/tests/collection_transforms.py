@@ -23,6 +23,12 @@ $seq = sequence_filter($v, fn($x)=>$x!==2);
 if (count($seq)!==2 || $seq[1]!==3) {return 2;}
 $h hash<int,int> = [];
 $h[19]=1; $h[2]=2; $h[8]=3;
+$dense=sequence_filter($v,fn($x)=>$x===3);
+$denseGeneral=collection_filter($v,fn($x)=>$x===3);
+if(count($dense)!==1 || count($denseGeneral)!==1 || $dense[0]!==3 || $denseGeneral[0]!==3){return 23;}
+$sparse=keyed_filter($h,fn($x)=>$x===2);
+$sparseGeneral=collection_filter($h,fn($x)=>$x===2);
+if(count($sparse)!==1 || count($sparseGeneral)!==1 || $sparse[2]!==2 || $sparseGeneral[2]!==2){return 24;}
 $phpWords=array_map(label(...),$h);
 $phpKept=array_filter($phpWords,fn($s)=>$s==="two");
 if(count($phpKept)!==1 || $phpKept[2]!=="two" || in_array("absent",$phpKept)){return 22;}
@@ -50,6 +56,8 @@ try { $seq = collection_map($v,may_throw(...)); return 7; }
 catch (Exception $e) { if (count($seq)!==2 || $seq[1]!==3) { return 8; } }
 $stringKeys hash<int,string> = [];
 $stringKeys["05"] = 1; $stringKeys["5"] = 2;
+$exact = keyed_filter($stringKeys,fn($x)=>$x===1);
+if(count($exact)!==1 || $exact["05"]!==1){return 25;}
 $typed = collection_map($stringKeys,fn($x):int=>$x+10);
 if(count($typed)!==2 || $typed["05"]!==11 || $typed["5"]!==12){return 9;}
 $table mixed = []; $table[19]=1; $table["a\0b"]=2; $table[8]=3;
@@ -116,6 +124,8 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
         assert any(b'iteration_next' in code and b'&label_' in code for code in baseline.values())
         maps = sum(main_source.count(name + '(') for name in ('collection_map', 'keyed_map', 'labels', 'array_map'))
         assert sum(unit.count(b'::scpp::detail::map_entries<') for unit in baseline.values()) == maps
+        filters = sum(main_source.count(name + '(') for name in ('array_filter', 'sequence_filter', 'keyed_filter', 'collection_filter'))
+        assert sum(unit.count(b'::scpp::detail::filter_entries<') for unit in baseline.values()) == filters
         bundle = json.loads((out / 'manifest.json').read_text())
         binary = work / 'run'
         subprocess.run([cxx, '-std=c++23', '-stdlib=libc++', f'--ld-path={linker}', '-I', root/'runtime/generated/public',
@@ -123,16 +133,24 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
         result = subprocess.run([binary], capture_output=True, check=True)
         assert result.stdout == b'19;8;2;3;4;', result.stdout
         manifest.write_text('{}')
-        for name, declaration in [('collection_map', '$v vector<int>=[1];'), ('sequence_map', '$v vector<int>=[1];'),
-                                  ('keyed_map', '$v hash<int,int>=[2=>1];')]:
-            main.write_text(declaration + f'$r={name}($v,label(...)); return 0;')
-            check('Unknown function: ' + name)
+        for domain, declaration in [('collection', '$v vector<int>=[1];'), ('sequence', '$v vector<int>=[1];'),
+                                    ('keyed', '$v hash<int,int>=[2=>1];')]:
+            for op, callback in [('map', 'label(...)'), ('filter', 'fn($x)=>true')]:
+                name = domain + '_' + op
+                main.write_text(declaration + f'$r={name}($v,{callback}); return 0;')
+                check('Unknown function: ' + name)
         manifest.write_text('{"general_api":true}')
-        for name in ('collection_map', 'sequence_map', 'keyed_map'):
-            main.write_text(f'$v fixed_array<byte,1>=[1]; $r={name}($v,fn(byte $x):int=>(int)$x);return 0;')
-            check('Unsupported collection for ' + name)
+        for domain in ('collection', 'sequence', 'keyed'):
+            for op, callback in [('map', 'fn(byte $x):int=>(int)$x'), ('filter', 'fn(byte $x):bool=>true')]:
+                name = domain + '_' + op
+                main.write_text(f'$v fixed_array<byte,1>=[1]; $r={name}($v,{callback});return 0;')
+                check('Unsupported collection for ' + name)
         for expression, error in [('sequence_map($h,label(...))', 'Unsupported collection'),
                                   ('keyed_map($h,fn(int $x):byte=>(byte)$x)', 'Unavailable collection result for keyed_map'),
+                                  ('sequence_filter($h,fn($x)=>true)', 'Unsupported collection'),
+                                  ('keyed_filter($v,fn($x)=>true)', 'Unsupported collection'),
+                                  ('keyed_filter($b,fn($x)=>true)', 'Unsupported collection'),
+                                  ('sequence_filter($b,fn($x)=>true)', 'Unsupported collection'),
                                   ('keyed_map($v,label(...))', 'Unsupported collection'),
                                   ('sequence_filter($v,label(...))', 'Invalid callback'),
                                   ('collection_map($v,fn(string $x):int=>1)', 'Invalid callback'),

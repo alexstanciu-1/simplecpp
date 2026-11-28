@@ -85,18 +85,11 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
         }
     }
     prepareHashes($metadata, $publication, $plan);
-    $maps = publishedMaps($metadata, $publication);
-    foreach (names(property_exists($publication, 'collection_transforms') ? $publication->collection_transforms : [], 'Duplicate collection transform') as $name) {
-        if (in_array($name, ['in_array', 'array_filter'], true) || in_array($name, $maps, true)) {
-            $plan['collection_transforms'][] = $name;
-            continue;
-        }
-        requireThat(preg_match('/^(collection|sequence|keyed)_(map|filter)$/D', $name, $match) === 1, 'Unknown collection transform');
-        if ($match[2] === 'map') continue;
-        if (($match[1] !== 'keyed' && $plan['vectors'] !== []) || ($match[1] !== 'sequence' && isset($plan['hashes']))
-            || ($match[1] === 'collection' && isset($plan['boxed_dispatch']))) {
-            $plan['collection_transforms'][] = $name;
-        }
+    $transforms = publishedTransforms($metadata, $publication);
+    foreach (names($publication->collection_transforms ?? [], 'Duplicate collection transform') as $name) {
+        requireThat($name === 'in_array' || preg_match('/^(array|collection|sequence|keyed)_(map|filter)$/D', $name) === 1,
+            'Unknown collection transform');
+        if (in_array($name, $transforms, true)) $plan['collection_transforms'][] = $name;
     }
     prepareTextBuilders($metadata, $publication, $plan);
     prepareStringable($metadata, $plan);
@@ -532,7 +525,7 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     if ($m === null) {
         return;
     }
-    fields($m, ['map_domain', 'access_contracts', 'provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations', 'initialization', 'reserve', 'transfer_assignment']);
+    fields($m, ['transform_domain', 'access_contracts', 'provider', 'source_type', 'storage', 'count_type', 'read', 'mutation', 'element_families', 'native_index', 'native_value', 'operations', 'initialization', 'reserve', 'transfer_assignment']);
     $transfer = privateValueTransfer($m);
     $reserve = property_exists($m, 'reserve');
     if ($reserve) literals($m, ['reserve' => 'checked_capacity_preserve_size']);
@@ -830,7 +823,7 @@ function prepareHashes(mixed $metadata, mixed $publication, array &$plan): void 
     if($m === null) {
         return;
     }
-    fields($m, ['map_domain', 'access_contracts', 'provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization', 'transfer_assignment']);
+    fields($m, ['transform_domain', 'access_contracts', 'provider', 'source_type', 'binding', 'construction', 'key_types', 'value_types', 'count_type', 'key_policy', 'key_contracts', 'read', 'optional_lookup', 'append', 'initialization', 'transfer_assignment']);
     $transfer = privateValueTransfer($m);
     literals($m, ['source_type' => 'hash', 'binding' => 'ordered_typed_swiss', 'construction' => 'empty', 'count_type' => 'int64', 'key_policy' => 'strict', 'read' => 'value_copy', 'optional_lookup' => 'nullable', 'append' => 'max_live_nonnegative_plus_one']);
     $keys = names(at($m, 'key_types'), 'Duplicate hash key type');

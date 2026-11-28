@@ -3522,28 +3522,21 @@ final class Preparation
 		$input = $source->type_def();
 		$filter = in_array($operation, [runtime_factory::array_filter, runtime_factory::collection_filter, runtime_factory::sequence_filter, runtime_factory::keyed_filter], true);
 		$output = $input;
-		if (!$filter) {
-			$admitted = match ($operation) {
-				runtime_factory::array_map => $input instanceof map_source,
-				runtime_factory::collection_map => $input instanceof collection_map_source,
-				runtime_factory::sequence_map => $input instanceof sequence_map_source,
-				runtime_factory::keyed_map => $input instanceof keyed_map_source,
-			};
-			if (!$admitted) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
-			$element = $input->iteration_value_type();
-		} elseif ($operation === runtime_factory::array_filter) {
-			if (!($input instanceof subset_source)) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for array_filter');
-			$element = $input->iteration_value_type();
+		$admitted = match ($operation) {
+			runtime_factory::array_map => $input instanceof map_source,
+			runtime_factory::collection_map => $input instanceof collection_map_source,
+			runtime_factory::sequence_map => $input instanceof sequence_map_source,
+			runtime_factory::keyed_map => $input instanceof keyed_map_source,
+			runtime_factory::array_filter => $input instanceof subset_source,
+			runtime_factory::collection_filter => $input instanceof collection_filter_source,
+			runtime_factory::sequence_filter => $input instanceof sequence_filter_source,
+			runtime_factory::keyed_filter => $input instanceof keyed_filter_source,
+		};
+		if (!$admitted) throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
+		$element = $input->iteration_value_type();
+		if ($operation === runtime_factory::array_filter) {
 			$output = $input->subset_result_type();
 			if (!($output instanceof keyed_result_builder)) throw new diagnostic($source->source(), $source->byte_start(), 'Unavailable keyed filter result');
-		} elseif ($input instanceof vector_type_definition && $operation !== runtime_factory::keyed_filter) {
-			$element = $input->element_type;
-		} elseif ($input instanceof hash_type_definition && $operation !== runtime_factory::sequence_filter) {
-			$element = $input->value_type;
-		} elseif ($input instanceof boxed_type_definition && $operation === runtime_factory::collection_filter) {
-			$element = $input;
-		} else {
-			throw new diagnostic($source->source(), $source->byte_start(), 'Unsupported collection for ' . $operation->name);
 		}
 		if ($implicit_filter) {
 			if (!$element->supports_scalar_condition()) {
@@ -3580,7 +3573,7 @@ final class Preparation
 		}
 		if (!$filter) {
 			$output = $input->mapped_result_type($signature->result);
-			if (!($output instanceof mapped_result_builder)) {
+			if (!($output instanceof entry_result_builder)) {
 				$message = $callback_first ? 'Unavailable mapped result builder for array_map' : 'Unavailable collection result for ' . $operation->name;
 				throw new diagnostic($call->source(), $call->byte_start(), $message);
 			}
