@@ -7,9 +7,10 @@ from extends_native import source_edit
 from entry_probe import raw_entry
 
 
-def revisions(work,flavor,sources,edits, *, unaffected_source=None, unaffected_revisions=None):
+def revisions(work,flavor,sources,edits, *, unaffected_source=None, unaffected_revisions=None, support_sources=None):
     app=work/flavor;app.mkdir();out=work/(flavor+'-out');rows=[]
     source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
+    for name,text in (support_sources or {}).items():source_edit(app/name,text)
     for name,text in sources.items():source_edit(app/(name+'.'+flavor),text)
     proc=service(app,out)
     try:
@@ -41,9 +42,10 @@ def revisions(work,flavor,sources,edits, *, unaffected_source=None, unaffected_r
     (work/(flavor+'-timings.json')).write_text(json.dumps(rows,indent=2)+'\n')
 
 
-def guard(work,flavor,label,source,error=None, *, retry_entry=False, expected_stdout=b'', exception_type='std::exception', exception_header='stdexcept'):
+def guard(work,flavor,label,source,error=None, *, retry_entry=False, expected_stdout=b'', exception_type='std::exception', exception_header='stdexcept', support_sources=None):
     app=work/(flavor+'-'+label);app.mkdir();out=work/(flavor+'-'+label+'-out')
     source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}));source_edit(app/('main.'+flavor),source)
+    for name,text in (support_sources or {}).items():source_edit(app/name,text)
     p=service(app,out)
     try:got=invoke(p)
     finally:p.stdin.close();p.wait()
