@@ -743,6 +743,8 @@ if(BUILD_TESTING)
   add_test(NAME compiler_integer_radix_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/integer_radix_native.py --quick)
   add_test(NAME compiler_fixed_array_native COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/fixed_array_native.py --quick)
   if(SCPP_ENABLE_FCGI)
+    add_test(NAME fcgi_dev_pool COMMAND ${Python3_EXECUTABLE} -B
+      ${CMAKE_CURRENT_SOURCE_DIR}/tools/fcgi_dev/test_pool.py)
     find_program(SCPP_APACHE_EXECUTABLE NAMES apache2 httpd)
     find_path(SCPP_APACHE_MODULE_DIR mod_proxy_fcgi.so PATHS /usr/lib/apache2/modules /usr/lib64/httpd/modules /usr/lib/httpd/modules)
     if(SCPP_APACHE_EXECUTABLE AND SCPP_APACHE_MODULE_DIR)

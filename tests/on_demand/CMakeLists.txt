@@ -165,3 +165,9 @@ endif()
 add_test(NAME compiler_binary64_spelling_native COMMAND ${Python3_EXECUTABLE} -B
   ${CMAKE_CURRENT_SOURCE_DIR}/binary64_spelling.py ${CMAKE_CXX_COMPILER} ${PHP_EXECUTABLE} -stdlib=libc++)
 set_tests_properties(compiler_binary64_spelling_native PROPERTIES LABELS on_demand)
+
+if(SCPP_ENABLE_FCGI AND SCPP_APACHE_EXECUTABLE AND SCPP_APACHE_MODULE_DIR AND Python3_VERSION VERSION_GREATER_EQUAL 3.11)
+  add_test(NAME fcgi_dev_reload_apache COMMAND ${Python3_EXECUTABLE} -B
+    ${PROJECT_SOURCE_DIR}/tools/fcgi_dev/test_apache.py ${SCPP_APACHE_EXECUTABLE} ${SCPP_APACHE_MODULE_DIR})
+  set_tests_properties(fcgi_dev_reload_apache PROPERTIES LABELS on_demand TIMEOUT 180)
+endif()
