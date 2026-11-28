@@ -171,6 +171,14 @@ finish evaluating and converting its result before resolving the full path again
 from the selected root with the saved keys. A replacement child receives the store. A removed parent or
 an invalid vector position raises its usual error and preserves fallback effects.
 
+For a PHP local `mixed` or `dynamic`, `$box[key()] ??= fallback();` evaluates and
+normalizes one bracket key before testing the receiver and entry. On a container,
+a missing key or stored null selects the fallback. Zero, false and the empty
+string skip it. A null `mixed` becomes a container on the successful store. A null
+`dynamic` raises `boxed_expected_container` before evaluating the fallback.
+The ordinary boxed store uses the current local and the saved key, including
+when the fallback replaces the local. A throwing fallback performs no final store.
+
 Parameters, globals, static properties, other indexed places, for-header writes and
 application/shared carriers remain outside this contract.
 

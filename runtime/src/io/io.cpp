@@ -1,5 +1,6 @@
 #include "io_provider.hpp"
 #include "scpp/value_error.hpp"
+#include "../sequence/csv_controls.hpp"
 #include <atomic>
 #include <cstdio>
 #include <string>
@@ -50,13 +51,66 @@ result_or_false_int64 tell(const file_stream& stream) {
     if (p < 0) return {};
     return result_or_false_int64{static_cast<int64>(p)};
 }
-result_or_false_int64 write(const file_stream& stream, const string& bytes) {
+static result_or_false_int64 write_bytes(const file_stream& stream, std::string_view bytes) {
     auto& s = state(stream);
     if (!s.writable) throw ValueError("stream is not writable");
     auto n = std::fwrite(bytes.data(), 1, bytes.size(), s.file);
     if (!n && !bytes.empty() && std::ferror(s.file)) return {};
     return result_or_false_int64{static_cast<int64>(n)};
 }
+result_or_false_int64 write(const file_stream& stream, const string& bytes) {
+    return write_bytes(stream, {bytes.data(), static_cast<std::size_t>(bytes.size())});
+}
+
+result_or_false_int64 write_csv(const file_stream& stream, const vector_string& fields,
+                                const string& separator, const string& enclosure, const string& escape,
+                                const string& ending) {
+    auto view = [](const string& s) { return std::string_view{s.data(), static_cast<std::size_t>(s.size())}; };
+    const detail::csv_controls controls{view(separator), view(enclosure), view(escape)};
+    std::string row;
+    int64 position = 0;
+    const auto limit = fields.iteration_limit();
+    string value;
+    bool first = true;
+    while (fields.iteration_next(position, limit, value)) {
+        if (!first) row.push_back(controls.separator);
+        first = false;
+        const auto field = view(value);
+        const bool quoted = field.find_first_of(" \t\r\n") != field.npos ||
+            field.find(controls.separator) != field.npos || field.find(controls.enclosure) != field.npos ||
+            field.find_first_of(controls.escape) != field.npos;
+        if (!quoted) {
+            row.append(field);
+            continue;
+        }
+        row.push_back(controls.enclosure);
+        bool escaped = false;
+        for (char ch : field) {
+            if (!controls.escapes(ch) && ch == controls.enclosure && !escaped) row.push_back(ch);
+            row.push_back(ch);
+            escaped = controls.escapes(ch);
+        }
+        row.push_back(controls.enclosure);
+    }
+    row.append(view(ending));
+    return write_bytes(stream, row);
+}
+
+result_or_false_int64 write_csv(const file_stream& stream, const vector_string& fields,
+                                const string& sep, const string& enc, const string& esc) {
+    return write_csv(stream, fields, sep, enc, esc, string{"\n"});
+}
+result_or_false_int64 write_csv(const file_stream& stream, const vector_string& fields,
+                                const string& sep, const string& enc) {
+    return write_csv(stream, fields, sep, enc, string{"\\"});
+}
+result_or_false_int64 write_csv(const file_stream& stream, const vector_string& fields, const string& sep) {
+    return write_csv(stream, fields, sep, string{"\""});
+}
+result_or_false_int64 write_csv(const file_stream& stream, const vector_string& fields) {
+    return write_csv(stream, fields, string{","});
+}
+
 static FILE* reader(const file_stream& stream) {
     auto& s = state(stream);
     if (!s.readable) throw ValueError("stream is not readable");

@@ -314,15 +314,20 @@ final class Preparation
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
 				$root = $this->prepare_index_mutation($statement);
+				$collection = $receiver->type_def();
 				if ($statement->operator === binary_operator::coalesce && $source->flavor === flavor::php
-					&& $receiver->type_def() instanceof conditional_index_store_type) {
+					&& ($collection instanceof conditional_index_store_type || $collection instanceof boxed_type_definition)) {
+					if ($collection instanceof boxed_type_definition && (!($receiver instanceof ast_name_expression)
+						|| !($receiver->local_binding() instanceof ast_local_declaration) || $statement->target instanceof ast_computed_member_read)) {
+						throw new diagnostic($source, $receiver->byte_start(), 'Boxed coalescing assignment requires a single bracket key on a local');
+					}
 					if ($root instanceof ast_field_expression && ast_index_expression::collection_storage_root($root) !== null) {
 						if ($root !== $receiver) $this->check_indexed_field_owner($root);
 						$this->retain_member_place($root);
 					} elseif (!($root instanceof ast_name_expression && $root->local_binding() instanceof ast_local_declaration)) {
 						throw new diagnostic($source, $root->byte_start(), 'Indexed coalescing assignment requires a local or writable instance field');
 					}
-					$element = $receiver->type_def()->write_type();
+					$element = $collection->write_type();
 					$this->collection_element($statement->value, $element, null);
 					$statement->prepare_conditional_store($element);
 					if ($root instanceof ast_name_expression) $this->latest_writes[$root->local_binding()->storage_id()] = null;

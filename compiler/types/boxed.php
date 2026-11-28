@@ -84,6 +84,13 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		return $receiver . '.source_read(scpp::boxed_key(' . $index . '))';
 	}
 
+	/** Probe an assignable entry. Only a null mixed receiver can create its table on the later store. */
+	public function lower_cpp_entry_presence(string $receiver, string $key): string
+	{
+		$probe = "($receiver.source_check_container(), $receiver.source_read($key).kind() != scpp::boxed_kind::null)";
+		return $this instanceof type_mixed ? "($receiver.kind() != scpp::boxed_kind::null && $probe)" : $probe;
+	}
+
 	/** Generated source_has applies the same source-key normalization as indexed reads. */
 	public function lower_cpp_key_presence(string $receiver, string $key): string
 	{

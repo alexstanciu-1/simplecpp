@@ -102,6 +102,11 @@ function renderSequences(array $plan, array &$files, string &$definitions, array
                         $parameters[1] .= ' = 76';
                         $parameters[2] .= ' = ::scpp::string{"\r\n", 2}';
                     }
+                    if ($binding['implementation'] === 'parse_csv') {
+                        $parameters[1] .= ' = ::scpp::string{","}';
+                        $parameters[2] .= ' = ::scpp::string{"\""}';
+                        $parameters[3] .= ' = ::scpp::string{"\\\\"}';
+                    }
                     if ($binding['implementation'] === 'wrap_words') {
                         $parameters[1] .= ' = 75';
                         $parameters[2] .= ' = ::scpp::string{"\n", 1}';
@@ -551,9 +556,11 @@ function renderVectors(array $plan, string $access = 'vector_access'): array {
         if (!in_array($binding['implementation'], STRING_VECTOR_IMPLEMENTATIONS, true)) continue;
         $vector = $plan['source_types']->{'vector<string>'};
         $name = substr($binding['symbol'], strlen('scpp::str::'));
-        $signature = $binding['implementation'] === 'split_bytes'
-            ? "$vector $name(const string& subject, const string& separator)"
-            : "string $name(const $vector& pieces, const string& separator)";
+        $signature = match ($binding['implementation']) {
+            'split_bytes' => "$vector $name(const string& subject, const string& separator)",
+            'parse_csv' => "$vector $name(const string& subject, const string& separator, const string& enclosure, const string& escape)",
+            'join_bytes' => "string $name(const $vector& pieces, const string& separator)",
+        };
         $h .= "namespace str { $signature; }\n";
         $vars = ['signature' => $signature, 'vector' => $vector];
         if ($binding['implementation'] === 'split_bytes') {
