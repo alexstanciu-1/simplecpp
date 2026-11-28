@@ -80,6 +80,14 @@ function renderDatetime(array $plan, array &$files): void {
         $declaration = "$result $name(" . implode(', ', $declArgs) . ");\n" . scalarInputFences($plan, $name, [$op['arguments']]);
         $files['public/' . $op['header']] = moduleHeaderBody($op['includes'], $module['namespace'], $declaration);
         $h .= includeHeader($op['header']);
+        if ($name === 'php_strtotime') {
+            $files['src/php_strtotime.cpp'] = BANNER . includeHeader($op['header']) . includeHeader('datetime_native.hpp')
+                . "namespace scpp::dt {\n$signature {\n"
+                . "    const auto base = input1.has_value() ? static_cast<long long>(input1.value()) : detail::datetime::now_unix_seconds();\n"
+                . "    const auto parsed = detail::datetime::php_strtotime({input0.data(), static_cast<std::size_t>(input0.size())}, base);\n"
+                . "    return parsed.error ? result_or_false_int64::from_false() : result_or_false_int64{int64{static_cast<long long>(parsed.value)}};\n}\n}\n";
+            continue;
+        }
         if ($name === 'php_date') {
             $files['src/php_date.cpp'] = BANNER . includeHeader($op['header']) . includeHeader('datetime_native.hpp')
                 . includeHeader('scalar_semantics.hpp') . "namespace scpp::dt {\n$signature {\n"

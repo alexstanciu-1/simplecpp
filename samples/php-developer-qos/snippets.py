@@ -265,7 +265,7 @@ try {throw new Rejected();} catch(Rejected $e) {echo "specific";} return 0;''', 
     Probe('routine-void', '''function log_event(string $text):void {echo $text; return;}
 log_event("ok"); return 0;''', output='ok'),
     Probe('closure-ref', '''$n=1; $add=function() use (&$n):void {$n+=2;}; $add(); echo $n; return 0;''', output='3'),
-    Probe('datetime-natural-epoch', 'echo strtotime("1970-01-01T00:00:00Z"); return 0;', modules=('datetime',), reject='Unknown function: strtotime'),
+    Probe('datetime-natural-epoch', 'echo (int)strtotime("1970-01-01T00:00:00Z"); return 0;', modules=('datetime',), output='0'),
     Probe('fputcsv', '$f file_stream=fopen("export.csv","wb"); fputcsv($f,["a","b"]); return 0;', modules=('io',), reject='Unknown function: fputcsv'),
     Probe('hash-array-value', '$v hash<int,string> = ["a"=>1]; $plain=array_values($v); return 0;', reject='Unknown function: array_values'),
     Probe('php-curl-status', '$r curl_handle=curl_init(); $s=curl_getinfo($r,CURLINFO_HTTP_CODE); return 0;', modules=('curl',), reject='Unknown constant: CURLINFO_HTTP_CODE'),

@@ -1415,7 +1415,7 @@
   },
   "datetime": {
     "binding": "native_datetime",
-    "php_names": {"now_unix_seconds": "time", "php_date": "date"},
+    "php_names": {"now_unix_seconds": "time", "php_date": "date", "php_strtotime": "strtotime"},
     "general_names": {
       "now_unix_seconds": "dt_now",
       "now_unix_millis": "dt_now_ms",
@@ -1444,6 +1444,7 @@
       "format_local",
       "format_local_now",
       "php_date",
+      "php_strtotime",
       "parse_common_local"
     ],
     "local_dst": "host_normalize_and_select"

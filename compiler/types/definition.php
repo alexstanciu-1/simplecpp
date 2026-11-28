@@ -251,6 +251,11 @@ interface iterable_type
 /** A protected selection can lend its live slot for a synchronous call. */
 interface writable_iteration_type
 {
+	/** Begin traversal with a private selected key independent of the source loop variable. @param string[] $lines */
+	public function lower_cpp_writable_iteration_open(array &$lines, string $receiver, int $loop_start): void;
+	public function lower_cpp_writable_iteration_close(): string;
+	public function lower_cpp_iteration_read(string $receiver, int $loop_start): string;
+	public function lower_cpp_iteration_replace(string $receiver, int $loop_start, string $value): string;
 	public function lower_cpp_iteration_reference(string $receiver, int $loop_start): string;
 }
 
