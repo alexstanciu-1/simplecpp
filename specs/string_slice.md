@@ -267,3 +267,11 @@ the first byte grows the string (`9z` becomes `10a`). A borrow can shorten
 it (`10a` becomes `9z`). Increment accepts leading zeroes. Decrement
 rejects any leading zero and the single letters `a` and `A`. Empty input,
 non-alphanumeric bytes and decrement underflow raise `ValueError`.
+
+PHP `strnatcmp(string1, string2)` and `strnatcasecmp(string1, string2)`
+compare byte strings in natural order. Both ignore redundant zeroes in the
+initial digit run. Later digit runs beginning with zero on either side compare
+digit by digit; other digit runs compare by length and then digits, without an
+integer size limit. Equal runs resume comparison at the immediate suffix byte.
+The insensitive form compares ASCII letters in uppercase. Embedded NULs are
+ordinary bytes. The result is a negative integer, zero or a positive integer.

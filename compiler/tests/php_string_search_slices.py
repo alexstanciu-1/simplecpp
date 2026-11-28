@@ -99,6 +99,19 @@ for search, replacement, subject in [
     body += f'check_ireplace({literal(search)},{literal(replacement)},{literal(subject)});\n'
 
 
+# Keep the PHP oracle and the compiled caller on the same binary inputs.
+for left, right in [
+        (b'', b''), (b'', b'0'), (b'file2', b'file10'), (b'v2.11', b'v2.9'),
+        (b'x' + b'9' * 80, b'x1' + b'0' * 80), (b'0010', b'10'),
+        (b'000', b'0'), (b'00a', b'a'), (b'v02', b'v2'), (b'v02', b'v010'),
+        (b'v001', b'v0010'), (b' 01', b'1'), (b'A2', b'a2'), (b'a', b'['),
+        (b'A\xff', b'a\xfe'), (b'ab\0x2', b'Ab\0x10'), (b'a\0', b'a'),
+        (b'1\0a', b'1\0b'), (b'x \t2', b'x2'), (b'x', b'x '),
+        (b'1 a', b'1a'), (b' ', b'\0'), (b'\0\0', b'\0')]:
+    for a, b in ((left, right), (right, left)):
+        args = f'string2:{literal(b)},string1:{literal(a)}'
+        body += f'echo strnatcmp({args}),";",strnatcasecmp({args}),";";\n'
+
 errors = ['chunk_split("",0)', 'chunk_split("x",-2)', 'wordwrap("x",2,"")',
           'wordwrap("x",0,"",true)', 'wordwrap("x",0,"|",true)']
 for name in ('str_increment', 'str_decrement'):

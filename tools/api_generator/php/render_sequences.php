@@ -316,15 +316,18 @@ function renderString(array $plan, array &$groups): array {
             $d .= template('strings/string_number_format', ['name' => $name]);
             continue;
         }
-        if (in_array($function['implementation'], ['compare_bytes', 'compare_prefix'], true)) {
+        if (in_array($function['implementation'], ['compare_bytes', 'compare_prefix', 'compare_natural'], true)) {
             if (!isset($comparisonSymbols[$name])) {
                 $bounded = $function['implementation'] === 'compare_prefix';
                 $limit = $bounded ? 'int64 limit, ' : '';
                 $signature = "int64 $name(const string& left, const string& right, {$limit}bool_t insensitive)";
                 $h .= "namespace str { $signature; }\n";
-                $d .= $bounded ? template('strings/string_compare_prefix', ['signature' => $signature])
-                    : "namespace str { $signature { return detail::compare_byte_views(detail::string_access::read(left),"
-                    . " detail::string_access::read(right), insensitive); } }\n";
+                $d .= match ($function['implementation']) {
+                    'compare_natural' => template('strings/compare_natural', ['signature' => $signature]),
+                    'compare_prefix' => template('strings/string_compare_prefix', ['signature' => $signature]),
+                    default => "namespace str { $signature { return detail::compare_byte_views(detail::string_access::read(left),"
+                        . " detail::string_access::read(right), insensitive); } }\n",
+                };
                 $comparisonSymbols[$name] = true;
             }
             continue;
