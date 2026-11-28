@@ -1932,6 +1932,10 @@ final class Preparation
 		if ($syntax instanceof ast_index_expression) {
 			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
 			$type = $syntax->receiver->type_def();
+			if ($syntax instanceof ast_computed_member_read) {
+				if ($deep_write_path) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member reads cannot be used as write targets');
+				if (!($type instanceof type_dynamic)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member read requires a dynamic receiver');
+			}
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
@@ -1940,6 +1944,9 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Python indexed read requires a typed vector or hash, or a boxed collection');
 			}
 			$this->value($syntax->index, $initializing);
+			if ($syntax instanceof ast_computed_member_read && $syntax->index->type_def() !== type_string::instance()) {
+				throw new diagnostic($syntax->source(), $syntax->index->byte_start(), 'Computed member name requires a string');
+			}
 			if ($deep_write_path && $type instanceof boxed_type_definition) $type->prepare_index($syntax, deep_path: true);
 			else $type->prepare_index($syntax);
 			if (!$syntax->index->is_effect_free_literal()) $this->retain_member_place($syntax->receiver);

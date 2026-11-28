@@ -185,6 +185,11 @@ class ast_index_expression extends ast_expression
 	}
 }
 
+/** PHP $d->{expr} retains the computed-member spelling for read-only admission, then lowers as an indexed read. */
+final class ast_computed_member_read extends ast_index_expression
+{
+}
+
 /** Append statement, e.g. values[] = 8; owns operands and caches the approved element conversion. */
 final class ast_append_statement extends ast_statement
 {
