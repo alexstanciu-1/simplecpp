@@ -126,9 +126,10 @@ The default publication enables `boxed.scalar_dispatch`. It registers `mixed` an
 addition and ordering. Each family has its own public header and runtime bindings.
 Generated dispatch selects the ordinary scalar rule for the observed kind. The application
 links the prebuilt runtime. The boxed storage API above can also be published separately.
-Typed local `[]`, single-level indexed reads and keyed writes are available in all three
+Typed local `[]`, indexed reads and keyed writes are available in all three
 flavors. Keys have static type int64 or string. A read returns a same-family value and
 writes use ordinary same-family copies or scalar boxing. A plain indexed write through nested boxed containers follows the rules below.
+In PHP, C++ and JavaScript, consecutive `mixed` reads compose at any depth. Each lookup produces a value snapshot before the next key is evaluated, even when that key suspends and replaces the root. A missing entry or a null receiver yields boxed null without insertion. The next key still runs. Indexing a non-null scalar fails at that lookup and skips later keys. Mutating an extracted mixed container preserves the original contents.
 Native traversal follows the [common protocol](collection_traversal.md); the [compiler foreach slice](../compiler/docs/foreach.md) consumes it. See [validation](boxed_slice_validation.md).
 
 ## Named dynamic keys

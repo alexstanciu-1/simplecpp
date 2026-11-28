@@ -45,13 +45,9 @@ abstract class boxed_type_definition extends type_definition implements indexed_
 		}
 	}
 
-	/** The deep write context follows only receiver links. Keys and RHS expressions retain read semantics. */
-	public function prepare_index(ast_index_expression $value, bool $deep_path = false): void
+	/** Each bracket returns a value of the receiver family. */
+	public function prepare_index(ast_index_expression $value): void
 	{
-		if (!$deep_path && $value->receiver instanceof ast_index_expression && $value->source()->flavor !== flavor::python
-			&& !($this instanceof type_dynamic)) {
-			throw new diagnostic($value->source(), $value->byte_start(), 'Nested boxed indexing is deferred');
-		}
 		$this->prepare_key($value->index);
 		$value->settle_element($this);
 	}

@@ -78,6 +78,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
             '@indexed_probe@' => $publishedProbe ? "\tpublic function supports_indexed_presence(): bool { return true; }\n"
                 . "\tpublic function require_entry_probe(Cpp_Concrete_Collections \$collections, array &\$headers): void { \$headers['$probeHeader'] = true; }\n" : '',
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
+            '@coalescing_lookup@' => $provider->coalescing_lookup,
             '@entry_presence@' => compilerEntryPresence(hashConcreteRecipe($hash), $at['name'], $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(hashConcreteRecipe($hash)),
             '@initialization@' => $initialization,

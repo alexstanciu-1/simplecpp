@@ -212,11 +212,12 @@ def terminal_void(work, case):
 
 def mixed_read_context(work, case):
     setup = '$v mixed=[];$row mixed=[];$row[0]=3;$v[0]=$row;$d dynamic=[];$child dynamic=[];$d->child=$child;'
-    good = setup + '$v[0][0]=8;$r=$v[0];echo (int)$r[0];return 8;'
-    read = '(int)$v[0][0]'
-    edits = [('main', setup + tail + 'return 8;', 'Nested boxed indexing is deferred')
-             for tail in ('echo '+read+';', '$d['+read+']=8;', '$d->child['+read+']=8;', '$d->name='+read+';')]
-    revisions(work, 'php', {'main': good}, [(None, None, b'8'), *edits, ('main', good, b'8')])
+    main = setup + """
+        $v[0][0]=8;echo (int)$v[0][0];
+        $d[(int)$v[0][0]]=7;$d->child[(int)$v[0][0]]=3;$d->name=(int)$v[0][0];
+        echo (int)$d[8],(int)$child[8],(int)$d->name;return 8;
+    """
+    revisions(work, 'php', {'main': main}, [(None, None, b'8738')])
 
 
 def shallow_failure(work, case):

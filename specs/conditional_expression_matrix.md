@@ -149,6 +149,10 @@ The presence probe leaves the hash untouched. On success the ordinary keyed-stor
 conversion applies and the current hash receives the value at the saved key, even
 if the fallback replaced the hash or inserted that key. If fallback or conversion
 throws, its earlier effects survive and the conditional store does not run.
+The saved-key rule includes a bare variable. In `$h[$key] ??= fallback();`,
+if the fallback changes `$key` from `"first"` to `"second"`, Simple C++ stores
+at `"first"`. PHP 8.5.7 can reread the variable and store at `"second"`.
+For a function-call key, both retain the result of the single call.
 
 For a PHP local typed vector, `$v[index()] ??= fallback();` saves the index once.
 The initial bounds check throws before fallback for a negative index or an index
@@ -164,6 +168,9 @@ holder and binds its field before evaluating the key. Rebinding the holder durin
 the key or fallback still updates the original holder. Replacing its collection
 field during fallback makes the replacement collection receive the store at the
 saved key. Preparation checks field writability even when the element is present.
+For a typed hash field, this differs from PHP 8.5.7 when the fallback assigns
+a new object to `$holder`: PHP writes into the new object's field, while
+Simple C++ writes into the original object's field.
 
 For PHP paths through typed vectors and hashes at any depth, the same root selection
 applies. Evaluate and save every key once in source order before looking up any

@@ -341,7 +341,7 @@ final class Preparation
 				$boxed_root = null;
 				$receiver = $statement->receiver;
 				if ($receiver instanceof ast_index_expression) {
-					$this->value($receiver, deep_write_path: true);
+					$this->value($receiver);
 					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
 					if ($collection_root === null) {
 						$boxed_root = ast_index_expression::boxed_path_root($receiver, $statement instanceof ast_computed_member_assignment);
@@ -409,7 +409,7 @@ final class Preparation
 					$this->writable_property($statement->receiver, payload: true);
 					$boxed_root = $statement->receiver->key_write_root;
 				} else {
-					$this->value($statement->receiver, deep_write_path: true);
+					$this->value($statement->receiver);
 					$root = $statement->receiver;
 					if ($root instanceof ast_index_expression) {
 						$boxed_root = ast_index_expression::boxed_path_root($root);
@@ -1126,7 +1126,7 @@ final class Preparation
 	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): ast_expression
 	{
 		$receiver = $statement->target->receiver;
-		$this->value($statement->target, deep_write_path: true);
+		$this->value($statement->target);
 		if ($receiver instanceof ast_field_expression) $this->check_indexed_field_owner($receiver);
 		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver, $statement->target instanceof ast_computed_member_read);
 		if ($receiver instanceof ast_index_expression && $receiver->type_def() instanceof boxed_type_definition
@@ -1390,7 +1390,7 @@ final class Preparation
 			$this->static_destination($root);
 			return null;
 		}
-		$this->value($root, deep_write_path: true);
+		$this->value($root);
 		if ($root->is_dynamic_key()) {
 			$place = ast_index_expression::boxed_path_root($root);
 			if ($place === null) throw new diagnostic($root->source(), $root->byte_start(), 'Dynamic key write requires local or instance-field storage');
@@ -1732,8 +1732,7 @@ final class Preparation
 	}
 
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
-	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null,
-		bool $deep_write_path = false): void
+	private function value(ast_expression $syntax, ?string $initializing = null, bool $allow_callback = false, ?type_definition $destination = null): void
 	{
 		if ($syntax instanceof ast_take_expression) {
 			$this->prepare_take($syntax, $initializing);
@@ -1901,7 +1900,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_field_expression) {
-			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
+			$this->value($syntax->receiver, $initializing);
 			if ($syntax->is_dynamic_key() && $syntax->source()->flavor !== flavor::python) {
 				$syntax->settle_field($syntax->receiver->type_def());
 				return;
@@ -1961,7 +1960,7 @@ final class Preparation
 			return;
 		}
 		if ($syntax instanceof ast_index_expression) {
-			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
+			$this->value($syntax->receiver, $initializing);
 			$type = $syntax->receiver->type_def();
 			if ($syntax instanceof ast_computed_member_read) {
 				if (!($type instanceof type_dynamic)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member read requires a dynamic receiver');
@@ -1976,8 +1975,7 @@ final class Preparation
 			if ($syntax instanceof ast_computed_member_read && $syntax->index->type_def() !== type_string::instance()) {
 				throw new diagnostic($syntax->source(), $syntax->index->byte_start(), 'Computed member name requires a string');
 			}
-			if ($deep_write_path && $type instanceof boxed_type_definition) $type->prepare_index($syntax, deep_path: true);
-			else $type->prepare_index($syntax);
+			$type->prepare_index($syntax);
 			if (!$syntax->index->is_effect_free_literal()) $this->retain_member_place($syntax->receiver);
 			return;
 		}
@@ -2085,7 +2083,10 @@ final class Preparation
 				$this->value($syntax->right, $initializing);
 			}
 			if ($syntax->operator === binary_operator::coalesce) {
-				$left = $syntax->left->type_def();
+				$entry = $syntax->left;
+				$provider = $entry instanceof ast_index_expression && $syntax->source()->flavor === flavor::php
+					? $entry->receiver->type_def() : null;
+				$left = $entry->type_def();
 				$right = $syntax->right instanceof ast_throw_expression ? null : $syntax->right->type_def();
 				if ($left instanceof carrier_type_definition && $left->supports_coalescing()) {
 					$result = $left->payload_type;
@@ -2093,12 +2094,19 @@ final class Preparation
 						throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type or a matching nullable<int>');
 					}
 					$this->retain_member_place($syntax->left);
+				} elseif ($provider instanceof coalescing_index_read_type) {
+					if ($right !== null && $right !== $left && !($left instanceof shared_record_type_definition
+						&& $right instanceof shared_record_type_definition && $right->payload === $left->payload && !$left->required)) {
+						throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Indexed coalescing fallback requires the entry value type');
+					}
+					$result = $left;
 				} elseif ($left instanceof shared_record_type_definition && $left->payload->declaration->kind === record_kind::class_type) {
 					if ($right !== $left) throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing requires identical shared class handle types');
 					$result = $left;
 				} else {
 					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier or a shared class handle');
 				}
+				if ($provider instanceof coalescing_index_read_type) $entry->coalescing_lookup = $provider;
 				$syntax->settle_binary($result);
 				return;
 			}

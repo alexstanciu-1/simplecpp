@@ -47,6 +47,7 @@ function concreteTemplate(string $name, array $types, array $values, string $nam
     }
     requireThat(!array_key_exists('type_contracts', $values), 'Concrete type contracts are generated');
     if (isset($recipe->fill_factory)) $values['fill_member'] = $recipe->fill_factory->member;
+    if (isset($recipe->coalescing_lookup)) $values['coalescing_lookup'] = $recipe->coalescing_lookup;
     if (isset($recipe->checked_slot)) $values['checked_slot'] = checkedSlotMethod($recipe);
     if (isset($recipe->entry_presence->owner_probe)) $values['owner_probe'] = $recipe->entry_presence->owner_probe;
     $values['type_contracts'] = $contracts;
@@ -73,13 +74,14 @@ function concreteRecipe(string $name): mixed {
     static $recipes = [];
     if (isset($recipes[$name])) return $recipes[$name];
     $recipe = decode(readFile(__DIR__ . '/../templates/' . $name . '.concrete.json'), 'concrete template');
-    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values', 'fill_factory', 'map_result', 'subset_result', 'entry_insertion', 'indexed_entry_types', 'declarations', 'private_copy_allocation_only']);
+    fields($recipe, ['parameters', 'fragments', 'application', 'support', 'includes', 'hash_key', 'destination_append', 'checked_slot', 'writable_iteration', 'entry_presence', 'indexed_probe_values', 'fill_factory', 'map_result', 'subset_result', 'entry_insertion', 'indexed_entry_types', 'declarations', 'private_copy_allocation_only', 'coalescing_lookup', 'application_scalar_values']);
     if (isset($recipe->fill_factory)) {
         fields($recipe->fill_factory, ['source', 'member']);
         foreach (['source', 'member'] as $field) {
             requireThat(recordIdentifier(textValue(at($recipe->fill_factory, $field))), 'Invalid collection fill factory identifier');
         }
     }
+    if (isset($recipe->coalescing_lookup)) requireThat(recordIdentifier(textValue($recipe->coalescing_lookup)), 'Invalid coalescing lookup method');
     if (isset($recipe->entry_presence)) {
         $presence = $recipe->entry_presence;
         switch (at($presence, 'protocol')) {

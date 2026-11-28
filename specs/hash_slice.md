@@ -34,6 +34,7 @@ private implementation templates never enter the public include closure.
 
 - Default construction is empty and allocation-free.
 - size() returns int64; empty()/has(key) return bool_t.
+- The PHP indexed coalescing binding selects the concrete recipe’s `coalescing_lookup` method. It returns an owned hit/miss snapshot and probes once, without insertion or default construction of a missing value. PHP uses its null-presence rules on a hit before deciding whether to evaluate the fallback.
 - at(const Key&) returns a value copy, throwing std::out_of_range for absence.
 - find(const Key&) returns nullable<Value>, empty for absence and an owned copied
   value for presence. Allocation/copy failure still throws; absence itself does not.

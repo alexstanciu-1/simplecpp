@@ -229,6 +229,9 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
     foreach ($definitions as $identity => $definition) {
         $keyContract = $runtime['hashes']['key_contracts'][$identity] ?? null;
         $typeTraits = $keyContract === null ? '' : "\tuse hash_key_specializations;\n\tuse concrete_value_storage;\n\n";
+        if ($keyContract === null && isset($runtime['hashes']) && in_array($identity, concreteRecipe('collections/hash')->application_scalar_values, true)) {
+            $typeTraits = "\tuse concrete_value_storage;\n\n";
+        }
         $phpOutput = $compiler->php_scalar_output->$identity ?? null;
         if ($phpOutput !== null && isset($output['int64'])) {
             requireThat(in_array($phpOutput, ['echo_int', 'echo_uint', 'echo_float', 'echo_php_bool', 'discard'], true), 'Unknown PHP scalar output');

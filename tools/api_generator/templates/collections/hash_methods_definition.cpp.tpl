@@ -1,6 +1,10 @@
 @inline@@count@ @n@::size() const { return static_cast<@count@>(storage_ ? storage_->size() : 0); }
 @inline@bool_t @n@::empty() const noexcept { return bool_t{!storage_ || storage_->size() == 0}; }
 @inline@bool_t @n@::has(const @k@& key) const { return bool_t{storage_ && storage_->find(key)}; }
+@inline@@n@::entry_snapshot @n@::@coalescing_lookup@(const @k@& key) const {
+    const auto* value = storage_ ? storage_->find(key) : nullptr;
+    return value ? entry_snapshot{*value} : entry_snapshot{};
+}
 @inline@@v@ @n@::at(const @k@& key) const { const auto* value = storage_ ? storage_->find(key) : nullptr; if (!value) throw std::out_of_range("hash_missing_key"); return *value; }
 @inline@@v@& @n@::@checked_slot@(const @k@& key) & {
     if (storage_) {
