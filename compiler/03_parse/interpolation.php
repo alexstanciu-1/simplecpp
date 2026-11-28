@@ -75,6 +75,13 @@ final class Interpolation
 				$part = new ast_interpolation_index($part, $key, $token + 1);
 				$after += 2;
 			}
+			elseif ($braced && $flavor === flavor::php && substr($text, $after, 2) === '->') {
+				$field_at = $after + 2;
+				if (regex_find_span($pattern, $text, $field_at, $after) === -1) {
+					throw new diagnostic($tokens->source, $tokens->tokens[$token]->offset + $field_at, 'Expected an interpolation field name');
+				}
+				$part = new ast_interpolation_field($part, substr($text, $field_at, $after - $field_at), $token + 1);
+			}
 			if ($braced && $text[$after] !== '}') {
 				throw new diagnostic($tokens->source, $tokens->tokens[$token]->offset + $after, 'Expected closing interpolation brace');
 			}

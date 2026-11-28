@@ -1932,6 +1932,10 @@ final class Preparation
 		if ($syntax instanceof ast_index_expression) {
 			$this->value($syntax->receiver, $initializing, deep_write_path: $deep_write_path);
 			$type = $syntax->receiver->type_def();
+			if ($syntax instanceof ast_computed_member_read) {
+				if ($deep_write_path) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member reads cannot be used as write targets');
+				if (!($type instanceof type_dynamic)) throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Computed member read requires a dynamic receiver');
+			}
 			if (!($type instanceof index_read_type)) {
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Indexed read requires a vector, hash, boxed container or readable string');
 			}
@@ -1939,6 +1943,9 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Provider does not support Python indexed reads');
 			}
 			$this->value($syntax->index, $initializing);
+			if ($syntax instanceof ast_computed_member_read && $syntax->index->type_def() !== type_string::instance()) {
+				throw new diagnostic($syntax->source(), $syntax->index->byte_start(), 'Computed member name requires a string');
+			}
 			if ($deep_write_path && $type instanceof boxed_type_definition) $type->prepare_index($syntax, deep_path: true);
 			else $type->prepare_index($syntax);
 			if (!$syntax->index->is_effect_free_literal()) $this->retain_member_place($syntax->receiver);
@@ -1951,6 +1958,12 @@ final class Preparation
 				if ($part instanceof ast_interpolation_index && !($part->receiver->type_def() instanceof hash_type_definition)
 					&& !($part->receiver->type_def() instanceof type_mixed)) {
 					throw new diagnostic($part->source(), $part->receiver->byte_start(), 'Keyed interpolation requires a hash or mixed row');
+				}
+				if ($part instanceof ast_interpolation_field) {
+					$receiver = $part->receiver->member_type();
+					if (!($receiver instanceof record_type_definition || $receiver instanceof shared_record_type_definition)) {
+						throw new diagnostic($part->source(), $part->byte_start(), 'Field interpolation requires a declared record field');
+					}
 				}
 				if (!($part instanceof ast_interpolation_text)) {
 					$part->prepare_text($string);

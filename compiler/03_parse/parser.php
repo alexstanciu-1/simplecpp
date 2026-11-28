@@ -1667,6 +1667,16 @@ final class Parser
 			}
 			if ($flavor !== flavor::js && $this->cursor->is(token_kind::member)) {
 				$this->cursor->take(token_kind::member, '->');
+				if ($flavor === flavor::php && $this->cursor->is(token_kind::lbrace)) {
+					$this->cursor->take(token_kind::lbrace, '{');
+					$key = $this->value();
+					$end = $this->cursor->take(token_kind::rbrace, '}') + 1;
+					if ($this->cursor->is(token_kind::lparen)) {
+						throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Computed member calls are not supported');
+					}
+					$value = new ast_computed_member_read($value, $key, $end);
+					continue;
+				}
 				$value = $this->instance_member($value);
 				continue;
 			}

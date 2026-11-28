@@ -291,7 +291,7 @@ final class ast_new_expression extends ast_construction_expression
 }
 
 /** Whole-value field access, e.g. $p->x or p.x. */
-final class ast_field_expression extends ast_expression
+class ast_field_expression extends ast_expression
 {
 	/** PROPERTIES */
 	/** Native owning receiver. */
