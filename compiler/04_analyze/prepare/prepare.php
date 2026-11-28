@@ -360,7 +360,7 @@ final class Preparation
 						}
 						$root = $root->receiver;
 					}
-					if (!($root instanceof ast_name_expression && $root->local_binding() !== null) && !($root instanceof ast_field_expression)) {
+					if ($boxed_root === null && !($root instanceof ast_name_expression && $root->local_binding() !== null) && !($root instanceof ast_field_expression)) {
 						throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires local or field storage');
 					}
 					Readonly_Access::write($root, true);
@@ -371,6 +371,9 @@ final class Preparation
 				} else {
 					$this->value($receiver);
 					$binding = $receiver->declaration();
+					if ($statement instanceof ast_computed_member_assignment && $binding instanceof ast_global_declaration) {
+						$boxed_root = ast_index_expression::boxed_path_root($receiver, true);
+					}
 					$this->require_index_write_available($receiver);
 					Readonly_Access::write($receiver, true);
 					if (!($binding instanceof ast_local_binding)
@@ -381,8 +384,8 @@ final class Preparation
 				$type = $statement->receiver->type_def();
 				if ($statement instanceof ast_computed_member_assignment && (!($type instanceof type_dynamic)
 					|| ($receiver instanceof ast_index_expression && $boxed_root === null)
-					|| ($receiver instanceof ast_name_expression && !($binding instanceof ast_local_binding)))) {
-					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a dynamic local or writable dynamic instance field');
+					|| ($receiver instanceof ast_name_expression && $boxed_root === null && !($binding instanceof ast_local_binding)))) {
+					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a dynamic local, writable instance field or named static property');
 				}
 				if (!($type instanceof index_write_type)) {
 					throw new diagnostic($statement->source(), $statement->byte_start(), 'Keyed write requires a string, vector, hash or boxed container');
@@ -413,7 +416,7 @@ final class Preparation
 						$root = $boxed_root ?? ast_index_expression::nested_collection_root($root);
 					}
 					$binding = $root instanceof ast_name_expression ? $root->local_binding() : null;
-					if ($binding === null && !($root instanceof ast_field_expression)) {
+					if ($binding === null && $boxed_root === null && !($root instanceof ast_field_expression)) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 					}
 					$this->require_collection_available($statement, $binding);
@@ -1134,7 +1137,7 @@ final class Preparation
 		if ($root !== null) {
 			$this->require_index_write_available($root);
 			Readonly_Access::write($root, true);
-			if ($root instanceof ast_name_expression) $this->latest_writes[$root->local_binding()->storage_id()] = null;
+			if ($root instanceof ast_name_expression && $root->local_binding() !== null) $this->latest_writes[$root->local_binding()->storage_id()] = null;
 			return $root;
 		}
 		if ($receiver instanceof ast_index_expression && !$receiver->type_def()->mutates_referenced_value()

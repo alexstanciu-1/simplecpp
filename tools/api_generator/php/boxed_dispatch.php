@@ -232,6 +232,7 @@ function compilerBoxedDefinitions(array $runtime, array &$cases, string $access)
                 ? ', sequence_initializer_type, keyed_initializer_type' : '',
             '@transfer@' => $runtime['boxed']['transfer_assignment'] ? ', private_value_transfer_type' : '',
             '@reference_mutation@' => $family['copy'] === 'shared_container_identity' ? 'true' : 'false',
+            '@static_default@' => in_array($name, $family['source_collection']['null_static_properties'], true) ? 'true' : 'false',
             '@field_admission@' => $family['source_collection']['instance_field_default'] === 'null' ? 'true' : 'false',
             '@append_method@' => strtr(readFile(__DIR__ . '/../templates/collections/compiler_append.php.tpl'), ['@append@' => $family['source_collection']['append_method']]),
             '@empty_method@' => $family['source_collection']['empty_method'],

@@ -43,6 +43,12 @@ final class Global_Syntax
 		$initializer = null;
 		if ($static && $cursor->tokens->source->flavor === flavor::php && $type?->name === 'function') {
 			if (!$cursor->is(token_kind::semicolon)) throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Static callable property starts absent; assign its target in executable code');
+		} elseif ($static && $cursor->tokens->source->flavor === flavor::php && $type?->name === 'dynamic') {
+			if ($cursor->is(token_kind::assign)) {
+				$cursor->take(token_kind::assign, '=');
+				if ($cursor->tokens->text_at($cursor->position()) !== 'null') throw new diagnostic($cursor->tokens->source, $cursor->offset(), 'Static dynamic property starts as null; assign its container in executable code');
+				$cursor->take($cursor->tokens->tokens[$cursor->position()]->kind, 'null');
+			}
 		} else {
 			$cursor->take(token_kind::assign, '=');
 			$initializer = $parser->literal_initializer('Expected scalar literal for global initializer');

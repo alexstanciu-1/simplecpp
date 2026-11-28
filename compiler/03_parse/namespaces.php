@@ -78,7 +78,8 @@ final class Namespace_Syntax
 			if ($qualified && self::write_operator($next)) return true;
 			if ($this->cursor->tokens->source->flavor === flavor::php && $next === token_kind::scope) {
 				$operator = $tokens[$i + 2]->kind ?? null;
-				return ($tokens[$i + 1]->kind ?? null) === token_kind::variable && self::write_operator($operator);
+				return ($tokens[$i + 1]->kind ?? null) === token_kind::variable && (self::write_operator($operator) || $operator === token_kind::lbracket
+					|| ($operator === token_kind::member && ($tokens[$i + 3]->kind ?? null) === token_kind::lbrace));
 			}
 			if ($next !== $this->separator) return false;
 			$qualified = true;

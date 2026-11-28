@@ -713,6 +713,12 @@ abstract class type_definition
 		return $this->supports_instance_field();
 	}
 
+	/** A static property declared without a literal uses native default construction. */
+	public function supports_default_static_property(): bool
+	{
+		return $this->supports_static_property();
+	}
+
 	/** Whether scalar condition lowering is published for this type. */
 	public function supports_scalar_condition(): bool
 	{
