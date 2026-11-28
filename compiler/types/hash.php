@@ -6,6 +6,7 @@ namespace scpp\compiler;
 /** Published hash<V,K> identity; e.g. hash<int,string>. Empty construction, keyed writes and value-copy reads are supported. */
 abstract class hash_type_definition extends type_definition implements subset_source, map_source, keyed_result_builder, readonly_index_lookup_type, writable_iteration_type, nested_index_storage_type, counted_collection_type, membership_type
 {
+	use indexed_entry_read;
 	use same_type_subset;
 	use keyed_entry_insert;
 	use checked_indexed_mutation;
@@ -104,11 +105,5 @@ abstract class hash_type_definition extends type_definition implements subset_so
 		$binding = $this->presence_function();
 		$headers[$binding->header] = true;
 		return '(' . $receiver . ').' . $binding->symbol . '(' . $this->lower_cpp_key($needle, $key) . ')';
-	}
-
-	public function prepare_index(ast_index_expression $value): void
-	{
-		$this->prepare_key($value->index);
-		$value->settle_element($this->value_type);
 	}
 }

@@ -6,6 +6,7 @@ namespace scpp\compiler;
 /** Inline byte storage, e.g. fixed_array<fixed_array<byte,5>,3>. Each dimension keeps its logical bound. */
 final class fixed_array_type extends type_definition implements container_type, subset_source, map_source, indexed_collection_type, index_write_type, counted_collection_type
 {
+	use indexed_entry_read;
 	use positional_subset;
 
 	/** CONSTANTS */
@@ -124,12 +125,6 @@ final class fixed_array_type extends type_definition implements container_type, 
 		if ($key->type_def() !== type_int64::instance()) {
 			throw new diagnostic($key->source(), $key->byte_start(), 'Fixed-array index requires int64');
 		}
-	}
-
-	public function prepare_index(ast_index_expression $value): void
-	{
-		$this->prepare_key($value->index);
-		$value->settle_element($this->element);
 	}
 
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string

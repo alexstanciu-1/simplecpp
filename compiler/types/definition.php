@@ -330,6 +330,19 @@ interface index_read_type
 	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string;
 }
 
+/** A checked read returns the same entry type this provider exposes during traversal. */
+trait indexed_entry_read
+{
+	abstract public function prepare_key(ast_expression $key): void;
+	abstract public function iteration_value_type(): type_definition;
+
+	public function prepare_index(ast_index_expression $value): void
+	{
+		$this->prepare_key($value->index);
+		$value->settle_element($this->iteration_value_type());
+	}
+}
+
 /**
  * After operand evaluation, locating an element preserves the receiver and selects the
  * same value or checked failure on an equal snapshot. Materializing the result has

@@ -588,6 +588,8 @@ if(BUILD_TESTING)
     ${CMAKE_CXX_COMPILER} ${SCPP_MOLD_LINKER} $<TARGET_FILE:scpp_runtime>)
   add_test(NAME compiler_collection_map COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_map.py)
+  add_test(NAME compiler_indexed_entry_reads COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/indexed_entry_reads.py)
   add_test(NAME compiler_collection_subset COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/collection_subset.py)
   add_test(NAME compiler_collection_value_scan COMMAND ${Python3_EXECUTABLE} -B

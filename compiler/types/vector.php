@@ -9,6 +9,7 @@ namespace scpp\compiler;
  */
 abstract class vector_type_definition extends type_definition implements subset_source, map_source, entry_result_builder, readonly_index_lookup_type, writable_iteration_type, appendable_collection_type, nested_index_storage_type, native_sequence_type, iterable_type, membership_type
 {
+	use indexed_entry_read;
 	use positional_subset;
 
 	use checked_indexed_mutation;
@@ -125,11 +126,5 @@ abstract class vector_type_definition extends type_definition implements subset_
 		return '([&]() { const auto& sequence = ' . $receiver . '; ' . $output . ' item{}; '
 			. $this->lower_cpp_iteration_storage(false) . $this->lower_cpp_iteration_initialize('sequence')
 			. ' while (' . $next . ') { if (' . $match . ') return true; } return false; }())';
-	}
-
-	public function prepare_index(ast_index_expression $value): void
-	{
-		$this->prepare_key($value->index);
-		$value->settle_element($this->element_type);
 	}
 }
