@@ -23,9 +23,10 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         $d .= "int64 boxed_key(int64 key) { return detail::packed_key::integer(key); }\n"
             . "boxed_text_key boxed_key(string key) {\n"
             . "    const auto index = detail::source_key_index({key.data(), static_cast<std::size_t>(key.size())});\n"
-            . "    if (index >= 0) return {boxed_key(static_cast<int64>(index)), {}};\n"
+            . "    if (index >= 0) return {boxed_key(static_cast<int64>(index)), std::move(key)};\n"
             . "    return {-1, std::move(key)};\n}\n";
     }
+    if (isset($plan['error'])) $d = includeHeader('scpp/exception.hpp') . $d;
     $recordExport = $split && isset($plan['structural_encoder']);
     if ($recordExport) {
         $d = "#include <vector>\n" . includeHeader('scpp/encoder.hpp') . $d;
@@ -72,8 +73,9 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
         if ($split) foreach ($family['source_collection']['methods'] as $operation => $binding) {
             if ($operation === 'clear') continue;
             $const = $operation === 'has' ? ' const' : '';
+            $textKey = $operation === 'remove' ? 'if (is_json_array()) return remove(key); ' : '';
             $sourceMembers .= "    bool_t $binding(int64 key)$const { return $operation(boxed_key(key)); }\n"
-                . "    bool_t $binding(const string& key)$const { auto normalized = boxed_key(key); return normalized.index < 0 ? $operation(normalized.text) : $operation(normalized.index); }\n";
+                . "    bool_t $binding(const string& key)$const { {$textKey}auto normalized = boxed_key(key); return normalized.index < 0 ? $operation(normalized.text) : $operation(normalized.index); }\n";
         }
         if ($recordExport) {
             $sourceMembers .= "    static $n from_record(const void* source, void (*visit)(const void*, Encoder&));\n";
@@ -118,7 +120,7 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
                 includeHeader('scpp/boxed_key.hpp') . includeHeader('scpp/boxed_kind.hpp') . "namespace scpp { namespace detail { struct ownership_access; } $forward\n" . $decl . $literalEntry . $api . $predicates . "}\n"];
             $d .= $impl . "void $n::source_check_container() const { if (kind() != boxed_kind::container) throw std::runtime_error(\"boxed_expected_container\"); }\n"
                 . "$n $n::source_read(const boxed_text_key& key) const { return key.index < 0 ? read(key.text) : read(key.index); }\n"
-                . "void $n::source_set(const boxed_text_key& key, const $n& value) { if (key.index < 0) set(key.text, value); else set(key.index, value); }\n";
+                . "void $n::source_set(const boxed_text_key& key, const $n& value) { if (key.index < 0 || (key.text.size() != 0 && is_json_array())) set(key.text, value); else set(key.index, value); }\n";
         } else {
             $h .= $decl . $predicates;
         }
@@ -134,8 +136,15 @@ function renderBoxed(array $plan, array &$files, array &$groups): void {
                 $d .= "$n $n::source_require(const boxed_text_key& key) const { $n result; $result = key.index < 0 ? $self.require(std::string_view{key.text.data(), static_cast<std::size_t>(key.text.size())}) : $self.require(key.index); return result; }\n";
             }
             $d .= "bool_t $n::has(const $key& key) const { return bool_t{{$self}.contains($expression)}; }\n";
-            $d .= "void $n::set($param key, $n value) { $self.set($expression, std::move($value)); }\n";
-            $d .= "bool_t $n::remove(const $key& key) { return bool_t{{$self}.remove($expression)}; }\n";
+            $store = "$self.set($expression, std::move($value));";
+            $remove = "return bool_t{{$self}.remove($expression)};";
+            if (isset($plan['error'])) {
+                $failure = 'catch (const detail::json_array_key_error& e) { throw_exception(exception{string{e.what()}}); }';
+                if ($key === 'string') $remove = "try { $remove } $failure";
+                $store = "try { $store } $failure";
+            }
+            $d .= "void $n::set($param key, $n value) { $store }\n";
+            $d .= "bool_t $n::remove(const $key& key) { $remove }\n";
         }
         foreach ($plan['string_functions'] ?? [] as $name => $binding) {
             if (empty($binding['project_selector'])) continue;

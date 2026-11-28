@@ -23,6 +23,11 @@ declaration header. The native umbrella includes the selected operation headers.
 | dt_format_now(string format) | format_local_now | string |
 | dt_parse(string value) | parse_common_local | result<int> |
 
+PHP `microtime(): string` requires datetime. One wall-clock sample supplies
+both the microsecond fraction and Unix seconds. The spelling is
+`0.ffffff00 seconds`, with six microsecond digits followed by two zeroes.
+This operation publishes the zero-argument string form.
+
 PHP also exposes `time(): int` when the project selects `datetime` and the build publishes
 `now_unix_seconds`. This PHP name needs no `general_api` opt-in and binds directly to
 the same native symbol and declaration header as `dt_now()`.
@@ -183,7 +188,7 @@ must build without the legacy runtime tree, including with tests disabled.
 
 ## Deferred scope
 
-The legacy source callable catalog remains unchanged. Custom DST resolution, PHP microtime adapters, configurable default zones, locale-aware
+The legacy source callable catalog remains unchanged. Custom DST resolution, the boolean microtime overload, configurable default zones, locale-aware
 formatters, calendar arithmetic and general module/plugin discovery are separate work.
 
 Donor provenance and initial validation are recorded in `datetime_validation.md`;

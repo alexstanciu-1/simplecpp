@@ -116,6 +116,20 @@ final readonly class rewrite_rule_overloads extends runtime_overloads
 	}
 }
 
+/** A PHP observation resolved through the operand's structural encoding capability. */
+final readonly class dump_contract extends runtime_overloads
+{
+}
+
+/** One synchronous observation of the prepared operand. */
+final readonly class dump_function extends runtime_function
+{
+	public function __construct(type_definition $input)
+	{
+		parent::__construct('var_dump', [$input], type_void::instance(), '::scpp::dump_value', 'scpp/encoder.hpp', const_reference_mask: 1);
+	}
+}
+
 /** Published leaf encoders also define the admissible fields of a data record. */
 final readonly class json_encoder_overloads extends runtime_overloads
 {

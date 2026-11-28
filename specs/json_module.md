@@ -74,9 +74,15 @@ produce doubles; underflow to zero retains donor behavior. Parsing uses a privat
 C numeric locale; formatting uses the classic locale, without changing process locale.
 
 The writer traverses same-family tables through a private synchronous const adapter.
-Packed shape emits arrays; other tables emit objects in storage order. Empty object
-identity is not retained. Cycles and nonfinite floats return checked encoding errors;
-repeated aliases outside the active recursion path are valid. Every call owns its
+Decoded arrays and objects retain their JSON identity through copies, shared aliases,
+mutation and clear. A decoded object emits its member names even when its backing
+table is empty or packed. Decoded arrays accept integer replacement and insertion
+at the current length. String-key writes (including numeric strings), string-key
+removals and sparse writes fail before changing the array. Removing an existing
+integer position shifts later elements down one. Removal returns
+false for a missing key within the boxed integer domain. Ordinary tables encode
+according to their physical layout as before. Cycles and nonfinite floats return
+checked encoding errors. Repeated aliases outside the active recursion path are valid. Every call owns its
 output and active path, so failures expose no partial output and later calls recover.
 Control bytes/quotes/backslashes are escaped, and escaped Unicode surrogate pairs are
 validated. Raw bytes above ASCII retain the donor behavior (no new UTF-8 validation).
@@ -124,8 +130,7 @@ paths record provenance only: builds use v0.2 sources exclusively. The private
 `boxed_inspection` adapter exposes no public cursor, mutable reference or subscription.
 Public traversal/liveness remains RT-DEBT-01.
 
-Standalone typed vector/hash encoding,
-PHP compatibility wrappers and persistent `{}`/`[]` identity remain separate work.
+Standalone typed vector/hash encoding and PHP compatibility wrappers remain separate work.
 The donor's recursive parser/writer has no explicit nesting-depth budget; this slice
 does not establish a hostile-input resource-limit contract or a throughput claim.
 See [validation](json_validation.md).

@@ -33,3 +33,5 @@ A future source-to-executable test should launch with an empty argument and one 
 ## Implementation outcome
 
 The [core publication](../../../runtime/metadata/publication.json) binds cli_argument_count, cli_arguments and env_get. PHP cli_argc and getenv share the general operations. PHP cli_args and cli_argv share the packed mixed snapshot provider. The normal launcher proof now uses the general vector through generated startup. The [source proof](../../../compiler/tests/cli_environment_native.py) verifies cross-unit reads, raw argument bytes, independent results, missing versus empty environment values, NUL rejection, source visibility and count-only header dependencies. Shell execution remains deferred and the PHP-flavor review retains the root variable decision.
+
+The later process-module publication adds PHP shell_exec with counted stdout and checked command bytes. See the [current process contract](../../stream_process_curl_modules.md#php-process-observations-and-shell-output).

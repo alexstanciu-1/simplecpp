@@ -62,6 +62,7 @@ Both classes expose the same bounded operations, preserving their family:
 | `remove(key)` | bool_t indicating removal |
 | `append(same-family value)` | Assigned int64 key, bounded by INT32_MAX |
 | `container_size()` | int64 count for a table or tuple |
+| `is_json_array()`, `is_json_object()` | fixed identity from boxed JSON decode, false for ordinary tables and scalars |
 | `is_packed_container()` | bool_t physical dense shape; requires container kind |
 | `clean()` | Nonthrowing reset of this binding to null |
 
@@ -93,6 +94,10 @@ integer keys above INT32_MAX then fail. Wider spellings, signed spellings, leadi
 (except "0") and embedded NUL remain byte strings. Each boxed keyed write validates its key and converts its RHS before the store.
 The two arguments follow native C++ evaluation order. If either fails, the store is
 skipped and effects already performed by either argument remain observable. Typed hashes continue to use their declared key domain.
+
+Decoded JSON arrays accept only integer keys for mutation and stay dense after removal.
+The source adapter retains the original key type for this check, including numeric
+strings. See [boxed JSON storage](json_module.md#storage-and-failures).
 
 The storage contracts own failure behavior. Invalid kinds throw runtime errors,
 invalid integer keys throw out_of_range, append exhaustion throws overflow_error,

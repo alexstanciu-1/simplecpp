@@ -26,6 +26,11 @@ abstract class hash_type_definition extends type_definition implements readonly_
 	}
 
 	/** METHODS */
+	public function structural_encoding(): ?encoding_shape
+	{
+		return in_array($this->key_type->scalar_kind(), [value_kind::integer, value_kind::string], true) ? encoding_shape::mapping : null;
+	}
+
 	abstract public function presence_function(): runtime_function;
 
 	public function prepare_membership(ast_binary_expression $site): void

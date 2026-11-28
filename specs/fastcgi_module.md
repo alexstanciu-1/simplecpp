@@ -42,3 +42,56 @@ The [compiled source fixture](../compiler/tests/fixtures/resource_modules/fcgi.p
 shows the accept loop, request dispatch, repeated response headers, and explicit
 abandon on a handler exception. The [Apache integration test](../compiler/tests/fcgi_apache_native.py)
 uses an isolated temporary configuration and leaves the system service untouched.
+
+### Compile on request in development
+
+Run the fixed supervisor from the checkout with Python 3.11+ and the PHP compiler
+on PATH. Enable and build the FastCGI provider first. Give the app the same
+manifest and worker entry contract as the compiled source fixture above. Each
+worker receives its private listener path as the first application argument.
+
+```sh
+cmake --preset default -DSCPP_ENABLE_FCGI=ON
+cmake --build --preset default
+python3 tools/fcgi_dev/serve.py --app /absolute/path/to/app --socket /run/scpp/app.sock --workers 2
+```
+
+Point the Apache mount above at that public socket with `enablereuse=off`.
+Create its parent directory beforehand with permissions that allow the supervisor
+to bind and Apache to connect. The socket mode is 0660. A shared group on a
+setgid directory works when the two processes use different accounts. Set the
+Apache proxy timeout to cover the expected cold build and application response.
+
+On the first request the supervisor starts one PHP compiler for this app. Each
+new request asks it to check the project and run the incremental native build.
+Requests arriving during the same check share its result. A matching executable
+digest keeps the current workers. For a changed executable the supervisor starts
+the whole replacement pool and waits for its private listener sockets. New work
+then goes to that pool immediately. Idle old workers retire in the background.
+Busy old workers retire after finishing their current exchanges. The
+supervisor relays FastCGI bytes in both directions, including repeated headers
+and binary bodies. It never retries a dispatched request.
+
+A build error returns HTTP 500 with the compiler diagnostic. The next request
+checks again. A stopped compiler is started on the next check. By default up to
+32 requests may be admitted at once, with a 150-second limit to acquire a
+worker. Queue saturation and acquisition timeouts return 503. During a refresh
+the process count may temporarily exceed the configured pool size while earlier
+exchanges drain. Application state kept in a worker is private to that process.
+
+Use `--toolchain /absolute/path/to/config.json` for a native build configuration,
+and `--help` for pool and timeout settings. The supervisor owns a private temporary
+build directory for its lifetime. SIGTERM or SIGINT stops its children and
+removes that directory and its public socket. Restart the supervisor after
+editing the compiler itself.
+
+To profile a bounded edit sequence with the provider enabled on Linux, run the
+Apache fixture with `--profile`. It uses a temporary app with three source files
+and two workers. The JSON output records HTTP latency, PHP CPU time, reaped
+build-child CPU time, compiler RSS and file descriptors, native object changes,
+and worker reuse per request. CPU counters have the resolution of Linux process
+accounting ticks. Repeat with `--toolchain PATH` to compare native configurations.
+
+```sh
+python3 -B tools/fcgi_dev/test_apache.py /usr/sbin/apache2 /usr/lib/apache2/modules --profile
+```

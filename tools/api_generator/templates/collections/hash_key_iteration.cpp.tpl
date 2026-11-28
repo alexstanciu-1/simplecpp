@@ -16,3 +16,7 @@
 @inline@@v@& @n@::iteration_reference(@count@ position) {
     return storage::iteration_reference(storage_, position);
 }
+
+@inline@const @v@& @n@::scpp_escape_read_slot(@count@ position) const & {
+    return storage::iteration_reference(storage_, position);
+}

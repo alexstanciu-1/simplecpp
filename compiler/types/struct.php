@@ -74,6 +74,11 @@ final class record_type_definition extends type_definition implements dependency
 	}
 
 	/** METHODS */
+	public function structural_encoding(): ?encoding_shape
+	{
+		return $this->declaration->data_constructor !== null && $this->constructor() === null ? encoding_shape::record : null;
+	}
+
 	/** Share the nominal pair while signatures retain it. Both cache links are weak across generations. */
 	public function intersection(shared_record_type_definition $capability): intersection_type_definition
 	{
@@ -755,6 +760,11 @@ final class shared_record_type_definition extends record_handle_definition
 	}
 
 	/** METHODS */
+	public function structural_encoding(): ?encoding_shape
+	{
+		return encoding_shape::owner;
+	}
+
 	public function mutates_referenced_value(): bool
 	{
 		return true;

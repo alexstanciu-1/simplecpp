@@ -34,7 +34,7 @@ Reconciled against `codex/helpers-and-libs` through `cfd9f27c9` on 2026-11-25. A
 | Tokenizer | Excluded from native helper intake by decision. Its implementation and benchmarks belong to the Simple C++ tokenizer. [Benchmark](../benchmarks/tokenizer/current_native.md) |
 | Iterators and storage | Built-in traversal, custom iterators and yield producers exist. Sparse stable-ID storage and keyed duplicate membership await concrete consumers. [Iteration](../../../compiler/docs/foreach.md) |
 | Compiler support | Bitsets, work queues, binary codecs and memory accounting await compiler or measurement consumers. The eleven donor filesystem publication operations belong with the publisher. [Filesystem audit](filesystem_audit.md) |
-| Shell execution and PHP root argument variables | shell_exec remains deferred. The PHP-flavor review owns implicit $argc and $argv. [Family audit](cli_environment_shell_audit.md) |
+| Shell execution and PHP root argument variables | PHP shell_exec is published by the process module. The PHP-flavor review owns implicit $argc and $argv. [Family audit](cli_environment_shell_audit.md) |
 | Async/task helpers | Cooperative suspension and joined parallel batches exist. Background ownership, cancellation, progress and intermediate publication await a concurrency use case. [Task audit](async_mysqli_ui_webview_audit.md#asynctask-helpers) |
 | Flavor and platform expansion | Separate flavor reviews own PHP date/time compatibility, indexed unset, donor container aliases and additional natural JS/Python APIs. Additional database engines, widget toolkits and non-Linux desktop providers are outside the selected contracts. |
 

@@ -73,7 +73,7 @@ return 0;
     nul = build(work/'nul', r'$s=getenv("SCPP_CLI_PROBE\0suffix"); return 0;')
     result = subprocess.run([nul], env={**os.environ, 'SCPP_CLI_PROBE':'exists'}, capture_output=True)
     assert result.returncode and b'must not contain NUL' in result.stderr, result
-    for i, expr in enumerate(['cli_arguments()', 'env_get("x")', 'shell_exec("x")', '$argc', '$argv']):
+    for i, expr in enumerate(['cli_arguments()', 'env_get("x")', '$argc', '$argv']):
         response, _ = project(work/str(i), 'echo '+expr+'; return 0;', general=i>=2)
         assert 'Unknown' in response.get('error',''), response
     probe = build(work/'count', 'return cli_argc();')

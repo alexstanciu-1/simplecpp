@@ -238,6 +238,11 @@ Executable startup retains the supplied count and argument slots before entering
 
 ## Stable string fingerprints
 
+The general API also publishes `content_sha256(string): string`. It hashes all
+input bytes, including embedded NULs, and returns 64 lowercase hexadecimal
+digits. PHP projects select `general_api` to use this spelling. It needs no
+optional module.
+
 The general API publishes `hash_string(string): string` and
 `stable_hash_string_u64(string): uint64`. Both borrow the input and compute
 FNV-1a 64-bit over its exact bytes, including NUL and invalid UTF-8. Start

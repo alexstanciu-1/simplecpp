@@ -44,6 +44,7 @@ function compilerTextBinding(string $name, array $binding, array $types, ?string
 
 function renderTextHelpers(array $plan, array &$files): void {
     foreach ($plan['text_helpers'] ?? [] as $name => $binding) {
+        if ($name === 'content_sha256') $files['src/runtime.cpp'] .= includeHeader('content_sha256.hpp');
         if (in_array($name, ['hash_string', 'stable_hash_string_u64'], true)) $files['src/runtime.cpp'] .= includeHeader('stable_string_hash.hpp');
         if ($name === 'string_byte_slice_equals') $files['src/runtime.cpp'] .= "#include <cstring>\n";
         if (str_starts_with($name, 'string_utf8_')) $files['src/runtime.cpp'] .= includeHeader('utf8_codepoints.hpp');

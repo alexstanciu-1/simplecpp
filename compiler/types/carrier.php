@@ -20,6 +20,11 @@ abstract class carrier_type_definition extends type_definition implements presen
 	}
 
 	/** METHODS */
+	public function structural_encoding(): ?encoding_shape
+	{
+		return $this->family === 'nullable' ? encoding_shape::optional : null;
+	}
+
 	/** Metadata-generated alternate-state admission and checked extraction binding. */
 	abstract public function accepts_empty(): bool;
 	/** Generated admission for a value-or-empty carrier; other alternate states are not fallback. */

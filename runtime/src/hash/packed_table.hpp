@@ -305,6 +305,11 @@ public:
         auto code = packed_string_pool::instance().find(key);
         return code ? find_code(*code).second : nullptr;
     }
+    bool remove_dense_at(std::size_t index) {
+        if (!is_packed() || index >= values_.size()) return false;
+        values_.erase(values_.begin() + index);
+        return true;
+    }
     bool remove(std::int64_t key) { return erase_code(packed_key::integer(key)); }
     bool remove(std::string_view key) {
         auto code = packed_string_pool::instance().find(key);

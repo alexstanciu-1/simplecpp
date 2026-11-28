@@ -12,6 +12,7 @@
     "format_local",
     "format_local_now",
     "php_date",
+    "php_microtime",
     "php_strtotime",
     "parse_common_local"
   ]

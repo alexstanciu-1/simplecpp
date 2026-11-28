@@ -334,6 +334,15 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         if ((valueKinds()[$kind] ?? null) === 'scalar') {
             $methods .= "\n\tpublic function scalar_kind(): ?value_kind { return value_kind::$kind; }\n";
         }
+        if (isset($runtime['structural_encoder'])) {
+            $encoding = match (true) {
+                isset($types[$identity]) => $types[$identity]['signed'] ? 'signed_integer' : 'unsigned_integer',
+                $kind === 'null' => 'null_value',
+                isset($runtime['structural_encoder'][$identity]) => 'leaf',
+                default => null,
+            };
+            if ($encoding !== null) $methods .= "\n\tpublic function structural_encoding(): ?encoding_shape { return encoding_shape::$encoding; }\n";
+        }
         if (isset($runtime['structural_decoder'][$identity])) {
             $reader = $runtime['structural_decoder'][$identity];
             $methods .= "\n\tpublic function structural_reader(): ?string { return '$reader'; }\n";
@@ -512,6 +521,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
         foreach ($runtime['boxed']['families'] as $box) $runtimeTypes[$box['name']] = $box['name'];
     }
     $runtimeCases = array_merge(compilerJsonCases($runtime, $runtimeTypes), compilerResourceCases($runtime, $runtimeTypes));
+    if (isset($runtime['structural_encoder'])) {
+        $context = isset($runtimeTypes['mixed']) ? 'type_mixed::instance()' : 'null';
+        $runtimeCases[] = "\t\t\t'php:func:var_dump' => \$bindings[\$key] ??= new dump_contract([], list_context: $context),";
+    }
     if (isset($runtime['query_builder'])) $runtimeCases[] = compilerQueryBuilder($runtime['query_builder'], $runtimeTypes);
     foreach ($runtime['regex']['callbacks'] ?? [] as $name => $binding) {
         $key = $binding['callbackSurface'] . ':func:' . $name;

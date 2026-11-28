@@ -100,6 +100,19 @@ void write_digits(std::array<char,20>& out, std::size_t offset, unsigned value, 
     }
 }
 }
+std::string php_microtime() {
+    using namespace std::chrono;
+    const auto now = floor<microseconds>(system_clock::now());
+    const auto whole = floor<seconds>(now);
+    auto fraction = (now - whole).count();
+    std::string text = "0.00000000 ";
+    for (int index = 7; index >= 2; --index) {
+        text[index] = static_cast<char>('0' + fraction % 10);
+        fraction /= 10;
+    }
+    return text + std::to_string(whole.time_since_epoch().count());
+}
+
 std::int64_t now_unix_seconds() {
     return checked_duration_count<seconds_t, true>(std::chrono::system_clock::now().time_since_epoch());
 }

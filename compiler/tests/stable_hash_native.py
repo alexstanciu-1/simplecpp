@@ -1,4 +1,5 @@
 """Verify both general string fingerprints through compiled source functions."""
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -42,7 +43,13 @@ static_assert(std::is_same_v<decltype(&scpp::str::{operation}), scpp::{result_ty
         main.write_text('stable_hash_string_u64(""); return 0;')
         assert 'requires module runtime-numeric' in invoke(proc).get('error', '')
         manifest.write_text(json.dumps({'general_api': True, 'dependencies': {'runtime': {'modules': ['numeric']}}}))
-        main.write_text('bits_value("abc"); return hex_value("abc")==="e71fa2190541574b" ? 0 : 1;')
+        # Feed the digest the same bytes on padding/block boundaries and across embedded NULs.
+        checks = ['$bytes = ""; for ($i=0; $i<256; $i+=1) { $bytes .= chr($i); }']
+        for n in (0, 3, 55, 56, 63, 64, 65, 256):
+            data = bytes(range(n))
+            source = f'substr($bytes,0,{n})'
+            checks.append(f'if(content_sha256({source})!=="{hashlib.sha256(data).hexdigest()}"){{return 1;}}')
+        main.write_text(''.join(checks) + 'bits_value("abc"); return hex_value("abc")==="e71fa2190541574b" ? 0 : 1;')
         (app/'hex.phs').write_text('function hex_value(string $s): string {return hash_string($s);}')
         (app/'bits.phs').write_text('function bits_value(string $s): uint64 {return stable_hash_string_u64($s);}')
         result = invoke(proc)
@@ -76,3 +83,6 @@ int main() {
     subprocess.run([*flags, f'--ld-path={linker}', observer, *(p.with_suffix('.cpp') for p in functions),
                     archive, '-o', work/'probe'], check=True)
     subprocess.run([work/'probe'], check=True)
+
+    subprocess.run([*flags, f'--ld-path={linker}', *(out/u for u in bundle['translation_units']), *bundle['link_inputs'], '-o', work/'source-caller'], check=True)
+    subprocess.run([work/'source-caller'], check=True)
