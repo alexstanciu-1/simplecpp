@@ -46,8 +46,7 @@ def prove(work):
             # Absence and explicit false both withdraw a grant.
             if family == 'hash':
                 del recipe['declarations']['instance_field' if local else 'inferred_local']
-            if not local:
-                del recipe['read_segment']
+            del recipe['segment']['write' if local else 'read']
             owner, view = ('vector<int>', 'read_segment<int>') if family == 'vector' else ('hash<int,int>', 'read_hash_segment<int,int>')
             prefix = f'function reader({view} $s):int {{return count($s);}} $items {owner}=[]; '
             error = None if local else 'Segment requires a matching local vector or hash'
@@ -55,6 +54,13 @@ def prove(work):
                 (prefix + 'parallel {reader(segment($items,0,0));}; return 0;', error),
                 (prefix + 'parallel {job (read: $s=segment($items,0,0)) {return count($s);} }; return 0;', error),
                 (prefix + 'foreach ($items as $v) {return $v;} return 0;', None),
+            ])
+            writer = view.removeprefix('read_')
+            prefix = f'function writer({writer} $s):int {{return count($s);}} $items {owner}=[]; '
+            error = 'Segment requires a matching local vector or hash' if local else None
+            programs.extend([
+                (prefix + 'parallel {writer(segment($items,0,0));}; return 0;', error),
+                (prefix + 'parallel {job (write: $s=segment($items,0,0)) {return count($s);} }; return 0;', error),
             ])
             path.write_text(json.dumps(recipe))
             for element in ('int', 'Item'):

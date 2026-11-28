@@ -1,6 +1,6 @@
 
 /** Canonical published hash<V,K> identity; empty construction, checked keyed writes and copied reads. */
-final class @class@ extends hash_type_definition@interfaces@@read_segment_interface@, coalescing_index_read_type, subset_source, map_source, @entry_builder@
+final class @class@ extends hash_type_definition@interfaces@@segment_interfaces@, coalescing_index_read_type, subset_source, map_source, @entry_builder@
 {
 	use @entry_insert@;
 	use collection_keyed_store;
@@ -16,7 +16,7 @@ final class @class@ extends hash_type_definition@interfaces@@read_segment_interf
 @initialization@
 @identity@
 	/** METHODS */
-@read_segment_methods@@copy_effect@
+@segment_methods@@copy_effect@
 @declarations@
 @subset_result@
 @map_result@

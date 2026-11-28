@@ -4209,7 +4209,7 @@ CPP;
 					$length = "snapshot_$i.range$slot.length";
 				} else [, $offset, $length] = $operands;
 				$forwarded[] = 'inputs[' . count($args) . ']';
-				$borrow = $input->read_segment_borrow ?? ($input->type_def()->key === null ? '::scpp::mt::job::borrow' : '::scpp::mt::job::borrow_hash');
+				$borrow = $input->segment_borrow ?? throw new \LogicException('Segment borrow is not settled');
 				$args[] = "{$borrow}($owner, $offset, $length)";
 			}
 			$grant_list = implode(', ', $args);

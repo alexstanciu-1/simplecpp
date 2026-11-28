@@ -274,6 +274,25 @@ function update_hash(hash_segment<int,int> $s): int {
     }
     return $order;
 }
+function hash_write_pair(hash<int,int> &$table, hash<int,int> &$alias, int $offset): vector<int> {
+    return parallel {
+        update_hash(segment($table,1,1));
+        job (write: $s = segment($alias,$offset,1)) { return update_hash($s); }
+    };
+}
+function hash_write_read(hash<int,int> &$table, hash<int,int> &$alias): vector<int> {
+    return parallel {
+        update_hash(segment($table,1,1));
+        read_order(segment($alias,1,1));
+    };
+}
+function write_digit(segment<int> $s): int { $s[0] = $s[0] + 10; return $s[0]; }
+function vector_write_pair(vector<int> &$v): vector<int> {
+    return parallel {
+        write_digit(segment($v,1,1));
+        job (write: $s = segment($v,2,1)) { return write_digit($s); }
+    };
+}
 function hash_batch(hash<int,int> &$table, hash<int,int> &$alias, vector<int> &$entered, int $offset): vector<int> {
     return parallel {
         job (write: $flag = segment($entered,0,1), write: $slice = segment($table,1,2)) {

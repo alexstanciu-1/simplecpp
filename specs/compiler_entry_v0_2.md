@@ -599,7 +599,10 @@ overlaps within one job. Empty ranges claim no slots.
 Named and inline readers require a provider grant for read-only segments. The grant declares
 the element type, any observable key type and the native read-borrow function. The provider
 keeps the selected elements and keys valid through join. Preparation binds the function at
-the segment expression. Ordinary iteration and writable borrowing are independent grants.
+the segment expression. Writable borrowing has its own provider grant and native binding.
+Both modes use the same backing identity and logical coordinates across aliases. A writable
+grant exposes the original selected value slots for in-place updates and keeps their addresses,
+order and observable keys stable through join. Ordinary iteration is independent of either grant.
 
 A `read:` binding borrows its source slots without copying. Its worker can index
 and count the segment and forward it to a helper taking `read_segment<T>`.

@@ -66,7 +66,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $provider = concreteRecipe(hashConcreteRecipe($hash));
         $indexedTypes = at($provider, 'indexed_entry_types');
         [$readMember, $indexedRead] = compilerIndexedRead($provider, $hash['methods'], $hash['key'], $hash['value']);
-        $bindings = compilerReadSegment($provider, !empty($runtime['mt_segments'])) + compilerCollectionBuilders($provider) + [
+        $bindings = compilerSegmentBindings($provider, !empty($runtime['mt_segments'])) + compilerCollectionBuilders($provider) + [
             '@copy_effect@' => compilerPrivateCopyEffect($provider, ['k' => '$this->key_type', 'v' => '$this->value_type']),
             '@declarations@' => compilerCollectionDeclarations($provider),
             '@indexed_probe@' => $publishedProbe ? "\tpublic function supports_indexed_presence(): bool { return true; }\n"

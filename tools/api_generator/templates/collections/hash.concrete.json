@@ -1,5 +1,5 @@
 {
-  "read_segment": {"element": "iteration_value", "key": "iteration", "borrow": "::scpp::mt::job::borrow_hash_read"},
+  "segment": {"element": "iteration_value", "key": "iteration", "read": "::scpp::mt::job::borrow_hash_read", "write": "::scpp::mt::job::borrow_hash"},
   "private_copy_allocation_only": ["k", "v"],
   "declarations": {"inferred_local": true, "instance_field": true},
   "hash_key": "k",

@@ -3,12 +3,23 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Provider lends stable read-only slots through join, with optional observable keys. */
-interface read_segment_source
+/** Both borrow modes address the same logical slots and expose the same worker types. */
+interface segment_source
 {
 	public function iteration_value_type(): type_definition;
-	public function read_segment_key_type(): ?type_definition;
+	public function segment_key_type(): ?type_definition;
+}
+
+/** Provider lends stable read-only slots through join. */
+interface read_segment_source extends segment_source
+{
 	public function read_segment_borrow(): string;
+}
+
+/** Provider lends the selected original values for in-place writes through join. */
+interface write_segment_source extends segment_source
+{
+	public function write_segment_borrow(): string;
 }
 
 /** Borrowed worker parameter. Only the joined launch can create a view over collection slots. */

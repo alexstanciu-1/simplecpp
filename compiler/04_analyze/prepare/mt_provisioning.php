@@ -84,16 +84,11 @@ final class Mt_Provisioning
 		$container = $owner->type_def();
 		if ($owner::class !== ast_name_expression::class || $owner->local_binding() === null || ($read_only
 			? !($container instanceof read_segment_source)
-			: !($container instanceof vector_type_definition || $container instanceof hash_type_definition)))
+			: !($container instanceof write_segment_source)))
 			self::reject($owner, 'Segment requires a matching local vector or hash');
 		if (ast_writable_element::origin($owner->local_binding()) !== null) self::reject($range, 'Writable foreach element cannot supply segment storage');
-		if ($read_only) {
-			$key = $container->read_segment_key_type();
-			$element = $container->iteration_value_type();
-		} else {
-			$key = $container instanceof hash_type_definition ? $container->key_type : null;
-			$element = $container instanceof hash_type_definition ? $container->value_type : $container->element_type;
-		}
+		$key = $container->segment_key_type();
+		$element = $container->iteration_value_type();
 		if ($key !== null && $key !== type_int64::instance() && $key !== type_string::instance())
 			self::reject($range, 'Hash segment keys must be int or string');
 		if ($expected === null) {
@@ -113,7 +108,7 @@ final class Mt_Provisioning
 				|| ($bound::class === ast_name_expression::class && $bound->local_binding() !== null)))
 				self::reject($bound, 'Segment bounds require int locals or literals');
 		}
-		$range->settle_mt('segment', $expected, $read_only ? $container->read_segment_borrow() : null);
+		$range->settle_mt('segment', $expected, $read_only ? $container->read_segment_borrow() : $container->write_segment_borrow());
 		return $expected;
 	}
 

@@ -1,5 +1,5 @@
 {
-  "read_segment": {"element": "iteration_value", "key": "none", "borrow": "::scpp::mt::job::borrow_read"},
+  "segment": {"element": "iteration_value", "key": "none", "read": "::scpp::mt::job::borrow_read", "write": "::scpp::mt::job::borrow"},
   "private_copy_allocation_only": ["e"],
   "declarations": {"inferred_local": true, "instance_field": true},
   "fill_factory": {"source": "vector_filled", "member": "filled"},

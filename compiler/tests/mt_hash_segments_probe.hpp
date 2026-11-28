@@ -8,6 +8,9 @@
 using Int = scpp::int64;
 namespace App {
 Int record_hash_();
+scpp::vector_int64 hash_write_pair_(scpp::hash_int64_int64&, scpp::hash_int64_int64&, Int);
+scpp::vector_int64 hash_write_read_(scpp::hash_int64_int64&, scpp::hash_int64_int64&);
+scpp::vector_int64 vector_write_pair_(scpp::vector_int64&);
 scpp::vector_int64 vector_read_pair_(scpp::vector_int64&);
 scpp::vector_int64 hole_read_pair_(scpp::hash_int64_int64&);
 scpp::vector_int64 read_pair_(scpp::hash_int64_int64&, Int, Int);
@@ -28,6 +31,26 @@ static void check_hash_segments() {
     for (Int value : {9, 4, 7, 2}) values.append(value);
     auto middle = App::vector_read_pair_(values);
     assert(middle.at(0) == 47 && middle.at(1) == 47);
+    auto writes = App::vector_write_pair_(values);
+    assert(writes.at(0) == 14 && writes.at(1) == 17);
+    assert(values.at(0) == 9 && values.at(1) == 14 && values.at(2) == 17 && values.at(3) == 2);
+    try {
+        App::hash_write_read_(table, table);
+        assert(false);
+    } catch (const std::invalid_argument& error) {
+        assert(std::string_view(error.what()) == "Overlapping read and write segments");
+    }
+    try {
+        App::hash_write_pair_(table, table, 1);
+        assert(false);
+    } catch (const std::invalid_argument& error) {
+        assert(std::string_view(error.what()) == "Overlapping exclusive segments");
+    }
+    assert(table.at(Int{3}) == 30);
+    auto adjacent = App::hash_write_pair_(table, table, 2);
+    assert(adjacent.at(0) == 3 && adjacent.at(1) == 4);
+    assert(table.at(Int{3}) == 40 && table.at(Int{4}) == 14);
+    assert(table.at(Int{1}) == 1 && table.at(Int{5}) == 5 && table.size() == 4);
     auto deleted = App::read_pair_(table, 0, 4);
     assert(deleted.at(0) == 1345 && deleted.at(1) == 4);
     table.set(Int{2}, Int{20});
@@ -43,10 +66,10 @@ static void check_hash_segments() {
         assert(std::string_view(error.what()) == "Overlapping read and write segments");
     }
     assert(entered.at(0) == 0 && entered.at(1) == 0);
-    assert(table.at(Int{3}) == 30 && table.at(Int{4}) == 4);
+    assert(table.at(Int{3}) == 40 && table.at(Int{4}) == 14);
     auto results = App::hash_batch_(table, table, entered, 4);
     assert(results.at(0) == 34 && results.at(1) == 2);
     assert(entered.at(0) == 1 && entered.at(1) == 1);
-    assert(table.at(Int{3}) == 40 && table.at(Int{4}) == 14);
+    assert(table.at(Int{3}) == 50 && table.at(Int{4}) == 24);
     assert(table.at(Int{1}) == 1 && table.at(Int{5}) == 5 && table.at(Int{2}) == 20);
 }
