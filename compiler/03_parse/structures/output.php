@@ -18,6 +18,11 @@ final class ast_echo_statement extends ast_statement
 	/** Native owning syntax children, in output order. @var ast_expression[] */
 	public readonly array $values /** list<ast_expression> */;
 
+	/** Prepared fact: only operands requiring an implicit formatter have entries, indexed in source order.
+	 * @var array<int,runtime_function|ast_function_declaration>
+	 */
+	public array $formatters /** array<uint32,runtime_function|ast_function_declaration> */ = [];
+
 	/**
 	 * @param ast_expression[] $values
 	 * $start: token position.

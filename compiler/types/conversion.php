@@ -59,6 +59,7 @@ final class value_conversion
 	public const int intersection_capability /** uint16 */ = 26;
 	public const int guarded_intersection /** uint16 */ = 27;
 
+	public const int stringable_text /** uint16 */ = 34;
 	public const int forwarded_error /** uint16 */ = 33;
 	public const int export_record /** uint16 */ = 32;
 	public const int export_list /** uint16 */ = 31;
@@ -71,6 +72,7 @@ final class value_conversion
 	{
 		$operation = $code & self::OPERATION_MASK;
 		$name = match ($operation) {
+			self::stringable_text => 'to_string',
 			self::forwarded_error => 'forwarded_error',
 			self::export_record => 'export_record',
 			self::export_list => 'export_list',

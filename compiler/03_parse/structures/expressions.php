@@ -295,6 +295,8 @@ final class ast_cast_expression extends ast_expression
 	public readonly ast_expression $operand;
 
 	/** PREP FACTS */
+	/** Prepared fact: selected target for an implicit PHP text consumer. */
+	public runtime_function|ast_function_declaration|null $text_formatter = null;
 	/** Prepared fact: generated conversion decision; null before preparation or after reset. */
 	protected ?int $conversion /** uint16 */ = null;
 
@@ -327,6 +329,7 @@ final class ast_cast_expression extends ast_expression
 	{
 		parent::reset_preparation();
 		$this->conversion = null;
+		$this->text_formatter = null;
 	}
 }
 

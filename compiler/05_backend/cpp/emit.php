@@ -112,7 +112,22 @@ final class Cpp_Emitter
 		if ($part instanceof ast_interpolation_text) return $value;
 		$conversion = $part->conversion();
 		foreach ($type->conversion_headers($conversion) as $header) $required_headers[$header] = true;
-		return $this->conversion($type, $conversion, $value, $part);
+		return $part->text_formatter === null ? $this->conversion($type, $conversion, $value, $part)
+			: $this->formatted_text($part->text_formatter, $part, $value, $required_headers);
+	}
+
+	/** Keep a strong receiver through user code, including replacement of its original slot.
+	 * @param array<string,bool> $required_headers
+	 */
+	private function formatted_text(runtime_function|ast_function_declaration $target, ast_expression $site, string $operand, array &$required_headers): string
+	{
+		$type = $site->type_def();
+		if ($type instanceof carrier_type_definition) $operand = $type->lower_cpp_extract($operand);
+		if ($target instanceof runtime_function) {
+			$required_headers[$target->header] = true;
+			return $target->receiver_method ? '(' . $operand . ').' . $target->symbol . '()' : $target->symbol . '(' . $operand . ')';
+		}
+		return $site->value_type()->cpp_type() . '(' . $operand . ')->' . self::virtual_name($target) . '()';
 	}
 
 	/**
@@ -1722,19 +1737,26 @@ CPP;
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
-				foreach ($statement->values as $value) {
-					$type = $value->type_def();
+				foreach ($statement->values as $index => $value) {
+					$formatter = $statement->formatters[$index] ?? null;
+					$type = $formatter === null ? $value->type_def() : type_string::instance();
 					foreach ($type->output_headers() as $header) {
 						$required_headers[$header] = true;
 					}
 					if ($value instanceof ast_interpolated_string && $value->source()->flavor === flavor::php) {
 						// Complete every lookup and conversion before the first byte of this operand is visible.
 						$setup = $output = [];
+						$last_call = -1;
+						foreach ($value->parts as $i => $part) {
+							if (!($part instanceof ast_interpolation_text) && $part->text_formatter instanceof ast_function_declaration) $last_call = $i;
+						}
 						foreach ($value->parts as $i => $part) {
 							$operand = null;
 							if (!($part instanceof ast_interpolation_text)) {
 								$operand = 'scpp_text_' . $i;
-								$setup[] = 'const auto& ' . $operand . ' = ' . $this->interpolation_part($part, $type,
+								// A later user formatter can mutate or release a previously borrowed string.
+								$binding = $i < $last_call && $part->type_def() === $type ? 'const auto ' : 'const auto& ';
+								$setup[] = $binding . $operand . ' = ' . $this->interpolation_part($part, $type,
 									$global_references, $declarations, $required_headers) . ';';
 							}
 							$output[] = $type->lower_cpp_output($part, $operand);
@@ -1744,6 +1766,7 @@ CPP;
 					}
 					$operand = $value instanceof ast_string_expression ? null
 						: $this->value($value, $global_references, $declarations, $required_headers);
+					if ($formatter !== null) $operand = $this->formatted_text($formatter, $value, $operand, $required_headers);
 					$lines[] = $this->async_statement($type->lower_cpp_output($value, $operand));
 				}
 			}
@@ -3135,6 +3158,7 @@ CPP;
 				$type->conversion_headers($conversion)) as $header) {
 				$required_headers[$header] = true;
 			}
+			if ($conversion === value_conversion::stringable_text) return $this->formatted_text($value->text_formatter, $value->operand, $operand, $required_headers);
 			$reorderable = $operand_safe && $type->cpp_trivial_value() && ($conversion === value_conversion::identity);
 			return '(' . $this->conversion($type, $conversion, $operand, $value->operand) . ')';
 		}

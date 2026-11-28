@@ -23,3 +23,12 @@ foreach (['string', 'int', 'bool', 'byte', 'float', 'text_builder', 'string_part
 if (Stringable_Contract::target(type_registry::specialize('vector', type_registry::integer()), $scope) !== null) {
 	throw new RuntimeException('Collection formatting must await the collection contract');
 }
+foreach (['echo $v;', 'echo "<$v>";', '$s=(string)$v;'] as $consumer) {
+	$source = 'class Lookalike {public function to_string():string{return "L";}} $v=new Lookalike();' . $consumer;
+	try {
+		(new Source_Frontend())->prepare(new source_file('main', $source, flavor::php), new entry_target(31));
+		throw new RuntimeException("Accepted an implicit formatter without opt-in: $consumer");
+	} catch (\scpp\compiler\diagnostic $e) {
+		if (!str_contains($e->getMessage(), 'Lookalike')) throw $e;
+	}
+}

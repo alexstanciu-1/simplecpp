@@ -153,7 +153,10 @@ function renderCompiler(mixed $metadata, array $facts, ?array $runtime = null): 
             $symbol = $builder ? $contract['method'] : '::scpp::to_string';
             $mode = $builder ? 'receiver_method: true' : 'free_receiver: true';
             $borrow = $builder || $identity === 'string' ? 1 : 0;
-            $methods .= "\n\tpublic function native_string_formatter(): ?runtime_function\n\t{\n"
+            // Existing scalar conversions retain their constant facts and direct lowering.
+            $existing = isset($runtime['explicit_formatters'][$identity]) || $identity === 'string';
+            $methods .= "\n\tpublic function native_string_formatter(bool \$fallback = false): ?runtime_function\n\t{\n"
+                . ($existing ? "\t\tif (\$fallback) return null;\n" : '')
                 . "\t\tstatic \$binding = null;\n\t\treturn \$binding ??= new runtime_function('{$contract['method']}', [\$this], type_string::instance(), '$symbol', '$header', "
                 . "const_reference_mask: $borrow, $mode, retains_receiver: false, exact_arguments: true);\n\t}\n";
         }

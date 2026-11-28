@@ -412,14 +412,17 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
-				foreach ($statement->values as $value) {
+				foreach ($statement->values as $i => $value) {
 					$this->guard_reads = [];
 					$this->value($value);
-					if (!$value->type_def()->supports_output($source->flavor)) {
+					if ($value->type_def()->supports_output($source->flavor)) continue;
+					$formatter = $this->prepare_formatter($value);
+					if ($formatter === null) {
 						throw new diagnostic($value->source(), $value->byte_start(), $source->flavor === flavor::php
-							? 'Echo requires a printable scalar; received ' . $value->type_def()->name
+							? 'Echo requires a printable scalar or Stringable value; received ' . $value->type_def()->name
 							: 'Echo currently supports only int64 and string values');
 					}
+					$statement->formatters[$i] = $formatter;
 				}
 			}
 			elseif ($statement instanceof ast_discard_statement) {
@@ -1976,6 +1979,7 @@ final class Preparation
 					}
 				}
 				if (!($part instanceof ast_interpolation_text)) {
+					$part->text_formatter = $this->prepare_formatter($part);
 					$part->prepare_text($string);
 				}
 			}
@@ -1989,6 +1993,10 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Unsupported cast target: ' . $syntax->type_reference->spelling());
 			}
 			$source = $syntax->operand->type_def();
+			if ($type instanceof type_string && ($syntax->text_formatter = $this->prepare_formatter($syntax->operand, cast: true)) !== null) {
+				$syntax->settle_cast($type, value_conversion::stringable_text);
+				return;
+			}
 			$schema = $source instanceof native_sequence_type ? $source->write_type() : $source;
 			if ($type instanceof boxed_type_definition && $schema instanceof record_type_definition) {
 				$seen = $path = [];
@@ -2615,6 +2623,24 @@ final class Preparation
 		for ($base = $record->base(); $base !== null; $base = $base->base()) {
 			$this->dependencies?->watch($this->symbols->entry($base->declaration->symbol_key()), $this->owner);
 		}
+	}
+
+	/** Select PHP's additional text conversions while keeping existing scalar and boxed rules. */
+	private function prepare_formatter(ast_expression $value, bool $cast = false): runtime_function|ast_function_declaration|null
+	{
+		if ($value->source()->flavor !== flavor::php) return null;
+		$type = $value->type_def();
+		if ($cast && $type instanceof carrier_type_definition) {
+			$type->require_extraction($value, conversion_context::explicit_cast);
+			$type = carrier_operand_payload($type);
+			if ($type === null) return null;
+		}
+		if ($type instanceof shared_record_type_definition) {
+			$this->dependencies?->watch($this->symbols->entry($type->payload->declaration->symbol_key()), $this->owner);
+		}
+		$target = Stringable_Contract::target($type, $this->symbols, fallback: true);
+		if ($target instanceof ast_function_declaration) Readonly_Access::write($value, true);
+		return $target;
 	}
 
 	/** Validate and watch each embedded value schema once per cast. @param bool[] $seen @param string[] $path */
