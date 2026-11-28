@@ -1689,6 +1689,9 @@ CPP;
 					: $type->lower_cpp_append_value($receiver, $value) . ';';
 				$lines[] = $this->async_statement($steps === [] ? $append : '{ ' . implode(' ', $steps) . ' ' . $append . ' }');
 			}
+			elseif ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
+				$lines[] = $this->conditional_assignment($statement, $global_references, $declarations, $required_headers);
+			}
 			elseif (($statement instanceof ast_local_declaration) || ($statement instanceof ast_storage_write)) {
 				if ($body instanceof ast_function_body && $statement === $body->byte_view_length) {
 					$this->byte_view = $statement->initializer->arguments[0];
@@ -1701,11 +1704,7 @@ CPP;
 				$write = $this->binding($statement, $global_references, $declarations, $required_headers, $snapshot,
 					operand_override: $first_initializer !== null && $statement === $body->statements[0] ? $first_initializer : null,
 					borrow_snapshot: $statement === $borrowed_snapshot);
-				if ($statement instanceof ast_assignment_statement && $statement->operator === binary_operator::coalesce) {
-					/** @var carrier_type_definition $type */
-					$type = $statement->local_def()->type_def();
-					$lines[] = "\tif (!(" . $type->lower_cpp_presence($this->name($statement->local_def())) . ')) { ' . ltrim($this->async_statement($write . ';')) . ' }';
-				} else $lines[] = $this->async_statement($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
+				$lines[] = $this->async_statement($snapshot === null ? $write . ';' : '{ const auto ' . $snapshot . '; ' . $write . '; }');
 			}
 			elseif ($statement instanceof ast_return_statement && ($statement->value === null || $statement->value->type_def() === type_void::instance())) {
 				if ($statement->value !== null) {
@@ -2109,6 +2108,34 @@ CPP;
 		$source = $loop->source_value;
 		$value = 'static_cast<' . $element->type_def()->cpp_type() . '>(' . $value . ')';
 		return $source->type_def()->lower_cpp_write($this->name($source->local_def()), 'iteration_index_' . $loop->start, $value);
+	}
+
+	/**
+	 * Keep the selected field alive through the presence test and stage fallback work inside its branch.
+	 * @param ast_global_declaration[] $globals
+	 * @param ast_function_declaration[] $declarations
+	 * @param bool[] $headers
+	 */
+	private function conditional_assignment(ast_assignment_statement $statement, array &$globals, array &$declarations, array &$headers): string
+	{
+		$field = $statement instanceof ast_property_compound;
+		$destination = $field ? $statement->target : $statement->local_def();
+		/** @var carrier_type_definition $type */
+		$type = $destination->type_def();
+		if ($field) {
+			$steps = [];
+			$place = $this->retained_place($destination, $globals, $declarations, $headers, $steps);
+			array_push($this->async_steps, ...$steps);
+			$this->async_steps[] = 'auto& coalesce_target = ' . $place . ';';
+			$name = 'coalesce_target';
+		} else $name = $this->name($destination);
+		[$value, $rhs] = $this->staged_operand($statement->value, $globals, $declarations, $headers);
+		$conversion = $statement->conversion();
+		foreach ($type->conversion_headers($conversion) as $header) $headers[$header] = true;
+		if (!$field && $conversion === value_conversion::identity && $statement->value instanceof ast_name_expression && $statement->value->refers_to($destination)) {
+			$rhs[] = '(void)' . $name . ';';
+		} else $rhs[] = $name . ' = ' . $this->conversion($type, $conversion, $value, $statement->value) . ';';
+		return $this->async_statement('if (!(' . $type->lower_cpp_presence($name) . ')) { ' . implode(' ', $rhs) . ' }');
 	}
 
 	/**
