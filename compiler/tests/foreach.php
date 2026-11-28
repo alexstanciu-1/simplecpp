@@ -106,10 +106,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		// Keep a caller AST across provider signature edits, deletion, repeated failures and recovery.
 		$directory = sys_get_temp_dir() . '/scpp-foreach-' . bin2hex(random_bytes(8)); mkdir($directory);
 		try {
-			$provider = $directory . '/library.' . $flavor->name;
-			file_put_contents($directory . '/main.' . $flavor->name, $main);
-			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name,
-				'sources' => ['main.' . $flavor->name, basename($provider)]]));
+			$provider = $directory . '/library.' . $flavor->source_extension();
+			file_put_contents($directory . '/main.' . $flavor->source_extension(), $main);
+			file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension(),
+				'sources' => ['main.' . $flavor->source_extension(), basename($provider)]]));
 			$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp = time(); $caller = null;
 			foreach ([$helpers, str_replace('10', '11', $helpers), $function('int', 'make', 'return 8;'), '', $helpers] as $step => $text) {
 				file_put_contents($provider, $text); touch($provider, ++$stamp);

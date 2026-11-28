@@ -1,4 +1,5 @@
 """Exercise PHP filesystem names and the project-wide general surface in a mixed application."""
+from source_suffix import source_suffix
 import json
 import os
 from pathlib import Path
@@ -40,7 +41,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-filesystem-family-') as folder:
         assert 'scpp/js/' not in closure and 'scpp/py/' not in closure and 'runtime/src/' not in closure
         if 'fs_is_dir' in header:
             assert 'scpp/php/' not in closure and 'scpp/carriers.hpp' not in closure
-    main = app / 'main.php'
+    main = app / 'main.phs'
     main.write_text(r'''
 use function file_get_contents as read_bytes;
 if (!mkdir("dir") || mkdir("dir") || !is_dir("dir")) { return 1; }
@@ -113,7 +114,7 @@ int snapshot_check() {
     for flavor, code in [('php', r'\fs_get("x"); return 0;'), ('php', 'use function fs_get as fetch; return 0;'),
                          ('js', 'fs_get("x"); return 0;'), ('py', 'fs_get("x")\nreturn 0')]:
         main.unlink()
-        main = app / ('main.' + flavor)
+        main = app / ('main.' + source_suffix(flavor))
         main.write_text(code)
         config.write_text(json.dumps(manifest))
         compile_app(app, out, 'fs_get')

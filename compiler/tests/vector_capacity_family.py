@@ -1,4 +1,5 @@
 """Check inferred vector factories, receiver bindings and retained source visibility."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 import subprocess
@@ -58,9 +59,9 @@ with tempfile.TemporaryDirectory(prefix='vector-capacity-') as tmp:
     app.mkdir()
     manifest = app / 'module.json'
     manifest.write_text('{"general_api":true}')
-    main = app / 'main.php'
+    main = app / 'main.phs'
     source_edit(main, source)
-    model = app / 'types.php'
+    model = app / 'types.phs'
     declarations = 'struct OnlyTemporary {} struct Point { public int $x = 7; } class Node { public int $x = 0; } function capacity_of(const vector<string> &$v): int { return $v->capacity(); } function counted_fill(int &$calls): string { $calls++; return "unused"; }'
     model.write_text(declarations)
     (app / 'cpp.cpp').write_text('int cpp_check() { auto values = vector_filled(0, 1); return values->capacity(); }')
@@ -122,7 +123,7 @@ static_assert(requires(const scpp::vector_string& v) { v.capacity(); });
                          ('py', 'return vector_filled(1, 9).capacity()')]:
         isolated = work / flavor
         isolated.mkdir()
-        (isolated / ('main.' + flavor)).write_text(body)
+        (isolated / ('main.' + source_suffix(flavor))).write_text(body)
         settings = isolated / 'module.json'
         settings.write_text('{}')
         result = run_once(isolated, work / (flavor + '-out'))

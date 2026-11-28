@@ -66,7 +66,7 @@ return 1
 """})
     provider = ''.join(f'function make_{t}():{t} {{ $v {t}=[]; $v[0]=null; return $v; }}'
                        for t in ('mixed', 'dynamic'))
-    source_edit(app / 'provider.php', provider)
+    source_edit(app / 'provider.phs', provider)
     out = work / 'python-out'
     proc = service(app, out)
     try:
@@ -74,12 +74,12 @@ return 1
         assert 'error' not in result, result
         measure(out, work / 'python-native', b'')
         original = artifacts(out)
-        source_edit(app / 'binding.php', 'const int undefined=7;')
+        source_edit(app / 'binding.phs', 'const int undefined=7;')
         failed = invoke(proc)
         assert 'Unsupported boxed binary operands or operator' in failed.get('error', ''), failed
         assert failed['error'] == fresh_build(app, work / 'python-fresh-bound')['error']
         assert artifacts(out) == original
-        (app / 'binding.php').unlink()
+        (app / 'binding.phs').unlink()
         repaired = invoke(proc)
         assert 'error' not in repaired, repaired
         fresh = work / 'python-fresh'

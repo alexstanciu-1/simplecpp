@@ -1,4 +1,5 @@
 """Concrete vector/hash fields: empty initialization, copy/mutation and retained/fresh recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -44,8 +45,8 @@ def prove(work, flavor, libraries):
     body+=f'echo {v}original{a}x,":",{v}changed{a}x,":",{v}owner{a}x,":",{v}held{a}x,":",count({v}b{a}items),":",count({v}b{a}numbers); return 8;'
     expected=b'7:9:11:9:81:80'
     app=work/flavor;out=work/(flavor+'-out');app.mkdir()
-    source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
-    for name,text in dict(point=point,node=node,bag=bag,box=box,wrap=wrap,api=api,main=body).items():source_edit(app/(name+'.'+flavor),text)
+    source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}))
+    for name,text in dict(point=point,node=node,bag=bag,box=box,wrap=wrap,api=api,main=body).items():source_edit(app/(name+'.'+source_suffix(flavor)),text)
     recursive=s['record']('Recursive',s['field']('children','vector<Recursive>'))
     mutual=s['record']('Left',s['field']('right','hash<Right,int>'))+s['record']('Right',s['field']('left','vector<Left>'))
     edits=[(None,None,expected),(None,None,expected),
@@ -61,9 +62,9 @@ def prove(work, flavor, libraries):
     try:
         for rev,(name,text,wanted) in enumerate(edits):
             before=artifacts(out)
-            if name=='namespace':source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor,'cpp_namespace':text}))
+            if name=='namespace':source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor),'cpp_namespace':text}))
             elif name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink(missing_ok=True)
                 else:source_edit(path,text)
             got=invoke(proc);fresh_out=work/f'{flavor}-fresh-{rev}';fresh=service(app,fresh_out)
@@ -84,7 +85,7 @@ def prove(work, flavor, libraries):
             if rev==0:
                 times[-1].update(measure(out,work/(flavor+'-timing'),wanted))
                 single=work/(flavor+'-single.source')
-                single.write_text(''.join((app/(name+'.'+flavor)).read_text() for name in ['point','node','bag','box','wrap','api','main']))
+                single.write_text(''.join((app/(name+'.'+source_suffix(flavor))).read_text() for name in ['point','node','bag','box','wrap','api','main']))
                 cpp=work/(flavor+'-single.cpp')
                 code='require $argv[1]; $p=(new scpp\\compiler\\Source_Frontend())->prepare(new scpp\\compiler\\source_file("single",file_get_contents($argv[2]),scpp\\compiler\\flavor::from($argv[3])),new scpp\\compiler\\entry_target(31)); file_put_contents($argv[4],(new scpp\\compiler\\Cpp_Emitter())->emit($p));'
                 root=Path(__file__).resolve().parents[2]
@@ -103,7 +104,7 @@ def retirement(app, out):
         assert 'error' not in invoke(proc)
         entry=json.loads((app/'module.json').read_text())['entry']
         for path in app.iterdir():
-            if path.suffix in ['.php','.cpp','.js'] and path.name!=entry:path.unlink()
+            if path.suffix in ['.phs','.cpp','.js'] and path.name!=entry:path.unlink()
         source_edit(app/entry,'return 8;')
         result=invoke(proc);assert 'error' not in result,result
         assert not any(p.suffix=='.hpp' for p in artifacts(out)),artifacts(out).keys()

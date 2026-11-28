@@ -218,19 +218,19 @@ $directory = sys_get_temp_dir() . '/scpp-typed-functions-' . bin2hex(random_byte
 mkdir($directory);
 try
 {
-	file_put_contents($directory . '/module.json', '{"entry":"main.php"}');
-	file_put_contents($directory . '/main.php', '$x=f(8); $ret int=$x; return $ret;');
-	file_put_contents($directory . '/lib.php', 'function f(int $value): int { return $value; }');
+	file_put_contents($directory . '/module.json', '{"entry":"main.phs"}');
+	file_put_contents($directory . '/main.phs', '$x=f(8); $ret int=$x; return $ret;');
+	file_put_contents($directory . '/lib.phs', 'function f(int $value): int { return $value; }');
 	$compiler = new Project_Compiler();
 	$session = $compiler->frontend($directory);
 	Incremental_Preparation::prepare($session, new entry_target(31));
 	$caller = $session->entry->entry->ast;
-	file_put_contents($directory . '/lib.php', 'function f(float $value): float { return $value; }');
+	file_put_contents($directory . '/lib.phs', 'function f(float $value): float { return $value; }');
 	$session = $compiler->frontend($directory, $session);
 	verify(Incremental_Preparation::prepare($session, new entry_target(31))['prepared'] === 2, 'Signature edit did not invalidate caller');
 	verify($session->entry->entry->ast === $caller, 'Caller reparsed after signature edit');
 	verify($caller->main()->body()->locals[0]->initializer->conversion(0) === value_conversion::numeric_floating, 'Stale argument conversion');
-	file_put_contents($directory . '/lib.php', 'function f(float $value): float { return 8.75; }');
+	file_put_contents($directory . '/lib.phs', 'function f(float $value): float { return 8.75; }');
 	$session = $compiler->frontend($directory, $session);
 	verify(Incremental_Preparation::prepare($session, new entry_target(31))['reused'] === 1, 'Body-only edit invalidated caller');
 }

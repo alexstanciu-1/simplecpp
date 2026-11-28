@@ -1,4 +1,5 @@
 """Typed collection helper execution, source visibility and retained edit recovery."""
+from source_suffix import source_suffix
 import json
 import subprocess
 import sys
@@ -106,9 +107,9 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
     app.mkdir()
     manifest = app / 'module.json'
     manifest.write_text('{"general_api":true}')
-    main = app / 'main.php'
+    main = app / 'main.phs'
     main.write_text(main_source)
-    model = app / 'model.php'
+    model = app / 'model.phs'
     model.write_text(models)
     resident = service(app, out)
     try:
@@ -179,12 +180,12 @@ with tempfile.TemporaryDirectory(prefix='collection-transforms-') as tmp:
     for flavor in ('cpp', 'js', 'py'):
         app = work / flavor
         app.mkdir()
-        (app / 'calls.php').write_text('function values():vector<int>{return [1];} '
+        (app / 'calls.phs').write_text('function values():vector<int>{return [1];} '
                                        'function op():function<int(int)>{return fn($n)=>$n+1;} '
                                        'function boxed():mixed{$x mixed=[]; return $x;} '
                                        'function identity():function<mixed(mixed)>{return fn($x)=>$x;}')
         terminator = '' if flavor == 'py' else ';'
-        (app / ('main.' + flavor)).write_text('return count(sequence_map(values(),op())) + count(collection_map(boxed(),identity()))' + terminator)
+        (app / ('main.' + source_suffix(flavor))).write_text('return count(sequence_map(values(),op())) + count(collection_map(boxed(),identity()))' + terminator)
         settings = app / 'module.json'
         settings.write_text('{}')
         result = fresh(app, work / (flavor + '-out'))

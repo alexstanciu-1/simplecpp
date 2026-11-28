@@ -1,4 +1,5 @@
 """Compile both regex result shapes and check module removal/recovery through the native bundle."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 import shutil
@@ -787,7 +788,7 @@ def prove(work, runtime, flavor):
     app = work / flavor
     app.mkdir()
     output = work / ('out-' + flavor)
-    source = app / ('main.' + flavor)
+    source = app / ('main.' + source_suffix(flavor))
     manifest = app / 'module.json'
     enabled = json.dumps({'general_api': True, 'dependencies': {'runtime': {'modules': ['regex']}}})
     def compiler(out):

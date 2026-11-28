@@ -20,9 +20,9 @@ try
 		mkdir($app);
 		file_put_contents($app . '/module.json', '{}');
 		$head = static fn(string $name, string $type = 'void'): string => $flavor === 'cpp' ? "$type $name()" : "function $name(): $type";
-		$main = $app . '/main.' . $flavor;
-		$first = $app . '/first.' . $flavor;
-		$second = $app . '/second.' . $flavor;
+		$main = $app . '/main.' . \scpp\compiler\flavor::from($flavor)->source_extension();
+		$first = $app . '/first.' . \scpp\compiler\flavor::from($flavor)->source_extension();
+		$second = $app . '/second.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 		file_put_contents($main, 'first(); return 8;');
 		file_put_contents($first, $head('first') . '{ second(); strlen("abc"); }');
 		file_put_contents($second, $head('second') . '{}');
@@ -67,8 +67,8 @@ try
 		verify($prepare($session) === ['prepared' => 1, 'reused' => 2], 'Body-only preparation scope');
 		verify(($call->function_def() !== $old_second) && ($call->function_def() === $slot->declaration()),
 			'Cached call did not follow new destination');
-		rename($second, $app . '/moved.' . $flavor);
-		$second = $app . '/moved.' . $flavor;
+		rename($second, $app . '/moved.' . \scpp\compiler\flavor::from($flavor)->source_extension());
+		$second = $app . '/moved.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 		$session = $compiler->frontend($app, $session);
 		verify(($symbols->entry('func:second') === $slot) && $first_body->is_prepared(),
 			'Move invalidated unchanged contract');
@@ -136,7 +136,7 @@ try
 		verify($prepare($session) === ['prepared' => 2, 'reused' => 1], 'Rename/observer replacement');
 		verify($session->dependency_watches->observer_count($other) === 1,
 			'Replacement body failed to subscribe');
-		$duplicate = $app . '/duplicate.' . $flavor;
+		$duplicate = $app . '/duplicate.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 		file_put_contents($duplicate, $head('other') . '{}');
 		$session = $compiler->frontend($app, $session);
 		verify(!$symbols->resolve('func:first')->body()->is_prepared(),

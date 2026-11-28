@@ -1,4 +1,5 @@
 """Capture-free arrow lambdas, PHP block closures and callback conversion."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 import tempfile
@@ -39,7 +40,7 @@ def prove(work, flavor):
          if flavor == 'php' else 'Unknown or not-yet-initialized local/global: outer'),
         ('main', entry.replace(inline, arrow('b', 'int', f'{v}b > 0', 'bool')), 'Expected exact callback signature'),
         ('main', entry, b'6:7:6:7'),
-    ], unaffected_source=f'main.{flavor}', unaffected_revisions={2})
+    ], unaffected_source=f'main.{source_suffix(flavor)}', unaffected_revisions={2})
     generated = b'\n'.join(artifacts(work / f'{flavor}-out').values())
     assert b'auto var_increment_' in generated and b' = [](' in generated
     assert b'(*var_op_' in generated
@@ -147,7 +148,7 @@ def prove_block(work):
         ('worker', worker.replace('return "!";', ''), 'Non-void function requires a value return'),
         ('worker', protected, b'3:9.!7:9.!'),
         ('worker', worker.replace('return helper();', 'try { return helper(); } finally { echo "F"; }'), b'3:9!F7:9!'),
-    ], unaffected_source='main.php', unaffected_revisions={4, 6, 8, 10})
+    ], unaffected_source='main.phs', unaffected_revisions={4, 6, 8, 10})
 
 
 def prove_int_capture(work):
@@ -175,7 +176,7 @@ def prove_int_capture(work):
         ('seed', 'function seed():int {return 3;}', b'7'),
         ('seed', 'function seed():Iterator<int> {yield 3;}', 'Generator cursors are move-only'),
         ('seed', 'function seed():int {return 5;}', b'9'),
-    ], unaffected_source='consumer.php', unaffected_revisions={2, 4, 11})
+    ], unaffected_source='consumer.phs', unaffected_revisions={2, 4, 11})
 
 
 def prove_reference_captures(work):
@@ -392,7 +393,7 @@ def prove_multiple_int_captures(work):
     work.mkdir()
     revisions(work, 'php', dict(main=entry, helper=helper), [
         (None, None, b'23'), (None, None, b'23'),
-        ('main', duplicate, f'main.php:1:{column}: Duplicate closure capture: base'),
+        ('main', duplicate, f'main.phs:1:{column}: Duplicate closure capture: base'),
         ('main', entry, b'23'),
         ('main', entry.replace(captures, 'use ($step, $base)'), b'23'),
         ('helper', 'function initialStep():Iterator<int> {yield 3;}', 'Generator cursors are move-only'),
@@ -413,7 +414,7 @@ def prove_capture_copy_contract(work):
     capture = binding + ' $read=function () use ($value):void {echo $value;}; $read(); return 8;'
     cursor = 'function sourceValue():Iterator<int> {yield 2;}'
     string = 'function sourceValue():string {return "ok";}'
-    line_prefix = f"main.php:1:{capture.index('$value)') + 1}: "
+    line_prefix = f"main.phs:1:{capture.index('$value)') + 1}: "
     work.mkdir()
     revisions(work, 'php', dict(main=entry, model=model, source=string), [
         (None, None, b'before27'), (None, None, b'before27'),
@@ -437,13 +438,13 @@ def prove_php_arrow_captures(work):
     work.mkdir()
     revisions(work, 'php', dict(main=entry, helper=helper), [
         (None, None, b'12'), (None, None, b'12'),
-        ('helper', 'function seed():Iterator<int> {yield 3;}', f'main.php:1:{first_use}: Generator cursors are move-only'),
+        ('helper', 'function seed():Iterator<int> {yield 3;}', f'main.phs:1:{first_use}: Generator cursors are move-only'),
         ('helper', helper, b'12'),
         ('main', shadow, b'9'),
         ('main', block, b'3'),
         ('main', block.replace(' use ($factor)', ''), 'Unknown or not-yet-initialized local/global: factor'),
         ('main', interpolation, b'value=3'),
-        ('helper', 'function seed():Iterator<int> {yield 3;}', f'main.php:1:{name_column}: Generator cursors are move-only'),
+        ('helper', 'function seed():Iterator<int> {yield 3;}', f'main.phs:1:{name_column}: Generator cursors are move-only'),
         ('helper', helper, b'value=3'),
         ('main', 'global $factor int=3; function read(callback<int> $op):int {return $op();} '
                  '$f=fn():int => $factor; echo read($f); return 8;', b'3'),
@@ -471,7 +472,7 @@ def prove_void_block(work):
         ('main', main.replace('$report(0);', 'echo $report(0);'), 'Void call cannot be used as a value'),
         ('main', '$f = fn(int $n):void => $n; return 8;', 'Void function cannot return a value'),
         ('main', main, b'7'),
-    ], unaffected_source='consumer.php', unaffected_revisions={3, 6})
+    ], unaffected_source='consumer.phs', unaffected_revisions={3, 6})
 
 
 def prove_void_forwarding(work):
@@ -525,7 +526,7 @@ def prove_block_callback_result(work):
         ('main', entry('function ():int { return 1; }'), mismatch),
         (None, None, mismatch),
         ('main', entry('function ():string { return "repaired"; }'), b'repaired'),
-    ], unaffected_source='consumer.php', unaffected_revisions={3})
+    ], unaffected_source='consumer.phs', unaffected_revisions={3})
 
 
 def prove_block_local_scope(work):

@@ -163,14 +163,14 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	try {
 		$stamp = time();
 		$manifest = static function (bool $enabled) use ($directory, $flavor, &$stamp): void {
-			file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'provider.' . $flavor->name],
+			file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension(), 'provider.' . $flavor->source_extension()],
 				'dependencies' => ['runtime' => ['modules' => $enabled ? ['numeric'] : []]]]));
 			touch($directory . '/module.json', ++$stamp);
 		};
 		$manifest(true);
-		file_put_contents($directory . '/main.' . $flavor->name,
+		file_put_contents($directory . '/main.' . $flavor->source_extension(),
 			$decl('int16', 'x', '8') . $var('x') . '+=value();echo (int)' . $var('x') . ';return 8;');
-		$path = $directory . '/provider.' . $flavor->name;
+		$path = $directory . '/provider.' . $flavor->source_extension();
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31));
 		foreach (['int8', 'uint32', 'bool', '', 'int32'] as $index => $type) {
 			file_put_contents($path, $type === '' ? '' : $fn('value', $type, 'return ' . ($type === 'bool' ? 'true' : '2') . ';'));

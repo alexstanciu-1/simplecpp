@@ -16,7 +16,7 @@ def atomic_save():
         app = work/'app'
         app.mkdir()
         (app/'module.json').write_text('{}')
-        source = app/'main.php'
+        source = app/'main.phs'
         good = 'echo 404; return 0;'
         broken = 'echo @@@; return 0;'
         source.write_text(good)
@@ -47,7 +47,7 @@ def ordinary_saves():
         app = work/'app'
         app.mkdir()
         (app/'module.json').write_text('{}')
-        source = app/'main.php'
+        source = app/'main.phs'
         source.write_text('echo 99; return 0;')
         exe = build(app, work)
         for trial in range(5):
@@ -71,10 +71,10 @@ def main():
         work = Path(directory)
         app = work/'project with spaces'
         app.mkdir()
-        (app/'module.json').write_text(json.dumps({'name': 'edit-demo', 'sources': ['main.php', 'status.php']}))
-        main = app/'main.php'
+        (app/'module.json').write_text(json.dumps({'name': 'edit-demo', 'sources': ['main.phs', 'status.phs']}))
+        main = app/'main.phs'
         main.write_text('echo status(); return 0;')
-        helper = app/'status.php'
+        helper = app/'status.phs'
         helper.write_text('function status(): int {return 200;}')
         exe = build(app, work)
         check_cli(exe, [], 0, '200')
@@ -98,7 +98,7 @@ def main():
         try:
             build(app, work)
         except RuntimeError as error:
-            if 'Unknown function: missing_helper' not in str(error) or 'status.php:' not in str(error):
+            if 'Unknown function: missing_helper' not in str(error) or 'status.phs:' not in str(error):
                 raise
             print('Invalid edit:', str(error).replace(str(app)+'/', '').strip())
         else:

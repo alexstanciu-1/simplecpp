@@ -11,9 +11,9 @@ from app_namespace_native import ROOT, invoke, service
 def run(work, runtime, quick):
     app, out = work / 'app', work / 'out'
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.php'}))
-    (app / 'main.php').write_text('$p Point = {x:2};$v Packet = {data:[1,2]};$f Flags = {data:[true]};return $p->x;')
-    (app / 'records.php').write_text('data struct Point {public readonly int $x;public int $y=7;}'
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.phs'}))
+    (app / 'main.phs').write_text('$p Point = {x:2};$v Packet = {data:[1,2]};$f Flags = {data:[true]};return $p->x;')
+    (app / 'records.phs').write_text('data struct Point {public readonly int $x;public int $y=7;}'
                                       'data struct Packet {public vector<int> $data; public int $version=1;}'
                                       'data struct Flags {public vector<bool> $data;}')
     compiler = service(app, out)

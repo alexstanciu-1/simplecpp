@@ -1,4 +1,5 @@
 """Single-base storage, construction, visibility and incremental recovery across all flavors."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -135,7 +136,7 @@ def prove(work, flavor, libraries):
     app.mkdir()
     output = work / f'{flavor}-output'
     source = fixtures(flavor)
-    files = {name: app / f'{name}.{flavor}' for name in ['main', 'base', 'derived', 'support']}
+    files = {name: app / f'{name}.{source_suffix(flavor)}' for name in ['main', 'base', 'derived', 'support']}
     (app / 'module.json').write_text(json.dumps({'entry': files['main'].name}))
     files['main'].write_text(source['main'])
     files['base'].write_text(source['base'])
@@ -267,7 +268,7 @@ def construction_contract(work, flavor, libraries):
     runtime_child = explicit.replace('Base()', 'Base(' + runtime_call + ')') if flavor == 'cpp' else explicit.replace('__construct();', '__construct(' + runtime_call + ');').replace('super();', 'super(' + runtime_call + ');')
     app = work / (flavor + '-contract')
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     output = work / (flavor + '-contract-output')
     resident = service(app, output)
     try:
@@ -284,9 +285,9 @@ def construction_contract(work, flavor, libraries):
             (base, runtime_child, main, None),
         ]):
             if index == 9:
-                source_edit(app / 'module.json', json.dumps({'entry': 'main.' + flavor, 'cpp_namespace': None}))
+                source_edit(app / 'module.json', json.dumps({'entry': 'main.' + source_suffix(flavor), 'cpp_namespace': None}))
             for name, text in [('base', model), ('child', derived), ('main', entry)]:
-                source_edit(app / (name + '.' + flavor), qualify(text))
+                source_edit(app / (name + '.' + source_suffix(flavor)), qualify(text))
             result = invoke(resident)
             fresh_output = work / f'{flavor}-contract-fresh-{index}'
             fresh = service(app, fresh_output)
@@ -303,9 +304,9 @@ def construction_contract(work, flavor, libraries):
                 assert artifacts(output) == artifacts(fresh_output), (flavor, index, [str(k) for k in artifacts(output) if artifacts(output)[k] != artifacts(fresh_output).get(k)])
                 for compiler, library in libraries.items():
                     build(output, work / (flavor + '-contract-' + compiler), compiler, library, b'9' if index == 1 else b'1' if index >= 8 else b'7')
-        source_edit(app / 'module.json', json.dumps({'entry': 'main.' + flavor}))
+        source_edit(app / 'module.json', json.dumps({'entry': 'main.' + source_suffix(flavor)}))
         # The first conversion throws: no evaluation of later(), no base or child body.
-        source_edit(app / ('child.' + flavor), qualify(child + checked))
+        source_edit(app / ('child.' + source_suffix(flavor)), qualify(child + checked))
         result = invoke(resident)
         assert 'error' not in result, result
         units = [output / name for name in json.loads((output / 'manifest.json').read_text())['translation_units'] if name != 'entry.cpp']
@@ -357,10 +358,10 @@ def lifetime(work, flavor, libraries, memcheck):
     }
     app = work / (flavor + '-lifetime')
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
-    (app / ('main.' + flavor)).write_text('return 8;')
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
+    (app / ('main.' + source_suffix(flavor))).write_text('return 8;')
     for name, text in zip(['base', 'child'], sources[flavor]):
-        (app / (name + '.' + flavor)).write_text(text)
+        (app / (name + '.' + source_suffix(flavor))).write_text(text)
     output = work / (flavor + '-lifetime-output')
     compiler_service = service(app, output)
     try:

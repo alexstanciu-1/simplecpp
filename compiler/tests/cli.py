@@ -60,16 +60,33 @@ with tempfile.TemporaryDirectory() as directory:
     assert run('tokens', 'php', Path(directory) / 'missing').returncode == 1
     project = Path(directory)
     facts = main.parents[1] / 'build/clang/native-layout/facts.json'
-    (project / 'main.php').write_text('<?php\n$v vector<vector<int>>=[]; echo answer();')
-    (project / 'helper.php').write_text('<?php function answer():int { return 42; }')
+    (project / 'main.phs').write_text('<?php\n$v vector<vector<int>>=[]; echo answer();')
+    (project / 'helper.phs').write_text('<?php function answer():int { return 42; }')
     for _ in range(2):
-        result = run('program', project, 'main.php', facts, project / 'out',
-                     'php', 'main.php', 'php', 'helper.php')
+        result = run('program', project, 'main.phs', facts, project / 'out',
+                     'php', 'main.phs', 'php', 'helper.phs')
         assert result.returncode == 0, result.stderr
         assert result.stderr.count(b'opening tag is deprecated') == 1, result.stderr
+    classic = project / 'main.php'
+    classic.write_text('<?php echo "classic";')
+    manifest = project / 'module.json'
+    manifest.write_text('{}')
+    output = project / 'out'
+    result = run('project', project, facts, output)
+    assert result.returncode == 0, result.stderr
+    inventory = json.loads((project / 'module.sources.json').read_text())
+    assert list(inventory['modules'][project.name]) == ['helper.phs', 'main.phs'], inventory
+    assert subprocess.check_output([php, classic]) == b'classic'
+    for selection in ({'entry': 'main.php'}, {'sources': ['main.php']}, {'sources': {'main.php': 'php'}}):
+        manifest.write_text(json.dumps(selection))
+        result = run('project', project, facts, output)
+        assert result.returncode == 1 and b'Classic PHP file' in result.stderr, result
+    for command in [('parse', 'php', classic), ('program', project, 'main.php', facts, output, 'php', 'main.php')]:
+        result = run(*command)
+        assert result.returncode == 1 and b'use .phs' in result.stderr, result
     for name in ('include', 'require', 'include_once', 'require_once'):
         for prefix in ('', '$x = '):
-            source.write_text(f'<?php\n{prefix}{name} "helper.php";')
+            source.write_text(f'<?php\n{prefix}{name} "helper.phs";')
             result = run('parse', 'php', source)
             assert result.returncode == 1 and f'{name} is unsupported'.encode() in result.stderr
             assert b'module.json' in result.stderr and b':2:' in result.stderr

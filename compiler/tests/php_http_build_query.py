@@ -48,7 +48,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-query-build-') as directory:
     app, output = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    main = app/'main.php'
+    main = app/'main.phs'
     main.write_text('\n'.join(simple) + common)
     proc = service(app, output)
     try:

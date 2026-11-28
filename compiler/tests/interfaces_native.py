@@ -1,4 +1,5 @@
 """Bounded class interfaces: original method ownership, shared views and incremental recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import re
@@ -88,7 +89,7 @@ def incremental(work, flavor, libraries):
         for revision,(name,text,expected,error,kind) in enumerate(changes):
             before=artifacts(out); stamps={p:(out/p).stat().st_mtime_ns for p in before}
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             current=invoke(resident); fresh_out=work/f'{flavor}-fresh-{revision}'; comparison=fresh(app,fresh_out)
@@ -216,7 +217,7 @@ int main() {
 ''')
     facts=work/'facts.json';facts.write_text(json.dumps({'schema':1,'native_integers':{'int':{'signed':True,'digits':31}}}))
     cpp=work/(flavor+'-standalone.cpp')
-    r=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,app/('main.'+flavor),facts,cpp],capture_output=True,text=True);assert r.returncode==0,r.stderr
+    r=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,app/('main.'+source_suffix(flavor)),facts,cpp],capture_output=True,text=True);assert r.returncode==0,r.stderr
     for cc,library in libraries.items():
         incremental_native_build(out,work/(flavor+'-ownership-native-'+cc),cc,library,b'91121')
         for path,label,code,stdout in [(probe,'ownership',0,b'R'*32+b'K'),(cpp,'standalone',8,b'91121')]:
@@ -274,12 +275,12 @@ def contracts(work, flavor, libraries):
     try:
         assert 'error' not in invoke(resident)
         for i,(text,message) in enumerate(invalid):
-            old=artifacts(out);source_edit(app/('main.'+flavor),text)
+            old=artifacts(out);source_edit(app/('main.'+source_suffix(flavor)),text)
             for attempt in range(2):
                 r=invoke(resident);comparison=fresh(app,work/f'{flavor}-bad-{i}-{attempt}')
                 assert message in r.get('error','').lower(),(flavor,i,r)
                 assert r['error']==comparison.get('error') and artifacts(out)==old,(i,r,comparison)
-            source_edit(app/('main.'+flavor),good);r=invoke(resident);f=work/f'{flavor}-recovery-{i}'
+            source_edit(app/('main.'+source_suffix(flavor)),good);r=invoke(resident);f=work/f'{flavor}-recovery-{i}'
             assert 'error' not in r and 'error' not in fresh(app,f),r
             assert artifacts(out)==artifacts(f)
         # Inherited ordinary bridge is a new virtual slot on Middle, not on Base.
@@ -311,7 +312,7 @@ def contracts(work, flavor, libraries):
         scenarios.append((code,b'2'))
         if flavor=='php':scenarios.append((good.replace('public override','#[\\Override] public'),b''))
         for i,(text,expected) in enumerate(scenarios):
-            source_edit(app/('main.'+flavor),text);r=invoke(resident);f=work/f'{flavor}-success-{i}'
+            source_edit(app/('main.'+source_suffix(flavor)),text);r=invoke(resident);f=work/f'{flavor}-success-{i}'
             assert 'error' not in r and 'error' not in fresh(app,f),(i,r)
             assert artifacts(out)==artifacts(f)
             for cc,library in libraries.items():incremental_native_build(out,work/(flavor+'-contracts-native-'+cc),cc,library,expected)
@@ -329,8 +330,8 @@ def removal(work, flavor, libraries):
     try:
         steps=[('initial',None),('noop',None),('delete','first'),('delete','second'),('restore','first'),('restore','second'),('noop',None)]
         for i,(action,name) in enumerate(steps):
-            if action=='delete':(app/(name+'.'+flavor)).unlink()
-            if action=='restore':source_edit(app/(name+'.'+flavor),sources[name])
+            if action=='delete':(app/(name+'.'+source_suffix(flavor))).unlink()
+            if action=='restore':source_edit(app/(name+'.'+source_suffix(flavor)),sources[name])
             before=artifacts(out);r=invoke(resident);f=work/f'{flavor}-removal-fresh-{i}'
             assert 'error' not in r and 'error' not in fresh(app,f),r
             now=artifacts(out);assert now==artifacts(f)
@@ -355,7 +356,7 @@ def forwarding_removal(work, flavor, libraries):
     try:
         for i,present in enumerate([True,True,False,False,True,True]):
             before=artifacts(out);stamps={p:(out/p).stat().st_mtime_ns for p in before}
-            if i in [2,4]:source_edit(app/('leaf.'+flavor),leaf if present else implementation('Leaf',field,base='Base',interfaces=())+factory)
+            if i in [2,4]:source_edit(app/('leaf.'+source_suffix(flavor)),leaf if present else implementation('Leaf',field,base='Base',interfaces=())+factory)
             r=invoke(resident);f=work/f'{flavor}-forwarding-fresh-{i}'
             assert 'error' not in r and 'error' not in fresh(app,f),r
             now=artifacts(out);assert now==artifacts(f),(flavor,i,'fresh mismatch')
@@ -374,7 +375,7 @@ def forwarding_removal(work, flavor, libraries):
                 if i in [1,3,5]:assert not changed and r['preparation']['prepared']==0 and r['emitted_sources']==[],r
                 if i in [2,4]:assert changed=={units[name] for name in ['leaf','observer','base','contract']},changed
         # The standalone declaration inventory must deduplicate the inherited target.
-        combined=work/(flavor+'-forwarding-source.'+flavor)
+        combined=work/(flavor+'-forwarding-source.'+source_suffix(flavor))
         combined.write_text('\n'.join(sources.values()))
         facts=work/'facts.json';cpp=work/(flavor+'-forwarding-standalone.cpp')
         result=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,combined,facts,cpp],capture_output=True,text=True)

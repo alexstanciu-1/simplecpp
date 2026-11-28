@@ -10,7 +10,7 @@ ORACLE = r'''
 require $argv[1];
 use scpp\compiler\{Source_Frontend, source_file, flavor, entry_target, type_float64, diagnostic};
 foreach (json_decode(stream_get_contents(STDIN), true, flags: JSON_THROW_ON_ERROR) as $text) {
-    $source = new source_file('decimal.php', '$x float = ' . $text . '; return 0;', flavor::php);
+    $source = new source_file('decimal.phs', '$x float = ' . $text . '; return 0;', flavor::php);
     try {
         $entry = (new Source_Frontend())->prepare($source, new entry_target(31));
         echo type_float64::instance()->cpp_constant(array_values($entry->body()->locals)[0]->constant()), "\n";

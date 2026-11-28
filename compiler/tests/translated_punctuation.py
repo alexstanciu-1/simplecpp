@@ -112,9 +112,9 @@ def scanner_project(work):
     (app/'module.json').write_text('{"general_api":true}')
     examples = ROOT/'compiler/examples'
     for name in ('frontend', 'function_ast'):
-        shutil.copyfile(examples/f'translated_path/{name}.php.scpp', app/f'{name}.php')
-    shutil.copyfile(examples/'tokenizer/utf8.php.scpp', app/'utf8.php')
-    with (app/'punctuation.php').open('wb') as output:
+        shutil.copyfile(examples/f'translated_path/{name}.phs', app/f'{name}.phs')
+    shutil.copyfile(examples/'tokenizer/utf8.phs', app/'utf8.phs')
+    with (app/'punctuation.phs').open('wb') as output:
         subprocess.run(['php', examples/'tokenizer/emit_punctuation.php'], stdout=output, check=True)
     return app
 
@@ -137,7 +137,7 @@ def verify(work):
     main = [DRIVER, LAYOUT_REPAIR, 'repair_layout();']
     for mode, source, _ in rows:
         main.append(f'show(hex2bin("{source.encode().hex()}"), Scan_Flavor::{mode});')
-    (app/'main.php').write_text('\n'.join([*main, 'return 8;']))
+    (app/'main.phs').write_text('\n'.join([*main, 'return 8;']))
     generated = work/'generated'
     result = fresh_build(app, generated)
     assert 'error' not in result, result

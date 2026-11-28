@@ -61,7 +61,7 @@ return null, and the escaped backtick produces a byte only in JS template mode.
 
 ## Bootstrap C++ literal spelling proof
 
-The [translated byte emitter](../examples/cpp_literal_bytes/emitter.php.scpp)
+The [translated byte emitter](../examples/cpp_literal_bytes/emitter.phs)
 uses indexed byte reads and explicit widening to spell C++ string literals.
 The [native proof](../tests/cpp_literal_bytes_native.py) compares the spelling
 with the production PHP helper, then compiles the emitted literals with Clang

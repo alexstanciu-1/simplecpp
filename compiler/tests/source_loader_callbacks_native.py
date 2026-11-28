@@ -1,4 +1,5 @@
 """Native proof for the frontend's explicit loader state and named workers."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 import tempfile
@@ -51,7 +52,7 @@ def prove(work, flavor):
          'Callback target signature mismatch'),
         ('memory', None, 'Callback requires a source free function or static method'),
         ('memory', memory, b'disk-updated:memory'),
-    ], unaffected_source=f'main.{flavor}', unaffected_revisions={2})
+    ], unaffected_source=f'main.{source_suffix(flavor)}', unaffected_revisions={2})
     generated = b'\n'.join(artifacts(work / f'{flavor}-out').values())
     assert b'(*var_load_' in generated and b'&loadDisk_' in generated and b'&loadSnapshot_' in generated
     assert b'std::function' not in generated and b'#include <functional>' not in generated

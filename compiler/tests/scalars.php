@@ -129,19 +129,19 @@ $directory = sys_get_temp_dir() . '/scpp-scalar-incremental-' . bin2hex(random_b
 mkdir($directory);
 try
 {
-	file_put_contents($directory . '/module.json', '{"entry":"main.php"}');
-	file_put_contents($directory . '/main.php', '$n int = $external; return $n;');
-	file_put_contents($directory . '/lib.php', 'global $external = 8;');
+	file_put_contents($directory . '/module.json', '{"entry":"main.phs"}');
+	file_put_contents($directory . '/main.phs', '$n int = $external; return $n;');
+	file_put_contents($directory . '/lib.phs', 'global $external = 8;');
 	$compiler = new Project_Compiler();
 	$session = $compiler->frontend($directory);
 	Incremental_Preparation::prepare($session, new entry_target(31));
 	$caller = $session->entry->entry->ast;
-	file_put_contents($directory . '/lib.php', 'global $external = false;');
+	file_put_contents($directory . '/lib.phs', 'global $external = false;');
 	$session = $compiler->frontend($directory, $session);
 	verify(Incremental_Preparation::prepare($session, new entry_target(31))['prepared'] === 1, 'Inferred type change missed');
 	verify($session->entry->entry->ast === $caller, 'Unchanged AST copied');
 	verify(array_values($caller->main()->body()->locals)[0]->initialization() === value_conversion::boolean_integer, 'Stale conversion cache');
-	file_put_contents($directory . '/lib.php', 'global $external = null;');
+	file_put_contents($directory . '/lib.phs', 'global $external = null;');
 	$session = $compiler->frontend($directory, $session);
 	rejects(fn() => Incremental_Preparation::prepare($session, new entry_target(31)), 'conversion');
 }

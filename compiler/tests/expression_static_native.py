@@ -90,7 +90,7 @@ def prove(work, flavor, quick=False):
 
 
 def donor_declared_qualifier(work, flavor):
-    # Port compiler/my-try/tests/late_static.php's declared_qualifier case.
+    # Port compiler/my-try/tests/late_static.phs's declared_qualifier case.
     _, (s, klass, _, static, sep) = sources(flavor)
     late = 'Static::' if flavor == 'cpp' else 'static::'
     base = klass('Base', static('pick', 'return 2;')

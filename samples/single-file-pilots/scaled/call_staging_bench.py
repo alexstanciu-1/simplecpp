@@ -71,7 +71,7 @@ def main():
                 w = temp / name / mode / str(iteration)
                 app, out = w / "app", w / "out"
                 app.mkdir(parents=True)
-                for file in ("main.php", "module.json"):
+                for file in ("main.phs", "module.json"):
                     shutil.copyfile(HERE / "100k" / name / file, app / file)
                 compiler = args.new_compiler.resolve() if mode == "compiler-blocks" else root / "compiler"
                 start = clock()

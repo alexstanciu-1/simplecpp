@@ -152,7 +152,7 @@ def ticket_report(exe, work):
             app = variant/'app'
             app.mkdir(parents=True)
             (app/'module.json').write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["mysqli"]}}}')
-            shutil.copy(suite/'ticket-report/checked-count.php', app/'main.php')
+            shutil.copy(suite/'ticket-report/checked-count.phs', app/'main.phs')
             checked = build(app, variant)
             check_cli(checked, [address, 'open'], 1, 'prepare failed\n', env)
             check_cli(exe, [address, 'open'], 1, 'prepare failed\n', env)
@@ -164,7 +164,7 @@ INSERT INTO tickets VALUES ('mail','open'),('mail','open'),('api','open'),('api'
             subprocess.run(client, input=sql.encode(), capture_output=True, timeout=10, check=True)
             check_cli(checked, [address, 'open'], 0, '3\n', env)
             check_cli(checked, [address, 'unknown'], 0, '0\n', env)
-            shutil.copy(suite/'ticket-report/query-states.php', app/'main.php')
+            shutil.copy(suite/'ticket-report/query-states.phs', app/'main.phs')
             alternate = build(app, variant)
             check_cli(alternate, [address], 0, 'error\ncommand\ncount 6\n', env)
             check_cli(exe, [address, 'triage'], 0, 'triage:\n  (unassigned) 1\n   1\n', env)

@@ -27,8 +27,12 @@ def build(work, runtime, emitted):
         if 'error' in result:
             raise RuntimeError(result['error'])
     manifest = json.loads((emitted / 'manifest.json').read_text())
-    units = {Path(key).suffix[1:]: emitted / file for key, file in manifest['sources'].items()
-             if Path(key).stem == 'search'}
+    units = {}
+    for key, file in manifest['sources'].items():
+        source = Path(key)
+        if source.stem == 'search':
+            flavor = 'php' if source.suffix == '.phs' else source.suffix[1:]
+            units[flavor] = emitted / file
     assert set(units) == {'php', 'js', 'cpp'}
     compiler = 'clang++'
     flags = ['-std=c++23', '-stdlib=libc++', '-O2', '-g0', '-ffunction-sections', '-fdata-sections',

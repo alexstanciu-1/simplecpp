@@ -1,4 +1,5 @@
 """Fresh multi-file compilation and native slot identity, batch admission and joined failure."""
+from source_suffix import source_suffix
 import json
 import os
 import re
@@ -15,10 +16,10 @@ FLAGS = [CXX, '-std=c++23', '-stdlib=libc++', '-pthread', '-I' + str(ROOT / 'run
 
 
 def compile_source(app, out, sources, error=None):
-    command = ['php', ROOT / 'compiler/main.php', 'program', app, 'main.php', FACTS, out]
+    command = ['php', ROOT / 'compiler/main.php', 'program', app, 'main.phs', FACTS, out]
     for name, source in sources.items():
         (app / name).write_text(source)
-        command.extend([name.split('.')[-1], name])
+        command.extend(['php' if name.endswith('.phs') else name.split('.')[-1], name])
     run = subprocess.run(command, text=True, capture_output=True)
     if error:
         assert run.returncode and error in run.stderr and not (out / 'manifest.json').exists(), run.stderr
@@ -272,13 +273,13 @@ function hash_batch(hash<int,int> &$table, hash<int,int> &$alias, vector<int> &$
 
 
 def sources_for(flavor):
-    sources = {'main.php': MAIN, 'dispatch.php': DISPATCH, 'mixed.php': MIXED_BATCH, 'hash.php': HASH_BATCH, 'point.php': 'struct Point { public const bool ENABLED = true; public int $x = 1; }'}
-    sources['probe_hook.php'] = 'function note_entry(int $id): int { return $id; }'
+    sources = {'main.phs': MAIN, 'dispatch.phs': DISPATCH, 'mixed.phs': MIXED_BATCH, 'hash.phs': HASH_BATCH, 'point.phs': 'struct Point { public const bool ENABLED = true; public int $x = 1; }'}
+    sources['probe_hook.phs'] = 'function note_entry(int $id): int { return $id; }'
     if flavor == 'py':
         return dict(sources, **{'worker.py': PY_WORK, 'helper.py': PY_HELPER})
     # Use the same direct-call block in each brace frontend. The Python worker
     # fixture above retains the original mt_join launch for compatibility.
-    del sources['dispatch.php']
+    del sources['dispatch.phs']
     header = {
         'php': 'function dispatch(vector<Point> &$rows, vector<int> &$deltas, vector<int> &$other, int $offset): vector<int>',
         'cpp': 'vector<int> dispatch(vector<Point>& rows, vector<int>& deltas, vector<int>& other, int offset)',
@@ -293,7 +294,7 @@ def sources_for(flavor):
         }
         job (each: $part in 0..<2, workers: 1, read: $empty = segment($rows,balanced_range(0,2,$part))) { return $part + count($empty); }
     }; }"""
-    sources['dispatch.' + flavor] = header + (body if flavor == 'php' else body.replace('$', ''))
+    sources['dispatch.' + source_suffix(flavor)] = header + (body if flavor == 'php' else body.replace('$', ''))
     f = fixture(flavor)
     v = f['v']
     params = [('rows', 'segment<Point>'), ('deltas', 'segment<int>')]
@@ -301,8 +302,8 @@ def sources_for(flavor):
     update = f'{field} = {field} + {v}deltas[{v}i]; {v}deltas[{v}i] = {v}deltas[{v}i] + 1; return {field};'
     body = (f['infer']('i', '0') + f['infer']('subtotal', '0') +
             f'while ({v}i < count({v}rows)) {{ {v}subtotal += update({v}rows,{v}deltas,{v}i); {v}i += 1; }} return {v}subtotal;')
-    sources['helper.' + flavor] = f['function']('update', 'int', params + [('i', 'int')], update)
-    sources['worker.' + flavor] = f['function']('work', 'int', params, body)
+    sources['helper.' + source_suffix(flavor)] = f['function']('update', 'int', params + [('i', 'int')], update)
+    sources['worker.' + source_suffix(flavor)] = f['function']('work', 'int', params, body)
     return sources
 
 
@@ -310,22 +311,22 @@ def prove_each(work):
     app = work / 'app'
     app.mkdir()
     out = work / 'out'
-    sources = {'main.php': 'return 0;', 'batch.php': EACH_BATCH}
+    sources = {'main.phs': 'return 0;', 'batch.phs': EACH_BATCH}
     manifest = compile_source(app, out, sources)
     units = [out / unit for unit in manifest['translation_units'] if unit != 'entry.cpp']
     binary = work / 'probe'
     subprocess.run([*FLAGS, Path(__file__).with_name('mt_each_probe.cpp'), *units, LIBRARY, '-o', binary], check=True)
     for policy in ('sleep', 'active'):
         subprocess.run([binary], env=dict(os.environ, SCPP_MT_WAIT=policy), check=True, timeout=10)
-    sources['batch.php'] = EACH_BATCH.replace('return $part;', 'return observe();')
-    sources['helper.php'] = 'global $counter int = 7; function observe():int { return $counter; }'
+    sources['batch.phs'] = EACH_BATCH.replace('return $part;', 'return observe();')
+    sources['helper.phs'] = 'global $counter int = 7; function observe():int { return $counter; }'
     compile_source(app, work / 'rejected', sources, 'MT safety: worker cannot access global or static storage')
 
 
 def prove_readonly_helper(work):
     app = work / 'app'
     app.mkdir()
-    sources = {'main.php': 'return 0;', 'worker.php': """
+    sources = {'main.phs': 'return 0;', 'worker.phs': """
         function write_slot(segment<int> $s): int { $s[0] = 1; return $s[0]; }
         function relay(read_segment<int> $s): int { return write_slot($s); }
         function batch(vector<int> &$v): vector<int> {
@@ -338,15 +339,15 @@ def prove_readonly_helper(work):
 def prove_native_contract(work, name):
     app = work / 'app'
     app.mkdir()
-    sources = {'main.php': 'return 0;'}
+    sources = {'main.phs': 'return 0;'}
     if name == 'job_caps':
-        sources.update({'batch.php': CAP_BATCH, 'probe_hook.php': 'function note_entry(int $id): int { return $id; }'})
+        sources.update({'batch.phs': CAP_BATCH, 'probe_hook.phs': 'function note_entry(int $id): int { return $id; }'})
     else:
-        sources.update({'batch.php': HASH_BATCH, 'point.php': 'struct Point { public int $x = 1; }'})
+        sources.update({'batch.phs': HASH_BATCH, 'point.phs': 'struct Point { public int $x = 1; }'})
     out = work / 'out'
     manifest = compile_source(app, out, sources)
     # The cap observer supplies the instrumented implementation of note_entry.
-    hook = manifest['sources'].get('probe_hook.php')
+    hook = manifest['sources'].get('probe_hook.phs')
     units = [out / u for u in manifest['translation_units'] if u not in ('entry.cpp', hook)]
     driver = work / 'probe.cpp'
     driver.write_text(f'#include "mt_{name}_probe.hpp"\nint main() {{ check_{name}(); }}\n')
@@ -365,7 +366,7 @@ def prove(work):
         manifest = compile_source(app, out, sources)
         units = [out / u for u in manifest['translation_units']]
         # The compiled helper's store must use the record reference produced by the view.
-        helper_cpp = (out / manifest['sources']['helper.' + flavor]).read_text()
+        helper_cpp = (out / manifest['sources']['helper.' + source_suffix(flavor)]).read_text()
         assert re.search(r'\(\*static_cast<scpp_records::Point\*>\(.*?\.at\([^;]*?\)\)+\.x =', helper_cpp), helper_cpp
         binary = work / ('run-' + flavor)
         subprocess.run([*FLAGS, *units, LIBRARY, '-o', binary], check=True)
@@ -381,9 +382,9 @@ def prove(work):
                 assert sorted(direct) == sorted(includes), (header, direct)
                 subprocess.run([*FLAGS, '-x', 'c++', '-fsyntax-only', '-'],
                                input=f'#include <scpp/{header}>\n', text=True, check=True)
-            for source, expected in [('main.php', set()), ('point.php', set()),
-                                     ('helper.php', {view}), ('worker.php', {view}),
-                                     ('dispatch.php', {view, launch})]:
+            for source, expected in [('main.phs', set()), ('point.phs', set()),
+                                     ('helper.phs', {view}), ('worker.phs', {view}),
+                                     ('dispatch.phs', {view, launch})]:
                 deps = subprocess.check_output([*FLAGS, '-MM', out / manifest['sources'][source]], text=True)
                 assert {Path(dep).name for dep in deps.split() if '/scpp/mt_' in dep} == expected, deps
             # Exercise the compiler-generated application vector and the actual worker body.
@@ -396,72 +397,72 @@ def prove(work):
                               Path(__file__).with_name('mt_segments_probe.cpp').read_text())
             probe = work / 'probe'
             # Link a synchronized observer in place of the identity helper for this native probe.
-            hook = out / manifest['sources']['probe_hook.php']
+            hook = out / manifest['sources']['probe_hook.phs']
             subprocess.run([*FLAGS, '-I', Path(__file__).parent, driver, *[p for p in units if p.name != 'entry.cpp' and p != hook],
                             LIBRARY, '-o', probe], check=True)
             for policy in ('sleep', 'active'):
                 subprocess.run([probe], env=dict(os.environ, SCPP_MT_WAIT=policy), check=True, timeout=15)
 
     valid = sources_for('php')
-    helper = valid['helper.php']
-    dispatch = valid['dispatch.php']
+    helper = valid['helper.phs']
+    dispatch = valid['dispatch.phs']
     cases = [
-        ({'hash.php': HASH_BATCH.replace('write: $slice = segment($records', 'read: $slice = segment($records')},
+        ({'hash.phs': HASH_BATCH.replace('write: $slice = segment($records', 'read: $slice = segment($records')},
          'read-only hash segment binding'),
-        ({'hash.php': HASH_BATCH.replace('$value += 10;', '$key += 10;')}, 'read-only hash segment binding'),
-        ({'hash.php': HASH_BATCH.replace('return $key;', '$value += 10; return $key;')}, 'read-only hash segment binding'),
-        ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: true')}, 'Job workers requires int'),
-        ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: $part')}, 'local/global: part'),
-        ({'mixed.php': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: 2, workers: 3')}, 'Job workers must appear once'),
-        ({'mixed.php': MIXED_BATCH.replace('each: $part in 0 ..< $parts,', 'workers: 2, each: $part in 0 ..< $parts,')},
+        ({'hash.phs': HASH_BATCH.replace('$value += 10;', '$key += 10;')}, 'read-only hash segment binding'),
+        ({'hash.phs': HASH_BATCH.replace('return $key;', '$value += 10; return $key;')}, 'read-only hash segment binding'),
+        ({'mixed.phs': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: true')}, 'Job workers requires int'),
+        ({'mixed.phs': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: $part')}, 'local/global: part'),
+        ({'mixed.phs': MIXED_BATCH.replace('workers: tick($calls, $limit)', 'workers: 2, workers: 3')}, 'Job workers must appear once'),
+        ({'mixed.phs': MIXED_BATCH.replace('each: $part in 0 ..< $parts,', 'workers: 2, each: $part in 0 ..< $parts,')},
          'Job workers must appear once, immediately after each'),
-        ({'mixed.php': MIXED_BATCH.replace('value: $base = $part + 10', 'value: $base = tick($part,10)')},
+        ({'mixed.phs': MIXED_BATCH.replace('value: $base = $part + 10', 'value: $base = tick($part,10)')},
          'each index is read-only'),
-        ({'mixed.php': MIXED_BATCH.replace('return $part;', '$part += 1; return $part;')}, 'each index is read-only'),
-        ({'mixed.php': MIXED_BATCH.replace('workers: $cap', 'workers: true')}, 'Group workers requires int'),
-        ({'mixed.php': MIXED_BATCH.replace('0 ..< $parts', '0 ..< false')}, 'each bound requires int'),
+        ({'mixed.phs': MIXED_BATCH.replace('return $part;', '$part += 1; return $part;')}, 'each index is read-only'),
+        ({'mixed.phs': MIXED_BATCH.replace('workers: $cap', 'workers: true')}, 'Group workers requires int'),
+        ({'mixed.phs': MIXED_BATCH.replace('0 ..< $parts', '0 ..< false')}, 'each bound requires int'),
 
-        ({'mixed.php': MIXED_BATCH.replace('segment($output,$range)', 'segment($output,$parts)')},
+        ({'mixed.phs': MIXED_BATCH.replace('segment($output,$range)', 'segment($output,$parts)')},
          'Expected a segment_range'),
-        ({'mixed.php': MIXED_BATCH.replace('return $range->offset +', '$range->length = 5; return $range->offset +')},
+        ({'mixed.phs': MIXED_BATCH.replace('return $range->offset +', '$range->length = 5; return $range->offset +')},
          'Cannot modify a segment_range field'),
-        ({'mixed.php': MIXED_BATCH.replace('return $points[0]->x;', '$points[0]->x = 4; return 4;')},
+        ({'mixed.phs': MIXED_BATCH.replace('return $points[0]->x;', '$points[0]->x = 4; return 4;')},
          'Cannot write through a read-only segment'),
-        ({'mixed.php': MIXED_BATCH.replace('$out[0] = relay_read', '$a[0] = relay_read')},
+        ({'mixed.phs': MIXED_BATCH.replace('$out[0] = relay_read', '$a[0] = relay_read')},
          'Cannot write through a read-only segment'),
-        ({'mixed.php': MIXED_BATCH.replace('return read_first($points);', 'return mutate_points($points);') +
+        ({'mixed.phs': MIXED_BATCH.replace('return read_first($points);', 'return mutate_points($points);') +
                        'function mutate_points(segment<Point> $points): int { $points[0]->x = 1; return 1; }'},
          'conversion from read_segment<Point> to segment<Point>'),
-        ({'mixed.php': MIXED_BATCH.replace('write: $cell = segment($cells,0,1)', 'value: $cell = 1')},
+        ({'mixed.phs': MIXED_BATCH.replace('write: $cell = segment($cells,0,1)', 'value: $cell = 1')},
          'at least one segment binding'),
-        ({'dispatch.php': dispatch.replace('value: $enabled = true', 'value: $enabled = $rows')},
+        ({'dispatch.phs': dispatch.replace('value: $enabled = true', 'value: $enabled = $rows')},
          'requires a numeric or boolean scalar'),
-        ({'dispatch.php': dispatch.replace('value: $index', 'value: $points')}, 'Duplicate inline job binding: points'),
-        ({'dispatch.php': dispatch.replace('return update($points, $changes, $index);', 'return $offset;')},
+        ({'dispatch.phs': dispatch.replace('value: $index', 'value: $points')}, 'Duplicate inline job binding: points'),
+        ({'dispatch.phs': dispatch.replace('return update($points, $changes, $index);', 'return $offset;')},
          'Unknown or not-yet-initialized local/global: offset'),
-        ({'dispatch.php': dispatch.replace('write: $changes', 'write: $points')}, 'Duplicate inline job binding: points'),
-        ({'dispatch.php': dispatch.replace('return update($points, $changes, $index);', 'return $changes;')}, 'conversion'),
-        ({'dispatch.php': dispatch.replace('return update($points, $changes, $index);', 'return forbidden();')
+        ({'dispatch.phs': dispatch.replace('write: $changes', 'write: $points')}, 'Duplicate inline job binding: points'),
+        ({'dispatch.phs': dispatch.replace('return update($points, $changes, $index);', 'return $changes;')}, 'conversion'),
+        ({'dispatch.phs': dispatch.replace('return update($points, $changes, $index);', 'return forbidden();')
                           + ' global $counter int = 1; function forbidden(): int { return $counter; }'},
          'MT safety: worker cannot access global or static storage'),
-        ({'dispatch.php': valid['dispatch.php'].replace('work(segment($rows,0,1), segment($deltas,0,1));', '1;')},
+        ({'dispatch.phs': valid['dispatch.phs'].replace('work(segment($rows,0,1), segment($deltas,0,1));', '1;')},
          'Expected worker call'),
-        ({'dispatch.php': valid['dispatch.php'].replace('segment($deltas,0,1));', 'segment($deltas,0,1))')},
+        ({'dispatch.phs': valid['dispatch.phs'].replace('segment($deltas,0,1));', 'segment($deltas,0,1))')},
          'Expected ; after parallel worker call'),
-        ({'dispatch.php': DISPATCH[:DISPATCH.index('return')] + 'return parallel {}; }'},
+        ({'dispatch.phs': DISPATCH[:DISPATCH.index('return')] + 'return parallel {}; }'},
          'Expected at least one segment worker'),
-        ({'mixed.php': 'global $limit int = 10;' + MIXED_BATCH.replace('return LIMIT;', 'return $limit;')},
+        ({'mixed.phs': 'global $limit int = 10;' + MIXED_BATCH.replace('return LIMIT;', 'return $limit;')},
          'MT safety: worker cannot access global or static storage'),
-        ({'mixed.php': 'const string LABEL = "on";' + MIXED_BATCH.replace('Point::ENABLED', 'LABEL === LABEL')},
+        ({'mixed.phs': 'const string LABEL = "on";' + MIXED_BATCH.replace('Point::ENABLED', 'LABEL === LABEL')},
          'MT safety: worker requires a numeric or boolean constant'),
-        ({'mixed.php': MIXED_BATCH.replace('single_slot(segment($cells,0,1))', 'single_slot()')}, 'matching segment arguments'),
-        ({'mixed.php': MIXED_BATCH.replace(', segment($alias,$last,1)', '')}, 'matching segment arguments'),
-        ({'helper.php': 'global $counter int = 7;' + helper.replace('return $rows', 'return $counter + $rows')}, 'MT safety'),
-        ({'helper.php': helper.replace('return $rows[$i]->x;', 'return $rows;')}, 'conversion'),
-        ({'helper.php': helper.replace('return $rows', '$rows[] = 7; return $rows')}, 'Append'),
-        ({'point.php': 'class Shared {} struct Point { public const bool ENABLED = true; public int $x = 1; public Shared $shared; }'}, 'isolated inline'),
+        ({'mixed.phs': MIXED_BATCH.replace('single_slot(segment($cells,0,1))', 'single_slot()')}, 'matching segment arguments'),
+        ({'mixed.phs': MIXED_BATCH.replace(', segment($alias,$last,1)', '')}, 'matching segment arguments'),
+        ({'helper.phs': 'global $counter int = 7;' + helper.replace('return $rows', 'return $counter + $rows')}, 'MT safety'),
+        ({'helper.phs': helper.replace('return $rows[$i]->x;', 'return $rows;')}, 'conversion'),
+        ({'helper.phs': helper.replace('return $rows', '$rows[] = 7; return $rows')}, 'Append'),
+        ({'point.phs': 'class Shared {} struct Point { public const bool ENABLED = true; public int $x = 1; public Shared $shared; }'}, 'isolated inline'),
     ]
-    cases.append(({'main.php': '$m hash<int,int> = [];$m[1]=2;$alias =& $m;'
+    cases.append(({'main.phs': '$m hash<int,int> = [];$m[1]=2;$alias =& $m;'
                   'foreach ($m as &$v) {parallel { update_hash(segment($alias,0,1)); };}return 8;'},
                   'during writable foreach'))
     for i, (change, error) in enumerate(cases):

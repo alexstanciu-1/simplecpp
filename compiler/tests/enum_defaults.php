@@ -128,10 +128,10 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$directory = sys_get_temp_dir() . '/scpp-enum-defaults-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name, 'sources' => array_map(
-			static fn(string $name): string => $name . '.' . $flavor->name, ['main', 'kind', 'api', 'idle'])]));
+		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension(), 'sources' => array_map(
+			static fn(string $name): string => $name . '.' . $flavor->source_extension(), ['main', 'kind', 'api', 'idle'])]));
 		$paths = [];
-		foreach (['main', 'kind', 'api', 'idle'] as $name) $paths[$name] = $directory . '/' . $name . '.' . $flavor->name;
+		foreach (['main', 'kind', 'api', 'idle'] as $name) $paths[$name] = $directory . '/' . $name . '.' . $flavor->source_extension();
 		file_put_contents($paths['main'], $main);
 		file_put_contents($paths['idle'], $flavor === flavor::cpp ? 'int idle(){return 9;}' : 'function idle():int{return 9;}');
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31));
@@ -163,7 +163,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 			$fresh->run();
 			$caller ??= $project->session()->entry->entry->ast;
 			verify($project->session()->entry->entry->ast === $caller, 'Caller was reparsed');
-			$current = $project->session()->entry->sources['api.' . $flavor->name]->ast;
+			$current = $project->session()->entry->sources['api.' . $flavor->source_extension()]->ast;
 			if ($index === 2) verify($current === $provider, 'Enum edit reparsed callable provider');
 			$provider = $current;
 			verify(artifacts($directory . '/out') === artifacts($directory . '/fresh'), 'Enum defaults differ from fresh');

@@ -1,4 +1,5 @@
 """Typed vector literals reuse sequence contracts, conversions and incremental syntax ownership."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 from classes_native import fixture
@@ -52,11 +53,11 @@ def rejection(work, flavor, src):
         if flavor == 'cpp':
             invalid.append((s['infer']('x', '[1]'), 'explicitly typed local'))
         for text, message in invalid:
-            source_edit(app/('main.'+flavor), text+'return 8;')
+            source_edit(app/('main.'+source_suffix(flavor)), text+'return 8;')
             got = invoke(p)
             assert 'error' in got, got
             if message: assert message in got['error'], got
-        source_edit(app/('main.'+flavor), src['main'])
+        source_edit(app/('main.'+source_suffix(flavor)), src['main'])
         assert 'error' not in invoke(p)
     finally:
         p.stdin.close(); p.wait()

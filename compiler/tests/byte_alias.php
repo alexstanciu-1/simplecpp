@@ -89,9 +89,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$directory = sys_get_temp_dir() . '/scpp-byte-alias-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'provider.' . $flavor->name]], JSON_THROW_ON_ERROR));
-		file_put_contents($directory . '/main.' . $flavor->name, 'if (value() == (byte)8) { echo "Y"; } return 8;');
-		$path = $directory . '/provider.' . $flavor->name;
+		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension(), 'provider.' . $flavor->source_extension()]], JSON_THROW_ON_ERROR));
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'if (value() == (byte)8) { echo "Y"; } return 8;');
+		$path = $directory . '/provider.' . $flavor->source_extension();
 		$stamp = time();
 		$write = static function (string $type, string $expression) use ($path, $fn, &$stamp): void {
 			file_put_contents($path, $fn('value', '', $type, 'return ' . $expression . ';'));
@@ -129,9 +129,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$project->run();
 		$fresh->run();
 		verify(artifacts($directory . '/out') === artifacts($directory . '/fresh'), 'Deletion recovery differs from fresh');
-		file_put_contents($directory . '/main.' . $flavor->name,
+		file_put_contents($directory . '/main.' . $flavor->source_extension(),
 			'if ((uint8)9 != value()) { echo "Y"; } return 8;');
-		touch($directory . '/main.' . $flavor->name, ++$stamp);
+		touch($directory . '/main.' . $flavor->source_extension(), ++$stamp);
 		verify($project->run()['preparation']['prepared'] === 1, 'Operator edit prepared unchanged provider');
 		$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
 		$fresh->run();

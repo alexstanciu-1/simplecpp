@@ -18,7 +18,7 @@ from build_levels import build, measured
 
 def make_drivers(root, out, opt, mold):
     manifest = json.loads((out/'manifest.json').read_text())
-    unit = out/manifest['sources']['app/main.php']
+    unit = out/manifest['sources']['app/main.phs']
     cmd = ['clang++','-std=c++23','-stdlib=libc++',opt,'-g0','--ld-path='+mold,
            '-I'+str(root/'runtime/generated/public'), BASE/'runtime.cpp', unit.with_suffix('.o'),
            *manifest['link_inputs']]
@@ -36,7 +36,7 @@ def benchmark(size, root, tmp, php, mold, cpu):
         cases[name] = {}
         source = HERE/f'{size}k'/name
         text, plans = materialize(name,size*1000)
-        assert (source/'main.php').read_text() == text
+        assert (source/'main.phs').read_text() == text
         sources[name] = dict(bytes=len(text.encode()),functions=text.count('function '),reports=len(plans))
         for mode in ['shared','full']:
             path = tmp/name/mode
@@ -48,7 +48,7 @@ def benchmark(size, root, tmp, php, mold, cpu):
             app = tmp/name/opt/str(i)/'app'
             out = app.parent/'out'
             app.mkdir(parents=True)
-            for f in ['main.php','module.json']:
+            for f in ['main.phs','module.json']:
                 shutil.copyfile(HERE/f'{size}k'/name/f,app/f)
             times = build(root,app,out,php,mold,opt)
             for path in [BASE/name, *(p for p,_ in cases[name].values())]:

@@ -739,10 +739,10 @@ SCPP;
 	$dir = sys_get_temp_dir() . '/scpp-strlen-' . bin2hex(random_bytes(8));
 	mkdir($dir);
 	try {
-		$lib = "$dir/lib." . $flavor->name;
+		$lib = "$dir/lib." . $flavor->source_extension();
 		file_put_contents("$dir/module.json", '{}');
 		$word_length = $flavor === flavor::php ? 'strlen(strlen_source())' : 'strlen(word())';
-		file_put_contents("$dir/main." . $flavor->name, 'echo string_byte_from_int(' . $word_length . '), (int)' . $method('contains', 'word()', '"中"')
+		file_put_contents("$dir/main." . $flavor->source_extension(), 'echo string_byte_from_int(' . $word_length . '), (int)' . $method('contains', 'word()', '"中"')
 			. ', (int)' . $method('ends_with', 'word()', '"😀"') . '; return 8;');
 		$function = static fn(string $type, string $name, string $body) => ($flavor === flavor::cpp
 			? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
@@ -757,10 +757,10 @@ SCPP;
 			if ($body !== 'retry') {
 				if ($body === 'shadow_byte' || $body === 'add_shadow') {
 					$name = $body === 'shadow_byte' ? 'string_byte_from_int' : 'strlen';
-					file_put_contents("$dir/shadow." . $flavor->name, $function('int', $name, 'return 1;'));
+					file_put_contents("$dir/shadow." . $flavor->source_extension(), $function('int', $name, 'return 1;'));
 				}
 				elseif ($body === 'remove_shadow') {
-					unlink("$dir/shadow." . $flavor->name);
+					unlink("$dir/shadow." . $flavor->source_extension());
 				}
 				elseif ($body === null) {
 					unlink($lib);

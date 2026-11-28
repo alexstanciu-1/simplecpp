@@ -1,4 +1,5 @@
 """Whole-value transfer, destination cleanup and live-source fallback for collection providers."""
+from source_suffix import source_suffix
 import argparse
 import json
 import shutil
@@ -70,7 +71,7 @@ def prove(work, flavor, libraries, quick=False):
         resident.stdin.close()
         resident.wait()
     manifest = json.loads((out / 'manifest.json').read_text())
-    code = (out / manifest['sources'][f'{flavor}/api.{flavor}']).read_text()
+    code = (out / manifest['sources'][f'{flavor}/api.{source_suffix(flavor)}']).read_text()
     for label in ('Hash', 'Mixed', 'Dynamic'):
         for mode in ('move', 'copy'):
             function = code.split(mode + label + '_(', 1)[1].split('\n}', 1)[0]

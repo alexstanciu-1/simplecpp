@@ -1,4 +1,5 @@
 """Prove the selected general datetime bindings through real source, headers and archives."""
+from source_suffix import source_suffix
 import json
 import os
 from pathlib import Path
@@ -18,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-datetime-') as tmp:
     work = Path(tmp)
     app, out = work / 'app', work / 'out'
     app.mkdir()
-    main = app / 'main.php'
+    main = app / 'main.phs'
     main.write_text('''
 $seconds int = dt_now();
 $millis int = dt_now_ms();
@@ -33,7 +34,7 @@ $local int = dt_parse("1970-01-01");
 if ($local !== 0 || dt_format("U", $local) !== "0" || dt_format_now("x") !== "x") {return 2;}
 return 0;
 ''')
-    (app / 'forward.php').write_text('function forward_ticks(uint64 $ticks):uint64 {return $ticks;}')
+    (app / 'forward.phs').write_text('function forward_ticks(uint64 $ticks):uint64 {return $ticks;}')
     manifest = app / 'module.json'
     manifest.write_text(json.dumps(enabled))
     resident = service(app, out)
@@ -81,7 +82,7 @@ return 0;
     php_clock = work/'php-clock'
     php_clock.mkdir()
     settings = php_clock/'module.json'
-    source = php_clock/'main.php'
+    source = php_clock/'main.phs'
     settings.write_text(json.dumps({'dependencies': enabled['dependencies']}))
     source.write_text('$seconds int = time(); echo $seconds;')
     output = work/'php-clock-out'
@@ -163,7 +164,7 @@ return 0;
     for flavor, source in [('js', 'return dt_now();'), ('py', 'return dt_now()')]:
         caller = work/flavor
         caller.mkdir()
-        (caller/('main.' + flavor)).write_text(source)
+        (caller/('main.' + source_suffix(flavor))).write_text(source)
         settings = caller/'module.json'
         settings.write_text(json.dumps({'dependencies': enabled['dependencies']}))
         proc = service(caller, work/(flavor+'-out'))
@@ -195,7 +196,7 @@ return 0;
     bindings = publish()
     narrow = 'scpp/custom/time/parse_iso_utc.hpp'
     assert "general:func:dt_parse_iso_utc" in bindings and narrow in bindings
-    assert 'general:func:dt_now' not in bindings and not (work/'compiler/types/uint64.php').exists()
+    assert 'general:func:dt_now' not in bindings and not (work/'compiler/types/uint64.phs').exists()
     assert "php:func:time'" not in bindings
     umbrella = work/'runtime/public/scpp/custom/time.hpp'
     assert narrow in umbrella.read_text() and 'now_unix_seconds' not in umbrella.read_text()

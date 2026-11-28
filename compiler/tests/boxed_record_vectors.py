@@ -12,13 +12,13 @@ with tempfile.TemporaryDirectory(prefix='record-vector-export-') as folder:
     root = Path(folder)
     app, out = root/'app', root/'out'
     app.mkdir()
-    (app/'module.json').write_text('{"entry":"main.php"}')
-    point = app/'point.php'
+    (app/'module.json').write_text('{"entry":"main.phs"}')
+    point = app/'point.phs'
     schema = '''data struct Point { public int $x; public vector<int> $samples;
         public function __destruct(){echo "D";} }'''
     source_edit(point, schema)
-    source_edit(app/'packet.php', 'data struct Packet {public vector<Point> $points; public int $version=7;}')
-    main = app/'main.php'
+    source_edit(app/'packet.phs', 'data struct Packet {public vector<Point> $points; public int $version=7;}')
+    main = app/'main.phs'
     code = '''
 function once():vector<Point> {echo "!"; $v vector<Point> = [];return $v;}
 function copyPoint(vector<Point> &$v):void {$copy=$v[0];echo $copy->x;}

@@ -101,9 +101,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$directory = sys_get_temp_dir() . '/scpp-float-arithmetic-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'provider.' . $flavor->name]], JSON_THROW_ON_ERROR));
-		file_put_contents($directory . '/main.' . $flavor->name, 'if (-value() + 2.0 == -6.0) { echo "Y"; } return 8;');
-		$path = $directory . '/provider.' . $flavor->name;
+		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension(), 'provider.' . $flavor->source_extension()]], JSON_THROW_ON_ERROR));
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'if (-value() + 2.0 == -6.0) { echo "Y"; } return 8;');
+		$path = $directory . '/provider.' . $flavor->source_extension();
 		$stamp = time();
 		$write = static function (string $type, string $expression) use ($path, $fn, &$stamp): void {
 			file_put_contents($path, $fn('value', '', $type, 'return ' . $expression . ';'));

@@ -1,4 +1,5 @@
 """Class storage, optional instance properties and explicit object boundaries across all flavors."""
+from source_suffix import source_suffix
 import argparse
 import json
 from pathlib import Path
@@ -113,10 +114,10 @@ int main() {
 def prove(work, flavor, libraries, memcheck):
     s=fixture(flavor)
     app=work/flavor;app.mkdir()
-    (app/'module.json').write_text(json.dumps({'entry':'main.'+flavor}))
+    (app/'module.json').write_text(json.dumps({'entry':'main.'+source_suffix(flavor)}))
     sources={k:s[k] for k in ['node','addition','holder','other','point','api','main']}
     sources['idle']=s['function']('idle','int',[],'return 17;')
-    files={k:app/(k+'.'+flavor) for k in sources}
+    files={k:app/(k+'.'+source_suffix(flavor)) for k in sources}
     for k,text in sources.items():source_edit(files[k],text)
     output=work/(flavor+'-out');resident=service(app,output)
     nullable_accept=s['accept'].replace('Node','?Node')
@@ -157,7 +158,7 @@ def prove(work, flavor, libraries, memcheck):
             assert artifacts(output)==artifacts(fresh_out),(flavor,revision)
             if revision:
                 assert current['preparation']['reused']>=1,current
-                assert not any(p.endswith('/idle.'+flavor) for p in current['emitted_sources']),current
+                assert not any(p.endswith('/idle.'+source_suffix(flavor)) for p in current['emitted_sources']),current
             if revision==1:
                 assert current['preparation']['prepared']==0 and current['emitted_sources']==[],current
             if revision in [0,4,6,8,10,13,15]:
@@ -181,8 +182,8 @@ def signature_recovery(work, flavor, libraries):
     app = work / (flavor + '-signatures')
     app.mkdir()
     output = work / (flavor + '-signatures-out')
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
-    files = {name: app / (name + '.' + flavor) for name in ['main', 'api', 'missing', 'idle']}
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
+    files = {name: app / (name + '.' + source_suffix(flavor)) for name in ['main', 'api', 'missing', 'idle']}
     main = 'echo consume(produce()); return 8;'
     consume = s['function']('consume', 'int', [('n', 'Missing')], 'return 7;')
     produce = s['function']('produce', '?Missing', [], 'return new Missing();')
@@ -225,7 +226,7 @@ def signature_recovery(work, flavor, libraries):
                           and 'scpp::echo_int' in p.read_text())
             assert ('consume_(owner_Missing::require(produce_()))' in caller) == checked, caller
             if revision in [5, 6, 7, 8]:
-                assert not any(p.endswith('/idle.' + flavor) for p in current['emitted_sources']), current
+                assert not any(p.endswith('/idle.' + source_suffix(flavor)) for p in current['emitted_sources']), current
                 assert current['preparation']['reused'] >= 1, current
             if revision == 8:
                 assert current['preparation']['prepared'] == 0 and current['emitted_sources'] == [], current

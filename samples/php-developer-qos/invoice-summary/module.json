@@ -1,1 +1,1 @@
-{"sources":["main.php"],"dependencies":{"runtime":{"modules":["filesystem"]}}}
+{"sources":["main.phs"],"dependencies":{"runtime":{"modules":["filesystem"]}}}

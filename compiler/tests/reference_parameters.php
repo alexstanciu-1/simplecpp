@@ -148,8 +148,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		file_put_contents($directory . '/main.' . $flavor->name, $decl('x', 'int', '8') . 'f(' . $var('x') . '); return ' . $var('x') . ';');
-		$lib = $directory . '/lib.' . $flavor->name;
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), $decl('x', 'int', '8') . 'f(' . $var('x') . '); return ' . $var('x') . ';');
+		$lib = $directory . '/lib.' . $flavor->source_extension();
 		$write = static function (bool $ref, string $body) use ($lib, $fn, $p): void {
 			file_put_contents($lib, $fn('f', [$p('v', 'int', $ref)], 'void', $body));
 		};
@@ -175,7 +175,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		verify($caller->main()->body()->statements[2]->value->constant_known(), 'Value-mode repair lost fact');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op rebuilt');
-		file_put_contents($directory . '/main.' . $flavor->name, 'f(8); return 8;');
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'f(8); return 8;');
 		$session = $compiler->frontend($directory, $session);
 		Incremental_Preparation::prepare($session, $target);
 		$literal_caller = $session->entry->entry->ast;
@@ -187,7 +187,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		verify(Incremental_Preparation::prepare($session, $target)['prepared'] === 2, 'Invalid reference binding did not recover');
 		verify($session->entry->entry->ast === $literal_caller, 'Binding recovery reparsed caller');
 		// A parameter mode edit changes the caller's direct-addition proof.
-		file_put_contents($directory . '/main.' . $flavor->name,
+		file_put_contents($directory . '/main.' . $flavor->source_extension(),
 			$decl('x', 'int', '8') . 'return ' . $var('x') . '+f(' . $var('x') . ');');
 		$emit_caller = static fn(compilation_session $session): array => Cpp_Program::emit(new prepared_program(
 			$session->entry_key(), $session->files(), new prepared_entry($session->entry->entry->ast, $target), $session))->files;

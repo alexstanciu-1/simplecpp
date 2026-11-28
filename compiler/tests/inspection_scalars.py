@@ -1,4 +1,5 @@
 """Check scalar JSON through the CLI and panel, including globals in a second source unit."""
+from source_suffix import source_suffix
 import json
 from pathlib import Path
 import subprocess
@@ -28,7 +29,7 @@ def prove(work, flavor):
     app.mkdir()
     sources = app / 'sources'
     sources.mkdir()
-    main = sources / ('main.' + flavor)
+    main = sources / ('main.' + source_suffix(flavor))
     main.write_text(globals_text + body)
     cli = json.loads(subprocess.check_output(['php', ROOT/'compiler/main.php', 'prepare', flavor, main, FACTS]))
     # Compare JSON types as well as values (Python equates False and 0).
@@ -38,7 +39,7 @@ def prove(work, flavor):
     known, unknown = [s['initializer'] for s in cli['statements'][:2]]
     assert known['constant'] is None and known['constant_known'] is True
     assert unknown['constant'] is None and unknown['constant_known'] is False
-    library = sources / ('library.' + flavor)
+    library = sources / ('library.' + source_suffix(flavor))
     library.write_text(globals_text)
     main.write_text(body)
     request = app / 'request.json'

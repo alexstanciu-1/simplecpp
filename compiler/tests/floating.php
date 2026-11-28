@@ -126,14 +126,14 @@ $directory = sys_get_temp_dir() . '/scpp-floating-' . bin2hex(random_bytes(8));
 mkdir($directory);
 try
 {
-	file_put_contents($directory . '/module.json', '{"entry":"main.php"}');
-	file_put_contents($directory . '/main.php', '$result int = $external; return $result;');
-	file_put_contents($directory . '/lib.php', 'global $external = 8;');
+	file_put_contents($directory . '/module.json', '{"entry":"main.phs"}');
+	file_put_contents($directory . '/main.phs', '$result int = $external; return $result;');
+	file_put_contents($directory . '/lib.phs', 'global $external = 8;');
 	$compiler = new Project_Compiler();
 	$session = $compiler->frontend($directory);
 	Incremental_Preparation::prepare($session, new entry_target(31));
 	$caller = $session->entry->entry->ast;
-	file_put_contents($directory . '/lib.php', 'global $external = 8.75;');
+	file_put_contents($directory . '/lib.phs', 'global $external = 8.75;');
 	$session = $compiler->frontend($directory, $session);
 	verify(Incremental_Preparation::prepare($session, new entry_target(31))['prepared'] === 1, 'Inferred float type did not invalidate');
 	verify($session->entry->entry->ast === $caller, 'Unchanged caller reparsed');

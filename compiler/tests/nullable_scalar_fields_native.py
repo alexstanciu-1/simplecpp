@@ -52,4 +52,4 @@ if __name__ == '__main__':
             ('fields', broken, diagnostic),
             (None, None, diagnostic),
             ('fields', repaired, expected.replace(b'7;', b'12;', 1)),
-        ], unaffected_source='observe.php', unaffected_revisions={4})
+        ], unaffected_source='observe.phs', unaffected_revisions={4})

@@ -82,7 +82,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$fixtures[$flavor->name . '_invalid_native'] = ['cpp' => $bad, 'stdout_hex' => '', 'catch_runtime_error' => 'Invalid value for enum helper'];
 	$directory = sys_get_temp_dir() . '/scpp-enum-name-' . bin2hex(random_bytes(8)); mkdir($directory);
 	try {
-		$main = $directory . '/main.' . $flavor->name; $provider = $directory . '/kind.' . $flavor->name;
+		$main = $directory . '/main.' . $flavor->source_extension(); $provider = $directory . '/kind.' . $flavor->source_extension();
 		file_put_contents($directory . '/module.json', json_encode(['entry'=>basename($main), 'sources'=>[basename($main),basename($provider)]]));
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp=time(); $caller=null;
 		foreach (['Last','Renamed',null,'Restored',false,'Again'] as $index=>$name) {

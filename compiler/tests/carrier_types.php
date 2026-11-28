@@ -73,8 +73,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
-		$library = $directory . '/library.' . $flavor->name;
+		$main = $directory . '/main.' . $flavor->source_extension();
+		$library = $directory . '/library.' . $flavor->source_extension();
 		file_put_contents($main, 'echo "carriers"; return 8;');
 		$revision = time();
 		$write = static function (?string $type) use ($library, $flavor, &$revision): void {

@@ -10,10 +10,10 @@ def verify(work):
     app, out = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('return 8;')
-    caller = app/'helper.php'
+    (app/'main.phs').write_text('return 8;')
+    caller = app/'helper.phs'
     caller.write_text('function helper(int &$n):int { $f=function &(int &$x):int {leaf($x);return $x;};return $f($n);}')
-    leaf = app/'leaf.php'
+    leaf = app/'leaf.phs'
     source = 'function leaf(int &$x):int {return 1;}'
     source_edit(leaf, source)
     process = service(app, out)
@@ -23,7 +23,7 @@ def verify(work):
         # The closure's symbol watch must reach the enclosing body on a signature edit.
         source_edit(leaf, source.replace('int &$x', 'int &$x, int $extra'))
         failure = invoke(process).get('error', '')
-        assert 'helper.php:' in failure and 'Argument count mismatch' in failure, failure
+        assert 'helper.phs:' in failure and 'Argument count mismatch' in failure, failure
         assert good == (artifacts(out), (out/'manifest.json').read_bytes())
         source_edit(leaf, source)
         assert 'error' not in invoke(process)
@@ -48,8 +48,8 @@ def verify(work):
     translated.mkdir()
     (translated/'module.json').write_text('{}')
     example = ROOT/'compiler/examples/closure_dependencies'
-    shutil.copyfile(example/'graph.php.scpp', translated/'graph.php')
-    shutil.copyfile(example/'proof.php.scpp', translated/'main.php')
+    shutil.copyfile(example/'graph.phs', translated/'graph.phs')
+    shutil.copyfile(example/'proof.phs', translated/'main.phs')
     generated = work/'generated'
     result = fresh_build(translated, generated)
     assert 'error' not in result, result

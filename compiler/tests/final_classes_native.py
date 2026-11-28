@@ -1,4 +1,5 @@
 """Final class identity, inherited protected access and interface tests across retained generations."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 from collection_goal_native import revisions
@@ -34,7 +35,7 @@ def sources(flavor):
 def rejection(work,flavor,src):
     s,evaluate,klass,method,interface,implementation=forms(flavor)
     p=service(work/flavor,work/(flavor+'-reject'))
-    path=work/flavor/('extra.'+flavor)
+    path=work/flavor/('extra.'+source_suffix(flavor))
     try:
         cases=[('final','Expected'),('class Incomplete','Expected'),(klass('Child','','Leaf'),'Cannot extend final'),
             ('abstract '+final(flavor,klass('Conflict'),'Conflict'),'non-abstract class'),
@@ -46,11 +47,11 @@ def rejection(work,flavor,src):
             got=invoke(p);assert message in got.get('error',''),got
         path.unlink();assert 'error' not in invoke(p)
         # Test the reverse interface -> final class direction independently of forward().
-        source_edit(work/flavor/('bad.'+flavor),final(flavor,src['bad'],'Bad'))
-        source_edit(work/flavor/('api.'+flavor),src['api'].replace('return '+s['v']+'x instanceof Readable;', 'return false;'))
+        source_edit(work/flavor/('bad.'+source_suffix(flavor)),final(flavor,src['bad'],'Bad'))
+        source_edit(work/flavor/('api.'+source_suffix(flavor)),src['api'].replace('return '+s['v']+'x instanceof Readable;', 'return false;'))
         got=invoke(p);assert 'Final class does not implement' in got.get('error',''),got
-        source_edit(work/flavor/('bad.'+flavor),src['bad'])
-        source_edit(work/flavor/('api.'+flavor),src['api'])
+        source_edit(work/flavor/('bad.'+source_suffix(flavor)),src['bad'])
+        source_edit(work/flavor/('api.'+source_suffix(flavor)),src['api'])
         assert 'error' not in invoke(p)
     finally:p.stdin.close();p.wait()
 

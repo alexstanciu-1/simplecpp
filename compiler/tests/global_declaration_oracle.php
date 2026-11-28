@@ -8,7 +8,7 @@ use scpp\compiler\{flavor, source_file, Source_Frontend};
 
 $dialect = flavor::from($argv[1]);
 $code = stream_get_contents(STDIN);
-$file = (new Source_Frontend())->parse(new source_file('globals.' . $dialect->value, $code, $dialect));
+$file = (new Source_Frontend())->parse(new source_file('globals.' . $dialect->source_extension(), $code, $dialect));
 $tokens = [];
 foreach ($file->tokens->tokens as $index => $token) {
 	$tokens[] = [$token->kind->name, $file->tokens->text_at($index)];

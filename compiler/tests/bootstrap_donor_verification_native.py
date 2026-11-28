@@ -8,18 +8,18 @@ from exceptions_native import fresh_build, native
 from extends_native import ROOT, runtime, source_edit
 
 
-# Revisions of main.php in one compiler. Error strings include the source location.
+# Revisions of main.phs in one compiler. Error strings include the source location.
 CASES = [
     ('chained-assignment',
      '$a = $b = 1; return 8;',
-     'main.php:1:9: Expected ;'),
+     'main.phs:1:9: Expected ;'),
     ('split-assignment',
      'class Box {public int $n=7;} function makeBox():Box {echo "M"; return new Box();} '
      '$b=makeBox(); $a=$b; $b->n=9; echo $a->n; return 8;',
      (8, b'M9', b'')),
     ('discarded-arithmetic',
      '$a=1; $b=2; $c=3; $a + 1; return 8;',
-     'main.php:1:22: Expected identifier'),
+     'main.phs:1:22: Expected identifier'),
     ('discarded-call-result',
      'function observed():int {echo "C"; return 2;} observed(); return 8;',
      (8, b'C', b'')),
@@ -42,7 +42,7 @@ CASES = [
      (8, b'1', b'')),
     ('scope',
      '$f /** function<int(int)> */; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5); return 8;',
-     'main.php:1:29: Expected identifier'),
+     'main.phs:1:29: Expected identifier'),
     ('declared-callable',
      '$f function<int(int)>; if (true) { $f = function (int $x):int {return $x+1;}; } echo $f(5); return 8;',
      (8, b'6', b'')),
@@ -54,7 +54,7 @@ CASES = [
      (8, b'local', b'')),
     ('order',
      '$a = $b; $b = 1; return 8;',
-     'main.php:1:6: Unknown or not-yet-initialized local/global: b'),
+     'main.phs:1:6: Unknown or not-yet-initialized local/global: b'),
     ('used-import',
      'namespace App; use Lib\\X; $a=new X(); echo $a->n; return 8;',
      (8, b'7', b'')),
@@ -79,7 +79,7 @@ CASES = [
      (8, b'12', b'')),
     ('exec5',
      'namespace A { compute(1); namespace B { class X {} } compute(3); }',
-     'main.php:1:27: Nested/additional namespaces, body-local use and export are not supported in this slice'),
+     'main.phs:1:27: Nested/additional namespaces, body-local use and export are not supported in this slice'),
     ('resolve',
      'class A {public function __construct(){echo "ctor";}} $a=new A(); A\\B\\f(); return 8;',
      (8, b'ctorfunc', b'')),
@@ -92,34 +92,34 @@ CASES = [
      (8, b'7', b'')),
     ('untyped-const',
      'class A { public const X = 1; } echo A::X; return 8;',
-     'main.php:1:26: Expected identifier'),
+     'main.phs:1:26: Expected identifier'),
     ('typed-const',
      'class A { public const int X = 1; } echo A::X; return 8;',
      (8, b'1', b'')),
     ('unknown-field',
      'class A { public function assignField():void { $this->y = 1; } } $a=new A(); $a->assignField(); return 8;',
-     'main.php:1:48: Unknown field A.y'),
+     'main.phs:1:48: Unknown field A.y'),
     ('dynamic-field',
      'class A { public int $x=0; public function assignField(string $name):void { $this->$name = 1; } } $a=new A(); $a->assignField("x"); return 8;',
-     'main.php:1:84: Expected identifier'),
+     'main.phs:1:84: Expected identifier'),
     ('direct-field',
      'class A {public int $x=0; public function assignField():void {$this->x=1;}} $a=new A(); $a->assignField(); echo $a->x; return 8;',
      (8, b'1', b'')),
     ('dynamic-method',
      'class A { public function f():void { echo 1; } } $a=new A(); $name="f"; $a->$name(); return 8;',
-     'main.php:1:77: Expected identifier'),
+     'main.phs:1:77: Expected identifier'),
     ('direct-method',
      'class A {public function f():void {echo 1;}} $a=new A(); $a->f(); return 8;',
      (8, b'1', b'')),
     ('destructor',
      'class A { public function __destruct(){} } $a=new A(); $a->__destruct(); return 8;',
-     'main.php:1:56: Explicit destructor invocation is forbidden'),
+     'main.phs:1:56: Explicit destructor invocation is forbidden'),
     ('abstract-static',
      'abstract class A { abstract static function f(): int; } return 8;',
-     'main.php:1:20: Virtual modifiers require a public or protected instance method: A::f'),
+     'main.phs:1:20: Virtual modifiers require a public or protected instance method: A::f'),
     ('intmax',
      '$a = PHP_INT_MAX; echo $a; return 8;',
-     'main.php:1:6: Unknown constant: PHP_INT_MAX'),
+     'main.phs:1:6: Unknown constant: PHP_INT_MAX'),
     ('intmax-control',
      '$a = 9223372036854775807; echo $a; return 8;',
      (8, b'9223372036854775807', b'')),
@@ -130,10 +130,10 @@ def prove(work, quick=False):
     app = work / 'app'
     app.mkdir()
     (app / 'module.json').write_text('{}')
-    source_edit(app / 'lib.php', r'namespace Lib; class X {public int $n=7;}')
-    source_edit(app / 'compute.php', 'namespace A; function compute(int $i):void {echo $i;}')
-    source_edit(app / 'f.php', r'namespace A\B; function f():void {echo "func";}')
-    source_edit(app / 'deep.php', r'namespace A\B\A\B; class X { public int $n=7; }')
+    source_edit(app / 'lib.phs', r'namespace Lib; class X {public int $n=7;}')
+    source_edit(app / 'compute.phs', 'namespace A; function compute(int $i):void {echo $i;}')
+    source_edit(app / 'f.phs', r'namespace A\B; function f():void {echo "func";}')
+    source_edit(app / 'deep.phs', r'namespace A\B\A\B; class X { public int $n=7; }')
     output = work / 'out'
     library = ROOT/'build/clang/libscpp_runtime.a' if quick else runtime(work, 'clang++', [ROOT / 'runtime/generated/src/hash.cpp'])
     resident = service(app, output)
@@ -141,7 +141,7 @@ def prove(work, quick=False):
         for label, source, expected in CASES:
             if quick and label not in {'integer-hash-indexed-empty', 'declared-callable', 'scope', 'used-import', 'order'}:
                 continue
-            source_edit(app / 'main.php', source)
+            source_edit(app / 'main.phs', source)
             before = artifacts(output)
             actual = invoke(resident)
             fresh = work / ('fresh-' + label)

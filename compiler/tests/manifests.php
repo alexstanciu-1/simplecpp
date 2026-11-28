@@ -46,7 +46,7 @@ try
 	manifest($root, 'runtime/json', '{"name":"json","type":"c++","dependencies":{"runtime":{}}}');
 	manifest($root, 'app/nested', '{}');
 	file_put_contents($root . '/app/main.cpp', 'echo "module"; return 8;');
-	file_put_contents($root . '/lib/functions.php', 'function helper(): void { echo "module"; }');
+	file_put_contents($root . '/lib/functions.phs', 'function helper(): void { echo "module"; }');
 	file_put_contents($root . '/runtime/core/native.cpp', '#include <cstdint>');
 	file_put_contents($root . '/runtime/json/native.cpp', '#include <string>');
 	foreach (['build', 'generated', 'nested'] as $dir) {
@@ -85,9 +85,9 @@ try
 	manifest($root, 'app', '{"entry":"entry.scpp","sources":{"entry.scpp":"cpp"}}');
 	verify($loader->load($root . '/app')->entry->entry->path === 'entry.scpp', 'Explicit sources/entry');
 	manifest($root, 'app', '{}');
-	file_put_contents($root . '/app/main.php', 'return 8;');
+	file_put_contents($root . '/app/main.phs', 'return 8;');
 	rejects(fn() => $loader->load($root . '/app'), 'exactly one');
-	unlink($root . '/app/main.php');
+	unlink($root . '/app/main.phs');
 	manifest($root, 'app', '{"sources":[]}');
 	rejects(fn() => $loader->load($root . '/app'), 'exactly one');
 	manifest($root, 'app', '{"dependencies":{"runtime":{"modules":["missing"]}}}');
@@ -102,7 +102,7 @@ try
 	manifest($root, 'lib', '{"name":"wrong"}');
 	rejects(fn() => $loader->load($root . '/app'), 'does not match');
 	manifest($root, 'lib', '{}');
-	manifest($root, 'app', '{"entry":"../lib/functions.php","sources":["../lib/functions.php"]}');
+	manifest($root, 'app', '{"entry":"../lib/functions.phs","sources":["../lib/functions.phs"]}');
 	rejects(fn() => $loader->load($root . '/app'), 'canonical relative');
 	manifest($root, 'app', '{"sources":["missing.cpp"]}');
 	rejects(fn() => $loader->load($root . '/app'), 'exactly one');

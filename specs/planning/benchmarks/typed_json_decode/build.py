@@ -16,8 +16,8 @@ work.mkdir(parents=True, exist_ok=True)
 app = work / 'app'
 app.mkdir(exist_ok=True)
 (app / 'module.json').write_text('{"dependencies":{"runtime":{"modules":["json"]}},"general_api":true}')
-(app / 'records.php').write_text('data struct Packet {public vector<int> $data; public vector<int> $extra; public vector<string> $words; public int $version=1;}')
-(app / 'main.php').write_text('$p Packet=json_decode_as("{}",Packet::class);return $p->version;')
+(app / 'records.phs').write_text('data struct Packet {public vector<int> $data; public vector<int> $extra; public vector<string> $words; public int $version=1;}')
+(app / 'main.phs').write_text('$p Packet=json_decode_as("{}",Packet::class);return $p->version;')
 run = subprocess.run(['php', root / 'compiler/tests/incremental_executable.php', app, work / 'out'],
                      input='"run"\n', capture_output=True, text=True, check=True)
 assert 'error' not in json.loads(run.stdout), run.stdout

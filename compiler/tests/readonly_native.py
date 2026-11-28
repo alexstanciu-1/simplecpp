@@ -1,4 +1,5 @@
 """Stored-value readonly construction, reference boundaries and incremental recovery in every flavor."""
+from source_suffix import source_suffix
 import argparse
 import tempfile
 from pathlib import Path
@@ -46,21 +47,21 @@ def prove(work,flavor):
          f'{v}box{a}text[0]=65;',f'{v}box{a}inlinePoint{a}x=3;',f'{v}box{a}point=null;',f'{v}box{a}inlinePoint{a}touch();']
     try:
         for text in bad:
-            source_edit(app/('main.'+flavor),local+text+'return 8;')
+            source_edit(app/('main.'+source_suffix(flavor)),local+text+'return 8;')
             got=invoke(proc);assert 'readonly' in got.get('error','').lower(),(flavor,text,got)
-        source_edit(app/('main.'+flavor),local+f'{v}box{a}x=1;return 8;')
-        source_edit(app/('types.'+flavor),types.replace(field('x','int'),field('x','int',ro=False)));assert 'error' not in invoke(proc)
-        source_edit(app/('types.'+flavor),types);assert 'readonly' in invoke(proc).get('error','').lower()
-        source_edit(app/('main.'+flavor),main);assert 'error' not in invoke(proc)
+        source_edit(app/('main.'+source_suffix(flavor)),local+f'{v}box{a}x=1;return 8;')
+        source_edit(app/('types.'+source_suffix(flavor)),types.replace(field('x','int'),field('x','int',ro=False)));assert 'error' not in invoke(proc)
+        source_edit(app/('types.'+source_suffix(flavor)),types);assert 'readonly' in invoke(proc).get('error','').lower()
+        source_edit(app/('main.'+source_suffix(flavor)),main);assert 'error' not in invoke(proc)
         for edit in [types.replace(f'{v}this{a}point=new Point();',''),
                      types.replace(f'{v}this{a}point=new Point();',f'{v}this{a}text="bad";{v}this{a}point=new Point();'),
                      types.replace(f'{v}this{a}x={v}x;',f'echo {v}this{a}x;{v}this{a}x={v}x;'),
                      types.replace(f'{v}this{a}x={v}x;',''),
                      types.replace(f'{v}this{a}x={v}x;','return;'),
                      types.replace(f'{v}this{a}x={v}x;',f'while (true) {{{v}this{a}x={v}x;break;}}')]:
-            source_edit(app/('types.'+flavor),edit);got=invoke(proc)
+            source_edit(app/('types.'+source_suffix(flavor)),edit);got=invoke(proc)
             assert 'readonly' in got.get('error','').lower(),(flavor,got)
-            source_edit(app/('types.'+flavor),types);assert 'error' not in invoke(proc)
+            source_edit(app/('types.'+source_suffix(flavor)),types);assert 'error' not in invoke(proc)
     finally:proc.stdin.close();proc.wait()
 
 

@@ -46,12 +46,12 @@ def verify(work):
     app = work/'app'
     app.mkdir()
     (app/'module.json').write_text('{"general_api":true}')
-    shutil.copyfile(ROOT/'compiler/examples/tokenizer/utf8.php.scpp', app/'utf8.php')
+    shutil.copyfile(ROOT/'compiler/examples/tokenizer/utf8.phs', app/'utf8.phs')
     main = []
     for data in inputs:
         value = ' . '.join(f'string_byte_from_int({byte})' for byte in data) or '""'
         main.append(f'echo source_utf8_error({value}), "\\n";')
-    (app/'main.php').write_text('\n'.join([*main, 'return 8;']))
+    (app/'main.phs').write_text('\n'.join([*main, 'return 8;']))
     generated = work/'generated'
     result = fresh_build(app, generated)
     assert 'error' not in result, result

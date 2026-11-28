@@ -1,4 +1,5 @@
 """Retained keyed source contracts and native object reuse versus fresh builds."""
+from source_suffix import source_suffix
 import argparse
 import json
 import tempfile
@@ -31,9 +32,9 @@ def prove(work, quick_runtime=None):
         retired = stable_calls + 'return 8;'
         app, out = work/flavor, work/(flavor+'-out')
         app.mkdir()
-        source_edit(app/'module.json', json.dumps({'entry':'main.'+flavor}))
+        source_edit(app/'module.json', json.dumps({'entry':'main.'+source_suffix(flavor)}))
         for name, text in [('api',api), ('main',main), ('idle',function('int', 'idle', 'return 42;'))]:
-            source_edit(app/(name+'.'+flavor), text)
+            source_edit(app/(name+'.'+source_suffix(flavor)), text)
         edits = [(None,None,b'7'), (None,None,b'7'), ('api',api.replace('return 7;', 'return 8;'),b'8'),
                  ('api',function('string','key','return "bad";')+function('int','value','return 7;'),None),
                  ('api',None,None), (None,None,None), ('api',api,b'7'),
@@ -47,7 +48,7 @@ def prove(work, quick_runtime=None):
             for revision,(name,text,expected) in enumerate(edits):
                 before = artifacts(out)
                 if name:
-                    path = app/(name+'.'+flavor)
+                    path = app/(name+'.'+source_suffix(flavor))
                     if text is None: path.unlink()
                     else: source_edit(path,text)
                 current = invoke(resident)

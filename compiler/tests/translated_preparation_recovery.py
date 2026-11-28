@@ -1,4 +1,5 @@
 """Run a bounded translated preparation stage on real frontend AST inputs."""
+from source_suffix import source_suffix
 import argparse
 import json
 from pathlib import Path
@@ -13,7 +14,7 @@ from exceptions_native import fresh_build
 from extends_native import ROOT, source_edit
 
 
-TRANSLATION = ROOT / 'compiler/examples/preparation_recovery/preparation.php.scpp'
+TRANSLATION = ROOT / 'compiler/examples/preparation_recovery/preparation.phs'
 FUNCTIONS = ('changed', 'broken', 'quiet', 'missing')
 
 
@@ -54,10 +55,10 @@ def host_oracle(work, flavor):
     app.mkdir()
     fn = fixture(flavor)['function']
     (app / 'module.json').write_text('{}')
-    (app / f'main.{flavor}').write_text('echo changed(), broken(), quiet(); return 8;')
+    (app / f'main.{source_suffix(flavor)}').write_text('echo changed(), broken(), quiet(); return 8;')
 
     def write(name, expression):
-        path = app / f'{name}.{flavor}'
+        path = app / f'{name}.{source_suffix(flavor)}'
         source_edit(path, fn(name, 'int', [], f'return {expression};'))
         return parsed_return(path, flavor)
 
@@ -80,7 +81,7 @@ def host_oracle(work, flavor):
         repaired = invoke(process)
         assert 'error' not in repaired and repaired['preparation']['prepared'] == 2, repaired
         assert repaired['preparation']['reused'] == 3, repaired
-        assert f'app/quiet.{flavor}' not in repaired['emitted_sources'], repaired
+        assert f'app/quiet.{source_suffix(flavor)}' not in repaired['emitted_sources'], repaired
         fresh = work / 'fresh-host'
         assert 'error' not in fresh_build(app, fresh)
         assert artifacts(output) == artifacts(fresh)
@@ -95,14 +96,14 @@ def call_oracle(work):
     app, out = work / 'method-input', work / 'method-output'
     app.mkdir()
     (app / 'module.json').write_text('{}')
-    (app / 'main.php').write_text('return left_call() + right_call();')
-    (app / 'methods.php').write_text('class Base { public static function read(): int {return 3;} } '
+    (app / 'main.phs').write_text('return left_call() + right_call();')
+    (app / 'methods.phs').write_text('class Base { public static function read(): int {return 3;} } '
                                     'class Left extends Base {} class Right extends Base {}')
     for role in ('Left', 'Right'):
         name = role.lower() + '_call'
-        (app / (name + '.php')).write_text(f'function {name}(): int {{return {role}::read();}}')
+        (app / (name + '.phs')).write_text(f'function {name}(): int {{return {role}::read();}}')
     for name, prefix in [('lex_left', ''), ('lex_right', '$seed int = 9;')]:
-        (app / (name + '.php')).write_text(
+        (app / (name + '.phs')).write_text(
             f'function {name}(): int {{ {prefix} $g = function ():int {{return 7;}}; return $g(); }}')
     result = fresh_build(app, out)
     assert 'error' not in result, result
@@ -306,8 +307,8 @@ def prove(work):
     app, output = work / 'translated-input', work / 'translated-output'
     app.mkdir()
     (app / 'module.json').write_text('{}')
-    shutil.copyfile(TRANSLATION, app / 'preparation.php')
-    (app / 'main.php').write_text(driver(input_sets))
+    shutil.copyfile(TRANSLATION, app / 'preparation.phs')
+    (app / 'main.phs').write_text(driver(input_sets))
     result = fresh_build(app, output)
     assert 'error' not in result, result
     timing = measure(output, work / 'native', bytes(expected))

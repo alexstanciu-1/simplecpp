@@ -9,6 +9,8 @@ The Python subsection records the v0.2 typed surface.
 
 ## Starting a PHP-flavor source
 
+Use `.phs` for Simple C++ PHP-flavor source files and `.php` for classic PHP scripts. A project can contain both `main.phs` and `main.php`. Application discovery selects `main.phs`; explicit selection of a classic PHP script produces a diagnostic. Manifests and compiler commands use the flavor label `php`.
+
 A PHP-flavor file starts directly with source code. For migration, the compiler accepts `<?php` at byte zero followed by whitespace or end of file. It warns on stderr once per compiler execution across all source files. A selected PHP entry that reaches the end exits with status zero. Explicit integer returns still select the exit status.
 
 Simple C++ type checking is always enabled. The compiler diagnoses `declare(strict_types=1);` and directs authors to remove it. The `require`, `require_once`, `include` and `include_once` forms direct authors to the source inventory in `module.json`. In typed declarations the assignment can immediately follow the closing generic delimiter, as in `$v vector<int>=[];`.

@@ -96,7 +96,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		$prepare($returning);
 		$directory = sys_get_temp_dir() . '/scpp-vector-copy-' . bin2hex(random_bytes(8)); mkdir($directory);
 		try {
-			$entry_path = $directory . '/main.' . $flavor->name; $provider = $directory . '/value.' . $flavor->name;
+			$entry_path = $directory . '/main.' . $flavor->source_extension(); $provider = $directory . '/value.' . $flavor->source_extension();
 			file_put_contents($directory . '/module.json', json_encode(['entry' => basename($entry_path), 'sources' => [basename($entry_path),basename($provider)]]));
 			file_put_contents($entry_path, $main);
 			$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp=time(); $caller=null;

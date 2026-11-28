@@ -115,9 +115,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try
 	{
-		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->value], \JSON_THROW_ON_ERROR));
-		$main_path = $directory . '/main.' . $flavor->value;
-		$lib_path = $directory . '/lib.' . $flavor->value;
+		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension()], \JSON_THROW_ON_ERROR));
+		$main_path = $directory . '/main.' . $flavor->source_extension();
+		$lib_path = $directory . '/lib.' . $flavor->source_extension();
 		file_put_contents($main_path, wrap($flavor, 'App', $root_marker . 'Lib' . $separator . 'ping(); return 8;'));
 		file_put_contents($lib_path, wrap($flavor, 'Lib', $ping));
 		$compiler = new Project_Compiler();

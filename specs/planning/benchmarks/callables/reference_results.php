@@ -53,8 +53,8 @@ try {
 			default => throw new InvalidArgumentException($kind),
 		};
 		if ($kind === 'pointer') [$helper, $edited] = [$edited, $helper];
-		file_put_contents("$dir/main.php", $entry);
-		file_put_contents("$dir/lib.php", $helper);
+		file_put_contents("$dir/main.phs", $entry);
+		file_put_contents("$dir/lib.phs", $helper);
 		$compiler = new Project_Compiler();
 		$session = $compiler->frontend($dir);
 		Incremental_Preparation::prepare($session, $target);
@@ -62,7 +62,7 @@ try {
 		$pending = [];
 		for ($i = 0; $i < 69; ++$i) {
 			foreach ([$edited, $helper] as $index => $edit) {
-				file_put_contents("$dir/lib.php", $edit);
+				file_put_contents("$dir/lib.phs", $edit);
 				$session = $compiler->frontend($dir, $session);
 				$dirty = $session->preparation_work->pending_count();
 				$start = hrtime(true);

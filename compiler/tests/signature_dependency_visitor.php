@@ -16,8 +16,8 @@ $source = 'class Result { public int $id = 0; } class Item { public int $id = 1;
 	. ' class Box { public int $id = 2; }'
 	. 'function inspect(callback<vector<Item>,vector<Box>> $worker, vector<Box> $items):Result {return new Result();}'
 	. 'return 0;';
-$program = (new Program_Frontend())->prepare_sources('main.php',
-	['main.php' => new source_file('main.php', $source, flavor::php)], new entry_target(31));
+$program = (new Program_Frontend())->prepare_sources('main.phs',
+	['main.phs' => new source_file('main.phs', $source, flavor::php)], new entry_target(31));
 $signature = $program->files[$program->entry_path]->functions()[0];
 $callback = $signature->parameters[0]->type_def();
 verify($callback instanceof callback_type_definition, 'Expected a nested callback signature');

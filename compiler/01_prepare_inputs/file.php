@@ -9,6 +9,7 @@ final class File_Loader
 	/** Read a complete source snapshot and report IO failures at the compiler boundary. */
 	public static function load(string $path, flavor $flavor, ?string $logical_path = null): source_file
 	{
+		flavor::require_source_path($path, $flavor);
 		if (!is_file($path)) {
 			throw new \RuntimeException('Cannot read source file: ' . $path);
 		}

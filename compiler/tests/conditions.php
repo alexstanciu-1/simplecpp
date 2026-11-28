@@ -178,8 +178,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		file_put_contents($directory . '/main.' . $flavor->name, '{ ' . $decl('v', 'bool', 'false') . 'if (true) if ((' . $var('v') . '=!!predicate())) echo "Y"; } return 8;');
-		$lib = $directory . '/lib.' . $flavor->name;
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), '{ ' . $decl('v', 'bool', 'false') . 'if (true) if ((' . $var('v') . '=!!predicate())) echo "Y"; } return 8;');
+		$lib = $directory . '/lib.' . $flavor->source_extension();
 		$write = static function (string $type, string $value) use ($lib, $fn): void {
 			file_put_contents($lib, $fn('predicate', '', $type, 'return ' . $value . ';'));
 		};

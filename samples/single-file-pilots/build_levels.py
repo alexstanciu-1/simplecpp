@@ -90,7 +90,7 @@ def main():
                 work = base / name / str(round_id) / opt
                 app, out = work / "app", work / "out"
                 app.mkdir(parents=True)
-                for file in ["main.php", "module.json"]:
+                for file in ["main.phs", "module.json"]:
                     shutil.copyfile(HERE / name / file, app / file)
                 row = build(root, app, out, args.php, mold, opt)
                 for case in [HERE / name, base / name / "large"]:

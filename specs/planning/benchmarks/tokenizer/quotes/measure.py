@@ -1,4 +1,4 @@
-"""Compare two translated scanners on dev002. Pass the baseline frontend.php.scpp as argv[1]."""
+"""Compare two translated scanners on dev002. Pass the baseline frontend.phs as argv[1]."""
 import csv
 import json
 from pathlib import Path
@@ -23,7 +23,7 @@ def compile_probe(work, baseline):
     work.mkdir()
     app = scanner_project(work)
     if baseline:
-        shutil.copyfile(baseline, app/'frontend.php')
+        shutil.copyfile(baseline, app/'frontend.phs')
     (app/'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {
         'runtime': {'modules': ['datetime']}}}))
     source = '''
@@ -45,7 +45,7 @@ $elapsed = dt_monotonic_ms() - $start;
 echo $elapsed, " ", $total;
 return 0;
 '''
-    (app/'main.php').write_text(source.replace('PLAIN_HEX', PLAIN.encode().hex()).replace(
+    (app/'main.phs').write_text(source.replace('PLAIN_HEX', PLAIN.encode().hex()).replace(
         'HEAVY_HEX', HEAVY.encode().hex()).replace('COPIES', str(COPIES)).replace('PASSES', str(PASSES)))
     out = work/'bundle'
     result = fresh_build(app, out)

@@ -103,7 +103,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 
 	$directory = sys_get_temp_dir() . '/scpp-async-' . bin2hex(random_bytes(8)); mkdir($directory);
 	try {
-		$paths = array_map(fn($name) => $name . '.' . $flavor->name, ['main', 'parent', 'child']);
+		$paths = array_map(fn($name) => $name . '.' . $flavor->source_extension(), ['main', 'parent', 'child']);
 		file_put_contents("$directory/module.json", json_encode(['entry' => $paths[0], 'sources' => $paths]));
 		file_put_contents("$directory/$paths[0]", $main);
 		file_put_contents("$directory/$paths[1]", $parent);

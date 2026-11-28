@@ -1,4 +1,5 @@
 """Shared hash lookup and guarded previous-generation reuse on Clang."""
+from source_suffix import source_suffix
 import argparse
 import json
 import re
@@ -61,7 +62,7 @@ def prove(work, flavor, library, cxx_flags=()):
     write_app(app, flavor, dict(node=node, generation=previous, factory=factory, choose=choose, bag=bag, query=query,
                                 actions=key + argument + visit + attach, main=main))
     resident = service(app, out)
-    path = app / ('choose.' + flavor)
+    path = app / ('choose.' + source_suffix(flavor))
     edited = choose.replace('return newScope();', 'echo "E";return newScope();')
     try:
         for revision, replacement in enumerate([choose, edited, None, choose, choose]):

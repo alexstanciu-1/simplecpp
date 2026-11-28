@@ -31,8 +31,8 @@ function publication_gate_case(string $work, string $flavor): void
 	$app = $work . '/app';
 	mkdir($app);
 	file_put_contents($app . '/module.json', '{}');
-	$main_name = 'main.' . $flavor;
-	$library_name = 'library.' . $flavor;
+	$main_name = 'main.' . \scpp\compiler\flavor::from($flavor)->source_extension();
+	$library_name = 'library.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 	$library_path = $app . '/' . $library_name;
 	file_put_contents($app . '/' . $main_name, 'value(); return 8;');
 	$header = $flavor === 'cpp' ? 'void value()' : 'function value(): void';

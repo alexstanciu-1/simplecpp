@@ -25,7 +25,7 @@ def verify(work):
     app.mkdir()
     (app/'module.json').write_text('{}')
     for name in ('index', 'verify'):
-        shutil.copyfile(ROOT/f'compiler/examples/signature_interning/{name}.php.scpp', app/f'{name}.php')
+        shutil.copyfile(ROOT/f'compiler/examples/signature_interning/{name}.phs', app/f'{name}.phs')
     main = ['$cache = new Signature_Index();', '$live vector<Owned_Callable> = [];']
     for key in sorted({key for ids, *_ in cases for key in ids}):
         main.append(f'$type_{key} = new Component("Component");')
@@ -35,7 +35,7 @@ def verify(work):
             main.append(f'$sig->input($type_{key}, {json.dumps(mode)});')
         main.append('record($cache, $sig, $live);')
     main.extend(['check_lifetime($cache);', 'return 8;'])
-    (app/'main.php').write_text('\n'.join(main))
+    (app/'main.phs').write_text('\n'.join(main))
     generated = work/'generated'
     result = fresh_build(app, generated)
     assert 'error' not in result, result

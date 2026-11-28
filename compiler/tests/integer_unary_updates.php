@@ -127,11 +127,11 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$directory = sys_get_temp_dir() . '/scpp-integer-unary-updates-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'provider.' . $flavor->name]], JSON_THROW_ON_ERROR));
+		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension(), 'provider.' . $flavor->source_extension()]], JSON_THROW_ON_ERROR));
 		$caller_source = ($flavor === flavor::php ? '$x=value();' : ($flavor === flavor::cpp ? 'auto x=value();' : 'let x=value();'))
 			. '++' . $x . '; --' . $x . '; if (+' . $x . ' && - -' . $x . '==8) { echo "Y"; } return 8;';
-		file_put_contents($directory . '/main.' . $flavor->name, $caller_source);
-		$path = $directory . '/provider.' . $flavor->name;
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), $caller_source);
+		$path = $directory . '/provider.' . $flavor->source_extension();
 		$stamp = time();
 		$write = static function (string $type, string $expression) use ($path, $fn, &$stamp): void {
 			file_put_contents($path, $fn('value', '', $type, 'return ' . $expression . ';'));
@@ -170,9 +170,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
 		$fresh->run();
 		verify(artifacts($directory . '/out') === artifacts($directory . '/fresh'), 'Deletion recovery differs from fresh');
-		file_put_contents($directory . '/main.' . $flavor->name,
+		file_put_contents($directory . '/main.' . $flavor->source_extension(),
 			'if (+value()==8 && !!value()) { echo "Y"; } return 8;');
-		touch($directory . '/main.' . $flavor->name, ++$stamp);
+		touch($directory . '/main.' . $flavor->source_extension(), ++$stamp);
 		verify($project->run()['preparation']['prepared'] === 1, 'Operator edit prepared unchanged provider');
 		$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));
 		$fresh->run();

@@ -100,9 +100,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$dir = sys_get_temp_dir() . '/scpp-string-index-' . bin2hex(random_bytes(8));
 	mkdir($dir);
 	try {
-		$lib = "$dir/lib." . $flavor->name;
+		$lib = "$dir/lib." . $flavor->source_extension();
 		file_put_contents("$dir/module.json", '{}');
-		file_put_contents("$dir/main." . $flavor->name, $local . "{$s}[0] = word()[0]; {$s}[1] = replacement(); echo (int){$s}[0], (int){$s}[1]; return 8;");
+		file_put_contents("$dir/main." . $flavor->source_extension(), $local . "{$s}[0] = word()[0]; {$s}[1] = replacement(); echo (int){$s}[0], (int){$s}[1]; return 8;");
 		$word = $function('string', 'word', 'echo "X"; return "é中😀";');
 		$replacement = $function('int', 'replacement', 'return 255;');
 		$valid = $word . $replacement;

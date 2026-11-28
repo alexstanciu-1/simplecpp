@@ -1,4 +1,5 @@
 """Direct by-value call labels, written evaluation order, defaults and resident rename recovery."""
+from source_suffix import source_suffix
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -33,7 +34,7 @@ def prove(work, flavor, quick=False):
         ('main', main, answer),
         ('target', difference.replace('right', 'offset'), 'Unknown named argument: right'),
         ('main', main.replace('right:', 'offset:'), answer),
-    ], unaffected_source='plain.' + flavor, unaffected_revisions={9})
+    ], unaffected_source='plain.' + source_suffix(flavor), unaffected_revisions={9})
 
     if quick:
         return

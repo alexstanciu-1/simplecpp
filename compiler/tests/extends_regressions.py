@@ -1,4 +1,5 @@
 """Review regressions: transitive receiver watches and source-owned inherited factories."""
+from source_suffix import source_suffix
 import json
 
 from app_namespace_native import artifacts, invoke, service
@@ -34,8 +35,8 @@ def incremental_receivers(work, flavor, libraries, build, source_edit):
     v, access, record, field, getter, local, infer = forms(flavor)
     app = work / (flavor + '-receiver-watch')
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
-    files = {name: app / (name + '.' + flavor) for name in ['base', 'middle', 'child', 'other', 'main', 'unrelated']}
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
+    files = {name: app / (name + '.' + source_suffix(flavor)) for name in ['base', 'middle', 'child', 'other', 'main', 'unrelated']}
     base = record('Base', field('x', 'int', '3', True))
     other = record('Other', field('x', 'int', '9', True))
     middle = record('Middle', base='Base')
@@ -82,13 +83,13 @@ def incremental_receivers(work, flavor, libraries, build, source_edit):
             assert artifacts(output) == artifacts(fresh_out), (flavor, revision)
             if revision:
                 assert result['preparation']['reused'] >= 1, result
-                assert not any(path.endswith('/unrelated.' + flavor) for path in result['emitted_sources']), result
+                assert not any(path.endswith('/unrelated.' + source_suffix(flavor)) for path in result['emitted_sources']), result
             if revision in [1, 15]:
                 assert result['preparation']['prepared'] == 0, result
                 if revision == 1:
                     assert result['emitted_sources'] == [], result
                 else:
-                    assert not any(path.endswith('/child.' + flavor) for path in result['emitted_sources']), result
+                    assert not any(path.endswith('/child.' + source_suffix(flavor)) for path in result['emitted_sources']), result
             if revision in [0, 4, 6, 8, 11, 12, 14, 15]:
                 for compiler, library in libraries.items():
                     build(output, work / f'{flavor}-receiver-{compiler}', compiler, library, expected)
@@ -101,13 +102,13 @@ def constructor_publication(work, flavor, libraries, build, source_edit):
     v, access, record, field, getter, local, infer = forms(flavor)
     app = work / (flavor + '-factory-publication')
     app.mkdir()
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     params = 't:Token,h:shared<Token>' if flavor == 'js' else f'Token {v}t,shared<Token> {v}h'
     signature = {'php': 'public function __construct', 'cpp': 'Base', 'js': 'constructor'}[flavor]
     base = record('Base', field('x', 'int') + signature + '(' + params + ') { ' + v + 'this' + access + 'x=6; }')
     changed_params = 't:shared<Token>,h:Token' if flavor == 'js' else f'shared<Token> {v}t,Token {v}h'
     changed_base = base.replace(params, changed_params)
-    files = {name: app / (name + '.' + flavor) for name in ['base', 'middle', 'child', 'token', 'holder', 'main']}
+    files = {name: app / (name + '.' + source_suffix(flavor)) for name in ['base', 'middle', 'child', 'token', 'holder', 'main']}
     models = {'base': base, 'middle': record('Middle', base='Base'), 'child': record('Child', base='Middle'),
               'token': record('Token', field('v', 'int')), 'holder': record('Holder', field('child', 'shared<Child>') + field('observer', 'weak<Child>'))}
     empty = local('x', 'shared<Child>') + local('w', 'weak<Child>') + local('holder', 'Holder') + 'return 8;'

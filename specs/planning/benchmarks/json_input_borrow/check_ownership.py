@@ -11,7 +11,7 @@ includes = []
 for record in ('Scalar', 'Words'):
     header, = [out/h for h in manifest['headers'] if f'struct {record} {{' in (out/h).read_text()]
     includes += ['-include', header]
-unit = out/manifest['sources']['app/records.php']
+unit = out/manifest['sources']['app/records.phs']
 assert unit.read_text().count('::scpp::json::read_leaf_record(') == 2
 subprocess.run(['clang++', '-std=c++23', '-stdlib=libc++', '-O2', '-I', root/'runtime/generated/public',
                 *includes, Path(__file__).with_name('ownership.cpp'), unit, *manifest['link_inputs'],

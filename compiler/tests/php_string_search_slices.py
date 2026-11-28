@@ -145,7 +145,7 @@ with tempfile.TemporaryDirectory() as directory:
     app = work/'app'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    main = app/'main.php'
+    main = app/'main.phs'
     expected = subprocess.check_output(['php', '-n', '-r', body], env=env)
     # PHP 8.5.7 duplicated a final break at the width boundary when cutting.
     # Pin the dev002 (8.5.12) result and compare newer PHP directly as well.

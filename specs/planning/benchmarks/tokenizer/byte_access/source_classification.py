@@ -34,7 +34,7 @@ def prepare(repo, corpus):
         d.mkdir(parents=True,exist_ok=True)
         keywords=re.search("self::"+f+r" => '([^']+)'",words)[1].split()
         (d/'vocabulary.json').write_text(json.dumps(dict(keywords=keywords,punct=punct)))
-        for role,src in zip(FILES,[medium/('billing/batch_'+b),HERE/('scanner.'+f),medium/s]):
+        for role,src in zip(FILES,[medium/('billing/batch_'+b),HERE/('scanner.'+('phs' if f == 'php' else f)),medium/s]):
             data=src.read_bytes()
             (d/role).write_bytes(data)
             (d/(role+'.path')).write_text(str(src.relative_to(repo)))

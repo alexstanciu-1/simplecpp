@@ -3,7 +3,7 @@ function wait_check(bool $ok, string $detail): void {
 }
 
 function producer(Function_Entry $entry, string $argument): Function_Body {
-    $syntax = new Return_Syntax("main.php", "nested", "", "job", 40);
+    $syntax = new Return_Syntax("main.phs", "nested", "", "job", 40);
     $syntax->argument_type = "int64";
     $syntax->argument_cpp = $argument;
     $call = new Function_Body($syntax);
@@ -12,13 +12,13 @@ function producer(Function_Entry $entry, string $argument): Function_Body {
 }
 
 function check_wait(): void {
-    $source = new Return_Syntax("job.php", "job", "", "", 0);
+    $source = new Return_Syntax("job.phs", "job", "", "", 0);
     $source->is_async = true;
     $source->required_parameters = 1;
     $source->parameter_type = "int64";
     $entry = new Function_Entry();
     $entry->head = new Function_Body($source);
-    $syntax = new Return_Syntax("main.php", "probe", "", "async_wait", 29);
+    $syntax = new Return_Syntax("main.phs", "probe", "", "async_wait", 29);
     $wait = new Function_Body($syntax);
     $first = producer($entry, "7LL");
     $other = producer($entry, "9LL");
@@ -53,7 +53,7 @@ function check_wait(): void {
 // Keep the bridge for observation after the syntax owner releases the nested call.
 function detached_wait(Function_Entry $entry): Function_Body {
     $inner = producer($entry, "7LL");
-    $wait = new Function_Body(new Return_Syntax("main.php", "probe", "", "async_wait", 29));
+    $wait = new Function_Body(new Return_Syntax("main.phs", "probe", "", "async_wait", 29));
     $wait->settle_blocking_wait($inner);
     return $wait;
 }

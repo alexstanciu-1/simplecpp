@@ -1,4 +1,5 @@
 """Checked shared class access: native RTTI, ownership, adapter demand and retained recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -22,8 +23,8 @@ def syntax(flavor):
 
 def publish(app, out, sources, flavor):
     app.mkdir()
-    (app/'module.json').write_text(json.dumps({'entry':'main.'+flavor}))
-    for name, text in sources.items(): source_edit(app/(name+'.'+flavor), text)
+    (app/'module.json').write_text(json.dumps({'entry':'main.'+source_suffix(flavor)}))
+    for name, text in sources.items(): source_edit(app/(name+'.'+source_suffix(flavor)), text)
     process = service(app, out)
     try:
         result = invoke(process)
@@ -171,7 +172,7 @@ def incremental(work, flavor, libraries):
             stamps={p:(out/p).stat().st_mtime_ns for p in before}
             old=adapter_files(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             current=invoke(resident)
@@ -189,8 +190,8 @@ def incremental(work, flavor, libraries):
             adapters=adapter_files(out)
             if revision in [14,15,16,17]:
                 assert sum(b'dynamic_cast<' in text for text in adapters.values())==(0 if revision==15 else 1),(revision,adapters)
-                if revision==14:assert not any(p.endswith('/second.'+flavor) for p in current['emitted_sources']),current
-                if revision==16:assert not any(p.endswith('/first.'+flavor) for p in current['emitted_sources']),current
+                if revision==14:assert not any(p.endswith('/second.'+source_suffix(flavor)) for p in current['emitted_sources']),current
+                if revision==16:assert not any(p.endswith('/first.'+source_suffix(flavor)) for p in current['emitted_sources']),current
             for p in old.keys()-adapters.keys():assert not (out/p).exists()
             manifest=json.loads((out/'manifest.json').read_text())
             units={Path(p).stem:u for p,u in manifest['sources'].items()}
@@ -236,7 +237,7 @@ def syntax_and_recovery(work, flavor, libraries):
     facts=work/'facts.json'
     facts.write_text(json.dumps({'schema':1,'native_integers':{'int':{'signed':True,'digits':31}}}))
     def standalone(text, label, no_rtti=False):
-        path=work/(flavor+'-'+label+'.'+flavor)
+        path=work/(flavor+'-'+label+'.'+source_suffix(flavor))
         source_edit(path,text)
         cpp=work/(flavor+'-'+label+'-single.cpp')
         result=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,path,facts,cpp],capture_output=True,text=True)
@@ -281,7 +282,7 @@ def syntax_and_recovery(work, flavor, libraries):
         revisions.extend([(alternate,None),(source,None)])
         for revision,(text,error) in enumerate(revisions):
             before=artifacts(out)
-            source_edit(app/('main.'+flavor),text)
+            source_edit(app/('main.'+source_suffix(flavor)),text)
             result=invoke(resident)
             fresh_out=work/f'{flavor}-syntax-fresh-{revision}'
             fresh=service(app,fresh_out)

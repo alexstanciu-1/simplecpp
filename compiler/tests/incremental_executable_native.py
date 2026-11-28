@@ -1,4 +1,5 @@
 """Retained PHP preparation -> selected emission -> retained Ninja objects -> executable, including recovery."""
+from source_suffix import source_suffix
 import argparse
 import hashlib
 import json
@@ -44,7 +45,7 @@ def prove(work, quick=False):
                            'js': f'global let stored: {gt} = {gv};'}[flavor]
             return const + global_decl + fn('value', ft) + '{ return ' + value + '; }'
         def write(name, text):
-            path = app / (name + '.' + flavor)
+            path = app / (name + '.' + source_suffix(flavor))
             path.write_text(text)
             # Guarantee same-size changes are observable through the current second-resolution mtime contract.
             write.stamp += 1
@@ -143,10 +144,10 @@ def prove(work, quick=False):
             assert 'Duplicate' in request().get('error', ''), 'Duplicate publication was accepted'
             assert 'Duplicate' in request().get('error', ''), 'Duplicate retry lost diagnostics'
             assert before == {str(p): p.read_bytes() for p in output.rglob('*') if p.is_file()}
-            (app / ('duplicate.' + flavor)).unlink()
+            (app / ('duplicate.' + source_suffix(flavor))).unlink()
             step('duplicate_recovery', '888', 1, 1, 0)
             # Missing declarations retain recovery watches; re-addition reuses stable slots.
-            (app / ('provider.' + flavor)).unlink()
+            (app / ('provider.' + source_suffix(flavor))).unlink()
             assert 'Unknown' in request().get('error', ''), 'Deleted provider was accepted'
             assert 'Unknown' in request().get('error', ''), 'Missing-symbol retry lost diagnostics'
             assert before == {str(p): p.read_bytes() for p in output.rglob('*') if p.is_file()}
@@ -154,7 +155,7 @@ def prove(work, quick=False):
             step('provider_readdition', '888', 2, 2, 0)
             write('added', fn('extra', 'void') + '{ return; }')
             step('added', '888', 1, 1, 1)
-            (app / ('added.' + flavor)).unlink()
+            (app / ('added.' + source_suffix(flavor))).unlink()
             # Removal changes link membership even though surviving objects are unchanged.
             manifest = step('removed', '888', 0, 0)
             # Declaration-only edits have no body to seed preparation work.
@@ -173,7 +174,7 @@ def prove(work, quick=False):
             # A failed bundle write must keep emission work after preparation has already drained its queue.
             manifest = json.loads((output / 'manifest.json').read_text())
             provider_path = next(value for key, value in manifest['sources'].items()
-                                 if key.endswith('/provider.' + flavor) or key == 'provider.' + flavor)
+                                 if key.endswith('/provider.' + source_suffix(flavor)) or key == 'provider.' + source_suffix(flavor))
             blocked = output / provider_path
             saved = blocked.read_bytes(); blocked.unlink(); blocked.mkdir()
             write('aaa', fn('retry_added', 'void') + '{ return; }')

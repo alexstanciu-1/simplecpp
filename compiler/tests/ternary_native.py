@@ -1,4 +1,5 @@
 """Full ternary selection, native value semantics and retained edit recovery."""
+from source_suffix import source_suffix
 import json
 import argparse
 import tempfile
@@ -39,9 +40,9 @@ def prove(work, flavor, library, cxx_flags=()):
     app, out, native = work / flavor, work / (flavor + '-out'), work / (flavor + '-native')
     write_app(app, flavor, {'choose': choose, 'api': api, 'main': main})
     resident = service(app, out)
-    path = app / ('choose.' + flavor)
+    path = app / ('choose.' + source_suffix(flavor))
     try:
-        api_path = app / ('api.' + flavor)
+        api_path = app / ('api.' + source_suffix(flavor))
         arm_error = 'Unsupported explicit conversion from string to int64' if flavor == 'php' else 'result types must be identical'
         for revision, (target, body, error) in enumerate([
             (path, choose, None), (path, choose, None), (path, choose.replace('rightArm()', 'rightArm() + 1'), None),

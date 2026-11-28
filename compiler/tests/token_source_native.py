@@ -33,7 +33,7 @@ foreach (json_decode(stream_get_contents(STDIN), true) as $encoded) {
 }
 '''
     # The two multibyte letters occupy four bytes. The edit moves them to line two.
-    retained = f'same.php:NEW:{2 + line_delta}:5;same.php:OLD:{1 + line_delta}:7;'.encode()
+    retained = f'same.phs:NEW:{2 + line_delta}:5;same.phs:OLD:{1 + line_delta}:7;'.encode()
     return subprocess.check_output(['php', '-r', php, str(COMPILER), str(line_delta)], input=json.dumps([base64.b64encode(x).decode() for x in CORPUS]).encode()) + retained
 
 
@@ -83,7 +83,7 @@ def sources(flavor):
         literal = json.dumps(content.decode(), ensure_ascii=False).replace('\\u0000', '\\0')
         main += s['infer']('list'+str(i), 'makeTokens("fixture",'+literal+')') + f'show({v}list{i});\n'
     # The third span starts at byte six in both generations. Query it only after the edit.
-    main += s['infer']('path', '"same.php"') + s['infer']('content', '"abαβOLD"')
+    main += s['infer']('path', '"same.phs"') + s['infer']('content', '"abαβOLD"')
     main += s['infer']('previous', f'makeTokens({v}path,{v}content)')
     main += f'{v}content="x\\nαβNEW";' + s['infer']('current', f'makeTokens({v}path,{v}content)')
     main += f'if ({v}previous{a}source === {v}current{a}source) {{return 91;}}'

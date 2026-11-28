@@ -89,7 +89,7 @@ final class Unit_Lowering {
 			$definition = new Published_Function_Unit($target, emit_definition_unit($target));
 		}
 		if ($entry !== $this->caller || !$entry->matches_published($this->entry_signature)) {
-			$emitted .= "main.php,";
+			$emitted .= "main.phs,";
 			$caller = emit_call_unit($entry);
 		}
 		if ($adapter === "") $adapter = emit_entry_adapter();
@@ -138,7 +138,7 @@ final class Unit_Lowering {
 			// Recover the owned unit set even if a fresh process opens an existing bundle.
 			$existing vector<string> = fs_scan($directory);
 			foreach ($existing as $name) {
-				if (!str_starts_with($name, "unit-") || !str_ends_with($name, ".php.cpp") || isset($other[$name])) continue;
+				if (!str_starts_with($name, "unit-") || !str_ends_with($name, ".phs.cpp") || isset($other[$name])) continue;
 				$path = $directory . "/" . $name;
 				if (fs_is_link($path) || !fs_is_file($path)) continue;
 				$old string = fs_get($path);

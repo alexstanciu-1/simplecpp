@@ -171,9 +171,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	rejects(fn() => $prepare($bad . $main), 'Iterator requires');
 	$directory = sys_get_temp_dir() . '/scpp-iterator-' . bin2hex(random_bytes(8)); mkdir($directory);
 	try {
-		$provider = $directory . '/counter.' . $flavor->name;
-		file_put_contents($directory . '/main.' . $flavor->name, $main);
-		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->name, 'sources' => ['main.' . $flavor->name, basename($provider)]]));
+		$provider = $directory . '/counter.' . $flavor->source_extension();
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), $main);
+		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension(), 'sources' => ['main.' . $flavor->source_extension(), basename($provider)]]));
 		$project = new Incremental_Project($directory, $directory . '/out', new entry_target(31)); $stamp = time(); $caller = null;
 		foreach ([$model, str_replace('>=3', '>=2', $model), $bad, str_replace(' implements Iterator<int>', '', $model), '', $model, $key_model, str_replace('Iterator<int,string>', 'Iterator<int,int>', $key_model), $key_model, $model] as $step => $text) {
 			file_put_contents($provider, $text); touch($provider, ++$stamp);
@@ -188,8 +188,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 			verify($project->run()['preparation']['prepared'] === 0, 'No-op prepared bodies');
 		}
 		$key_main = $decl('cursor') . $key_loop . 'return 8;';
-		file_put_contents($directory . '/main.' . $flavor->name, $key_main);
-		touch($directory . '/main.' . $flavor->name, ++$stamp); $caller = null;
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), $key_main);
+		touch($directory . '/main.' . $flavor->source_extension(), ++$stamp); $caller = null;
 		foreach ([$key_model, str_replace('"key"', '"changed"', $key_model), $model, '', $key_model, $integer_keys, $key_model] as $step => $text) {
 			file_put_contents($provider, $text); touch($provider, ++$stamp);
 			$fresh = new Incremental_Project($directory, $directory . '/fresh', new entry_target(31));

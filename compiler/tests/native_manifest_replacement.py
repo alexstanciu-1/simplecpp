@@ -14,8 +14,8 @@ def verify(root, exe, compiler):
     app, bundle, output = root/'app', root/'bundle', root/'native'
     app.mkdir()
     manifest = app/'module.json'
-    for name in ['main.php', 'one.php', 'two.php']:
-        (app/name).write_text('return 0;' if name == 'main.php' else '')
+    for name in ['main.phs', 'one.phs', 'two.phs']:
+        (app/name).write_text('return 0;' if name == 'main.phs' else '')
     for name in ['left', 'right']:
         module = root/name
         module.mkdir()
@@ -23,7 +23,7 @@ def verify(root, exe, compiler):
         (module/(name+'.a')).touch()
 
     def version(source, order):
-        return json.dumps({'sources': ['main.php', source+'.php'],
+        return json.dumps({'sources': ['main.phs', source+'.phs'],
                            'dependencies': {key: {'path': '../'+key} for key in order}})
 
     first = version('one', ['left', 'right'])

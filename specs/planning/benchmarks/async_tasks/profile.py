@@ -27,7 +27,8 @@ def run(profile, enabled):
     for flavor in ['php', 'cpp', 'js']:
         app = profile / flavor
         app.mkdir()
-        sources = [f'{name}.{flavor}' for name in ['main', 'worker', 'plain']]
+        suffix = 'phs' if flavor == 'php' else flavor
+        sources = [f'{name}.{suffix}' for name in ['main', 'worker', 'plain']]
         signature = 'int readNumber()' if flavor == 'cpp' else 'function readNumber():int'
         (app / sources[2]).write_text(signature.replace('readNumber', 'plain') + '{return 7;}')
         cmd = ['php', compiler / 'main.php', 'program', app, sources[0], FACTS, app / 'out']

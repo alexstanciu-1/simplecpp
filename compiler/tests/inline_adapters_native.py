@@ -1,4 +1,5 @@
 """Concrete adapter demand: cross-unit deduplication, removal, namespace changes and recovery."""
+from source_suffix import source_suffix
 import argparse
 import hashlib
 import os
@@ -31,9 +32,9 @@ def prove(work, flavor, libraries):
     app = work / flavor
     app.mkdir()
     manifest = app / 'module.json'
-    source_edit(manifest, json.dumps({'entry': 'main.' + flavor}))
+    source_edit(manifest, json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     sources = {'node': s['node'], 'leaf': leaf, 'first': first, 'second': second, 'third': third, 'read': read, 'main': main}
-    paths = {name: app / (name + '.' + flavor) for name in sources}
+    paths = {name: app / (name + '.' + source_suffix(flavor)) for name in sources}
     for name, text in sources.items():
         source_edit(paths[name], text)
     output = work / (flavor + '-out')
@@ -49,7 +50,7 @@ def prove(work, flavor, libraries):
     try:
         for revision, (name, text, count, error) in enumerate(edits):
             if name == 'namespace':
-                source_edit(manifest, json.dumps({'entry': 'main.' + flavor, 'cpp_namespace': text}))
+                source_edit(manifest, json.dumps({'entry': 'main.' + source_suffix(flavor), 'cpp_namespace': text}))
             elif name:
                 source_edit(paths[name], text)
             before = artifacts(output)
@@ -78,7 +79,7 @@ def prove(work, flavor, libraries):
                 assert current['preparation']['prepared'] == 0 and current['emitted_sources'] == [], current
             if revision in [2, 3, 4, 5]:
                 unchanged = 'third' if revision in [2, 3] else 'first'
-                assert not any(p.endswith('/' + unchanged + '.' + flavor) for p in current['emitted_sources']), current
+                assert not any(p.endswith('/' + unchanged + '.' + source_suffix(flavor)) for p in current['emitted_sources']), current
             if revision in [0, 4, 5, 8, 9, 10, 11]:
                 for cc, library in libraries.items():
                     build(output, work / (flavor + '-adapter-' + cc), cc, library, b'333')
@@ -118,12 +119,12 @@ def removal_and_native_reuse(work, flavor, libraries):
     s = fixture(flavor)
     app, output = work / (flavor + '-removal'), work / (flavor + '-removal-out')
     app.mkdir()
-    source_edit(app / 'module.json', json.dumps({'entry': 'main.' + flavor}))
+    source_edit(app / 'module.json', json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     texts = {'node': s['node'], 'leaf': s['record']('Leaf', '', 'Node').replace('struct ', 'class ', 1),
              'main': s['infer']('n', 'new Leaf()') + f'echo {s["v"]}n{s["access"]}x; return 8;'}
     for name in ['first', 'second']:
         texts[name] = s['function'](name, 'Node', [('n', 'Leaf')], f'return {s["v"]}n;')
-    paths = {name: app / (name + '.' + flavor) for name in texts}
+    paths = {name: app / (name + '.' + source_suffix(flavor)) for name in texts}
     for name, text in texts.items():
         source_edit(paths[name], text)
     # Neither function is called: removing its source is a successful compilation,
@@ -166,7 +167,7 @@ def removal_and_native_reuse(work, flavor, libraries):
             if action in ['noop', 'touch-adapter']:
                 assert current['preparation']['prepared'] == 0 and current['emitted_sources'] == [], current
             if name == 'first':
-                assert not any(p.endswith('/second.' + flavor) for p in current['emitted_sources']), current
+                assert not any(p.endswith('/second.' + source_suffix(flavor)) for p in current['emitted_sources']), current
             if action == 'delete':
                 assert not any(p.endswith('/' + paths[name].name) for p in manifest['sources'])
             if action == 'touch-adapter':

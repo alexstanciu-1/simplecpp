@@ -86,9 +86,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$directory = sys_get_temp_dir() . '/scpp-echo-chain-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'provider.' . $flavor->name]], JSON_THROW_ON_ERROR));
-		file_put_contents($directory . '/main.' . $flavor->name, 'echo ">", value(), "<"; return 8;');
-		$path = $directory . '/provider.' . $flavor->name;
+		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension(), 'provider.' . $flavor->source_extension()]], JSON_THROW_ON_ERROR));
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'echo ">", value(), "<"; return 8;');
+		$path = $directory . '/provider.' . $flavor->source_extension();
 		$stamp = time();
 		$write = static function (string $type, string $value) use ($function, $path, &$stamp): void {
 			file_put_contents($path, $type === '' ? '' : $function('value', $type, 'return ' . $value . ';'));

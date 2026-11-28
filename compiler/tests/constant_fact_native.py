@@ -9,8 +9,8 @@ import tempfile
 from app_namespace_native import ROOT, invoke, service, write_build
 
 
-SOURCE = Path(__file__).with_name('constant_fact') / 'main.php'
-FACT = ROOT / 'compiler/examples/constant_evaluation/constant_fact.php.scpp'
+SOURCE = Path(__file__).with_name('constant_fact') / 'main.phs'
+FACT = ROOT / 'compiler/examples/constant_evaluation/constant_fact.phs'
 PREPARE = r'''
 require $argv[1];
 use scpp\compiler\{Parser, Preparation, Tokenizer, entry_target, flavor, source_file};
@@ -81,9 +81,9 @@ int main() {
 def prove(work):
     app = work / 'app'
     app.mkdir()
-    specimen = app / 'main.php'
+    specimen = app / 'main.phs'
     specimen.write_bytes(FACT.read_bytes() + b'\n' + SOURCE.read_bytes())
-    (app / 'module.json').write_text('{"entry":"main.php"}')
+    (app / 'module.json').write_text('{"entry":"main.phs"}')
     out = work / 'out'
     with service(app, out) as proc:
         result = invoke(proc)

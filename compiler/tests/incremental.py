@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-incremental-') as temporary:
     assert changed['build']['inputs'] != first['build']['inputs']
     run(False)
     # Full semantic compilation still runs, but identical generated text keeps its timestamp.
-    extra = app/'other.php'
+    extra = app/'other.phs'
     extra.write_text('function helper(): void {}')
     added = run(True)
     assert run.report['changes'][str(extra)] == 'added'
@@ -89,7 +89,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-incremental-') as temporary:
     removed = run(True)
     assert run.report['changes'][str(extra)] == 'removed'
     assert len(removed['sources']) == 1
-    assert not (output/added['sources']['app/other.php']).exists()
+    assert not (output/added['sources']['app/other.phs']).exists()
     # Only app inputs and facts invalidate. Dependency sources, headers and artifacts are not tracked.
     for path, text in [(app/'module.json', (app/'module.json').read_text()+'\n'),
                        (native/'value.cpp', '#include "value.hpp"\n// changed\n'),

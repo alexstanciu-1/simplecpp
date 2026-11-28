@@ -21,7 +21,7 @@ def main():
     }
     assert expected == {local: b'000010011', parameter: b'000010011', global_declaration: b'000010010'}, expected
     sources = {
-        **{name: (EXAMPLE / f'{name}.php.scpp').read_text() for name in ('declarations', 'proof')},
+        **{name: (EXAMPLE / f'{name}.phs').read_text() for name in ('declarations', 'proof')},
         'candidate': candidate(parameter),
         'main': 'prove_duplicate_links(); return 8;',
         'idle': 'function idle(): int { return 17; }',
@@ -36,7 +36,7 @@ def main():
             ('candidate', None, 'candidate_declaration'),
             ('candidate', candidate(local), expected[local]),
             ('candidate', candidate(parameter), expected[parameter]),
-        ], unaffected_source='idle.php')
+        ], unaffected_source='idle.phs')
 
 
 if __name__ == '__main__':

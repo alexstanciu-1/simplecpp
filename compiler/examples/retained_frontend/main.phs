@@ -50,7 +50,7 @@ function prepare_request(Frontend_Session $session, Translation $compiler, strin
 	$entry = $compiler->entry_binding();
 	$reused = "";
 	if ($old_definition !== null && $old_definition === $compiler->declaration()) $reused .= $old_definition->scope->source->path . ",";
-	if ($old_entry !== null && $old_entry === $entry) $reused .= "main.php,";
+	if ($old_entry !== null && $old_entry === $entry) $reused .= "main.phs,";
 	return $status . "|" . (string)$session->generation . "|" . (string)$generation . "|" . $session->parsed
 		. "|" . $work . "|" . $reused;
 }

@@ -44,11 +44,11 @@ function retirement_case(string $app, string $flavor, string $kind): array /** l
 	$reader = $function('reader', 'void', 'echo ' . $expression . ';');
 	$stamp = time();
 	$write = static function (string $name, string $text) use ($app, $flavor, &$stamp): void {
-		file_put_contents($app . '/' . $name . '.' . $flavor, $text);
-		touch($app . '/' . $name . '.' . $flavor, ++$stamp);
+		file_put_contents($app . '/' . $name . '.' . \scpp\compiler\flavor::from($flavor)->source_extension(), $text);
+		touch($app . '/' . $name . '.' . \scpp\compiler\flavor::from($flavor)->source_extension(), ++$stamp);
 	};
 	$remove = static function (string $name) use ($app, $flavor): void {
-		unlink($app . '/' . $name . '.' . $flavor);
+		unlink($app . '/' . $name . '.' . \scpp\compiler\flavor::from($flavor)->source_extension());
 	};
 	$write('main', 'reader(); return 8;');
 	$write('reader', $reader);

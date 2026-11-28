@@ -32,7 +32,7 @@ file_put_contents($runtime . '/numeric.json', json_encode(['name' => 'test-numer
 foreach (['php', 'cpp', 'js'] as $flavor) {
 	$app = $argv[2] . '/' . $flavor;
 	mkdir($app);
-	$entry = 'main.' . $flavor;
+	$entry = 'main.' . \scpp\compiler\flavor::from($flavor)->source_extension();
 	$write = static function (bool $enabled) use ($app, $entry): void {
 		file_put_contents($app . '/module.json', json_encode(['name' => 'app', 'entry' => $entry, 'sources' => [$entry],
 			'dependencies' => ['runtime' => ['modules' => $enabled ? ['numeric'] : []]]]));

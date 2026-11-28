@@ -18,7 +18,7 @@ def build(work, interface):
     mode = 'interface' if interface else 'tagged'
     app = work / mode
     app.mkdir()
-    model = (HERE / 'model.php.scpp').read_text()
+    model = (HERE / 'model.phs').read_text()
     model = model.replace('INTERFACE_DECL', 'interface Target {public function resolve():Selection;}' if interface else '')
     model = model.replace('IMPLEMENTS', 'implements Target' if interface else '').replace('OVERRIDE', 'override' if interface else '')
     for t in TYPES:
@@ -31,8 +31,8 @@ def build(work, interface):
     for t in (('Target',) if interface else TYPES):
         model += f'\nfunction read{t}(weak<{t}> $ref):Selection {{ $p = lock($ref);'
         model += ' if ($p === null) { return selection(0,0,0); } return $p->resolve(); }'
-    (app / 'main.php').write_text(model + '\nreturn 8;')
-    (app / 'module.json').write_text('{"entry":"main.php"}')
+    (app / 'main.phs').write_text(model + '\nreturn 8;')
+    (app / 'module.json').write_text('{"entry":"main.phs"}')
     out = work / (mode+'-out')
     with service(app, out) as proc:
         result = invoke(proc)

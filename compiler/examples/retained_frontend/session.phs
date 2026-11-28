@@ -28,10 +28,10 @@ final class Frontend_Session {
 		if ($all_definitions) {
 			$names vector<string> = fs_scan($directory);
 			foreach ($names as $name) {
-				if ($name !== "main.php" && str_ends_with($name, ".php") && fs_is_file($directory . "/" . $name)) $paths[] = $name;
+				if ($name !== "main.phs" && str_ends_with($name, ".phs") && fs_is_file($directory . "/" . $name)) $paths[] = $name;
 			}
 		}
-		if (count($paths) === 0) $paths[] = "definition.php";
+		if (count($paths) === 0) $paths[] = "definition.phs";
 		$scopes hash<Translation_Scope,string> = [];
 		foreach ($paths as $path) {
 			$text = $this->read_source($directory, $path);
@@ -41,9 +41,9 @@ final class Frontend_Session {
 			}
 			$scopes[$path] = $scope;
 		}
-		$main string = $this->read_source($directory, "main.php");
+		$main string = $this->read_source($directory, "main.phs");
 		if ($entry === null || $entry->source->text !== $main) {
-			$parser = $this->parser("main.php", $main);
+			$parser = $this->parser("main.phs", $main);
 			$entry = $parser->parse_entry();
 		}
 		// Publish only after every changed file has parsed successfully.

@@ -3,10 +3,11 @@ declare(strict_types=1);
 use scpp\compiler\{Cpp_Program, Destination_Trial, Program_Frontend, Preparation, Symbol_Publication, entry_target, flavor, source_file};
 [$script, $boot, $out, $language, $case] = $argv;
 require $boot;
+$suffix = $language === 'php' ? 'phs' : $language;
 require __DIR__ . '/plan.php';
 $f = flavor::from($language);
 $dir = dirname(__DIR__);
-$source = file_get_contents("$dir/scanner.$language");
+$source = file_get_contents("$dir/scanner.$suffix");
 if ($case === 'second') {
     // A distinct record layout: two fields, omitting token kind from publication.
     $source = preg_replace('/^.*(?:int \$?kind;|kind:int;|item(?:->|\.)kind=).*\n/m', '', $source);
@@ -16,12 +17,12 @@ if ($case === 'live') {
     $read = ['cpp'=>'echo item->kind;', 'php'=>'echo $item->kind;', 'js'=>'echo item.kind;'][$language];
     $source = preg_replace('/(items\[\]=\$?item;)/', '$1' . $read, $source);
 }
-$path = "scanner.$language";
+$path = "scanner.$suffix";
 $main = ['cpp'=>'auto r=scan("if ===",0);echo count(r->tokens);',
     'php'=>'$r=scan("if ===",0);echo count($r->tokens);','js'=>'let r=scan("if ===",0);echo count(r.tokens);'][$language];
 $entry = new entry_target(31);
-$program = (new Program_Frontend())->prepare_sources("main.$language", [
-    $path=>new source_file($path,$source,$f), "main.$language"=>new source_file("main.$language",$main.'return 8;',$f)
+$program = (new Program_Frontend())->prepare_sources("main.$suffix", [
+    $path=>new source_file($path,$source,$f), "main.$suffix"=>new source_file("main.$suffix",$main.'return 8;',$f)
 ], $entry);
 $file = $program->files[$path];
 $body = $file->functions()[0]->body();

@@ -1,4 +1,5 @@
 """Weak observation, strong identity and incremental equivalence for PHP, C++ and JS source."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -128,9 +129,9 @@ int main() {
 def prove(work, flavor, memcheck):
     app = work / flavor
     app.mkdir()
-    entry, api, parent, child = [app / (n + '.' + flavor) for n in ('main', 'api', 'parent', 'child')]
+    entry, api, parent, child = [app / (n + '.' + source_suffix(flavor)) for n in ('main', 'api', 'parent', 'child')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
-    (app / 'factory.php').write_text('function makeParent(): shared<Parent> { return new Parent(); } '
+    (app / 'factory.phs').write_text('function makeParent(): shared<Parent> { return new Parent(); } '
                                      'function makeChild(): shared<Child> { return new Child(); }')
     parent_text, child_text, api_text, source, p, c, w, held = fixture(flavor)
     for path, text in [(api, api_text), (parent, parent_text), (child, child_text)]:

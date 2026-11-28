@@ -1,4 +1,5 @@
 "Typed diagnostic identity, source location, and incremental ancestry recovery."
+from source_suffix import source_suffix
 import argparse
 from functools import partial
 import json
@@ -51,8 +52,8 @@ def prove(work, flavor, library, quick=False, run_native=native):
     app = work / 'app'
     app.mkdir(parents=True)
     output = work / 'output'
-    (app / 'module.json').write_text(json.dumps({'entry': f'main.{flavor}'}))
-    base_path, main_path = (app / f'{name}.{flavor}' for name in ['base', 'main'])
+    (app / 'module.json').write_text(json.dumps({'entry': f'main.{source_suffix(flavor)}'}))
+    base_path, main_path = (app / f'{name}.{source_suffix(flavor)}' for name in ['base', 'main'])
     if flavor == 'php':
         core = 'use Exception as CoreFailure; ' + klass('Failure', base='CoreFailure')
     else:
@@ -62,17 +63,17 @@ def prove(work, flavor, library, quick=False, run_native=native):
     snapshot_literal = json.dumps(snapshot, ensure_ascii=False)
     offset = snapshot.encode('utf-8').index(b'problem')
     expected = (0, f'Finput.phs:{offset}'.encode(), b'')
-    catch_path = app / f'handler.{flavor}'
+    catch_path = app / f'handler.{source_suffix(flavor)}'
     catch_source = klass('UnrelatedFailure', base='Failure')
     source_edit(catch_path, catch_source)
-    middle = app / f'middle.{flavor}'
+    middle = app / f'middle.{source_suffix(flavor)}'
     source_edit(middle, klass('DiagnosticBase', base='Failure'))
-    source_edit(app / f'diagnostic.{flavor}',
+    source_edit(app / f'diagnostic.{source_suffix(flavor)}',
                 klass('Snapshot', field('path', 'string', '"input.phs"') +
                       field('content', 'string', snapshot_literal)) +
                 klass('Diagnostic', field('origin', '?Snapshot') + field('offset', 'int') +
                       field('marker', 'int', '0'), 'DiagnosticBase'))
-    source_edit(app / f'quiet.{flavor}', s['function']('quiet', 'int', [], 'return 42;'))
+    source_edit(app / f'quiet.{source_suffix(flavor)}', s['function']('quiet', 'int', [], 'return 42;'))
     def nullable_local(name, type_name, value):
         declaration = s['local'](name, '?' + type_name).removesuffix(';')
         return f'{declaration} = {value};'
@@ -161,7 +162,7 @@ def prove(work, flavor, library, quick=False, run_native=native):
 
         recovered = invoke(resident)
         assert 'error' not in recovered and recovered['preparation']['reused'] >= 1, recovered
-        assert not any(path.endswith(f'/quiet.{flavor}') for path in recovered['emitted_sources']), recovered
+        assert not any(path.endswith(f'/quiet.{source_suffix(flavor)}') for path in recovered['emitted_sources']), recovered
         fresh_output = work / 'fresh'
         fresh_result = fresh_build(app, fresh_output)
         assert 'error' not in fresh_result, fresh_result

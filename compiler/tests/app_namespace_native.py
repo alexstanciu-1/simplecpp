@@ -1,4 +1,5 @@
 """Cross-flavor provider bindings and application namespace changes through the resident project."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -37,12 +38,12 @@ def prove(work, quick=False):
     manifest.write_text('{}')
     (app / 'main.cpp').write_text('echo (int)p("a\\0b","a\\0"), (int)j("",""), (int)c("a","ab"),'
                                   '(int)c(string_byte_from_int(255),string_byte_from_int(255)); return 8;')
-    (app / 'predicate.php').write_text('function p(string $s, string $n): bool { return str_starts_with($s,$n); }')
+    (app / 'predicate.phs').write_text('function p(string $s, string $n): bool { return str_starts_with($s,$n); }')
     (app / 'predicate.js').write_text('function j(s: string,n: string): bool { return s.startsWith(n); }')
     cpp = app / 'predicate.cpp'
     original = 'bool c(string s,string n) { return s.starts_with(n); }'
     cpp.write_text(original)
-    predicates = {flavor: app / ('predicate.' + flavor) for flavor in ('cpp', 'php', 'js')}
+    predicates = {flavor: app / ('predicate.' + source_suffix(flavor)) for flavor in ('cpp', 'php', 'js')}
     originals = {flavor: path.read_text() for flavor, path in predicates.items()}
     calls = {
         'php': ('str_starts_with($s,$n)', 'str_ends_with($s,$n)', 'str_contains($s,$n)',
@@ -235,7 +236,7 @@ def prove(work, quick=False):
                 if key.endswith('/main.cpp'):
                     assert all(f'<scpp/{f}/string.hpp>' not in text for f in ('cpp','js','php'))
                     continue
-                flavor = key.split('.')[-1]
+                flavor = next(f for f, path in predicates.items() if path.name == Path(key).name)
                 direct = '::scpp::str::starts_with(' in text
                 search = '::scpp::str::find(' in text or '::scpp::php::strpos(' in text
                 adapter = any(f'#include <scpp/{flavor}/{family}.hpp>' in text for family in ('string', 'string_vectors'))

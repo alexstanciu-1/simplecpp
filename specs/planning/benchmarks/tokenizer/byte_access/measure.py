@@ -131,7 +131,7 @@ void print_events(){for(unsigned i=0;i<used;++i) std::printf("%s:%zu\\n",events[
             corpus=root/flavor
             out=root/(flavor+'-out')
             manifest=json.loads((out/'manifest.json').read_text())
-            src=out/manifest['sources'][f'{flavor}/scanner.{flavor}']
+            src=out/manifest['sources'][f'{flavor}/scanner.{"phs" if flavor == "php" else flavor}']
             dest=work/(cc+'-'+flavor)
             dest.mkdir(exist_ok=True)
             results={}

@@ -47,7 +47,7 @@ $i=$args[2] === "two" ? 2 : 0;
 echo ({left} {op} {right}) ? "Y" : "N";
 return 0;
 '''
-    (app/'main.php').write_text(helpers + entry)
+    (app/'main.phs').write_text(helpers + entry)
     try:
         exe = build(app, work)
     except RuntimeError as error:

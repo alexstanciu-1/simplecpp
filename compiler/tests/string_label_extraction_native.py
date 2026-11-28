@@ -18,8 +18,8 @@ def prove(work):
 
     main = r'''echo classify(""), "|", classify("\0"), "|", classify("x"); return 8;'''
     sources = dict(labels='const string EMPTY_LABEL = "";', dispatch=dispatch('"x"'), main=main)
-    duplicate = 'dispatch.php:5:14: Duplicate switch label'
-    admission = 'dispatch.php:5:14: Switch label requires a literal, named constant or enum case'
+    duplicate = 'dispatch.phs:5:14: Duplicate switch label'
+    admission = 'dispatch.phs:5:14: Switch label requires a literal, named constant or enum case'
     revisions(work, 'php', sources, [
         (None, None, b'empty|other|second'),
         ('dispatch', dispatch('$local'), admission),

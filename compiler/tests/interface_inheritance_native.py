@@ -1,4 +1,5 @@
 """Inherited interface dispatch, original diamond identity, and incremental contract recovery."""
+from source_suffix import source_suffix
 import argparse
 from pathlib import Path
 import tempfile
@@ -38,7 +39,7 @@ def prove(work, flavor):
         ('right',interface('Right',default='7'),'Ambiguous inherited interface method'),
         ('both',derived('Both',['Left','Right'],signature('8')),b'1118'),
         ('right',right,b'1118'),('both',both,b'1111'),
-    ],unaffected_source='idle.'+flavor)
+    ],unaffected_source='idle.'+source_suffix(flavor))
 
 
 if __name__ == '__main__':

@@ -165,8 +165,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		file_put_contents($directory . '/main.' . $flavor->name, 'use const VALUE as READ; echo READ;' . $decl('x', 'int', '1') . $var('x') . '+=READ; return 8;');
-		$lib = $directory . '/lib.' . $flavor->name;
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'use const VALUE as READ; echo READ;' . $decl('x', 'int', '1') . $var('x') . '+=READ; return 8;');
+		$lib = $directory . '/lib.' . $flavor->source_extension();
 		$compiler = new Project_Compiler();
 		$target = new entry_target(31);
 		file_put_contents($lib, $const('VALUE', 'int', '8'));

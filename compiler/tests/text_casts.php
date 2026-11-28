@@ -67,9 +67,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 	$dir = sys_get_temp_dir() . '/scpp-text-cast-' . bin2hex(random_bytes(8));
 	mkdir($dir);
 	try {
-		$lib = "$dir/lib." . $flavor->name;
+		$lib = "$dir/lib." . $flavor->source_extension();
 		file_put_contents("$dir/module.json", '{}');
-		file_put_contents("$dir/main." . $flavor->name, 'echo (string)word(); return 8;');
+		file_put_contents("$dir/main." . $flavor->source_extension(), 'echo (string)word(); return 8;');
 		$function = static fn(string $type, string $name, string $body) => ($flavor === flavor::cpp
 			? "$type $name()" : "function $name(): $type") . '{' . $body . '}';
 		$valid = $function('bool', 'word', 'echo "X"; return false;');

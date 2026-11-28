@@ -10,8 +10,8 @@ root, work = map(lambda p: Path(p).resolve(), sys.argv[1:3])
 app = work / 'app'
 app.mkdir(exist_ok=True, parents=True)
 (app / 'module.json').write_text('{"dependencies":{"runtime":{"modules":["json"]}},"general_api":true}')
-(app / 'records.php').write_text('data struct Row {public readonly int $id; public int $x=3; public bool $ok=false; public int $tag=5;} data struct Packet {public vector<Row> $rows;}')
-(app / 'main.php').write_text('$p Packet=json_decode_as("{}",Packet::class);return 0;')
+(app / 'records.phs').write_text('data struct Row {public readonly int $id; public int $x=3; public bool $ok=false; public int $tag=5;} data struct Packet {public vector<Row> $rows;}')
+(app / 'main.phs').write_text('$p Packet=json_decode_as("{}",Packet::class);return 0;')
 result = subprocess.run(['php', root/'compiler/tests/incremental_executable.php', app, work/'out'],
                         input='"run"\n', text=True, capture_output=True, check=True)
 assert 'error' not in json.loads(result.stdout), result.stdout

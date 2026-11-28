@@ -134,8 +134,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		rejects(fn()=>$prepare($decl($type,'items','[]').'for ('.$decl('int','i','0').$v('i').'<1;++'.$v('items').'['.$key.']) {}return 8;'),'for headers');
 		$directory=sys_get_temp_dir().'/scpp-index-update-'.bin2hex(random_bytes(8));mkdir($directory);
 		try {
-			$provider=$directory.'/library.'.$flavor->name;file_put_contents($directory.'/main.'.$flavor->name,$main);
-			file_put_contents($directory.'/module.json',json_encode(['entry'=>'main.'.$flavor->name,'sources'=>['main.'.$flavor->name,basename($provider)]]));
+			$provider=$directory.'/library.'.$flavor->source_extension();file_put_contents($directory.'/main.'.$flavor->source_extension(),$main);
+			file_put_contents($directory.'/module.json',json_encode(['entry'=>'main.'.$flavor->source_extension(),'sources'=>['main.'.$flavor->source_extension(),basename($provider)]]));
 			$project=new Incremental_Project($directory,$directory.'/out',new entry_target(31));$stamp=time();$caller=null;
 			$initial=$model.$helpers;
 			$wrong=$key_type==='int'?$function('string','key_once','','return "bad";'):$function('int','key_once','','return 0;');

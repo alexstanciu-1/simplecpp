@@ -1,4 +1,5 @@
 """Raw byte arrays, aggregate frame budget and bounds, through all three source flavors."""
+from source_suffix import source_suffix
 import json
 import subprocess
 import argparse
@@ -17,8 +18,8 @@ def prove(work, flavor, quick=False):
     v, access, record, field, _, local, infer = forms(flavor)
     app = work / flavor
     app.mkdir()
-    main = app / ('main.' + flavor)
-    provider = app / ('packet.' + flavor)
+    main = app / ('main.' + source_suffix(flavor))
+    provider = app / ('packet.' + source_suffix(flavor))
     source_edit(app / 'module.json', json.dumps({'entry': main.name}))
     output = work / ('out-' + flavor)
 

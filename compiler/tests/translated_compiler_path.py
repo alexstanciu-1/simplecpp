@@ -41,12 +41,12 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     work = Path(temporary)
     translator = work / 'translator'
     translator.mkdir()
-    for file in EXAMPLE.glob('*.php.scpp'):
-        target = 'main.php' if file.name == 'proof.php.scpp' else file.stem
+    for file in EXAMPLE.glob('*.phs'):
+        target = 'main.phs' if file.name == 'proof.phs' else file.name
         shutil.copyfile(file, translator / target)
-    with (translator/'punctuation.php').open('wb') as generated:
+    with (translator/'punctuation.phs').open('wb') as generated:
         subprocess.run([PHP, EXAMPLE.parent/'tokenizer/emit_punctuation.php'], stdout=generated, check=True)
-    shutil.copyfile(EXAMPLE.parent/'tokenizer/utf8.php.scpp', translator/'utf8.php')
+    shutil.copyfile(EXAMPLE.parent/'tokenizer/utf8.phs', translator/'utf8.phs')
     (translator / 'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {
         'compiler-private-frontend': {'path': ADAPTER}, 'runtime': {'modules': ['filesystem']}}}))
     host_bundle, executable = work / 'translator-cpp', work / 'translated-compiler'
@@ -67,7 +67,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
     invalid_entry = lexical_error + b'abc\x80'
     invalid_definition = updated + b'\xf0\x90'
     samples = {'invalid-entry.source': invalid_entry, 'invalid-definition.source': invalid_definition,
-               'lexical-error.source': lexical_error, 'definition.php': definition, 'initial.source': initial, 'bad.source': bad,
+               'lexical-error.source': lexical_error, 'definition.phs': definition, 'initial.source': initial, 'bad.source': bad,
                'fixed.source': fixed, 'updated.source': updated, 'incomplete.source': incomplete,
                'overflow.source': overflow, 'unclosed.source': unclosed}
     for name, data in samples.items():
@@ -75,32 +75,32 @@ with tempfile.TemporaryDirectory(prefix='scpp-translated-path-') as temporary:
 
     left = b'// first source\n  ' + definition
     right = b'\n\n   ' + updated
-    (work/'left.php').write_bytes(left)
-    (work/'right.php').write_bytes(right)
+    (work/'left.phs').write_bytes(left)
+    (work/'right.phs').write_bytes(right)
     translated = run(executable, cwd=work)
     parsed, *diagnostics = translated.stdout.decode().splitlines()
     oracle = work / 'oracle'
     oracle.mkdir()
     (oracle / 'module.json').write_text('{}')
 
-    (oracle/'main.php').write_bytes(initial)
-    (oracle/'right.php').write_bytes(right)
-    (oracle/'left.php').write_bytes(left)
+    (oracle/'main.phs').write_bytes(initial)
+    (oracle/'right.phs').write_bytes(right)
+    (oracle/'left.phs').write_bytes(left)
     duplicate = project(oracle, work/'duplicate-bundle', expected=1)
     message = (work/'duplicate.txt').read_text()
-    assert message == 'right.php:3:13: Duplicate function: answer_2; first declaration at left.php:2:12', message
+    assert message == 'right.phs:3:13: Duplicate function: answer_2; first declaration at left.phs:2:12', message
     assert message == duplicate.stderr.decode().replace(str(oracle) + '/', '').strip(), duplicate.stderr
     for survivor, equivalent in [('right', 'updated'), ('left', 'initial')]:
-        removed = oracle/('left.php' if survivor == 'right' else 'right.php')
+        removed = oracle/('left.phs' if survivor == 'right' else 'right.phs')
         removed.unlink()
         project(oracle, work/(survivor+'-bundle'))
         # These exact translation units are compiled and executed against PHP below.
         assert (work/(survivor+'-survivor.cpp')).read_bytes() == (work/(equivalent+'.cpp')).read_bytes()
         removed.write_bytes(left if survivor == 'right' else right)
-    (oracle/'left.php').unlink()
-    (oracle/'right.php').unlink()
-    (oracle / 'definition.php').write_bytes(definition)
-    (oracle / 'main.php').write_bytes(initial)
+    (oracle/'left.phs').unlink()
+    (oracle/'right.phs').unlink()
+    (oracle / 'definition.phs').write_bytes(definition)
+    (oracle / 'main.phs').write_bytes(initial)
     production_ast = run(PHP, '-r', r"""
 require $argv[1];
 $session = (new \scpp\compiler\Project_Compiler())->frontend($argv[2]);
@@ -116,25 +116,25 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
     assert parsed == production_ast.stdout.decode(), (parsed, production_ast.stdout)
 
     errors = [
-        ('invalid-entry', definition, invalid_entry, 'main.php', invalid_entry.index(b'\x80')),
-        ('invalid-definition', invalid_definition, initial, 'definition.php', len(updated)),
-        ('lexical-error', definition, lexical_error, 'main.php', lexical_error.index(b'\x01')),
-        ('incomplete', definition, incomplete, 'main.php', len(incomplete)),
-        ('bad', updated, bad, 'main.php', bad.index(b'missing_2')),
-        ('overflow', overflow, initial, 'definition.php', overflow.index(b'9223372036854775808')),
-        ('unclosed', unclosed, fixed, 'definition.php', len(unclosed)),
-        ('removed', None, fixed, 'main.php', fixed.index(b'answer_2')),
+        ('invalid-entry', definition, invalid_entry, 'main.phs', invalid_entry.index(b'\x80')),
+        ('invalid-definition', invalid_definition, initial, 'definition.phs', len(updated)),
+        ('lexical-error', definition, lexical_error, 'main.phs', lexical_error.index(b'\x01')),
+        ('incomplete', definition, incomplete, 'main.phs', len(incomplete)),
+        ('bad', updated, bad, 'main.phs', bad.index(b'missing_2')),
+        ('overflow', overflow, initial, 'definition.phs', overflow.index(b'9223372036854775808')),
+        ('unclosed', unclosed, fixed, 'definition.phs', len(unclosed)),
+        ('removed', None, fixed, 'main.phs', fixed.index(b'answer_2')),
     ]
     assert len(diagnostics) == 4 * len(errors), translated.stdout
     for index, (name, current_definition, entry, expected_path, expected_offset) in enumerate(errors):
         path, offset, location, message = diagnostics[index * 4:index * 4 + 4]
         assert (path, int(offset)) == (expected_path, expected_offset), (path, offset, message)
-        definition_path = oracle / 'definition.php'
+        definition_path = oracle / 'definition.phs'
         if current_definition is None:
             definition_path.unlink()
         else:
             definition_path.write_bytes(current_definition)
-        (oracle / 'main.php').write_bytes(entry)
+        (oracle / 'main.phs').write_bytes(entry)
         diagnostic = project(oracle, work / f'oracle-{name}', expected=1)
         text = (diagnostic.stdout + diagnostic.stderr).decode()
         match = re.search(rf'{re.escape(path)}:(\d+):(\d+): ([^\n]+)', text)
@@ -151,8 +151,8 @@ echo implode('|', [$function->symbol_key(), $function->start, $function->header_
         ('updated', updated, fixed, 9),
         ('restored', definition, fixed, 8),
     ]:
-        (oracle / 'definition.php').write_bytes(current_definition)
-        (oracle / 'main.php').write_bytes(entry)
+        (oracle / 'definition.phs').write_bytes(current_definition)
+        (oracle / 'main.phs').write_bytes(entry)
         reference_bundle, reference = work / f'oracle-{name}', work / f'reference-{name}'
         project(oracle, reference_bundle)
         # Repairs producing identical native inputs can execute the already-linked pair.

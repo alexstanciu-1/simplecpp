@@ -1,4 +1,5 @@
 """Cross-unit shared reference semantics, signature edits, and optional native heap checks."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -118,10 +119,10 @@ int main(int argc, char**) {
 def prove(work, flavor, memcheck):
     app = work / flavor
     app.mkdir()
-    entry = app / ('main.' + flavor)
-    lib = app / ('api.' + flavor)
+    entry = app / ('main.' + source_suffix(flavor))
+    lib = app / ('api.' + source_suffix(flavor))
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
-    (app / 'model.php').write_text('struct Point { public int $x; public shared<Point> $next; } struct Other {} '
+    (app / 'model.phs').write_text('struct Point { public int $x; public shared<Point> $next; } struct Other {} '
                                    'function makePoint(): shared<Point> { return new Point(); } '
                                    'function makeOther(): shared<Other> { return new Other(); }')
     api, source, wrong_type, field = fixture(flavor)

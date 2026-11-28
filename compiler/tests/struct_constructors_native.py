@@ -1,4 +1,5 @@
 """Constructor contracts, inline/shared cleanup, and cross-unit recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 import os
@@ -69,12 +70,12 @@ int main() {
 def prove(work, flavor, memcheck):
     app = work / flavor
     app.mkdir()
-    entry, record = (app / (s+'.'+flavor) for s in ('main', 'point'))
+    entry, record = (app / (s+'.'+source_suffix(flavor)) for s in ('main', 'point'))
     (app / 'module.json').write_text(json.dumps({'entry':entry.name}))
-    (app / 'support.php').write_text('struct Token { public int $v; } function makeToken(): shared<Token> { return new Token(); } '
+    (app / 'support.phs').write_text('struct Token { public int $v; } function makeToken(): shared<Token> { return new Token(); } '
                                    'function step(int &$i): int { $i++; return $i; }')
     model, body, guard, init, default, assign, params = fixture(flavor)
-    (app / ('guard.'+flavor)).write_text(guard)
+    (app / ('guard.'+source_suffix(flavor))).write_text(guard)
     source = init+body+'return 8;'
     record.write_text(model)
     zero = model.replace(params, '').replace(assign,assign.split('=')[0]+'=7;')
@@ -89,10 +90,10 @@ def prove(work, flavor, memcheck):
     edits = [(None, '', None, b'1231'),(entry, default+'return 8;', 'Argument count mismatch', None),
            (record, zero, None, b''),(entry, source.replace('step($i),step($i)', '').replace('step(i),step(i)', '').replace('3,true', ''),
                                     'typed declaration without ()', None),
-           (entry, default+'return 8;', None, b''),(app / 'nested.php', 'struct Box { public Point $p; }', None, b''),
+           (entry, default+'return 8;', None, b''),(app / 'nested.phs', 'struct Box { public Point $p; }', None, b''),
            (entry, box+'return 8;', None, b'78'), (record, model, 'Inline field requires', None),
            (None, '', 'Inline field requires', None), (record, zero, None, b'78'), (entry, no_args, None, b'78'),
-           (app / 'nested.php', '', None, b'78'), (record, model, 'Argument count mismatch', None),
+           (app / 'nested.phs', '', None, b'78'), (record, model, 'Argument count mismatch', None),
            (entry, wrong, 'conversion', None), (entry, source, None, b'1231')]
     ctor, inline, factory, copy_use = {
         'php': ('public function __construct', '$value Point(4,5);',
@@ -130,9 +131,9 @@ def prove(work, flavor, memcheck):
         (entry,'return 8;',None,b''),(record,public_zero,None,b''),
         (entry,default+'return 8;',None,b''),(record,private_zero,denied,None),
         (entry,'return 8;',None,b''),
-        (app/'nested.php','struct Box { public Point $p; }',denied,None),
+        (app/'nested.phs','struct Box { public Point $p; }',denied,None),
         (record,public_zero,None,b''),(record,private_zero,denied,None),
-        (app/'nested.php','struct Box { public shared<Point> $p; }',None,b''),
+        (app/'nested.phs','struct Box { public shared<Point> $p; }',None,b''),
     ])
     first, second = params.split(',')
     def defaults(x, y):
@@ -144,7 +145,7 @@ def prove(work, flavor, memcheck):
     bind = {'php':'$full=', 'cpp':'auto full=', 'js':'let full='}[flavor]
     calls = (default + make_one + bind + 'new Point(7,4); echo ' + y('p') + ',' + y('one') + ',' + y('full')
              + ',(new Point())' + member + 'y' + ',(new Point(7))' + member + 'y;')
-    nested = app/'nested.php'
+    nested = app/'nested.phs'
     edits.extend([
         (record, defaults('=true', '=2'), None, b''),
         (nested, 'struct Box { public Point $p; public shared<Point> $owner; }', None, b''),
@@ -190,7 +191,7 @@ def prove(work, flavor, memcheck):
 def record_arguments(work, flavor):
     app = work / ('record-args-' + flavor)
     app.mkdir()
-    model, segment, entry = [app / (name + '.' + flavor) for name in ('point', 'segment', 'main')]
+    model, segment, entry = [app / (name + '.' + source_suffix(flavor)) for name in ('point', 'segment', 'main')]
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     var = '$' if flavor == 'php' else ''
     member = '.' if flavor == 'js' else '->'
@@ -221,7 +222,7 @@ def record_arguments(work, flavor):
     entry.write_text(src)
     segment.write_text(record)
     # These parameters occur only in signatures, including mutually referring and self-taking constructors.
-    (app/'edges.php').write_text('struct Left { public function __construct(Right $r) {} } '
+    (app/'edges.phs').write_text('struct Left { public function __construct(Right $r) {} } '
         'struct Right { public function __construct(Left $l) {} } '
         'struct Same { public function __construct(Same $s) {} } '
         'function copySame(Same $s):Same { $v Same($s); return $v; } '

@@ -27,7 +27,7 @@ def verify_publication(work, driver, cxx, flags):
     app.mkdir()
     (app/'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {
         'runtime': {'modules': ['filesystem', 'datetime']}}}))
-    main = app/'main.php'
+    main = app/'main.phs'
     release_app = work/'release-app'
     main.write_text(f'while (!fs_exists("{release_app}")) {{ dt_sleep_ms(1); }} echo 1; return 0;')
     fresh(app, bundle)
@@ -42,7 +42,7 @@ def verify_publication(work, driver, cxx, flags):
     writer = service(app, bundle)
     try:
         wait_until(ready.exists, 'Clang never entered')
-        (app/'second.php').write_text('function second(): int { return 2; }')
+        (app/'second.phs').write_text('function second(): int { return 2; }')
         main.write_text('echo second(); return 0;')
         writer.stdin.write('"run"\n')
         writer.stdin.flush()
@@ -78,8 +78,8 @@ def build_driver(work, cxx, linker):
     tool.mkdir()
     modules = ['filesystem', 'io', 'json', 'process', 'datetime']
     (tool/'module.json').write_text(json.dumps({'general_api': True, 'dependencies': {'runtime': {'modules': modules}}}))
-    shutil.copyfile(ROOT/'compiler/examples/native_driver/main.php.scpp', tool/'main.php')
-    shutil.copyfile(ROOT/'compiler/examples/native_driver/build_inputs.php.scpp', tool/'build_inputs.php')
+    shutil.copyfile(ROOT/'compiler/examples/native_driver/main.phs', tool/'main.phs')
+    shutil.copyfile(ROOT/'compiler/examples/native_driver/build_inputs.phs', tool/'build_inputs.phs')
     bundle = work/'driver-out'
     manifest = fresh(tool, bundle)
     driver = work/'driver-executable'

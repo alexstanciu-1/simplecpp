@@ -12,7 +12,7 @@ function measure_close(string $app, string $flavor, bool $failed): array /** lis
 {
 	mkdir($app);
 	file_put_contents($app . '/module.json', '{}');
-	file_put_contents($app . '/main.' . $flavor, 'value(); return 8;');
+	file_put_contents($app . '/main.' . \scpp\compiler\flavor::from($flavor)->source_extension(), 'value(); return 8;');
 	$header = $flavor === 'cpp' ? 'void value()' : 'function value(): void';
 	$compiler = new Project_Compiler();
 	$session = null;
@@ -23,8 +23,8 @@ function measure_close(string $app, string $flavor, bool $failed): array /** lis
 	{
 		$phase = $step === 0 ? 'initial' : (($step % 2) === 1 ? 'edit' : 'noop');
 		if ($phase !== 'noop') {
-			file_put_contents($app . '/library.' . $flavor, $header . '{' . ($failed ? 'missing();' : '') . 'echo ' . $step . ';}');
-			touch($app . '/library.' . $flavor, ++$stamp);
+			file_put_contents($app . '/library.' . \scpp\compiler\flavor::from($flavor)->source_extension(), $header . '{' . ($failed ? 'missing();' : '') . 'echo ' . $step . ';}');
+			touch($app . '/library.' . \scpp\compiler\flavor::from($flavor)->source_extension(), ++$stamp);
 		}
 		$session = $compiler->frontend($app, $session, $app . '/out');
 		if ($failed) {

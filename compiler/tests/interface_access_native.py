@@ -1,4 +1,5 @@
 """Interface capability checks: shared ownership, runtime overlap and incremental publication."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -112,7 +113,7 @@ int main() {
 }
 ''')
     facts=work/'facts.json';facts.write_text(json.dumps({'schema':1,'native_integers':{'int':{'signed':True,'digits':31}}}))
-    combined=work/(flavor+'-standalone-source.'+flavor);combined.write_text(types+api+main)
+    combined=work/(flavor+'-standalone-source.'+source_suffix(flavor));combined.write_text(types+api+main)
     cpp=work/(flavor+'-standalone.cpp')
     result=subprocess.run(['php',ROOT/'compiler/main.php','cpp',flavor,combined,facts,cpp],capture_output=True,text=True)
     assert result.returncode==0,result.stderr
@@ -158,7 +159,7 @@ def incremental(work, flavor, libraries):
         for i,(name,text,expected,error,kind) in enumerate(steps):
             before=artifacts(out);stamps={p:(out/p).stat().st_mtime_ns for p in before};old=adapter_files(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             r=invoke(resident);f=work/f'{flavor}-fresh-{i}';comparison=fresh(app,f)
@@ -176,8 +177,8 @@ def incremental(work, flavor, libraries):
             if kind in ['capability','layout']:
                 for n in ['first','second']:
                     path=Path(units[n]);assert before[path]==now[path] and stamps[path]==(out/path).stat().st_mtime_ns,(i,n)
-            if kind=='first-unused':assert not any(p.endswith('/second.'+flavor) for p in r['emitted_sources']),r
-            if kind=='restore-use' and name=='second':assert not any(p.endswith('/first.'+flavor) for p in r['emitted_sources']),r
+            if kind=='first-unused':assert not any(p.endswith('/second.'+source_suffix(flavor)) for p in r['emitted_sources']),r
+            if kind=='restore-use' and name=='second':assert not any(p.endswith('/first.'+source_suffix(flavor)) for p in r['emitted_sources']),r
             for cc,lib in libraries.items():
                 changed=incremental_native_build(out,work/(flavor+'-incremental-native-'+cc),cc,lib,expected)
                 if kind=='noop':assert not changed and r['preparation']['prepared']==0 and r['emitted_sources']==[],r
@@ -215,7 +216,7 @@ def adapter_transitions(work, flavor, libraries):
         for i,(name,text,kind,dynamic,count) in enumerate(steps):
             before=artifacts(out);stamps={p:(out/p).stat().st_mtime_ns for p in before};old=adapter_files(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             r=invoke(resident);f=work/f'{flavor}-adapters-fresh-{i}';comparison=fresh(app,f)
@@ -233,7 +234,7 @@ def adapter_transitions(work, flavor, libraries):
             if cached:
                 path=Path(units[cached])
                 assert before[path]==now[path] and stamps[path]==(out/path).stat().st_mtime_ns,(i,cached)
-                assert not any(p.endswith('/'+cached+'.'+flavor) for p in r['emitted_sources']),r
+                assert not any(p.endswith('/'+cached+'.'+source_suffix(flavor)) for p in r['emitted_sources']),r
             for cc,lib in libraries.items():
                 changed=incremental_native_build(out,work/(flavor+'-adapters-native-'+cc),cc,lib,b'8')
                 if kind=='noop':assert not changed and r['preparation']['prepared']==0 and r['emitted_sources']==[],r
@@ -265,12 +266,12 @@ def rejections(work, flavor):
     try:
         assert 'error' not in invoke(resident)
         for i,(bad,message) in enumerate(cases):
-            before=artifacts(out);source_edit(app/('main.'+flavor),types+bad+'return 8;')
+            before=artifacts(out);source_edit(app/('main.'+source_suffix(flavor)),types+bad+'return 8;')
             for retry in range(2):
                 r=invoke(resident);comparison=fresh(app,work/f'{flavor}-bad-{i}-{retry}')
                 assert 'error' in r and message.lower() in r['error'].lower(),(i,r)
                 assert r['error']==comparison.get('error') and artifacts(out)==before,(i,r,comparison)
-            source_edit(app/('main.'+flavor),good);r=invoke(resident);f=work/f'{flavor}-recovery-{i}'
+            source_edit(app/('main.'+source_suffix(flavor)),good);r=invoke(resident);f=work/f'{flavor}-recovery-{i}'
             assert 'error' not in r and 'error' not in fresh(app,f),r
             assert artifacts(out)==artifacts(f)
     finally:resident.stdin.close();resident.wait()

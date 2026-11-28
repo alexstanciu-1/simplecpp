@@ -120,10 +120,10 @@ with tempfile.TemporaryDirectory(prefix='json-source-') as tmp:
     work = Path(tmp)
     app, out = work/'app', work/'out'
     app.mkdir()
-    manifest, main = app/'module.json', app/'main.php'
+    manifest, main = app/'module.json', app/'main.phs'
     deps = {'dependencies': {'runtime': {'modules': ['json']}}}
     manifest.write_text(json.dumps(dict(deps, general_api=True)))
-    records = app/'records.php'
+    records = app/'records.phs'
     definitions = ('data struct Packet { public vector<int> $data; public int $version=1; public function bump(int $n):int { $this->version+=$n; return $this->version; } }'
                    'data class Box { public string $label; }'
                    'data struct Text { public string $label; public vector<string> $words; }'
@@ -154,7 +154,7 @@ return 0;""")
     }
     for name, body in flavor_sources.items():
         (app/name).write_text(body)
-    reader = app/'reader.php'
+    reader = app/'reader.phs'
     decoder = ('function readPacket(string $text):result<Packet> {return json_decode_as($text,Packet::class);}'
                r'function replacePacket(result<Packet> &$r):int { $r=readPacket("{\"data\":[],\"version\":70}"); return 4; }'
                'function replaceIndex(result<Packet> &$r):int { replacePacket($r); return 0; }'
@@ -170,7 +170,7 @@ return 0;""")
     for name, carrier in families.items():
         decoder += f'function grow{name}({carrier} &$slot):void {{ $slot->resize(2,"x"); }}'
     reader.write_text(decoder)
-    (app/'writer.php').write_text('function encodeBox(Box $box):string {return json_encode($box);}'
+    (app/'writer.phs').write_text('function encodeBox(Box $box):string {return json_encode($box);}'
                                   'function encodeLate():result<string> {'
                                   '$late Late={payload:{data:[2,7]},tail:1.0e308*2.0};return json_encode($late);}')
     main.write_text(source)
@@ -199,11 +199,11 @@ return 0;""")
         assert all(b'template<class scpp_escape_Field' not in data for data in baseline.values())
         assert b'decode_record<' not in units and b'record_result<' not in units
         bundle = json.loads((out/'manifest.json').read_text())
-        for source_name in ['records.php', 'CppWords.cpp', 'JsWords.js', 'PyWords.py']:
+        for source_name in ['records.phs', 'CppWords.cpp', 'JsWords.js', 'PyWords.py']:
             unit = out/bundle['sources']['app/'+source_name]
             code = unit.read_text()
             assert 'd.read_strings(' in code and '::scpp::json::read_leaf_record(' in code, source_name
-        records_unit = out/bundle['sources']['app/records.php']
+        records_unit = out/bundle['sources']['app/records.phs']
         envelope = records_unit.read_text().split('record_result_Envelope::from_text(', 1)[1].split('slot.present', 1)[0]
         assert '::scpp::json::read_record(' in envelope
         packet_header = next(out/h for h in bundle['headers'] if 'struct Packet {' in (out/h).read_text())
@@ -237,7 +237,7 @@ return 0;""")
             reduced_units = artifacts(out)
             header = next(data for data in reduced_units.values() if b'struct record_result_Packet {' in data)
             assert b'std::shared_ptr<Value> payload' not in header and b'#include <memory>' not in header
-            entry = reduced_units[Path(bundle['sources']['app/main.php'])]
+            entry = reduced_units[Path(bundle['sources']['app/main.phs'])]
             assert b'.pin()' not in entry and entry.count(b'.checked_ref()).version') == 2, entry
         finally:
             cold.stdin.close()

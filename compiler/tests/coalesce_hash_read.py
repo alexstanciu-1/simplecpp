@@ -46,7 +46,7 @@ with TemporaryDirectory(prefix='scpp-coalescing-read-') as directory:
     app, out = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text(source)
+    (app/'main.phs').write_text(source)
     proc = service(app, out)
     try:
         got = invoke(proc)

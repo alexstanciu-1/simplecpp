@@ -141,7 +141,7 @@ def main():
                 w=temp/mode/str(i)
                 app,out=w/'app',w/'out'
                 app.mkdir(parents=True)
-                for file in ['main.php','module.json']:
+                for file in ['main.phs','module.json']:
                     shutil.copyfile(SOURCE/file,app/file)
                 start=time.perf_counter()
                 info=json.loads(run([args.php,root/'compiler/tests/incremental_executable.php',app,out],input=b'"run"\n').stdout)

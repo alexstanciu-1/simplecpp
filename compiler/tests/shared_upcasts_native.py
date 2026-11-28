@@ -1,4 +1,5 @@
 """Shared class base views: native lifetime, conversion contracts and retained recovery."""
+from source_suffix import source_suffix
 import argparse
 import json
 from pathlib import Path
@@ -124,12 +125,12 @@ def prove(work, flavor, libraries, memcheck):
     app = work / flavor
     app.mkdir()
     output = work / (flavor + '-out')
-    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + flavor}))
+    (app / 'module.json').write_text(json.dumps({'entry': 'main.' + source_suffix(flavor)}))
     names = ['node', 'token', 'other', 'literal', 'leaf', 'alternate', 'explicit', 'fail', 'holder', 'api', 'main']
-    files = {name: app / (name + '.' + flavor) for name in names}
+    files = {name: app / (name + '.' + source_suffix(flavor)) for name in names}
     for name in names:
         source_edit(files[name], s[name])
-    source_edit(app / ('idle.' + flavor), s['function']('idle', 'int', [], 'return 17;'))
+    source_edit(app / ('idle.' + source_suffix(flavor)), s['function']('idle', 'int', [], 'return 17;'))
     relation = (' : ' if flavor == 'cpp' else ' extends ')
     edits = [(None, None, None), (None, None, None),
         ('literal', s['literal'].replace(relation + 'Node', relation + 'Other'), 'Unsupported explicit conversion'),
@@ -173,7 +174,7 @@ def prove(work, flavor, libraries, memcheck):
             assert artifacts(output) == artifacts(fresh_out), revision
             if revision:
                 assert current['preparation']['reused'] >= 1, current
-                assert not any(p.endswith('/idle.' + flavor) for p in current['emitted_sources']), current
+                assert not any(p.endswith('/idle.' + source_suffix(flavor)) for p in current['emitted_sources']), current
             if revision == 1:
                 assert current['preparation']['prepared'] == 0 and current['emitted_sources'] == [], current
             else:

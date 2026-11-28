@@ -1,4 +1,5 @@
 """Host method selection and private aliases keep independent consumer-owned bodies."""
+from source_suffix import source_suffix
 import argparse
 import tempfile
 from pathlib import Path
@@ -34,7 +35,7 @@ def prove(work, flavor):
         ('host', host.replace('private namespace_name', 'private original'), 'Trait alias conflicts'),
         ('host', host.replace(use, use + 'use Another;'), 'Naming and Another'),
         ('host', host, b'544'),
-        ('naming', trait('Naming', common.replace('return 4;', f'return {receiver}missing();')), f'naming.{flavor}:2:'),
+        ('naming', trait('Naming', common.replace('return 4;', f'return {receiver}missing();')), f'naming.{source_suffix(flavor)}:2:'),
         ('naming', trait('Naming', common.replace('4', '7')), b'877'),
     ])
 

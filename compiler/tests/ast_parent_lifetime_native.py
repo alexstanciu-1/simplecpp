@@ -1,4 +1,5 @@
 """Weak AST parents: retained roots, expiry and real compiler incremental reuse."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -148,7 +149,7 @@ def prove(work, flavor, libraries, memcheck):
         for i,(name,text,error,expected,kind) in enumerate(steps):
             before=artifacts(out);stamps={p:(out/p).stat().st_mtime_ns for p in before}
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             r=invoke(resident);f=work/f'{flavor}-fresh-{i}';comparison=fresh(app,f)
@@ -188,10 +189,10 @@ if __name__=='__main__':
                 assert 'error' not in invoke(resident)
                 original = artifacts(out)
                 assert invoke(resident)['preparation']['prepared'] == 0
-                (app/'literal.php').unlink()
+                (app/'literal.phs').unlink()
                 assert 'requires a record' in invoke(resident)['error'].lower()
                 assert artifacts(out) == original
-                source_edit(app/'literal.php', src['literal'])
+                source_edit(app/'literal.phs', src['literal'])
                 assert 'error' not in invoke(resident) and artifacts(out) == original
             finally:
                 resident.stdin.close()

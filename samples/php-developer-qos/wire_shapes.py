@@ -75,7 +75,7 @@ if __name__ == '__main__':
         app = work/'app'
         app.mkdir()
         (app/'module.json').write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem","json"]}}}')
-        (app/'main.php').write_text(entry)
+        (app/'main.phs').write_text(entry)
         exe = build(app, work)
         php = work/'control.php'
         php.write_text(control)

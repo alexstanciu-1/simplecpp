@@ -309,8 +309,8 @@ SCPP;
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		$main = $directory . '/main.' . $flavor->name;
-		$library = $directory . '/library.' . $flavor->name;
+		$main = $directory . '/main.' . $flavor->source_extension();
+		$library = $directory . '/library.' . $flavor->source_extension();
 		$pair_check = $flavor === flavor::php ? '$box mixed = provide(); $sink ?float = 1.0; $sink += provide(); echo (int)(provide() === provide()), (int)(provide() == provide()), (int)(provide() === 0);' : '';
 		$sum = $flavor === flavor::php ? '(int)(provide() + 5)' : 'provide() + 5';
 		file_put_contents($main, $pair_check . 'echo (int)isset(provide()), ' . $sum . '; return 8;');

@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-csv-') as directory:
     app, out = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text(json.dumps({'dependencies': {'runtime': {'modules': ['io']}}}))
-    (app/'main.php').write_text(scpp + writes.replace('$row=[', '$row vector<string> = ['))
+    (app/'main.phs').write_text(scpp + writes.replace('$row=[', '$row vector<string> = ['))
     proc = service(app, out)
     try:
         result = invoke(proc)

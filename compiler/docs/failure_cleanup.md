@@ -36,7 +36,7 @@ Native failure occurs after C++ publication and needs no prior AST generation.
 
 ## Translated preparation proof
 
-The [bounded native preparation stage](../examples/preparation_recovery/preparation.php.scpp)
+The [bounded native preparation stage](../examples/preparation_recovery/preparation.phs)
 translates the body completion and pending-work rules for one zero-argument
 integer-return function per source unit. It consumes return syntax exported
 by the existing frontend. The supported expressions are a canonical decimal

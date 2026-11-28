@@ -1,1 +1,1 @@
-{"sources":["main.php"],"dependencies":{"runtime":{"modules":["mysqli"]}}}
+{"sources":["main.phs"],"dependencies":{"runtime":{"modules":["mysqli"]}}}

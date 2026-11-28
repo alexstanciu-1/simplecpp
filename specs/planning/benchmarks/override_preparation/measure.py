@@ -38,14 +38,14 @@ def measure(directory, server, receiver, count, writer):
     app = directory/'app'
     app.mkdir(parents=True)
     source_edit(app/'module.json', '{}')
-    source_edit(app/'base.php', 'class Base {public virtual function value():int {return 1;}}')
+    source_edit(app/'base.phs', 'class Base {public virtual function value():int {return 1;}}')
     child = 'class Child extends Base {public override function value():int {return %d;}}'
-    source_edit(app/'child.php', child % 2)
+    source_edit(app/'child.phs', child % 2)
     # Keep entry size and file count fixed. Every declared caller has a prepared
     # body; the preparation counts verify participation independently of timing.
-    source_edit(app/'main.php', 'return 8;')
+    source_edit(app/'main.phs', 'return 8;')
     callers = [f'function read{i}({receiver} $n):int {{return $n->value();}}' for i in range(count)]
-    source_edit(app/'callers.php', '\n'.join(callers) + '\n')
+    source_edit(app/'callers.phs', '\n'.join(callers) + '\n')
     with subprocess.Popen(['php', server, app, directory/'out'], text=True,
                           stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                           env={**os.environ, 'XDEBUG_MODE': 'off'}) as proc:
@@ -59,7 +59,7 @@ def measure(directory, server, receiver, count, writer):
         try:
             assert request()['prepared'] == count + 3
             for pair in range(34):
-                source_edit(app/'child.php', child % (3 if pair % 2 == 0 else 2))
+                source_edit(app/'child.phs', child % (3 if pair % 2 == 0 else 2))
                 edit = request()
                 noop = request()
                 assert noop['prepared'] == 0, noop

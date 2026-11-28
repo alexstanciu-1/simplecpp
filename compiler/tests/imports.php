@@ -154,9 +154,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try
 	{
-		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->value], JSON_THROW_ON_ERROR));
-		$main_path = $directory . '/main.' . $flavor->value;
-		$lib_path = $directory . '/lib.' . $flavor->value;
+		file_put_contents($directory . '/module.json', json_encode(['entry' => 'main.' . $flavor->source_extension()], JSON_THROW_ON_ERROR));
+		$main_path = $directory . '/main.' . $flavor->source_extension();
+		$lib_path = $directory . '/lib.' . $flavor->source_extension();
 		file_put_contents($main_path, $main);
 		file_put_contents($lib_path, $library);
 		$compiler = new Project_Compiler();
@@ -191,7 +191,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		verify(Incremental_Preparation::prepare($session, $target_layout) === ['prepared' => 3, 'reused' => 0], 'Reactivation did not prepare caller');
 		verify($session->entry->entry->ast === $caller && $call->function_def() === $scope->resolve($key),
 			'Recovered call did not follow the reactivated entry');
-		$conflict_path = $directory . '/conflict.' . $flavor->value;
+		$conflict_path = $directory . '/conflict.' . $flavor->source_extension();
 		file_put_contents($conflict_path, body($flavor, 'App', definition($flavor, 'run')));
 		$session = $compiler->frontend($directory, $session);
 		rejects(fn() => Incremental_Preparation::prepare($session, $target_layout), 'conflicts with namespace declaration');

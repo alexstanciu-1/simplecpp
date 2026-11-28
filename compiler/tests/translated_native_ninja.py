@@ -17,8 +17,8 @@ def verify(work, cxx, linker):
     app, bundle, native = work/'app', work/'generated', work/'native objects'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text('echo number(); return 8;')
-    helper = app/'number.php'
+    (app/'main.phs').write_text('echo number(); return 8;')
+    helper = app/'number.phs'
     helper.write_text('function number(): int { return 1; }')
     compiler = service(app, bundle)
     command = [driver, '--ninja', bundle, native, shutil.which('ninja')]
@@ -63,7 +63,7 @@ def verify(work, cxx, linker):
         assert failed.returncode not in (0, 8) and b'ninja_build_failed' in failed.stdout, failed
         changed.write_bytes(saved)
         build(b'2', [object_name(changed), 'program'])
-        (app/'extra.php').write_text('function extra(): int { return 3; }')
+        (app/'extra.phs').write_text('function extra(): int { return 3; }')
         assert 'error' not in invoke(compiler)
         stale = subprocess.run(command, capture_output=True, timeout=10)
         assert stale.returncode not in (0, 8) and b'Republish the Ninja graph' in stale.stderr, stale

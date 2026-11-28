@@ -137,9 +137,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor) {
 		rejects(fn()=>$prepare($decl($type,'items','[]').$v('items').'['.$key.']'.($string?'-=1':'+="bad"').';return 8;'),'compound');
 		$directory=sys_get_temp_dir().'/scpp-index-compound-'.bin2hex(random_bytes(8));mkdir($directory);
 		try {
-			$provider=$directory.'/library.'.$flavor->name;
-			file_put_contents($directory.'/main.'.$flavor->name,$main);
-			file_put_contents($directory.'/module.json',json_encode(['entry'=>'main.'.$flavor->name,'sources'=>['main.'.$flavor->name,basename($provider)]]));
+			$provider=$directory.'/library.'.$flavor->source_extension();
+			file_put_contents($directory.'/main.'.$flavor->source_extension(),$main);
+			file_put_contents($directory.'/module.json',json_encode(['entry'=>'main.'.$flavor->source_extension(),'sources'=>['main.'.$flavor->source_extension(),basename($provider)]]));
 			$project=new Incremental_Project($directory,$directory.'/out',new entry_target(31));$stamp=time();$caller=null;
 			$initial=$model.$helpers;
 			$edits=[$initial,$record('Box',$field($type,'items').$field('string','extra')).$helpers,

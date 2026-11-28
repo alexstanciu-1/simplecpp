@@ -1,4 +1,5 @@
 """Bootstrap lookup representation, real generated overload selection and source-shadow recovery."""
+from source_suffix import source_suffix
 import argparse
 import tempfile
 from pathlib import Path
@@ -54,7 +55,7 @@ def prove(work, flavor, quick=False):
     ]
     revisions(work, flavor, dict(types=types, lookup=lookup, main=main, selector=selector, apply=apply, identity=identity),
               [edits[i] for i in (0, 2, 3, 5, 6)] if quick else edits,
-              unaffected_source='main.' + flavor, unaffected_revisions={1} if quick else {2})
+              unaffected_source='main.' + source_suffix(flavor), unaffected_revisions={1} if quick else {2})
 
 
 def lazy_session(work, flavor):
@@ -92,7 +93,7 @@ def lazy_session(work, flavor):
         (None, None, b'FF'), (None, None, b'FF'),
         ('factory', factory.replace('"F"', '"G"'), b'GG'),
         ('factory', None, 'Unknown function'), ('factory', factory, b'FF'),
-    ], unaffected_source='registry.' + flavor, unaffected_revisions={2})
+    ], unaffected_source='registry.' + source_suffix(flavor), unaffected_revisions={2})
 
 
 if __name__ == '__main__':

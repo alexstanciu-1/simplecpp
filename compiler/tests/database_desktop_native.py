@@ -18,7 +18,7 @@ fixtures = root/'compiler/tests/fixtures/resource_modules'
 def compile_app(work, module, text, clang, negatives=()):
     app, out = work/'app', work/'out'
     app.mkdir()
-    main = app/'main.php'
+    main = app/'main.phs'
     main.write_text(text)
     manifest = app/'module.json'
     settings = {'general_api': True, 'dependencies': {'runtime': {'modules': [module]}}}
@@ -55,7 +55,7 @@ def compile_app(work, module, text, clang, negatives=()):
 
 def database(work, clang):
     sock = work/'db.sock'
-    text = (fixtures/'mysqli.php').read_text().replace('@SOCKET@', str(sock))
+    text = (fixtures/'mysqli.phs').read_text().replace('@SOCKET@', str(sock))
     start = '$db=new mysqli(); $id=1; $s mysqli_stmt=$db->prepare("SELECT ?"); '
     bind = '$ok=$s->bind_param("i",$id); '
     confined = '$r=$db->prepare("SELECT ?"); $s mysqli_stmt=$r; $id=1; '
@@ -100,7 +100,7 @@ def database(work, clang):
 
 
 def desktop(work, module, clang):
-    src = 'desktop.php' if module=='webview' else 'window.php'
+    src = 'desktop.phs' if module=='webview' else 'window.phs'
     compile_app(work,module,(fixtures/src).read_text(),clang)
     shutil.copytree(fixtures/'assets',work/'assets')
     command = ['xvfb-run','-a','dbus-run-session','--',work/'run']

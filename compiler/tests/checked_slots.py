@@ -43,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix='checked-slots-') as tmp:
     app, out = work/'app', work/'out'
     app.mkdir()
     (app/'module.json').write_text('{}')
-    (app/'main.php').write_text(source)
+    (app/'main.phs').write_text(source)
     proc = service(app, out)
     try:
         response = invoke(proc)

@@ -38,7 +38,7 @@ reuse disabled for this synchronous host.
 ProxyPass "/app/" "unix:/run/scpp/app.sock|fcgi://localhost/app/"
 ```
 
-The [compiled source fixture](../compiler/tests/fixtures/resource_modules/fcgi.php.scpp)
+The [compiled source fixture](../compiler/tests/fixtures/resource_modules/fcgi.phs)
 shows the accept loop, request dispatch, repeated response headers, and explicit
 abandon on a handler exception. The [Apache integration test](../compiler/tests/fcgi_apache_native.py)
 uses an isolated temporary configuration and leaves the system service untouched.

@@ -1,4 +1,5 @@
 """Audit boxed collection admission, with native proofs for common value/reference passing."""
+from source_suffix import source_suffix
 import argparse
 import json
 import tempfile
@@ -11,7 +12,7 @@ from application_vectors_native import measure
 
 def prove(work,flavor):
     s=fixture(flavor);v,a=s['v'],s['access'];rows={}
-    app=work/flavor;app.mkdir();source_edit(app/'module.json',json.dumps({'entry':'main.'+flavor}))
+    app=work/flavor;app.mkdir();source_edit(app/'module.json',json.dumps({'entry':'main.'+source_suffix(flavor)}))
     for family in ['mixed','dynamic']:
         def decl(name,t,value):
             return {'php':f'${name} {t} = {value};','cpp':f'{t} {name} = {value};','js':f'let {name}:{t} = {value};'}[flavor]
@@ -31,7 +32,7 @@ def prove(work,flavor):
         code+=f'replace({v}items);echo (int){v}items["a"],(int){v}saved["a"];'
         code+=decl('other',family,f'copy({v}items)')+f'{v}other["a"]=5;echo (int){v}items["a"];'
         code+=s['infer']('worker','new Worker()')+f'{v}worker{a}edit({v}items);echo (int){v}items["a"];return 8;'
-        source_edit(app/('main.'+flavor),code);out=work/(flavor+'-'+family);proc=service(app,out)
+        source_edit(app/('main.'+source_suffix(flavor)),code);out=work/(flavor+'-'+family);proc=service(app,out)
         try:got=invoke(proc)
         finally:proc.stdin.close();proc.wait()
         assert 'error' not in got,(flavor,family,got)
@@ -61,7 +62,7 @@ def prove(work,flavor):
             'family mismatch':mutate+decl('other','dynamic' if family=='mixed' else 'mixed','[]')+f'mutate({v}other);return 8;',
         }
         for feature,code in probes.items():
-            source_edit(app/('main.'+flavor),code);proc=service(app,work/(flavor+'-'+family+'-probe'))
+            source_edit(app/('main.'+source_suffix(flavor)),code);proc=service(app,work/(flavor+'-'+family+'-probe'))
             try:result=invoke(proc)
             finally:proc.stdin.close();proc.wait()
             accepted='error' not in result

@@ -88,8 +88,8 @@ def prove(work, quick=False):
 def mixed_consumers(work):
     app = work / 'mixed'
     app.mkdir()
-    (app / 'module.json').write_text('{"entry":"main.php"}')
-    (app / 'main.php').write_text('function &pick(int &$x):int {$x+=1;return $x;}'
+    (app / 'module.json').write_text('{"entry":"main.phs"}')
+    (app / 'main.phs').write_text('function &pick(int &$x):int {$x+=1;return $x;}'
                                   'echo cppUse(pick(...)),":",jsUse(pick(...));return 8;')
     (app / 'cppUse.cpp').write_text('int cppUse(callback<int&,int&> op) {int x=1;return op(x);}')
     (app / 'jsUse.js').write_text('function jsUse(op:callback<int&,int&>):int {let x=3;return op(x);}')

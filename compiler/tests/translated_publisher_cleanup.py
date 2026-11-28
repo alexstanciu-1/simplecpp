@@ -11,7 +11,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 php, cxx, linker, filesystem_archive, runtime_archive = sys.argv[1:]
 facts = Path(runtime_archive).parent / 'native-layout/facts.json'
-fixture = ROOT / 'compiler/examples/publisher_cleanup/proof.php.scpp'
+fixture = ROOT / 'compiler/examples/publisher_cleanup/proof.phs'
 
 
 def run(*args, cwd=None):
@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-publisher-cleanup-') as directory:
     app, compiled = work / 'app', work / 'compiled'
     app.mkdir()
     (app / 'module.json').write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["filesystem"]}}}')
-    shutil.copyfile(fixture, app / 'main.php')
+    shutil.copyfile(fixture, app / 'main.phs')
     run(php, ROOT / 'compiler/main.php', 'project', app, facts, compiled)
 
     output = json.loads((compiled / 'manifest.json').read_text())

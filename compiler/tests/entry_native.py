@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-entry-') as directory:
     work = Path(directory)
     emitted = []
     for flavor in ['php', 'cpp', 'js']:
-        text = (root / 'compiler/examples' / ('entry.' + flavor + '.scpp')).read_text()
+        text = (root / 'compiler/examples' / ('entry.phs' if flavor == 'php' else f'entry.{flavor}.scpp')).read_text()
         source = work / (flavor + '.source')
         source.write_text(text)
         parsed = json.loads(success(cli('parse', flavor, source)).stdout)

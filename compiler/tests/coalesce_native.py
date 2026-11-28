@@ -1,4 +1,5 @@
 """Nullable payload coalescing: lazy fallback, owned results and retained/native recovery."""
+from source_suffix import source_suffix
 import json
 import subprocess
 import tempfile
@@ -67,7 +68,7 @@ def prove(work,flavor,libraries, *, quick=False):
         for revision,(name,text,error,wanted) in enumerate(steps):
             before=artifacts(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             got=invoke(resident);fresh_out=work/f'{flavor}-fresh-{revision}';clean=fresh(app,fresh_out)

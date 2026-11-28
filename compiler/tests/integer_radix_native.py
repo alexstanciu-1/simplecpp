@@ -1,4 +1,5 @@
 """Prefixed integer boundaries, checked destinations and resident recovery in every flavor."""
+from source_suffix import source_suffix
 import json
 import os
 from pathlib import Path
@@ -21,7 +22,7 @@ def source(flavor, literal, kind='int'):
 def prove(work, flavor, quick=False):
     app = work / flavor
     app.mkdir()
-    entry = app / ('main.' + flavor)
+    entry = app / ('main.' + source_suffix(flavor))
     (app / 'module.json').write_text(json.dumps({'entry': entry.name}))
     output = work / ('out-' + flavor)
     good = [('0x7fffffffffffffff', 'int', '9223372036854775807'),

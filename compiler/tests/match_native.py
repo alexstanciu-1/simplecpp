@@ -1,4 +1,5 @@
 """Bounded match: lazy native switch, exact types and retained preparation recovery."""
+from source_suffix import source_suffix
 import json
 import subprocess
 import tempfile
@@ -98,7 +99,7 @@ def prove(work, flavor, libraries, *, quick=False):
     try:
         for i,(name,source,error,stdout) in enumerate(edits):
             before=artifacts(out)
-            path=app/(name+'.'+flavor)
+            path=app/(name+'.'+source_suffix(flavor))
             if source is None:path.unlink()
             else:source_edit(path,source)
             current=invoke(resident);comparison_out=work/f'{flavor}-fresh-{i}';comparison=fresh(app,comparison_out)

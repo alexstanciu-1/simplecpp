@@ -1,4 +1,5 @@
 """Lazy throw fallbacks preserve the successful value and transport the original diagnostic."""
+from source_suffix import source_suffix
 import json
 import os
 from pathlib import Path
@@ -17,15 +18,15 @@ def prove(work, flavor, library, cxx_flags=()):
     app = work / 'app'
     app.mkdir(parents=True)
     output = work / 'output'
-    entry = app / f'main.{flavor}'
-    provider = app / f'failure.{flavor}'
+    entry = app / f'main.{source_suffix(flavor)}'
+    provider = app / f'failure.{source_suffix(flavor)}'
     source_edit(app / 'module.json', json.dumps({'entry': entry.name}))
     diagnostic = form['record']('Diagnostic', form['field']('offset', 'int', '17'),
                                 'Exception').replace('struct ', 'class ', 1)
-    source_edit(app / f'diagnostic.{flavor}', diagnostic)
+    source_edit(app / f'diagnostic.{source_suffix(flavor)}', diagnostic)
     make_failure = function('failure', 'Diagnostic', [('diag', 'Diagnostic')], f'echo "F:"; return {v}diag;')
     source_edit(provider, make_failure)
-    source_edit(app / f'quiet.{flavor}', function('quiet', 'int', [], 'return 1;'))
+    source_edit(app / f'quiet.{source_suffix(flavor)}', function('quiet', 'int', [], 'return 1;'))
 
     def local(name, kind, value):
         return form['local'](name, kind).removesuffix(';') + f' = {value};'
@@ -87,7 +88,7 @@ def prove(work, flavor, library, cxx_flags=()):
         source_edit(provider, make_failure)
         recovered = invoke(resident)
         assert 'error' not in recovered and recovered['preparation']['reused'] >= 1, recovered
-        assert f'app/quiet.{flavor}' not in recovered['emitted_sources']
+        assert f'app/quiet.{source_suffix(flavor)}' not in recovered['emitted_sources']
         fresh_output = work / 'fresh-recovered'
         assert 'error' not in fresh_build(app, fresh_output)
         assert artifacts(output) == artifacts(fresh_output) == before

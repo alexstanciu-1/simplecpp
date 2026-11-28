@@ -1,4 +1,5 @@
 """Ordered match(true) conditions, fallback invalidation and native incremental reuse."""
+from source_suffix import source_suffix
 import json
 import subprocess
 import tempfile
@@ -75,7 +76,7 @@ def prove(work, flavor, libraries, *, quick=False):
         for i,(name,source,error,stdout) in enumerate(edits):
             before=artifacts(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if source is None:path.unlink()
                 else:source_edit(path,source)
             got=invoke(resident);fresh_out=work/f'{flavor}-fresh-{i}';clean=fresh(app,fresh_out)

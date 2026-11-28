@@ -1,4 +1,5 @@
 """Closed union return contracts across source files and incremental class-layout changes."""
+from source_suffix import source_suffix
 import argparse
 import json
 from pathlib import Path
@@ -116,8 +117,8 @@ def static_returns(work, flavor):
     for rev, owner in ((0,'Node'),(6,'Middle'),(12,'Node')):
         out = work/f'{flavor}-fresh-{rev}'
         units = json.loads((out/'manifest.json').read_text())['sources']
-        provider = out/units[f'{flavor}/factory.{flavor}']
-        caller = out/units[f'{flavor}/main.{flavor}']
+        provider = out/units[f'{flavor}/factory.{source_suffix(flavor)}']
+        caller = out/units[f'{flavor}/main.{source_suffix(flavor)}']
         header = provider.with_suffix('.hpp')
         signature = f'owner_{owner} method_12_RecordSyntax_read('
         assert signature in provider.read_text() and signature in header.read_text()

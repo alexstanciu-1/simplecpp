@@ -1,4 +1,5 @@
 """PHP in-process qualification and native host: retained checks, cold failure, warm reuse and standalone gate."""
+from source_suffix import source_suffix
 import argparse
 import copy
 from contextlib import contextmanager
@@ -232,7 +233,7 @@ def native_proof(work, compiler, flavor, runtime=None, *, quick=False):
     work.mkdir(parents=True)
     app, bundle, native = (work/n for n in ('app', 'generated', 'native'))
     app.mkdir(); (app/'module.json').write_text('{}')
-    source = app/('main.'+flavor)
+    source = app/('main.'+source_suffix(flavor))
     source.write_text('echo "host"; return 8;')
     flags = ['-std=c++23', '-O2', '-g0', '-Wall', '-Wextra', '-Werror', '-I', str(ROOT/'runtime/generated/public')]
     if 'clang' in compiler:
@@ -306,7 +307,7 @@ def native_proof(work, compiler, flavor, runtime=None, *, quick=False):
         assert changed['native']['exit_code'] == 0 and len(changed['emitted_sources']) == 1, changed
         assert run([native/'program']).stdout == 'changed'
         # Membership changes relink without rebuilding surviving objects; restoration rebuilds only its unit.
-        spare = app/('spare.'+flavor)
+        spare = app/('spare.'+source_suffix(flavor))
         spare.write_text('int spare(){return 4;}' if flavor == 'cpp' else 'function spare():int{return 4;}')
         added = build(retained)['result']
         assert added['native']['exit_code'] == 0 and len(added['emitted_sources']) == 1, added

@@ -11,7 +11,7 @@ function ensure(bool $ok, string $message): void
 
 function literal(string $directory, bool $value, int $stamp): void
 {
-	$path = "$directory/literal.php";
+	$path = "$directory/literal.phs";
 	file_put_contents($path, 'function fromLiteral():int { $count = (int) ' . ($value ? 'true' : 'false') . '; return $count; }');
 	touch($path, $stamp);
 	clearstatcache(true, $path);
@@ -35,8 +35,8 @@ function facts($session, string $name): array
 $app = $argv[1];
 $profile = in_array('--calls', $argv, true);
 file_put_contents("$app/module.json", '{}');
-file_put_contents("$app/main.php", 'return fromLiteral() + fromParameter(false);');
-file_put_contents("$app/parameter.php", 'function fromParameter(bool $flag):int { $count = (int) $flag; return $count; }');
+file_put_contents("$app/main.phs", 'return fromLiteral() + fromParameter(false);');
+file_put_contents("$app/parameter.phs", 'function fromParameter(bool $flag):int { $count = (int) $flag; return $count; }');
 $target = new entry_target(31);
 $samples = [];
 foreach (range(0, $profile ? 0 : 21) as $i) {

@@ -11,7 +11,7 @@ $output = new cpp_program_output('app/main.cpp', ['app/main.cpp' => 'entry.cpp']
 $manifest = $bundle . '/manifest.json';
 if ($mode === 'capture') {
 	$files = ['main.cpp' => flavor::cpp];
-	if (is_file($root . '/sub/helper.php')) $files['sub/helper.php'] = flavor::php;
+	if (is_file($root . '/sub/helper.phs')) $files['sub/helper.phs'] = flavor::php;
 	$session = Program_Loader::modules(['app' => ['root' => $root, 'entry' => 'main.cpp',
 		'sources' => $files, 'dependencies' => []]], 'app');
 	$state = Project_Changes::capture($session, $root . '/facts.json', $bundle);

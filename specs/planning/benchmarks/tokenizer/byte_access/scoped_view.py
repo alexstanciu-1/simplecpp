@@ -19,7 +19,7 @@ def prepare(root):
     from extends_native import source_edit
     scanner(root)
     for f in FLAVORS:
-        path = root / f / ('scanner.' + f)
+        path = root / f / ('scanner.' + ('phs' if f == 'php' else f))
         original = path.read_text()
         # An equivalent length expression bypasses the direct-initializer proof.
         length = next(line for line in original.splitlines() if 'strlen(' in line)
@@ -47,7 +47,7 @@ def run(root, runtime, rounds, copy_root=None):
         variants = [('copy', copy_root / (f + '-out')), ('transfer', root / (f + '-out'))] if copy_root else [
             ('ordinary', root / (f + '-ordinary')), ('view', root / (f + '-out'))]
         for variant, out in variants:
-            unit = out / json.loads((out / 'manifest.json').read_text())['sources'][f'{f}/scanner.{f}']
+            unit = out / json.loads((out / 'manifest.json').read_text())['sources'][f'{f}/scanner.{"phs" if f == "php" else f}']
             code = unit.read_text()
             assert ('.checked_bytes()' in code) == (variant != 'ordinary')
             assert '.tokens = std::move(' in code

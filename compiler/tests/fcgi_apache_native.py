@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-fcgi-') as directory:
     work = Path(directory)
     app, out = work/'app', work/'out'
     app.mkdir()
-    manifest, entry = app/'module.json', app/'main.php'
+    manifest, entry = app/'module.json', app/'main.phs'
     manifest.write_text('{}')
     entry.write_text('return 0;')
     proc = service(app, out)
@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-fcgi-') as directory:
         entry.write_text('fcgi_listen("/unused",32); return 0;')
         assert 'requires module runtime-fcgi' in invoke(proc).get('error', '')
         manifest.write_text('{"general_api":true,"dependencies":{"runtime":{"modules":["fcgi"]}}}')
-        entry.write_text((root/'compiler/tests/fixtures/resource_modules/fcgi.php.scpp').read_text())
+        entry.write_text((root/'compiler/tests/fixtures/resource_modules/fcgi.phs').read_text())
         result = invoke(proc)
         assert 'error' not in result, result
         bundle = json.loads((out/'manifest.json').read_text())

@@ -1,4 +1,5 @@
 """Key presence for runtime/application hashes, borrowed receivers and incremental reuse."""
+from source_suffix import source_suffix
 import argparse
 import json
 import subprocess
@@ -68,7 +69,7 @@ def prove(work, flavor, libraries, *, quick=False):
         ])
         out = work / (flavor+'-out')
         units = json.loads((out/'manifest.json').read_text())['sources']
-        generated = (out/units[f'{flavor}/api.{flavor}']).read_text()
+        generated = (out/units[f'{flavor}/api.{source_suffix(flavor)}']).read_text()
         assert '.has(' in generated and '.at(' not in generated and '.find(' not in generated
         return
     app,out=work/flavor,work/(flavor+'-out')
@@ -85,7 +86,7 @@ def prove(work, flavor, libraries, *, quick=False):
         for revision,(name,text,error) in enumerate(steps):
             before=artifacts(out)
             if name:
-                path=app/(name+'.'+flavor)
+                path=app/(name+'.'+source_suffix(flavor))
                 if text is None:path.unlink()
                 else:source_edit(path,text)
             got=invoke(resident);fresh_out=work/f'{flavor}-fresh-{revision}';clean=fresh(app,fresh_out)

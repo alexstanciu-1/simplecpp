@@ -41,7 +41,7 @@ def prove(work):
         ('fields', broken, diagnostic),
         (None, None, diagnostic),
         ('fields', repaired, expected.replace(b'seed', b'repaired')),
-    ], unaffected_source='observe.php', unaffected_revisions={4})
+    ], unaffected_source='observe.phs', unaffected_revisions={4})
 
 
 if __name__ == '__main__':

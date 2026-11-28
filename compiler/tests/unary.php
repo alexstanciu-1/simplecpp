@@ -114,8 +114,8 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	mkdir($directory);
 	try {
 		file_put_contents($directory . '/module.json', '{}');
-		file_put_contents($directory . '/main.' . $flavor->name, 'echo -value(); return 8;');
-		$lib = $directory . '/lib.' . $flavor->name;
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'echo -value(); return 8;');
+		$lib = $directory . '/lib.' . $flavor->source_extension();
 		$write = static function (string $type, string $value) use ($lib, $fn): void {
 			file_put_contents($lib, $fn('value', '', $type, 'return ' . $value . ';'));
 		};
@@ -147,7 +147,7 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 1, 'Body-only edit invalidated caller');
 		$session = $compiler->frontend($directory, $session);
 		verify(Incremental_Preparation::prepare($session, $target)['reused'] === 2, 'No-op rebuilt');
-		file_put_contents($directory . '/main.' . $flavor->name, 'echo + value(); return 8;');
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'echo + value(); return 8;');
 		$session = $compiler->frontend($directory, $session);
 		$changed = Incremental_Preparation::prepare($session, $target);
 		verify(($changed['prepared'] === 1) && ($changed['reused'] === 1), 'Sign edit rebuilt unchanged callee');

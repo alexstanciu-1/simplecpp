@@ -9,8 +9,8 @@ from strings_native import ROOT, prove, run, success
 def prove_parameter_reassignment(work):
     app = work / 'reassignment'
     app.mkdir()
-    (app / 'module.json').write_text('{"entry":"main.php"}')
-    (app / 'main.php').write_text('''
+    (app / 'module.json').write_text('{"entry":"main.phs"}')
+    (app / 'main.phs').write_text('''
         function replace_items(vector<int> $items): int {
             $replacement vector<int> = [71];
             $items = $replacement;

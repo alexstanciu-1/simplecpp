@@ -222,9 +222,9 @@ foreach ([flavor::cpp, flavor::php, flavor::js] as $flavor)
 	$directory = sys_get_temp_dir() . '/scpp-logical-' . bin2hex(random_bytes(8));
 	mkdir($directory);
 	try {
-		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->name, 'lib.' . $flavor->name]], JSON_THROW_ON_ERROR));
-		file_put_contents($directory . '/main.' . $flavor->name, 'if (true xor value()) { echo "Y"; } return 8;');
-		$lib = $directory . '/lib.' . $flavor->name;
+		file_put_contents($directory . '/module.json', json_encode(['sources' => ['main.' . $flavor->source_extension(), 'lib.' . $flavor->source_extension()]], JSON_THROW_ON_ERROR));
+		file_put_contents($directory . '/main.' . $flavor->source_extension(), 'if (true xor value()) { echo "Y"; } return 8;');
+		$lib = $directory . '/lib.' . $flavor->source_extension();
 		$stamp = time();
 		$write = static function (string $type, string $value) use ($lib, $fn, &$stamp): void {
 			file_put_contents($lib, $fn('value', '', $type, 'return ' . $value . ';'));
