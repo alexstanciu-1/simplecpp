@@ -87,6 +87,16 @@ Each lookup returns its element by value. When that element is a collection,
 the next lookup sees the selected snapshot, even if its key suspends and
 replaces the original outer slot. A stored zero stays present through `??`.
 
+Parentheses end the guard when they enclose the nullsafe field read. In
+`($team?->scores)[key()]`, preparation must first form the optional result
+of the field read, then check ordinary indexed access on that result. With
+the current runtime, `vector<int>` and `hash<int,string>` fields have no
+published optional representation. A `vector<string>` field produces a
+`nullable<vector<string>>`, which does not support ordinary indexed access.
+All three grouped forms therefore reject before execution. Removing those
+parentheses places the lookup inside the guard: `$team?->scores[key()]`
+skips the key on absence and evaluates it once on hit or miss.
+
 A checked index may also feed a further nullsafe member access, for example
 `$team?->players[key()]?->points` or `$team?->players[key()]?->score(arg())`.
 An absent team skips the key. A missing slot raises the collection's checked
