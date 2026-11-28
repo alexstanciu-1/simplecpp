@@ -133,6 +133,56 @@ def index_member(work, case):
           error, exception_type='std::out_of_range', expected_stdout=b'PK')
 
 
+def terminal_index_call(work, case):
+    vector = case.endswith('vector')
+    key = '0' if vector else '"score"'
+    key_type = 'int' if vector else 'string'
+    collection = 'vector<function<int(int)>>' if vector else 'hash<function<int(int)>,string>'
+    first = '$this->ops[]' if vector else '$this->ops["score"]'
+    model = f"""
+        class Router {{
+            public {collection} $ops;
+            public function fill():void {{{first}=fn($n)=>original($n);}}
+            public function replace():void {{$this->ops[{key}]=fn($n)=>replacement($n);}}
+        }}
+        function original(int $n):int {{echo "A";return $n;}}
+        function replacement(int $n):int {{echo "B";return 8;}}
+    """
+    readers = f"""
+        function probe(?Router $r):?Router {{echo "P";return $r;}}
+        function key():{key_type} {{echo "K";return {key};}}
+        function arg(?Router $r):int {{echo "X";$r->replace();return 0;}}
+        function invoke(?Router $r):nullable<int> {{return probe($r)?->ops[key()](arg($r));}}
+    """
+    if '_missing_' in case:
+        guard(work, 'php', 'missing', model + readers + 'echo invoke(new Router()) ?? 9;return 8;',
+              'sequence_index_out_of_range' if vector else 'hash_missing_key',
+              exception_type='std::out_of_range', expected_stdout=b'PK')
+        return
+    main = readers + """
+        echo invoke(null) ?? 9;$r=new Router();$r->fill();
+        echo invoke($r) ?? 9,invoke($r) ?? 9;return 8;
+    """
+    changed = model.replace('function<int(int)>', 'function<int(int,int)>').replace('fn($n)', 'fn($n,$other)')
+    trace = b'P9PKXA0PKXB8'
+    edits = [(None, None, trace)]
+    # Two native builds plus fresh/incremental comparisons took 4–7 s in isolation
+    # even with misses split out. Keep one native execution in the default suite.
+    if '_recovery_' in case:
+        edits.extend([('router', changed, 'Argument count mismatch for function: indexed callable'), ('router', model, trace)])
+    revisions(work, 'php', dict(main=main, router=model), edits)
+
+
+def terminal_index_call_admission(work):
+    model = 'class Router {public vector<function<int(int&)>> $ops;}'
+    main = 'function read(?Router $r):nullable<int> {$n=0;return $r?->ops[0]($n);}return 8;'
+    diagnostic = 'Nullsafe indexed invocation requires a callable returning by value'
+    revisions(work, 'php', dict(router=model, main=main), [
+        ('router', model.replace('int(int&)', 'int&(int&)'), diagnostic),
+        ('router', model.replace('int(int&)', 'void(int&)'), 'Void call cannot be used as a value'),
+        ('router', model, b'')])
+
+
 def index_ordinary(work, case):
     team = """
         class Team {
@@ -575,6 +625,8 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     case = sys.argv[1]
     if case in ('hash_vector', 'vector_hash', 'hash_vector_missing', 'vector_hash_missing'):
         repeated_index(Path(tmp), case)
+    elif case.startswith('terminal_index_call_') and case.endswith(('vector', 'hash')):
+        terminal_index_call(Path(tmp), case)
     elif case in ('index_vector', 'index_hash'):
         terminal_index(Path(tmp), case)
     elif case in ('index_ordinary', 'index_ordinary_failures'):
@@ -584,7 +636,7 @@ with TemporaryDirectory(prefix='php-nullsafe-call-') as tmp:
     elif case in ('indexed_callable', 'indexed_callable_missing', 'chained_indexed_callable', 'ordinary_indexed_callable', 'ordinary_indexed_empty'):
         indexed_callable(Path(tmp), case)
     else:
-        {'index_ordinary_owner': index_ordinary_owner, 'repeated_index_owner': repeated_index_owner, 'enum_properties': enum_properties, 'enum_property_admission': enum_property_admission,
+        {'terminal_index_call_admission': terminal_index_call_admission, 'index_ordinary_owner': index_ordinary_owner, 'repeated_index_owner': repeated_index_owner, 'enum_properties': enum_properties, 'enum_property_admission': enum_property_admission,
          'enum_selected_case': enum_selected_case, 'enum_method': enum_method, 'index_admission': index_admission, 'index_owner': index_owner, 'index_suspended': index_suspended, 'terminal_void': terminal_void, 'terminal_void_empty': terminal_void_empty,
          'terminal_void_suspended': terminal_void_suspended, 'mixed_chain': mixed_chain, 'mixed_failure': mixed_failure, 'mixed_suspended': mixed_suspended,
          'chain': chain, 'named': named, 'lifetime': lifetime, 'suspended': suspended,

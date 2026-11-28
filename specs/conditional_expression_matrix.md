@@ -95,6 +95,13 @@ contains an empty owner, ordinary `->` raises the empty-owner failure before
 evaluating the argument. A present player stays alive through the call even
 when the argument replaces the slot.
 
+A chain can end by invoking an owned callable from a typed vector or hash slot,
+as in `$router?->ops[key()](arg())`. An absent router skips the key and
+arguments. A present router performs the checked lookup before evaluating
+arguments. Lookup failure propagates. The selected callable stays alive through
+invocation even if an argument replaces its slot. Its signature governs argument
+binding, and its by-value result uses the ordinary nullsafe result representation.
+
 A standalone call such as `$team?->coach->notify(key());` may end in a
 synchronous `void` method. An absent team skips the arguments and invocation.
 With a present team, the ordinary receiver check runs before `key()`. An

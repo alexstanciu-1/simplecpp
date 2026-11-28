@@ -2,12 +2,19 @@
 
 Doc Status: supporting
 
-The first current-compiler slice accepts `nullable<T> ?? T` when the nullable
+The compiler accepts `nullable<T> ?? T` when the nullable
 carrier is published and the fallback has exactly its canonical payload type.
 It returns an owned payload, preserving the source carrier. This availability
 boundary does not replace the broader [conditional matrix](../../specs/conditional_expression_matrix.md).
-Application carriers, homogeneous wrapper fallbacks, result/sentinel families,
-bare-null left operands and widening joins are deferred for `??`.
+Two `nullable<int>` operands also produce an owned `int`. A present zero skips
+the fallback. If both are empty, evaluation throws
+`std::domain_error("coalesce_selected_branch_has_no_usable_value_domain")`.
+
+Two class handles of the exact same type (`N ?? N` or `?N ?? ?N`) select by
+handle presence and preserve the chosen allocation. Two empty optional handles
+produce an empty optional handle. Both forms evaluate the left once and the
+fallback only on absence. Mixed required/optional handles, upcasts, other
+homogeneous wrappers and result/sentinel families remain deferred.
 
 ## Ownership and preparation
 

@@ -3190,18 +3190,31 @@ CPP;
 		}
 		if ($value instanceof ast_binary_expression) {
 			if ($value->operator === binary_operator::coalesce) {
-				/** @var carrier_type_definition $carrier */
-				$carrier = $value->left->type_def();
+				$left_type = $value->left->type_def();
 				$before = $this->suspensions;
 				$start = count($this->async_steps);
 				$steps = [];
-				$left = $this->retained_place($value->left, $global_references, $declarations, $required_headers, $steps);
-				$steps = [...array_splice($this->async_steps, $start), ...$steps, 'const auto& coalesce_value = ' . $left . ';'];
-				$presence = $carrier->lower_cpp_presence('coalesce_value');
-				$present = $carrier->lower_cpp_extract('coalesce_value');
+				if ($left_type instanceof shared_record_type_definition) {
+					$left = $this->value($value->left, $global_references, $declarations, $required_headers);
+					$steps[] = 'auto coalesce_value = ' . $left . ';';
+					$presence = $left_type->lower_cpp_condition('coalesce_value');
+					$present = 'coalesce_value';
+				} else {
+					$left = $this->retained_place($value->left, $global_references, $declarations, $required_headers, $steps);
+					$steps[] = 'const auto& coalesce_value = ' . $left . ';';
+					$presence = $left_type->lower_cpp_presence('coalesce_value');
+					$present = $left_type->lower_cpp_extract('coalesce_value');
+				}
+				$steps = [...array_splice($this->async_steps, $start), ...$steps];
 				$throws = $value->right instanceof ast_throw_expression;
 				$fallback = $throws ? $this->throw_call($value->right, $global_references, $declarations, $required_headers)
 					: $this->value($value->right, $global_references, $declarations, $required_headers, inside_scope: true);
+				if ($left_type instanceof carrier_type_definition && !$throws && $value->right->type_def() === $left_type) {
+					$required_headers['stdexcept'] = true;
+					$fallback = '([](const auto& backup) { if (!' . $left_type->lower_cpp_presence('backup')
+						. ') throw std::domain_error("coalesce_selected_branch_has_no_usable_value_domain"); return '
+						. $left_type->lower_cpp_extract('backup') . '; }(' . $fallback . '))';
+				}
 				if ($before === $this->suspensions) {
 					return '([&]() -> ' . $this->signature_type($value_type, false) . ' { ' . implode(' ', $steps)
 						. " if ($presence) { return $present; } " . ($throws ? '' : 'return ') . $fallback . '; }())';

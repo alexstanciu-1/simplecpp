@@ -1848,7 +1848,7 @@ final class Preparation
 				if ($hop instanceof ast_index_expression && !($hop->receiver->type_def() instanceof readonly_index_lookup_type)) {
 					throw new diagnostic($hop->source(), $hop->byte_start(), 'Nullsafe indexed read requires a typed vector or hash');
 				}
-				if ($hop instanceof ast_call_expression) $this->check_nullsafe_method($hop);
+				if ($hop instanceof ast_call_expression) $this->check_nullsafe_call($hop);
 			}
 			$result = $payload === type_void::instance() || ($payload instanceof carrier_type_definition && $payload->family === 'nullable')
 				? $payload : Type_Resolution::nullable_value($payload);
@@ -2025,15 +2025,21 @@ final class Preparation
 				$this->value($syntax->right, $initializing);
 			}
 			if ($syntax->operator === binary_operator::coalesce) {
-				$carrier = $syntax->left->type_def();
-				if (!($carrier instanceof carrier_type_definition) || !$carrier->supports_coalescing()) {
-					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier');
+				$left = $syntax->left->type_def();
+				$right = $syntax->right instanceof ast_throw_expression ? null : $syntax->right->type_def();
+				if ($left instanceof carrier_type_definition && $left->supports_coalescing()) {
+					$result = $left->payload_type;
+					if ($right !== null && $right !== $result && !($right === $left && $result === type_int64::instance())) {
+						throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type or a matching nullable<int>');
+					}
+					$this->retain_member_place($syntax->left);
+				} elseif ($left instanceof shared_record_type_definition && $left->payload->declaration->kind === record_kind::class_type) {
+					if ($right !== $left) throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing requires identical shared class handle types');
+					$result = $left;
+				} else {
+					throw new diagnostic($syntax->source(), $syntax->byte_start(), 'Coalescing requires a published nullable carrier or a shared class handle');
 				}
-				if (!($syntax->right instanceof ast_throw_expression) && $syntax->right->type_def() !== $carrier->payload_type) {
-					throw new diagnostic($syntax->right->source(), $syntax->right->byte_start(), 'Coalescing fallback requires the exact payload type');
-				}
-				$this->retain_member_place($syntax->left);
-				$syntax->settle_binary($carrier->payload_type);
+				$syntax->settle_binary($result);
 				return;
 			}
 			if ($syntax->operator->logical()) {
@@ -2174,9 +2180,16 @@ final class Preparation
 		return $type->helper_function($operation);
 	}
 
-	/** Guarded calls use synchronous instance dispatch and never return a reference. */
-	private function check_nullsafe_method(ast_call_expression $call): void
+	/** Guarded calls use synchronous methods or a terminal indexed callable returning a value. */
+	private function check_nullsafe_call(ast_call_expression $call): void
 	{
+		if ($call->qualifier === call_qualifier::stored_value) {
+			$signature = $call->receiver->type_def()->signature;
+			if ($signature->reference_origin !== null || $signature->result === type_void::instance()) {
+				throw new diagnostic($call->source(), $call->byte_start(), 'Nullsafe indexed invocation requires a callable returning by value');
+			}
+			return;
+		}
 		$method = $call->function_def();
 		if (!($method instanceof ast_function_declaration) || !$method->has_receiver() || $method->returns_reference || $method->is_async) {
 			throw new diagnostic($call->source(), $call->byte_start(), 'Nullsafe call requires a synchronous instance method without a reference return');
