@@ -313,10 +313,11 @@ final class Preparation
 			}
 			elseif ($statement instanceof ast_index_compound) {
 				$receiver = $statement->target->receiver;
-				$root = $this->prepare_index_mutation($statement);
+				$prepared_root = $this->prepare_index_mutation($statement);
 				$collection = $receiver->type_def();
 				if ($statement->operator === binary_operator::coalesce && $source->flavor === flavor::php
 					&& $collection instanceof conditional_index_store_type) {
+					$root = $prepared_root ?? $receiver;
 					if ($root instanceof ast_field_expression && ast_index_expression::collection_storage_root($root) !== null) {
 						if ($root !== $receiver) $this->check_indexed_field_owner($root);
 						$this->retain_member_place($root);
@@ -335,21 +336,19 @@ final class Preparation
 					$this->retain_member_place($receiver);
 					$statement->prepare_storage_compound($statement->target->type_def());
 				}
+				$statement->prepared_root = $prepared_root;
 			}
 			elseif ($statement instanceof ast_index_assignment) {
 				$binding = null;
-				$boxed_root = null;
+				$prepared_root = null;
 				$receiver = $statement->receiver;
 				if ($receiver instanceof ast_index_expression) {
 					$this->value($receiver);
-					$collection_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
-					if ($collection_root === null) {
-						$boxed_root = ast_index_expression::boxed_path_root($receiver, $statement instanceof ast_computed_member_assignment);
-						$collection_root = $boxed_root;
-					}
-					$binding = $collection_root instanceof ast_name_expression ? $collection_root->local_binding() : null;
-					if ($collection_root !== null) $this->require_index_write_available($collection_root);
-					$root = $collection_root ?? $receiver;
+					$prepared_root = $source->flavor === flavor::python ? null : ast_index_expression::nested_collection_root($receiver);
+					$prepared_root ??= ast_index_expression::boxed_path_root($receiver, $statement instanceof ast_computed_member_assignment);
+					$binding = $prepared_root instanceof ast_name_expression ? $prepared_root->local_binding() : null;
+					if ($prepared_root !== null) $this->require_index_write_available($prepared_root);
+					$root = $prepared_root ?? $receiver;
 					while ($root instanceof ast_index_expression) {
 						$owner = $root->receiver->type_def();
 						if (!($owner instanceof fixed_array_type) && !($source->flavor === flavor::python
@@ -360,19 +359,19 @@ final class Preparation
 						}
 						$root = $root->receiver;
 					}
-					if ($boxed_root === null && !($root instanceof ast_name_expression && $root->local_binding() !== null) && !($root instanceof ast_field_expression)) {
+					if ($prepared_root === null && !($root instanceof ast_name_expression && $root->local_binding() !== null) && !($root instanceof ast_field_expression)) {
 						throw new diagnostic($root->source(), $root->byte_start(), 'Nested indexed write requires local or field storage');
 					}
 					Readonly_Access::write($root, true);
 				}
 				elseif ($receiver instanceof ast_field_expression) {
 					$this->writable_property($receiver, payload: true);
-					$boxed_root = $receiver->key_write_root;
+					$prepared_root = $receiver->key_write_root;
 				} else {
 					$this->value($receiver);
 					$binding = $receiver->declaration();
 					if ($statement instanceof ast_computed_member_assignment && $binding instanceof ast_global_declaration) {
-						$boxed_root = ast_index_expression::boxed_path_root($receiver, true);
+						$prepared_root = ast_index_expression::boxed_path_root($receiver, true);
 					}
 					$this->require_index_write_available($receiver);
 					Readonly_Access::write($receiver, true);
@@ -383,8 +382,8 @@ final class Preparation
 				}
 				$type = $statement->receiver->type_def();
 				if ($statement instanceof ast_computed_member_assignment && (!($type instanceof type_dynamic)
-					|| ($receiver instanceof ast_index_expression && $boxed_root === null)
-					|| ($receiver instanceof ast_name_expression && $boxed_root === null && !($binding instanceof ast_local_binding)))) {
+					|| ($receiver instanceof ast_index_expression && !($prepared_root?->type_def() instanceof boxed_type_definition))
+					|| ($receiver instanceof ast_name_expression && $prepared_root === null && !($binding instanceof ast_local_binding)))) {
 					throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Computed member assignment requires a dynamic local, writable instance field or named static property');
 				}
 				if (!($type instanceof index_write_type)) {
@@ -400,23 +399,23 @@ final class Preparation
 				$type->prepare_key($statement->index);
 				$this->collection_element($statement->value, $type->write_type(), null);
 				$this->retain_member_place($receiver);
-				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination), $boxed_root);
+				$statement->settle_write($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination), $prepared_root);
 				if ($binding instanceof ast_local_binding) $this->latest_writes[$binding->storage_id()] = null;
 			}
 			elseif ($statement instanceof ast_append_statement) {
-				$boxed_root = null;
+				$prepared_root = null;
 				if ($statement->receiver instanceof ast_field_expression) {
 					$this->writable_property($statement->receiver, payload: true);
-					$boxed_root = $statement->receiver->key_write_root;
+					$prepared_root = $statement->receiver->key_write_root;
 				} else {
 					$this->value($statement->receiver);
 					$root = $statement->receiver;
 					if ($root instanceof ast_index_expression) {
-						$boxed_root = ast_index_expression::boxed_path_root($root);
-						$root = $boxed_root ?? ast_index_expression::nested_collection_root($root);
+						$prepared_root = ast_index_expression::boxed_path_root($root) ?? ast_index_expression::nested_collection_root($root);
+						$root = $prepared_root;
 					}
 					$binding = $root instanceof ast_name_expression ? $root->local_binding() : null;
-					if ($binding === null && $boxed_root === null && !($root instanceof ast_field_expression)) {
+					if ($binding === null && $prepared_root === null && !($root instanceof ast_field_expression)) {
 						throw new diagnostic($statement->source(), $statement->byte_start(), 'Append requires writable local storage');
 					}
 					$this->require_collection_available($statement, $binding);
@@ -428,7 +427,7 @@ final class Preparation
 				}
 				$this->collection_element($statement->value, $type->write_type(), null);
 				$this->retain_member_place($statement->receiver);
-				$statement->settle_append($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination), $boxed_root);
+				$statement->settle_append($type->write_type()->prepare_conversion($statement->value, conversion_context::typed_destination), $prepared_root);
 			}
 			elseif ($statement instanceof ast_storage_write) {
 				$this->write($statement);
@@ -1123,17 +1122,17 @@ final class Preparation
 	}
 
 	/** A mutation through a value-copy row requires a path back to writable storage. */
-	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): ast_expression
+	private function prepare_index_mutation(ast_index_compound|ast_index_update $statement): ast_name_expression|ast_field_expression|null
 	{
 		$receiver = $statement->target->receiver;
 		$this->value($statement->target);
 		if ($receiver instanceof ast_field_expression) $this->check_indexed_field_owner($receiver);
-		$statement->boxed_root = ast_index_expression::boxed_path_root($receiver, $statement->target instanceof ast_computed_member_read);
+		$boxed_root = ast_index_expression::boxed_path_root($receiver, $statement->target instanceof ast_computed_member_read);
 		if ($receiver instanceof ast_index_expression && $receiver->type_def() instanceof boxed_type_definition
-			&& $statement->boxed_root === null && $statement->source()->flavor !== flavor::python) {
+			&& $boxed_root === null && $statement->source()->flavor !== flavor::python) {
 			throw new diagnostic($receiver->source(), $receiver->byte_start(), 'Nested boxed update requires a local or instance-field boxed root');
 		}
-		$root = $statement->boxed_root ?? ast_index_expression::nested_collection_root($receiver);
+		$root = $boxed_root ?? ast_index_expression::nested_collection_root($receiver);
 		if ($root !== null) {
 			$this->require_index_write_available($root);
 			Readonly_Access::write($root, true);
@@ -1146,7 +1145,7 @@ final class Preparation
 		}
 		$this->require_index_write_available($receiver);
 		Readonly_Access::write($receiver, true);
-		return $receiver;
+		return null;
 	}
 
 	/** A separate hash write could insert a key while the loop holds a selection. */
@@ -1453,12 +1452,13 @@ final class Preparation
 	private function write(ast_storage_write $statement, bool $consumes_result = false): void
 	{
 		if ($statement instanceof ast_index_update) {
-			$this->prepare_index_mutation($statement);
+			$root = $this->prepare_index_mutation($statement);
 			$this->retain_member_place($statement->target->receiver);
 			if (!($statement->target->receiver->type_def() instanceof indexed_mutation_type)) {
 				throw new diagnostic($statement->source(), $statement->byte_start(), 'Indexed updates require a mutable collection');
 			}
 			$statement->require_update_type($statement->target->type_def());
+			$statement->prepared_root = $root;
 			return;
 		}
 		if ($statement instanceof ast_property_update) {

@@ -18,6 +18,8 @@ def exercise(work, flavor):
     main += f['infer']('copy', v + 'board')
     main += f'{path}["A"][0] = 6; {path}["A"][0]++; --{path}["A"][0];'
     main += f'{path}["A"][] = 3; {path}["A"][0] += 2;'
+    if flavor == 'php':
+        main += f'{path}["A"][0] ??= 99;'
     main += f'echo {v}copy{access}groups["A"][0],count({v}copy{access}groups["A"]),{path}["A"][1];'
     main += f'return {path}["A"][0];'
     revisions(work, flavor, {'main': main, 'model': model}, [

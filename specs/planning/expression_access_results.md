@@ -34,7 +34,7 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 | 🟢 D3. Computed PHP callees and cross-flavor indexed invocation | PHP now accepts parenthesized expressions producing an owned callable. The registered ternary and match cases verify lazy selection, replacement during argument evaluation and recovery after a provider edit. C++, JavaScript and Python now accept `ops[key](arg)` using the same stored-call preparation and lowering. |
 | 🟢 D4. Closed for the agreed scope | [D4 slice list](#d4-slice-list) |
 | 🟢 D5. Closed | Nested mixed snapshot reads shipped for PHP, C++ and JS in `5761dd781`. Durable references into movable elements remain deferred pending an element lifetime contract. String/string equality compares the full byte sequence and ordering is lexicographic over unsigned bytes, including numeric-looking strings. [String contract](../compiler_scalars_v0_2.md#string-comparison--2026-11-06) · [Reference contract](../native_reference_safety.md) |
-| 🟠 A1. Open engineering decision | Preparation records boxed roots. The emitter also calls `nested_collection_root` on typed stores, appends and mutations. This is duplicated classification, with incremental invalidation implications. The retained-owner and write-back probes did not reproduce another lost write. Treat a refactor as a separate engineering decision. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Lowering](../../compiler/05_backend/cpp/emit.php) |
+| 🟢 A1. Closed | Preparation records one non-owning root on each indexed write that needs a typed or boxed path. Lowering uses it for assignment, append, compounds and updates, and conditional assignment. Body reset clears the fact on each form. A foreign field key-type edit, field removal and repair exercise the unchanged PHP caller against fresh compilation. [Reset proof](../../compiler/tests/prepared_index_roots.php) · [Cross-file proof](../../compiler/tests/nested_field_write.py) |
 
 **Two historical gaps closed upstream during the audit.** PHP now prints scalar bytes/bools and reports the received type for a boxed echo operand. PHP kind predicates now admit dynamic values; `is_string` and `is_array` are available. New upstream coverage also exercises terminal checked vector/hash reads on nullsafe chains and nullsafe enum methods and read-only case properties. These changes are included in the integrated default-suite result. [QoS follow-up](php_flavor_developer_qos_reaudit.md) · [Nullsafe access contract](../conditional_expression_matrix.md)
 
@@ -174,11 +174,7 @@ in 90.66 s. These figures apply to the workspace 03 snapshot.
   At the audit baseline, `$h?->x=7` stopped in parsing (expected call statement). Indexed
   `$v[0] ??= 7` on a local integer vector now checks bounds and skips fallback for every existing element.
   PHP field `$h->x ??= 7` requires a published nullable carrier.
-- **D5 and A1.** Keep the missing-key, mixed-read, stable-reference and text
-  comparison contracts in the inventory. The intervening compiler changes
-  concern terminal indexed calls. Typed stores, appends and updates still
-  consult `nested_collection_root` in lowering. The existing native controls
-  protect write-back behavior; they cannot prove classification happens once.
+- **D5 and A1 at reconciliation.** Typed stores, appends and updates still consulted `nested_collection_root` in lowering at this checkpoint. The current dispositions above record the subsequent D5 decisions and A1 implementation.
 
 ## 🟢 Native witnesses worth retaining
 
