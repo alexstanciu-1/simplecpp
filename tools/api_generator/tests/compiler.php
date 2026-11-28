@@ -787,6 +787,19 @@ foreach (['missing', 'unknown', 'incompatible', 'unregistered_keywords', 'duplic
     } catch (\RuntimeException $expected) {
     }
 }
+// Ordinary reads require a checked value copy even when a nonthrowing lookup is available.
+$readProvider = (object)['indexed_read' => (object)['member' => 'fetch', 'protocol' => 'checked_key']];
+$read = ['name' => 'fetch', 'arguments' => ['const string&'], 'result' => 'int64', 'mutates' => false, 'missing' => 'throw_out_of_range'];
+$lookup = array_replace($read, ['name' => 'lookup_entry', 'missing' => 'empty_nullable']);
+[$member, $binding] = compilerIndexedRead($readProvider, [$lookup, $read], 'string', 'int64');
+requireThat($member === 'fetch' && str_contains($binding, "'.fetch('"), 'Indexed read ignored its declared member');
+$readProvider->indexed_read->member = 'lookup_entry';
+try {
+    compilerIndexedRead($readProvider, [$lookup, $read], 'string', 'int64');
+    throw new \LogicException('Accepted a nonthrowing lookup as an ordinary read');
+} catch (\RuntimeException $error) {
+    requireThat(str_contains($error->getMessage(), 'Invalid indexed read signature'), 'Unexpected read validation error');
+}
 // Indexed writes follow the provider member, even when a different mutable overload exists.
 $storeProvider = (object)['indexed_store' => (object)['member' => 'put', 'missing' => 'insert']];
 $store = ['name' => 'put', 'arguments' => ['string', 'int64'], 'result' => 'void', 'mutates' => true];

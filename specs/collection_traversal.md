@@ -49,6 +49,9 @@ expression using the provider’s diagnostic prefix. Lowering uses the same type
 for the identity conversion. The `indexed_store` recipe selects the mutable member
 taking the exact key and value types. A vector store rejects an out-of-range position.
 A hash store inserts a missing key or replaces its existing value.
+The `indexed_read` recipe selects the checked member that returns a value copy.
+A missing position or key raises the ordinary provider error. PHP hash `??`
+uses its separate `coalescing_lookup` member to distinguish a miss from a present zero.
 
 ## Ownership and mutation
 

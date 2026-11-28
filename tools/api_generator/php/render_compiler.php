@@ -46,6 +46,32 @@ function compilerCollectionBuilders(object $recipe): array {
             . "\t\treturn Type_Resolution::collection(" . var_export($family, true) . ", \$element, $key);\n\t}\n"];
 }
 
+/** Resolve the checked value-copy member for both ordinary indexing and native-key readers. */
+function compilerIndexedRead(object $provider, array $methods, string $key, string $value): array {
+    $read = at($provider, 'indexed_read');
+    fields($read, ['member', 'protocol']);
+    $member = textValue(at($read, 'member'));
+    requireThat(recordIdentifier($member), 'Invalid indexed read member');
+    $position = match (at($read, 'protocol')) {
+        'checked_position' => true,
+        'checked_key' => false,
+        default => throw new \RuntimeException('Unknown indexed read protocol'),
+    };
+    $argument = $position ? $key : "const $key&";
+    foreach ($methods as $method) {
+        if ($method['name'] !== $member || $method['arguments'] !== [$argument]) continue;
+        $checked = $position
+            ? ($method['receiver'] ?? null) === 'const_reference' && ($method['result_category'] ?? null) === 'value'
+                && ($method['adaptation'] ?? null) === 'checked_index_copy'
+            : ($method['mutates'] ?? true) === false && ($method['missing'] ?? null) === 'throw_out_of_range';
+        requireThat($checked && $method['result'] === $value, 'Invalid indexed read signature: ' . $member);
+        return [$member, strtr(readFile(__DIR__ . '/../templates/collections/compiler_indexed_read.php.tpl'), [
+            '@receiver@' => $position ? "'(' . \$receiver . ')'" : '$receiver', '@member@' => $member,
+        ])];
+    }
+    throw new \RuntimeException('Missing indexed read overload: ' . $member);
+}
+
 /** Select the ordinary store overload for the provider's exact key and value types. */
 function compilerIndexedStore(object $provider, array $methods, string $key, string $value): string {
     $store = at($provider, 'indexed_store');

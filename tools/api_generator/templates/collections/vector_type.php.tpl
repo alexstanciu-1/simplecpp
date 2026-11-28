@@ -47,11 +47,7 @@ final class @class@ extends vector_type_definition@interfaces@, subset_source, m
 		return '(' . $receiver . ').@append@(' . $value . ')';
 	}
 
-	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
-	{
-		$index = $this->lower_cpp_key($key, $index);
-		return $this->lower_cpp_element_read($receiver, $index);
-	}
+@indexed_read@
 
 	/** Read through an already typed native index, including an iteration position. */
 	public function lower_cpp_element_read(string $receiver, string $index): string

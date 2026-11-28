@@ -48,10 +48,7 @@ final class @class@ extends hash_type_definition@interfaces@, coalescing_index_r
 		return $receiver . '.@coalescing_lookup@(' . $this->lower_cpp_key($key, $index) . ')';
 	}
 
-	public function lower_cpp_index(ast_expression $key, string $receiver, string $index): string
-	{
-		return $receiver . '.@index@(' . $this->lower_cpp_key($key, $index) . ')';
-	}
+@indexed_read@
 
 @indexed_store@
 

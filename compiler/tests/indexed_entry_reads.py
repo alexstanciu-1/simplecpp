@@ -15,6 +15,9 @@ function labels():hash<int,string> { echo "H"; $h hash<int,string>=["05"=>37]; r
 function pos(int $i):int { echo "I"; return $i; }
 function rowPos(int $i):int { echo "R"; return $i; }
 function keyText(string $s):string { echo "K"; return $s; }
+struct Item {public int $n; public function __construct(int $n){$this->n=$n;}}
+if(cli_argc()===7){$empty vector<Item>=[]; $item=$empty[pos(0)]; return 99;}
+if(cli_argc()===8){$empty hash<Item,string>=[]; $item=$empty[keyText("miss")]; return 99;}
 $rows fixed_array<fixed_array<byte,1>,1> = [[29]];
 if(cli_argc()===2){ $v=numbers()[pos(1)]; return 99; }
 if(cli_argc()===3){ $h=labels()[keyText("5")]; return 99; }
@@ -32,7 +35,6 @@ $v string=numbers()[pos(0)];
 $h int=labels()[keyText("05")];
 $b byte=$rows[rowPos(0)][pos(0)];
 function tracedKey(string $mark,string $key):string {echo $mark;return $key;}
-struct Item {public int $n; public function __construct(int $n){$this->n=$n;}}
 $left Item(5); $right Item(7);
 $items vector<Item>=[$left]; $items[rowPos(0)]=$right;
 $named hash<Item,string>=[tracedKey("A","05")=>$left,tracedKey("B","5")=>$right];
@@ -72,6 +74,7 @@ with tempfile.TemporaryDirectory(prefix='indexed-entry-reads-') as tmp:
     for argc, trace, error in [(1, b'IS' + b'KS' * 3 + b'VIHKRIRABWICD', b''), (2, b'VI', b'sequence_index_out_of_range\n'),
                                (3, b'HK', b'hash_missing_key\n'), (4, b'R', b'sequence_index_out_of_range\n'),
                                (5, b'RI', b'sequence_index_out_of_range\n'),
-                               (6, b'IS', b'sequence_index_out_of_range\n')]:
+                               (6, b'IS', b'sequence_index_out_of_range\n'),
+                               (7, b'I', b'sequence_index_out_of_range\n'), (8, b'K', b'hash_missing_key\n')]:
         result = subprocess.run([work / 'program', *(['x'] * (argc - 1))], capture_output=True)
         assert (result.returncode, result.stdout, result.stderr) == (int(bool(error)), trace, error), result

@@ -21,16 +21,12 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $class = 'type_' . $hash['name'];
         requireThat($hash['construction'] === 'empty' && $hash['key_policy'] === 'strict'
             && $hash['read'] === 'value_copy', 'Compiler hash requires empty construction, strict keys and copied reads');
-        $at = null;
         $has = null;
         $find = null;
         foreach ($hash['methods'] as $method) {
             if ($method['name'] === 'find' && $method['arguments'] === ['const ' . $hash['key'] . '&']) $find = $method;
             if ($method['name'] === 'has' && $method['arguments'] === ['const ' . $hash['key'] . '&']) $has = $method;
-            if ($method['name'] === 'at' && $method['arguments'] === ['const ' . $hash['key'] . '&']) $at = $method;
         }
-        requireThat($at !== null && $at['result'] === $hash['value'] && !$at['mutates']
-            && $at['missing'] === 'throw_out_of_range', 'Compiler hash requires checked value-copy read binding');
         requireThat($has !== null && $has['result'] === 'bool_t' && !$has['mutates'],
             'Compiler hash requires canonical const key-presence binding');
         $presence = "\t\t\$this->presence_binding = new runtime_function('hash_contains', [\$this, $key::instance()], type_"
@@ -69,6 +65,7 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
         $probeHeader = $regexProbe ? 'scpp/php/regex_hash_isset.hpp' : 'scpp/php/hash_isset.hpp';
         $provider = concreteRecipe(hashConcreteRecipe($hash));
         $indexedTypes = at($provider, 'indexed_entry_types');
+        [$readMember, $indexedRead] = compilerIndexedRead($provider, $hash['methods'], $hash['key'], $hash['value']);
         $bindings = compilerCollectionBuilders($provider) + [
             '@copy_effect@' => compilerPrivateCopyEffect($provider, ['k' => '$this->key_type', 'v' => '$this->value_type']),
             '@declarations@' => compilerCollectionDeclarations($provider),
@@ -76,12 +73,12 @@ function compilerHashTypes(mixed $metadata, ?array $runtime, array $definitions)
                 . "\tpublic function require_entry_probe(Cpp_Concrete_Collections \$collections, array &\$headers): void { \$headers['$probeHeader'] = true; }\n" : '',
             '@writable_iteration@' => $writable === '' ? '' : "\tuse $writable;\n",
             '@coalescing_lookup@' => $provider->coalescing_lookup,
+            '@indexed_read@' => $indexedRead,
             '@indexed_store@' => compilerIndexedStore($provider, $hash['methods'], $hash['key'], $hash['value']),
-            '@entry_presence@' => compilerEntryPresence(hashConcreteRecipe($hash), $at['name'], $traits, $code),
+            '@entry_presence@' => compilerEntryPresence(hashConcreteRecipe($hash), $readMember, $traits, $code),
             '@checked_slot_binding@' => compilerCheckedSlot(hashConcreteRecipe($hash)),
             '@initialization@' => $initialization,
             '@append_method@' => compilerHashAppend($hash),
-            '@index@' => $at['name'],
             '@iteration@' => compilerTraversalMethods($hash['traversal'], $value . '::instance()', $key . '::instance()', indexedTypes: $indexedTypes),
             '@methods@' => compilerCollectionMethods($hash, $definitions),
             '@cardinality@' => compilerCardinalityMethods($hash['methods'], $runtime['hashes']['count_type'], $definitions),

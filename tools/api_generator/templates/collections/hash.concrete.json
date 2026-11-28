@@ -4,6 +4,7 @@
   "hash_key": "k",
   "subset_result": {"source": true},
   "map_result": {"family": "hash", "key": "source"},
+  "indexed_read": {"member": "at", "protocol": "checked_key"},
   "indexed_store": {"member": "set", "missing": "insert"},
   "indexed_entry_types": {"protocol": "traversal_value_exact_key", "key_diagnostic": "Hash key requires"},
   "entry_insertion": "keyed_store",
