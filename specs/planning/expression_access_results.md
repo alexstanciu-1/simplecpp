@@ -32,7 +32,7 @@ Controls distinguish signature compatibility from declaration origin. Selecting 
 | 🟢 D1. Python nested typed-write diagnostic | Fixed in workspace 03. The preparation diagnostic identifies the storage available in Python. The default regression checks rejection, repair and native execution of both working controls. Typed-vector write admission remains a separate decision. |
 | 🟢 D2. Plain PHP scalar stores through computed shared class handles | Grouped and ungrouped indexed receivers and shared factory results retain the selected allocation through the store. The native regression observes the original and replacement values, throwing RHS behavior and readonly edit/recovery. [Evaluation contract](../expression_evaluation.md#php-scalar-field-stores-through-selected-shared-owners) |
 | 🟢 D3. Computed PHP callees and cross-flavor indexed invocation | PHP now accepts parenthesized expressions producing an owned callable. The registered ternary and match cases verify lazy selection, replacement during argument evaluation and recovery after a provider edit. C++, JavaScript and Python now accept `ops[key](arg)` using the same stored-call preparation and lowering. |
-| D4. Decide additional access syntax and grouping expectations | A grouped optional field followed by an ordinary field access checks the resulting owner. On an absent outer receiver it raised `ownership_empty_access`; the continuous guarded member chain produced absence. A grouped scalar optional can feed coalescing. Computed PHP member names, nullsafe writes, nonlocal/indexed `??=` and field interpolation remain limited. Field interpolation still reports a closing-brace parse error. Decide each surface before broadening admission; a grouping comparison alone does not prove a language bug. |
+| D4. Decide additional access syntax and grouping expectations | A grouped optional field followed by an ordinary field access checks the resulting owner. On an absent outer receiver it raised `ownership_empty_access`; the continuous guarded member chain produced absence. A grouped scalar optional can feed coalescing. Grouped invocation of a nullsafe owned callable field now uses its empty state and ordinary argument ordering. Computed PHP member names, nullsafe writes, nonlocal/indexed `??=` and field interpolation remain limited. Field interpolation still reports a closing-brace parse error. Decide each surface before broadening admission; a grouping comparison alone does not prove a language bug. |
 | D5. Keep existing bounded semantics explicit | Non-Python mixed nested value reads, references escaping into movable slots and the sampled lexical comparisons of numeric-looking strings have existing boundaries. No evidence in this audit calls for changing boxed ownership, reference origins or comparison semantics. |
 | A1. Consider preparing typed destinations once | Preparation records boxed roots. The emitter also calls `nested_collection_root` on typed stores, appends and mutations. This is duplicated classification, with incremental invalidation implications. The retained-owner and write-back probes did not reproduce another lost write. Treat a refactor as a separate engineering decision. [Preparation](../../compiler/04_analyze/prepare/prepare.php) · [Lowering](../../compiler/05_backend/cpp/emit.php) |
 
@@ -87,7 +87,12 @@ in 90.66 s. These figures apply to the workspace 03 snapshot.
   distinguish a grouped empty receiver's runtime failure from absence propagated
   by the continuous chain. Repeated checked reads (`adaee7bba`), ordinary
   member continuation (`7fa1e23dd`) and terminal indexed calls (`5b2388267`)
-  have their own native regressions. In separate probes, `$d->{$n}`,
+  have their own native regressions. On base `f478637e0`, the
+  `callable_field_*` fixtures check grouped invocation with an absent router
+  and an empty field, retention during argument-side replacement, a saved
+  callable copy, and cross-file edit to an integer field and recovery. On
+  dev002, 8/8 focused checks and 679/679 default tests passed.
+  In separate probes, `$d->{$n}`,
   `$h?->x=7` and `"{$h->x}"` still stop in parsing (expected identifier,
   call statement and closing interpolation brace respectively). Indexed
   `$v[0] ??= 7` and field `$h->x ??= 7` on integer slots parse and reject

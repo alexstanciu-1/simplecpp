@@ -33,6 +33,13 @@ evaluating the receiver propagate.
 Preparation resolves the field and checks visibility even when the receiver
 can be absent. The field must have a supported optional representation.
 
+An owned callable field supplies its own empty state. Reading `$router?->op`
+returns an empty callable for an absent router and a copy of the field for a
+present router. In `($router?->op)(arg())`, the guard ends before invocation.
+The argument runs even when the selected callable is empty, then invocation
+raises the ordinary empty-call failure. If the argument replaces the field,
+the pending call uses the copy selected before argument evaluation.
+
 For `findPlayer()?->scoreFor(key())`, absence skips the arguments and the call.
 Presence retains the selected owner through argument evaluation and invocation.
 Arguments bind and execute as for an ordinary instance call, including named
